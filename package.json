@@ -1,0 +1,43 @@
+{
+  "name": "ngcp-api",
+  "version": "0.0.1",
+  "description": "API Interface for NGCP",
+  "main": "src/bin/apiserver.js",
+  "author": "Kirill Solomko <ksolomko@sipwise.com>",
+  "license": "",
+  "private": true,
+  "scripts": {
+    "start": "./src/bin/apiserver",
+    "dev": "NODE_ENV=dev nodemon --exec ./src/bin/apiserver",
+    "lint": "eslint ./src",
+    "test": "nyc --reporter=text --reporter=lcov mocha --exit"
+  },
+  "dependencies": {
+    "bcrypt": "^5.0.0",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "debug": "^4.1.1",
+    "express": "^4.17.1",
+    "express-prettify": "^0.1.1",
+    "express-validator": "^6.6.1",
+    "halson": "^3.0.0",
+    "helmet": "^4.0.0",
+    "http": "^0.0.1-security",
+    "http-errors": "^1.8.0",
+    "mariadb": "^2.4.2",
+    "morgan": "^1.10.0",
+    "nodemon": "^2.0.4",
+    "sequelize": "^6.3.4"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "eslint": "^7.6.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.0",
+    "mocha": "^8.1.1",
+    "nyc": "^15.1.0",
+    "prettier": "^2.0.5",
+    "sinon-chai": "^3.5.0",
+    "supertest": "^4.0.2"
+  }
+}
