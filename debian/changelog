@@ -1,0 +1,6 @@
+ngcp-rest-api (9.1.0.0+0~mr9.1.0.0) unstable; urgency=medium
+
+  [ Sergii Kipot ]
+  * [014ba52] TT#88103 Add initial commit with .gitreview file
+
+ -- Alex Lutay <alutay@sipwise.com>  Mon, 31 Aug 2020 23:02:31 +0200
