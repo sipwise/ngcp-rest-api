@@ -9,6 +9,7 @@ export class BasicAuthGuard implements CanActivate {
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
+    console.log(request.socket)
     const b64auth = (request.headers.authorization || '').split(' ')[1] || '';
     const [username, password] = Buffer.from(b64auth, 'base64')
       .toString()
@@ -27,7 +28,6 @@ export class BasicAuthGuard implements CanActivate {
       request.user = admin;
       return true;
     }
-    const response = context.switchToHttp().getResponse();
     throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
   }
 }
