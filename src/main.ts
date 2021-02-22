@@ -1,11 +1,9 @@
-import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
 import * as fs from 'fs';
 import * as dotenv from 'dotenv';
-import { DocumentBuilder, SwaggerDocumentOptions, SwaggerModule } from '@nestjs/swagger';
-import { Admin } from './modules/admins/admin.entity';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidateInputPipe } from './core/pipes/validate.pipe'
 
 dotenv.config()
@@ -19,7 +17,6 @@ const httpsOptions = {
 }
 
 async function bootstrap() {
-  // const app = await NestFactory.create(AppModule);
   const app = await NestFactory.create(AppModule, {httpsOptions});
 
   const config = new DocumentBuilder()
@@ -29,17 +26,10 @@ async function bootstrap() {
     .addTag('NGCP')
     .build();
 
-  // const options: SwaggerDocumentOptions = {
-  //   extraModels: [Admin],
-  // }
-  //const document = SwaggerModule.createDocument(app, config, options);
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup("api/v2", app, document);
+  SwaggerModule.setup(process.env.API_PREFIX, app, document);
 
-  app.setGlobalPrefix('api/v2');
-  // app.useGlobalPipes(new ValidationPipe({
-  //   transform: true,
-  // }));
+  app.setGlobalPrefix(process.env.API_PREFIX);
   app.useGlobalPipes(new ValidateInputPipe())
   await app.listen(3443);
 }
