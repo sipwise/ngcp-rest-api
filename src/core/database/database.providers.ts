@@ -1,6 +1,7 @@
 import { Sequelize } from 'sequelize-typescript';
 import { Admin } from 'src/modules/admins/admin.entity';
 import { AdminsModule } from 'src/modules/admins/admins.module';
+import { Contact } from 'src/modules/contacts/contact.entity';
 
 import { SEQUELIZE, DEVELOPMENT, TEST, PRODUCTION } from '../constants';
 import { databaseConfig } from './database.config';
@@ -24,7 +25,7 @@ export const databaseProviders = [{
            config = databaseConfig.development;
         }
         const sequelize = new Sequelize(config);
-        sequelize.addModels([Admin]);
+        sequelize.addModels([Admin, Contact]);
         await sequelize.sync();
         return sequelize;
     },
