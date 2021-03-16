@@ -1,10 +1,12 @@
 {
-  "name": "nest-api",
+  "name": "ngcp-rest-api",
   "version": "0.0.1",
-  "description": "",
+  "description": "REST API for the NGCP platform",
+  "productName": "NGCP REST API",
   "author": "",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "GPL-3+",
+  "private": true,
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",

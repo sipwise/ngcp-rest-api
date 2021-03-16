@@ -4,11 +4,12 @@ NGCP API is a RESTful based provider for working with the NGCP databases and mic
 
 ## Installation
 
-### As a package (currently not available, please use the Manual installation)
+### As a package
+
 Use the package manager to install the ngcp-api package
 
 ```bash
-apt install ngcp-api
+apt install ngcp-rest-api
 ```
 
 ### Manual
@@ -16,7 +17,7 @@ apt install ngcp-api
 Clone the repository
 
 ```bash
-git clone ngcp-api && cd ngcp-api
+git clone ngcp-rest-api && cd ngcp-rest-api
 ```
 
 Fetch the required nodejs modules
@@ -58,7 +59,8 @@ yarnpkg lint
 Create a customtt from '/etc/ngcp-config/templates/etc/nginx/sites-available/ngcp-panel_admin_api.tt2'
 
 ```bash
-cd /etc/ngcp-config/templates/etc/nginx/sites-available/ && cp ngcp-panel_admin_api.tt2 ngcp-panel_admin_api.customtt.tt2
+cd /etc/ngcp-config/templates/etc/nginx/sites-available/ &&
+cp ngcp-panel_admin_api.tt2 ngcp-panel_admin_api.customtt.tt2
 ```
 
 To reroute /api/admins and /api/domains
@@ -94,10 +96,14 @@ curl -i -X GET  -H 'Content-Type: application/json' -k -uadministrator:administr
 
 ## Currently supported
 
-* [ORM](http://sequelize.org) supporting provisioning domains and admins
+* [ORM](https://sequelize.org) supporting provisioning domains and admins
 * JSON HAL data representation (backward compatibility with APIv1)
 * Bcrypt authorization
 * Input data validation
 * Develompent mode
 * Self testing
 * Link checking
+
+## License
+
+[GPL-3+](https://spdx.org/licenses/GPL-3.0-or-later.html)
