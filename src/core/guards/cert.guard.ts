@@ -1,27 +1,31 @@
-import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { AdminsService } from "src/modules/admins/admins.service";
+import {CanActivate, ExecutionContext, Injectable} from "@nestjs/common";
+import {AdminsService} from "src/modules/admins/admins.service";
+import {BasicAuthGuard} from "./basic.auth.guard";
 
 @Injectable()
-export class CertGuard implements CanActivate {
+export class CertGuard extends BasicAuthGuard implements CanActivate {
     constructor(
-        private readonly adminsService: AdminsService,
-        private reflector: Reflector
-    ) {}
+        protected readonly adminsService: AdminsService,
+    ) {
+        super(adminsService)
+    }
+
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
-        console.log(request.headers);
         const certificate = request.socket.getPeerCertificate(true)
 
-        const sn = certificate.serialNumber ? certificate.serialNumber : request.headers['x-ssl-client-serial'];
+        // return true; // TODO: Remove this after tests
 
-        console.log(sn);
+        const sn_string = certificate.serialNumber ? certificate.serialNumber : request.headers['x-ssl-client-serial'];
+        const sn = parseInt(sn_string, 16)
         if (!sn) {
-            return false; // cert not received as neither cert nor header
+            return await super.canActivate(context); // cert not received as neither cert nor header, trying basic auth
         }
-        console.log(sn); // TODO: check certificate serial in database
-
+        const admin = await this.adminsService.searchOne({where: {ssl_client_m_serial: sn}});
+        if (!admin) {
+            return await super.canActivate(context); // no user with matching cert found, trying basic auth
+        }
         return true;
     }
 }

@@ -1,6 +1,6 @@
-import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { AdminsService } from "src/modules/admins/admins.service";
+import {CanActivate, ExecutionContext, Injectable} from "@nestjs/common";
+import {Reflector} from "@nestjs/core";
+import {AdminsService} from "src/modules/admins/admins.service";
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -22,7 +22,6 @@ export class RolesGuard implements CanActivate {
         }
 
         const admin = await this.adminsService.findOneByLogin(username);
-        console.log(username)
         if(!admin) {
             return false;
         }

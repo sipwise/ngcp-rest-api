@@ -1,40 +1,31 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Req, Res, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ApiCreatedResponse, ApiHeader, ApiOkResponse, ApiTags } from "@nestjs/swagger";
-import { Request, Response} from "express";
-import { Roles } from "src/core/decorators/roles.decorator";
-import { BasicAuthGuard } from "src/core/guards/basic.auth.guard";
-import { CertGuard } from "src/core/guards/cert.guard";
-import { RolesGuard } from "src/core/guards/roles.guard";
-import { TransformInterceptor } from "src/core/interceptors/transform.interceptor";
-import { AdminsService } from "./admins.service";
-import { CreateAdminDto } from "./dto/create-admin.dto";
-import { UpdateAdminDto } from "./dto/update-admin.dto";
-import { Admin } from "./admin.entity";
+import {Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards} from "@nestjs/common";
+import {ApiCreatedResponse, ApiOkResponse, ApiTags} from "@nestjs/swagger";
+import {CertGuard} from "src/core/guards/cert.guard";
+import {AdminsService} from "./admins.service";
+import {CreateAdminDto} from "./dto/create-admin.dto";
+import {UpdateAdminDto} from "./dto/update-admin.dto";
+import {Admin} from "./admin.entity";
 
 @ApiTags('admins')
 @Controller('admins')
+@UseGuards(CertGuard)
 export class AdminsController {
     constructor(private readonly adminsService: AdminsService) {}
 
     @Post()
-    //@UseGuards(BasicAuthGuard)
     @ApiCreatedResponse({
         type: Admin,
     })
     async create(@Body() admin: CreateAdminDto) {
-        // console.log(admin)
         return await this.adminsService.create(admin);
     }
 
     @Get()
-    // @UseGuards(BasicAuthGuard)
-    // @Roles('admin')
-    //@UseGuards(RolesGuard)
-    // @UseGuards(CertGuard)
     @ApiOkResponse()
-    @UseInterceptors(new TransformInterceptor({resource: "admins", pageName: "page", perPageName: "row"}))
-    async findAll() {
-        return await this.adminsService.findAll();
+    async findAll(@Query('page') page: string, @Query('rows') row: string) {
+        page = page ? page : `${process.env.API_DEFAULT_QUERY_PAGE}`;
+        row = row ? row : `${process.env.API_DEFAULT_QUERY_ROWS}`;
+        return await this.adminsService.findAll(page, row);
     }
 
     @Get(':id')

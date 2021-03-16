@@ -5,6 +5,8 @@ import * as fs from 'fs';
 import * as dotenv from 'dotenv';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidateInputPipe } from './core/pipes/validate.pipe'
+import { AppClusterService } from './app-cluster.service';
+import { TransformInterceptor } from './core/interceptors/transform.interceptor';
 
 dotenv.config()
 
@@ -21,7 +23,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle("NGCP API")
-    .setDescription("This is the NGCP API descritption")
+    .setDescription("This is the NGCP API description")
     .setVersion('2.0')
     .addTag('NGCP')
     .build();
@@ -31,6 +33,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix(process.env.API_PREFIX);
   app.useGlobalPipes(new ValidateInputPipe())
-  await app.listen(3443);
+  app.useGlobalInterceptors(new TransformInterceptor({pageName: process.env.API_DEFAULT_QUERY_PAGE_NAME, perPageName: process.env.API_DEFAULT_QUERY_ROWS_NAME}))
+  await app.listen(process.env.API_PORT);
 }
-bootstrap();
+AppClusterService.clusterize(bootstrap);

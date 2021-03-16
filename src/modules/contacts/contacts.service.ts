@@ -1,8 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { CreateContactDto } from './dto/create-contact.dto';
-import { UpdateContactDto } from './dto/update-contact.dto';
-import { Contact } from './contact.entity'
-import { CONTACT_REPOSITORY } from 'src/core/constants';
+import {Inject, Injectable} from '@nestjs/common';
+import {CreateContactDto} from './dto/create-contact.dto';
+import {UpdateContactDto} from './dto/update-contact.dto';
+import {Contact} from './contact.entity'
+import {CONTACT_REPOSITORY} from 'src/core/constants';
 
 @Injectable()
 export class ContactsService {
@@ -11,22 +11,23 @@ export class ContactsService {
   ){}
 
   async create(contact: CreateContactDto): Promise<Contact> {
-    return await this.contactsRepository.create<Contact>(contact);
+    return this.contactsRepository.create<Contact>(contact);
   }
 
-  async findAll() {
-    return await this.contactsRepository.findAll<Contact>()
+  async findAll(page: string, rows: string): Promise<Contact[]> {
+    let result = await this.contactsRepository.findAndCountAll({limit: +rows, offset: +rows*(+page-1)});
+    return result.rows
   }
 
   async findOne(id: number) {
-    return await this.contactsRepository.findOne<Contact>({ where: { id }});
+    return this.contactsRepository.findOne<Contact>({where: {id}});
   }
 
   async update(id: number, contact: UpdateContactDto) {
-    return await this.contactsRepository.update<Contact>(contact, { where: { id }});
+    return this.contactsRepository.update<Contact>(contact, {where: {id}});
   }
 
   async remove(id: number) {
-    return await this.contactsRepository.destroy({ where: { id }});
+    return this.contactsRepository.destroy({where: {id}});
   }
 }

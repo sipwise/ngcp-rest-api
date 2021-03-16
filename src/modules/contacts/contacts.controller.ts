@@ -1,12 +1,14 @@
-import { Controller, Get, Post, Body, Put, Param, Delete } from '@nestjs/common';
-import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
-import { ContactsService } from './contacts.service';
-import { CreateContactDto } from './dto/create-contact.dto';
-import { UpdateContactDto } from './dto/update-contact.dto';
-import { Contact} from './contact.entity';
+import {Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards} from '@nestjs/common';
+import {ApiCreatedResponse, ApiTags} from '@nestjs/swagger';
+import {ContactsService} from './contacts.service';
+import {CreateContactDto} from './dto/create-contact.dto';
+import {UpdateContactDto} from './dto/update-contact.dto';
+import {Contact} from './contact.entity';
+import {CertGuard} from 'src/core/guards/cert.guard';
 
 @ApiTags('contacts')
 @Controller('contacts')
+@UseGuards(CertGuard)
 export class ContactsController {
   constructor(private readonly contactsService: ContactsService) {}
 
@@ -19,9 +21,11 @@ export class ContactsController {
   }
 
   @Get()
-  async findAll() {
-    return await this.contactsService.findAll();
-  }
+  async findAll(@Query('page') page: string, @Query('rows') row: string) {
+        page = page ? page : `${process.env.API_DEFAULT_QUERY_PAGE}`;
+        row = row ? row : `${process.env.API_DEFAULT_QUERY_ROWS}`;
+        return await this.contactsService.findAll(page, row);
+    }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {

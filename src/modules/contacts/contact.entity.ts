@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { Model, Table, Column, DataType, Index, Sequelize, ForeignKey } from "sequelize-typescript";
+import {ApiProperty} from "@nestjs/swagger";
+import {Column, DataType, Index, Model, Table} from "sequelize-typescript";
 
 enum ContactGender {
     Male = 'male',

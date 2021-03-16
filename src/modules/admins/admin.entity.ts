@@ -1,7 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import {
-	Model, Table, Column, DataType, Index, Sequelize, ForeignKey
-} from "sequelize-typescript";
+import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
+import {Column, DataType, Index, Model, Table} from "sequelize-typescript";
 
 @Table({
 	tableName: "admins",
@@ -55,7 +53,7 @@ export class Admin extends Model<Admin> {
 
     @Column({
     	allowNull: true,
-    	type: DataType.CHAR(54)
+    	type: DataType.CHAR(54),
     })
     saltedpass?: string;
 
