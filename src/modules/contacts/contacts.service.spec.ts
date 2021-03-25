@@ -1,18 +1,23 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ContactsService } from './contacts.service';
+import {Test, TestingModule} from '@nestjs/testing';
+import {ContactsService} from './contacts.service';
+import {contactsProviders} from "./contacts.provider";
+import {Contact} from "./contact.entity";
+import {Repository} from "sequelize-typescript";
 
 describe('ContactsService', () => {
-  let service: ContactsService;
+  let contactsService: ContactsService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ContactsService],
+      providers: [
+        ContactsService,
+      ],
     }).compile();
 
-    service = module.get<ContactsService>(ContactsService);
+    contactsService = module.get<ContactsService>(ContactsService);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(contactsService).toBeDefined();
   });
 });

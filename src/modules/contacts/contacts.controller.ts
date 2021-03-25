@@ -4,7 +4,7 @@ import {ContactsService} from './contacts.service';
 import {CreateContactDto} from './dto/create-contact.dto';
 import {UpdateContactDto} from './dto/update-contact.dto';
 import {Contact} from './contact.entity';
-import {CertGuard} from 'src/core/guards/cert.guard';
+import {CertGuard} from 'core/guards/cert.guard';
 
 @ApiTags('contacts')
 @Controller('contacts')

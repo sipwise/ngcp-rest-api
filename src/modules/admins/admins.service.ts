@@ -1,5 +1,5 @@
 import {Inject, Injectable} from "@nestjs/common";
-import {ADMIN_REPOSITORY} from "src/core/constants";
+import {ADMIN_REPOSITORY} from "core/constants";
 import {Admin} from "./admin.entity";
 import {CreateAdminDto} from "./dto/create-admin.dto";
 import {UpdateAdminDto} from "./dto/update-admin.dto";

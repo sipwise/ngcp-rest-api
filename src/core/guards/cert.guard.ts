@@ -1,5 +1,5 @@
 import {CanActivate, ExecutionContext, Injectable} from "@nestjs/common";
-import {AdminsService} from "src/modules/admins/admins.service";
+import {AdminsService} from "modules/admins/admins.service";
 import {BasicAuthGuard} from "./basic.auth.guard";
 
 @Injectable()
@@ -14,8 +14,6 @@ export class CertGuard extends BasicAuthGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
         const certificate = request.socket.getPeerCertificate(true)
-
-        // return true; // TODO: Remove this after tests
 
         const sn_string = certificate.serialNumber ? certificate.serialNumber : request.headers['x-ssl-client-serial'];
         const sn = parseInt(sn_string, 16)

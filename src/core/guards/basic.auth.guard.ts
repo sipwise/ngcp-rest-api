@@ -1,6 +1,6 @@
 import {CanActivate, ExecutionContext, Injectable} from '@nestjs/common';
 import {compare} from 'bcrypt';
-import {AdminsService} from 'src/modules/admins/admins.service';
+import {AdminsService} from 'modules/admins/admins.service';
 
 @Injectable()
 export class BasicAuthGuard implements CanActivate {
@@ -23,7 +23,7 @@ export class BasicAuthGuard implements CanActivate {
     const bcrypt_version = '2b';
     const bcrypt_cost = 13;
 
-    if (admin && compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`) !== false) {
+    if (admin && await compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`) !== false) {
       request.user = admin;
       return true;
     }

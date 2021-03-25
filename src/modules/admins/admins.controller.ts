@@ -1,6 +1,6 @@
 import {Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards} from "@nestjs/common";
 import {ApiCreatedResponse, ApiOkResponse, ApiTags} from "@nestjs/swagger";
-import {CertGuard} from "src/core/guards/cert.guard";
+import {CertGuard} from "core/guards/cert.guard";
 import {AdminsService} from "./admins.service";
 import {CreateAdminDto} from "./dto/create-admin.dto";
 import {UpdateAdminDto} from "./dto/update-admin.dto";

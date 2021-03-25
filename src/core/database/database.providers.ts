@@ -1,6 +1,6 @@
 import { Sequelize } from 'sequelize-typescript';
-import { Admin } from 'src/modules/admins/admin.entity';
-import { Contact } from 'src/modules/contacts/contact.entity';
+import { Admin } from 'modules/admins/admin.entity';
+import { Contact } from 'modules/contacts/contact.entity';
 
 import { SEQUELIZE, DEVELOPMENT, TEST, PRODUCTION } from '../constants';
 import { databaseConfig } from './database.config';

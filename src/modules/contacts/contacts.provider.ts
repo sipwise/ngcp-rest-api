@@ -1,4 +1,4 @@
-import {CONTACT_REPOSITORY} from "src/core/constants";
+import {CONTACT_REPOSITORY} from "core/constants";
 import {Contact} from './contact.entity'
 
 export const contactsProviders = [{
