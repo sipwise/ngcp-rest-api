@@ -101,6 +101,3 @@ curl -i -X GET  -H 'Content-Type: application/json' -k -uadministrator:administr
 * Develompent mode
 * Self testing
 * Link checking
-
-## License
-[?]()
