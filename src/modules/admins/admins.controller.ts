@@ -1,14 +1,14 @@
 import {Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards} from "@nestjs/common";
 import {ApiCreatedResponse, ApiOkResponse, ApiTags} from "@nestjs/swagger";
-import {CertGuard} from "core/guards/cert.guard";
 import {AdminsService} from "./admins.service";
 import {CreateAdminDto} from "./dto/create-admin.dto";
 import {UpdateAdminDto} from "./dto/update-admin.dto";
 import {Admin} from "./admin.entity";
+import {OmniGuard} from "../../core/guards/omni.guard";
 
 @ApiTags('admins')
 @Controller('admins')
-@UseGuards(CertGuard)
+@UseGuards(OmniGuard)
 export class AdminsController {
     constructor(private readonly adminsService: AdminsService) {}
 

@@ -4,11 +4,11 @@ import {ContactsService} from './contacts.service';
 import {CreateContactDto} from './dto/create-contact.dto';
 import {UpdateContactDto} from './dto/update-contact.dto';
 import {Contact} from './contact.entity';
-import {CertGuard} from 'core/guards/cert.guard';
+import {OmniGuard} from "../../core/guards/omni.guard";
 
 @ApiTags('contacts')
 @Controller('contacts')
-@UseGuards(CertGuard)
+@UseGuards(OmniGuard)
 export class ContactsController {
   constructor(private readonly contactsService: ContactsService) {}
 
