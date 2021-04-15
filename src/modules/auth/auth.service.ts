@@ -4,12 +4,12 @@ import {compare} from "bcrypt";
 import {JwtService} from "@nestjs/jwt";
 
 /**
- * `AuthService` provides functionality to validate Admin authentication and to sign JWTs for authenticated users
+ * `AuthService` provides functionality to authenticate Admins and to sign JWTs for authenticated users
  */
 @Injectable()
 export class AuthService {
     /**
-     *
+     * Creates a new `AuthService`
      * @param adminsService Admin service to access DB
      * @param jwtService    JWT service to sign access tokens
      */

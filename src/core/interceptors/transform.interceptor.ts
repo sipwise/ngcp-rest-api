@@ -3,22 +3,45 @@ import {Observable} from "rxjs";
 import {map} from "rxjs/operators"
 import * as halson from "halson";
 
+/**
+ * Defines the names of query parameters for pagination
+ */
 interface TransformInterceptorOptions {
     pageName?: string;
     perPageName?: string;
 }
 
+/**
+ * TransformInterceptor transforms the data that is returned based on values set in the 'Accept' HTTP header.
+ *
+ * If the 'Accept' header explicitly contains 'application/json' that data is returned as is.
+ * In all other cases the data is transformed into 'application/hal+json' before it is returned.
+ */
 @Injectable()
 export class TransformInterceptor implements NestInterceptor {
     private readonly pageName: string;
     private readonly perPageName: string;
 
+    /**
+     * Creates a new TransformInterceptor with query parameter names set
+     * @param options Query parameter names
+     */
     constructor(options: TransformInterceptorOptions) {
         const { pageName = 'page', perPageName = 'row' } = options;
         this.pageName = pageName;
         this.perPageName = perPageName;
     }
 
+    /**
+     * Transforms data that is returned to 'application/hal+json' depending on 'Accept' headers
+     *
+     * If content type explicitly is set to 'application/json' normal JSON is returned. In all other cases
+     * JSON+HAL is returned.
+     * @param context ExecutionContext to access HTTP request
+     * @param next  Next CallHandler
+     *
+     * @returns data JSON or HAL+JSON
+     */
     async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
         const ctx = context.switchToHttp();
         return next.handle().pipe(map(data => {
@@ -33,6 +56,12 @@ export class TransformInterceptor implements NestInterceptor {
         }))
     }
 
+    /**
+     * Generates HAL+JSON resource from request data
+     * @param req HTTP request object
+     * @param data Date to be transformed
+     * @private
+     */
     private generateHALResource(req: any, data: any) {
         const page: string = (req.query[this.pageName] as string) ?? `${process.env.API_DEFAULT_QUERY_PAGE}`;
         const row: string = (req.query[this.perPageName] as string) ?? `${process.env.API_DEFAULT_QUERY_ROWS}`;
@@ -60,6 +89,12 @@ export class TransformInterceptor implements NestInterceptor {
         return resource;
     }
 
+    /**
+     * Extracs the API resource name from request URL
+     * @param url URL of requested resource
+     * @param prefix API prefix
+     * @private
+     */
     private static extractResourceName(url: string, prefix: string): string {
         if (url.startsWith("/")) {
             url = url.slice(1)
