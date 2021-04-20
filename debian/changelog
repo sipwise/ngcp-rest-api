@@ -1,3 +1,27 @@
+ngcp-rest-api (9.4.1.0+0~mr9.4.1.0) unstable; urgency=medium
+
+  [ Michael Berger ]
+  * [76f24e1] TT#107206 Draft of NestJS implementation
+  * [01921a7] TT#109612 Add bcrypt authentication
+  * [3434834] TT#107206 Add contacts api endpoint
+  * [7d08e83] TT#107206 Add roles and cert authentication guards
+  * [d0528ad] TT#107206 Add interceptor for return representation
+  * [66c2aa6] TT#107206 Finalize PoC
+  * [8af6803] TT#107206 change framework to fastify
+  * [680168e] TT#116551 add auth module
+  * [18e1b05] TT#116551 use passportjs strategies in guards
+
+  [ Guillem Jover ]
+  * [b410b6b] TT#115100 Switch yarn.lock file to use the internal npm registry
+
+  [ Hans-Peter Herzog ]
+  * [150a767] TT#117400 Add common .editorconfig
+
+  [ Alexander Lutay ]
+  * [80dcefd] TT#115100 Add LICENSE file
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 20 Apr 2021 11:58:46 +0200
+
 ngcp-rest-api (9.4.0.0+0~mr9.4.0.0) unstable; urgency=medium
 
   * New release.
