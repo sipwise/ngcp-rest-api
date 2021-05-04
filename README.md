@@ -107,3 +107,8 @@ curl -i -X GET  -H 'Content-Type: application/json' -k -uadministrator:administr
 ## License
 
 [GPL-3+](https://spdx.org/licenses/GPL-3.0-or-later.html)
+## Generating NestJS entities from database
+### Example
+```bash
+ yarnpkg stg -h localhost -D mysql -u root -d accounting -t api_journal_objects -o src/modules/journalV2/generated
+```
