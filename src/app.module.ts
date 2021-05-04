@@ -9,6 +9,7 @@ import {JournalModule} from "./modules/journal/journal.module";
 import {TxIDMiddleware} from "./core/middleware/txid.middleware";
 import {TimestampMiddleware} from "./core/middleware/timestamp.middleware";
 import {ContextMiddleware} from "./core/middleware/context.middleware";
+import {InterceptorModule} from "./core/interceptors/interceptor.module";
 
 @Module({
     controllers: [
@@ -22,6 +23,7 @@ import {ContextMiddleware} from "./core/middleware/context.middleware";
         ContactsModule,
         AuthModule,
         JournalModule,
+        InterceptorModule
     ],
 })
 export class AppModule implements NestModule {

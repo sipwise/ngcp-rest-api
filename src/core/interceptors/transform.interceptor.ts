@@ -2,6 +2,7 @@ import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from "@nestj
 import {Observable} from "rxjs";
 import {map} from "rxjs/operators"
 import * as halson from "halson";
+import {extractResourceName} from "./utils/interceptor.utils";
 
 /**
  * Defines the names of query parameters for pagination
@@ -27,7 +28,7 @@ export class TransformInterceptor implements NestInterceptor {
      * @param options Query parameter names
      */
     constructor(options: TransformInterceptorOptions) {
-        const { pageName = 'page', perPageName = 'row' } = options;
+        const {pageName = 'page', perPageName = 'row'} = options;
         this.pageName = pageName;
         this.perPageName = perPageName;
     }
@@ -44,11 +45,14 @@ export class TransformInterceptor implements NestInterceptor {
      */
     async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
         const ctx = context.switchToHttp();
-        return next.handle().pipe(map(data => {
+        return next.handle().pipe(map(async data => {
             const req = ctx.getRequest();
-
+            data = await data; // TODO: Take a closer look. No idea why data is a promise in the first place
             const accept = (req.headers.accept || '').split(',');
             if (accept.length == 1 && accept[0] === 'application/json') {
+                return data;
+            }
+            if (req.method === 'DELETE') {
                 return data;
             }
             let hal = this.generateHALResource(req, data)
@@ -66,7 +70,7 @@ export class TransformInterceptor implements NestInterceptor {
         const page: string = (req.query[this.pageName] as string) ?? `${process.env.API_DEFAULT_QUERY_PAGE}`;
         const row: string = (req.query[this.perPageName] as string) ?? `${process.env.API_DEFAULT_QUERY_ROWS}`;
 
-        const resName = TransformInterceptor.extractResourceName(req.url, process.env.API_PREFIX);
+        const resName = extractResourceName(req.url, process.env.API_PREFIX);
 
         const prefix = process.env.API_PREFIX;
 
@@ -89,19 +93,5 @@ export class TransformInterceptor implements NestInterceptor {
         return resource;
     }
 
-    /**
-     * Extracs the API resource name from request URL
-     * @param url URL of requested resource
-     * @param prefix API prefix
-     * @private
-     */
-    private static extractResourceName(url: string, prefix: string): string {
-        if (url.startsWith("/")) {
-            url = url.slice(1)
-        }
-        if (url.startsWith(prefix)) {
-            return url.slice(prefix.length + 1).split("/")[0]
-        }
-        return url.split("/")[0]
-    }
+
 }
