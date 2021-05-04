@@ -1,6 +1,15 @@
 import * as dotenv from "dotenv";
 
-export const SEQUELIZE = 'SEQUELIZE';
+export const DATABASES = {
+    accounting: {
+        token: "db_accounting",
+        name: "accounting",
+    },
+    billing: {
+        token: "db_billing",
+        name: "billing",
+    },
+};
 
 export const DEVELOPMENT = 'development';
 export const TEST = 'test';

@@ -1,31 +1,24 @@
 import * as dotenv from 'dotenv';
 
-import { IDatabaseConfig } from './interfaces/db-config.interface';
+import {DatabaseConfigAttributes} from './interfaces/db-config.interface';
+import {DATABASES} from "../constants";
 
 dotenv.config();
 
-export const databaseConfig: IDatabaseConfig = {
-    development: {
+export const databaseConfig: { [key: string]: DatabaseConfigAttributes} = {
+    billing: {
         username: process.env.DB_USER,
         password: process.env.DB_PASS,
-        database: process.env.DB_NAME_DEVELOPMENT,
+        database: DATABASES.billing.name,
         host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
         dialect: process.env.DB_DIALECT,
     },
-    test: {
+    accounting: {
         username: process.env.DB_USER,
         password: process.env.DB_PASS,
-        database: process.env.DB_NAME_TEST,
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        dialect: process.env.DB_DIALECT,
-    },
-    production: {
-        username: process.env.DB_USER,
-        password: process.env.DB_PASS,
-        database: process.env.DB_NAME_PRODUCTION,
+        database: DATABASES.accounting.name,
         host: process.env.DB_HOST,
         dialect: process.env.DB_DIALECT,
     },
 };
+

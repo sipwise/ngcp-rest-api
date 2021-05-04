@@ -1,4 +1,4 @@
-export interface IDatabaseConfigAttributes {
+export interface DatabaseConfigAttributes {
     username?: string;
     password?: string;
     database?: string;
@@ -6,10 +6,4 @@ export interface IDatabaseConfigAttributes {
     port?: number | string;
     dialect?: string;
     urlDatabase?: string;
-}
-
-export interface IDatabaseConfig {
-    development: IDatabaseConfigAttributes;
-    test: IDatabaseConfigAttributes;
-    production: IDatabaseConfigAttributes;
 }
