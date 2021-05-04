@@ -1622,7 +1622,7 @@ ansi-gray@^0.1.1:
   dependencies:
     ansi-wrap "0.1.0"
 
-ansi-regex@^2.0.0:
+ansi-regex@^2.0.0, ansi-regex@^2.1.1:
   version "2.1.1"
   resolved "https://npm-registry.sipwise.com/ansi-regex/-/ansi-regex-2.1.1.tgz#c3b33ab5ee360d86e0e628f0468ae7ef27d654df"
   integrity sha1-w7M6te42DYbg5ijwRorn7yfWVN8=
@@ -2078,7 +2078,7 @@ binary-extensions@^2.0.0:
   resolved "https://npm-registry.sipwise.com/binary-extensions/-/binary-extensions-2.1.0.tgz#30fa40c9e7fe07dbc895678cd287024dea241dd9"
   integrity sha512-1Yj8h9Q+QDF5FzhMs/c9+6UntbD5MkRfRwac8DoEm9ZfUBZ7tZ55YcGVAzEe4bXsdQHEk+s9S5wsOKVdZrw0tQ==
 
-bindings@^1.5.0:
+bindings@^1.3.0, bindings@^1.5.0:
   version "1.5.0"
   resolved "https://npm-registry.sipwise.com/bindings/-/bindings-1.5.0.tgz#10353c9e945334bc0511a6d90b38fbc7c9c504df"
   integrity sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==
@@ -2671,6 +2671,18 @@ cli-boxes@^1.0.0:
   version "1.0.0"
   resolved "https://npm-registry.sipwise.com/cli-boxes/-/cli-boxes-1.0.0.tgz#4fa917c3e59c94a004cd61f8ee509da651687143"
   integrity sha1-T6kXw+WclKAEzWH47lCdplFocUM=
+
+cli-color@^2.0.0:
+  version "2.0.0"
+  resolved "https://npm-registry.sipwise.com/cli-color/-/cli-color-2.0.0.tgz#11ecfb58a79278cf6035a60c54e338f9d837897c"
+  integrity sha512-a0VZ8LeraW0jTuCkuAGMNufareGHhyZU9z8OGsW0gXd1hZGi1SRuNRXdbGkraBBKnhyUhyebFWnRbp+dIn0f0A==
+  dependencies:
+    ansi-regex "^2.1.1"
+    d "^1.0.1"
+    es5-ext "^0.10.51"
+    es6-iterator "^2.0.3"
+    memoizee "^0.4.14"
+    timers-ext "^0.1.7"
 
 cli-cursor@^3.1.0:
   version "3.1.0"
@@ -3648,7 +3660,7 @@ es-to-primitive@^1.2.1:
     is-date-object "^1.0.1"
     is-symbol "^1.0.2"
 
-es5-ext@^0.10.35, es5-ext@^0.10.50, es5-ext@~0.10.14:
+es5-ext@^0.10.35, es5-ext@^0.10.46, es5-ext@^0.10.50, es5-ext@^0.10.51, es5-ext@^0.10.53, es5-ext@~0.10.14, es5-ext@~0.10.2, es5-ext@~0.10.46:
   version "0.10.53"
   resolved "https://npm-registry.sipwise.com/es5-ext/-/es5-ext-0.10.53.tgz#93c5a3acfdbef275220ad72644ad02ee18368de1"
   integrity sha512-Xs2Stw6NiNHWypzRTY1MtaG/uJlwCk8kH81920ma8mvN8Xq1gsfhZvpkImLQArw8AHnv8MT2I45J3c0R8slE+Q==
@@ -3657,7 +3669,7 @@ es5-ext@^0.10.35, es5-ext@^0.10.50, es5-ext@~0.10.14:
     es6-symbol "~3.1.3"
     next-tick "~1.0.0"
 
-es6-iterator@~2.0.1, es6-iterator@~2.0.3:
+es6-iterator@^2.0.3, es6-iterator@~2.0.1, es6-iterator@~2.0.3:
   version "2.0.3"
   resolved "https://npm-registry.sipwise.com/es6-iterator/-/es6-iterator-2.0.3.tgz#a7de889141a05a94b0854403b2d0a0fbfa98f3b7"
   integrity sha1-p96IkUGgWpSwhUQDstCg+/qY87c=
@@ -3716,6 +3728,16 @@ es6-symbol@^3.1.1, es6-symbol@~3.1.1, es6-symbol@~3.1.3:
   dependencies:
     d "^1.0.1"
     ext "^1.1.2"
+
+es6-weak-map@^2.0.3:
+  version "2.0.3"
+  resolved "https://npm-registry.sipwise.com/es6-weak-map/-/es6-weak-map-2.0.3.tgz#b6da1f16cc2cc0d9be43e6bdbfc5e7dfcdf31d53"
+  integrity sha512-p5um32HOTO1kP+w7PRnB+5lQ43Z6muuMuIMffvDN8ZB4GcnjLBV6zGStpbASIMk4DCAvEaamhe2zhyCb/QXXsA==
+  dependencies:
+    d "1"
+    es5-ext "^0.10.46"
+    es6-iterator "^2.0.3"
+    es6-symbol "^3.1.1"
 
 escalade@^3.1.1:
   version "3.1.1"
@@ -3995,7 +4017,7 @@ etag@~1.8.1:
   resolved "https://npm-registry.sipwise.com/etag/-/etag-1.8.1.tgz#41ae2eeb65efa62268aebfea83ac7d79299b0887"
   integrity sha1-Qa4u62XvpiJorr/qg6x9eSmbCIc=
 
-event-emitter@~0.3.5:
+event-emitter@^0.3.5, event-emitter@~0.3.5:
   version "0.3.5"
   resolved "https://npm-registry.sipwise.com/event-emitter/-/event-emitter-0.3.5.tgz#df8c69eef1647923c7157b9ce83840610b02cc39"
   integrity sha1-34xp7vFkeSPHFXuc6DhAYQsCzDk=
@@ -4946,6 +4968,11 @@ globby@^8.0.1:
     pify "^3.0.0"
     slash "^1.0.0"
 
+glossy@^0.1.7:
+  version "0.1.7"
+  resolved "https://npm-registry.sipwise.com/glossy/-/glossy-0.1.7.tgz#769b5984a96f6066ab9ea758224825ee6c210f0b"
+  integrity sha1-dptZhKlvYGarnqdYIkgl7mwhDws=
+
 got@^6.7.1:
   version "6.7.1"
   resolved "https://npm-registry.sipwise.com/got/-/got-6.7.1.tgz#240cd05785a9a18e561dc1b44b41c763ef1e8db0"
@@ -5708,6 +5735,11 @@ is-potential-custom-element-name@^1.0.0:
   version "1.0.0"
   resolved "https://npm-registry.sipwise.com/is-potential-custom-element-name/-/is-potential-custom-element-name-1.0.0.tgz#0c52e54bcca391bb2c494b21e8626d7336c6e397"
   integrity sha1-DFLlS8yjkbssSUsh6GJtczbG45c=
+
+is-promise@^2.2.2:
+  version "2.2.2"
+  resolved "https://npm-registry.sipwise.com/is-promise/-/is-promise-2.2.2.tgz#39ab959ccbf9a774cf079f7b40c7a26f763135f1"
+  integrity sha512-+lP4/6lKUBfQjZ2pdxThZvLUAafmZb8OAxFb8XXtiQmS35INgr85hdOGoEs124ez1FCnZJt6jau/T+alh58QFQ==
 
 is-property@^1.0.2:
   version "1.0.2"
@@ -6807,6 +6839,13 @@ lru-cache@^6.0.0:
   dependencies:
     yallist "^4.0.0"
 
+lru-queue@^0.1.0:
+  version "0.1.0"
+  resolved "https://npm-registry.sipwise.com/lru-queue/-/lru-queue-0.1.0.tgz#2738bd9f0d3cf4f84490c5736c48699ac632cda3"
+  integrity sha1-Jzi9nw089PhEkMVzbEhpmsYyzaM=
+  dependencies:
+    es5-ext "~0.10.2"
+
 lunr@^2.3.6, lunr@^2.3.9:
   version "2.3.9"
   resolved "https://npm-registry.sipwise.com/lunr/-/lunr-2.3.9.tgz#18b123142832337dd6e964df1a5a7707b25d35e1"
@@ -6928,6 +6967,20 @@ memfs@^3.1.2:
   integrity sha512-f/xxz2TpdKv6uDn6GtHee8ivFyxwxmPuXatBb1FBwxYNuVpbM3k/Y1Z+vC0mH/dIXXrukYfe3qe5J32Dfjg93A==
   dependencies:
     fs-monkey "1.0.1"
+
+memoizee@^0.4.14:
+  version "0.4.15"
+  resolved "https://npm-registry.sipwise.com/memoizee/-/memoizee-0.4.15.tgz#e6f3d2da863f318d02225391829a6c5956555b72"
+  integrity sha512-UBWmJpLZd5STPm7PMUlOw/TSy972M+z8gcyQ5veOnSDRREz/0bmpyTfKt3/51DhEBqCZQn1udM/5flcSPYhkdQ==
+  dependencies:
+    d "^1.0.1"
+    es5-ext "^0.10.53"
+    es6-weak-map "^2.0.3"
+    event-emitter "^0.3.5"
+    is-promise "^2.2.2"
+    lru-queue "^0.1.0"
+    next-tick "^1.1.0"
+    timers-ext "^0.1.7"
 
 memory-fs@^0.5.0:
   version "0.5.0"
@@ -7242,7 +7295,7 @@ named-placeholders@^1.1.2:
   dependencies:
     lru-cache "^4.1.3"
 
-nan@^2.12.1:
+nan@^2.12.1, nan@^2.13.2:
   version "2.14.2"
   resolved "https://npm-registry.sipwise.com/nan/-/nan-2.14.2.tgz#f5376400695168f4cc694ac9393d0c9585eeea19"
   integrity sha512-M2ufzIiINKCuDfBSAUr1vWQ+vuVcA9kqx8JJUsbQi6yf1uGRyb7HfpdfUr5qLXf3B/t8dPvcjhKMmlfnP47EzQ==
@@ -7287,6 +7340,19 @@ neo-async@^2.6.0, neo-async@^2.6.2:
   version "2.6.2"
   resolved "https://npm-registry.sipwise.com/neo-async/-/neo-async-2.6.2.tgz#b4aafb93e3aeb2d8174ca53cf163ab7d7308305f"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
+
+nest-winston@^1.4.1:
+  version "1.4.1"
+  resolved "https://npm-registry.sipwise.com/nest-winston/-/nest-winston-1.4.1.tgz#88e959bd0caaaf47cf0f8fb1d05cc5106847792c"
+  integrity sha512-c6SHNZbLVEKOD3nBWIXfVoCuHL1OaulNPPoSzhjq+pxeUZRgKjsPbob6xAS5tIchdAc1RB6hQoAwha5+ipBwEg==
+  dependencies:
+    cli-color "^2.0.0"
+    fast-safe-stringify "^2.0.7"
+
+next-tick@1, next-tick@^1.1.0:
+  version "1.1.0"
+  resolved "https://npm-registry.sipwise.com/next-tick/-/next-tick-1.1.0.tgz#1836ee30ad56d67ef281b22bd199f709449b35eb"
+  integrity sha512-CXdUiJembsNjuToQvxayPZF9Vqht7hewsvy2sOWafLvi2awflj9mOC6bHIg50orX8IJvWKY9wYQ/zB2kogPslQ==
 
 next-tick@~1.0.0:
   version "1.0.0"
@@ -10106,6 +10172,14 @@ timed-out@^4.0.0:
   resolved "https://npm-registry.sipwise.com/timed-out/-/timed-out-4.0.1.tgz#f32eacac5a175bea25d7fab565ab3ed8741ef56f"
   integrity sha1-8y6srFoXW+ol1/q1Zas+2HQe9W8=
 
+timers-ext@^0.1.7:
+  version "0.1.7"
+  resolved "https://npm-registry.sipwise.com/timers-ext/-/timers-ext-0.1.7.tgz#6f57ad8578e07a3fb9f91d9387d65647555e25c6"
+  integrity sha512-b85NUNzTSdodShTIbky6ZF02e8STtVVfD+fu4aXXShEELpozH+bCpJLYMPZbsABN2wDH7fJpqIoXxJpzbf0NqQ==
+  dependencies:
+    es5-ext "~0.10.46"
+    next-tick "1"
+
 tiny-inflate@^1.0.0, tiny-inflate@^1.0.2:
   version "1.0.3"
   resolved "https://npm-registry.sipwise.com/tiny-inflate/-/tiny-inflate-1.0.3.tgz#122715494913a1805166aaf7c93467933eea26c4"
@@ -10554,6 +10628,14 @@ unix-crypt-td-js@^1.1.4:
   resolved "https://npm-registry.sipwise.com/unix-crypt-td-js/-/unix-crypt-td-js-1.1.4.tgz#4912dfad1c8aeb7d20fa0a39e4c31918c1d5d5dd"
   integrity sha512-8rMeVYWSIyccIJscb9NdCfZKSRBKYTeVnwmiRYT2ulE3qd1RaDQ0xQDP+rI3ccIWbhu/zuo5cgN8z73belNZgw==
 
+unix-dgram@2.0.3:
+  version "2.0.3"
+  resolved "https://npm-registry.sipwise.com/unix-dgram/-/unix-dgram-2.0.3.tgz#511fc1f8ed94ffe40e0dfeacdae1bf8b06533296"
+  integrity sha512-Bay5CkSLcdypcBCsxvHEvaG3mftzT5FlUnRToPWEAVxwYI8NI/8zSJ/Gknlp86MPhV6hBA8I8TBsETj2tssoHQ==
+  dependencies:
+    bindings "^1.3.0"
+    nan "^2.13.2"
+
 unpipe@1.0.0, unpipe@~1.0.0:
   version "1.0.0"
   resolved "https://npm-registry.sipwise.com/unpipe/-/unpipe-1.0.0.tgz#b2bf4ee8514aae6165b4817829d21b2ef49904ec"
@@ -10665,7 +10747,7 @@ uuid@8.3.1:
   resolved "https://npm-registry.sipwise.com/uuid/-/uuid-8.3.1.tgz#2ba2e6ca000da60fce5a196954ab241131e05a31"
   integrity sha512-FOmRr+FmWEIG8uhZv6C2bTgEVXsHk08kE7mPlrBbEe+c3r9pjceVPgupIfNIhc4yx55H69OXANrUaSuu9eInKg==
 
-uuid@8.3.2, uuid@^8.1.0, uuid@^8.3.0:
+uuid@8.3.2, uuid@^8.1.0, uuid@^8.3.0, uuid@^8.3.2:
   version "8.3.2"
   resolved "https://npm-registry.sipwise.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
@@ -10926,6 +11008,15 @@ windows-release@^4.0.0:
   integrity sha512-OxmV4wzDKB1x7AZaZgXMVsdJ1qER1ed83ZrTYd5Bwq2HfJVg3DJS8nqlAG4sMoJ7mu8cuRmLEYyU13BKwctRAg==
   dependencies:
     execa "^4.0.2"
+
+winston-syslog@^2.4.4:
+  version "2.4.4"
+  resolved "https://npm-registry.sipwise.com/winston-syslog/-/winston-syslog-2.4.4.tgz#855a518851c42cb7ebc54b67f5b44a3cde161e4a"
+  integrity sha512-zDjoKO932Yszvzq8WtbIFMXHwAT2MOxpWC9s6djw2tvjdRESWw3au6l+0xDMatMhNWVoVaVNkDXF+r/eyoBUVA==
+  dependencies:
+    glossy "^0.1.7"
+  optionalDependencies:
+    unix-dgram "2.0.3"
 
 winston-transport@^4.4.0:
   version "4.4.0"
