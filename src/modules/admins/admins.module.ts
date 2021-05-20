@@ -5,14 +5,12 @@ import {AdminsService} from "./admins.service";
 import {InterceptorModule} from "../../core/interceptors/interceptor.module";
 
 @Module({
-    imports: [
-        // LoggingService,
-        InterceptorModule],
+    imports: [InterceptorModule],
     controllers: [AdminsController],
     exports: [AdminsService],
     providers: [
-        // LoggingService,
         AdminsService,
-        ...adminsProviders],
+        ...adminsProviders
+    ],
 })
 export class AdminsModule {}

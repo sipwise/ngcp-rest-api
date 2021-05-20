@@ -20,17 +20,20 @@ import {OmniGuard} from "../../core/guards/omni.guard";
 import {JournalingInterceptor} from "../../core/interceptors/journaling.interceptor";
 import {JOURNAL_SERVICE} from "../../core/constants";
 import {JournalService} from "../journal/journal.service";
+import {LoggingInterceptor} from "../../core/interceptors/logging.interceptor";
 
 @ApiTags('admins')
 @Controller('admins')
+// TODO: We could create a custom decorator that combines OmniGuard, Logging- and JournalingInterceptor?
 @UseGuards(OmniGuard)
-@UseInterceptors(JournalingInterceptor)
+@UseInterceptors(LoggingInterceptor, JournalingInterceptor)
 export class AdminsController {
     constructor(
         private readonly adminsService: AdminsService,
-        // private readonly logger: LoggingService,
+        // private readonly logging: LoggingService,
         @Inject(JOURNAL_SERVICE) private readonly journalService: JournalService,
-    ) {}
+    ) {
+    }
 
     @Post()
     @ApiCreatedResponse({

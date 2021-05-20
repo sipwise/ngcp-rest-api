@@ -4,10 +4,13 @@ import {ContactsController} from './contacts.controller';
 import {contactsProviders} from './contacts.provider';
 import {AdminsService} from '../admins/admins.service';
 import {adminsProviders} from '../admins/admins.providers';
+import {InterceptorModule} from "../../core/interceptors/interceptor.module";
 
 @Module({
-  controllers: [ContactsController],
-  exports: [ContactsService],
-  providers: [ContactsService, ...contactsProviders, AdminsService, ...adminsProviders]
+    imports: [InterceptorModule],
+    controllers: [ContactsController],
+    exports: [ContactsService],
+    providers: [ContactsService, ...contactsProviders, AdminsService, ...adminsProviders]
 })
-export class ContactsModule {}
+export class ContactsModule {
+}

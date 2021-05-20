@@ -6,28 +6,29 @@ import {CONTACT_REPOSITORY} from 'core/constants';
 
 @Injectable()
 export class ContactsService {
-  constructor(
-      @Inject(CONTACT_REPOSITORY) private readonly contactsRepository: typeof Contact
-  ){}
+    constructor(
+        @Inject(CONTACT_REPOSITORY) private readonly contactsRepository: typeof Contact
+    ) {
+    }
 
-  async create(contact: CreateContactDto): Promise<Contact> {
-    return this.contactsRepository.create<Contact>(contact);
-  }
+    async create(contact: CreateContactDto): Promise<Contact> {
+        return this.contactsRepository.create<Contact>(contact);
+    }
 
-  async findAll(page: string, rows: string): Promise<Contact[]> {
-    let result = await this.contactsRepository.findAndCountAll({limit: +rows, offset: +rows*(+page-1)});
-    return result.rows
-  }
+    async findAll(page: string, rows: string): Promise<Contact[]> {
+        let result = await this.contactsRepository.findAndCountAll({limit: +rows, offset: +rows * (+page - 1)});
+        return result.rows
+    }
 
-  async findOne(id: number) {
-    return this.contactsRepository.findOne<Contact>({where: {id}});
-  }
+    async findOne(id: number) {
+        return this.contactsRepository.findOne<Contact>({where: {id}});
+    }
 
-  async update(id: number, contact: UpdateContactDto) {
-    return this.contactsRepository.update<Contact>(contact, {where: {id}});
-  }
+    async update(id: number, contact: UpdateContactDto) {
+        return this.contactsRepository.update<Contact>(contact, {where: {id}});
+    }
 
-  async remove(id: number) {
-    return this.contactsRepository.destroy({where: {id}});
-  }
+    async remove(id: number) {
+        return this.contactsRepository.destroy({where: {id}});
+    }
 }
