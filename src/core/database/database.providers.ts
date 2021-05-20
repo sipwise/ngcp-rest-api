@@ -13,7 +13,10 @@ export const databaseProviders = [
             let config;
             config = databaseConfig["billing"]
             config['logging'] = true;
-            config['query'] = {raw: true}; // TODO: figure out if raw or sequelize data is preferred
+
+            // TODO: figure out if raw or sequelize data is preferred
+            //       When raw == false class-transformer classToPlain sometime runs into "Maximum call stack size exceeded"
+            config['query'] = {raw: false};
             const sequelize = new Sequelize(config);
             sequelize.addModels([Admin, Contact, Journal]);
             await sequelize.sync();
@@ -26,7 +29,7 @@ export const databaseProviders = [
             let config;
             config = databaseConfig["accounting"]
             config['logging'] = false;
-            config['query'] = {raw: true}; // TODO: figure out if raw or sequelize data is preferred
+            config['query'] = {raw: false}; // TODO: figure out if raw or sequelize data is preferred
             const sequelize = new Sequelize(config);
             // sequelize.addModels([JournalV2]);
             // await sequelize.sync();
