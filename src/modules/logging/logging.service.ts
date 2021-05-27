@@ -1,6 +1,7 @@
 import {Injectable, LoggerService} from "@nestjs/common";
 import * as winston from "winston";
 import {Syslog, SyslogTransportOptions} from 'winston-syslog';
+import {config} from '../../config/main';
 
 const opt: SyslogTransportOptions = {
     path: '/dev/log',
@@ -13,7 +14,7 @@ export class LoggingService implements LoggerService {
     private logger: winston.Logger
 
     constructor() {
-        if (process.env.ENVIRONMENT === 'production') {
+        //if (process.env.ENVIRONMENT === 'production') {
             this.logger = winston.createLogger({
                 levels: winston.config.syslog.levels,
                 defaultMeta: {service: LoggingService.name},
@@ -22,6 +23,7 @@ export class LoggingService implements LoggerService {
                     new Syslog(opt)
                 ],
             })
+        /*
         } else {
             this.logger = winston.createLogger({
                 levels: winston.config.syslog.levels,
@@ -33,6 +35,7 @@ export class LoggingService implements LoggerService {
             })
             // TODO: write both transports when debug?
         }
+        */
     }
 
     error(message: any, trace?: string, context?: string): any {

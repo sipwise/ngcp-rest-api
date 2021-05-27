@@ -1,0 +1,19 @@
+[Unit]
+Description=NGCP REST API
+After=network.target
+After=mariadb.service
+Requires=network.target
+Wants=mariadb.service
+
+[Service]
+Type=notify
+Environment="HOME=/usr/share/ngcp-rest-api"
+User=www-data
+Group=www-data
+RuntimeDirectory=ngcp-rest-api
+RuntimeDirectoryPreserve=yes
+PIDFile=/run/ngcp-rest-api/ngcp-rest-api.pid
+ExecStart=/usr/bin/node /usr/share/ngcp-rest-api/main
+
+[Install]
+WantedBy=multi-user.target

@@ -5,6 +5,7 @@ import {extractResourceName} from "./utils/interceptor.utils";
 import {JournalService} from "../../modules/journal/journal.service";
 import {TextEncoder} from "util";
 import {JournalCreateDto} from "../../modules/journal/dto/journal.create.dto";
+import {config} from '../../config/main';
 
 /**
  * Lookup-table for HTTP operations
@@ -54,7 +55,7 @@ export class JournalingInterceptor implements NestInterceptor {
             map(async data => {
                 // TODO: only log to console when executed in Debug mode
                 let httpCtx = context.switchToHttp();
-                const req = httpCtx.getRequest()
+                const req = httpCtx.getRequest();
 
                 // Set content format and default to json
                 let cf = contentFormat[req.get("Content-Type")];
@@ -70,7 +71,7 @@ export class JournalingInterceptor implements NestInterceptor {
                 }
                 // console.log("Operation: ", op);
 
-                const resourceName = extractResourceName(req.path, process.env.API_PREFIX)
+                const resourceName = extractResourceName(req.path, config.common.api_prefix);
                 // console.log("Resource name: ", resourceName);
 
                 // Get resourceID from data values if method is POST else from request params 'id'
@@ -89,7 +90,7 @@ export class JournalingInterceptor implements NestInterceptor {
                 const enc = new TextEncoder();
 
                 // create new Journal entry
-                let j = new JournalCreateDto()
+                let j = new JournalCreateDto();
                 j.content = enc.encode(JSON.stringify(req.body));
                 j.content_format = cf;
                 j.operation = op;
@@ -99,7 +100,7 @@ export class JournalingInterceptor implements NestInterceptor {
                 j.username = req.user.dataValues.login;
 
                 // write Journal entry to database
-                await this.journalService.create(j)
+                await this.journalService.create(j);
                 return data;
             })
         );

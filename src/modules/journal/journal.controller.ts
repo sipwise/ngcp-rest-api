@@ -2,6 +2,7 @@ import {Controller, Get, Inject, Param, Query, UseGuards} from "@nestjs/common";
 import {ApiOkResponse, ApiTags} from "@nestjs/swagger";
 import {OmniGuard} from "../../core/guards/omni.guard";
 import {JournalService} from "./journal.service";
+import {config} from '../../config/main';
 
 @ApiTags('journals')
 @Controller('journals')
@@ -18,8 +19,8 @@ export class JournalController {
         @Query('rows') row: string,
         @Param('resource_name') resourceName: string
     ) {
-        page = page ? page : `${process.env.API_DEFAULT_QUERY_PAGE}`;
-        row = row ? row : `${process.env.API_DEFAULT_QUERY_ROWS}`;
+        page = page ? page : `${config.common.api_default_query_page}`;
+        row = row ? row : `${config.common.api_default_query_rows}`;
         return await this.journalService.findAll(page, row, resourceName);
     }
 
@@ -31,8 +32,8 @@ export class JournalController {
         @Param('resource_name') resourceName: string,
         @Param('id') resourceId: string
     ) {
-        page = page ? page : `${process.env.API_DEFAULT_QUERY_PAGE}`;
-        row = row ? row : `${process.env.API_DEFAULT_QUERY_ROWS}`;
+        page = page ? page : `${config.common.api_default_query_page}`;
+        row = row ? row : `${config.common.api_default_query_rows}`;
         return await this.journalService.findAll(page, row, resourceName, resourceId);
     }
 

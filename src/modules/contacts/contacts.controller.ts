@@ -7,6 +7,7 @@ import {Contact} from './contact.entity';
 import {OmniGuard} from "../../core/guards/omni.guard";
 import {LoggingInterceptor} from "../../core/interceptors/logging.interceptor";
 import {JournalingInterceptor} from "../../core/interceptors/journaling.interceptor";
+import {config} from '../../config/main';
 
 @ApiTags('contacts')
 @Controller('contacts')
@@ -26,8 +27,8 @@ export class ContactsController {
 
     @Get()
     async findAll(@Query('page') page: string, @Query('rows') row: string) {
-        page = page ? page : `${process.env.API_DEFAULT_QUERY_PAGE}`;
-        row = row ? row : `${process.env.API_DEFAULT_QUERY_ROWS}`;
+        page = page ? page : `${config.common.api_default_query_page}`;
+        row = row ? row : `${config.common.api_default_query_rows}`;
         return await this.contactsService.findAll(page, row);
     }
 

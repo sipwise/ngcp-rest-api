@@ -1,1 +1,7 @@
-dist/*    usr/share/ngcp-rest-api
+dist/*                          usr/share/ngcp-rest-api
+etc/api.conf                    etc/ngcp-rest-api
+node_modules/bindings           usr/share/ngcp-rest-api/node_modules
+node_modules/file-uri-to-path   usr/share/ngcp-rest-api/node_modules
+node_modules/glossy             usr/share/ngcp-rest-api/node_modules
+node_modules/sd-notify          usr/share/ngcp-rest-api/node_modules
+node_modules/winston-syslog     usr/share/ngcp-rest-api/node_modules

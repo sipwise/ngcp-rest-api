@@ -1,54 +1,57 @@
 import {NestFactory} from '@nestjs/core';
 import {AppModule} from './app.module';
+import {ConfigService} from '@nestjs/config';
 
-import * as fs from 'fs';
-import * as dotenv from 'dotenv';
+import { readFileSync } from 'fs';
 import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger';
 import {ValidateInputPipe} from './core/pipes/validate.pipe'
 import {AppClusterService} from './app-cluster.service';
 import {TransformInterceptor} from "./core/interceptors/transform.interceptor";
 
-dotenv.config()
-
-
-const httpsOptions = {
-    key: fs.readFileSync(process.env.SSL_CERT_KEY_FILE),
-    cert: fs.readFileSync(process.env.SSL_CERT_FILE),
-    ca: fs.readFileSync(process.env.SSL_CERT_FILE),
-    requestCert: true,
-    rejectUnauthorized: false,
-}
+process.title = 'ngcp-rest-api';
 
 async function bootstrap() {
     // TODO: evaluate and compare default Express vs Fastify
     //       https://docs.nestjs.com/techniques/performance#adapter
+    const config = AppModule.config;
     const app = await NestFactory.create(
         AppModule,
         {
-            httpsOptions: httpsOptions
+            httpsOptions: {
+                key: readFileSync(config.ssl.ssl_cert_key_file),
+                cert: readFileSync(config.ssl.ssl_cert_file),
+                ca: readFileSync(config.ssl.ssl_cert_file),
+                requestCert: true,
+                rejectUnauthorized: false,
+            },
         },
     );
 
-    const config = new DocumentBuilder()
+    // Another way of getting the config data
+    // const config: ConfigService = app.get('ConfigService');
+    // config.get<number>('database.port');
+
+    const doc_config = new DocumentBuilder()
         .setTitle("NGCP API")
         .setDescription("This is the NGCP API description")
         .setVersion('2.0')
         .addTag('NGCP')
         .build();
 
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup(process.env.API_PREFIX, app, document);
+    const document = SwaggerModule.createDocument(app, doc_config);
+    SwaggerModule.setup(config.common.api_prefix, app, document);
 
-    app.setGlobalPrefix(process.env.API_PREFIX);
+    app.setGlobalPrefix(config.common.api_prefix);
     app.useGlobalPipes(new ValidateInputPipe())
 
     app.useGlobalInterceptors(
         new TransformInterceptor({
-            pageName: process.env.API_DEFAULT_QUERY_PAGE_NAME,
-            perPageName: process.env.API_DEFAULT_QUERY_ROWS_NAME
+            pageName: config.common.api_default_query_page_name,
+            perPageName: config.common.api_default_query_rows_name
         })
     )
-    await app.listen(process.env.API_PORT, '0.0.0.0');
+
+    await app.listen(config.common.api_port, '0.0.0.0');
 }
 
 AppClusterService.clusterize(bootstrap);

@@ -21,6 +21,7 @@ import {JournalingInterceptor} from "../../core/interceptors/journaling.intercep
 import {JOURNAL_SERVICE} from "../../core/constants";
 import {JournalService} from "../journal/journal.service";
 import {LoggingInterceptor} from "../../core/interceptors/logging.interceptor";
+import {config} from '../../config/main';
 
 @ApiTags('admins')
 @Controller('admins')
@@ -46,8 +47,8 @@ export class AdminsController {
     @Get()
     @ApiOkResponse()
     async findAll(@Query('page') page: string, @Query('rows') row: string) {
-        page = page ? page : `${process.env.API_DEFAULT_QUERY_PAGE}`;
-        row = row ? row : `${process.env.API_DEFAULT_QUERY_ROWS}`;
+        page = page ? page : `${config.common.api_default_query_page}`;
+        row = row ? row : `${config.common.api_default_query_rows}`;
         return await this.adminsService.findAll(page, row);
     }
 
@@ -73,8 +74,8 @@ export class AdminsController {
         @Query('page') page: string,
         @Query('rows') row: string
     ) {
-        page = page ? page : `${process.env.API_DEFAULT_QUERY_PAGE}`;
-        row = row ? row : `${process.env.API_DEFAULT_QUERY_ROWS}`;
+        page = page ? page : `${config.common.api_default_query_page}`;
+        row = row ? row : `${config.common.api_default_query_rows}`;
         return this.journalService.findAll(page, row, 'admins', id)
     }
 }

@@ -3,6 +3,7 @@ import {Observable} from "rxjs";
 import {map} from "rxjs/operators"
 import * as halson from "halson";
 import {extractResourceName} from "./utils/interceptor.utils";
+import {config} from '../../config/main';
 
 /**
  * Defines the names of query parameters for pagination
@@ -67,12 +68,12 @@ export class TransformInterceptor implements NestInterceptor {
      * @private
      */
     private generateHALResource(req: any, data: any) {
-        const page: string = (req.query[this.pageName] as string) ?? `${process.env.API_DEFAULT_QUERY_PAGE}`;
-        const row: string = (req.query[this.perPageName] as string) ?? `${process.env.API_DEFAULT_QUERY_ROWS}`;
+        const page: string = (req.query[this.pageName] as string) ?? `${config.common.api_default_query_page}`;
+        const row: string = (req.query[this.perPageName] as string) ?? `${config.common.api_default_query_rows}`;
 
-        const resName = extractResourceName(req.url, process.env.API_PREFIX);
+        const resName = extractResourceName(req.url, config.common.api_prefix);
 
-        const prefix = process.env.API_PREFIX;
+        const prefix = config.common.api_prefix;
 
         if (Array.isArray(data)) {
             let resource = halson()

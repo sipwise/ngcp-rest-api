@@ -4,6 +4,7 @@ import {map} from "rxjs/operators";
 import {extractResourceName} from "./utils/interceptor.utils";
 import {LoggingService} from "../../modules/logging/logging.service";
 import {plainToClass} from "class-transformer";
+import {config} from '../../config/main';
 
 /**
  * LoggingInterceptor intercepts requests and writes relevant information to log.
@@ -32,7 +33,7 @@ export class LoggingInterceptor implements NestInterceptor {
             map(async data => {
                 // TODO: only log to console when executed in Debug mode
                 let httpCtx = context.switchToHttp();
-                const req = httpCtx.getRequest()
+                const req = httpCtx.getRequest();
 
                 // Set content format and default to json
                 let contentType = req.get("Content-Type");
@@ -40,7 +41,7 @@ export class LoggingInterceptor implements NestInterceptor {
                     contentType = "application/json";
                 }
 
-                const resourceName = extractResourceName(req.path, process.env.API_PREFIX)
+                const resourceName = extractResourceName(req.path, config.common.api_prefix);
                 // console.log("Resource name: ", resourceName);
 
                 // Get resourceID from data values if method is POST else from request params 'id'
@@ -70,7 +71,7 @@ export class LoggingInterceptor implements NestInterceptor {
                     "user": req.user.login,
                     "response": redacted,
                 }
-                this.logger.log(logEntry, "")
+                this.logger.log(logEntry, "");
                 return data;
             })
         );

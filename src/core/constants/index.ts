@@ -1,4 +1,4 @@
-import * as dotenv from "dotenv";
+import {config} from '../../config/main';
 
 export const DATABASES = {
     accounting: {
@@ -24,8 +24,6 @@ export const JOURNAL_OBJECT_REPOSITORY = "JOURNAL_OBJECT_REPOSITORY";
 
 export const LOGGING_SERVICE = "LOGGING_SERVICE";
 
-dotenv.config()
-
 export const jwtConstants = {
-    secret: process.env.JWTKEY,
+    secret: config.common.jwt_key,
 };
