@@ -7,6 +7,7 @@ import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger';
 import {ValidateInputPipe} from './core/pipes/validate.pipe'
 import {AppClusterService} from './app-cluster.service';
 import {TransformInterceptor} from "./core/interceptors/transform.interceptor";
+import {LoggingService} from './modules/logging/logging.service';
 
 process.title = 'ngcp-rest-api';
 
@@ -24,8 +25,10 @@ async function bootstrap() {
                 requestCert: true,
                 rejectUnauthorized: false,
             },
+            logger: false,
         },
     );
+    app.useLogger(app.get(LoggingService))
 
     // Another way of getting the config data
     // const config: ConfigService = app.get('ConfigService');

@@ -1,24 +1,15 @@
-import {CallHandler, ExecutionContext, Inject, NestInterceptor} from "@nestjs/common";
 import {Observable} from "rxjs";
 import {map} from "rxjs/operators";
 import {extractResourceName} from "./utils/interceptor.utils";
-import {LoggingService} from "../../modules/logging/logging.service";
 import {plainToClass} from "class-transformer";
 import {config} from '../../config/main';
+import {CallHandler, ExecutionContext, Logger, NestInterceptor} from '@nestjs/common'
 
 /**
  * LoggingInterceptor intercepts requests and writes relevant information to log.
  */
 export class LoggingInterceptor implements NestInterceptor {
-
-    /**
-     * Creates a new `LoggingInterceptor`
-     * @param logger LoggingService
-     */
-    constructor(
-        @Inject("LOGGING_SERVICE") private readonly logger: LoggingService
-    ) {
-    }
+    private readonly logger = new Logger(LoggingInterceptor.name)
 
     /**
      * Intercept implements the logging part for all HTTP requests
@@ -42,7 +33,6 @@ export class LoggingInterceptor implements NestInterceptor {
                 }
 
                 const resourceName = extractResourceName(req.path, config.common.api_prefix);
-                // console.log("Resource name: ", resourceName);
 
                 // Get resourceID from data values if method is POST else from request params 'id'
                 let resourceID;
@@ -55,11 +45,7 @@ export class LoggingInterceptor implements NestInterceptor {
                 } else {
                     resourceID = req.params.id;
                 }
-                // console.log("Resource ID: ", resourceID);
 
-                // console.log("Timestamp: ", req.ctx.startTimestamp);
-                // console.log("User: ", req.user.login);
-                // console.log("Content Format: ", 'json');
                 const logEntry = {
                     "resource_id": resourceID,
                     "resource_name": resourceName,
