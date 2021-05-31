@@ -16,7 +16,8 @@ export class AuthService {
     constructor(
         private adminsService: AdminsService,
         private jwtService: JwtService
-    ) {}
+    ) {
+    }
 
     /**
      * Tries to get [`Admin`]{@link Admin} with `login` matching `username` from DB.

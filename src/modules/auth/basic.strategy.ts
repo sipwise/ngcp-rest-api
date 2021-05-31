@@ -1,7 +1,6 @@
 import {Injectable, UnauthorizedException} from "@nestjs/common";
 import {PassportStrategy} from "@nestjs/passport";
 import {AuthService} from "./auth.service";
-import {Request} from "express";
 import {BasicStrategy} from "passport-http"
 import {Strategy} from "passport-local";
 import {Admin} from "../admins/admin.entity";
@@ -21,7 +20,7 @@ interface Authenticator {
  */
 async function pwd_auth(username: string, password: string, service: AuthService): Promise<Admin> {
     const admin = await service.validateAdmin(username, password);
-    if(!admin) {
+    if (!admin) {
         throw new UnauthorizedException();
     }
     return admin;
@@ -39,18 +38,17 @@ export class BasicHTTPStrategy extends PassportStrategy(BasicStrategy) {
      * @param authService AuthService to validate the Admin
      */
     constructor(private authService: AuthService) {
-       super();
-       this.auth = pwd_auth;
+        super();
+        this.auth = pwd_auth;
     }
 
     /**
      * Validates an Admin user with username and password
-     * @param request HTTP request object
      * @param username Username in 'Authorization' header
-     * @param password Password in 'Authroization' header
+     * @param password Password in 'Authorization' header
      */
-    async validate(request: Request, username: string, password: string): Promise<any> {
-       return await this.auth(username, password, this.authService);
+    async validate(username: string, password: string): Promise<any> {
+        return await this.auth(username, password, this.authService);
     }
 }
 
@@ -72,11 +70,10 @@ export class BasicJSONStrategy extends PassportStrategy(Strategy) {
 
     /**
      * Validates an Admin user with username and password
-     * @param request HTTP request object
      * @param username Username from JSON
      * @param password Password from JSON
      */
-    async validate(request: Request, username: string, password: string): Promise<any> {
+    async validate(username: string, password: string): Promise<any> {
         return await this.auth(username, password, this.authService);
     }
 }
