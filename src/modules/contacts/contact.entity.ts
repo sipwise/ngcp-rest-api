@@ -1,7 +1,7 @@
-import {ApiProperty} from "@nestjs/swagger";
-import {Column, DataType, Index, Model, Table} from "sequelize-typescript";
-import {Expose} from "class-transformer";
-import {GDPRCompliance, Sensitive} from "../../core/decorators/compliance.decorator";
+import {ApiProperty} from '@nestjs/swagger'
+import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
+import {Expose} from 'class-transformer'
+import {GDPRCompliance, Sensitive} from '../../core/decorators/compliance.decorator'
 
 enum ContactGender {
     Male = 'male',
@@ -13,153 +13,153 @@ enum ContactStatus {
     Terminated = 'terminated',
 }
 
-@Table({tableName: "contacts", timestamps: false})
+@Table({tableName: 'contacts', timestamps: false})
 export class Contact extends Model<Contact> {
     @Column({primaryKey: true, autoIncrement: true, type: DataType.INTEGER})
-    @Index({name: "PRIMARY", using: "BTREE", order: "ASC", unique: true})
+    @Index({name: 'PRIMARY', using: 'BTREE', order: 'ASC', unique: true})
     @ApiProperty()
-    id?: number;
+    id?: number
 
     @Column({allowNull: true, type: DataType.INTEGER})
-    @Index({name: "ct_resellerid_ref", using: "BTREE", order: "ASC", unique: false})
+    @Index({name: 'ct_resellerid_ref', using: 'BTREE', order: 'ASC', unique: false})
     @ApiProperty()
-    reseller_id?: number;
+    reseller_id?: number
 
     @Column({allowNull: true, type: DataType.ENUM('male', 'female')})
     @ApiProperty({enum: ['male', 'female']})
     @GDPRCompliance()
-    gender?: string; // TODO: Change type to enum type: ContactGender
+    gender?: string // TODO: Change type to enum type: ContactGender
 
     @Column({allowNull: true, type: DataType.STRING(127)})
     @ApiProperty()
     @GDPRCompliance()
-    firstname?: string;
+    firstname?: string
 
     @Column({allowNull: true, type: DataType.STRING(127)})
     @ApiProperty()
     @GDPRCompliance()
-    lastname?: string;
+    lastname?: string
 
     @Column({allowNull: true, type: DataType.STRING(31)})
     @ApiProperty()
-    comregnum?: string;
+    comregnum?: string
 
     @Column({allowNull: true, type: DataType.STRING(127)})
     @ApiProperty()
-    company?: string;
+    company?: string
 
     @Column({allowNull: true, type: DataType.STRING(127)})
     @ApiProperty()
-    street?: string;
+    street?: string
 
     @Column({allowNull: true, type: DataType.STRING(16)})
     @ApiProperty()
-    postcode?: string;
+    postcode?: string
 
     @Column({allowNull: true, type: DataType.STRING(127)})
     @ApiProperty()
-    city?: string;
+    city?: string
 
     @Column({allowNull: true, type: DataType.CHAR(2)})
     @ApiProperty()
-    country?: string;
+    country?: string
 
     @Column({allowNull: true, type: DataType.STRING(31)})
     @ApiProperty()
-    phonenumber?: string;
+    phonenumber?: string
 
     @Column({allowNull: true, type: DataType.STRING(31)})
     @ApiProperty()
-    mobilenumber?: string;
+    mobilenumber?: string
 
     @Column({allowNull: true, type: DataType.STRING(255)})
     @ApiProperty()
     @Expose()
     @Sensitive()
-    email?: string;
+    email?: string
 
     @Column({type: DataType.TINYINT})
     @ApiProperty()
-    newsletter!: number;
+    newsletter!: number
 
     @Column({type: DataType.DATE})
     @ApiProperty()
-    modify_timestamp!: Date;
+    modify_timestamp!: Date
 
     @Column({type: DataType.DATE})
     @ApiProperty()
-    create_timestamp!: Date;
+    create_timestamp!: Date
 
     @Column({allowNull: true, type: DataType.STRING(31)})
     @ApiProperty()
-    faxnumber?: string;
+    faxnumber?: string
 
     @Column({allowNull: true, type: DataType.STRING(34)})
     @ApiProperty()
-    iban?: string;
+    iban?: string
 
     @Column({allowNull: true, type: DataType.STRING(11)})
     @ApiProperty()
-    bic?: string;
+    bic?: string
 
     @Column({allowNull: true, type: DataType.STRING(127)})
     @ApiProperty()
-    vatnum?: string;
+    vatnum?: string
 
     @Column({allowNull: true, type: DataType.STRING(255)})
     @ApiProperty()
-    bankname?: string;
+    bankname?: string
 
     @Column({allowNull: true, type: DataType.STRING(255)})
     @ApiProperty()
-    gpp0?: string;
+    gpp0?: string
 
     @Column({allowNull: true, type: DataType.STRING(255)})
     @ApiProperty()
-    gpp1?: string;
+    gpp1?: string
 
     @Column({allowNull: true, type: DataType.STRING(255)})
     @ApiProperty()
-    gpp2?: string;
+    gpp2?: string
 
     @Column({allowNull: true, type: DataType.STRING(255)})
     @ApiProperty()
-    gpp3?: string;
+    gpp3?: string
 
     @Column({allowNull: true, type: DataType.STRING(255)})
     @ApiProperty()
-    gpp4?: string;
+    gpp4?: string
 
     @Column({allowNull: true, type: DataType.STRING(255)})
     @ApiProperty()
-    gpp5?: string;
+    gpp5?: string
 
     @Column({allowNull: true, type: DataType.STRING(255)})
     @ApiProperty()
-    gpp6?: string;
+    gpp6?: string
 
     @Column({allowNull: true, type: DataType.STRING(255)})
     @ApiProperty()
-    gpp7?: string;
+    gpp7?: string
 
     @Column({allowNull: true, type: DataType.STRING(255)})
     @ApiProperty()
-    gpp8?: string;
+    gpp8?: string
 
     @Column({allowNull: true, type: DataType.STRING(255)})
     @ApiProperty()
-    gpp9?: string;
+    gpp9?: string
 
     @Column({type: DataType.ENUM('active', 'terminated')})
     @ApiProperty({enum: ['active', 'terminated']})
-    status!: string; // Todo: change type to enum type: ContactStatus
+    status!: string // Todo: change type to enum type: ContactStatus
 
     @Column({allowNull: true, type: DataType.DATE})
     @ApiProperty()
-    terminate_timestamp?: Date;
+    terminate_timestamp?: Date
 
     @Column({allowNull: true, type: DataType.STRING(80)})
     @ApiProperty()
-    timezone?: string;
+    timezone?: string
 }
 

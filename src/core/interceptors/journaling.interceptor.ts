@@ -1,25 +1,25 @@
-import {CallHandler, ExecutionContext, Inject, NestInterceptor} from "@nestjs/common";
-import {Observable} from "rxjs";
-import {map} from "rxjs/operators";
-import {extractResourceName} from "./utils/interceptor.utils";
-import {JournalService} from "../../modules/journal/journal.service";
-import {TextEncoder} from "util";
-import {JournalCreateDto} from "../../modules/journal/dto/journal.create.dto";
-import {config} from '../../config/main';
+import {CallHandler, ExecutionContext, Inject, NestInterceptor} from '@nestjs/common'
+import {Observable} from 'rxjs'
+import {map} from 'rxjs/operators'
+import {extractResourceName} from './utils/interceptor.utils'
+import {JournalService} from '../../modules/journal/journal.service'
+import {TextEncoder} from 'util'
+import {JournalCreateDto} from '../../modules/journal/dto/journal.create.dto'
+import {config} from '../../config/main'
 
 /**
  * Lookup-table for HTTP operations
  */
 const operation = {
-    "POST": "create",
-    "PUT": "update",
-    "DELETE": "delete",
+    'POST': 'create',
+    'PUT': 'update',
+    'DELETE': 'delete',
 }
 /**
  * Lookup-table for Content-Type
  */
 const contentFormat = {
-    "application/json": "json",
+    'application/json': 'json',
 }
 
 /**
@@ -31,7 +31,7 @@ export class JournalingInterceptor implements NestInterceptor {
      * Creates a new `JournalingInterceptor`
      * @param journalService Injected JournalService to access database
      */
-    constructor(@Inject("JOURNAL_SERVICE") private readonly journalService: JournalService) {
+    constructor(@Inject('JOURNAL_SERVICE') private readonly journalService: JournalService) {
     }
 
     /**
@@ -54,56 +54,48 @@ export class JournalingInterceptor implements NestInterceptor {
         return next.handle().pipe(
             map(async data => {
                 // TODO: only log to console when executed in Debug mode
-                let httpCtx = context.switchToHttp();
-                const req = httpCtx.getRequest();
+                let httpCtx = context.switchToHttp()
+                const req = httpCtx.getRequest()
 
                 // Set content format and default to json
-                let cf = contentFormat[req.get("Content-Type")];
+                let cf = contentFormat[req.get('Content-Type')]
                 if (cf === undefined) {
-                    cf = "json";
+                    cf = 'json'
                 }
 
                 // skip journaling if request method is not POST, PUT or DELETE
-                let op = operation[req.method];
+                let op = operation[req.method]
                 if (op === undefined) {
-                    // console.log("skipping journal on method", req.method)
-                    return data;
+                    return data
                 }
-                // console.log("Operation: ", op);
 
-                const resourceName = extractResourceName(req.path, config.common.api_prefix);
-                // console.log("Resource name: ", resourceName);
+                const resourceName = extractResourceName(req.path, config.common.api_prefix)
 
                 // Get resourceID from data values if method is POST else from request params 'id'
-                let resourceID;
-                if (req.method == "POST") {
-                    resourceID = data.dataValues.id;
+                let resourceID
+                if (req.method == 'POST') {
+                    resourceID = data.dataValues.id
                 } else {
-                    resourceID = req.params.id;
+                    resourceID = req.params.id
                 }
-                // console.log("Resource ID: ", resourceID);
 
-                // console.log("Timestamp: ", req.ctx.startTimestamp);
-                // console.log("User: ", req.user.login);
-                // console.log("Content Format: ", 'json');
-
-                const enc = new TextEncoder();
+                const enc = new TextEncoder()
 
                 // create new Journal entry
-                let j = new JournalCreateDto();
-                j.content = enc.encode(JSON.stringify(req.body));
-                j.content_format = cf;
-                j.operation = op;
-                j.resource_id = resourceID;
-                j.resource_name = resourceName;
-                j.timestamp = req.ctx.startTimestamp / 1000;
-                j.username = req.user.dataValues.login;
+                let j = new JournalCreateDto()
+                j.content = enc.encode(JSON.stringify(req.body))
+                j.content_format = cf
+                j.operation = op
+                j.resource_id = resourceID
+                j.resource_name = resourceName
+                j.timestamp = req.ctx.startTimestamp / 1000
+                j.username = req.user.dataValues.login
 
                 // write Journal entry to database
-                await this.journalService.create(j);
-                return data;
-            })
-        );
+                await this.journalService.create(j)
+                return data
+            }),
+        )
     }
 
 }

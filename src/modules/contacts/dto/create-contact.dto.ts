@@ -1,1 +1,2 @@
-export class CreateContactDto {}
+export class CreateContactDto {
+}

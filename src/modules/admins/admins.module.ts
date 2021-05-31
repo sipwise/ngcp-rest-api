@@ -1,8 +1,8 @@
-import {Module} from "@nestjs/common";
-import {AdminsController} from "./admins.controller";
-import {adminsProviders} from "./admins.providers";
-import {AdminsService} from "./admins.service";
-import {InterceptorModule} from "../../core/interceptors/interceptor.module";
+import {Module} from '@nestjs/common'
+import {AdminsController} from './admins.controller'
+import {adminsProviders} from './admins.providers'
+import {AdminsService} from './admins.service'
+import {InterceptorModule} from '../../core/interceptors/interceptor.module'
 
 @Module({
     imports: [InterceptorModule],
@@ -10,7 +10,8 @@ import {InterceptorModule} from "../../core/interceptors/interceptor.module";
     exports: [AdminsService],
     providers: [
         AdminsService,
-        ...adminsProviders
+        ...adminsProviders,
     ],
 })
-export class AdminsModule {}
+export class AdminsModule {
+}

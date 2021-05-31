@@ -1,144 +1,144 @@
-import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
-import {Column, DataType, Index, Model, Table} from "sequelize-typescript";
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 @Table({
-	tableName: "admins",
-	timestamps: false
+    tableName: 'admins',
+    timestamps: false,
 })
 export class Admin extends Model<Admin> {
 
     @Column({
-    	primaryKey: true,
-    	autoIncrement: true,
-    	type: DataType.INTEGER
+        primaryKey: true,
+        autoIncrement: true,
+        type: DataType.INTEGER,
     })
     @Index({
-    	name: "PRIMARY",
-    	using: "BTREE",
-    	order: "ASC",
-    	unique: true
+        name: 'PRIMARY',
+        using: 'BTREE',
+        order: 'ASC',
+        unique: true,
     })
     @ApiProperty()
-    id?: number;
+    id?: number
 
     @Column({
-    	allowNull: true,
-    	type: DataType.INTEGER
+        allowNull: true,
+        type: DataType.INTEGER,
     })
     @Index({
-    	name: "resellerid_idx",
-    	using: "BTREE",
-    	order: "ASC",
-    	unique: false
+        name: 'resellerid_idx',
+        using: 'BTREE',
+        order: 'ASC',
+        unique: false,
     })
-    @ApiPropertyOptional({example: 1, description: "Unique identifier of a reseller", type: "integer"})
-    reseller_id?: number;
+    @ApiPropertyOptional({example: 1, description: 'Unique identifier of a reseller', type: 'integer'})
+    reseller_id?: number
 
     @Column({
-    	type: DataType.STRING(31)
+        type: DataType.STRING(31),
     })
     @Index({
-    	name: "login_idx",
-    	using: "BTREE",
-    	order: "ASC",
-    	unique: true
+        name: 'login_idx',
+        using: 'BTREE',
+        order: 'ASC',
+        unique: true,
     })
-    login!: string;
+    login!: string
 
     @Column({
-    	allowNull: true,
-    	type: DataType.CHAR(32)
+        allowNull: true,
+        type: DataType.CHAR(32),
     })
-    md5pass?: string;
+    md5pass?: string
 
     @Column({
-    	allowNull: true,
-    	type: DataType.CHAR(54),
+        allowNull: true,
+        type: DataType.CHAR(54),
     })
-    saltedpass?: string;
+    saltedpass?: string
 
     @Column({
-    	type: DataType.BOOLEAN
+        type: DataType.BOOLEAN,
     })
-    is_master!: number;
+    is_master!: number
 
     @Column({
-    	type: DataType.BOOLEAN
+        type: DataType.BOOLEAN,
     })
-    is_superuser!: boolean;
+    is_superuser!: boolean
 
     @Column({
-    	type: DataType.BOOLEAN
+        type: DataType.BOOLEAN,
     })
-    is_ccare!: number;
+    is_ccare!: number
 
     @Column({
-    	type: DataType.BOOLEAN
+        type: DataType.BOOLEAN,
     })
-    is_active!: number;
+    is_active!: number
 
     @Column({
-    	type: DataType.BOOLEAN
+        type: DataType.BOOLEAN,
     })
-    read_only!: number;
+    read_only!: number
 
     @Column({
-    	type: DataType.BOOLEAN
+        type: DataType.BOOLEAN,
     })
-    show_passwords!: number;
+    show_passwords!: number
 
     @Column({
-    	type: DataType.BOOLEAN
+        type: DataType.BOOLEAN,
     })
-    call_data!: number;
+    call_data!: number
 
     @Column({
-    	type: DataType.BOOLEAN
+        type: DataType.BOOLEAN,
     })
-    billing_data!: number;
+    billing_data!: number
 
     @Column({
-    	type: DataType.BOOLEAN
+        type: DataType.BOOLEAN,
     })
-    lawful_intercept!: number;
+    lawful_intercept!: number
 
     @Column({
-    	allowNull: true,
-    	type: DataType.BIGINT
+        allowNull: true,
+        type: DataType.BIGINT,
     })
     @Index({
-    	name: "ssl_client_m_serial_UNIQUE",
-    	using: "BTREE",
-    	order: "ASC",
-    	unique: true
+        name: 'ssl_client_m_serial_UNIQUE',
+        using: 'BTREE',
+        order: 'ASC',
+        unique: true,
     })
-    ssl_client_m_serial?: number;
+    ssl_client_m_serial?: number
 
     @Column({
-    	allowNull: true,
-    	type: DataType.STRING
+        allowNull: true,
+        type: DataType.STRING,
     })
-    ssl_client_certificate?: string;
+    ssl_client_certificate?: string
 
     @Column({
-    	allowNull: true,
-    	type: DataType.STRING(255)
+        allowNull: true,
+        type: DataType.STRING(255),
     })
     @Index({
-    	name: "email",
-    	using: "BTREE",
-    	order: "ASC",
-    	unique: true
+        name: 'email',
+        using: 'BTREE',
+        order: 'ASC',
+        unique: true,
     })
-    email?: string;
+    email?: string
 
     @Column({
-    	type: DataType.BOOLEAN
+        type: DataType.BOOLEAN,
     })
-    can_reset_password!: number;
+    can_reset_password!: number
 
     @Column({
-    	type: DataType.BOOLEAN
+        type: DataType.BOOLEAN,
     })
-    is_system!: number;
+    is_system!: number
 }

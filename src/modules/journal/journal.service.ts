@@ -1,8 +1,8 @@
-import {Inject, Injectable} from '@nestjs/common';
-import {JOURNAL_REPOSITORY} from "../../core/constants";
-import {Journal} from "./journal.entity";
-import {JournalCreateDto} from "./dto/journal.create.dto";
-import {FindOptions, WhereOptions} from "sequelize";
+import {Inject, Injectable} from '@nestjs/common'
+import {JOURNAL_REPOSITORY} from '../../core/constants'
+import {Journal} from './journal.entity'
+import {JournalCreateDto} from './dto/journal.create.dto'
+import {FindOptions, WhereOptions} from 'sequelize'
 
 @Injectable()
 export class JournalService {
@@ -12,14 +12,15 @@ export class JournalService {
      */
     constructor(
         @Inject(JOURNAL_REPOSITORY) private readonly journalRepo: typeof Journal,
-    ) {}
+    ) {
+    }
 
     /**
      * Creates a new `Journal` entry in the database
      * @param journal Journal to be created
      */
     async create(journal: JournalCreateDto): Promise<Journal> {
-        return this.journalRepo.create<Journal>(journal);
+        return this.journalRepo.create<Journal>(journal)
     }
 
     /**
@@ -33,17 +34,17 @@ export class JournalService {
         let filter: WhereOptions = {}
         if (resource_name !== undefined) {
             filter = {resource_name}
-            if(resource_id !== undefined) {
+            if (resource_id !== undefined) {
                 filter = {resource_name, resource_id}
             }
         }
         let result = await this.journalRepo.findAndCountAll({
             limit: +rows,
-            offset: +rows*(+page-1),
+            offset: +rows * (+page - 1),
             where: filter,
-            attributes: {exclude: ['content']}
-        });
-        return result.rows;
+            attributes: {exclude: ['content']},
+        })
+        return result.rows
     }
 
     /**
@@ -51,7 +52,7 @@ export class JournalService {
      * @param id ID of Journal
      */
     async findOne(id: number): Promise<Journal> {
-        return this.journalRepo.findOne<Journal>({where: {id}});
+        return this.journalRepo.findOne<Journal>({where: {id}})
     }
 
     /**
@@ -59,6 +60,6 @@ export class JournalService {
      * @param pattern FindOptions to filter results
      */
     async searchOne(pattern: FindOptions): Promise<Journal> {
-        return this.journalRepo.findOne(pattern);
+        return this.journalRepo.findOne(pattern)
     }
 }

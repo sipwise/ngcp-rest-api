@@ -1,6 +1,6 @@
-import {Module} from '@nestjs/common';
-import {journalProviders} from "./journal.provider";
-import {JournalController} from "./journal.controller";
+import {Module} from '@nestjs/common'
+import {journalProviders} from './journal.provider'
+import {JournalController} from './journal.controller'
 
 @Module({
     controllers: [JournalController],

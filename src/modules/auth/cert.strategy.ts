@@ -1,7 +1,7 @@
-import {Injectable, UnauthorizedException} from "@nestjs/common";
-import {PassportStrategy} from "@nestjs/passport";
-import {Strategy} from "passport-http-header-strategy";
-import {AuthService} from "./auth.service";
+import {Injectable, UnauthorizedException} from '@nestjs/common'
+import {PassportStrategy} from '@nestjs/passport'
+import {Strategy} from 'passport-http-header-strategy'
+import {AuthService} from './auth.service'
 
 /**
  * Implementation of the HTTP header strategy
@@ -13,7 +13,7 @@ export class CertStrategy extends PassportStrategy(Strategy, 'cert-header') {
      * @param authService AuthService to validate the Admin certificate
      */
     constructor(private authService: AuthService) {
-        super({header: 'x-ssl-client-serial'});
+        super({header: 'x-ssl-client-serial'})
     }
 
     /**
@@ -21,9 +21,9 @@ export class CertStrategy extends PassportStrategy(Strategy, 'cert-header') {
      * @param token Certificate serial number
      */
     async validate(token: string): Promise<any> {
-        const admin = this.authService.validateAdminCert(token);
+        const admin = this.authService.validateAdminCert(token)
         if (!admin) {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException()
         }
         return admin
     }

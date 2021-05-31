@@ -1,8 +1,8 @@
-import {DatabaseConfigAttributes} from './interfaces/db-config.interface';
-import {DATABASES} from '../constants';
-import {config} from '../../config/main';
+import {DatabaseConfigAttributes} from './interfaces/db-config.interface'
+import {DATABASES} from '../constants'
+import {config} from '../../config/main'
 
-export const databaseConfig: { [key: string]: DatabaseConfigAttributes} = {
+export const databaseConfig: { [key: string]: DatabaseConfigAttributes } = {
     billing: {
         username: config.database.user,
         password: config.database.pass,
@@ -17,5 +17,5 @@ export const databaseConfig: { [key: string]: DatabaseConfigAttributes} = {
         host: config.database.host,
         dialect: config.database.dialect,
     },
-};
+}
 

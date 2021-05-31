@@ -1,7 +1,6 @@
-import {Injectable, LoggerService} from "@nestjs/common";
-import * as winston from "winston";
-import {Syslog, SyslogTransportOptions} from 'winston-syslog';
-import {config} from '../../config/main';
+import {Injectable, LoggerService} from '@nestjs/common'
+import * as winston from 'winston'
+import {Syslog, SyslogTransportOptions} from 'winston-syslog'
 
 const opt: SyslogTransportOptions = {
     path: '/dev/log',
@@ -15,14 +14,14 @@ export class LoggingService implements LoggerService {
 
     constructor() {
         //if (process.env.ENVIRONMENT === 'production') {
-            this.logger = winston.createLogger({
-                levels: winston.config.syslog.levels,
-                defaultMeta: {service: LoggingService.name},
-                format: winston.format.json(),
-                transports: [
-                    new Syslog(opt)
-                ],
-            })
+        this.logger = winston.createLogger({
+            levels: winston.config.syslog.levels,
+            defaultMeta: {service: LoggingService.name},
+            format: winston.format.json(),
+            transports: [
+                new Syslog(opt),
+            ],
+        })
         /*
         } else {
             this.logger = winston.createLogger({
@@ -43,11 +42,11 @@ export class LoggingService implements LoggerService {
     }
 
     log(message: any, context?: string): any {
-        this.logger.log("info", message);
+        this.logger.log('info', message)
     }
 
     warn(message: any, context?: string): any {
-        this.logger.warn(message);
+        this.logger.warn(message)
     }
 
     debug(message: any, context?: string): any {

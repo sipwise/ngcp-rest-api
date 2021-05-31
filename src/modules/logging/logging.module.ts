@@ -1,5 +1,5 @@
-import {Module} from "@nestjs/common";
-import {loggingProviders} from "./logging.providers";
+import {Module} from '@nestjs/common'
+import {loggingProviders} from './logging.providers'
 
 @Module({
     providers: [...loggingProviders],

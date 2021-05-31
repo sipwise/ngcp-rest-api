@@ -1,7 +1,7 @@
-import {Injectable} from '@nestjs/common';
-import {AdminsService} from "../admins/admins.service";
-import {compare} from "bcrypt";
-import {JwtService} from "@nestjs/jwt";
+import {Injectable} from '@nestjs/common'
+import {AdminsService} from '../admins/admins.service'
+import {compare} from 'bcrypt'
+import {JwtService} from '@nestjs/jwt'
 
 /**
  * `AuthService` provides functionality to authenticate Admins and to sign JWTs for authenticated users
@@ -15,7 +15,7 @@ export class AuthService {
      */
     constructor(
         private adminsService: AdminsService,
-        private jwtService: JwtService
+        private jwtService: JwtService,
     ) {
     }
 
@@ -29,19 +29,19 @@ export class AuthService {
      * @returns Authenticated `Admin` on success else `null`
      */
     async validateAdmin(username: string, password: string): Promise<any> {
-        const admin = await this.adminsService.findOneByLogin(username);
+        const admin = await this.adminsService.findOneByLogin(username)
         if (!admin) {
-            return null;
+            return null
         }
-        const [b64salt, b64hash] = admin.saltedpass.split('$');
-        const bcrypt_version = '2b';
-        const bcrypt_cost = 13;
+        const [b64salt, b64hash] = admin.saltedpass.split('$')
+        const bcrypt_version = '2b'
+        const bcrypt_cost = 13
 
         if (admin && await compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`) !== false) {
-            const {saltedpass, ...result} = admin;
-            return result;
+            const {saltedpass, ...result} = admin
+            return result
         }
-        return null;
+        return null
     }
 
     /**
@@ -55,14 +55,14 @@ export class AuthService {
     async validateAdminCert(serial: string): Promise<any> {
         const sn = parseInt(serial, 16)
         if (!sn) {
-            return null;
+            return null
         }
-        const admin = await this.adminsService.searchOne({where: {ssl_client_m_serial: sn}});
+        const admin = await this.adminsService.searchOne({where: {ssl_client_m_serial: sn}})
         if (!admin) {
             return null
         }
-        const {saltedpass, ...result} = admin;
-        return result;
+        const {saltedpass, ...result} = admin
+        return result
     }
 
     /**
@@ -73,9 +73,9 @@ export class AuthService {
      * @returns JSON Web Token
      */
     async signJwt(user: any) {
-        const payload = {username: user.login, sub: user.id};
+        const payload = {username: user.login, sub: user.id}
         return {
-            access_token: this.jwtService.sign(payload)
+            access_token: this.jwtService.sign(payload),
         }
     }
 }
