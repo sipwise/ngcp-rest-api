@@ -5,6 +5,8 @@ import {Syslog, SyslogTransportOptions} from 'winston-syslog'
 const opt: SyslogTransportOptions = {
     path: '/dev/log',
     protocol: 'unix',
+    localhost: '',
+    format: winston.format.simple(),
 }
 
 @Injectable()
@@ -17,7 +19,7 @@ export class LoggingService implements LoggerService {
         this.logger = winston.createLogger({
             levels: winston.config.syslog.levels,
             defaultMeta: {service: LoggingService.name},
-            format: winston.format.json(),
+            format: winston.format.simple(),
             transports: [
                 new Syslog(opt),
             ],

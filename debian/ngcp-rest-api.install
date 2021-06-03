@@ -1,8 +1,5 @@
-dist/*                          usr/share/ngcp-rest-api
-etc/api.conf                    etc/ngcp-rest-api
-node_modules/bindings           usr/share/ngcp-rest-api/node_modules
-node_modules/file-uri-to-path   usr/share/ngcp-rest-api/node_modules
-node_modules/glossy             usr/share/ngcp-rest-api/node_modules
-node_modules/sd-notify          usr/share/ngcp-rest-api/node_modules
-node_modules/unix-dgram         usr/share/ngcp-rest-api/node_modules
-node_modules/winston-syslog     usr/share/ngcp-rest-api/node_modules
+etc/api.conf                                            etc/ngcp-rest-api
+prod/*                                                  usr/share/ngcp-rest-api
+package.json                                            usr/share/ngcp-rest-api
+node_modules/sd-notify/build/Release/notify.node        usr/share/ngcp-rest-api/build
+node_modules/unix-dgram/build/Release/unix_dgram.node   usr/share/ngcp-rest-api/build

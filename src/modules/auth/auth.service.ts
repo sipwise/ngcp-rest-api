@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common'
 import {AdminsService} from '../admins/admins.service'
-import {compare} from 'bcrypt'
+import {compare} from 'bcryptjs'
 import {JwtService} from '@nestjs/jwt'
 
 /**

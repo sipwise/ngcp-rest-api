@@ -1,10 +1,13 @@
 import {Sequelize} from 'sequelize-typescript'
-import {Admin} from 'modules/admins/admin.entity'
-import {Contact} from 'modules/contacts/contact.entity'
-
+import * as mysql2 from 'mysql2';
+import {Admin} from '../../modules/admins/admin.entity'
+import {Contact} from '../../modules/contacts/contact.entity'
 import {DATABASES} from '../constants'
 import {databaseConfig} from './database.config'
 import {Journal} from '../../modules/journal/journal.entity'
+import {LoggingService} from '../../modules/logging/logging.service'
+
+const logger = new LoggingService()
 
 export const databaseProviders = [
     {
@@ -12,11 +15,14 @@ export const databaseProviders = [
         useFactory: async () => {
             let config
             config = databaseConfig['billing']
-            config['logging'] = true
+            config.logging = (msg) => logger.log(msg)
+            if (config.dialect === 'mysql') {
+                config.dialectModule = mysql2; // workaround for webpack (please install mysql2 module)
+            }
 
             // TODO: figure out if raw or sequelize data is preferred
             //       When raw == false class-transformer classToPlain sometime runs into "Maximum call stack size exceeded"
-            config['query'] = {raw: false}
+            config.query = {raw: false}
             const sequelize = new Sequelize(config)
             sequelize.addModels([Admin, Contact, Journal])
             await sequelize.sync()
@@ -28,8 +34,11 @@ export const databaseProviders = [
         useFactory: async () => {
             let config
             config = databaseConfig['accounting']
-            config['logging'] = false
-            config['query'] = {raw: false} // TODO: figure out if raw or sequelize data is preferred
+            config.logging = (msg) => logger.log(msg)
+            if (config.dialect === 'mysql') {
+                config.dialectModule = mysql2; // workaround for webpack (please install mysql2 module)
+            }
+            config.query = {raw: false} // TODO: figure out if raw or sequelize data is preferred
             const sequelize = new Sequelize(config)
             // sequelize.addModels([JournalV2]);
             // await sequelize.sync();

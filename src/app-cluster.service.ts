@@ -22,12 +22,21 @@ export class AppClusterService {
                 cluster.fork()
             }
             cluster.on('exit', (worker, code, signal) => {
-                logger.log(`Worker ${worker.process.pid} died. Restarting`)
-                workersOnline -= 1
-                cluster.fork()
+                logger.log(`Worker ${worker.process.pid} died (${code} ${signal})`)
+                if (workersOnline > 0) {
+                    workersOnline -= 1
+                }
+                if (!workersOnline) {
+                    sdNotify.sendStatus('STOPPING=1')
+                    if (fs.existsSync(`${pidDir}/${pidFile}`)) {
+                        fs.unlinkSync(`${pidDir}/${pidFile}`)
+                    }
+                    logger.log('Server is stopped')
+                    started = 0
+                }
             })
             cluster.on('disconnect', (worker) => {
-                if (started == 1) {
+                if (started) {
                     sdNotify.sendStatus('STOPPING=1')
                     if (fs.existsSync(`${pidDir}/${pidFile}`)) {
                         fs.unlinkSync(`${pidDir}/${pidFile}`)

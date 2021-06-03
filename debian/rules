@@ -11,7 +11,7 @@ YARN_BIN := $(shell which yarnpkg || echo yarn)
 
 override_dh_auto_install:
 	$(YARN_BIN) install
-	$(YARN_BIN) build -p tsconfig.prod.json
+	$(YARN_BIN) build:prod
 
 override_dh_auto_clean:
 	rm -rf dist

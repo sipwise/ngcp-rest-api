@@ -8,8 +8,6 @@ import {AppClusterService} from './app-cluster.service'
 import {TransformInterceptor} from './core/interceptors/transform.interceptor'
 import {LoggingService} from './modules/logging/logging.service'
 
-process.title = 'ngcp-rest-api'
-
 async function bootstrap() {
     // TODO: evaluate and compare default Express vs Fastify
     //       https://docs.nestjs.com/techniques/performance#adapter
@@ -24,7 +22,7 @@ async function bootstrap() {
                 requestCert: true,
                 rejectUnauthorized: false,
             },
-            logger: false,
+            logger: ['error', 'warn'],
         },
     )
     app.useLogger(app.get(LoggingService))

@@ -1,6 +1,4 @@
-ngcp-rest-api: package-contains-eslint-config-file usr/share/ngcp-rest-api/node_modules/winston-syslog/.eslintrc
-ngcp-rest-api: arch-dependent-file-in-usr-share usr/share/ngcp-rest-api/node_modules/*
-ngcp-rest-api: arch-independent-package-contains-binary-or-object usr/share/ngcp-rest-api/node_modules/*
-ngcp-rest-api: missing-dependency-on-libc *
-ngcp-rest-api: unstripped-binary-or-object usr/share/ngcp-rest-api/node_modules/*
-ngcp-rest-api: package-contains-npm-ignore-file usr/share/ngcp-rest-api/node_modules/file-uri-to-path/.npmignore
+ngcp-rest-api: arch-dependent-file-in-usr-share usr/share/ngcp-rest-api/build/*
+ngcp-rest-api: arch-independent-package-contains-binary-or-object usr/share/ngcp-rest-api/build/*
+ngcp-rest-api: missing-dependency-on-libc needed by usr/share/ngcp-rest-api/build/*
+ngcp-rest-api: unstripped-binary-or-object usr/share/ngcp-rest-api/build/*
