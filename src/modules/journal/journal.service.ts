@@ -2,7 +2,7 @@ import {Inject, Injectable} from '@nestjs/common'
 import {JOURNAL_REPOSITORY} from '../../core/constants'
 import {Journal} from './journal.entity'
 import {JournalCreateDto} from './dto/journal.create.dto'
-import {FindOptions, WhereOptions} from 'sequelize'
+import {FindOptions, WhereOptions, Op} from 'sequelize'
 
 @Injectable()
 export class JournalService {
@@ -36,6 +36,13 @@ export class JournalService {
             filter = {resource_name}
             if (resource_id !== undefined) {
                 filter = {resource_name, resource_id}
+            } else {
+                filter = {
+                    [Op.or]: [
+                        { resource_name: resource_name },
+                        { id: resource_name },
+                    ]
+                }
             }
         }
         let result = await this.journalRepo.findAndCountAll({

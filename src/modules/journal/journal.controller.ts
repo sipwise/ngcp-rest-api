@@ -13,6 +13,14 @@ export class JournalController {
     ) {
     }
 
+    @Get()
+    @ApiOkResponse()
+    async findAll(@Query('page') page: string, @Query('rows') row: string) {
+        page = page ? page : `${config.common.api_default_query_page}`
+        row = row ? row : `${config.common.api_default_query_rows}`
+        return await this.journalService.findAll(page, row)
+    }
+
     @Get(':resource_name')
     @ApiOkResponse()
     async findResource(
@@ -36,11 +44,5 @@ export class JournalController {
         page = page ? page : `${config.common.api_default_query_page}`
         row = row ? row : `${config.common.api_default_query_rows}`
         return await this.journalService.findAll(page, row, resourceName, resourceId)
-    }
-
-    @Get(':id')
-    @ApiOkResponse()
-    async findOne(@Param('id') id: string) {
-        return await this.journalService.findOne(+id)
     }
 }
