@@ -1,16 +1,16 @@
 import {MiddlewareConsumer, Module, NestModule, RequestMethod} from '@nestjs/common'
 import {ConfigModule} from '@nestjs/config'
-import {DatabaseModule} from './core/database/database.module'
-import {AdminsModule} from './modules/admins/admins.module'
-import {ContactsModule} from './modules/contacts/contacts.module'
-import {AuthModule} from './modules/auth/auth.module'
+import {DatabaseModule} from './database/database.module'
 import {AppController} from './app.controller'
-import {JournalModule} from './modules/journal/journal.module'
-import {TxIDMiddleware} from './core/middleware/txid.middleware'
-import {TimestampMiddleware} from './core/middleware/timestamp.middleware'
-import {ContextMiddleware} from './core/middleware/context.middleware'
-import {InterceptorModule} from './core/interceptors/interceptor.module'
-import {config} from './config/main'
+import {AuthModule} from './auth/auth.module'
+import {AdminsModule} from './api/admins/admins.module'
+import {ContactsModule} from './api/contacts/contacts.module'
+import {JournalsModule} from './api/journals/journals.module'
+import {InterceptorModule} from './interceptors/interceptor.module'
+import {TxIDMiddleware} from './middleware/txid.middleware'
+import {TimestampMiddleware} from './middleware/timestamp.middleware'
+import {ContextMiddleware} from './middleware/context.middleware'
+import {config} from './config/main.config'
 
 @Module({
     controllers: [
@@ -31,7 +31,7 @@ import {config} from './config/main'
         AdminsModule,
         ContactsModule,
         AuthModule,
-        JournalModule,
+        JournalsModule,
         InterceptorModule,
     ],
 })

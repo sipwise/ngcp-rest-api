@@ -3,10 +3,10 @@ import {AppModule} from './app.module'
 
 import {readFileSync} from 'fs'
 import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger'
-import {ValidateInputPipe} from './core/pipes/validate.pipe'
+import {ValidateInputPipe} from './pipes/validate.pipe'
 import {AppClusterService} from './app-cluster.service'
-import {TransformInterceptor} from './core/interceptors/transform.interceptor'
-import {LoggingService} from './modules/logging/logging.service'
+import {TransformInterceptor} from './interceptors/transform.interceptor'
+import {LoggerService} from './logger/logger.service'
 
 async function bootstrap() {
     // TODO: evaluate and compare default Express vs Fastify
@@ -25,7 +25,7 @@ async function bootstrap() {
             logger: ['error', 'warn'],
         },
     )
-    app.useLogger(app.get(LoggingService))
+    app.useLogger(app.get(LoggerService))
 
     // Another way of getting the config data
     // const config: ConfigService = app.get('ConfigService');

@@ -2,8 +2,8 @@ import {Injectable} from '@nestjs/common'
 import * as cluster from 'cluster'
 import * as fs from 'fs'
 import * as sdNotify from 'sd-notify'
-import {config} from './config/main'
-import {LoggingService} from './modules/logging/logging.service'
+import {config} from './config/main.config'
+import {LoggerService} from './logger/logger.service'
 
 const workersAmount = config.common.workers
 
@@ -15,7 +15,7 @@ var workersOnline = 0
 @Injectable()
 export class AppClusterService {
     static clusterize(callback: Function): void {
-        const logger = new LoggingService()
+        const logger = new LoggerService()
         if (cluster.isMaster) {
             logger.log(`Master server started with PID: ${process.pid} Workers: ${workersAmount}`)
             for (let i = 0; i < workersAmount; i++) {
