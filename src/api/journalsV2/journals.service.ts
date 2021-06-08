@@ -1,6 +1,6 @@
 import {Inject, Injectable} from '@nestjs/common'
 import {JOURNAL_OBJECT_REPOSITORY, JOURNAL_V2_REPOSITORY} from '../../config/constants.config'
-import {JournalObject, Journal} from './journals.entity'
+import {Journal, JournalObject} from './journals.entity'
 import {FindOptions} from 'sequelize'
 
 @Injectable()

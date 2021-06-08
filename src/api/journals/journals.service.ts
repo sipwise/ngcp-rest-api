@@ -2,7 +2,7 @@ import {Inject, Injectable} from '@nestjs/common'
 import {JOURNAL_REPOSITORY} from '../../config/constants.config'
 import {Journal} from '../../entities/db/billing/journal.entity'
 import {CreateJournalDto} from './dto/create-journal.dto'
-import {FindOptions, WhereOptions, Op} from 'sequelize'
+import {FindOptions, Op, WhereOptions} from 'sequelize'
 
 @Injectable()
 export class JournalsService {
@@ -39,9 +39,9 @@ export class JournalsService {
             } else {
                 filter = {
                     [Op.or]: [
-                        { resource_name: resource_name },
-                        { id: resource_name },
-                    ]
+                        {resource_name: resource_name},
+                        {id: resource_name},
+                    ],
                 }
             }
         }

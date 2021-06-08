@@ -1,5 +1,5 @@
 import {Sequelize} from 'sequelize-typescript'
-import * as mysql2 from 'mysql2';
+import * as mysql2 from 'mysql2'
 import {DATABASES} from '../config/constants.config'
 import {databaseConfig} from '../config/database.config'
 import {Admin} from '../entities/db/billing/admin.entity'
@@ -17,7 +17,7 @@ export const databaseProviders = [
             config = databaseConfig['billing']
             config.logging = (msg) => logger.log(msg)
             if (config.dialect === 'mysql') {
-                config.dialectModule = mysql2; // workaround for webpack (please install mysql2 module)
+                config.dialectModule = mysql2 // workaround for webpack (please install mysql2 module)
             }
 
             // TODO: figure out if raw or sequelize data is preferred
@@ -36,7 +36,7 @@ export const databaseProviders = [
             config = databaseConfig['accounting']
             config.logging = (msg) => logger.log(msg)
             if (config.dialect === 'mysql') {
-                config.dialectModule = mysql2; // workaround for webpack (please install mysql2 module)
+                config.dialectModule = mysql2 // workaround for webpack (please install mysql2 module)
             }
             config.query = {raw: false} // TODO: figure out if raw or sequelize data is preferred
             const sequelize = new Sequelize(config)
