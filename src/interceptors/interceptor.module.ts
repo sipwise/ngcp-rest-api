@@ -10,6 +10,5 @@ import {LoggerService} from '../logger/logger.service'
     providers: [JournalingInterceptor, LoggingInterceptor, LoggerService],
     exports: [JournalsModule, LoggerModule],
 })
-
 export class InterceptorModule {
 }

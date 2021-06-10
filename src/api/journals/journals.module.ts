@@ -10,6 +10,5 @@ import {JournalsController} from './journals.controller'
     providers: [...journalsProviders],
     exports: [...journalsProviders],
 })
-
 export class JournalsModule {
 }
