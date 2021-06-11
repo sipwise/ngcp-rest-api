@@ -14,7 +14,7 @@ enum ContactStatus {
 }
 
 @Table({tableName: 'contacts', timestamps: false})
-export class Contact extends Model<Contact> {
+export class Contact extends Model {
     @Column({primaryKey: true, autoIncrement: true, type: DataType.INTEGER})
     @Index({name: 'PRIMARY', using: 'BTREE', order: 'ASC', unique: true})
     @ApiProperty()

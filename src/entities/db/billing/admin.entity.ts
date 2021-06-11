@@ -5,7 +5,7 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
     tableName: 'admins',
     timestamps: false,
 })
-export class Admin extends Model<Admin> {
+export class Admin extends Model {
 
     @Column({
         primaryKey: true,

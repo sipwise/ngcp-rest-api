@@ -2,7 +2,7 @@ import {Column, DataType, Model, Table} from 'sequelize-typescript'
 import {ApiProperty} from '@nestjs/swagger'
 
 @Table({tableName: 'journals', timestamps: false})
-export class Journal extends Model<Journal> {
+export class Journal extends Model {
     @ApiProperty()
     @Column({primaryKey: true, autoIncrement: true, type: DataType.INTEGER})
     id?: number
