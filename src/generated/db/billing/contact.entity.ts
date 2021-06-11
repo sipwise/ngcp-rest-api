@@ -4,11 +4,49 @@ import {Customer} from './customer.entity'
 import {Order} from './order.entity'
 import {Reseller} from './reseller.entity'
 
+interface ContactAttributes {
+    id?: number;
+    resellerId?: number;
+    gender?: string;
+    firstname?: string;
+    lastname?: string;
+    comregnum?: string;
+    company?: string;
+    street?: string;
+    postcode?: string;
+    city?: string;
+    country?: string;
+    phonenumber?: string;
+    mobilenumber?: string;
+    email?: string;
+    newsletter: number;
+    modifyTimestamp: Date;
+    createTimestamp: Date;
+    faxnumber?: string;
+    iban?: string;
+    bic?: string;
+    vatnum?: string;
+    bankname?: string;
+    gpp0?: string;
+    gpp1?: string;
+    gpp2?: string;
+    gpp3?: string;
+    gpp4?: string;
+    gpp5?: string;
+    gpp6?: string;
+    gpp7?: string;
+    gpp8?: string;
+    gpp9?: string;
+    status: string;
+    terminateTimestamp?: Date;
+    timezone?: string;
+}
+
 @Table({
     tableName: 'contacts',
     timestamps: false,
 })
-export class Contact extends Model {
+export class Contact extends Model<ContactAttributes, ContactAttributes> implements ContactAttributes {
 
     @Column({
         primaryKey: true,
@@ -250,6 +288,16 @@ export class Contact extends Model {
     })
     Customers?: Customer[]
 
+    // @HasMany(() => Customer, {
+    //     sourceKey: 'id',
+    // })
+    // Customers?: Customer[]
+    //
+    // @HasMany(() => Customer, {
+    //     sourceKey: 'id',
+    // })
+    // Customers?: Customer[]
+
     @HasMany(() => Order, {
         sourceKey: 'id',
     })
@@ -257,5 +305,4 @@ export class Contact extends Model {
 
     @BelongsTo(() => Reseller)
     Reseller?: Reseller
-
 }

@@ -1,10 +1,18 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface CustomerRegisterAttributes {
+    id?: number;
+    customerId: number;
+    actor?: string;
+    type: string;
+    data?: string;
+}
+
 @Table({
     tableName: 'customer_registers',
     timestamps: false,
 })
-export class CustomerRegister extends Model {
+export class CustomerRegister extends Model<CustomerRegisterAttributes, CustomerRegisterAttributes> implements CustomerRegisterAttributes {
 
     @Column({
         primaryKey: true,

@@ -1,10 +1,17 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface ResellerPhonebookAttributes {
+    id?: number;
+    resellerId: number;
+    name: string;
+    number: string;
+}
+
 @Table({
     tableName: 'reseller_phonebook',
     timestamps: false,
 })
-export class ResellerPhonebook extends Model {
+export class ResellerPhonebook extends Model<ResellerPhonebookAttributes, ResellerPhonebookAttributes> implements ResellerPhonebookAttributes {
 
     @Column({
         primaryKey: true,

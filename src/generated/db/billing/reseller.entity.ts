@@ -11,11 +11,18 @@ import {Product} from './product.entity'
 import {NcosLevel} from './ncos-level.entity'
 import {Order} from './order.entity'
 
+interface ResellerAttributes {
+    id?: number;
+    contractId: number;
+    name: string;
+    status: string;
+}
+
 @Table({
     tableName: 'resellers',
     timestamps: false,
 })
-export class Reseller extends Model {
+export class Reseller extends Model<ResellerAttributes, ResellerAttributes> implements ResellerAttributes {
 
     @Column({
         primaryKey: true,

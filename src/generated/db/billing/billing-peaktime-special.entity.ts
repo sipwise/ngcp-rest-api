@@ -1,10 +1,17 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface BillingPeaktimeSpecialAttributes {
+    id?: number;
+    billingProfileId: number;
+    start?: Date;
+    end?: Date;
+}
+
 @Table({
     tableName: 'billing_peaktime_special',
     timestamps: false,
 })
-export class BillingPeaktimeSpecial extends Model {
+export class BillingPeaktimeSpecial extends Model<BillingPeaktimeSpecialAttributes, BillingPeaktimeSpecialAttributes> implements BillingPeaktimeSpecialAttributes {
 
     @Column({
         primaryKey: true,

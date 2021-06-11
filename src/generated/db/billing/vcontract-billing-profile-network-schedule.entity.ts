@@ -1,11 +1,25 @@
 import {Column, DataType, Model, Table} from 'sequelize-typescript'
 
+interface VContractBillingProfileNetworkScheduleAttributes {
+    id: number;
+    contractId: number;
+    startDate?: Date;
+    endDate?: Date;
+    billingProfileId: number;
+    networkId?: number;
+    effectiveStartTime: string;
+    effectiveStartDate?: Date;
+    billingProfileName: string;
+    billingProfileHandle: string;
+    billingNetworkName?: string;
+}
+
 @Table({
     tableName: 'v_contract_billing_profile_network_schedules',
     timestamps: false,
     comment: 'VIEW',
 })
-export class VContractBillingProfileNetworkSchedule extends Model {
+export class VContractBillingProfileNetworkSchedule extends Model<VContractBillingProfileNetworkScheduleAttributes, VContractBillingProfileNetworkScheduleAttributes> implements VContractBillingProfileNetworkScheduleAttributes {
 
     @Column({
         type: DataType.INTEGER,

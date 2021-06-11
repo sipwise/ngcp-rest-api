@@ -1,10 +1,37 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface BillingFeesHistoryAttributes {
+    id?: number;
+    bfId?: number;
+    billingProfileId: number;
+    billingZonesHistoryId?: number;
+    source: string;
+    destination: string;
+    direction: string;
+    type: string;
+    onpeakInitRate: number;
+    onpeakInitInterval: number;
+    onpeakFollowRate: number;
+    onpeakFollowInterval: number;
+    offpeakInitRate: number;
+    offpeakInitInterval: number;
+    offpeakFollowRate: number;
+    offpeakFollowInterval: number;
+    onpeakUseFreeTime: number;
+    matchMode: string;
+    onpeakExtraRate: number;
+    onpeakExtraSecond?: number;
+    offpeakExtraRate: number;
+    offpeakExtraSecond?: number;
+    offpeakUseFreeTime: number;
+    aocPulseAmountPerMessage: number;
+}
+
 @Table({
     tableName: 'billing_fees_history',
     timestamps: false,
 })
-export class BillingFeesHistory extends Model {
+export class BillingFeesHistory extends Model<BillingFeesHistoryAttributes, BillingFeesHistoryAttributes> implements BillingFeesHistoryAttributes {
 
     @Column({
         primaryKey: true,

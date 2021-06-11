@@ -1,10 +1,16 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface OrderPaymentAttributes {
+    id?: number;
+    orderId: number;
+    paymentId: number;
+}
+
 @Table({
     tableName: 'order_payments',
     timestamps: false,
 })
-export class OrderPayment extends Model {
+export class OrderPayment extends Model<OrderPaymentAttributes, OrderPaymentAttributes> implements OrderPaymentAttributes {
 
     @Column({
         primaryKey: true,

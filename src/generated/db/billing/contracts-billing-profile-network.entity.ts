@@ -3,11 +3,21 @@ import {BillingNetwork} from './billing-network.entity'
 import {BillingProfile} from './billing-profile.entity'
 import {Contract} from './contract.entity'
 
+interface ContractsBillingProfileNetworkAttributes {
+    id?: number;
+    contractId: number;
+    billingProfileId: number;
+    billingNetworkId?: number;
+    startDate?: Date;
+    endDate?: Date;
+    base: number;
+}
+
 @Table({
     tableName: 'contracts_billing_profile_network',
     timestamps: false,
 })
-export class ContractsBillingProfileNetwork extends Model {
+export class ContractsBillingProfileNetwork extends Model<ContractsBillingProfileNetworkAttributes, ContractsBillingProfileNetworkAttributes> implements ContractsBillingProfileNetworkAttributes {
 
     @Column({
         primaryKey: true,

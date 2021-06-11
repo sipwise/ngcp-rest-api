@@ -3,11 +3,18 @@ import {BillingProfile} from './billing-profile.entity'
 import {BillingZonesHistory} from './billing-zones-history.entity'
 import {BillingFee} from './billing-fee.entity'
 
+interface BillingZoneAttributes {
+    id?: number;
+    billingProfileId: number;
+    zone: string;
+    detail?: string;
+}
+
 @Table({
     tableName: 'billing_zones',
     timestamps: false,
 })
-export class BillingZone extends Model {
+export class BillingZone extends Model<BillingZoneAttributes, BillingZoneAttributes> implements BillingZoneAttributes {
 
     @Column({
         primaryKey: true,

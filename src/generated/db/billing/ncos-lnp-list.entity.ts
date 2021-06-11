@@ -2,11 +2,18 @@ import {BelongsTo, Column, DataType, ForeignKey, Index, Model, Table} from 'sequ
 import {LnpProvider} from './lnp-provider.entity'
 import {NcosLevel} from './ncos-level.entity'
 
+interface NcosLnpListAttributes {
+    id?: number;
+    ncosLevelId: number;
+    lnpProviderId: number;
+    description?: string;
+}
+
 @Table({
     tableName: 'ncos_lnp_list',
     timestamps: false,
 })
-export class NcosLnpList extends Model {
+export class NcosLnpList extends Model<NcosLnpListAttributes, NcosLnpListAttributes> implements NcosLnpListAttributes {
 
     @Column({
         primaryKey: true,

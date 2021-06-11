@@ -3,11 +3,23 @@ import {BillingProfile} from './billing-profile.entity'
 import {Contract} from './contract.entity'
 import {Reseller} from './reseller.entity'
 
+interface ProductAttributes {
+    id?: number;
+    resellerId?: number;
+    class: string;
+    handle: string;
+    name: string;
+    onSale: number;
+    price?: number;
+    weight?: number;
+    billingProfileId?: number;
+}
+
 @Table({
     tableName: 'products',
     timestamps: false,
 })
-export class Product extends Model {
+export class Product extends Model<ProductAttributes, ProductAttributes> implements ProductAttributes {
 
     @Column({
         primaryKey: true,

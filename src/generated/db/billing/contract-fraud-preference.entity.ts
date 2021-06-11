@@ -1,10 +1,21 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface ContractFraudPreferenceAttributes {
+    id?: number;
+    contractId: number;
+    fraudIntervalLimit?: number;
+    fraudIntervalLock?: number;
+    fraudIntervalNotify?: string;
+    fraudDailyLimit?: number;
+    fraudDailyLock?: number;
+    fraudDailyNotify?: string;
+}
+
 @Table({
     tableName: 'contract_fraud_preferences',
     timestamps: false,
 })
-export class ContractFraudPreference extends Model {
+export class ContractFraudPreference extends Model<ContractFraudPreferenceAttributes, ContractFraudPreferenceAttributes> implements ContractFraudPreferenceAttributes {
 
     @Column({
         primaryKey: true,

@@ -1,10 +1,21 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface BillingNetworkBlockAttributes {
+    id?: number;
+    networkId: number;
+    ip: string;
+    mask?: number;
+    ipv4NetFrom?: any;
+    ipv4NetTo?: any;
+    ipv6NetFrom?: any;
+    ipv6NetTo?: any;
+}
+
 @Table({
     tableName: 'billing_network_blocks',
     timestamps: false,
 })
-export class BillingNetworkBlock extends Model {
+export class BillingNetworkBlock extends Model<BillingNetworkBlockAttributes, BillingNetworkBlockAttributes> implements BillingNetworkBlockAttributes {
 
     @Column({
         primaryKey: true,

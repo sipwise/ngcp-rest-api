@@ -11,11 +11,34 @@ import {Order} from './order.entity'
 import {Product} from './product.entity'
 import {ProfilePackage} from './profile-package.entity'
 
+interface ContractAttributes {
+    id?: number;
+    customerId?: number;
+    contactId?: number;
+    orderId?: number;
+    profilePackageId?: number;
+    status: string;
+    externalId?: string;
+    modifyTimestamp: Date;
+    createTimestamp: Date;
+    activateTimestamp?: Date;
+    terminateTimestamp?: Date;
+    maxSubscribers?: number;
+    sendInvoice: number;
+    subscriberEmailTemplateId?: number;
+    passresetEmailTemplateId?: number;
+    invoiceEmailTemplateId?: number;
+    invoiceTemplateId?: number;
+    vatRate: number;
+    addVat: number;
+    productId: number;
+}
+
 @Table({
     tableName: 'contracts',
     timestamps: false,
 })
-export class Contract extends Model {
+export class Contract extends Model<ContractAttributes, ContractAttributes> implements ContractAttributes {
 
     @Column({
         primaryKey: true,

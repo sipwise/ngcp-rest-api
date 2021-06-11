@@ -4,11 +4,25 @@ import {Contract} from './contract.entity'
 import {Order} from './order.entity'
 import {Reseller} from './reseller.entity'
 
+interface CustomerAttributes {
+    id?: number;
+    resellerId?: number;
+    shopuser?: string;
+    shoppass?: string;
+    business: number;
+    contactId?: number;
+    techContactId?: number;
+    commContactId?: number;
+    externalId?: string;
+    modifyTimestamp: Date;
+    createTimestamp: Date;
+}
+
 @Table({
     tableName: 'customers',
     timestamps: false,
 })
-export class Customer extends Model {
+export class Customer extends Model<CustomerAttributes, CustomerAttributes> implements CustomerAttributes {
 
     @Column({
         primaryKey: true,
@@ -135,6 +149,12 @@ export class Customer extends Model {
 
     @BelongsTo(() => Contact)
     Contact?: Contact
+
+    // @BelongsTo(() => Contact)
+    // Contact?: Contact
+    //
+    // @BelongsTo(() => Contact)
+    // Contact?: Contact
 
     @HasMany(() => Contract, {
         sourceKey: 'id',

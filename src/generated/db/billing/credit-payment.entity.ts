@@ -1,10 +1,16 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface CreditPaymentAttributes {
+    id?: number;
+    creditId: number;
+    paymentId: number;
+}
+
 @Table({
     tableName: 'credit_payments',
     timestamps: false,
 })
-export class CreditPayment extends Model {
+export class CreditPayment extends Model<CreditPaymentAttributes, CreditPaymentAttributes> implements CreditPaymentAttributes {
 
     @Column({
         primaryKey: true,

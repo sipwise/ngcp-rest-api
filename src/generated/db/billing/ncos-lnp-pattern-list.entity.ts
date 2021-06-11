@@ -1,10 +1,17 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface NcosLnpPatternListAttributes {
+    id?: number;
+    ncosLnpListId: number;
+    pattern: string;
+    description?: string;
+}
+
 @Table({
     tableName: 'ncos_lnp_pattern_list',
     timestamps: false,
 })
-export class NcosLnpPatternList extends Model {
+export class NcosLnpPatternList extends Model<NcosLnpPatternListAttributes, NcosLnpPatternListAttributes> implements NcosLnpPatternListAttributes {
 
     @Column({
         primaryKey: true,

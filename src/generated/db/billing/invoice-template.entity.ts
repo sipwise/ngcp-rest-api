@@ -1,10 +1,18 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface InvoiceTemplateAttributes {
+    id?: number;
+    resellerId: number;
+    name: string;
+    type: string;
+    data?: Uint8Array;
+}
+
 @Table({
     tableName: 'invoice_templates',
     timestamps: false,
 })
-export class InvoiceTemplate extends Model {
+export class InvoiceTemplate extends Model<InvoiceTemplateAttributes, InvoiceTemplateAttributes> implements InvoiceTemplateAttributes {
 
     @Column({
         primaryKey: true,

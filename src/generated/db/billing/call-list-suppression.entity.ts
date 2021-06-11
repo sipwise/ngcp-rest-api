@@ -1,10 +1,19 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface CallListSuppressionAttributes {
+    id?: number;
+    domain: string;
+    pattern: string;
+    label: string;
+    direction: string;
+    mode: string;
+}
+
 @Table({
     tableName: 'call_list_suppressions',
     timestamps: false,
 })
-export class CallListSuppression extends Model {
+export class CallListSuppression extends Model<CallListSuppressionAttributes, CallListSuppressionAttributes> implements CallListSuppressionAttributes {
 
     @Column({
         primaryKey: true,

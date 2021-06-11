@@ -2,11 +2,37 @@ import {BelongsTo, Column, DataType, ForeignKey, Index, Model, Table} from 'sequ
 import {BillingProfile} from './billing-profile.entity'
 import {BillingZone} from './billing-zone.entity'
 
+interface BillingFeeAttributes {
+    id?: number;
+    billingProfileId: number;
+    billingZoneId?: number;
+    source: string;
+    destination: string;
+    direction: string;
+    type: string;
+    onpeakInitRate: number;
+    onpeakInitInterval: number;
+    onpeakFollowRate: number;
+    onpeakFollowInterval: number;
+    offpeakInitRate: number;
+    offpeakInitInterval: number;
+    offpeakFollowRate: number;
+    offpeakFollowInterval: number;
+    onpeakUseFreeTime: number;
+    matchMode: string;
+    onpeakExtraRate: number;
+    onpeakExtraSecond?: number;
+    offpeakExtraRate: number;
+    offpeakExtraSecond?: number;
+    offpeakUseFreeTime: number;
+    aocPulseAmountPerMessage: number;
+}
+
 @Table({
     tableName: 'billing_fees',
     timestamps: false,
 })
-export class BillingFee extends Model {
+export class BillingFee extends Model<BillingFeeAttributes, BillingFeeAttributes> implements BillingFeeAttributes {
 
     @Column({
         primaryKey: true,

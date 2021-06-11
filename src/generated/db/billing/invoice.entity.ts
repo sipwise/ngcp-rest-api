@@ -3,11 +3,25 @@ import {Contract} from './contract.entity'
 import {ContractBalance} from './contract-balance.entity'
 import {Order} from './order.entity'
 
+interface InvoiceAttributes {
+    id?: number;
+    contractId: number;
+    serial: string;
+    periodStart: Date;
+    periodEnd: Date;
+    amountNet: number;
+    amountVat: number;
+    amountTotal: number;
+    data?: Uint8Array;
+    sentDate?: Date;
+    generator?: string;
+}
+
 @Table({
     tableName: 'invoices',
     timestamps: false,
 })
-export class Invoice extends Model {
+export class Invoice extends Model<InvoiceAttributes, InvoiceAttributes> implements InvoiceAttributes {
 
     @Column({
         primaryKey: true,

@@ -4,11 +4,24 @@ import {ProfilePackage} from './profile-package.entity'
 import {Reseller} from './reseller.entity'
 import {VoipSubscriber} from './voip-subscriber.entity'
 
+interface VoucherAttributes {
+    id?: number;
+    code: string;
+    amount: number;
+    resellerId: number;
+    customerId?: number;
+    packageId?: number;
+    usedBySubscriberId?: number;
+    createdAt: Date;
+    usedAt: Date;
+    validUntil: Date;
+}
+
 @Table({
     tableName: 'vouchers',
     timestamps: false,
 })
-export class Voucher extends Model {
+export class Voucher extends Model<VoucherAttributes, VoucherAttributes> implements VoucherAttributes {
 
     @Column({
         primaryKey: true,

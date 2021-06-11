@@ -1,10 +1,30 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface VoipInterceptAttributes {
+    id?: number;
+    resellerId?: number;
+    lIID?: number;
+    number?: string;
+    ccRequired: number;
+    deliveryHost?: string;
+    deliveryPort?: number;
+    deliveryUser?: string;
+    deliveryPass?: string;
+    modifyTimestamp: Date;
+    createTimestamp: Date;
+    deleted: number;
+    uuid?: string;
+    sipUsername?: string;
+    sipDomain?: string;
+    ccDeliveryHost?: string;
+    ccDeliveryPort?: number;
+}
+
 @Table({
     tableName: 'voip_intercept',
     timestamps: false,
 })
-export class VoipIntercept extends Model {
+export class VoipIntercept extends Model<VoipInterceptAttributes, VoipInterceptAttributes> implements VoipInterceptAttributes {
 
     @Column({
         primaryKey: true,

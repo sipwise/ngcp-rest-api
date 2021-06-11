@@ -1,10 +1,18 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface BillingPeaktimeWeekdayAttributes {
+    id?: number;
+    billingProfileId: number;
+    weekday: number;
+    start?: string;
+    end?: string;
+}
+
 @Table({
     tableName: 'billing_peaktime_weekdays',
     timestamps: false,
 })
-export class BillingPeaktimeWeekday extends Model {
+export class BillingPeaktimeWeekday extends Model<BillingPeaktimeWeekdayAttributes, BillingPeaktimeWeekdayAttributes> implements BillingPeaktimeWeekdayAttributes {
 
     @Column({
         primaryKey: true,

@@ -3,11 +3,29 @@ import {ContractCredit} from './contract-credit.entity'
 import {Contract} from './contract.entity'
 import {Invoice} from './invoice.entity'
 
+interface ContractBalanceAttributes {
+    id?: number;
+    contractId: number;
+    cashBalance?: number;
+    cashBalanceInterval: number;
+    freeTimeBalance?: number;
+    freeTimeBalanceInterval: number;
+    topupCount: number;
+    timelyTopupCount: number;
+    start: Date;
+    end: Date;
+    invoiceId?: number;
+    underrunProfiles?: Date;
+    underrunLock?: Date;
+    initialCashBalance?: number;
+    initialFreeTimeBalance?: number;
+}
+
 @Table({
     tableName: 'contract_balances',
     timestamps: false,
 })
-export class ContractBalance extends Model {
+export class ContractBalance extends Model<ContractBalanceAttributes, ContractBalanceAttributes> implements ContractBalanceAttributes {
 
     @Column({
         primaryKey: true,

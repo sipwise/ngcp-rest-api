@@ -1,10 +1,24 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface PaymentAttributes {
+    id?: number;
+    amount?: number;
+    type?: string;
+    state?: string;
+    mpaytid?: number;
+    status?: string;
+    errno?: number;
+    returncode?: string;
+    externalstatus?: string;
+    modifyTimestamp: Date;
+    createTimestamp: Date;
+}
+
 @Table({
     tableName: 'payments',
     timestamps: false,
 })
-export class Payment extends Model {
+export class Payment extends Model<PaymentAttributes, PaymentAttributes> implements PaymentAttributes {
 
     @Column({
         primaryKey: true,

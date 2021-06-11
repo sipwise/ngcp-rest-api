@@ -1,10 +1,21 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface ProvisioningTemplateAttributes {
+    id?: number;
+    resellerId?: number;
+    name: string;
+    description: string;
+    lang: string;
+    yaml: string;
+    modifyTimestamp: Date;
+    createTimestamp: Date;
+}
+
 @Table({
     tableName: 'provisioning_templates',
     timestamps: false,
 })
-export class ProvisioningTemplate extends Model {
+export class ProvisioningTemplate extends Model<ProvisioningTemplateAttributes, ProvisioningTemplateAttributes> implements ProvisioningTemplateAttributes {
 
     @Column({
         primaryKey: true,

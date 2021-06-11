@@ -1,10 +1,20 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface VoipNumberBlockAttributes {
+    id?: number;
+    cc: number;
+    ac: string;
+    snPrefix: string;
+    snLength: number;
+    allocable: number;
+    authoritative: number;
+}
+
 @Table({
     tableName: 'voip_number_blocks',
     timestamps: false,
 })
-export class VoipNumberBlock extends Model {
+export class VoipNumberBlock extends Model<VoipNumberBlockAttributes, VoipNumberBlockAttributes> implements VoipNumberBlockAttributes {
 
     @Column({
         primaryKey: true,

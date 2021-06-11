@@ -40,6 +40,11 @@ async function main() {
 
             }
 
+            // TODO: export attribute interfaces of generated entities
+
+            // TODO: rename sequelize mappings according to *-associations.csv because the stg does not correctly
+            //       name relations: e.g. contact to contract has many fields with the same name
+
             /**
              * Rewriting imports for newly created files
              */

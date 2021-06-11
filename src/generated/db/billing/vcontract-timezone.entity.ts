@@ -1,11 +1,17 @@
 import {Column, DataType, Model, Table} from 'sequelize-typescript'
 
+interface VContractTimezoneAttributes {
+    contactId: number;
+    contractId: number;
+    name?: string;
+}
+
 @Table({
     tableName: 'v_contract_timezone',
     timestamps: false,
     comment: 'VIEW',
 })
-export class VContractTimezone extends Model {
+export class VContractTimezone extends Model<VContractTimezoneAttributes, VContractTimezoneAttributes> implements VContractTimezoneAttributes {
 
     @Column({
         field: 'contact_id',

@@ -1,10 +1,18 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface PackageProfileSetAttributes {
+    id?: number;
+    packageId: number;
+    discriminator: string;
+    profileId: number;
+    networkId?: number;
+}
+
 @Table({
     tableName: 'package_profile_sets',
     timestamps: false,
 })
-export class PackageProfileSet extends Model {
+export class PackageProfileSet extends Model<PackageProfileSetAttributes, PackageProfileSetAttributes> implements PackageProfileSetAttributes {
 
     @Column({
         primaryKey: true,

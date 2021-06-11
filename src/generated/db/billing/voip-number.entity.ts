@@ -1,12 +1,24 @@
-import {BelongsTo, Column, DataType, ForeignKey, HasOne, Index, Model, Table} from 'sequelize-typescript'
+import {BelongsTo, Column, DataType, ForeignKey, HasMany, HasOne, Index, Model, Table} from 'sequelize-typescript'
 import {Reseller} from './reseller.entity'
 import {VoipSubscriber} from './voip-subscriber.entity'
+
+interface VoipNumberAttributes {
+    id?: number;
+    cc: number;
+    ac: string;
+    sn: string;
+    resellerId?: number;
+    subscriberId?: number;
+    status: string;
+    ported: number;
+    listTimestamp: Date;
+}
 
 @Table({
     tableName: 'voip_numbers',
     timestamps: false,
 })
-export class VoipNumber extends Model {
+export class VoipNumber extends Model<VoipNumberAttributes, VoipNumberAttributes> implements VoipNumberAttributes {
 
     @ForeignKey(() => VoipSubscriber)
     @Column({
@@ -111,4 +123,13 @@ export class VoipNumber extends Model {
         sourceKey: 'id',
     })
     VoipSubscriber?: VoipSubscriber
+
+    @HasMany(() => VoipSubscriber, {
+        sourceKey: 'id',
+    })
+    VoipSubscribers?: VoipSubscriber[]
+
+    // @BelongsTo(() => VoipSubscriber)
+    // VoipSubscriber?: VoipSubscriber
+
 }

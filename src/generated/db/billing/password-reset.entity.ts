@@ -1,10 +1,17 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface PasswordResetAttributes {
+    id?: number;
+    subscriberId: number;
+    uuid: string;
+    timestamp: number;
+}
+
 @Table({
     tableName: 'password_resets',
     timestamps: false,
 })
-export class PasswordReset extends Model {
+export class PasswordReset extends Model<PasswordResetAttributes, PasswordResetAttributes> implements PasswordResetAttributes {
 
     @Column({
         primaryKey: true,

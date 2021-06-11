@@ -1,10 +1,20 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface LnpNumberAttributes {
+    id?: number;
+    number: string;
+    routingNumber?: string;
+    lnpProviderId: number;
+    start?: Date;
+    end?: Date;
+    type?: string;
+}
+
 @Table({
     tableName: 'lnp_numbers',
     timestamps: false,
 })
-export class LnpNumber extends Model {
+export class LnpNumber extends Model<LnpNumberAttributes, LnpNumberAttributes> implements LnpNumberAttributes {
 
     @Column({
         primaryKey: true,

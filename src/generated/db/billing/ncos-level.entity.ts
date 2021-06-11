@@ -2,11 +2,21 @@ import {BelongsTo, Column, DataType, ForeignKey, HasMany, Index, Model, Table} f
 import {NcosLnpList} from './ncos-lnp-list.entity'
 import {Reseller} from './reseller.entity'
 
+interface NcosLevelAttributes {
+    id?: number;
+    resellerId?: number;
+    level: string;
+    mode: string;
+    localAc: number;
+    intraPbx: number;
+    description?: string;
+}
+
 @Table({
     tableName: 'ncos_levels',
     timestamps: false,
 })
-export class NcosLevel extends Model {
+export class NcosLevel extends Model<NcosLevelAttributes, NcosLevelAttributes> implements NcosLevelAttributes {
 
     @Column({
         primaryKey: true,

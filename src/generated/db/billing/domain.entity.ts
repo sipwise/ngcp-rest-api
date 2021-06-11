@@ -1,11 +1,16 @@
 import {Column, DataType, HasMany, Index, Model, Table} from 'sequelize-typescript'
 import {VoipSubscriber} from './voip-subscriber.entity'
 
+interface DomainAttributes {
+    id?: number;
+    domain: string;
+}
+
 @Table({
     tableName: 'domains',
     timestamps: false,
 })
-export class Domain extends Model {
+export class Domain extends Model<DomainAttributes, DomainAttributes> implements DomainAttributes {
 
     @Column({
         primaryKey: true,

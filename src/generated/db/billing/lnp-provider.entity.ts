@@ -1,11 +1,19 @@
 import {Column, DataType, HasMany, Index, Model, Table} from 'sequelize-typescript'
 import {NcosLnpList} from './ncos-lnp-list.entity'
 
+interface LnpProviderAttributes {
+    id?: number;
+    name?: string;
+    prefix: string;
+    authoritative: number;
+    skipRewrite: number;
+}
+
 @Table({
     tableName: 'lnp_providers',
     timestamps: false,
 })
-export class LnpProvider extends Model {
+export class LnpProvider extends Model<LnpProviderAttributes, LnpProviderAttributes> implements LnpProviderAttributes {
 
     @Column({
         primaryKey: true,

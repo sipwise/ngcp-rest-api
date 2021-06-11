@@ -1,10 +1,32 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface AdminAttributes {
+    id?: number;
+    resellerId?: number;
+    login: string;
+    md5pass?: string;
+    saltedpass?: string;
+    isMaster: number;
+    isSuperuser: number;
+    isCcare: number;
+    isActive: number;
+    readOnly: number;
+    showPasswords: number;
+    callData: number;
+    billingData: number;
+    lawfulIntercept: number;
+    sslClientMSerial?: number;
+    sslClientCertificate?: string;
+    email?: string;
+    canResetPassword: number;
+    isSystem: number;
+}
+
 @Table({
     tableName: 'admins',
     timestamps: false,
 })
-export class Admin extends Model {
+export class Admin extends Model<AdminAttributes, AdminAttributes> implements AdminAttributes {
 
     @Column({
         primaryKey: true,
@@ -154,3 +176,4 @@ export class Admin extends Model {
     isSystem!: number
 
 }
+

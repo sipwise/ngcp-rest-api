@@ -1,10 +1,20 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface BillingMappingAttributes {
+    id?: number;
+    startDate?: Date;
+    endDate?: Date;
+    billingProfileId?: number;
+    contractId: number;
+    productId?: number;
+    networkId?: number;
+}
+
 @Table({
     tableName: 'billing_mappings',
     timestamps: false,
 })
-export class BillingMapping extends Model {
+export class BillingMapping extends Model<BillingMappingAttributes, BillingMappingAttributes> implements BillingMappingAttributes {
 
     @Column({
         primaryKey: true,

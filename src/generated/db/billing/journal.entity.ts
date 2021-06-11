@@ -1,10 +1,21 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface JournalAttributes {
+    id?: number;
+    operation: string;
+    resourceName: string;
+    resourceId: number;
+    timestamp: string;
+    username?: string;
+    contentFormat: string;
+    content?: Uint8Array;
+}
+
 @Table({
     tableName: 'journals',
     timestamps: false,
 })
-export class Journal extends Model {
+export class Journal extends Model<JournalAttributes, JournalAttributes> implements JournalAttributes {
 
     @Column({
         primaryKey: true,

@@ -1,10 +1,16 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface ContractsBillingProfileNetworkScheduleAttributes {
+    id?: number;
+    profileNetworkId: number;
+    effectiveStartTime: string;
+}
+
 @Table({
     tableName: 'contracts_billing_profile_network_schedule',
     timestamps: false,
 })
-export class ContractsBillingProfileNetworkSchedule extends Model {
+export class ContractsBillingProfileNetworkSchedule extends Model<ContractsBillingProfileNetworkScheduleAttributes, ContractsBillingProfileNetworkScheduleAttributes> implements ContractsBillingProfileNetworkScheduleAttributes {
 
     @Column({
         primaryKey: true,

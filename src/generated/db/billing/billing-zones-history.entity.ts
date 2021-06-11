@@ -1,11 +1,19 @@
 import {BelongsTo, Column, DataType, ForeignKey, Index, Model, Table} from 'sequelize-typescript'
 import {BillingZone} from './billing-zone.entity'
 
+interface BillingZonesHistoryAttributes {
+    id?: number;
+    bzId?: number;
+    billingProfileId: number;
+    zone: string;
+    detail?: string;
+}
+
 @Table({
     tableName: 'billing_zones_history',
     timestamps: false,
 })
-export class BillingZonesHistory extends Model {
+export class BillingZonesHistory extends Model<BillingZonesHistoryAttributes, BillingZonesHistoryAttributes> implements BillingZonesHistoryAttributes {
 
     @Column({
         primaryKey: true,

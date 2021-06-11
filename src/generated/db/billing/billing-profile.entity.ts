@@ -5,11 +5,38 @@ import {Product} from './product.entity'
 import {ContractsBillingProfileNetwork} from './contracts-billing-profile-network.entity'
 import {Reseller} from './reseller.entity'
 
+interface BillingProfileAttributes {
+    id?: number;
+    resellerId?: number;
+    handle: string;
+    name: string;
+    prepaid: number;
+    intervalCharge: number;
+    intervalFreeTime: number;
+    intervalFreeCash: number;
+    intervalUnit: string;
+    intervalCount: number;
+    fraudIntervalLimit?: number;
+    fraudIntervalLock?: number;
+    fraudIntervalNotify?: string;
+    fraudDailyLimit?: number;
+    fraudDailyLock?: number;
+    fraudDailyNotify?: string;
+    fraudUseResellerRates?: number;
+    currency?: string;
+    status: string;
+    modifyTimestamp: Date;
+    createTimestamp: Date;
+    terminateTimestamp: Date;
+    adviceOfCharge: number;
+    prepaidLibrary: string;
+}
+
 @Table({
     tableName: 'billing_profiles',
     timestamps: false,
 })
-export class BillingProfile extends Model {
+export class BillingProfile extends Model<BillingProfileAttributes, BillingProfileAttributes> implements BillingProfileAttributes {
 
     @Column({
         primaryKey: true,

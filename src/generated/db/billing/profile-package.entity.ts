@@ -3,11 +3,31 @@ import {Contract} from './contract.entity'
 import {Voucher} from './voucher.entity'
 import {Reseller} from './reseller.entity'
 
+interface ProfilePackageAttributes {
+    id?: number;
+    resellerId?: number;
+    name: string;
+    description: string;
+    initialBalance: number;
+    serviceCharge: number;
+    balanceIntervalUnit: string;
+    balanceIntervalValue: number;
+    balanceIntervalStartMode: string;
+    carryOverMode: string;
+    timelyDurationUnit?: string;
+    timelyDurationValue?: number;
+    notopupDiscardIntervals?: number;
+    underrunLockThreshold?: number;
+    underrunLockLevel?: number;
+    underrunProfileThreshold?: number;
+    topupLockLevel?: number;
+}
+
 @Table({
     tableName: 'profile_packages',
     timestamps: false,
 })
-export class ProfilePackage extends Model {
+export class ProfilePackage extends Model<ProfilePackageAttributes, ProfilePackageAttributes> implements ProfilePackageAttributes {
 
     @Column({
         primaryKey: true,

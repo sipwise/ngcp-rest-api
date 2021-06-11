@@ -1,10 +1,20 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface ResellerBrandingAttributes {
+    id?: number;
+    resellerId: number;
+    css?: string;
+    logo?: Uint8Array;
+    logoImageType?: string;
+    cscColorPrimary?: string;
+    cscColorSecondary?: string;
+}
+
 @Table({
     tableName: 'reseller_brandings',
     timestamps: false,
 })
-export class ResellerBranding extends Model {
+export class ResellerBranding extends Model<ResellerBrandingAttributes, ResellerBrandingAttributes> implements ResellerBrandingAttributes {
 
     @Column({
         primaryKey: true,

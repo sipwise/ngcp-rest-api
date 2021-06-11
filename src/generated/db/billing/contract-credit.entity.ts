@@ -1,11 +1,21 @@
 import {BelongsTo, Column, DataType, ForeignKey, Index, Model, Table} from 'sequelize-typescript'
 import {ContractBalance} from './contract-balance.entity'
 
+interface ContractCreditAttributes {
+    id?: number;
+    balanceId: number;
+    state: string;
+    amount?: number;
+    reason?: string;
+    modifyTimestamp: Date;
+    createTimestamp: Date;
+}
+
 @Table({
     tableName: 'contract_credits',
     timestamps: false,
 })
-export class ContractCredit extends Model {
+export class ContractCredit extends Model<ContractCreditAttributes, ContractCreditAttributes> implements ContractCreditAttributes {
 
     @Column({
         primaryKey: true,

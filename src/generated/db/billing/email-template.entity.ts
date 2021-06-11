@@ -1,10 +1,20 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface EmailTemplateAttributes {
+    id?: number;
+    resellerId?: number;
+    name: string;
+    fromEmail: string;
+    subject: string;
+    body: string;
+    attachmentName: string;
+}
+
 @Table({
     tableName: 'email_templates',
     timestamps: false,
 })
-export class EmailTemplate extends Model {
+export class EmailTemplate extends Model<EmailTemplateAttributes, EmailTemplateAttributes> implements EmailTemplateAttributes {
 
     @Column({
         primaryKey: true,

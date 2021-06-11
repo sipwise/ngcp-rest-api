@@ -1,10 +1,34 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface TopupLogAttributes {
+    id?: number;
+    username?: string;
+    timestamp: string;
+    type: string;
+    outcome: string;
+    message?: string;
+    subscriberId?: number;
+    contractId?: number;
+    amount?: number;
+    voucherId?: number;
+    cashBalanceBefore?: number;
+    cashBalanceAfter?: number;
+    packageBeforeId?: number;
+    packageAfterId?: number;
+    profileBeforeId?: number;
+    profileAfterId?: number;
+    lockLevelBefore?: number;
+    lockLevelAfter?: number;
+    contractBalanceBeforeId?: number;
+    contractBalanceAfterId?: number;
+    requestToken?: string;
+}
+
 @Table({
     tableName: 'topup_log',
     timestamps: false,
 })
-export class TopupLog extends Model {
+export class TopupLog extends Model<TopupLogAttributes, TopupLogAttributes> implements TopupLogAttributes {
 
     @Column({
         primaryKey: true,

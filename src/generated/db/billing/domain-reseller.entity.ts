@@ -1,10 +1,16 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface DomainResellerAttributes {
+    id?: number;
+    domainId: number;
+    resellerId: number;
+}
+
 @Table({
     tableName: 'domain_resellers',
     timestamps: false,
 })
-export class DomainReseller extends Model {
+export class DomainReseller extends Model<DomainResellerAttributes, DomainResellerAttributes> implements DomainResellerAttributes {
 
     @Column({
         primaryKey: true,

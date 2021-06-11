@@ -1,10 +1,16 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface VoipNumberBlockResellerAttributes {
+    id?: number;
+    numberBlockId: number;
+    resellerId: number;
+}
+
 @Table({
     tableName: 'voip_number_block_resellers',
     timestamps: false,
 })
-export class VoipNumberBlockReseller extends Model {
+export class VoipNumberBlockReseller extends Model<VoipNumberBlockResellerAttributes, VoipNumberBlockResellerAttributes> implements VoipNumberBlockResellerAttributes {
 
     @Column({
         primaryKey: true,

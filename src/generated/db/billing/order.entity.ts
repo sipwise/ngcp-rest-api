@@ -5,11 +5,26 @@ import {Invoice} from './invoice.entity'
 import {Contract} from './contract.entity'
 import {Reseller} from './reseller.entity'
 
+interface OrderAttributes {
+    id?: number;
+    resellerId?: number;
+    customerId?: number;
+    deliveryContactId?: number;
+    type?: string;
+    state: string;
+    value?: number;
+    shippingCosts?: number;
+    invoiceId?: number;
+    modifyTimestamp: Date;
+    createTimestamp: Date;
+    completeTimestamp: Date;
+}
+
 @Table({
     tableName: 'orders',
     timestamps: false,
 })
-export class Order extends Model {
+export class Order extends Model<OrderAttributes, OrderAttributes> implements OrderAttributes {
 
     @Column({
         primaryKey: true,

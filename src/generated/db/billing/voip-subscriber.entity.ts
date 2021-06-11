@@ -1,14 +1,26 @@
-import {BelongsTo, Column, DataType, ForeignKey, HasMany, Index, Model, Table} from 'sequelize-typescript'
+import {BelongsTo, Column, DataType, ForeignKey, HasMany, HasOne, Index, Model, Table} from 'sequelize-typescript'
 import {Contract} from './contract.entity'
 import {Domain} from './domain.entity'
 import {VoipNumber} from './voip-number.entity'
 import {Voucher} from './voucher.entity'
 
+interface VoipSubscriberAttributes {
+    id?: number;
+    contractId: number;
+    uuid: string;
+    username: string;
+    domainId: number;
+    status: string;
+    primaryNumberId?: number;
+    externalId?: string;
+    contactId?: number;
+}
+
 @Table({
     tableName: 'voip_subscribers',
     timestamps: false,
 })
-export class VoipSubscriber extends Model {
+export class VoipSubscriber extends Model<VoipSubscriberAttributes, VoipSubscriberAttributes> implements VoipSubscriberAttributes {
 
     @ForeignKey(() => VoipNumber)
     @Column({
@@ -119,6 +131,14 @@ export class VoipSubscriber extends Model {
 
     @BelongsTo(() => VoipNumber)
     VoipNumber?: VoipNumber
+
+    // @BelongsTo(() => VoipNumber)
+    // VoipNumber?: VoipNumber
+    //
+    // @HasOne(() => VoipNumber, {
+    //     sourceKey: 'id',
+    // })
+    // VoipNumber?: VoipNumber
 
     @HasMany(() => Voucher, {
         sourceKey: 'id',

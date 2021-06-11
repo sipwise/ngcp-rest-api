@@ -1,10 +1,18 @@
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
+interface SubscriberPhonebookAttributes {
+    id?: number;
+    subscriberId: number;
+    name: string;
+    number: string;
+    shared: number;
+}
+
 @Table({
     tableName: 'subscriber_phonebook',
     timestamps: false,
 })
-export class SubscriberPhonebook extends Model {
+export class SubscriberPhonebook extends Model<SubscriberPhonebookAttributes, SubscriberPhonebookAttributes> implements SubscriberPhonebookAttributes {
 
     @Column({
         primaryKey: true,
