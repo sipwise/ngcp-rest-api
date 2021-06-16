@@ -6,6 +6,7 @@ import {Admin} from '../entities/db/billing/admin.entity'
 import {Contact} from '../entities/db/billing/contact.entity'
 import {Journal} from '../entities/db/billing/journal.entity'
 import {LoggerService} from '../logger/logger.service'
+import {Domain} from '../entities/db/billing/domain.entity'
 
 const logger = new LoggerService()
 
@@ -24,7 +25,7 @@ export const databaseProviders = [
             //       When raw == false class-transformer classToPlain sometime runs into "Maximum call stack size exceeded"
             config.query = {raw: false}
             const sequelize = new Sequelize(config)
-            sequelize.addModels([Admin, Contact, Journal])
+            sequelize.addModels([Admin, Contact, Journal, Domain])
             await sequelize.sync()
             return sequelize
         },

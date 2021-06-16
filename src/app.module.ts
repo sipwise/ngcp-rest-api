@@ -11,6 +11,7 @@ import {TxIDMiddleware} from './middleware/txid.middleware'
 import {TimestampMiddleware} from './middleware/timestamp.middleware'
 import {ContextMiddleware} from './middleware/context.middleware'
 import {config} from './config/main.config'
+import {DomainsModule} from './api/domains/domains.module'
 
 @Module({
     controllers: [
@@ -27,9 +28,9 @@ import {config} from './config/main.config'
             ],
         }),
         DatabaseModule,
-        // LoggingModule,
         AdminsModule,
         ContactsModule,
+        DomainsModule,
         AuthModule,
         JournalsModule,
         InterceptorModule,
