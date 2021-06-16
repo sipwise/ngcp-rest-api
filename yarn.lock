@@ -715,6 +715,13 @@
     jsonc-parser "3.0.0"
     pluralize "8.0.0"
 
+"@nestjs/sequelize@0.2.0":
+  version "0.2.0"
+  resolved "https://npm-registry.sipwise.com/@nestjs/sequelize/-/sequelize-0.2.0.tgz#11751eb348ecfbe2383360795c53c6d810c7e9ce"
+  integrity sha512-uS8mf+ReIE03Vzda2+/Ner0IGLYITLUml061CprADntgua4K3TnLVLt717HgqtdwYyrAPQNu/LxUBhCINEBxnQ==
+  dependencies:
+    uuid "8.3.2"
+
 "@nestjs/swagger@4.8.0":
   version "4.8.0"
   resolved "https://npm-registry.sipwise.com/@nestjs/swagger/-/swagger-4.8.0.tgz#7ebfeb0d59e0c27ff40beb429d7311b752c0dca4"

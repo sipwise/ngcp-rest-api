@@ -24,23 +24,23 @@ export class JournalsService {
     }
 
     /**
-     * Find all `Journal` entries. Allows to provide search filters for `resource_name` and `resource_id`.
+     * Find all `Journal` entries. Allows to provide search filters for `resourceName` and `resourceId`.
      * @param page Page limit
      * @param rows Rows per page limit
-     * @param resource_name Name of the resource
-     * @param resource_id ID of the named resource
+     * @param resourceName Name of the resource
+     * @param resourceId ID of the named resource
      */
-    async findAll(page?: string, rows?: string, resource_name?: string, resource_id?: string): Promise<Journal[]> {
+    async readAll(page?: string, rows?: string, resourceName?: string, resourceId?: string): Promise<Journal[]> {
         let filter: WhereOptions = {}
-        if (resource_name !== undefined) {
-            filter = {resource_name}
-            if (resource_id !== undefined) {
-                filter = {resource_name, resource_id}
+        if (resourceName !== undefined) {
+            filter = {resource_name: resourceName}
+            if (resourceId !== undefined) {
+                filter = {resource_name: resourceName, resource_id: resourceId}
             } else {
                 filter = {
                     [Op.or]: [
-                        {resource_name: resource_name},
-                        {id: resource_name},
+                        {resource_name: resourceName},
+                        {id: resourceName},
                     ],
                 }
             }
@@ -58,7 +58,7 @@ export class JournalsService {
      * Find one `Journal` by ID
      * @param id ID of Journal
      */
-    async findOne(id: number): Promise<Journal> {
+    async readOne(id: number): Promise<Journal> {
         return this.journalRepo.findOne<Journal>({where: {id}})
     }
 

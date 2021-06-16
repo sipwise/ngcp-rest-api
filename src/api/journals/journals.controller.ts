@@ -18,7 +18,7 @@ export class JournalsController {
     async findAll(@Query('page') page: string, @Query('rows') row: string) {
         page = page ? page : `${config.common.api_default_query_page}`
         row = row ? row : `${config.common.api_default_query_rows}`
-        return await this.journalsService.findAll(page, row)
+        return await this.journalsService.readAll(page, row)
     }
 
     @Get(':resource_name')
@@ -30,7 +30,7 @@ export class JournalsController {
     ) {
         page = page ? page : `${config.common.api_default_query_page}`
         row = row ? row : `${config.common.api_default_query_rows}`
-        return await this.journalsService.findAll(page, row, resourceName)
+        return await this.journalsService.readAll(page, row, resourceName)
     }
 
     @Get(':resource_name/:id')
@@ -43,6 +43,6 @@ export class JournalsController {
     ) {
         page = page ? page : `${config.common.api_default_query_page}`
         row = row ? row : `${config.common.api_default_query_rows}`
-        return await this.journalsService.findAll(page, row, resourceName, resourceId)
+        return await this.journalsService.readAll(page, row, resourceName, resourceId)
     }
 }

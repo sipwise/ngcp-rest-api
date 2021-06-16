@@ -76,6 +76,6 @@ export class AdminsController {
     ) {
         page = page ? page : `${config.common.api_default_query_page}`
         row = row ? row : `${config.common.api_default_query_rows}`
-        return this.journalsService.findAll(page, row, 'admins', id)
+        return this.journalsService.readAll(page, row, 'admins', id)
     }
 }
