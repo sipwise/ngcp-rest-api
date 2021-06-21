@@ -1,4 +1,4 @@
-import {Sequelize} from 'sequelize-typescript'
+import {Sequelize, SequelizeOptions} from 'sequelize-typescript'
 import * as mysql2 from 'mysql2'
 import {DATABASES} from '../config/constants.config'
 import {databaseConfig} from '../config/database.config'
@@ -14,8 +14,7 @@ export const databaseProviders = [
     {
         provide: DATABASES.billing.token,
         useFactory: async () => {
-            let config
-            config = databaseConfig['billing']
+            let config = databaseConfig['billing']
             config.logging = (msg) => logger.log(msg)
             if (config.dialect === 'mysql') {
                 config.dialectModule = mysql2 // workaround for webpack (please install mysql2 module)

@@ -1,8 +1,8 @@
-import {DatabaseConfigAttributes} from '../interfaces/db-config.interface'
 import {DATABASES} from '../config/constants.config'
 import {config} from '../config/main.config'
+import {SequelizeOptions} from 'sequelize-typescript'
 
-export const databaseConfig: { [key: string]: DatabaseConfigAttributes } = {
+export const databaseConfig: { [key: string]: SequelizeOptions } = {
     billing: {
         username: config.database.user,
         password: config.database.pass,
