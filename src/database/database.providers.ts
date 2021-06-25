@@ -25,7 +25,8 @@ export const databaseProviders = [
             config.query = {raw: false}
             const sequelize = new Sequelize(config)
             sequelize.addModels([Admin, Contact, Journal, Domain])
-            await sequelize.sync()
+            // models sync is not allowed
+            // await sequelize.sync()
             return sequelize
         },
     },
