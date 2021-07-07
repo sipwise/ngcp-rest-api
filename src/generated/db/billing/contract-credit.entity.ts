@@ -3,12 +3,12 @@ import {ContractBalance} from './contract-balance.entity'
 
 interface ContractCreditAttributes {
     id?: number;
-    balanceId: number;
+    balance_id: number;
     state: string;
     amount?: number;
     reason?: string;
-    modifyTimestamp: Date;
-    createTimestamp: Date;
+    modify_timestamp: Date;
+    create_timestamp: Date;
 }
 
 @Table({
@@ -32,7 +32,6 @@ export class ContractCredit extends Model<ContractCreditAttributes, ContractCred
 
     @ForeignKey(() => ContractBalance)
     @Column({
-        field: 'balance_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -41,7 +40,7 @@ export class ContractCredit extends Model<ContractCreditAttributes, ContractCred
         order: 'ASC',
         unique: false,
     })
-    balanceId!: number
+    balance_id!: number
 
     @Column({
         type: DataType.ENUM('init', 'transact', 'charged', 'failed', 'success'),
@@ -61,16 +60,14 @@ export class ContractCredit extends Model<ContractCreditAttributes, ContractCred
     reason?: string
 
     @Column({
-        field: 'modify_timestamp',
         type: DataType.DATE,
     })
-    modifyTimestamp!: Date
+    modify_timestamp!: Date
 
     @Column({
-        field: 'create_timestamp',
         type: DataType.DATE,
     })
-    createTimestamp!: Date
+    create_timestamp!: Date
 
     @BelongsTo(() => ContractBalance)
     ContractBalance?: ContractBalance

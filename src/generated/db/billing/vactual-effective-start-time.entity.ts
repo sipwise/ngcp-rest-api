@@ -1,8 +1,8 @@
 import {Column, DataType, Model, Table} from 'sequelize-typescript'
 
 interface VActualEffectiveStartTimeAttributes {
-    contractId: number;
-    effectiveStartTime?: string;
+    contract_id: number;
+    effective_start_time?: string;
 }
 
 @Table({
@@ -13,16 +13,14 @@ interface VActualEffectiveStartTimeAttributes {
 export class VActualEffectiveStartTime extends Model<VActualEffectiveStartTimeAttributes, VActualEffectiveStartTimeAttributes> implements VActualEffectiveStartTimeAttributes {
 
     @Column({
-        field: 'contract_id',
         type: DataType.INTEGER,
     })
-    contractId!: number
+    contract_id!: number
 
     @Column({
-        field: 'effective_start_time',
         allowNull: true,
         type: DataType.DECIMAL(13, 3),
     })
-    effectiveStartTime?: string
+    effective_start_time?: string
 
 }

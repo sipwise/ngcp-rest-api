@@ -2,24 +2,24 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface AdminAttributes {
     id?: number;
-    resellerId?: number;
+    reseller_id?: number;
     login: string;
     md5pass?: string;
     saltedpass?: string;
-    isMaster: number;
-    isSuperuser: number;
-    isCcare: number;
-    isActive: number;
-    readOnly: number;
-    showPasswords: number;
-    callData: number;
-    billingData: number;
-    lawfulIntercept: number;
-    sslClientMSerial?: number;
-    sslClientCertificate?: string;
+    is_master: number;
+    is_superuser: number;
+    is_ccare: number;
+    is_active: number;
+    read_only: number;
+    show_passwords: number;
+    call_data: number;
+    billing_data: number;
+    lawful_intercept: number;
+    ssl_client_m_serial?: number;
+    ssl_client_certificate?: string;
     email?: string;
-    canResetPassword: number;
-    isSystem: number;
+    can_reset_password: number;
+    is_system: number;
 }
 
 @Table({
@@ -42,7 +42,6 @@ export class Admin extends Model<AdminAttributes, AdminAttributes> implements Ad
     id?: number
 
     @Column({
-        field: 'reseller_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -52,7 +51,7 @@ export class Admin extends Model<AdminAttributes, AdminAttributes> implements Ad
         order: 'ASC',
         unique: false,
     })
-    resellerId?: number
+    reseller_id?: number
 
     @Column({
         type: DataType.STRING(31),
@@ -78,61 +77,51 @@ export class Admin extends Model<AdminAttributes, AdminAttributes> implements Ad
     saltedpass?: string
 
     @Column({
-        field: 'is_master',
         type: DataType.TINYINT,
     })
-    isMaster!: number
+    is_master!: number
 
     @Column({
-        field: 'is_superuser',
         type: DataType.TINYINT,
     })
-    isSuperuser!: number
+    is_superuser!: number
 
     @Column({
-        field: 'is_ccare',
         type: DataType.TINYINT,
     })
-    isCcare!: number
+    is_ccare!: number
 
     @Column({
-        field: 'is_active',
         type: DataType.TINYINT,
     })
-    isActive!: number
+    is_active!: number
 
     @Column({
-        field: 'read_only',
         type: DataType.TINYINT,
     })
-    readOnly!: number
+    read_only!: number
 
     @Column({
-        field: 'show_passwords',
         type: DataType.TINYINT,
     })
-    showPasswords!: number
+    show_passwords!: number
 
     @Column({
-        field: 'call_data',
         type: DataType.TINYINT,
     })
-    callData!: number
+    call_data!: number
 
     @Column({
-        field: 'billing_data',
         type: DataType.TINYINT,
     })
-    billingData!: number
+    billing_data!: number
 
     @Column({
-        field: 'lawful_intercept',
         type: DataType.TINYINT,
     })
-    lawfulIntercept!: number
+    lawful_intercept!: number
 
     @Column({
-        field: 'ssl_client_m_serial',
         allowNull: true,
         type: DataType.BIGINT,
     })
@@ -142,14 +131,13 @@ export class Admin extends Model<AdminAttributes, AdminAttributes> implements Ad
         order: 'ASC',
         unique: true,
     })
-    sslClientMSerial?: number
+    ssl_client_m_serial?: number
 
     @Column({
-        field: 'ssl_client_certificate',
         allowNull: true,
         type: DataType.STRING,
     })
-    sslClientCertificate?: string
+    ssl_client_certificate?: string
 
     @Column({
         allowNull: true,
@@ -164,16 +152,13 @@ export class Admin extends Model<AdminAttributes, AdminAttributes> implements Ad
     email?: string
 
     @Column({
-        field: 'can_reset_password',
         type: DataType.TINYINT,
     })
-    canResetPassword!: number
+    can_reset_password!: number
 
     @Column({
-        field: 'is_system',
         type: DataType.TINYINT,
     })
-    isSystem!: number
+    is_system!: number
 
 }
-

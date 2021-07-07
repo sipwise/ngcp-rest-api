@@ -2,7 +2,7 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface ResellerPhonebookAttributes {
     id?: number;
-    resellerId: number;
+    reseller_id: number;
     name: string;
     number: string;
 }
@@ -27,7 +27,6 @@ export class ResellerPhonebook extends Model<ResellerPhonebookAttributes, Resell
     id?: number
 
     @Column({
-        field: 'reseller_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -36,7 +35,7 @@ export class ResellerPhonebook extends Model<ResellerPhonebookAttributes, Resell
         order: 'ASC',
         unique: true,
     })
-    resellerId!: number
+    reseller_id!: number
 
     @Column({
         type: DataType.STRING(255),

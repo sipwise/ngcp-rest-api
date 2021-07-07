@@ -6,7 +6,7 @@ import {Reseller} from './reseller.entity'
 
 interface ContactAttributes {
     id?: number;
-    resellerId?: number;
+    reseller_id?: number;
     gender?: string;
     firstname?: string;
     lastname?: string;
@@ -20,8 +20,8 @@ interface ContactAttributes {
     mobilenumber?: string;
     email?: string;
     newsletter: number;
-    modifyTimestamp: Date;
-    createTimestamp: Date;
+    modify_timestamp: Date;
+    create_timestamp: Date;
     faxnumber?: string;
     iban?: string;
     bic?: string;
@@ -38,7 +38,7 @@ interface ContactAttributes {
     gpp8?: string;
     gpp9?: string;
     status: string;
-    terminateTimestamp?: Date;
+    terminate_timestamp?: Date;
     timezone?: string;
 }
 
@@ -63,7 +63,6 @@ export class Contact extends Model<ContactAttributes, ContactAttributes> impleme
 
     @ForeignKey(() => Reseller)
     @Column({
-        field: 'reseller_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -73,7 +72,7 @@ export class Contact extends Model<ContactAttributes, ContactAttributes> impleme
         order: 'ASC',
         unique: false,
     })
-    resellerId?: number
+    reseller_id?: number
 
     @Column({
         allowNull: true,
@@ -159,16 +158,14 @@ export class Contact extends Model<ContactAttributes, ContactAttributes> impleme
     newsletter!: number
 
     @Column({
-        field: 'modify_timestamp',
         type: DataType.DATE,
     })
-    modifyTimestamp!: Date
+    modify_timestamp!: Date
 
     @Column({
-        field: 'create_timestamp',
         type: DataType.DATE,
     })
-    createTimestamp!: Date
+    create_timestamp!: Date
 
     @Column({
         allowNull: true,
@@ -266,11 +263,10 @@ export class Contact extends Model<ContactAttributes, ContactAttributes> impleme
     status!: string
 
     @Column({
-        field: 'terminate_timestamp',
         allowNull: true,
         type: DataType.DATE,
     })
-    terminateTimestamp?: Date
+    terminate_timestamp?: Date
 
     @Column({
         allowNull: true,
@@ -289,14 +285,14 @@ export class Contact extends Model<ContactAttributes, ContactAttributes> impleme
     Customers?: Customer[]
 
     // @HasMany(() => Customer, {
-    //     sourceKey: 'id',
+    //   sourceKey: 'id'
     // })
-    // Customers?: Customer[]
-    //
+    // Customers?: Customer[];
+
     // @HasMany(() => Customer, {
-    //     sourceKey: 'id',
+    //   sourceKey: 'id'
     // })
-    // Customers?: Customer[]
+    // Customers?: Customer[];
 
     @HasMany(() => Order, {
         sourceKey: 'id',
@@ -305,4 +301,5 @@ export class Contact extends Model<ContactAttributes, ContactAttributes> impleme
 
     @BelongsTo(() => Reseller)
     Reseller?: Reseller
+
 }

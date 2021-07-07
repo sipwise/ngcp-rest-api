@@ -8,13 +8,13 @@ interface VoucherAttributes {
     id?: number;
     code: string;
     amount: number;
-    resellerId: number;
-    customerId?: number;
-    packageId?: number;
-    usedBySubscriberId?: number;
-    createdAt: Date;
-    usedAt: Date;
-    validUntil: Date;
+    reseller_id: number;
+    customer_id?: number;
+    package_id?: number;
+    used_by_subscriber_id?: number;
+    created_at: Date;
+    used_at: Date;
+    valid_until: Date;
 }
 
 @Table({
@@ -60,7 +60,6 @@ export class Voucher extends Model<VoucherAttributes, VoucherAttributes> impleme
 
     @ForeignKey(() => Reseller)
     @Column({
-        field: 'reseller_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -75,11 +74,10 @@ export class Voucher extends Model<VoucherAttributes, VoucherAttributes> impleme
         order: 'ASC',
         unique: false,
     })
-    resellerId!: number
+    reseller_id!: number
 
     @ForeignKey(() => Contract)
     @Column({
-        field: 'customer_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -89,11 +87,10 @@ export class Voucher extends Model<VoucherAttributes, VoucherAttributes> impleme
         order: 'ASC',
         unique: false,
     })
-    customerId?: number
+    customer_id?: number
 
     @ForeignKey(() => ProfilePackage)
     @Column({
-        field: 'package_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -103,11 +100,10 @@ export class Voucher extends Model<VoucherAttributes, VoucherAttributes> impleme
         order: 'ASC',
         unique: false,
     })
-    packageId?: number
+    package_id?: number
 
     @ForeignKey(() => VoipSubscriber)
     @Column({
-        field: 'used_by_subscriber_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -123,22 +119,19 @@ export class Voucher extends Model<VoucherAttributes, VoucherAttributes> impleme
         order: 'ASC',
         unique: false,
     })
-    usedBySubscriberId?: number
+    used_by_subscriber_id?: number
 
     @Column({
-        field: 'created_at',
         type: DataType.DATE,
     })
-    createdAt!: Date
+    created_at!: Date
 
     @Column({
-        field: 'used_at',
         type: DataType.DATE,
     })
-    usedAt!: Date
+    used_at!: Date
 
     @Column({
-        field: 'valid_until',
         type: DataType.DATE,
     })
     @Index({
@@ -147,7 +140,7 @@ export class Voucher extends Model<VoucherAttributes, VoucherAttributes> impleme
         order: 'ASC',
         unique: false,
     })
-    validUntil!: Date
+    valid_until!: Date
 
     @BelongsTo(() => Contract)
     Contract?: Contract

@@ -5,14 +5,14 @@ import {Reseller} from './reseller.entity'
 
 interface ProductAttributes {
     id?: number;
-    resellerId?: number;
+    reseller_id?: number;
     class: string;
     handle: string;
     name: string;
-    onSale: number;
+    on_sale: number;
     price?: number;
     weight?: number;
-    billingProfileId?: number;
+    billing_profile_id?: number;
 }
 
 @Table({
@@ -36,7 +36,6 @@ export class Product extends Model<ProductAttributes, ProductAttributes> impleme
 
     @ForeignKey(() => Reseller)
     @Column({
-        field: 'reseller_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -58,7 +57,7 @@ export class Product extends Model<ProductAttributes, ProductAttributes> impleme
         order: 'ASC',
         unique: false,
     })
-    resellerId?: number
+    reseller_id?: number
 
     @Column({
         type: DataType.ENUM('sippeering', 'pstnpeering', 'reseller', 'sipaccount', 'pbxaccount'),
@@ -88,10 +87,9 @@ export class Product extends Model<ProductAttributes, ProductAttributes> impleme
     name!: string
 
     @Column({
-        field: 'on_sale',
         type: DataType.TINYINT,
     })
-    onSale!: number
+    on_sale!: number
 
     @Column({
         allowNull: true,
@@ -107,7 +105,6 @@ export class Product extends Model<ProductAttributes, ProductAttributes> impleme
 
     @ForeignKey(() => BillingProfile)
     @Column({
-        field: 'billing_profile_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -117,7 +114,7 @@ export class Product extends Model<ProductAttributes, ProductAttributes> impleme
         order: 'ASC',
         unique: false,
     })
-    billingProfileId?: number
+    billing_profile_id?: number
 
     @BelongsTo(() => BillingProfile)
     BillingProfile?: BillingProfile

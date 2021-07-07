@@ -6,7 +6,7 @@ interface LnpProviderAttributes {
     name?: string;
     prefix: string;
     authoritative: number;
-    skipRewrite: number;
+    skip_rewrite: number;
 }
 
 @Table({
@@ -45,10 +45,9 @@ export class LnpProvider extends Model<LnpProviderAttributes, LnpProviderAttribu
     authoritative!: number
 
     @Column({
-        field: 'skip_rewrite',
         type: DataType.TINYINT,
     })
-    skipRewrite!: number
+    skip_rewrite!: number
 
     @HasMany(() => NcosLnpList, {
         sourceKey: 'id',

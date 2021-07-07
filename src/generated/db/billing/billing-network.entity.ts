@@ -4,7 +4,7 @@ import {Reseller} from './reseller.entity'
 
 interface BillingNetworkAttributes {
     id?: number;
-    resellerId?: number;
+    reseller_id?: number;
     name: string;
     description: string;
     status: string;
@@ -31,7 +31,6 @@ export class BillingNetwork extends Model<BillingNetworkAttributes, BillingNetwo
 
     @ForeignKey(() => Reseller)
     @Column({
-        field: 'reseller_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -41,7 +40,7 @@ export class BillingNetwork extends Model<BillingNetworkAttributes, BillingNetwo
         order: 'ASC',
         unique: true,
     })
-    resellerId?: number
+    reseller_id?: number
 
     @Column({
         type: DataType.STRING(255),

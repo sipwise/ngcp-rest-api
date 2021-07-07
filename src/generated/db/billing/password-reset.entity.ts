@@ -2,7 +2,7 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface PasswordResetAttributes {
     id?: number;
-    subscriberId: number;
+    subscriber_id: number;
     uuid: string;
     timestamp: number;
 }
@@ -27,7 +27,6 @@ export class PasswordReset extends Model<PasswordResetAttributes, PasswordResetA
     id?: number
 
     @Column({
-        field: 'subscriber_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -36,7 +35,7 @@ export class PasswordReset extends Model<PasswordResetAttributes, PasswordResetA
         order: 'ASC',
         unique: false,
     })
-    subscriberId!: number
+    subscriber_id!: number
 
     @Column({
         type: DataType.CHAR(36),

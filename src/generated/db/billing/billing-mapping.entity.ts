@@ -2,12 +2,12 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface BillingMappingAttributes {
     id?: number;
-    startDate?: Date;
-    endDate?: Date;
-    billingProfileId?: number;
-    contractId: number;
-    productId?: number;
-    networkId?: number;
+    start_date?: Date;
+    end_date?: Date;
+    billing_profile_id?: number;
+    contract_id: number;
+    product_id?: number;
+    network_id?: number;
 }
 
 @Table({
@@ -30,7 +30,6 @@ export class BillingMapping extends Model<BillingMappingAttributes, BillingMappi
     id?: number
 
     @Column({
-        field: 'start_date',
         allowNull: true,
         type: DataType.DATE,
     })
@@ -40,17 +39,15 @@ export class BillingMapping extends Model<BillingMappingAttributes, BillingMappi
         order: 'ASC',
         unique: false,
     })
-    startDate?: Date
+    start_date?: Date
 
     @Column({
-        field: 'end_date',
         allowNull: true,
         type: DataType.DATE,
     })
-    endDate?: Date
+    end_date?: Date
 
     @Column({
-        field: 'billing_profile_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -60,10 +57,9 @@ export class BillingMapping extends Model<BillingMappingAttributes, BillingMappi
         order: 'ASC',
         unique: false,
     })
-    billingProfileId?: number
+    billing_profile_id?: number
 
     @Column({
-        field: 'contract_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -72,10 +68,9 @@ export class BillingMapping extends Model<BillingMappingAttributes, BillingMappi
         order: 'ASC',
         unique: false,
     })
-    contractId!: number
+    contract_id!: number
 
     @Column({
-        field: 'product_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -85,10 +80,9 @@ export class BillingMapping extends Model<BillingMappingAttributes, BillingMappi
         order: 'ASC',
         unique: false,
     })
-    productId?: number
+    product_id?: number
 
     @Column({
-        field: 'network_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -98,6 +92,6 @@ export class BillingMapping extends Model<BillingMappingAttributes, BillingMappi
         order: 'ASC',
         unique: false,
     })
-    networkId?: number
+    network_id?: number
 
 }

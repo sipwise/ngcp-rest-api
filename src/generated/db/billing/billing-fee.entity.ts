@@ -4,28 +4,28 @@ import {BillingZone} from './billing-zone.entity'
 
 interface BillingFeeAttributes {
     id?: number;
-    billingProfileId: number;
-    billingZoneId?: number;
+    billing_profile_id: number;
+    billing_zone_id?: number;
     source: string;
     destination: string;
     direction: string;
     type: string;
-    onpeakInitRate: number;
-    onpeakInitInterval: number;
-    onpeakFollowRate: number;
-    onpeakFollowInterval: number;
-    offpeakInitRate: number;
-    offpeakInitInterval: number;
-    offpeakFollowRate: number;
-    offpeakFollowInterval: number;
-    onpeakUseFreeTime: number;
-    matchMode: string;
-    onpeakExtraRate: number;
-    onpeakExtraSecond?: number;
-    offpeakExtraRate: number;
-    offpeakExtraSecond?: number;
-    offpeakUseFreeTime: number;
-    aocPulseAmountPerMessage: number;
+    onpeak_init_rate: number;
+    onpeak_init_interval: number;
+    onpeak_follow_rate: number;
+    onpeak_follow_interval: number;
+    offpeak_init_rate: number;
+    offpeak_init_interval: number;
+    offpeak_follow_rate: number;
+    offpeak_follow_interval: number;
+    onpeak_use_free_time: number;
+    match_mode: string;
+    onpeak_extra_rate: number;
+    onpeak_extra_second?: number;
+    offpeak_extra_rate: number;
+    offpeak_extra_second?: number;
+    offpeak_use_free_time: number;
+    aoc_pulse_amount_per_message: number;
 }
 
 @Table({
@@ -49,7 +49,6 @@ export class BillingFee extends Model<BillingFeeAttributes, BillingFeeAttributes
 
     @ForeignKey(() => BillingProfile)
     @Column({
-        field: 'billing_profile_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -76,11 +75,10 @@ export class BillingFee extends Model<BillingFeeAttributes, BillingFeeAttributes
         order: 'ASC',
         unique: false,
     })
-    billingProfileId!: number
+    billing_profile_id!: number
 
     @ForeignKey(() => BillingZone)
     @Column({
-        field: 'billing_zone_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -96,7 +94,7 @@ export class BillingFee extends Model<BillingFeeAttributes, BillingFeeAttributes
         order: 'ASC',
         unique: false,
     })
-    billingZoneId?: number
+    billing_zone_id?: number
 
     @Column({
         type: DataType.STRING(255),
@@ -173,61 +171,51 @@ export class BillingFee extends Model<BillingFeeAttributes, BillingFeeAttributes
     type!: string
 
     @Column({
-        field: 'onpeak_init_rate',
         type: DataType.DOUBLE(22),
     })
-    onpeakInitRate!: number
+    onpeak_init_rate!: number
 
     @Column({
-        field: 'onpeak_init_interval',
         type: DataType.INTEGER,
     })
-    onpeakInitInterval!: number
+    onpeak_init_interval!: number
 
     @Column({
-        field: 'onpeak_follow_rate',
         type: DataType.DOUBLE(22),
     })
-    onpeakFollowRate!: number
+    onpeak_follow_rate!: number
 
     @Column({
-        field: 'onpeak_follow_interval',
         type: DataType.INTEGER,
     })
-    onpeakFollowInterval!: number
+    onpeak_follow_interval!: number
 
     @Column({
-        field: 'offpeak_init_rate',
         type: DataType.DOUBLE(22),
     })
-    offpeakInitRate!: number
+    offpeak_init_rate!: number
 
     @Column({
-        field: 'offpeak_init_interval',
         type: DataType.INTEGER,
     })
-    offpeakInitInterval!: number
+    offpeak_init_interval!: number
 
     @Column({
-        field: 'offpeak_follow_rate',
         type: DataType.DOUBLE(22),
     })
-    offpeakFollowRate!: number
+    offpeak_follow_rate!: number
 
     @Column({
-        field: 'offpeak_follow_interval',
         type: DataType.INTEGER,
     })
-    offpeakFollowInterval!: number
+    offpeak_follow_interval!: number
 
     @Column({
-        field: 'onpeak_use_free_time',
         type: DataType.TINYINT,
     })
-    onpeakUseFreeTime!: number
+    onpeak_use_free_time!: number
 
     @Column({
-        field: 'match_mode',
         type: DataType.ENUM('regex_longest_pattern', 'regex_longest_match', 'prefix', 'exact_destination'),
     })
     @Index({
@@ -242,45 +230,39 @@ export class BillingFee extends Model<BillingFeeAttributes, BillingFeeAttributes
         order: 'ASC',
         unique: false,
     })
-    matchMode!: string
+    match_mode!: string
 
     @Column({
-        field: 'onpeak_extra_rate',
         type: DataType.DOUBLE(22),
     })
-    onpeakExtraRate!: number
+    onpeak_extra_rate!: number
 
     @Column({
-        field: 'onpeak_extra_second',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    onpeakExtraSecond?: number
+    onpeak_extra_second?: number
 
     @Column({
-        field: 'offpeak_extra_rate',
         type: DataType.DOUBLE(22),
     })
-    offpeakExtraRate!: number
+    offpeak_extra_rate!: number
 
     @Column({
-        field: 'offpeak_extra_second',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    offpeakExtraSecond?: number
+    offpeak_extra_second?: number
 
     @Column({
-        field: 'offpeak_use_free_time',
         type: DataType.TINYINT,
     })
-    offpeakUseFreeTime!: number
+    offpeak_use_free_time!: number
 
     @Column({
-        field: 'aoc_pulse_amount_per_message',
         type: DataType.DOUBLE(22),
     })
-    aocPulseAmountPerMessage!: number
+    aoc_pulse_amount_per_message!: number
 
     @BelongsTo(() => BillingProfile)
     BillingProfile?: BillingProfile

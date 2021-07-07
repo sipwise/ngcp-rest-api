@@ -1,8 +1,8 @@
 import {Column, DataType, Model, Table} from 'sequelize-typescript'
 
 interface VContractTimezoneAttributes {
-    contactId: number;
-    contractId: number;
+    contact_id: number;
+    contract_id: number;
     name?: string;
 }
 
@@ -14,16 +14,14 @@ interface VContractTimezoneAttributes {
 export class VContractTimezone extends Model<VContractTimezoneAttributes, VContractTimezoneAttributes> implements VContractTimezoneAttributes {
 
     @Column({
-        field: 'contact_id',
         type: DataType.INTEGER,
     })
-    contactId!: number
+    contact_id!: number
 
     @Column({
-        field: 'contract_id',
         type: DataType.INTEGER,
     })
-    contractId!: number
+    contract_id!: number
 
     @Column({
         allowNull: true,

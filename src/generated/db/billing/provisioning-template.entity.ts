@@ -2,13 +2,13 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface ProvisioningTemplateAttributes {
     id?: number;
-    resellerId?: number;
+    reseller_id?: number;
     name: string;
     description: string;
     lang: string;
     yaml: string;
-    modifyTimestamp: Date;
-    createTimestamp: Date;
+    modify_timestamp: Date;
+    create_timestamp: Date;
 }
 
 @Table({
@@ -31,7 +31,6 @@ export class ProvisioningTemplate extends Model<ProvisioningTemplateAttributes, 
     id?: number
 
     @Column({
-        field: 'reseller_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -41,7 +40,7 @@ export class ProvisioningTemplate extends Model<ProvisioningTemplateAttributes, 
         order: 'ASC',
         unique: true,
     })
-    resellerId?: number
+    reseller_id?: number
 
     @Column({
         type: DataType.STRING(255),
@@ -70,15 +69,13 @@ export class ProvisioningTemplate extends Model<ProvisioningTemplateAttributes, 
     yaml!: string
 
     @Column({
-        field: 'modify_timestamp',
         type: DataType.DATE,
     })
-    modifyTimestamp!: Date
+    modify_timestamp!: Date
 
     @Column({
-        field: 'create_timestamp',
         type: DataType.DATE,
     })
-    createTimestamp!: Date
+    create_timestamp!: Date
 
 }

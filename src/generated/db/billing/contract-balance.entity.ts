@@ -5,20 +5,20 @@ import {Invoice} from './invoice.entity'
 
 interface ContractBalanceAttributes {
     id?: number;
-    contractId: number;
-    cashBalance?: number;
-    cashBalanceInterval: number;
-    freeTimeBalance?: number;
-    freeTimeBalanceInterval: number;
-    topupCount: number;
-    timelyTopupCount: number;
+    contract_id: number;
+    cash_balance?: number;
+    cash_balance_interval: number;
+    free_time_balance?: number;
+    free_time_balance_interval: number;
+    topup_count: number;
+    timely_topup_count: number;
     start: Date;
     end: Date;
-    invoiceId?: number;
-    underrunProfiles?: Date;
-    underrunLock?: Date;
-    initialCashBalance?: number;
-    initialFreeTimeBalance?: number;
+    invoice_id?: number;
+    underrun_profiles?: Date;
+    underrun_lock?: Date;
+    initial_cash_balance?: number;
+    initial_free_time_balance?: number;
 }
 
 @Table({
@@ -42,7 +42,6 @@ export class ContractBalance extends Model<ContractBalanceAttributes, ContractBa
 
     @ForeignKey(() => Contract)
     @Column({
-        field: 'contract_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -51,45 +50,39 @@ export class ContractBalance extends Model<ContractBalanceAttributes, ContractBa
         order: 'ASC',
         unique: true,
     })
-    contractId!: number
+    contract_id!: number
 
     @Column({
-        field: 'cash_balance',
         allowNull: true,
         type: DataType.DOUBLE(22),
     })
-    cashBalance?: number
+    cash_balance?: number
 
     @Column({
-        field: 'cash_balance_interval',
         type: DataType.DOUBLE(22),
     })
-    cashBalanceInterval!: number
+    cash_balance_interval!: number
 
     @Column({
-        field: 'free_time_balance',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    freeTimeBalance?: number
+    free_time_balance?: number
 
     @Column({
-        field: 'free_time_balance_interval',
         type: DataType.INTEGER,
     })
-    freeTimeBalanceInterval!: number
+    free_time_balance_interval!: number
 
     @Column({
-        field: 'topup_count',
         type: DataType.INTEGER,
     })
-    topupCount!: number
+    topup_count!: number
 
     @Column({
-        field: 'timely_topup_count',
         type: DataType.INTEGER,
     })
-    timelyTopupCount!: number
+    timely_topup_count!: number
 
     @Column({
         type: DataType.DATE,
@@ -115,7 +108,6 @@ export class ContractBalance extends Model<ContractBalanceAttributes, ContractBa
 
     @ForeignKey(() => Invoice)
     @Column({
-        field: 'invoice_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -125,35 +117,31 @@ export class ContractBalance extends Model<ContractBalanceAttributes, ContractBa
         order: 'ASC',
         unique: false,
     })
-    invoiceId?: number
+    invoice_id?: number
 
     @Column({
-        field: 'underrun_profiles',
         allowNull: true,
         type: DataType.DATE,
     })
-    underrunProfiles?: Date
+    underrun_profiles?: Date
 
     @Column({
-        field: 'underrun_lock',
         allowNull: true,
         type: DataType.DATE,
     })
-    underrunLock?: Date
+    underrun_lock?: Date
 
     @Column({
-        field: 'initial_cash_balance',
         allowNull: true,
         type: DataType.DOUBLE(22),
     })
-    initialCashBalance?: number
+    initial_cash_balance?: number
 
     @Column({
-        field: 'initial_free_time_balance',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    initialFreeTimeBalance?: number
+    initial_free_time_balance?: number
 
     @HasMany(() => ContractCredit, {
         sourceKey: 'id',

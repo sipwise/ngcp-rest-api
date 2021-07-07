@@ -2,8 +2,8 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface VoipNumberBlockResellerAttributes {
     id?: number;
-    numberBlockId: number;
-    resellerId: number;
+    number_block_id: number;
+    reseller_id: number;
 }
 
 @Table({
@@ -26,7 +26,6 @@ export class VoipNumberBlockReseller extends Model<VoipNumberBlockResellerAttrib
     id?: number
 
     @Column({
-        field: 'number_block_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -35,10 +34,9 @@ export class VoipNumberBlockReseller extends Model<VoipNumberBlockResellerAttrib
         order: 'ASC',
         unique: false,
     })
-    numberBlockId!: number
+    number_block_id!: number
 
     @Column({
-        field: 'reseller_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -47,6 +45,6 @@ export class VoipNumberBlockReseller extends Model<VoipNumberBlockResellerAttrib
         order: 'ASC',
         unique: false,
     })
-    resellerId!: number
+    reseller_id!: number
 
 }

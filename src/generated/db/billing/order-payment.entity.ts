@@ -2,8 +2,8 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface OrderPaymentAttributes {
     id?: number;
-    orderId: number;
-    paymentId: number;
+    order_id: number;
+    payment_id: number;
 }
 
 @Table({
@@ -26,7 +26,6 @@ export class OrderPayment extends Model<OrderPaymentAttributes, OrderPaymentAttr
     id?: number
 
     @Column({
-        field: 'order_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -35,10 +34,9 @@ export class OrderPayment extends Model<OrderPaymentAttributes, OrderPaymentAttr
         order: 'ASC',
         unique: false,
     })
-    orderId!: number
+    order_id!: number
 
     @Column({
-        field: 'payment_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -47,6 +45,6 @@ export class OrderPayment extends Model<OrderPaymentAttributes, OrderPaymentAttr
         order: 'ASC',
         unique: false,
     })
-    paymentId!: number
+    payment_id!: number
 
 }

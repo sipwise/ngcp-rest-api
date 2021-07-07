@@ -1,4 +1,4 @@
-import {BelongsTo, Column, DataType, ForeignKey, HasMany, HasOne, Index, Model, Table} from 'sequelize-typescript'
+import {BelongsTo, Column, DataType, ForeignKey, HasMany, Index, Model, Table} from 'sequelize-typescript'
 import {Reseller} from './reseller.entity'
 import {VoipSubscriber} from './voip-subscriber.entity'
 
@@ -7,11 +7,11 @@ interface VoipNumberAttributes {
     cc: number;
     ac: string;
     sn: string;
-    resellerId?: number;
-    subscriberId?: number;
+    reseller_id?: number;
+    subscriber_id?: number;
     status: string;
     ported: number;
-    listTimestamp: Date;
+    list_timestamp: Date;
 }
 
 @Table({
@@ -69,7 +69,6 @@ export class VoipNumber extends Model<VoipNumberAttributes, VoipNumberAttributes
 
     @ForeignKey(() => Reseller)
     @Column({
-        field: 'reseller_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -79,10 +78,9 @@ export class VoipNumber extends Model<VoipNumberAttributes, VoipNumberAttributes
         order: 'ASC',
         unique: false,
     })
-    resellerId?: number
+    reseller_id?: number
 
     @Column({
-        field: 'subscriber_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -92,7 +90,7 @@ export class VoipNumber extends Model<VoipNumberAttributes, VoipNumberAttributes
         order: 'ASC',
         unique: false,
     })
-    subscriberId?: number
+    subscriber_id?: number
 
     @Column({
         type: DataType.ENUM('active', 'reserved', 'locked', 'deported'),
@@ -105,7 +103,6 @@ export class VoipNumber extends Model<VoipNumberAttributes, VoipNumberAttributes
     ported!: number
 
     @Column({
-        field: 'list_timestamp',
         type: DataType.DATE,
     })
     @Index({
@@ -114,22 +111,17 @@ export class VoipNumber extends Model<VoipNumberAttributes, VoipNumberAttributes
         order: 'ASC',
         unique: false,
     })
-    listTimestamp!: Date
+    list_timestamp!: Date
 
     @BelongsTo(() => Reseller)
     Reseller?: Reseller
-
-    @HasOne(() => VoipSubscriber, {
-        sourceKey: 'id',
-    })
-    VoipSubscriber?: VoipSubscriber
 
     @HasMany(() => VoipSubscriber, {
         sourceKey: 'id',
     })
     VoipSubscribers?: VoipSubscriber[]
 
-    // @BelongsTo(() => VoipSubscriber)
-    // VoipSubscriber?: VoipSubscriber
+    @BelongsTo(() => VoipSubscriber)
+    VoipSubscriber?: VoipSubscriber
 
 }

@@ -7,21 +7,21 @@ interface TopupLogAttributes {
     type: string;
     outcome: string;
     message?: string;
-    subscriberId?: number;
-    contractId?: number;
+    subscriber_id?: number;
+    contract_id?: number;
     amount?: number;
-    voucherId?: number;
-    cashBalanceBefore?: number;
-    cashBalanceAfter?: number;
-    packageBeforeId?: number;
-    packageAfterId?: number;
-    profileBeforeId?: number;
-    profileAfterId?: number;
-    lockLevelBefore?: number;
-    lockLevelAfter?: number;
-    contractBalanceBeforeId?: number;
-    contractBalanceAfterId?: number;
-    requestToken?: string;
+    voucher_id?: number;
+    cash_balance_before?: number;
+    cash_balance_after?: number;
+    package_before_id?: number;
+    package_after_id?: number;
+    profile_before_id?: number;
+    profile_after_id?: number;
+    lock_level_before?: number;
+    lock_level_after?: number;
+    contract_balance_before_id?: number;
+    contract_balance_after_id?: number;
+    request_token?: string;
 }
 
 @Table({
@@ -77,7 +77,6 @@ export class TopupLog extends Model<TopupLogAttributes, TopupLogAttributes> impl
     message?: string
 
     @Column({
-        field: 'subscriber_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -87,10 +86,9 @@ export class TopupLog extends Model<TopupLogAttributes, TopupLogAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    subscriberId?: number
+    subscriber_id?: number
 
     @Column({
-        field: 'contract_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -100,7 +98,7 @@ export class TopupLog extends Model<TopupLogAttributes, TopupLogAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    contractId?: number
+    contract_id?: number
 
     @Column({
         allowNull: true,
@@ -109,7 +107,6 @@ export class TopupLog extends Model<TopupLogAttributes, TopupLogAttributes> impl
     amount?: number
 
     @Column({
-        field: 'voucher_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -119,24 +116,21 @@ export class TopupLog extends Model<TopupLogAttributes, TopupLogAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    voucherId?: number
+    voucher_id?: number
 
     @Column({
-        field: 'cash_balance_before',
         allowNull: true,
         type: DataType.DOUBLE(22),
     })
-    cashBalanceBefore?: number
+    cash_balance_before?: number
 
     @Column({
-        field: 'cash_balance_after',
         allowNull: true,
         type: DataType.DOUBLE(22),
     })
-    cashBalanceAfter?: number
+    cash_balance_after?: number
 
     @Column({
-        field: 'package_before_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -146,10 +140,9 @@ export class TopupLog extends Model<TopupLogAttributes, TopupLogAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    packageBeforeId?: number
+    package_before_id?: number
 
     @Column({
-        field: 'package_after_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -159,10 +152,9 @@ export class TopupLog extends Model<TopupLogAttributes, TopupLogAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    packageAfterId?: number
+    package_after_id?: number
 
     @Column({
-        field: 'profile_before_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -172,10 +164,9 @@ export class TopupLog extends Model<TopupLogAttributes, TopupLogAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    profileBeforeId?: number
+    profile_before_id?: number
 
     @Column({
-        field: 'profile_after_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -185,24 +176,21 @@ export class TopupLog extends Model<TopupLogAttributes, TopupLogAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    profileAfterId?: number
+    profile_after_id?: number
 
     @Column({
-        field: 'lock_level_before',
         allowNull: true,
         type: DataType.TINYINT,
     })
-    lockLevelBefore?: number
+    lock_level_before?: number
 
     @Column({
-        field: 'lock_level_after',
         allowNull: true,
         type: DataType.TINYINT,
     })
-    lockLevelAfter?: number
+    lock_level_after?: number
 
     @Column({
-        field: 'contract_balance_before_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -212,10 +200,9 @@ export class TopupLog extends Model<TopupLogAttributes, TopupLogAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    contractBalanceBeforeId?: number
+    contract_balance_before_id?: number
 
     @Column({
-        field: 'contract_balance_after_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -225,10 +212,9 @@ export class TopupLog extends Model<TopupLogAttributes, TopupLogAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    contractBalanceAfterId?: number
+    contract_balance_after_id?: number
 
     @Column({
-        field: 'request_token',
         allowNull: true,
         type: DataType.STRING(255),
     })
@@ -238,6 +224,6 @@ export class TopupLog extends Model<TopupLogAttributes, TopupLogAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    requestToken?: string
+    request_token?: string
 
 }

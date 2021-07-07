@@ -2,8 +2,8 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface ContractsBillingProfileNetworkScheduleAttributes {
     id?: number;
-    profileNetworkId: number;
-    effectiveStartTime: string;
+    profile_network_id: number;
+    effective_start_time: string;
 }
 
 @Table({
@@ -26,7 +26,6 @@ export class ContractsBillingProfileNetworkSchedule extends Model<ContractsBilli
     id?: number
 
     @Column({
-        field: 'profile_network_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -35,10 +34,9 @@ export class ContractsBillingProfileNetworkSchedule extends Model<ContractsBilli
         order: 'ASC',
         unique: false,
     })
-    profileNetworkId!: number
+    profile_network_id!: number
 
     @Column({
-        field: 'effective_start_time',
         type: DataType.DECIMAL(13, 3),
     })
     @Index({
@@ -47,6 +45,6 @@ export class ContractsBillingProfileNetworkSchedule extends Model<ContractsBilli
         order: 'ASC',
         unique: false,
     })
-    effectiveStartTime!: string
+    effective_start_time!: string
 
 }

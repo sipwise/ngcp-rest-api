@@ -2,12 +2,12 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface ResellerBrandingAttributes {
     id?: number;
-    resellerId: number;
+    reseller_id: number;
     css?: string;
     logo?: Uint8Array;
-    logoImageType?: string;
-    cscColorPrimary?: string;
-    cscColorSecondary?: string;
+    logo_image_type?: string;
+    csc_color_primary?: string;
+    csc_color_secondary?: string;
 }
 
 @Table({
@@ -30,7 +30,6 @@ export class ResellerBranding extends Model<ResellerBrandingAttributes, Reseller
     id?: number
 
     @Column({
-        field: 'reseller_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -39,7 +38,7 @@ export class ResellerBranding extends Model<ResellerBrandingAttributes, Reseller
         order: 'ASC',
         unique: true,
     })
-    resellerId!: number
+    reseller_id!: number
 
     @Column({
         allowNull: true,
@@ -54,24 +53,21 @@ export class ResellerBranding extends Model<ResellerBrandingAttributes, Reseller
     logo?: Uint8Array
 
     @Column({
-        field: 'logo_image_type',
         allowNull: true,
         type: DataType.STRING(32),
     })
-    logoImageType?: string
+    logo_image_type?: string
 
     @Column({
-        field: 'csc_color_primary',
         allowNull: true,
         type: DataType.STRING(45),
     })
-    cscColorPrimary?: string
+    csc_color_primary?: string
 
     @Column({
-        field: 'csc_color_secondary',
         allowNull: true,
         type: DataType.STRING(45),
     })
-    cscColorSecondary?: string
+    csc_color_secondary?: string
 
 }

@@ -1,4 +1,4 @@
-import {BelongsTo, Column, DataType, ForeignKey, HasMany, HasOne, Index, Model, Table} from 'sequelize-typescript'
+import {BelongsTo, Column, DataType, ForeignKey, HasMany, Index, Model, Table} from 'sequelize-typescript'
 import {Contract} from './contract.entity'
 import {Domain} from './domain.entity'
 import {VoipNumber} from './voip-number.entity'
@@ -6,14 +6,14 @@ import {Voucher} from './voucher.entity'
 
 interface VoipSubscriberAttributes {
     id?: number;
-    contractId: number;
+    contract_id: number;
     uuid: string;
     username: string;
-    domainId: number;
+    domain_id: number;
     status: string;
-    primaryNumberId?: number;
-    externalId?: string;
-    contactId?: number;
+    primary_number_id?: number;
+    external_id?: string;
+    contact_id?: number;
 }
 
 @Table({
@@ -22,7 +22,6 @@ interface VoipSubscriberAttributes {
 })
 export class VoipSubscriber extends Model<VoipSubscriberAttributes, VoipSubscriberAttributes> implements VoipSubscriberAttributes {
 
-    @ForeignKey(() => VoipNumber)
     @Column({
         primaryKey: true,
         autoIncrement: true,
@@ -38,7 +37,6 @@ export class VoipSubscriber extends Model<VoipSubscriberAttributes, VoipSubscrib
 
     @ForeignKey(() => Contract)
     @Column({
-        field: 'contract_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -47,7 +45,7 @@ export class VoipSubscriber extends Model<VoipSubscriberAttributes, VoipSubscrib
         order: 'ASC',
         unique: false,
     })
-    contractId!: number
+    contract_id!: number
 
     @Column({
         type: DataType.CHAR(36),
@@ -73,7 +71,6 @@ export class VoipSubscriber extends Model<VoipSubscriberAttributes, VoipSubscrib
 
     @ForeignKey(() => Domain)
     @Column({
-        field: 'domain_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -82,7 +79,7 @@ export class VoipSubscriber extends Model<VoipSubscriberAttributes, VoipSubscrib
         order: 'ASC',
         unique: false,
     })
-    domainId!: number
+    domain_id!: number
 
     @Column({
         type: DataType.ENUM('active', 'locked', 'terminated'),
@@ -91,7 +88,6 @@ export class VoipSubscriber extends Model<VoipSubscriberAttributes, VoipSubscrib
 
     @ForeignKey(() => VoipNumber)
     @Column({
-        field: 'primary_number_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -101,10 +97,9 @@ export class VoipSubscriber extends Model<VoipSubscriberAttributes, VoipSubscrib
         order: 'ASC',
         unique: false,
     })
-    primaryNumberId?: number
+    primary_number_id?: number
 
     @Column({
-        field: 'external_id',
         allowNull: true,
         type: DataType.STRING(255),
     })
@@ -114,14 +109,13 @@ export class VoipSubscriber extends Model<VoipSubscriberAttributes, VoipSubscrib
         order: 'ASC',
         unique: false,
     })
-    externalId?: string
+    external_id?: string
 
     @Column({
-        field: 'contact_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    contactId?: number
+    contact_id?: number
 
     @BelongsTo(() => Contract)
     Contract?: Contract
@@ -132,17 +126,14 @@ export class VoipSubscriber extends Model<VoipSubscriberAttributes, VoipSubscrib
     @BelongsTo(() => VoipNumber)
     VoipNumber?: VoipNumber
 
-    // @BelongsTo(() => VoipNumber)
-    // VoipNumber?: VoipNumber
-    //
-    // @HasOne(() => VoipNumber, {
-    //     sourceKey: 'id',
-    // })
-    // VoipNumber?: VoipNumber
-
     @HasMany(() => Voucher, {
         sourceKey: 'id',
     })
     Vouchers?: Voucher[]
+
+    // @HasOne(() => VoipNumber, {
+    //   sourceKey: 'id'
+    // })
+    // VoipNumber?: VoipNumber;
 
 }

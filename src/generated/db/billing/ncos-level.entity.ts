@@ -4,11 +4,11 @@ import {Reseller} from './reseller.entity'
 
 interface NcosLevelAttributes {
     id?: number;
-    resellerId?: number;
+    reseller_id?: number;
     level: string;
     mode: string;
-    localAc: number;
-    intraPbx: number;
+    local_ac: number;
+    intra_pbx: number;
     description?: string;
 }
 
@@ -33,7 +33,6 @@ export class NcosLevel extends Model<NcosLevelAttributes, NcosLevelAttributes> i
 
     @ForeignKey(() => Reseller)
     @Column({
-        field: 'reseller_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -43,7 +42,7 @@ export class NcosLevel extends Model<NcosLevelAttributes, NcosLevelAttributes> i
         order: 'ASC',
         unique: true,
     })
-    resellerId?: number
+    reseller_id?: number
 
     @Column({
         type: DataType.STRING(31),
@@ -62,16 +61,14 @@ export class NcosLevel extends Model<NcosLevelAttributes, NcosLevelAttributes> i
     mode!: string
 
     @Column({
-        field: 'local_ac',
         type: DataType.TINYINT,
     })
-    localAc!: number
+    local_ac!: number
 
     @Column({
-        field: 'intra_pbx',
         type: DataType.TINYINT,
     })
-    intraPbx!: number
+    intra_pbx!: number
 
     @Column({
         allowNull: true,

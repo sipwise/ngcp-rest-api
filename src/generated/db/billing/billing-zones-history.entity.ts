@@ -3,8 +3,8 @@ import {BillingZone} from './billing-zone.entity'
 
 interface BillingZonesHistoryAttributes {
     id?: number;
-    bzId?: number;
-    billingProfileId: number;
+    bz_id?: number;
+    billing_profile_id: number;
     zone: string;
     detail?: string;
 }
@@ -30,7 +30,6 @@ export class BillingZonesHistory extends Model<BillingZonesHistoryAttributes, Bi
 
     @ForeignKey(() => BillingZone)
     @Column({
-        field: 'bz_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -40,13 +39,12 @@ export class BillingZonesHistory extends Model<BillingZonesHistoryAttributes, Bi
         order: 'ASC',
         unique: false,
     })
-    bzId?: number
+    bz_id?: number
 
     @Column({
-        field: 'billing_profile_id',
         type: DataType.INTEGER,
     })
-    billingProfileId!: number
+    billing_profile_id!: number
 
     @Column({
         type: DataType.STRING(127),

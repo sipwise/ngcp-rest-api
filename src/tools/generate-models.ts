@@ -1,7 +1,7 @@
 import {Connection, createConnection} from 'mysql2/promise'
 import {createWriteStream, promises as fsp, readFileSync, writeFileSync} from 'fs'
 import {DialectMySQL, IConfig, ModelBuilder} from 'sequelize-typescript-generator'
-import {camelCase, hyphenate, pascalCase} from './string-utils'
+import {hyphenate, pascalCase, snakeCase} from './string-utils'
 import {config} from '../config/main.config'
 
 
@@ -94,7 +94,7 @@ async function writeModelsForDB(db: string, assocPath: string, modelsPath: strin
                     let groups = value.match(/(^.+?)(s*)$/)
                     return groups[1]
                 }
-                return camelCase(value)
+                return snakeCase(value)
             },
         },
         output: {

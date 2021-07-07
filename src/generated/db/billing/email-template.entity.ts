@@ -2,12 +2,12 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface EmailTemplateAttributes {
     id?: number;
-    resellerId?: number;
+    reseller_id?: number;
     name: string;
-    fromEmail: string;
+    from_email: string;
     subject: string;
     body: string;
-    attachmentName: string;
+    attachment_name: string;
 }
 
 @Table({
@@ -30,7 +30,6 @@ export class EmailTemplate extends Model<EmailTemplateAttributes, EmailTemplateA
     id?: number
 
     @Column({
-        field: 'reseller_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -40,7 +39,7 @@ export class EmailTemplate extends Model<EmailTemplateAttributes, EmailTemplateA
         order: 'ASC',
         unique: true,
     })
-    resellerId?: number
+    reseller_id?: number
 
     @Column({
         type: DataType.STRING(255),
@@ -54,10 +53,9 @@ export class EmailTemplate extends Model<EmailTemplateAttributes, EmailTemplateA
     name!: string
 
     @Column({
-        field: 'from_email',
         type: DataType.STRING(255),
     })
-    fromEmail!: string
+    from_email!: string
 
     @Column({
         type: DataType.STRING(255),
@@ -70,9 +68,8 @@ export class EmailTemplate extends Model<EmailTemplateAttributes, EmailTemplateA
     body!: string
 
     @Column({
-        field: 'attachment_name',
         type: DataType.STRING(255),
     })
-    attachmentName!: string
+    attachment_name!: string
 
 }

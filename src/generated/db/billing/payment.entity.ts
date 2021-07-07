@@ -10,8 +10,8 @@ interface PaymentAttributes {
     errno?: number;
     returncode?: string;
     externalstatus?: string;
-    modifyTimestamp: Date;
-    createTimestamp: Date;
+    modify_timestamp: Date;
+    create_timestamp: Date;
 }
 
 @Table({
@@ -100,15 +100,13 @@ export class Payment extends Model<PaymentAttributes, PaymentAttributes> impleme
     externalstatus?: string
 
     @Column({
-        field: 'modify_timestamp',
         type: DataType.DATE,
     })
-    modifyTimestamp!: Date
+    modify_timestamp!: Date
 
     @Column({
-        field: 'create_timestamp',
         type: DataType.DATE,
     })
-    createTimestamp!: Date
+    create_timestamp!: Date
 
 }

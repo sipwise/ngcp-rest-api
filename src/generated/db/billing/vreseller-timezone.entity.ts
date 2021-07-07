@@ -1,8 +1,8 @@
 import {Column, DataType, Model, Table} from 'sequelize-typescript'
 
 interface VResellerTimezoneAttributes {
-    contactId: number;
-    resellerId: number;
+    contact_id: number;
+    reseller_id: number;
     name?: string;
 }
 
@@ -14,16 +14,14 @@ interface VResellerTimezoneAttributes {
 export class VResellerTimezone extends Model<VResellerTimezoneAttributes, VResellerTimezoneAttributes> implements VResellerTimezoneAttributes {
 
     @Column({
-        field: 'contact_id',
         type: DataType.INTEGER,
     })
-    contactId!: number
+    contact_id!: number
 
     @Column({
-        field: 'reseller_id',
         type: DataType.INTEGER,
     })
-    resellerId!: number
+    reseller_id!: number
 
     @Column({
         allowNull: true,

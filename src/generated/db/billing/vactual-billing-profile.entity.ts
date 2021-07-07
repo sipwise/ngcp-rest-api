@@ -1,8 +1,8 @@
 import {Column, DataType, Model, Table} from 'sequelize-typescript'
 
 interface VActualBillingProfileAttributes {
-    contractId: number;
-    billingProfileId: number;
+    contract_id: number;
+    billing_profile_id: number;
 }
 
 @Table({
@@ -13,15 +13,13 @@ interface VActualBillingProfileAttributes {
 export class VActualBillingProfile extends Model<VActualBillingProfileAttributes, VActualBillingProfileAttributes> implements VActualBillingProfileAttributes {
 
     @Column({
-        field: 'contract_id',
         type: DataType.INTEGER,
     })
-    contractId!: number
+    contract_id!: number
 
     @Column({
-        field: 'billing_profile_id',
         type: DataType.INTEGER,
     })
-    billingProfileId!: number
+    billing_profile_id!: number
 
 }

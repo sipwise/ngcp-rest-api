@@ -4,8 +4,8 @@ import {NcosLevel} from './ncos-level.entity'
 
 interface NcosLnpListAttributes {
     id?: number;
-    ncosLevelId: number;
-    lnpProviderId: number;
+    ncos_level_id: number;
+    lnp_provider_id: number;
     description?: string;
 }
 
@@ -30,7 +30,6 @@ export class NcosLnpList extends Model<NcosLnpListAttributes, NcosLnpListAttribu
 
     @ForeignKey(() => NcosLevel)
     @Column({
-        field: 'ncos_level_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -39,11 +38,10 @@ export class NcosLnpList extends Model<NcosLnpListAttributes, NcosLnpListAttribu
         order: 'ASC',
         unique: true,
     })
-    ncosLevelId!: number
+    ncos_level_id!: number
 
     @ForeignKey(() => LnpProvider)
     @Column({
-        field: 'lnp_provider_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -58,7 +56,7 @@ export class NcosLnpList extends Model<NcosLnpListAttributes, NcosLnpListAttribu
         order: 'ASC',
         unique: false,
     })
-    lnpProviderId!: number
+    lnp_provider_id!: number
 
     @Column({
         allowNull: true,

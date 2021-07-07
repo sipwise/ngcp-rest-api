@@ -101,7 +101,7 @@ function unhyphenate(str) {
  * Replaces spaces with underscores, split camelCase text, remove
  * non-word chars, remove accents and convert to lower case.
  */
-function underscore(str) {
+export function snakeCase(str) {
     str = unCamelCase(str)
     return slugify(str, '_')
 }

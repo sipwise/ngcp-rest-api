@@ -7,17 +7,17 @@ import {Reseller} from './reseller.entity'
 
 interface OrderAttributes {
     id?: number;
-    resellerId?: number;
-    customerId?: number;
-    deliveryContactId?: number;
+    reseller_id?: number;
+    customer_id?: number;
+    delivery_contact_id?: number;
     type?: string;
     state: string;
     value?: number;
-    shippingCosts?: number;
-    invoiceId?: number;
-    modifyTimestamp: Date;
-    createTimestamp: Date;
-    completeTimestamp: Date;
+    shipping_costs?: number;
+    invoice_id?: number;
+    modify_timestamp: Date;
+    create_timestamp: Date;
+    complete_timestamp: Date;
 }
 
 @Table({
@@ -41,7 +41,6 @@ export class Order extends Model<OrderAttributes, OrderAttributes> implements Or
 
     @ForeignKey(() => Reseller)
     @Column({
-        field: 'reseller_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -51,11 +50,10 @@ export class Order extends Model<OrderAttributes, OrderAttributes> implements Or
         order: 'ASC',
         unique: false,
     })
-    resellerId?: number
+    reseller_id?: number
 
     @ForeignKey(() => Customer)
     @Column({
-        field: 'customer_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -65,11 +63,10 @@ export class Order extends Model<OrderAttributes, OrderAttributes> implements Or
         order: 'ASC',
         unique: false,
     })
-    customerId?: number
+    customer_id?: number
 
     @ForeignKey(() => Contact)
     @Column({
-        field: 'delivery_contact_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -79,7 +76,7 @@ export class Order extends Model<OrderAttributes, OrderAttributes> implements Or
         order: 'ASC',
         unique: false,
     })
-    deliveryContactId?: number
+    delivery_contact_id?: number
 
     @Column({
         allowNull: true,
@@ -99,15 +96,13 @@ export class Order extends Model<OrderAttributes, OrderAttributes> implements Or
     value?: number
 
     @Column({
-        field: 'shipping_costs',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    shippingCosts?: number
+    shipping_costs?: number
 
     @ForeignKey(() => Invoice)
     @Column({
-        field: 'invoice_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -117,25 +112,22 @@ export class Order extends Model<OrderAttributes, OrderAttributes> implements Or
         order: 'ASC',
         unique: false,
     })
-    invoiceId?: number
+    invoice_id?: number
 
     @Column({
-        field: 'modify_timestamp',
         type: DataType.DATE,
     })
-    modifyTimestamp!: Date
+    modify_timestamp!: Date
 
     @Column({
-        field: 'create_timestamp',
         type: DataType.DATE,
     })
-    createTimestamp!: Date
+    create_timestamp!: Date
 
     @Column({
-        field: 'complete_timestamp',
         type: DataType.DATE,
     })
-    completeTimestamp!: Date
+    complete_timestamp!: Date
 
     @BelongsTo(() => Contact)
     Contact?: Contact

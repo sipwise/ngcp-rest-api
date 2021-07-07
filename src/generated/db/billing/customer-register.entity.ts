@@ -2,7 +2,7 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface CustomerRegisterAttributes {
     id?: number;
-    customerId: number;
+    customer_id: number;
     actor?: string;
     type: string;
     data?: string;
@@ -28,7 +28,6 @@ export class CustomerRegister extends Model<CustomerRegisterAttributes, Customer
     id?: number
 
     @Column({
-        field: 'customer_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -37,7 +36,7 @@ export class CustomerRegister extends Model<CustomerRegisterAttributes, Customer
         order: 'ASC',
         unique: false,
     })
-    customerId!: number
+    customer_id!: number
 
     @Column({
         allowNull: true,

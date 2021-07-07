@@ -3,8 +3,8 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 interface LnpNumberAttributes {
     id?: number;
     number: string;
-    routingNumber?: string;
-    lnpProviderId: number;
+    routing_number?: string;
+    lnp_provider_id: number;
     start?: Date;
     end?: Date;
     type?: string;
@@ -41,14 +41,12 @@ export class LnpNumber extends Model<LnpNumberAttributes, LnpNumberAttributes> i
     number!: string
 
     @Column({
-        field: 'routing_number',
         allowNull: true,
         type: DataType.STRING(31),
     })
-    routingNumber?: string
+    routing_number?: string
 
     @Column({
-        field: 'lnp_provider_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -57,7 +55,7 @@ export class LnpNumber extends Model<LnpNumberAttributes, LnpNumberAttributes> i
         order: 'ASC',
         unique: false,
     })
-    lnpProviderId!: number
+    lnp_provider_id!: number
 
     @Column({
         allowNull: true,

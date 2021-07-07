@@ -2,7 +2,7 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface SubscriberPhonebookAttributes {
     id?: number;
-    subscriberId: number;
+    subscriber_id: number;
     name: string;
     number: string;
     shared: number;
@@ -28,7 +28,6 @@ export class SubscriberPhonebook extends Model<SubscriberPhonebookAttributes, Su
     id?: number
 
     @Column({
-        field: 'subscriber_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -37,7 +36,7 @@ export class SubscriberPhonebook extends Model<SubscriberPhonebookAttributes, Su
         order: 'ASC',
         unique: true,
     })
-    subscriberId!: number
+    subscriber_id!: number
 
     @Column({
         type: DataType.STRING(255),

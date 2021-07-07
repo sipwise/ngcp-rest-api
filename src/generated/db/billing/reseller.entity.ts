@@ -1,19 +1,19 @@
 import {BelongsTo, Column, DataType, ForeignKey, HasMany, Index, Model, Table} from 'sequelize-typescript'
 import {Contract} from './contract.entity'
-import {ProfilePackage} from './profile-package.entity'
-import {Customer} from './customer.entity'
-import {VoipNumber} from './voip-number.entity'
-import {Contact} from './contact.entity'
-import {BillingProfile} from './billing-profile.entity'
 import {Voucher} from './voucher.entity'
-import {BillingNetwork} from './billing-network.entity'
 import {Product} from './product.entity'
+import {BillingNetwork} from './billing-network.entity'
+import {ProfilePackage} from './profile-package.entity'
+import {BillingProfile} from './billing-profile.entity'
+import {Contact} from './contact.entity'
+import {VoipNumber} from './voip-number.entity'
+import {Customer} from './customer.entity'
 import {NcosLevel} from './ncos-level.entity'
 import {Order} from './order.entity'
 
 interface ResellerAttributes {
     id?: number;
-    contractId: number;
+    contract_id: number;
     name: string;
     status: string;
 }
@@ -39,7 +39,6 @@ export class Reseller extends Model<ResellerAttributes, ResellerAttributes> impl
 
     @ForeignKey(() => Contract)
     @Column({
-        field: 'contract_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -48,7 +47,7 @@ export class Reseller extends Model<ResellerAttributes, ResellerAttributes> impl
         order: 'ASC',
         unique: true,
     })
-    contractId!: number
+    contract_id!: number
 
     @Column({
         type: DataType.STRING(63),
@@ -69,45 +68,45 @@ export class Reseller extends Model<ResellerAttributes, ResellerAttributes> impl
     @BelongsTo(() => Contract)
     Contract?: Contract
 
-    @HasMany(() => ProfilePackage, {
-        sourceKey: 'id',
-    })
-    ProfilePackages?: ProfilePackage[]
-
-    @HasMany(() => Customer, {
-        sourceKey: 'id',
-    })
-    Customers?: Customer[]
-
-    @HasMany(() => VoipNumber, {
-        sourceKey: 'id',
-    })
-    VoipNumbers?: VoipNumber[]
-
-    @HasMany(() => Contact, {
-        sourceKey: 'id',
-    })
-    Contacts?: Contact[]
-
-    @HasMany(() => BillingProfile, {
-        sourceKey: 'id',
-    })
-    BillingProfiles?: BillingProfile[]
-
     @HasMany(() => Voucher, {
         sourceKey: 'id',
     })
     Vouchers?: Voucher[]
+
+    @HasMany(() => Product, {
+        sourceKey: 'id',
+    })
+    Products?: Product[]
 
     @HasMany(() => BillingNetwork, {
         sourceKey: 'id',
     })
     BillingNetworks?: BillingNetwork[]
 
-    @HasMany(() => Product, {
+    @HasMany(() => ProfilePackage, {
         sourceKey: 'id',
     })
-    Products?: Product[]
+    ProfilePackages?: ProfilePackage[]
+
+    @HasMany(() => BillingProfile, {
+        sourceKey: 'id',
+    })
+    BillingProfiles?: BillingProfile[]
+
+    @HasMany(() => Contact, {
+        sourceKey: 'id',
+    })
+    Contacts?: Contact[]
+
+    @HasMany(() => VoipNumber, {
+        sourceKey: 'id',
+    })
+    VoipNumbers?: VoipNumber[]
+
+    @HasMany(() => Customer, {
+        sourceKey: 'id',
+    })
+    Customers?: Customer[]
 
     @HasMany(() => NcosLevel, {
         sourceKey: 'id',

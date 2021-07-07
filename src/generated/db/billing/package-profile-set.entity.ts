@@ -2,10 +2,10 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface PackageProfileSetAttributes {
     id?: number;
-    packageId: number;
+    package_id: number;
     discriminator: string;
-    profileId: number;
-    networkId?: number;
+    profile_id: number;
+    network_id?: number;
 }
 
 @Table({
@@ -28,7 +28,6 @@ export class PackageProfileSet extends Model<PackageProfileSetAttributes, Packag
     id?: number
 
     @Column({
-        field: 'package_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -37,7 +36,7 @@ export class PackageProfileSet extends Model<PackageProfileSetAttributes, Packag
         order: 'ASC',
         unique: false,
     })
-    packageId!: number
+    package_id!: number
 
     @Column({
         type: DataType.ENUM('initial', 'underrun', 'topup'),
@@ -51,7 +50,6 @@ export class PackageProfileSet extends Model<PackageProfileSetAttributes, Packag
     discriminator!: string
 
     @Column({
-        field: 'profile_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -60,10 +58,9 @@ export class PackageProfileSet extends Model<PackageProfileSetAttributes, Packag
         order: 'ASC',
         unique: false,
     })
-    profileId!: number
+    profile_id!: number
 
     @Column({
-        field: 'network_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -73,6 +70,6 @@ export class PackageProfileSet extends Model<PackageProfileSetAttributes, Packag
         order: 'ASC',
         unique: false,
     })
-    networkId?: number
+    network_id?: number
 
 }

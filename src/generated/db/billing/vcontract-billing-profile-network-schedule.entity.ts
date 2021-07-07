@@ -2,16 +2,16 @@ import {Column, DataType, Model, Table} from 'sequelize-typescript'
 
 interface VContractBillingProfileNetworkScheduleAttributes {
     id: number;
-    contractId: number;
-    startDate?: Date;
-    endDate?: Date;
-    billingProfileId: number;
-    networkId?: number;
-    effectiveStartTime: string;
-    effectiveStartDate?: Date;
-    billingProfileName: string;
-    billingProfileHandle: string;
-    billingNetworkName?: string;
+    contract_id: number;
+    start_date?: Date;
+    end_date?: Date;
+    billing_profile_id: number;
+    network_id?: number;
+    effective_start_time: string;
+    effective_start_date?: Date;
+    billing_profile_name: string;
+    billing_profile_handle: string;
+    billing_network_name?: string;
 }
 
 @Table({
@@ -27,68 +27,58 @@ export class VContractBillingProfileNetworkSchedule extends Model<VContractBilli
     id!: number
 
     @Column({
-        field: 'contract_id',
         type: DataType.INTEGER,
     })
-    contractId!: number
+    contract_id!: number
 
     @Column({
-        field: 'start_date',
         allowNull: true,
         type: DataType.DATE,
     })
-    startDate?: Date
+    start_date?: Date
 
     @Column({
-        field: 'end_date',
         allowNull: true,
         type: DataType.DATE,
     })
-    endDate?: Date
+    end_date?: Date
 
     @Column({
-        field: 'billing_profile_id',
         type: DataType.INTEGER,
     })
-    billingProfileId!: number
+    billing_profile_id!: number
 
     @Column({
-        field: 'network_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    networkId?: number
+    network_id?: number
 
     @Column({
-        field: 'effective_start_time',
         type: DataType.DECIMAL(13, 3),
     })
-    effectiveStartTime!: string
+    effective_start_time!: string
 
     @Column({
-        field: 'effective_start_date',
         allowNull: true,
         type: DataType.DATE(3),
     })
-    effectiveStartDate?: Date
+    effective_start_date?: Date
 
     @Column({
-        field: 'billing_profile_name',
         type: DataType.STRING(31),
     })
-    billingProfileName!: string
+    billing_profile_name!: string
 
     @Column({
-        field: 'billing_profile_handle',
         type: DataType.STRING(63),
     })
-    billingProfileHandle!: string
+    billing_profile_handle!: string
 
     @Column({
-        field: 'billing_network_name',
         allowNull: true,
         type: DataType.STRING(255),
     })
-    billingNetworkName?: string
+    billing_network_name?: string
 
 }

@@ -2,8 +2,8 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface DomainResellerAttributes {
     id?: number;
-    domainId: number;
-    resellerId: number;
+    domain_id: number;
+    reseller_id: number;
 }
 
 @Table({
@@ -26,7 +26,6 @@ export class DomainReseller extends Model<DomainResellerAttributes, DomainResell
     id?: number
 
     @Column({
-        field: 'domain_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -35,10 +34,9 @@ export class DomainReseller extends Model<DomainResellerAttributes, DomainResell
         order: 'ASC',
         unique: false,
     })
-    domainId!: number
+    domain_id!: number
 
     @Column({
-        field: 'reseller_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -47,6 +45,6 @@ export class DomainReseller extends Model<DomainResellerAttributes, DomainResell
         order: 'ASC',
         unique: false,
     })
-    resellerId!: number
+    reseller_id!: number
 
 }

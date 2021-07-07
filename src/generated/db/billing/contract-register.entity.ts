@@ -2,7 +2,7 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface ContractRegisterAttributes {
     id?: number;
-    contractId: number;
+    contract_id: number;
     actor?: string;
     type: string;
     data?: string;
@@ -28,7 +28,6 @@ export class ContractRegister extends Model<ContractRegisterAttributes, Contract
     id?: number
 
     @Column({
-        field: 'contract_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -37,7 +36,7 @@ export class ContractRegister extends Model<ContractRegisterAttributes, Contract
         order: 'ASC',
         unique: false,
     })
-    contractId!: number
+    contract_id!: number
 
     @Column({
         allowNull: true,

@@ -2,7 +2,7 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface BillingPeaktimeSpecialAttributes {
     id?: number;
-    billingProfileId: number;
+    billing_profile_id: number;
     start?: Date;
     end?: Date;
 }
@@ -27,7 +27,6 @@ export class BillingPeaktimeSpecial extends Model<BillingPeaktimeSpecialAttribut
     id?: number
 
     @Column({
-        field: 'billing_profile_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -36,7 +35,7 @@ export class BillingPeaktimeSpecial extends Model<BillingPeaktimeSpecialAttribut
         order: 'ASC',
         unique: false,
     })
-    billingProfileId!: number
+    billing_profile_id!: number
 
     @Column({
         allowNull: true,

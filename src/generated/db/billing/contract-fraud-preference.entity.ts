@@ -2,13 +2,13 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface ContractFraudPreferenceAttributes {
     id?: number;
-    contractId: number;
-    fraudIntervalLimit?: number;
-    fraudIntervalLock?: number;
-    fraudIntervalNotify?: string;
-    fraudDailyLimit?: number;
-    fraudDailyLock?: number;
-    fraudDailyNotify?: string;
+    contract_id: number;
+    fraud_interval_limit?: number;
+    fraud_interval_lock?: number;
+    fraud_interval_notify?: string;
+    fraud_daily_limit?: number;
+    fraud_daily_lock?: number;
+    fraud_daily_notify?: string;
 }
 
 @Table({
@@ -31,7 +31,6 @@ export class ContractFraudPreference extends Model<ContractFraudPreferenceAttrib
     id?: number
 
     @Column({
-        field: 'contract_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -40,48 +39,42 @@ export class ContractFraudPreference extends Model<ContractFraudPreferenceAttrib
         order: 'ASC',
         unique: true,
     })
-    contractId!: number
+    contract_id!: number
 
     @Column({
-        field: 'fraud_interval_limit',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    fraudIntervalLimit?: number
+    fraud_interval_limit?: number
 
     @Column({
-        field: 'fraud_interval_lock',
         allowNull: true,
         type: DataType.TINYINT,
     })
-    fraudIntervalLock?: number
+    fraud_interval_lock?: number
 
     @Column({
-        field: 'fraud_interval_notify',
         allowNull: true,
         type: DataType.STRING(255),
     })
-    fraudIntervalNotify?: string
+    fraud_interval_notify?: string
 
     @Column({
-        field: 'fraud_daily_limit',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    fraudDailyLimit?: number
+    fraud_daily_limit?: number
 
     @Column({
-        field: 'fraud_daily_lock',
         allowNull: true,
         type: DataType.TINYINT,
     })
-    fraudDailyLock?: number
+    fraud_daily_lock?: number
 
     @Column({
-        field: 'fraud_daily_notify',
         allowNull: true,
         type: DataType.STRING(255),
     })
-    fraudDailyNotify?: string
+    fraud_daily_notify?: string
 
 }

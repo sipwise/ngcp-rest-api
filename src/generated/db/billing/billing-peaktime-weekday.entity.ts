@@ -2,7 +2,7 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface BillingPeaktimeWeekdayAttributes {
     id?: number;
-    billingProfileId: number;
+    billing_profile_id: number;
     weekday: number;
     start?: string;
     end?: string;
@@ -28,7 +28,6 @@ export class BillingPeaktimeWeekday extends Model<BillingPeaktimeWeekdayAttribut
     id?: number
 
     @Column({
-        field: 'billing_profile_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -37,7 +36,7 @@ export class BillingPeaktimeWeekday extends Model<BillingPeaktimeWeekdayAttribut
         order: 'ASC',
         unique: false,
     })
-    billingProfileId!: number
+    billing_profile_id!: number
 
     @Column({
         type: DataType.TINYINT,

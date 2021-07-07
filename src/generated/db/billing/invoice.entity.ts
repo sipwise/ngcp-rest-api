@@ -1,19 +1,19 @@
 import {BelongsTo, Column, DataType, ForeignKey, HasMany, Index, Model, Table} from 'sequelize-typescript'
 import {Contract} from './contract.entity'
-import {ContractBalance} from './contract-balance.entity'
 import {Order} from './order.entity'
+import {ContractBalance} from './contract-balance.entity'
 
 interface InvoiceAttributes {
     id?: number;
-    contractId: number;
+    contract_id: number;
     serial: string;
-    periodStart: Date;
-    periodEnd: Date;
-    amountNet: number;
-    amountVat: number;
-    amountTotal: number;
+    period_start: Date;
+    period_end: Date;
+    amount_net: number;
+    amount_vat: number;
+    amount_total: number;
     data?: Uint8Array;
-    sentDate?: Date;
+    sent_date?: Date;
     generator?: string;
 }
 
@@ -38,7 +38,6 @@ export class Invoice extends Model<InvoiceAttributes, InvoiceAttributes> impleme
 
     @ForeignKey(() => Contract)
     @Column({
-        field: 'contract_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -47,7 +46,7 @@ export class Invoice extends Model<InvoiceAttributes, InvoiceAttributes> impleme
         order: 'ASC',
         unique: false,
     })
-    contractId!: number
+    contract_id!: number
 
     @Column({
         type: DataType.STRING(32),
@@ -61,34 +60,29 @@ export class Invoice extends Model<InvoiceAttributes, InvoiceAttributes> impleme
     serial!: string
 
     @Column({
-        field: 'period_start',
         type: DataType.DATE,
     })
-    periodStart!: Date
+    period_start!: Date
 
     @Column({
-        field: 'period_end',
         type: DataType.DATE,
     })
-    periodEnd!: Date
+    period_end!: Date
 
     @Column({
-        field: 'amount_net',
         type: DataType.DOUBLE(22),
     })
-    amountNet!: number
+    amount_net!: number
 
     @Column({
-        field: 'amount_vat',
         type: DataType.DOUBLE(22),
     })
-    amountVat!: number
+    amount_vat!: number
 
     @Column({
-        field: 'amount_total',
         type: DataType.DOUBLE(22),
     })
-    amountTotal!: number
+    amount_total!: number
 
     @Column({
         allowNull: true,
@@ -97,11 +91,10 @@ export class Invoice extends Model<InvoiceAttributes, InvoiceAttributes> impleme
     data?: Uint8Array
 
     @Column({
-        field: 'sent_date',
         allowNull: true,
         type: DataType.DATE,
     })
-    sentDate?: Date
+    sent_date?: Date
 
     @Column({
         allowNull: true,
@@ -112,14 +105,14 @@ export class Invoice extends Model<InvoiceAttributes, InvoiceAttributes> impleme
     @BelongsTo(() => Contract)
     Contract?: Contract
 
-    @HasMany(() => ContractBalance, {
-        sourceKey: 'id',
-    })
-    ContractBalances?: ContractBalance[]
-
     @HasMany(() => Order, {
         sourceKey: 'id',
     })
     Orders?: Order[]
+
+    @HasMany(() => ContractBalance, {
+        sourceKey: 'id',
+    })
+    ContractBalances?: ContractBalance[]
 
 }

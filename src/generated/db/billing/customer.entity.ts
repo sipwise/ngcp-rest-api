@@ -6,16 +6,16 @@ import {Reseller} from './reseller.entity'
 
 interface CustomerAttributes {
     id?: number;
-    resellerId?: number;
+    reseller_id?: number;
     shopuser?: string;
     shoppass?: string;
     business: number;
-    contactId?: number;
-    techContactId?: number;
-    commContactId?: number;
-    externalId?: string;
-    modifyTimestamp: Date;
-    createTimestamp: Date;
+    contact_id?: number;
+    tech_contact_id?: number;
+    comm_contact_id?: number;
+    external_id?: string;
+    modify_timestamp: Date;
+    create_timestamp: Date;
 }
 
 @Table({
@@ -39,7 +39,6 @@ export class Customer extends Model<CustomerAttributes, CustomerAttributes> impl
 
     @ForeignKey(() => Reseller)
     @Column({
-        field: 'reseller_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -55,7 +54,7 @@ export class Customer extends Model<CustomerAttributes, CustomerAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    resellerId?: number
+    reseller_id?: number
 
     @Column({
         allowNull: true,
@@ -82,7 +81,6 @@ export class Customer extends Model<CustomerAttributes, CustomerAttributes> impl
 
     @ForeignKey(() => Contact)
     @Column({
-        field: 'contact_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -92,11 +90,10 @@ export class Customer extends Model<CustomerAttributes, CustomerAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    contactId?: number
+    contact_id?: number
 
     @ForeignKey(() => Contact)
     @Column({
-        field: 'tech_contact_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -106,11 +103,10 @@ export class Customer extends Model<CustomerAttributes, CustomerAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    techContactId?: number
+    tech_contact_id?: number
 
     @ForeignKey(() => Contact)
     @Column({
-        field: 'comm_contact_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -120,10 +116,9 @@ export class Customer extends Model<CustomerAttributes, CustomerAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    commContactId?: number
+    comm_contact_id?: number
 
     @Column({
-        field: 'external_id',
         allowNull: true,
         type: DataType.STRING(255),
     })
@@ -133,28 +128,26 @@ export class Customer extends Model<CustomerAttributes, CustomerAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    externalId?: string
+    external_id?: string
 
     @Column({
-        field: 'modify_timestamp',
         type: DataType.DATE,
     })
-    modifyTimestamp!: Date
+    modify_timestamp!: Date
 
     @Column({
-        field: 'create_timestamp',
         type: DataType.DATE,
     })
-    createTimestamp!: Date
-
-    @BelongsTo(() => Contact)
-    Contact?: Contact
+    create_timestamp!: Date
 
     // @BelongsTo(() => Contact)
-    // Contact?: Contact
-    //
+    // Contact?: Contact;
+
     // @BelongsTo(() => Contact)
-    // Contact?: Contact
+    // Contact?: Contact;
+
+    // @BelongsTo(() => Contact)
+    // Contact?: Contact;
 
     @HasMany(() => Contract, {
         sourceKey: 'id',

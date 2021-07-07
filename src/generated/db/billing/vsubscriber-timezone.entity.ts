@@ -1,8 +1,8 @@
 import {Column, DataType, Model, Table} from 'sequelize-typescript'
 
 interface VSubscriberTimezoneAttributes {
-    contactId?: number;
-    subscriberId: number;
+    contact_id?: number;
+    subscriber_id: number;
     uuid: string;
     name?: string;
 }
@@ -15,17 +15,15 @@ interface VSubscriberTimezoneAttributes {
 export class VSubscriberTimezone extends Model<VSubscriberTimezoneAttributes, VSubscriberTimezoneAttributes> implements VSubscriberTimezoneAttributes {
 
     @Column({
-        field: 'contact_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    contactId?: number
+    contact_id?: number
 
     @Column({
-        field: 'subscriber_id',
         type: DataType.INTEGER,
     })
-    subscriberId!: number
+    subscriber_id!: number
 
     @Column({
         type: DataType.CHAR(36),

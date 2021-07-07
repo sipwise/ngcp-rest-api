@@ -2,8 +2,8 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface CreditPaymentAttributes {
     id?: number;
-    creditId: number;
-    paymentId: number;
+    credit_id: number;
+    payment_id: number;
 }
 
 @Table({
@@ -26,7 +26,6 @@ export class CreditPayment extends Model<CreditPaymentAttributes, CreditPaymentA
     id?: number
 
     @Column({
-        field: 'credit_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -35,10 +34,9 @@ export class CreditPayment extends Model<CreditPaymentAttributes, CreditPaymentA
         order: 'ASC',
         unique: false,
     })
-    creditId!: number
+    credit_id!: number
 
     @Column({
-        field: 'payment_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -47,6 +45,6 @@ export class CreditPayment extends Model<CreditPaymentAttributes, CreditPaymentA
         order: 'ASC',
         unique: false,
     })
-    paymentId!: number
+    payment_id!: number
 
 }

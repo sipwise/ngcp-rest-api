@@ -2,13 +2,13 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface BillingNetworkBlockAttributes {
     id?: number;
-    networkId: number;
+    network_id: number;
     ip: string;
     mask?: number;
-    ipv4NetFrom?: any;
-    ipv4NetTo?: any;
-    ipv6NetFrom?: any;
-    ipv6NetTo?: any;
+    _ipv4_net_from?: any;
+    _ipv4_net_to?: any;
+    _ipv6_net_from?: any;
+    _ipv6_net_to?: any;
 }
 
 @Table({
@@ -31,7 +31,6 @@ export class BillingNetworkBlock extends Model<BillingNetworkBlockAttributes, Bi
     id?: number
 
     @Column({
-        field: 'network_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -40,7 +39,7 @@ export class BillingNetworkBlock extends Model<BillingNetworkBlockAttributes, Bi
         order: 'ASC',
         unique: false,
     })
-    networkId!: number
+    network_id!: number
 
     @Column({
         type: DataType.STRING(39),
@@ -54,7 +53,6 @@ export class BillingNetworkBlock extends Model<BillingNetworkBlockAttributes, Bi
     mask?: number
 
     @Column({
-        field: '_ipv4_net_from',
         allowNull: true,
     })
     @Index({
@@ -63,10 +61,9 @@ export class BillingNetworkBlock extends Model<BillingNetworkBlockAttributes, Bi
         order: 'ASC',
         unique: false,
     })
-    ipv4NetFrom?: any
+    _ipv4_net_from?: any
 
     @Column({
-        field: '_ipv4_net_to',
         allowNull: true,
     })
     @Index({
@@ -75,10 +72,9 @@ export class BillingNetworkBlock extends Model<BillingNetworkBlockAttributes, Bi
         order: 'ASC',
         unique: false,
     })
-    ipv4NetTo?: any
+    _ipv4_net_to?: any
 
     @Column({
-        field: '_ipv6_net_from',
         allowNull: true,
     })
     @Index({
@@ -87,10 +83,9 @@ export class BillingNetworkBlock extends Model<BillingNetworkBlockAttributes, Bi
         order: 'ASC',
         unique: false,
     })
-    ipv6NetFrom?: any
+    _ipv6_net_from?: any
 
     @Column({
-        field: '_ipv6_net_to',
         allowNull: true,
     })
     @Index({
@@ -99,6 +94,6 @@ export class BillingNetworkBlock extends Model<BillingNetworkBlockAttributes, Bi
         order: 'ASC',
         unique: false,
     })
-    ipv6NetTo?: any
+    _ipv6_net_to?: any
 
 }

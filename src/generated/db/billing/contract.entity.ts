@@ -1,11 +1,11 @@
 import {BelongsTo, Column, DataType, ForeignKey, HasMany, Index, Model, Table} from 'sequelize-typescript'
 import {Contact} from './contact.entity'
-import {ContractBalance} from './contract-balance.entity'
+import {ContractsBillingProfileNetwork} from './contracts-billing-profile-network.entity'
+import {Voucher} from './voucher.entity'
 import {Invoice} from './invoice.entity'
 import {VoipSubscriber} from './voip-subscriber.entity'
-import {Voucher} from './voucher.entity'
 import {Reseller} from './reseller.entity'
-import {ContractsBillingProfileNetwork} from './contracts-billing-profile-network.entity'
+import {ContractBalance} from './contract-balance.entity'
 import {Customer} from './customer.entity'
 import {Order} from './order.entity'
 import {Product} from './product.entity'
@@ -13,25 +13,25 @@ import {ProfilePackage} from './profile-package.entity'
 
 interface ContractAttributes {
     id?: number;
-    customerId?: number;
-    contactId?: number;
-    orderId?: number;
-    profilePackageId?: number;
+    customer_id?: number;
+    contact_id?: number;
+    order_id?: number;
+    profile_package_id?: number;
     status: string;
-    externalId?: string;
-    modifyTimestamp: Date;
-    createTimestamp: Date;
-    activateTimestamp?: Date;
-    terminateTimestamp?: Date;
-    maxSubscribers?: number;
-    sendInvoice: number;
-    subscriberEmailTemplateId?: number;
-    passresetEmailTemplateId?: number;
-    invoiceEmailTemplateId?: number;
-    invoiceTemplateId?: number;
-    vatRate: number;
-    addVat: number;
-    productId: number;
+    external_id?: string;
+    modify_timestamp: Date;
+    create_timestamp: Date;
+    activate_timestamp?: Date;
+    terminate_timestamp?: Date;
+    max_subscribers?: number;
+    send_invoice: number;
+    subscriber_email_template_id?: number;
+    passreset_email_template_id?: number;
+    invoice_email_template_id?: number;
+    invoice_template_id?: number;
+    vat_rate: number;
+    add_vat: number;
+    product_id: number;
 }
 
 @Table({
@@ -55,7 +55,6 @@ export class Contract extends Model<ContractAttributes, ContractAttributes> impl
 
     @ForeignKey(() => Customer)
     @Column({
-        field: 'customer_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -65,11 +64,10 @@ export class Contract extends Model<ContractAttributes, ContractAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    customerId?: number
+    customer_id?: number
 
     @ForeignKey(() => Contact)
     @Column({
-        field: 'contact_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -79,11 +77,10 @@ export class Contract extends Model<ContractAttributes, ContractAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    contactId?: number
+    contact_id?: number
 
     @ForeignKey(() => Order)
     @Column({
-        field: 'order_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -93,11 +90,10 @@ export class Contract extends Model<ContractAttributes, ContractAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    orderId?: number
+    order_id?: number
 
     @ForeignKey(() => ProfilePackage)
     @Column({
-        field: 'profile_package_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -107,7 +103,7 @@ export class Contract extends Model<ContractAttributes, ContractAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    profilePackageId?: number
+    profile_package_id?: number
 
     @Column({
         type: DataType.ENUM('pending', 'active', 'locked', 'terminated'),
@@ -115,7 +111,6 @@ export class Contract extends Model<ContractAttributes, ContractAttributes> impl
     status!: string
 
     @Column({
-        field: 'external_id',
         allowNull: true,
         type: DataType.STRING(255),
     })
@@ -125,90 +120,77 @@ export class Contract extends Model<ContractAttributes, ContractAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    externalId?: string
+    external_id?: string
 
     @Column({
-        field: 'modify_timestamp',
         type: DataType.DATE,
     })
-    modifyTimestamp!: Date
+    modify_timestamp!: Date
 
     @Column({
-        field: 'create_timestamp',
         type: DataType.DATE,
     })
-    createTimestamp!: Date
+    create_timestamp!: Date
 
     @Column({
-        field: 'activate_timestamp',
         allowNull: true,
         type: DataType.DATE,
     })
-    activateTimestamp?: Date
+    activate_timestamp?: Date
 
     @Column({
-        field: 'terminate_timestamp',
         allowNull: true,
         type: DataType.DATE,
     })
-    terminateTimestamp?: Date
+    terminate_timestamp?: Date
 
     @Column({
-        field: 'max_subscribers',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    maxSubscribers?: number
+    max_subscribers?: number
 
     @Column({
-        field: 'send_invoice',
         type: DataType.TINYINT,
     })
-    sendInvoice!: number
+    send_invoice!: number
 
     @Column({
-        field: 'subscriber_email_template_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    subscriberEmailTemplateId?: number
+    subscriber_email_template_id?: number
 
     @Column({
-        field: 'passreset_email_template_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    passresetEmailTemplateId?: number
+    passreset_email_template_id?: number
 
     @Column({
-        field: 'invoice_email_template_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    invoiceEmailTemplateId?: number
+    invoice_email_template_id?: number
 
     @Column({
-        field: 'invoice_template_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    invoiceTemplateId?: number
+    invoice_template_id?: number
 
     @Column({
-        field: 'vat_rate',
         type: DataType.TINYINT,
     })
-    vatRate!: number
+    vat_rate!: number
 
     @Column({
-        field: 'add_vat',
         type: DataType.TINYINT,
     })
-    addVat!: number
+    add_vat!: number
 
     @ForeignKey(() => Product)
     @Column({
-        field: 'product_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -217,15 +199,20 @@ export class Contract extends Model<ContractAttributes, ContractAttributes> impl
         order: 'ASC',
         unique: false,
     })
-    productId!: number
+    product_id!: number
 
     @BelongsTo(() => Contact)
     Contact?: Contact
 
-    @HasMany(() => ContractBalance, {
+    @HasMany(() => ContractsBillingProfileNetwork, {
         sourceKey: 'id',
     })
-    ContractBalances?: ContractBalance[]
+    ContractsBillingProfileNetworks?: ContractsBillingProfileNetwork[]
+
+    @HasMany(() => Voucher, {
+        sourceKey: 'id',
+    })
+    Vouchers?: Voucher[]
 
     @HasMany(() => Invoice, {
         sourceKey: 'id',
@@ -237,20 +224,15 @@ export class Contract extends Model<ContractAttributes, ContractAttributes> impl
     })
     VoipSubscribers?: VoipSubscriber[]
 
-    @HasMany(() => Voucher, {
-        sourceKey: 'id',
-    })
-    Vouchers?: Voucher[]
-
     @HasMany(() => Reseller, {
         sourceKey: 'id',
     })
     Resellers?: Reseller[]
 
-    @HasMany(() => ContractsBillingProfileNetwork, {
+    @HasMany(() => ContractBalance, {
         sourceKey: 'id',
     })
-    ContractsBillingProfileNetworks?: ContractsBillingProfileNetwork[]
+    ContractBalances?: ContractBalance[]
 
     @BelongsTo(() => Customer)
     Customer?: Customer

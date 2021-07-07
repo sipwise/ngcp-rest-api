@@ -1,11 +1,11 @@
 import {BelongsTo, Column, DataType, ForeignKey, HasMany, Index, Model, Table} from 'sequelize-typescript'
 import {BillingProfile} from './billing-profile.entity'
-import {BillingZonesHistory} from './billing-zones-history.entity'
 import {BillingFee} from './billing-fee.entity'
+import {BillingZonesHistory} from './billing-zones-history.entity'
 
 interface BillingZoneAttributes {
     id?: number;
-    billingProfileId: number;
+    billing_profile_id: number;
     zone: string;
     detail?: string;
 }
@@ -31,7 +31,6 @@ export class BillingZone extends Model<BillingZoneAttributes, BillingZoneAttribu
 
     @ForeignKey(() => BillingProfile)
     @Column({
-        field: 'billing_profile_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -40,7 +39,7 @@ export class BillingZone extends Model<BillingZoneAttributes, BillingZoneAttribu
         order: 'ASC',
         unique: true,
     })
-    billingProfileId!: number
+    billing_profile_id!: number
 
     @Column({
         type: DataType.STRING(127),
@@ -68,14 +67,14 @@ export class BillingZone extends Model<BillingZoneAttributes, BillingZoneAttribu
     @BelongsTo(() => BillingProfile)
     BillingProfile?: BillingProfile
 
-    @HasMany(() => BillingZonesHistory, {
-        sourceKey: 'id',
-    })
-    BillingZonesHistories?: BillingZonesHistory[]
-
     @HasMany(() => BillingFee, {
         sourceKey: 'id',
     })
     BillingFees?: BillingFee[]
+
+    @HasMany(() => BillingZonesHistory, {
+        sourceKey: 'id',
+    })
+    BillingZonesHistories?: BillingZonesHistory[]
 
 }

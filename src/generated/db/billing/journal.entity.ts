@@ -3,11 +3,11 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 interface JournalAttributes {
     id?: number;
     operation: string;
-    resourceName: string;
-    resourceId: number;
+    resource_name: string;
+    resource_id: number;
     timestamp: string;
     username?: string;
-    contentFormat: string;
+    content_format: string;
     content?: Uint8Array;
 }
 
@@ -42,7 +42,6 @@ export class Journal extends Model<JournalAttributes, JournalAttributes> impleme
     operation!: string
 
     @Column({
-        field: 'resource_name',
         type: DataType.STRING(64),
     })
     @Index({
@@ -51,10 +50,9 @@ export class Journal extends Model<JournalAttributes, JournalAttributes> impleme
         order: 'ASC',
         unique: false,
     })
-    resourceName!: string
+    resource_name!: string
 
     @Column({
-        field: 'resource_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -63,7 +61,7 @@ export class Journal extends Model<JournalAttributes, JournalAttributes> impleme
         order: 'ASC',
         unique: false,
     })
-    resourceId!: number
+    resource_id!: number
 
     @Column({
         type: DataType.DECIMAL(13, 3),
@@ -83,10 +81,9 @@ export class Journal extends Model<JournalAttributes, JournalAttributes> impleme
     username?: string
 
     @Column({
-        field: 'content_format',
         type: DataType.ENUM('storable', 'json', 'json_deflate', 'sereal'),
     })
-    contentFormat!: string
+    content_format!: string
 
     @Column({
         allowNull: true,

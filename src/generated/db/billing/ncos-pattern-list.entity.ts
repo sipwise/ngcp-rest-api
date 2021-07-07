@@ -2,7 +2,7 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface NcosPatternListAttributes {
     id?: number;
-    ncosLevelId: number;
+    ncos_level_id: number;
     pattern: string;
     description?: string;
 }
@@ -27,7 +27,6 @@ export class NcosPatternList extends Model<NcosPatternListAttributes, NcosPatter
     id?: number
 
     @Column({
-        field: 'ncos_level_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -36,7 +35,7 @@ export class NcosPatternList extends Model<NcosPatternListAttributes, NcosPatter
         order: 'ASC',
         unique: true,
     })
-    ncosLevelId!: number
+    ncos_level_id!: number
 
     @Column({
         type: DataType.STRING(255),

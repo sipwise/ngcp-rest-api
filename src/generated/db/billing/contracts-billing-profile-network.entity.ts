@@ -5,11 +5,11 @@ import {Contract} from './contract.entity'
 
 interface ContractsBillingProfileNetworkAttributes {
     id?: number;
-    contractId: number;
-    billingProfileId: number;
-    billingNetworkId?: number;
-    startDate?: Date;
-    endDate?: Date;
+    contract_id: number;
+    billing_profile_id: number;
+    billing_network_id?: number;
+    start_date?: Date;
+    end_date?: Date;
     base: number;
 }
 
@@ -34,7 +34,6 @@ export class ContractsBillingProfileNetwork extends Model<ContractsBillingProfil
 
     @ForeignKey(() => Contract)
     @Column({
-        field: 'contract_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -43,11 +42,10 @@ export class ContractsBillingProfileNetwork extends Model<ContractsBillingProfil
         order: 'ASC',
         unique: true,
     })
-    contractId!: number
+    contract_id!: number
 
     @ForeignKey(() => BillingProfile)
     @Column({
-        field: 'billing_profile_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -62,11 +60,10 @@ export class ContractsBillingProfileNetwork extends Model<ContractsBillingProfil
         order: 'ASC',
         unique: false,
     })
-    billingProfileId!: number
+    billing_profile_id!: number
 
     @ForeignKey(() => BillingNetwork)
     @Column({
-        field: 'billing_network_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -82,10 +79,9 @@ export class ContractsBillingProfileNetwork extends Model<ContractsBillingProfil
         order: 'ASC',
         unique: false,
     })
-    billingNetworkId?: number
+    billing_network_id?: number
 
     @Column({
-        field: 'start_date',
         allowNull: true,
         type: DataType.DATE,
     })
@@ -95,10 +91,9 @@ export class ContractsBillingProfileNetwork extends Model<ContractsBillingProfil
         order: 'ASC',
         unique: true,
     })
-    startDate?: Date
+    start_date?: Date
 
     @Column({
-        field: 'end_date',
         allowNull: true,
         type: DataType.DATE,
     })
@@ -108,7 +103,7 @@ export class ContractsBillingProfileNetwork extends Model<ContractsBillingProfil
         order: 'ASC',
         unique: true,
     })
-    endDate?: Date
+    end_date?: Date
 
     @Column({
         type: DataType.TINYINT,

@@ -1,26 +1,26 @@
 import {BelongsTo, Column, DataType, ForeignKey, HasMany, Index, Model, Table} from 'sequelize-typescript'
-import {Contract} from './contract.entity'
 import {Voucher} from './voucher.entity'
+import {Contract} from './contract.entity'
 import {Reseller} from './reseller.entity'
 
 interface ProfilePackageAttributes {
     id?: number;
-    resellerId?: number;
+    reseller_id?: number;
     name: string;
     description: string;
-    initialBalance: number;
-    serviceCharge: number;
-    balanceIntervalUnit: string;
-    balanceIntervalValue: number;
-    balanceIntervalStartMode: string;
-    carryOverMode: string;
-    timelyDurationUnit?: string;
-    timelyDurationValue?: number;
-    notopupDiscardIntervals?: number;
-    underrunLockThreshold?: number;
-    underrunLockLevel?: number;
-    underrunProfileThreshold?: number;
-    topupLockLevel?: number;
+    initial_balance: number;
+    service_charge: number;
+    balance_interval_unit: string;
+    balance_interval_value: number;
+    balance_interval_start_mode: string;
+    carry_over_mode: string;
+    timely_duration_unit?: string;
+    timely_duration_value?: number;
+    notopup_discard_intervals?: number;
+    underrun_lock_threshold?: number;
+    underrun_lock_level?: number;
+    underrun_profile_threshold?: number;
+    topup_lock_level?: number;
 }
 
 @Table({
@@ -44,7 +44,6 @@ export class ProfilePackage extends Model<ProfilePackageAttributes, ProfilePacka
 
     @ForeignKey(() => Reseller)
     @Column({
-        field: 'reseller_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -54,7 +53,7 @@ export class ProfilePackage extends Model<ProfilePackageAttributes, ProfilePacka
         order: 'ASC',
         unique: true,
     })
-    resellerId?: number
+    reseller_id?: number
 
     @Column({
         type: DataType.STRING(255),
@@ -73,99 +72,86 @@ export class ProfilePackage extends Model<ProfilePackageAttributes, ProfilePacka
     description!: string
 
     @Column({
-        field: 'initial_balance',
         type: DataType.DOUBLE(22),
     })
-    initialBalance!: number
+    initial_balance!: number
 
     @Column({
-        field: 'service_charge',
         type: DataType.DOUBLE(22),
     })
-    serviceCharge!: number
+    service_charge!: number
 
     @Column({
-        field: 'balance_interval_unit',
         type: DataType.ENUM('minute', 'hour', 'day', 'week', 'month'),
     })
-    balanceIntervalUnit!: string
+    balance_interval_unit!: string
 
     @Column({
-        field: 'balance_interval_value',
         type: DataType.INTEGER,
     })
-    balanceIntervalValue!: number
+    balance_interval_value!: number
 
     @Column({
-        field: 'balance_interval_start_mode',
         type: DataType.ENUM('create', 'create_tz', '1st', '1st_tz', 'topup', 'topup_interval'),
     })
-    balanceIntervalStartMode!: string
+    balance_interval_start_mode!: string
 
     @Column({
-        field: 'carry_over_mode',
         type: DataType.ENUM('carry_over', 'carry_over_timely', 'discard'),
     })
-    carryOverMode!: string
+    carry_over_mode!: string
 
     @Column({
-        field: 'timely_duration_unit',
         allowNull: true,
         type: DataType.ENUM('minute', 'hour', 'day', 'week', 'month'),
     })
-    timelyDurationUnit?: string
+    timely_duration_unit?: string
 
     @Column({
-        field: 'timely_duration_value',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    timelyDurationValue?: number
+    timely_duration_value?: number
 
     @Column({
-        field: 'notopup_discard_intervals',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    notopupDiscardIntervals?: number
+    notopup_discard_intervals?: number
 
     @Column({
-        field: 'underrun_lock_threshold',
         allowNull: true,
         type: DataType.DOUBLE(22),
     })
-    underrunLockThreshold?: number
+    underrun_lock_threshold?: number
 
     @Column({
-        field: 'underrun_lock_level',
         allowNull: true,
         type: DataType.TINYINT,
     })
-    underrunLockLevel?: number
+    underrun_lock_level?: number
 
     @Column({
-        field: 'underrun_profile_threshold',
         allowNull: true,
         type: DataType.DOUBLE(22),
     })
-    underrunProfileThreshold?: number
+    underrun_profile_threshold?: number
 
     @Column({
-        field: 'topup_lock_level',
         allowNull: true,
         type: DataType.TINYINT,
     })
-    topupLockLevel?: number
-
-    @HasMany(() => Contract, {
-        sourceKey: 'id',
-    })
-    Contracts?: Contract[]
+    topup_lock_level?: number
 
     @HasMany(() => Voucher, {
         sourceKey: 'id',
     })
     Vouchers?: Voucher[]
+
+    @HasMany(() => Contract, {
+        sourceKey: 'id',
+    })
+    Contracts?: Contract[]
 
     @BelongsTo(() => Reseller)
     Reseller?: Reseller

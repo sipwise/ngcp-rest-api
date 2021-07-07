@@ -4,8 +4,8 @@ interface VoipNumberBlockAttributes {
     id?: number;
     cc: number;
     ac: string;
-    snPrefix: string;
-    snLength: number;
+    sn_prefix: string;
+    sn_length: number;
     allocable: number;
     authoritative: number;
 }
@@ -52,7 +52,6 @@ export class VoipNumberBlock extends Model<VoipNumberBlockAttributes, VoipNumber
     ac!: string
 
     @Column({
-        field: 'sn_prefix',
         type: DataType.STRING(31),
     })
     @Index({
@@ -61,13 +60,12 @@ export class VoipNumberBlock extends Model<VoipNumberBlockAttributes, VoipNumber
         order: 'ASC',
         unique: true,
     })
-    snPrefix!: string
+    sn_prefix!: string
 
     @Column({
-        field: 'sn_length',
         type: DataType.TINYINT,
     })
-    snLength!: number
+    sn_length!: number
 
     @Column({
         type: DataType.TINYINT,

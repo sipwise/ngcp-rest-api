@@ -2,22 +2,22 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface VoipInterceptAttributes {
     id?: number;
-    resellerId?: number;
-    lIID?: number;
+    reseller_id?: number;
+    liid?: number;
     number?: string;
-    ccRequired: number;
-    deliveryHost?: string;
-    deliveryPort?: number;
-    deliveryUser?: string;
-    deliveryPass?: string;
-    modifyTimestamp: Date;
-    createTimestamp: Date;
+    cc_required: number;
+    delivery_host?: string;
+    delivery_port?: number;
+    delivery_user?: string;
+    delivery_pass?: string;
+    modify_timestamp: Date;
+    create_timestamp: Date;
     deleted: number;
     uuid?: string;
-    sipUsername?: string;
-    sipDomain?: string;
-    ccDeliveryHost?: string;
-    ccDeliveryPort?: number;
+    sip_username?: string;
+    sip_domain?: string;
+    cc_delivery_host?: string;
+    cc_delivery_port?: number;
 }
 
 @Table({
@@ -40,7 +40,6 @@ export class VoipIntercept extends Model<VoipInterceptAttributes, VoipInterceptA
     id?: number
 
     @Column({
-        field: 'reseller_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -50,14 +49,14 @@ export class VoipIntercept extends Model<VoipInterceptAttributes, VoipInterceptA
         order: 'ASC',
         unique: false,
     })
-    resellerId?: number
+    reseller_id?: number
 
     @Column({
         field: 'LIID',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    lIID?: number
+    liid?: number
 
     @Column({
         allowNull: true,
@@ -72,50 +71,43 @@ export class VoipIntercept extends Model<VoipInterceptAttributes, VoipInterceptA
     number?: string
 
     @Column({
-        field: 'cc_required',
         type: DataType.TINYINT,
     })
-    ccRequired!: number
+    cc_required!: number
 
     @Column({
-        field: 'delivery_host',
         allowNull: true,
         type: DataType.STRING(15),
     })
-    deliveryHost?: string
+    delivery_host?: string
 
     @Column({
-        field: 'delivery_port',
         allowNull: true,
         type: DataType.SMALLINT,
     })
-    deliveryPort?: number
+    delivery_port?: number
 
     @Column({
-        field: 'delivery_user',
         allowNull: true,
         type: DataType.STRING,
     })
-    deliveryUser?: string
+    delivery_user?: string
 
     @Column({
-        field: 'delivery_pass',
         allowNull: true,
         type: DataType.STRING,
     })
-    deliveryPass?: string
+    delivery_pass?: string
 
     @Column({
-        field: 'modify_timestamp',
         type: DataType.DATE,
     })
-    modifyTimestamp!: Date
+    modify_timestamp!: Date
 
     @Column({
-        field: 'create_timestamp',
         type: DataType.DATE,
     })
-    createTimestamp!: Date
+    create_timestamp!: Date
 
     @Column({
         type: DataType.TINYINT,
@@ -135,31 +127,27 @@ export class VoipIntercept extends Model<VoipInterceptAttributes, VoipInterceptA
     uuid?: string
 
     @Column({
-        field: 'sip_username',
         allowNull: true,
         type: DataType.STRING(255),
     })
-    sipUsername?: string
+    sip_username?: string
 
     @Column({
-        field: 'sip_domain',
         allowNull: true,
         type: DataType.STRING(255),
     })
-    sipDomain?: string
+    sip_domain?: string
 
     @Column({
-        field: 'cc_delivery_host',
         allowNull: true,
         type: DataType.STRING(64),
     })
-    ccDeliveryHost?: string
+    cc_delivery_host?: string
 
     @Column({
-        field: 'cc_delivery_port',
         allowNull: true,
         type: DataType.SMALLINT,
     })
-    ccDeliveryPort?: number
+    cc_delivery_port?: number
 
 }

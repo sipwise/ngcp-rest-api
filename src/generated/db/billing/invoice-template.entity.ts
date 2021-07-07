@@ -2,7 +2,7 @@ import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
 interface InvoiceTemplateAttributes {
     id?: number;
-    resellerId: number;
+    reseller_id: number;
     name: string;
     type: string;
     data?: Uint8Array;
@@ -28,7 +28,6 @@ export class InvoiceTemplate extends Model<InvoiceTemplateAttributes, InvoiceTem
     id?: number
 
     @Column({
-        field: 'reseller_id',
         type: DataType.INTEGER,
     })
     @Index({
@@ -37,7 +36,7 @@ export class InvoiceTemplate extends Model<InvoiceTemplateAttributes, InvoiceTem
         order: 'ASC',
         unique: false,
     })
-    resellerId!: number
+    reseller_id!: number
 
     @Column({
         type: DataType.STRING(255),

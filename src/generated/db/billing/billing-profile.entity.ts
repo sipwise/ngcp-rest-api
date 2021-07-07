@@ -1,35 +1,35 @@
 import {BelongsTo, Column, DataType, ForeignKey, HasMany, Index, Model, Table} from 'sequelize-typescript'
-import {BillingFee} from './billing-fee.entity'
-import {BillingZone} from './billing-zone.entity'
-import {Product} from './product.entity'
 import {ContractsBillingProfileNetwork} from './contracts-billing-profile-network.entity'
+import {Product} from './product.entity'
+import {BillingZone} from './billing-zone.entity'
+import {BillingFee} from './billing-fee.entity'
 import {Reseller} from './reseller.entity'
 
 interface BillingProfileAttributes {
     id?: number;
-    resellerId?: number;
+    reseller_id?: number;
     handle: string;
     name: string;
     prepaid: number;
-    intervalCharge: number;
-    intervalFreeTime: number;
-    intervalFreeCash: number;
-    intervalUnit: string;
-    intervalCount: number;
-    fraudIntervalLimit?: number;
-    fraudIntervalLock?: number;
-    fraudIntervalNotify?: string;
-    fraudDailyLimit?: number;
-    fraudDailyLock?: number;
-    fraudDailyNotify?: string;
-    fraudUseResellerRates?: number;
+    interval_charge: number;
+    interval_free_time: number;
+    interval_free_cash: number;
+    interval_unit: string;
+    interval_count: number;
+    fraud_interval_limit?: number;
+    fraud_interval_lock?: number;
+    fraud_interval_notify?: string;
+    fraud_daily_limit?: number;
+    fraud_daily_lock?: number;
+    fraud_daily_notify?: string;
+    fraud_use_reseller_rates?: number;
     currency?: string;
     status: string;
-    modifyTimestamp: Date;
-    createTimestamp: Date;
-    terminateTimestamp: Date;
-    adviceOfCharge: number;
-    prepaidLibrary: string;
+    modify_timestamp: Date;
+    create_timestamp: Date;
+    terminate_timestamp: Date;
+    advice_of_charge: number;
+    prepaid_library: string;
 }
 
 @Table({
@@ -53,7 +53,6 @@ export class BillingProfile extends Model<BillingProfileAttributes, BillingProfi
 
     @ForeignKey(() => Reseller)
     @Column({
-        field: 'reseller_id',
         allowNull: true,
         type: DataType.INTEGER,
     })
@@ -75,7 +74,7 @@ export class BillingProfile extends Model<BillingProfileAttributes, BillingProfi
         order: 'ASC',
         unique: false,
     })
-    resellerId?: number
+    reseller_id?: number
 
     @Column({
         type: DataType.STRING(63),
@@ -105,83 +104,71 @@ export class BillingProfile extends Model<BillingProfileAttributes, BillingProfi
     prepaid!: number
 
     @Column({
-        field: 'interval_charge',
         type: DataType.DOUBLE(22),
     })
-    intervalCharge!: number
+    interval_charge!: number
 
     @Column({
-        field: 'interval_free_time',
         type: DataType.INTEGER,
     })
-    intervalFreeTime!: number
+    interval_free_time!: number
 
     @Column({
-        field: 'interval_free_cash',
         type: DataType.DOUBLE(22),
     })
-    intervalFreeCash!: number
+    interval_free_cash!: number
 
     @Column({
-        field: 'interval_unit',
         type: DataType.ENUM('week', 'month'),
     })
-    intervalUnit!: string
+    interval_unit!: string
 
     @Column({
-        field: 'interval_count',
         type: DataType.TINYINT,
     })
-    intervalCount!: number
+    interval_count!: number
 
     @Column({
-        field: 'fraud_interval_limit',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    fraudIntervalLimit?: number
+    fraud_interval_limit?: number
 
     @Column({
-        field: 'fraud_interval_lock',
         allowNull: true,
         type: DataType.TINYINT,
     })
-    fraudIntervalLock?: number
+    fraud_interval_lock?: number
 
     @Column({
-        field: 'fraud_interval_notify',
         allowNull: true,
         type: DataType.STRING(255),
     })
-    fraudIntervalNotify?: string
+    fraud_interval_notify?: string
 
     @Column({
-        field: 'fraud_daily_limit',
         allowNull: true,
         type: DataType.INTEGER,
     })
-    fraudDailyLimit?: number
+    fraud_daily_limit?: number
 
     @Column({
-        field: 'fraud_daily_lock',
         allowNull: true,
         type: DataType.TINYINT,
     })
-    fraudDailyLock?: number
+    fraud_daily_lock?: number
 
     @Column({
-        field: 'fraud_daily_notify',
         allowNull: true,
         type: DataType.STRING(255),
     })
-    fraudDailyNotify?: string
+    fraud_daily_notify?: string
 
     @Column({
-        field: 'fraud_use_reseller_rates',
         allowNull: true,
         type: DataType.TINYINT,
     })
-    fraudUseResellerRates?: number
+    fraud_use_reseller_rates?: number
 
     @Column({
         allowNull: true,
@@ -195,19 +182,16 @@ export class BillingProfile extends Model<BillingProfileAttributes, BillingProfi
     status!: string
 
     @Column({
-        field: 'modify_timestamp',
         type: DataType.DATE,
     })
-    modifyTimestamp!: Date
+    modify_timestamp!: Date
 
     @Column({
-        field: 'create_timestamp',
         type: DataType.DATE,
     })
-    createTimestamp!: Date
+    create_timestamp!: Date
 
     @Column({
-        field: 'terminate_timestamp',
         type: DataType.DATE,
     })
     @Index({
@@ -222,39 +206,37 @@ export class BillingProfile extends Model<BillingProfileAttributes, BillingProfi
         order: 'ASC',
         unique: true,
     })
-    terminateTimestamp!: Date
+    terminate_timestamp!: Date
 
     @Column({
-        field: 'advice_of_charge',
         type: DataType.TINYINT,
     })
-    adviceOfCharge!: number
+    advice_of_charge!: number
 
     @Column({
-        field: 'prepaid_library',
         type: DataType.ENUM('libswrate', 'libinewrate'),
     })
-    prepaidLibrary!: string
+    prepaid_library!: string
 
-    @HasMany(() => BillingFee, {
+    @HasMany(() => ContractsBillingProfileNetwork, {
         sourceKey: 'id',
     })
-    BillingFees?: BillingFee[]
-
-    @HasMany(() => BillingZone, {
-        sourceKey: 'id',
-    })
-    BillingZones?: BillingZone[]
+    ContractsBillingProfileNetworks?: ContractsBillingProfileNetwork[]
 
     @HasMany(() => Product, {
         sourceKey: 'id',
     })
     Products?: Product[]
 
-    @HasMany(() => ContractsBillingProfileNetwork, {
+    @HasMany(() => BillingZone, {
         sourceKey: 'id',
     })
-    ContractsBillingProfileNetworks?: ContractsBillingProfileNetwork[]
+    BillingZones?: BillingZone[]
+
+    @HasMany(() => BillingFee, {
+        sourceKey: 'id',
+    })
+    BillingFees?: BillingFee[]
 
     @BelongsTo(() => Reseller)
     Reseller?: Reseller
