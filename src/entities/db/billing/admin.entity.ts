@@ -1,11 +1,32 @@
-import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
+
+export interface AdminDbAttributes {
+    id?: number;
+    reseller_id?: number;
+    login: string;
+    md5pass?: string;
+    saltedpass?: string;
+    is_master: boolean;
+    is_superuser: boolean;
+    is_ccare: boolean;
+    is_active: boolean;
+    read_only: boolean;
+    show_passwords: boolean;
+    call_data: boolean;
+    billing_data: boolean;
+    lawful_intercept: boolean;
+    ssl_client_m_serial?: number;
+    ssl_client_certificate?: string;
+    email?: string;
+    can_reset_password: boolean;
+    is_system: boolean;
+}
 
 @Table({
     tableName: 'admins',
     timestamps: false,
 })
-export class Admin extends Model {
+export class Admin extends Model<AdminDbAttributes, AdminDbAttributes> implements AdminDbAttributes {
 
     @Column({
         primaryKey: true,
@@ -18,7 +39,6 @@ export class Admin extends Model {
         order: 'ASC',
         unique: true,
     })
-    @ApiProperty()
     id?: number
 
     @Column({
@@ -31,7 +51,6 @@ export class Admin extends Model {
         order: 'ASC',
         unique: false,
     })
-    @ApiPropertyOptional({example: 1, description: 'Unique identifier of a reseller', type: 'integer'})
     reseller_id?: number
 
     @Column({

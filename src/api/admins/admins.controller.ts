@@ -13,15 +13,15 @@ import {
 } from '@nestjs/common'
 import {ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {AdminsService} from './admins.service'
-import {CreateAdminDto} from './dto/create-admin.dto'
-import {UpdateAdminDto} from './dto/update-admin.dto'
-import {Admin} from '../../entities/db/billing/admin.entity'
+import {AdminCreateDto} from './dto/admin-create.dto'
+import {AdminUpdateDto} from './dto/admin-update.dto'
 import {OmniGuard} from '../../guards/omni.guard'
-import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 import {JOURNAL_SERVICE} from '../../config/constants.config'
 import {JournalsService} from '../journals/journals.service'
-import {LoggingInterceptor} from '../../interceptors/logging.interceptor'
 import {config} from '../../config/main.config'
+import {AdminResponseDto} from './dto/admin-response.dto'
+import {LoggingInterceptor} from '../../interceptors/logging.interceptor'
+import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 
 @ApiTags('admins')
 @Controller('admins')
@@ -38,14 +38,16 @@ export class AdminsController {
 
     @Post()
     @ApiCreatedResponse({
-        type: Admin,
+        type: AdminResponseDto,
     })
-    async create(@Body() admin: CreateAdminDto) {
+    async create(@Body() admin: AdminCreateDto) {
         return await this.adminsService.create(admin)
     }
 
     @Get()
-    @ApiOkResponse()
+    @ApiOkResponse({
+        type: AdminResponseDto,
+    })
     async findAll(@Query('page') page: string, @Query('rows') row: string) {
         page = page ? page : `${config.common.api_default_query_page}`
         row = row ? row : `${config.common.api_default_query_rows}`
@@ -53,13 +55,15 @@ export class AdminsController {
     }
 
     @Get(':id')
-    @ApiOkResponse()
+    @ApiOkResponse({
+        type: AdminResponseDto,
+    })
     async findOne(@Param('id') id: string) {
         return await this.adminsService.findOne(+id)
     }
 
     @Put(':id')
-    async update(@Param('id') id: string, @Body() admin: UpdateAdminDto) {
+    async update(@Param('id') id: string, @Body() admin: AdminUpdateDto) {
         return await this.adminsService.update(+id, admin)
     }
 

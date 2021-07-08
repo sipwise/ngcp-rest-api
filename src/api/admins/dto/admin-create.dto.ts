@@ -1,23 +1,13 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsEmail, IsNotEmpty} from 'class-validator'
 
-export class CreateAdminDto {
-    // @IsEmpty()
-    // @ApiPropertyOptional({example: 1, description: "Unique identifier of an admin", type: "integer"})
-    // readonly id: number;
-
+export class AdminCreateDto {
     @ApiPropertyOptional({example: 1, description: 'Unique identifier of a reseller', type: 'integer'})
-    readonly reseller_id: number
+    readonly reseller_id?: number
 
     @IsNotEmpty()
     @ApiProperty({example: 'jsmith', description: 'Username used for authentication'})
     readonly login: string
-
-    @ApiPropertyOptional({description: 'md5 hash of password'})
-    readonly md5pass: string
-
-    @ApiPropertyOptional({description: 'bcrypt representation of password'})
-    readonly saltedpass: string
 
     @IsNotEmpty()
     @ApiProperty({description: 'Is master'})
@@ -55,12 +45,6 @@ export class CreateAdminDto {
     @ApiProperty({description: 'Lawful intercept'})
     readonly lawful_intercept: boolean
 
-    @ApiProperty({description: 'SSL certificate serial number'})
-    readonly ssl_client_m_serial: number
-
-    @ApiProperty({description: 'SSL certificate'})
-    readonly ssl_client_certificate: string
-
     @IsNotEmpty()
     @IsEmail()
     @ApiProperty({description: 'Email address', example: 'admin@example.com'})
@@ -73,4 +57,8 @@ export class CreateAdminDto {
     @IsNotEmpty()
     @ApiProperty({description: 'Is system user'})
     readonly is_system: boolean
+
+    @IsNotEmpty()
+    @ApiProperty({description: 'Password to be set for user'})
+    readonly password: string
 }
