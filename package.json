@@ -35,7 +35,7 @@
     "@types/bluebird": "3.5.35",
     "@types/node": "15.12.2",
     "@types/validator": "13.1.4",
-    "bcryptjs": "2.4.3",
+    "bcrypt": "5.0.1",
     "class-transformer": "0.4.0",
     "class-validator": "0.13.1",
     "express": "4.17.1",

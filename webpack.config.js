@@ -29,6 +29,10 @@ module.exports =
         use: 'ts-loader',
         exclude: /node_modules/,
       },
+      {
+        test: /\.(cs|html)$/,
+        use: 'ignore-loader',
+      },
     ],
   },
   resolve:
@@ -52,6 +56,7 @@ module.exports =
               '@nestjs/microservices/microservices-module',
               '@nestjs/websockets/socket-module',
               '@nestjs/platform-express',
+              'bluebird',
               'cache-manager',
               'cardinal',
               'class-validator',
@@ -59,6 +64,7 @@ module.exports =
               'class-transformer/storage',
               'pg-hstore',
               'nock',
+              'npm',
               'aws-sdk',
               'mock-aws-s3',
         ]
