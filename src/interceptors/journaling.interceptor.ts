@@ -3,7 +3,7 @@ import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
 import {extractResourceName} from '../helpers/uri.helper'
 import {JournalsService} from '../api/journals/journals.service'
-import {CreateJournalDto} from '../api/journals/dto/create-journal.dto'
+import {JournalCreateDto} from '../api/journals/dto/journal-create.dto'
 import {TextEncoder} from 'util'
 import {config} from '../config/main.config'
 
@@ -74,7 +74,7 @@ export class JournalingInterceptor implements NestInterceptor {
                 // Get resourceID from data values if method is POST else from request params 'id'
                 let resourceID
                 if (req.method == 'POST') {
-                    resourceID = data.dataValues.id
+                    resourceID = data.id
                 } else {
                     resourceID = req.params.id
                 }
@@ -82,17 +82,19 @@ export class JournalingInterceptor implements NestInterceptor {
                 const enc = new TextEncoder()
 
                 // create new Journal entry
-                let j = new CreateJournalDto()
-                j.content = enc.encode(JSON.stringify(req.body))
-                j.content_format = cf
-                j.operation = op
-                j.resource_id = resourceID
-                j.resource_name = resourceName
-                j.timestamp = req.ctx.startTimestamp / 1000
-                j.username = req.user.dataValues.login
+                const entry: JournalCreateDto = {
+                    content: enc.encode(JSON.stringify(req.body)),
+                    content_format: cf,
+                    operation: op,
+                    resource_id: resourceID,
+                    resource_name: resourceName,
+                    timestamp: req.ctx.startTimestamp / 1000,
+                    username: req.user.login,
+                }
+
 
                 // write Journal entry to database
-                await this.journalsService.create(j)
+                await this.journalsService.create(entry)
                 return data
             }),
         )

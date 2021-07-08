@@ -1,8 +1,9 @@
 import {Inject, Injectable} from '@nestjs/common'
 import {JOURNAL_REPOSITORY} from '../../config/constants.config'
-import {Journal} from '../../entities/db/billing/journal.entity'
-import {CreateJournalDto} from './dto/create-journal.dto'
+import {Journal, JournalAttributes} from '../../entities/db/billing/journal.entity'
+import {JournalCreateDto} from './dto/journal-create.dto'
 import {FindOptions, Op, WhereOptions} from 'sequelize'
+import {JournalResponseDto} from './dto/journal-response.dto'
 
 @Injectable()
 export class JournalsService {
@@ -15,12 +16,33 @@ export class JournalsService {
     ) {
     }
 
+    private static toResponse(db: Journal): JournalResponseDto {
+        return {
+            content: db.content,
+            content_format: db.content_format,
+            operation: db.operation,
+            resource_id: db.resource_id,
+            resource_name: db.resource_name,
+            timestamp: db.timestamp,
+            username: db.username,
+        }
+    }
+
     /**
      * Creates a new `Journal` entry in the database
      * @param journal Journal to be created
      */
-    async create(journal: CreateJournalDto): Promise<Journal> {
-        return this.journalRepo.create<Journal>(journal)
+    async create(journal: JournalCreateDto): Promise<JournalResponseDto> {
+        const dbJournal: JournalAttributes = {
+            content: journal.content,
+            content_format: journal.content_format,
+            operation: journal.operation,
+            resource_id: journal.resource_id,
+            resource_name: journal.resource_name,
+            timestamp: journal.timestamp,
+            username: journal.username,
+        }
+        return JournalsService.toResponse(await this.journalRepo.create<Journal>(journal))
     }
 
     /**
@@ -30,7 +52,7 @@ export class JournalsService {
      * @param resourceName Name of the resource
      * @param resourceId ID of the named resource
      */
-    async readAll(page?: string, rows?: string, resourceName?: string, resourceId?: string): Promise<Journal[]> {
+    async readAll(page?: string, rows?: string, resourceName?: string, resourceId?: string): Promise<JournalResponseDto[]> {
         let filter: WhereOptions = {}
         if (resourceName !== undefined) {
             filter = {resource_name: resourceName}
@@ -51,22 +73,22 @@ export class JournalsService {
             where: filter,
             attributes: {exclude: ['content']},
         })
-        return result.rows
+        return result.rows.map(j => JournalsService.toResponse(j))
     }
 
     /**
      * Find one `Journal` by ID
      * @param id ID of Journal
      */
-    async readOne(id: number): Promise<Journal> {
-        return this.journalRepo.findOne<Journal>({where: {id}})
+    async readOne(id: number): Promise<JournalResponseDto> {
+        return JournalsService.toResponse(await this.journalRepo.findOne<Journal>({where: {id}}))
     }
 
     /**
      * Find one `Journal` by pattern
      * @param pattern FindOptions to filter results
      */
-    async searchOne(pattern: FindOptions): Promise<Journal> {
-        return this.journalRepo.findOne(pattern)
+    async searchOne(pattern: FindOptions): Promise<JournalResponseDto> {
+        return JournalsService.toResponse(await this.journalRepo.findOne(pattern))
     }
 }

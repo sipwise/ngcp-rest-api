@@ -1,37 +1,94 @@
-import {Column, DataType, Model, Table} from 'sequelize-typescript'
-import {ApiProperty} from '@nestjs/swagger'
+import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
-@Table({tableName: 'journals', timestamps: false})
-export class Journal extends Model {
-    @ApiProperty()
-    @Column({primaryKey: true, autoIncrement: true, type: DataType.INTEGER})
+export interface JournalAttributes {
+    id?: number;
+    operation: string;
+    resource_name: string;
+    resource_id: number;
+    timestamp: number;
+    username?: string;
+    content_format: string;
+    content?: Uint8Array;
+}
+
+@Table({
+    tableName: 'journals',
+    timestamps: false,
+})
+export class Journal extends Model<JournalAttributes, JournalAttributes> implements JournalAttributes {
+
+    @Column({
+        primaryKey: true,
+        autoIncrement: true,
+        type: DataType.INTEGER,
+    })
+    @Index({
+        name: 'PRIMARY',
+        using: 'BTREE',
+        order: 'ASC',
+        unique: true,
+    })
     id?: number
 
-    @ApiProperty()
-    @Column({type: DataType.ENUM('create', 'update', 'delete')})
+    @Column({
+        type: DataType.ENUM('create', 'update', 'delete'),
+    })
+    @Index({
+        name: 'op_idx',
+        using: 'BTREE',
+        order: 'ASC',
+        unique: false,
+    })
     operation!: string
 
-    @ApiProperty()
-    @Column({type: DataType.STRING(64)})
+    @Column({
+        type: DataType.STRING(64),
+    })
+    @Index({
+        name: 'res_idx',
+        using: 'BTREE',
+        order: 'ASC',
+        unique: false,
+    })
     resource_name!: string
 
-    @ApiProperty()
-    @Column({type: DataType.INTEGER})
+    @Column({
+        type: DataType.INTEGER,
+    })
+    @Index({
+        name: 'res_idx',
+        using: 'BTREE',
+        order: 'ASC',
+        unique: false,
+    })
     resource_id!: number
 
-    @ApiProperty()
-    @Column({type: DataType.DECIMAL(13, 3)})
+    @Column({
+        type: DataType.DECIMAL(13, 3),
+    })
+    @Index({
+        name: 'ts_idx',
+        using: 'BTREE',
+        order: 'ASC',
+        unique: false,
+    })
     timestamp!: number
 
-    @ApiProperty()
-    @Column({allowNull: true, type: DataType.STRING(127)})
+    @Column({
+        allowNull: true,
+        type: DataType.STRING(127),
+    })
     username?: string
 
-    @ApiProperty()
-    @Column({type: DataType.ENUM('storable', 'json', 'json_deflate', 'sereal')})
+    @Column({
+        type: DataType.ENUM('storable', 'json', 'json_deflate', 'sereal'),
+    })
     content_format!: string
 
-    @ApiProperty()
-    @Column({allowNull: true, type: DataType.BLOB})
+    @Column({
+        allowNull: true,
+        type: DataType.BLOB,
+    })
     content?: Uint8Array
+
 }
