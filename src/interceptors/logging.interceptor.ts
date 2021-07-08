@@ -41,7 +41,7 @@ export class LoggingInterceptor implements NestInterceptor {
                 // Get redacted version of response data
                 let redacted: any = this.getRedactedPlain(data)
                 if (req.method == 'POST') {
-                    resourceID = data.dataValues.id
+                    resourceID = data.id
                 } else {
                     resourceID = req.params.id
                 }
@@ -76,16 +76,16 @@ export class LoggingInterceptor implements NestInterceptor {
             // value.constructor returns the constructor of a specific object.
             // This allows the call of the correct ClassConstructor in plainToClass()
             data.forEach(function (value) {
-                let redacted: any = plainToClass(value.constructor, value.get({plain: true}))
-                redactedArr.push(redacted.get({plain: true}))
+                let redacted = plainToClass(value.constructor, value)
+                redactedArr.push(redacted)
             })
             return redactedArr
         } else {
             // get plain version object
             // value.constructor returns the constructor of a specific object.
             // This allows the call of the correct ClassConstructor in plainToClass()
-            let redacted: any = plainToClass(data.constructor, data.get({plain: true}))
-            return redacted.get({plain: true})
+            let redacted: any = plainToClass(data.constructor, data)
+            return redacted
         }
     }
 }

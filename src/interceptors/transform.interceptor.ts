@@ -79,16 +79,16 @@ export class TransformInterceptor implements NestInterceptor {
             let resource = halson()
                 .addLink('self', `/${prefix}/${resName}?page=${page}&rows=${row}`)
             data.map(async (row) => {
-                await resource.addLink(`ngcp:${resName}`, `/${prefix}/${resName}/${row.dataValues.id}`)
-                await resource.addEmbed(`ngcp:${resName}`, row.dataValues)
+                await resource.addLink(`ngcp:${resName}`, `/${prefix}/${resName}/${row.id}`)
+                await resource.addEmbed(`ngcp:${resName}`, row)
             })
             resource.addLink('collection', `/${prefix}/${resName}`)
             resource['total_count'] = data.length
 
             return resource
         }
-        let resource = halson(data.dataValues)
-            .addLink('self', `/${prefix}/${resName}/${data.dataValues.id}`)
+        let resource = halson(data)
+            .addLink('self', `/${prefix}/${resName}/${data.id}`)
             .addLink('collection', `/${prefix}/${resName}`)
 
         return resource
