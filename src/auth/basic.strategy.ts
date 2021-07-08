@@ -3,13 +3,13 @@ import {PassportStrategy} from '@nestjs/passport'
 import {AuthService} from './auth.service'
 import {BasicStrategy} from 'passport-http'
 import {Strategy} from 'passport-local'
-import {Admin} from '../entities/db/billing/admin.entity'
+import {AuthResponseDto} from './dto/auth-response.dto'
 
 /**
  * Defines authentication function format
  */
 interface Authenticator {
-    (username: string, password: string, service: AuthService): Promise<Admin>
+    (username: string, password: string, service: AuthService): Promise<AuthResponseDto>
 }
 
 /**
@@ -18,7 +18,7 @@ interface Authenticator {
  * @param password Login password
  * @param service AuthService that is called to validate the Admin
  */
-async function pwd_auth(username: string, password: string, service: AuthService): Promise<Admin> {
+async function pwd_auth(username: string, password: string, service: AuthService): Promise<AuthResponseDto> {
     const admin = await service.validateAdmin(username, password)
     if (!admin) {
         throw new UnauthorizedException()
@@ -47,7 +47,7 @@ export class BasicHTTPStrategy extends PassportStrategy(BasicStrategy) {
      * @param username Username in 'Authorization' header
      * @param password Password in 'Authorization' header
      */
-    async validate(username: string, password: string): Promise<any> {
+    async validate(username: string, password: string): Promise<AuthResponseDto> {
         return await this.auth(username, password, this.authService)
     }
 }
@@ -73,7 +73,7 @@ export class BasicJSONStrategy extends PassportStrategy(Strategy) {
      * @param username Username from JSON
      * @param password Password from JSON
      */
-    async validate(username: string, password: string): Promise<any> {
+    async validate(username: string, password: string): Promise<AuthResponseDto> {
         return await this.auth(username, password, this.authService)
     }
 }

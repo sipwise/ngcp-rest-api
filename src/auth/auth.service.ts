@@ -1,7 +1,9 @@
-import {Injectable} from '@nestjs/common'
-import {AdminsService} from '../api/admins/admins.service'
+import {Inject, Injectable} from '@nestjs/common'
 import {compare} from 'bcrypt'
 import {JwtService} from '@nestjs/jwt'
+import {ADMIN_REPOSITORY} from '../config/constants.config'
+import {Admin} from '../entities/db/billing/admin.entity'
+import {AuthResponseDto} from './dto/auth-response.dto'
 
 /**
  * `AuthService` provides functionality to authenticate Admins and to sign JWTs for authenticated users
@@ -10,13 +12,32 @@ import {JwtService} from '@nestjs/jwt'
 export class AuthService {
     /**
      * Creates a new `AuthService`
-     * @param adminsService Admin service to access DB
      * @param jwtService    JWT service to sign access tokens
      */
     constructor(
-        private adminsService: AdminsService,
+        @Inject(ADMIN_REPOSITORY) private readonly authRepo: typeof Admin,
         private jwtService: JwtService,
     ) {
+    }
+
+    private static toResponse(db: Admin): AuthResponseDto {
+        return {
+            billing_data: db.billing_data,
+            call_data: db.call_data,
+            can_reset_password: db.can_reset_password,
+            id: db.id,
+            is_active: db.is_active,
+            is_ccare: db.is_ccare,
+            is_master: db.is_master,
+            is_superuser: db.is_superuser,
+            is_system: db.is_system,
+            lawful_intercept: db.lawful_intercept,
+            login: db.login,
+            read_only: db.read_only,
+            show_passwords: db.show_passwords,
+            ssl_client_certificate: db.ssl_client_certificate,
+            ssl_client_m_serial: db.ssl_client_m_serial,
+        }
     }
 
     /**
@@ -28,8 +49,9 @@ export class AuthService {
      *
      * @returns Authenticated `Admin` on success else `null`
      */
-    async validateAdmin(username: string, password: string): Promise<any> {
-        const admin = await this.adminsService.findOneByLogin(username)
+    async validateAdmin(username: string, password: string): Promise<AuthResponseDto> {
+        const login = username
+        const admin = await this.authRepo.findOne<Admin>({where: {login}})
         if (!admin) {
             return null
         }
@@ -38,8 +60,7 @@ export class AuthService {
         const bcrypt_cost = 13
 
         if (admin && await compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`) !== false) {
-            const {saltedpass, ...result} = admin
-            return result
+            return AuthService.toResponse(admin)
         }
         return null
     }
@@ -57,12 +78,11 @@ export class AuthService {
         if (!sn) {
             return null
         }
-        const admin = await this.adminsService.searchOne({where: {ssl_client_m_serial: sn}})
+        const admin = await this.authRepo.findOne({where: {ssl_client_m_serial: sn}})
         if (!admin) {
             return null
         }
-        const {saltedpass, ...result} = admin
-        return result
+        return AuthService.toResponse(admin)
     }
 
     /**

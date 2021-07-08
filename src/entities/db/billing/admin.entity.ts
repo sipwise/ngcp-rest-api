@@ -60,7 +60,7 @@ export class Admin extends Model {
     @Column({
         type: DataType.BOOLEAN,
     })
-    is_master!: number
+    is_master!: boolean
 
     @Column({
         type: DataType.BOOLEAN,
@@ -70,37 +70,37 @@ export class Admin extends Model {
     @Column({
         type: DataType.BOOLEAN,
     })
-    is_ccare!: number
+    is_ccare!: boolean
 
     @Column({
         type: DataType.BOOLEAN,
     })
-    is_active!: number
+    is_active!: boolean
 
     @Column({
         type: DataType.BOOLEAN,
     })
-    read_only!: number
+    read_only!: boolean
 
     @Column({
         type: DataType.BOOLEAN,
     })
-    show_passwords!: number
+    show_passwords!: boolean
 
     @Column({
         type: DataType.BOOLEAN,
     })
-    call_data!: number
+    call_data!: boolean
 
     @Column({
         type: DataType.BOOLEAN,
     })
-    billing_data!: number
+    billing_data!: boolean
 
     @Column({
         type: DataType.BOOLEAN,
     })
-    lawful_intercept!: number
+    lawful_intercept!: boolean
 
     @Column({
         allowNull: true,
@@ -135,10 +135,10 @@ export class Admin extends Model {
     @Column({
         type: DataType.BOOLEAN,
     })
-    can_reset_password!: number
+    can_reset_password!: boolean
 
     @Column({
         type: DataType.BOOLEAN,
     })
-    is_system!: number
+    is_system!: boolean
 }

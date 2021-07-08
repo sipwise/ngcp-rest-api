@@ -1,16 +1,15 @@
 import {Module} from '@nestjs/common'
 import {AuthService} from './auth.service'
-import {AdminsModule} from '../api/admins/admins.module'
 import {PassportModule} from '@nestjs/passport'
 import {JwtModule} from '@nestjs/jwt'
 import {jwtConstants} from '../config/constants.config'
 import {BasicHTTPStrategy, BasicJSONStrategy} from './basic.strategy'
 import {CertStrategy} from './cert.strategy'
 import {JwtStrategy} from './jwt.strategy'
+import {adminsProviders} from '../api/admins/admins.providers'
 
 @Module({
     imports: [
-        AdminsModule,
         PassportModule,
         JwtModule.register({
             secret: jwtConstants.secret,
@@ -23,6 +22,7 @@ import {JwtStrategy} from './jwt.strategy'
         BasicJSONStrategy,
         CertStrategy,
         JwtStrategy,
+        ...adminsProviders,
     ],
     exports: [
         AuthService,
