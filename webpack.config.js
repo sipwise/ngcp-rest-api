@@ -1,7 +1,7 @@
 const path = require("path")
 const webpack = require('webpack')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
-const { TsconfigPathsPlugin } = require('tsconfig-paths-webpack-plugin');
+const { TsconfigPathsPlugin } = require('tsconfig-paths-webpack-plugin')
 
 module.exports =
 {
@@ -26,8 +26,23 @@ module.exports =
     [
       {
         test: /\.tsx?$/,
-        use: 'ts-loader',
+        loader: 'ts-loader',
         exclude: /node_modules/,
+        options:
+        {
+          getCustomTransformers: (program) => ({
+            before:
+            [
+              require('@nestjs/swagger/plugin').before(
+              {
+                dtoFileNameSuffix: ['.dto.ts', '.entity.ts'],
+                classValidatorShim: true,
+                introspectComments: true
+              },
+              program)
+            ]
+          }),
+        },
       },
       {
         test: /\.(cs|html)$/,
@@ -47,6 +62,7 @@ module.exports =
   plugins:
   [
     new CleanWebpackPlugin(),
+    new webpack.ProvidePlugin({ 'openapi': '@nestjs/swagger', }),
     new webpack.IgnorePlugin({
       checkResource: function(resource)
       {
