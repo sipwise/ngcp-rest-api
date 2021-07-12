@@ -48,6 +48,29 @@ module.exports =
         test: /\.(cs|html)$/,
         use: 'ignore-loader',
       },
+      {
+        test: /bcrypt\/bcrypt\.js$/,
+        loader: 'string-replace-loader',
+        options: {
+          multiple: [
+            {
+              search: "var nodePreGyp = require('@mapbox/node-pre-gyp');",
+              replace: "",
+              strict: true,
+            },
+            {
+              search: "var binding_path = nodePreGyp.find(path.resolve(path.join(__dirname, './package.json')));",
+              replace: "",
+              strict: true
+            },
+            {
+              search: "var bindings = require(binding_path);",
+              replace: "var bindings = require('bindings')('bcrypt_lib');",
+              strict: true
+            },
+          ]
+        }
+      },
     ],
   },
   resolve:
@@ -84,6 +107,13 @@ module.exports =
               'aws-sdk',
               'mock-aws-s3',
         ]
+
+        const ignoreImports = [
+            '@mapbox/node-pre-gyp',
+        ]
+
+        if (ignoreImports.includes(resource))
+          return true
 
         if (!lazyImports.includes(resource))
           return false
