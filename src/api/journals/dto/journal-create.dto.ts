@@ -1,8 +1,8 @@
 interface JournalCreateDtoAttributes {
-    operation
-    resource_name
-    resource_id
-    timestamp
+    operation: string
+    resource_name: string
+    resource_id: number
+    timestamp: number
     username?: string
     content_format
     content?: Uint8Array

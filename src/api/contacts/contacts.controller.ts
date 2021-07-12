@@ -1,7 +1,7 @@
 import {Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards, UseInterceptors} from '@nestjs/common'
 import {ApiCreatedResponse, ApiTags} from '@nestjs/swagger'
 import {ContactsService} from './contacts.service'
-import {CreateContactDto} from './dto/create-contact.dto'
+import {ContactCreateDto} from './dto/contact-create.dto'
 import {UpdateContactDto} from './dto/update-contact.dto'
 import {Contact} from '../../entities/db/billing/contact.entity'
 import {OmniGuard} from '../../guards/omni.guard'
@@ -21,7 +21,7 @@ export class ContactsController {
     @ApiCreatedResponse({
         type: Contact,
     })
-    async create(@Body() createContactDto: CreateContactDto) {
+    async create(@Body() createContactDto: ContactCreateDto) {
         return await this.contactsService.create(createContactDto)
     }
 
@@ -29,21 +29,22 @@ export class ContactsController {
     async findAll(@Query('page') page: string, @Query('rows') row: string) {
         page = page ? page : `${config.common.api_default_query_page}`
         row = row ? row : `${config.common.api_default_query_rows}`
-        return await this.contactsService.findAll(page, row)
+        return await this.contactsService.readAll(page, row)
     }
 
     @Get(':id')
     async findOne(@Param('id') id: string) {
-        return await this.contactsService.findOne(+id)
+        return await this.contactsService.read(+id)
     }
 
     @Put(':id')
     async update(@Param('id') id: string, @Body() updateContactDto: UpdateContactDto) {
-        return await this.contactsService.update(+id, updateContactDto)
+        //return await this.contactsService.update(+id, updateContactDto)
+        return
     }
 
     @Delete(':id')
     async remove(@Param('id') id: string) {
-        return await this.contactsService.remove(+id)
+        return await this.contactsService.delete(+id)
     }
 }

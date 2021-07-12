@@ -1,34 +1,34 @@
 import {Inject, Injectable} from '@nestjs/common'
-import {CreateContactDto} from './dto/create-contact.dto'
-import {UpdateContactDto} from './dto/update-contact.dto'
+import {ContactCreateDto} from './dto/contact-create.dto'
 import {Contact} from '../../entities/db/billing/contact.entity'
 import {CONTACT_REPOSITORY} from '../../config/constants.config'
+import {CrudService} from '../../interfaces/crud-service.interface'
+import {ContactResponseDto} from './dto/contact-response.dto'
 
 @Injectable()
-export class ContactsService {
+export class ContactsService implements CrudService<ContactCreateDto, ContactResponseDto> {
     constructor(
         @Inject(CONTACT_REPOSITORY) private readonly contactsRepository: typeof Contact,
     ) {
     }
 
-    async create(contact: CreateContactDto): Promise<Contact> {
-        return this.contactsRepository.create<Contact>(contact)
+    async create(entity: ContactCreateDto): Promise<ContactResponseDto> {
+        return Promise.resolve(undefined);
     }
 
-    async findAll(page: string, rows: string): Promise<Contact[]> {
-        let result = await this.contactsRepository.findAndCountAll({limit: +rows, offset: +rows * (+page - 1)})
-        return result.rows
+    async delete(id: number): Promise<number> {
+        return Promise.resolve(0);
     }
 
-    async findOne(id: number) {
-        return this.contactsRepository.findOne<Contact>({where: {id}})
+    async read(id: number): Promise<ContactResponseDto> {
+        return Promise.resolve(undefined);
     }
 
-    async update(id: number, contact: UpdateContactDto) {
-        return this.contactsRepository.update<Contact>(contact, {where: {id}})
+    async readAll(page: string, rows: string): Promise<ContactResponseDto[]> {
+        return Promise.resolve([]);
     }
 
-    async remove(id: number) {
-        return this.contactsRepository.destroy({where: {id}})
+    async update(id: number, entity: ContactCreateDto): Promise<[number, ContactResponseDto[]]> {
+        return Promise.resolve([0, []]);
     }
 }

@@ -1,20 +1,30 @@
-import {Model} from "sequelize-typescript";
 import {JournalsService} from "../api/journals/journals.service";
-import {Body, Delete, Get, Param, Post, Put, Query} from "@nestjs/common";
+import {Body, Delete, Get, Param, Post, Put, Query, UseGuards, UseInterceptors} from '@nestjs/common'
 import {config} from "../config/main.config";
-import {CrudRepository} from "../interfaces/crud.interface";
+import {CrudService} from '../interfaces/crud-service.interface'
+import {ApiCreatedResponse} from '@nestjs/swagger'
+import {OmniGuard} from '../guards/omni.guard'
+import {LoggingInterceptor} from '../interceptors/logging.interceptor'
+import {JournalingInterceptor} from '../interceptors/journaling.interceptor'
 
-export class CrudController<M extends Model> {
+@UseGuards(OmniGuard)
+@UseInterceptors(LoggingInterceptor, JournalingInterceptor)
+export class CrudController<CreateDTO, ResponseDTO> {
 
     constructor(
         private readonly resourceName: string,
-        private readonly repository: CrudRepository<M>,
+        private readonly repo: CrudService<any, any>,
         private readonly journals?: JournalsService) {
     }
 
     @Post()
-    async create(@Body() entity: M) {
-        return await this.repository.create(entity)
+    @ApiCreatedResponse({
+        // type: option => {
+        // }
+        // TODO: How to set responses? Cannot use ResponseDTO type
+    })
+    async create(@Body() entity: CreateDTO) {
+        return await this.repo.create(entity)
     }
 
     @Get()
@@ -24,28 +34,24 @@ export class CrudController<M extends Model> {
     ) {
         page = page ? page : `${config.common.api_default_query_page}`
         row = row ? row : `${config.common.api_default_query_rows}`
-        return await this.repository.readAll(page, row)
+        return await this.repo.readAll(page, row)
     }
 
     @Get(':id')
     async read(
-        @Query('page') page: string,
-        @Query('rows') row: string,
         @Param('id') id: string,
     ) {
-        page = page ? page : `${config.common.api_default_query_page}`
-        row = row ? row : `${config.common.api_default_query_rows}`
-        return await this.repository.read(page, row, +id)
+        return await this.repo.read(+id)
     }
 
     @Put(':id')
-    async update(@Param('id') id: string, @Body() entity: M) {
-        return await this.repository.update(+id, entity)
+    async update(@Param('id') id: string, @Body() entity: CreateDTO) {
+        return await this.repo.update(+id, entity)
     }
 
     @Delete(':id')
     async delete(@Param('id') id: string) {
-        return await this.repository.delete(+id)
+        return await this.repo.delete(+id)
     }
 
     @Get(':id/journal')

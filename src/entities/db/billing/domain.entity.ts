@@ -1,6 +1,6 @@
-import {Column, DataType, HasMany, Index, Model, Table} from 'sequelize-typescript'
+import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
 
-interface DomainAttributes {
+export interface DomainAttributes {
     id?: number;
     domain: string;
 }

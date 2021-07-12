@@ -18,6 +18,7 @@ export class JournalsService {
 
     private static toResponse(db: Journal): JournalResponseDto {
         return {
+            id: db.id,
             content: db.content,
             content_format: db.content_format,
             operation: db.operation,

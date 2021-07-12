@@ -4,6 +4,7 @@ import {
     Delete,
     Get,
     Inject,
+    Logger,
     Param,
     Post,
     Put,
@@ -29,9 +30,10 @@ import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 @UseGuards(OmniGuard)
 @UseInterceptors(LoggingInterceptor, JournalingInterceptor)
 export class AdminsController {
+    private logger = new Logger(AdminsController.name)
+
     constructor(
         private readonly adminsService: AdminsService,
-        // private readonly logger: LoggerService,
         @Inject(JOURNAL_SERVICE) private readonly journalsService: JournalsService,
     ) {
     }
@@ -51,7 +53,7 @@ export class AdminsController {
     async findAll(@Query('page') page: string, @Query('rows') row: string) {
         page = page ? page : `${config.common.api_default_query_page}`
         row = row ? row : `${config.common.api_default_query_rows}`
-        return await this.adminsService.findAll(page, row)
+        return await this.adminsService.readAll(page, row)
     }
 
     @Get(':id')
@@ -59,7 +61,7 @@ export class AdminsController {
         type: AdminResponseDto,
     })
     async findOne(@Param('id') id: string) {
-        return await this.adminsService.findOne(+id)
+        return await this.adminsService.read(+id)
     }
 
     @Put(':id')
@@ -69,7 +71,7 @@ export class AdminsController {
 
     @Delete(':id')
     async remove(@Param('id') id: string) {
-        return await this.adminsService.remove(+id)
+        return await this.adminsService.delete(+id)
     }
 
     @Get(':id/journal')

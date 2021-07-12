@@ -6,9 +6,10 @@ import {AdminUpdateDto} from './dto/admin-update.dto'
 import {genSalt, hash} from 'bcrypt'
 import {AdminResponseDto} from './dto/admin-response.dto'
 import {handleSequelizeError} from '../../helpers/errors.helper'
+import {CrudService} from '../../interfaces/crud-service.interface'
 
 @Injectable()
-export class AdminsService {
+export class AdminsService implements CrudService<AdminCreateDto, AdminResponseDto> {
     constructor(
         @Inject(ADMIN_REPOSITORY) private readonly adminRepository: typeof Admin,
     ) {
@@ -64,7 +65,7 @@ export class AdminsService {
         }
     }
 
-    async findAll(page?: string, rows?: string): Promise<AdminResponseDto[]> {
+    async readAll(page?: string, rows?: string): Promise<AdminResponseDto[]> {
         try {
             const result = await this.adminRepository.findAndCountAll({limit: +rows, offset: +rows * (+page - 1)})
             return result.rows.map(adm => AdminsService.toResponse(adm))
@@ -73,7 +74,7 @@ export class AdminsService {
         }
     }
 
-    async findOne(id: number): Promise<AdminResponseDto> {
+    async read(id: number): Promise<AdminResponseDto> {
         try {
             return AdminsService.toResponse(await this.adminRepository.findOne<Admin>({where: {id}}))
         } catch (err) {
@@ -81,7 +82,7 @@ export class AdminsService {
         }
     }
 
-    async findOneByLogin(login: string): Promise<AdminResponseDto> {
+    async readOneByLogin(login: string): Promise<AdminResponseDto> {
         try {
             return AdminsService.toResponse(await this.adminRepository.findOne<Admin>({where: {login}}))
         } catch (err) {
@@ -89,15 +90,16 @@ export class AdminsService {
         }
     }
 
-    async update(id: number, admin: AdminUpdateDto): Promise<[number, Admin[]]> {
+    async update(id: number, admin: AdminUpdateDto): Promise<[number, AdminResponseDto[]]> {
         try {
-            return this.adminRepository.update<Admin>(admin, {where: {id}})
+            const [num, results] = await this.adminRepository.update<Admin>(admin, {where: {id}})
+            return [num, results.map(a => AdminsService.toResponse(a))]
         } catch (err) {
             throw new BadRequestException(handleSequelizeError(err))
         }
     }
 
-    async remove(id: number) {
+    async delete(id: number) {
         try {
             return this.adminRepository.destroy({where: {id}})
         } catch (err) {

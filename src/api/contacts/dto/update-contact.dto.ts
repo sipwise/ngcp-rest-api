@@ -1,5 +1,5 @@
 import {PartialType} from '@nestjs/mapped-types'
-import {CreateContactDto} from './create-contact.dto'
+import {ContactCreateDto} from './contact-create.dto'
 
-export class UpdateContactDto extends PartialType(CreateContactDto) {
+export class UpdateContactDto extends PartialType(ContactCreateDto) {
 }

@@ -22,7 +22,7 @@ export class RolesGuard implements CanActivate {
             return false
         }
 
-        const admin = await this.adminsService.findOneByLogin(username)
+        const admin = await this.adminsService.readOneByLogin(username)
         if (!admin) {
             return false
         }

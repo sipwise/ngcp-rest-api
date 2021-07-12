@@ -35,5 +35,8 @@
         <option name="TAB_SIZE" value="2" />
       </indentOptions>
     </codeStyleSettings>
+    <codeStyleSettings language="TypeScript">
+      <option name="KEEP_BLANK_LINES_IN_CODE" value="1" />
+    </codeStyleSettings>
   </code_scheme>
 </component>
