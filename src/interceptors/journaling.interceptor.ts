@@ -89,7 +89,7 @@ export class JournalingInterceptor implements NestInterceptor {
                     resource_id: resourceID,
                     resource_name: resourceName,
                     timestamp: req.ctx.startTimestamp / 1000,
-                    username: req.user.login,
+                    username: req['user'] !== undefined ? req.user.username : '',
                 }
 
 

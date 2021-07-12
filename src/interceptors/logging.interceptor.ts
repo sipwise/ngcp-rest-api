@@ -54,10 +54,10 @@ export class LoggingInterceptor implements NestInterceptor {
                     'received_at': req.ctx.startTimestamp,
                     'response_at': Date.now(),
                     'method': req.method,
-                    'user': req.user.login,
                     'response': redacted,
                 }
-                this.logger.log(logEntry, '')
+                logEntry['username'] = req['user'] !== undefined ? req.user.username : 'unknown'
+                this.logger.log(JSON.stringify(logEntry), LoggingInterceptor.name)
                 return data
             }),
         )
@@ -84,7 +84,7 @@ export class LoggingInterceptor implements NestInterceptor {
             // get plain version object
             // value.constructor returns the constructor of a specific object.
             // This allows the call of the correct ClassConstructor in plainToClass()
-            let redacted: any = plainToClass(data.constructor, data)
+            let redacted = plainToClass(data.constructor, data)
             return redacted
         }
     }

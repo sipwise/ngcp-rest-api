@@ -5,11 +5,20 @@ import {ADMIN_REPOSITORY} from '../config/constants.config'
 import {Admin} from '../entities/db/billing/admin.entity'
 import {AuthResponseDto} from './dto/auth-response.dto'
 
+const roles = {
+    system: 'system',
+    admin: 'admin',
+    reseller: 'reseller',
+    ccare: 'ccare',
+    ccareadmin: 'ccareadmin'
+}
+
 /**
  * `AuthService` provides functionality to authenticate Admins and to sign JWTs for authenticated users
  */
 @Injectable()
 export class AuthService {
+
     /**
      * Creates a new `AuthService`
      * @param jwtService    JWT service to sign access tokens
@@ -21,23 +30,24 @@ export class AuthService {
     }
 
     private static toResponse(db: Admin): AuthResponseDto {
-        return {
-            billing_data: db.billing_data,
-            call_data: db.call_data,
-            can_reset_password: db.can_reset_password,
+        let response: AuthResponseDto = {
+            active: db.is_active,
             id: db.id,
-            is_active: db.is_active,
-            is_ccare: db.is_ccare,
-            is_master: db.is_master,
-            is_superuser: db.is_superuser,
-            is_system: db.is_system,
-            lawful_intercept: db.lawful_intercept,
-            login: db.login,
-            read_only: db.read_only,
-            show_passwords: db.show_passwords,
+            readOnly: db.read_only,
+            role: '',
+            showPasswords: db.show_passwords,
             ssl_client_certificate: db.ssl_client_certificate,
             ssl_client_m_serial: db.ssl_client_m_serial,
+            username: db.login
         }
+        if (db.is_system) {
+            response.role = roles.system
+        } else if (db.is_superuser) {
+            response.role = db.is_ccare ? roles.ccareadmin : roles.admin
+        } else {
+            response.role = db.is_ccare ? roles.ccare : roles.reseller
+        }
+        return response
     }
 
     /**
@@ -93,9 +103,9 @@ export class AuthService {
      * @returns JSON Web Token
      */
     async signJwt(user: any) {
-        const payload = {username: user.login, sub: user.id}
+        const payload = {username: user.username, id: user.id}
         return {
-            access_token: this.jwtService.sign(payload),
+            access_token: this.jwtService.sign(payload, {algorithm: 'HS256', noTimestamp: true}),
         }
     }
 }

@@ -25,6 +25,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
      * @returns token User information contained in the JWT
      */
     async validate(payload: any) {
-        return {userId: payload.sub, username: payload.username}
+        return {id: payload.id, username: payload.username}
     }
 }
