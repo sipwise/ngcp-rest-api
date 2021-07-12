@@ -38,13 +38,13 @@ import {DomainsModule} from './api/domains/domains.module'
 })
 
 export class AppModule implements NestModule {
+    // static method to fetch config files when the app is not initialised yet
+    static config = config
+
     configure(consumer: MiddlewareConsumer): any {
         consumer.apply(ContextMiddleware, TxIDMiddleware, TimestampMiddleware).forRoutes({
             path: '*',
             method: RequestMethod.ALL,
         })
     }
-
-    // static method to fetch config files when the app is not initialised yet
-    static config = config
 }

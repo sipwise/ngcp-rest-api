@@ -18,7 +18,7 @@ export class LoggerService implements NestLoggerService {
         //if (process.env.ENVIRONMENT === 'production') {
         this.logger = winston.createLogger({
             levels: winston.config.syslog.levels,
-            defaultMeta: {service: LoggerService.name},
+            //defaultMeta: {service: LoggerService.name},
             format: winston.format.simple(),
             transports: [
                 new Syslog(opt),
@@ -44,7 +44,7 @@ export class LoggerService implements NestLoggerService {
     }
 
     log(message: any, context?: string): any {
-        this.logger.log('info', message)
+        this.logger.log('info', message, [context])
     }
 
     warn(message: any, context?: string): any {

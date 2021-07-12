@@ -17,7 +17,6 @@ export class AppController {
     @UseGuards(JwtGuard)
     @Get('userinfo')
     async userinfo(@Request() req) {
-        console.log(req.user)
         return req.user
     }
 }

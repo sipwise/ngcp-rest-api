@@ -1,4 +1,4 @@
-import {Sequelize, SequelizeOptions} from 'sequelize-typescript'
+import {Sequelize} from 'sequelize-typescript'
 import * as mysql2 from 'mysql2'
 import {DATABASES} from '../config/constants.config'
 import {databaseConfig} from '../config/database.config'

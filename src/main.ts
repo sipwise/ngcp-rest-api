@@ -22,7 +22,7 @@ async function bootstrap() {
                 requestCert: true,
                 rejectUnauthorized: false,
             },
-            logger: ['error', 'warn'],
+            logger: ['error', 'warn', 'log'],
         },
     )
     app.useLogger(app.get(LoggerService))
