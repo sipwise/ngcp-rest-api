@@ -49,7 +49,7 @@
     "passport-local": "1.0.0",
     "reflect-metadata": "0.1.13",
     "rimraf": "3.0.2",
-    "rxjs": "^7.1.0",
+    "rxjs": "^6.0.0",
     "sd-notify": "2.8.0",
     "sequelize": "6.6.2",
     "sequelize-typescript": "2.1.0",
