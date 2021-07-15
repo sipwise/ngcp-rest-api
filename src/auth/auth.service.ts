@@ -1,17 +1,10 @@
-import {Inject, Injectable} from '@nestjs/common'
+import {ForbiddenException, Inject, Injectable} from '@nestjs/common'
 import {compare} from 'bcrypt'
 import {JwtService} from '@nestjs/jwt'
-import {ADMIN_REPOSITORY} from '../config/constants.config'
+import {ADMIN_REPOSITORY, RBAC_ROLES} from '../config/constants.config'
 import {Admin} from '../entities/db/billing/admin.entity'
 import {AuthResponseDto} from './dto/auth-response.dto'
 
-const roles = {
-    system: 'system',
-    admin: 'admin',
-    reseller: 'reseller',
-    ccare: 'ccare',
-    ccareadmin: 'ccareadmin'
-}
 
 /**
  * `AuthService` provides functionality to authenticate Admins and to sign JWTs for authenticated users
@@ -29,11 +22,22 @@ export class AuthService {
     ) {
     }
 
+    static isAdminValid(admin: Admin): boolean {
+        if (!admin) {
+            return false
+        }
+        if (!admin.is_active) {
+            throw new ForbiddenException()
+        }
+        return true
+    }
+
     private static toResponse(db: Admin): AuthResponseDto {
         let response: AuthResponseDto = {
             active: db.is_active,
             id: db.id,
             readOnly: db.read_only,
+            reseller_id: db.reseller_id,
             role: '',
             showPasswords: db.show_passwords,
             ssl_client_certificate: db.ssl_client_certificate,
@@ -41,11 +45,11 @@ export class AuthService {
             username: db.login
         }
         if (db.is_system) {
-            response.role = roles.system
+            response.role = RBAC_ROLES.system
         } else if (db.is_superuser) {
-            response.role = db.is_ccare ? roles.ccareadmin : roles.admin
+            response.role = db.is_ccare ? RBAC_ROLES.ccareadmin : RBAC_ROLES.admin
         } else {
-            response.role = db.is_ccare ? roles.ccare : roles.reseller
+            response.role = db.is_ccare ? RBAC_ROLES.ccare : RBAC_ROLES.reseller
         }
         return response
     }
@@ -62,7 +66,7 @@ export class AuthService {
     async validateAdmin(username: string, password: string): Promise<AuthResponseDto> {
         const login = username
         const admin = await this.authRepo.findOne<Admin>({where: {login}})
-        if (!admin) {
+        if (!AuthService.isAdminValid(admin)) {
             return null
         }
         const [b64salt, b64hash] = admin.saltedpass.split('$')
@@ -89,7 +93,7 @@ export class AuthService {
             return null
         }
         const admin = await this.authRepo.findOne({where: {ssl_client_m_serial: sn}})
-        if (!admin) {
+        if (!AuthService.isAdminValid(admin)) {
             return null
         }
         return AuthService.toResponse(admin)
@@ -105,7 +109,7 @@ export class AuthService {
     async signJwt(user: any) {
         const payload = {username: user.username, id: user.id}
         return {
-            access_token: this.jwtService.sign(payload, {algorithm: 'HS256', noTimestamp: true}),
+            access_token: this.jwtService.sign(payload, {algorithm: 'HS256', noTimestamp: true,}),
         }
     }
 }

@@ -1,14 +1,9 @@
 import {JournalsService} from "../api/journals/journals.service";
-import {Body, Delete, Get, Param, Post, Put, Query, UseGuards, UseInterceptors} from '@nestjs/common'
+import {Body, Delete, Get, Param, Post, Put, Query} from '@nestjs/common'
 import {config} from "../config/main.config";
 import {CrudService} from '../interfaces/crud-service.interface'
-import {ApiCreatedResponse} from '@nestjs/swagger'
-import {OmniGuard} from '../guards/omni.guard'
-import {LoggingInterceptor} from '../interceptors/logging.interceptor'
-import {JournalingInterceptor} from '../interceptors/journaling.interceptor'
 
-@UseGuards(OmniGuard)
-@UseInterceptors(LoggingInterceptor, JournalingInterceptor)
+// @Auth()
 export class CrudController<CreateDTO, ResponseDTO> {
 
     constructor(
@@ -18,11 +13,6 @@ export class CrudController<CreateDTO, ResponseDTO> {
     }
 
     @Post()
-    @ApiCreatedResponse({
-        // type: option => {
-        // }
-        // TODO: How to set responses? Cannot use ResponseDTO type
-    })
     async create(@Body() entity: CreateDTO) {
         return await this.repo.create(entity)
     }

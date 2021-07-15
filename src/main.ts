@@ -36,6 +36,12 @@ async function bootstrap() {
         .setDescription('This is the NGCP API description')
         .setVersion('2.0')
         .addTag('NGCP')
+        .addBasicAuth()
+        .addBearerAuth()
+        .addSecurity('cert', {
+            type: 'http',
+            scheme: 'cert'
+        })
         .build()
 
     const document = SwaggerModule.createDocument(app, doc_config)

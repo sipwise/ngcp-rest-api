@@ -1,34 +1,17 @@
-import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Inject,
-    Logger,
-    Param,
-    Post,
-    Put,
-    Query,
-    UseGuards,
-    UseInterceptors,
-} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Inject, Logger, Param, Post, Put, Query, Request,} from '@nestjs/common'
 import {ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {AdminsService} from './admins.service'
 import {AdminCreateDto} from './dto/admin-create.dto'
 import {AdminUpdateDto} from './dto/admin-update.dto'
-import {OmniGuard} from '../../guards/omni.guard'
-import {JOURNAL_SERVICE} from '../../config/constants.config'
+import {JOURNAL_SERVICE, RBAC_ROLES} from '../../config/constants.config'
 import {JournalsService} from '../journals/journals.service'
 import {config} from '../../config/main.config'
 import {AdminResponseDto} from './dto/admin-response.dto'
-import {LoggingInterceptor} from '../../interceptors/logging.interceptor'
-import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
+import {Auth} from "../../decorators/auth.decorator";
 
 @ApiTags('admins')
 @Controller('admins')
-// TODO: We could create a custom decorator that combines OmniGuard, Logger- and JournalingInterceptor?
-@UseGuards(OmniGuard)
-@UseInterceptors(LoggingInterceptor, JournalingInterceptor)
+@Auth(RBAC_ROLES.system)
 export class AdminsController {
     private logger = new Logger(AdminsController.name)
 
@@ -42,7 +25,7 @@ export class AdminsController {
     @ApiCreatedResponse({
         type: AdminResponseDto,
     })
-    async create(@Body() admin: AdminCreateDto) {
+    async create(@Body() admin: AdminCreateDto, @Request() r) {
         return await this.adminsService.create(admin)
     }
 
@@ -50,7 +33,7 @@ export class AdminsController {
     @ApiOkResponse({
         type: AdminResponseDto,
     })
-    async findAll(@Query('page') page: string, @Query('rows') row: string) {
+    async findAll(@Query('page') page: string, @Query('rows') row: string, @Request() req) {
         page = page ? page : `${config.common.api_default_query_page}`
         row = row ? row : `${config.common.api_default_query_rows}`
         return await this.adminsService.readAll(page, row)

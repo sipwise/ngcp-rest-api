@@ -52,12 +52,16 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
             reseller_id: admin.reseller_id,
             show_passwords: admin.show_passwords,
         }
-
         const bcrypt_version = 'b'
         const bcrypt_cost = 13
+
         const re = new RegExp(`^\\$2${bcrypt_version}\\$${bcrypt_cost}\\$(.*)$`)
-        const salt = genSalt(bcrypt_cost, bcrypt_version)
-        dbAdmin.saltedpass = (await hash(admin.password, await salt)).match(re)[1]
+
+        const salt = await genSalt(bcrypt_cost, bcrypt_version)
+        const hashPwd = (await hash(admin.password, salt)).match(re)[1]
+        const b64salt = hashPwd.slice(0, 22)
+        const b64hash = hashPwd.slice(22)
+        dbAdmin.saltedpass = b64salt + "$" + b64hash
         try {
             return AdminsService.toResponse(await this.adminRepository.create<Admin>(dbAdmin))
         } catch (err) {

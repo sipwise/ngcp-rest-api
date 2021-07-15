@@ -28,3 +28,11 @@ export const LOGGER_SERVICE = 'LOGGER_SERVICE'
 export const jwtConstants = {
     secret: config.common.jwt_key,
 }
+
+export const RBAC_ROLES = {
+    system: 'system',
+    admin: 'admin',
+    reseller: 'reseller',
+    ccare: 'ccare',
+    ccareadmin: 'ccareadmin'
+}
