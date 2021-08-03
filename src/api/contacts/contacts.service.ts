@@ -4,6 +4,7 @@ import {Contact} from '../../entities/db/billing/contact.entity'
 import {CONTACT_REPOSITORY} from '../../config/constants.config'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {ContactResponseDto} from './dto/contact-response.dto'
+import {Operation as PatchOperation} from 'fast-json-patch'
 
 @Injectable()
 export class ContactsService implements CrudService<ContactCreateDto, ContactResponseDto> {
@@ -12,23 +13,27 @@ export class ContactsService implements CrudService<ContactCreateDto, ContactRes
     ) {
     }
 
-    async create(entity: ContactCreateDto): Promise<ContactResponseDto> {
-        return Promise.resolve(undefined);
+    async create(dto: ContactCreateDto): Promise<ContactResponseDto> {
+        return Promise.resolve(undefined)
     }
 
     async delete(id: number): Promise<number> {
-        return Promise.resolve(0);
+        return Promise.resolve(0)
     }
 
     async read(id: number): Promise<ContactResponseDto> {
-        return Promise.resolve(undefined);
+        return Promise.resolve(undefined)
     }
 
     async readAll(page: string, rows: string): Promise<ContactResponseDto[]> {
-        return Promise.resolve([]);
+        return Promise.resolve([])
     }
 
-    async update(id: number, entity: ContactCreateDto): Promise<[number, ContactResponseDto[]]> {
-        return Promise.resolve([0, []]);
+    async update(id: number, dto: ContactCreateDto): Promise<ContactResponseDto> {
+        return Promise.resolve(Object())
+    }
+
+    async adjust(id: number, patch: PatchOperation[]): Promise<ContactResponseDto> {
+        return Promise.resolve(Object())
     }
 }

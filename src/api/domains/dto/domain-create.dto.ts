@@ -1,9 +1,4 @@
-interface DomainCreateDtoAttributes {
-    domain: string;
-    reseller_id: number;
-}
+import {DomainBaseDto} from './domain-base.dto'
 
-export class DomainCreateDto implements DomainCreateDtoAttributes {
-    domain: string
-    reseller_id: number
+export class DomainCreateDto extends DomainBaseDto {
 }

@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Inject, Logger, Param, Post, Put, Query, Request,} from '@nestjs/common'
+import {BadRequestException, Body, Controller, Delete, Get, Inject, Logger, Param, Post, Put, Patch, Query, Request} from '@nestjs/common'
 import {ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {AdminsService} from './admins.service'
 import {AdminCreateDto} from './dto/admin-create.dto'
@@ -8,10 +8,10 @@ import {JournalsService} from '../journals/journals.service'
 import {config} from '../../config/main.config'
 import {AdminResponseDto} from './dto/admin-response.dto'
 import {Auth} from "../../decorators/auth.decorator";
+import {validate, Operation as PatchOperation} from 'fast-json-patch'
 
 @ApiTags('admins')
 @Controller('admins')
-@Auth(RBAC_ROLES.system)
 export class AdminsController {
     private logger = new Logger(AdminsController.name)
 
@@ -50,6 +50,16 @@ export class AdminsController {
     @Put(':id')
     async update(@Param('id') id: string, @Body() admin: AdminUpdateDto) {
         return await this.adminsService.update(+id, admin)
+    }
+
+    @Patch(':id')
+    async adjust(@Param('id') id: string, @Body() patch: PatchOperation[]) {
+        const err = validate(patch)
+        if (err) {
+            let message = err.message.replace(/[\n\s]+/g,' ').replace(/\"/g, "'")
+            throw new BadRequestException(message)
+        }
+        return await this.adminsService.adjust(+id, patch)
     }
 
     @Delete(':id')

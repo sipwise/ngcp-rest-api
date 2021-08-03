@@ -47,9 +47,13 @@ export class AuthService {
         if (db.is_system) {
             response.role = RBAC_ROLES.system
         } else if (db.is_superuser) {
-            response.role = db.is_ccare ? RBAC_ROLES.ccareadmin : RBAC_ROLES.admin
+            response.role = RBAC_ROLES.admin
+            if (db.is_ccare)
+                response.role = RBAC_ROLES.ccareadmin
+        } else if (db.is_ccare) {
+            response.role = RBAC_ROLES.ccare
         } else {
-            response.role = db.is_ccare ? RBAC_ROLES.ccare : RBAC_ROLES.reseller
+            response.role = RBAC_ROLES.reseller
         }
         return response
     }

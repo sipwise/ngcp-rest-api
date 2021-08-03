@@ -1,7 +1,8 @@
 import {JournalsService} from "../api/journals/journals.service";
-import {Body, Delete, Get, Param, Post, Put, Query} from '@nestjs/common'
+import {BadRequestException, Body, Delete, Get, Param, Post, Put, Patch, Query} from '@nestjs/common'
 import {config} from "../config/main.config";
 import {CrudService} from '../interfaces/crud-service.interface'
+import {validate, Operation as PatchOperation} from 'fast-json-patch'
 
 // @Auth()
 export class CrudController<CreateDTO, ResponseDTO> {
@@ -35,8 +36,18 @@ export class CrudController<CreateDTO, ResponseDTO> {
     }
 
     @Put(':id')
-    async update(@Param('id') id: string, @Body() entity: CreateDTO) {
-        return await this.repo.update(+id, entity)
+    async update(@Param('id') id: string, @Body() dto: CreateDTO) {
+        return await this.repo.update(+id, dto)
+    }
+
+    @Patch(':id')
+    async adjust(@Param('id') id: string, @Body() patch: PatchOperation[]) {
+        const err = validate(patch)
+        if (err) {
+            let message = err.message.replace(/[\n\s]+/g,' ').replace(/\"/g, "'")
+            throw new BadRequestException(message)
+        }
+        return await this.repo.adjust(+id, patch)
     }
 
     @Delete(':id')

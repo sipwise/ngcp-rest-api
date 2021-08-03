@@ -39,6 +39,7 @@
     "class-transformer": "0.4.0",
     "class-validator": "0.13.1",
     "express": "4.17.1",
+    "fast-json-patch": "3.0.0-1",
     "fastify-swagger": "4.7.0",
     "halson": "3.0.0",
     "mysql2": "2.2.5",
