@@ -21,7 +21,9 @@ export class LoggerService implements NestLoggerService {
             //defaultMeta: {service: LoggerService.name},
             format: winston.format.simple(),
             transports: [
-                new Syslog(opt),
+                process.env.NODE_ENV == 'development'
+                                            ? new winston.transports.Console()
+                                            : new Syslog(opt),
             ],
         })
         /*

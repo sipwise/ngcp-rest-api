@@ -11,9 +11,6 @@ export const DATABASES = {
     },
 }
 
-export const DEVELOPMENT = 'development'
-export const TEST = 'test'
-export const PRODUCTION = 'production'
 export const ADMIN_REPOSITORY = 'ADMIN_REPOSITORY'
 export const CONTACT_REPOSITORY = 'CONTACT_REPOSITORY'
 export const DOMAIN_REPOSITORY = 'DOMAIN_REPOSITORY'

@@ -7,7 +7,9 @@ import {LoggerService} from './logger/logger.service'
 
 const workersAmount = config.common.workers
 
-const pidDir = '/run/ngcp-rest-api'
+const pidDir = process.env.NODE_ENV == 'development'
+                                        ? '/tmp/ngcp-rest-api'
+                                        : '/run/ngcp-rest-api'
 const pidFile = 'ngcp-rest-api.pid'
 var started = 0
 var workersOnline = 0
