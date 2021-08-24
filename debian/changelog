@@ -1,3 +1,39 @@
+ngcp-rest-api (10.0.1.0+0~mr10.0.1.0) unstable; urgency=medium
+
+  [ Michael Berger ]
+  * [8e7c346] TT#125651 Add script to generate endpoint skeleton
+  * [86093e0] TT#125651 Add generic CRUD implementation
+  * [b2282d8] TT#124250 Add generic domains implementation
+  * [db9d9bf] TT#125651 Add typing to db provider configuration
+  * [647c831] TT#125651 Set field names in entites to snake_case
+  * [04d1efd] TT#125651 Add helper to handle sequelize errors
+  * [2e04e6b] TT#125651 Decouple AdminsService from AuthService
+  * [30761b3] TT#125651 Implement service architecture for admins
+  * [7737358] TT#125651 Implement service architecture for journals
+  * [d1a9392] TT#125651 Remove db entity usage from interceptors
+  * [dc2831c] TT#125651 Update .idea
+  * [3ca8683] TT#125651 Update add OpenAPI plugin to nestjs-cli
+  * [35639fc] TT#125651 update existing api endpoints
+  * [84e7555] TT#129700 Set roles on user object
+  * [d2cab93] TT#125651 add context to logger
+  * [ee09d34] TT#125651 fix dependency warnings
+  * [9ac176a] TT#129700 implement v1 RBAC
+
+  [ Kirill Solomko ]
+  * [980aa9f] TT#126400 disable database models schema sync
+  * [873b376] TT#129601 switch from bcryptjs to bcrypt
+  * [e13bc5a] TT#129701 add webpack @nestjs/swagger support
+  * [166df01] TT#129601 fix bcrypt webpack
+  * [992b549] TT#135100 add development mode support
+  * [9cc373a] TT#134856 add PATCH method support
+  * [edb347f] TT#135100 remove self-signed certs
+  * [5530953] TT#135100 add self signed ssl keys generator
+
+  [ Alexander Lutay ]
+  * [a15123c] TT#135100 Fix typo in filename /etc/ngcp-rest-api/api.conf
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 24 Aug 2021 16:52:31 +0200
+
 ngcp-rest-api (10.0.0.0+0~mr10.0.0.0) unstable; urgency=medium
 
   [ Guillem Jover ]
