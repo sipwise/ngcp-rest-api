@@ -2,7 +2,7 @@ import {BaseEntity, Entity, PrimaryGeneratedColumn, Column} from "typeorm"
 
 @Entity({
     name: 'domains',
-    database: 'provisioning',
+    database: 'billing',
 })
 export class Domain extends BaseEntity {
 
