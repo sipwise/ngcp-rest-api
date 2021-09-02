@@ -6,7 +6,6 @@ import {jwtConstants} from '../config/constants.config'
 import {BasicHTTPStrategy, BasicJSONStrategy} from './basic.strategy'
 import {CertStrategy} from './cert.strategy'
 import {JwtStrategy} from './jwt.strategy'
-import {adminsProviders} from '../api/admins/admins.providers'
 
 @Module({
     imports: [
@@ -22,7 +21,6 @@ import {adminsProviders} from '../api/admins/admins.providers'
         BasicJSONStrategy,
         CertStrategy,
         JwtStrategy,
-        ...adminsProviders,
     ],
     exports: [
         AuthService,

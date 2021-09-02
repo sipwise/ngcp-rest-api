@@ -1,19 +1,18 @@
-import {BadRequestException, Inject, Injectable, NotFoundException} from '@nestjs/common'
-import {ADMIN_REPOSITORY} from '../../config/constants.config'
-import {Admin, AdminDbAttributes} from '../../entities/db/billing/admin.entity'
+import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common'
+import {Admin} from '../../entities/db/billing/admin.entity'
 import {AdminBaseDto} from './dto/admin-base.dto'
 import {AdminCreateDto} from './dto/admin-create.dto'
 import {AdminUpdateDto} from './dto/admin-update.dto'
 import {genSalt, hash} from 'bcrypt'
 import {AdminResponseDto} from './dto/admin-response.dto'
-import {handleSequelizeError} from '../../helpers/errors.helper'
 import {CrudService} from '../../interfaces/crud-service.interface'
-import { applyPatch, Operation as PatchOperation } from 'fast-json-patch'
+import {applyPatch, Operation as PatchOperation} from 'fast-json-patch'
+import {AppService} from 'app.sevice'
 
 @Injectable()
 export class AdminsService implements CrudService<AdminCreateDto, AdminResponseDto> {
     constructor(
-        @Inject(ADMIN_REPOSITORY) private readonly adminRepository: typeof Admin,
+        private readonly app: AppService
     ) {
     }
 
@@ -46,22 +45,7 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
     }
 
     async create(admin: AdminCreateDto): Promise<AdminResponseDto> {
-        let dbAdmin: AdminDbAttributes = {
-            billing_data: admin.billing_data,
-            call_data: admin.call_data,
-            can_reset_password: admin.can_reset_password,
-            email: admin.email,
-            is_active: admin.is_active,
-            is_ccare: admin.is_ccare,
-            is_master: admin.is_master,
-            is_superuser: admin.is_superuser,
-            is_system: admin.is_system,
-            lawful_intercept: admin.lawful_intercept,
-            login: admin.login,
-            read_only: admin.read_only,
-            reseller_id: admin.reseller_id,
-            show_passwords: admin.show_passwords,
-        }
+        let dbAdmin = Admin.create(admin)
         const bcrypt_version = 'b'
         const bcrypt_cost = 13
 
@@ -73,27 +57,30 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
         const b64hash = hashPwd.slice(22)
         dbAdmin.saltedpass = b64salt + "$" + b64hash
         try {
-            return this.toResponse(await this.adminRepository.create<Admin>(dbAdmin))
+            await Admin.insert(dbAdmin)
+            return this.toResponse(dbAdmin)
         } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
+            throw new BadRequestException(err)
         }
     }
 
     async readAll(page?: string, rows?: string): Promise<AdminResponseDto[]> {
         try {
-            const result = await this.adminRepository.findAndCountAll({limit: +rows, offset: +rows * (+page - 1)})
-            return result.rows.map(adm => this.toResponse(adm))
+            const result = await Admin.find(
+                {take: +rows, skip: +rows * (+page - 1)}
+            )
+            return result.map(adm => this.toResponse(adm))
         } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
+            throw new BadRequestException(err)
         }
     }
 
     async read(id: number): Promise<AdminResponseDto> {
         let entry: Admin
         try {
-            entry = await this.adminRepository.findOne<Admin>({where: {id}})
+            entry = await Admin.findOne(id)
         } catch(err) {
-            throw new BadRequestException(handleSequelizeError(err))
+            throw new BadRequestException(err)
         }
 
         if (!entry)
@@ -102,35 +89,39 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
         try {
             return this.toResponse(entry)
         } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
+            throw new BadRequestException(err)
         }
     }
 
     async readOneByLogin(login: string): Promise<AdminResponseDto> {
         try {
-            return this.toResponse(await this.adminRepository.findOne<Admin>({where: {login}}))
+            return this.toResponse(
+                await Admin.findOne(
+                    {where: {login: login}}
+                )
+            )
         } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
+            throw new BadRequestException(err)
         }
     }
 
     async update(id: number, admin: AdminUpdateDto): Promise<AdminResponseDto> {
         let entry: Admin
         try {
-            entry = await this.adminRepository.findByPk(id)
+            entry = await Admin.findOne(id)
         } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
+            throw new BadRequestException(err)
         }
 
         if (!entry)
             throw new NotFoundException()
 
         try {
-            entry.set(admin)
-            entry.save()
+            Admin.merge(entry, admin)
+            await Admin.update(entry.id, entry)
             return this.toResponse(entry)
         } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
+            throw new BadRequestException(err)
         }
     }
 
@@ -139,9 +130,9 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
         let admin: AdminBaseDto
 
         try {
-            entry = await this.adminRepository.findByPk(id)
+            entry = await Admin.findOne(id)
         } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
+            throw new BadRequestException(err)
         }
 
         if (!entry)
@@ -151,31 +142,35 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
             admin = this.deflate(entry)
             admin = applyPatch(admin, patch).newDocument
         } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
+            throw new BadRequestException(err)
         }
 
         try {
-            entry.set(this.inflate(admin))
-            entry.save()
+            entry = Admin.merge(entry, this.inflate(admin))
+            await Admin.update(entry.id, entry)
             return this.toResponse(entry)
         } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
+            throw new BadRequestException(err)
         }
     }
 
     async delete(id: number) {
         try {
-            return this.adminRepository.destroy({where: {id}})
+            let entry = await Admin.findOne(id)
+            await Admin.remove(entry)
+            return 1
         } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
+            throw new BadRequestException(err)
         }
     }
 
     async searchOne(pattern: {}): Promise<AdminResponseDto> {
         try {
-            return this.toResponse(await this.adminRepository.findOne(pattern))
+            return this.toResponse(
+                await Admin.findOne(pattern)
+            )
         } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
+            throw new BadRequestException(err)
         }
     }
 }

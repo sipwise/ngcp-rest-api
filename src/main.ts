@@ -1,5 +1,6 @@
 import {NestFactory} from '@nestjs/core'
-import {AppModule} from './app.module'
+import {AppModule} from 'app.module'
+import {AppService} from 'app.sevice'
 
 import {readFileSync} from 'fs'
 import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger'
@@ -11,7 +12,7 @@ import {LoggerService} from './logger/logger.service'
 async function bootstrap() {
     // TODO: evaluate and compare default Express vs Fastify
     //       https://docs.nestjs.com/techniques/performance#adapter
-    const config = AppModule.config
+    const config = AppService.config
     const app = await NestFactory.create(
         AppModule,
         {

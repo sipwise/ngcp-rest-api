@@ -2,7 +2,7 @@
 
 const fs = require('fs')
 const args = require('yargs/yargs')(process.argv.slice(2))
-    .usage('Usage: $0 --destdir ./etc/ssh')
+    .usage('Usage: $0 --destdir ./etc/ssl')
     .demandOption('destdir')
     .argv
 

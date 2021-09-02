@@ -1,4 +1,4 @@
-import {config} from '../config/main.config'
+import { AppService } from 'app.sevice'
 
 export const DATABASES = {
     accounting: {
@@ -11,19 +11,10 @@ export const DATABASES = {
     },
 }
 
-export const ADMIN_REPOSITORY = 'ADMIN_REPOSITORY'
-export const CONTACT_REPOSITORY = 'CONTACT_REPOSITORY'
-export const DOMAIN_REPOSITORY = 'DOMAIN_REPOSITORY'
-
-export const JOURNAL_SERVICE = 'JOURNAL_SERVICE'
-export const JOURNAL_REPOSITORY = 'JOURNAL_REPOSITORY'
-export const JOURNAL_V2_REPOSITORY = 'JOURNAL_V2_REPOSITORY'
-export const JOURNAL_OBJECT_REPOSITORY = 'JOURNAL_OBJECT_REPOSITORY'
-
 export const LOGGER_SERVICE = 'LOGGER_SERVICE'
 
 export const jwtConstants = {
-    secret: config.common.jwt_key,
+    secret: AppService.config.common.jwt_key,
 }
 
 export const RBAC_ROLES = {

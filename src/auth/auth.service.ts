@@ -1,9 +1,10 @@
 import {ForbiddenException, Inject, Injectable} from '@nestjs/common'
 import {compare} from 'bcrypt'
 import {JwtService} from '@nestjs/jwt'
-import {ADMIN_REPOSITORY, RBAC_ROLES} from '../config/constants.config'
+import {RBAC_ROLES} from '../config/constants.config'
 import {Admin} from '../entities/db/billing/admin.entity'
 import {AuthResponseDto} from './dto/auth-response.dto'
+import {AppService} from 'app.sevice'
 
 
 /**
@@ -17,7 +18,7 @@ export class AuthService {
      * @param jwtService    JWT service to sign access tokens
      */
     constructor(
-        @Inject(ADMIN_REPOSITORY) private readonly authRepo: typeof Admin,
+        private readonly app: AppService,
         private jwtService: JwtService,
     ) {
     }
@@ -68,8 +69,7 @@ export class AuthService {
      * @returns Authenticated `Admin` on success else `null`
      */
     async validateAdmin(username: string, password: string): Promise<AuthResponseDto> {
-        const login = username
-        const admin = await this.authRepo.findOne<Admin>({where: {login}})
+        const admin = await this.app.dbRepo(Admin).findOne({where: {login: username}})
         if (!AuthService.isAdminValid(admin)) {
             return null
         }
@@ -96,7 +96,7 @@ export class AuthService {
         if (!sn) {
             return null
         }
-        const admin = await this.authRepo.findOne({where: {ssl_client_m_serial: sn}})
+        const admin = await this.app.dbRepo(Admin).findOne({where: {ssl_client_m_serial: sn}})
         if (!AuthService.isAdminValid(admin)) {
             return null
         }

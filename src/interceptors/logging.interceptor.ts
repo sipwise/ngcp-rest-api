@@ -3,7 +3,7 @@ import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
 import {extractResourceName} from '../helpers/uri.helper'
 import {plainToClass} from 'class-transformer'
-import {config} from '../config/main.config'
+import {AppService} from 'app.sevice'
 
 /**
  * LoggingInterceptor intercepts requests and writes relevant information to log.
@@ -32,7 +32,7 @@ export class LoggingInterceptor implements NestInterceptor {
                     contentType = 'application/json'
                 }
 
-                const resourceName = extractResourceName(req.path, config.common.api_prefix)
+                const resourceName = extractResourceName(req.path, AppService.config.common.api_prefix)
 
                 // Get resourceID from data values if method is POST else from request params 'id'
                 let resourceID

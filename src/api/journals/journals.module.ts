@@ -1,14 +1,18 @@
 import {Module} from '@nestjs/common'
-import {journalsProviders} from './journals.providers'
 import {JournalsController} from './journals.controller'
+import { JournalsService } from './journals.service'
 
 @Module({
     controllers: [JournalsController],
     imports: [
         //LoggingModule
     ],
-    providers: [...journalsProviders],
-    exports: [...journalsProviders],
+    providers: [
+        JournalsService,
+    ],
+    exports: [
+        JournalsService,
+    ]
 })
 export class JournalsModule {
 }

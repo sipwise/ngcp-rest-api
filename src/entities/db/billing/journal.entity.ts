@@ -1,94 +1,47 @@
-import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
+import {BaseEntity, Entity, PrimaryGeneratedColumn, Column} from "typeorm"
 
-export interface JournalAttributes {
-    id?: number;
-    operation: string;
-    resource_name: string;
-    resource_id: number;
-    timestamp: number;
-    username?: string;
-    content_format: string;
-    content?: Uint8Array;
-}
-
-@Table({
-    tableName: 'journals',
-    timestamps: false,
+@Entity({
+    name: 'journals',
+    database: 'billing',
 })
-export class Journal extends Model<JournalAttributes, JournalAttributes> implements JournalAttributes {
-
-    @Column({
-        primaryKey: true,
-        autoIncrement: true,
-        type: DataType.INTEGER,
-    })
-    @Index({
-        name: 'PRIMARY',
-        using: 'BTREE',
-        order: 'ASC',
-        unique: true,
-    })
+export class Journal extends BaseEntity {
+    @PrimaryGeneratedColumn()
     id?: number
 
     @Column({
-        type: DataType.ENUM('create', 'update', 'delete'),
-    })
-    @Index({
-        name: 'op_idx',
-        using: 'BTREE',
-        order: 'ASC',
-        unique: false,
+        type: 'enum',
+        enum: ['create', 'update', 'delete'],
     })
     operation!: string
 
-    @Column({
-        type: DataType.STRING(64),
-    })
-    @Index({
-        name: 'res_idx',
-        using: 'BTREE',
-        order: 'ASC',
-        unique: false,
-    })
+    @Column({ length: 64 })
     resource_name!: string
 
-    @Column({
-        type: DataType.INTEGER,
-    })
-    @Index({
-        name: 'res_idx',
-        using: 'BTREE',
-        order: 'ASC',
-        unique: false,
-    })
+    @Column()
     resource_id!: number
 
     @Column({
-        type: DataType.DECIMAL(13, 3),
-    })
-    @Index({
-        name: 'ts_idx',
-        using: 'BTREE',
-        order: 'ASC',
-        unique: false,
+        type: 'decimal',
+        precision: 13,
+        scale: 3 ,
     })
     timestamp!: number
 
     @Column({
-        allowNull: true,
-        type: DataType.STRING(127),
+        nullable: true,
+        length: 127
     })
     username?: string
 
     @Column({
-        type: DataType.ENUM('storable', 'json', 'json_deflate', 'sereal'),
+        type: 'enum',
+        enum: ['storable', 'json', 'json_deflate', 'sereal'],
     })
     content_format!: string
 
     @Column({
-        allowNull: true,
-        type: DataType.BLOB,
+        nullable: true,
+        type: 'blob'
     })
     content?: Uint8Array
-
 }

@@ -1,43 +1,14 @@
-import {Column, DataType, Index, Model, Table} from 'sequelize-typescript'
+import {BaseEntity, Entity, PrimaryGeneratedColumn, Column} from "typeorm"
 
-export interface DomainAttributes {
-    id?: number;
-    domain: string;
-}
-
-@Table({
-    tableName: 'domains',
-    timestamps: false,
+@Entity({
+    name: 'domains',
+    database: 'provisioning',
 })
-export class Domain extends Model<DomainAttributes, DomainAttributes> implements DomainAttributes {
+export class Domain extends BaseEntity {
 
-    @Column({
-        primaryKey: true,
-        autoIncrement: true,
-        type: DataType.INTEGER,
-    })
-    @Index({
-        name: 'PRIMARY',
-        using: 'BTREE',
-        order: 'ASC',
-        unique: true,
-    })
+    @PrimaryGeneratedColumn()
     id?: number
 
-    @Column({
-        type: DataType.STRING(127),
-    })
-    @Index({
-        name: 'domain_idx',
-        using: 'BTREE',
-        order: 'ASC',
-        unique: true,
-    })
+    @Column({ length: 127 })
     domain!: string
-
-    // @HasMany(() => VoipSubscriber, {
-    //     sourceKey: 'id',
-    // })
-    // VoipSubscribers?: VoipSubscriber[]
-
 }

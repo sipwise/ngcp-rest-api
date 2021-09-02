@@ -2,10 +2,10 @@ import {Injectable} from '@nestjs/common'
 import * as cluster from 'cluster'
 import * as fs from 'fs'
 import * as sdNotify from 'sd-notify'
-import {config} from './config/main.config'
 import {LoggerService} from './logger/logger.service'
+import {AppService} from 'app.sevice'
 
-const workersAmount = config.common.workers
+const workersAmount = AppService.config.common.workers
 
 const pidDir = process.env.NODE_ENV == 'development'
                                         ? '/tmp/ngcp-rest-api'

@@ -5,7 +5,7 @@ import {extractResourceName} from '../helpers/uri.helper'
 import {JournalsService} from '../api/journals/journals.service'
 import {JournalCreateDto} from '../api/journals/dto/journal-create.dto'
 import {TextEncoder} from 'util'
-import {config} from '../config/main.config'
+import {AppService} from 'app.sevice'
 
 /**
  * Lookup-table for HTTP operations
@@ -31,7 +31,7 @@ export class JournalingInterceptor implements NestInterceptor {
      * Creates a new `JournalingInterceptor`
      * @param journalService Injected JournalService to access database
      */
-    constructor(@Inject('JOURNAL_SERVICE') private readonly journalsService: JournalsService) {
+    constructor(private readonly journalsService: JournalsService) {
     }
 
     /**
@@ -69,7 +69,7 @@ export class JournalingInterceptor implements NestInterceptor {
                     return data
                 }
 
-                const resourceName = extractResourceName(req.path, config.common.api_prefix)
+                const resourceName = extractResourceName(req.path, AppService.config.common.api_prefix)
 
                 // Get resourceID from data values if method is POST else from request params 'id'
                 let resourceID

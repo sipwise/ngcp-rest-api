@@ -1,8 +1,8 @@
 import {JournalsService} from "../api/journals/journals.service";
 import {BadRequestException, Body, Delete, Get, Param, Post, Put, Patch, Query} from '@nestjs/common'
-import {config} from "../config/main.config";
 import {CrudService} from '../interfaces/crud-service.interface'
 import {validate, Operation as PatchOperation} from 'fast-json-patch'
+import {AppService} from 'app.sevice';
 
 // @Auth()
 export class CrudController<CreateDTO, ResponseDTO> {
@@ -23,8 +23,8 @@ export class CrudController<CreateDTO, ResponseDTO> {
         @Query('page') page: string,
         @Query('rows') row: string
     ) {
-        page = page ? page : `${config.common.api_default_query_page}`
-        row = row ? row : `${config.common.api_default_query_rows}`
+        page = page ? page : `${AppService.config.common.api_default_query_page}`
+        row = row ? row : `${AppService.config.common.api_default_query_rows}`
         return await this.repo.readAll(page, row)
     }
 
@@ -61,8 +61,8 @@ export class CrudController<CreateDTO, ResponseDTO> {
         @Query('page') page: string,
         @Query('rows') row: string,
     ) {
-        page = page ? page : `${config.common.api_default_query_page}`
-        row = row ? row : `${config.common.api_default_query_rows}`
+        page = page ? page : `${AppService.config.common.api_default_query_page}`
+        row = row ? row : `${AppService.config.common.api_default_query_rows}`
         return this.journals.readAll(page, row, this.resourceName, id)
     }
 }

@@ -3,12 +3,12 @@ import {ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {AdminsService} from './admins.service'
 import {AdminCreateDto} from './dto/admin-create.dto'
 import {AdminUpdateDto} from './dto/admin-update.dto'
-import {JOURNAL_SERVICE, RBAC_ROLES} from '../../config/constants.config'
+import {RBAC_ROLES} from '../../config/constants.config'
 import {JournalsService} from '../journals/journals.service'
-import {config} from '../../config/main.config'
 import {AdminResponseDto} from './dto/admin-response.dto'
 import {Auth} from "../../decorators/auth.decorator";
 import {validate, Operation as PatchOperation} from 'fast-json-patch'
+import {AppService} from 'app.sevice'
 
 @ApiTags('admins')
 @Controller('admins')
@@ -16,8 +16,9 @@ export class AdminsController {
     private logger = new Logger(AdminsController.name)
 
     constructor(
+        private readonly app: AppService,
         private readonly adminsService: AdminsService,
-        @Inject(JOURNAL_SERVICE) private readonly journalsService: JournalsService,
+        private readonly journalsService: JournalsService,
     ) {
     }
 
@@ -34,8 +35,8 @@ export class AdminsController {
         type: AdminResponseDto,
     })
     async findAll(@Query('page') page: string, @Query('rows') row: string, @Request() req) {
-        page = page ? page : `${config.common.api_default_query_page}`
-        row = row ? row : `${config.common.api_default_query_rows}`
+        page = page ? page : `${this.app.config.common.api_default_query_page}`
+        row = row ? row : `${this.app.config.common.api_default_query_rows}`
         return await this.adminsService.readAll(page, row)
     }
 
@@ -73,8 +74,8 @@ export class AdminsController {
         @Query('page') page: string,
         @Query('rows') row: string,
     ) {
-        page = page ? page : `${config.common.api_default_query_page}`
-        row = row ? row : `${config.common.api_default_query_rows}`
+        page = page ? page : `${this.app.config.common.api_default_query_page}`
+        row = row ? row : `${this.app.config.common.api_default_query_rows}`
         return this.journalsService.readAll(page, row, 'admins', id)
     }
 }

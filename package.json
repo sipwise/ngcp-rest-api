@@ -32,6 +32,7 @@
     "@nestjs/platform-fastify": "7.6.17",
     "@nestjs/sequelize": "0.2.0",
     "@nestjs/swagger": "4.8.0",
+    "@nestjs/typeorm": "8.0.2",
     "@types/bluebird": "3.5.35",
     "@types/node": "15.12.2",
     "@types/validator": "13.1.4",
@@ -56,6 +57,7 @@
     "sequelize-typescript": "2.1.0",
     "sequelize-typescript-generator": "^5.1.1",
     "swagger-ui-express": "4.1.6",
+    "typeorm": "0.2.37",
     "uuid": "8.3.2",
     "winston": "3.3.3",
     "winston-syslog": "2.4.4"
