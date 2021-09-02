@@ -2,9 +2,9 @@ import {ForbiddenException, Inject, Injectable} from '@nestjs/common'
 import {compare} from 'bcrypt'
 import {JwtService} from '@nestjs/jwt'
 import {RBAC_ROLES} from '../config/constants.config'
-import {Admin} from '../entities/db/billing/admin.entity'
 import {AuthResponseDto} from './dto/auth-response.dto'
 import {AppService} from 'app.sevice'
+import {db} from 'entities'
 
 
 /**
@@ -23,7 +23,7 @@ export class AuthService {
     ) {
     }
 
-    static isAdminValid(admin: Admin): boolean {
+    static isAdminValid(admin: db.billing.Admin): boolean {
         if (!admin) {
             return false
         }
@@ -33,7 +33,7 @@ export class AuthService {
         return true
     }
 
-    private static toResponse(db: Admin): AuthResponseDto {
+    private static toResponse(db: db.billing.Admin): AuthResponseDto {
         let response: AuthResponseDto = {
             active: db.is_active,
             id: db.id,
@@ -60,8 +60,8 @@ export class AuthService {
     }
 
     /**
-     * Tries to get [`Admin`]{@link Admin} with `login` matching `username` from DB.
-     * If an [`Admin`]{@link Admin} is found the `password` is bcrypt-hashed and compared with the stored password.
+     * Tries to get [`Admin`]{@link db.billing.Admin} with `login` matching `username` from DB.
+     * If an [`Admin`]{@link db.billing.Admin} is found the `password` is bcrypt-hashed and compared with the stored password.
      *
      * @param username {string} Login username
      * @param password {string} Login password
@@ -69,7 +69,7 @@ export class AuthService {
      * @returns Authenticated `Admin` on success else `null`
      */
     async validateAdmin(username: string, password: string): Promise<AuthResponseDto> {
-        const admin = await this.app.dbRepo(Admin).findOne({where: {login: username}})
+        const admin = await this.app.dbRepo(db.billing.Admin).findOne({where: {login: username}})
         if (!AuthService.isAdminValid(admin)) {
             return null
         }
@@ -84,8 +84,8 @@ export class AuthService {
     }
 
     /**
-     * Parses `serial` into an int and tries to get [`Admin`]{@link Admin} from DB.
-     * If an [`Admin`]{@link Admin} is found the `serial` is compared to `ssl_client_m_serial` stored in DB.
+     * Parses `serial` into an int and tries to get [`Admin`]{@link db.billing.Admin} from DB.
+     * If an [`Admin`]{@link db.billing.Admin} is found the `serial` is compared to `ssl_client_m_serial` stored in DB.
      *
      * @param serial {string} Certificate serial number in Hex format
      *
@@ -96,7 +96,7 @@ export class AuthService {
         if (!sn) {
             return null
         }
-        const admin = await this.app.dbRepo(Admin).findOne({where: {ssl_client_m_serial: sn}})
+        const admin = await this.app.dbRepo(db.billing.Admin).findOne({where: {ssl_client_m_serial: sn}})
         if (!AuthService.isAdminValid(admin)) {
             return null
         }

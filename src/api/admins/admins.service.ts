@@ -1,5 +1,4 @@
 import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common'
-import {Admin} from '../../entities/db/billing/admin.entity'
 import {AdminBaseDto} from './dto/admin-base.dto'
 import {AdminCreateDto} from './dto/admin-create.dto'
 import {AdminUpdateDto} from './dto/admin-update.dto'
@@ -8,6 +7,7 @@ import {AdminResponseDto} from './dto/admin-response.dto'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {applyPatch, Operation as PatchOperation} from 'fast-json-patch'
 import {AppService} from 'app.sevice'
+import {db} from 'entities'
 
 @Injectable()
 export class AdminsService implements CrudService<AdminCreateDto, AdminResponseDto> {
@@ -16,15 +16,15 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
     ) {
     }
 
-    private inflate(dto: AdminBaseDto): Admin {
+    private inflate(dto: AdminBaseDto): db.billing.Admin {
             return Object.assign(dto)
     }
 
-    private deflate(entry: Admin): AdminBaseDto {
+    private deflate(entry: db.billing.Admin): AdminBaseDto {
             return Object.assign(entry)
     }
 
-    private toResponse(db: Admin): AdminResponseDto {
+    private toResponse(db: db.billing.Admin): AdminResponseDto {
         return {
             billing_data: db.billing_data,
             call_data: db.call_data,
@@ -45,10 +45,9 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
     }
 
     async create(admin: AdminCreateDto): Promise<AdminResponseDto> {
-        let dbAdmin = Admin.create(admin)
+        let dbAdmin = db.billing.Admin.create(admin)
         const bcrypt_version = 'b'
         const bcrypt_cost = 13
-
         const re = new RegExp(`^\\$2${bcrypt_version}\\$${bcrypt_cost}\\$(.*)$`)
 
         const salt = await genSalt(bcrypt_cost, bcrypt_version)
@@ -57,7 +56,7 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
         const b64hash = hashPwd.slice(22)
         dbAdmin.saltedpass = b64salt + "$" + b64hash
         try {
-            await Admin.insert(dbAdmin)
+            await db.billing.Admin.insert(dbAdmin)
             return this.toResponse(dbAdmin)
         } catch (err) {
             throw new BadRequestException(err)
@@ -66,7 +65,7 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
 
     async readAll(page?: string, rows?: string): Promise<AdminResponseDto[]> {
         try {
-            const result = await Admin.find(
+            const result = await db.billing.Admin.find(
                 {take: +rows, skip: +rows * (+page - 1)}
             )
             return result.map(adm => this.toResponse(adm))
@@ -76,9 +75,9 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
     }
 
     async read(id: number): Promise<AdminResponseDto> {
-        let entry: Admin
+        let entry: db.billing.Admin
         try {
-            entry = await Admin.findOne(id)
+            entry = await db.billing.Admin.findOne(id)
         } catch(err) {
             throw new BadRequestException(err)
         }
@@ -96,7 +95,7 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
     async readOneByLogin(login: string): Promise<AdminResponseDto> {
         try {
             return this.toResponse(
-                await Admin.findOne(
+                await db.billing.Admin.findOne(
                     {where: {login: login}}
                 )
             )
@@ -106,9 +105,9 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
     }
 
     async update(id: number, admin: AdminUpdateDto): Promise<AdminResponseDto> {
-        let entry: Admin
+        let entry: db.billing.Admin
         try {
-            entry = await Admin.findOne(id)
+            entry = await db.billing.Admin.findOne(id)
         } catch (err) {
             throw new BadRequestException(err)
         }
@@ -117,8 +116,8 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
             throw new NotFoundException()
 
         try {
-            Admin.merge(entry, admin)
-            await Admin.update(entry.id, entry)
+            entry = db.billing.Admin.merge(entry, admin)
+            await db.billing.Admin.update(entry.id, entry)
             return this.toResponse(entry)
         } catch (err) {
             throw new BadRequestException(err)
@@ -126,11 +125,11 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
     }
 
     async adjust(id: number, patch: PatchOperation[]): Promise<AdminResponseDto> {
-        let entry: Admin
+        let entry: db.billing.Admin
         let admin: AdminBaseDto
 
         try {
-            entry = await Admin.findOne(id)
+            entry = await db.billing.Admin.findOne(id)
         } catch (err) {
             throw new BadRequestException(err)
         }
@@ -146,8 +145,8 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
         }
 
         try {
-            entry = Admin.merge(entry, this.inflate(admin))
-            await Admin.update(entry.id, entry)
+            entry = db.billing.Admin.merge(entry, this.inflate(admin))
+            await db.billing.Admin.update(entry.id, entry)
             return this.toResponse(entry)
         } catch (err) {
             throw new BadRequestException(err)
@@ -156,8 +155,8 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
 
     async delete(id: number) {
         try {
-            let entry = await Admin.findOne(id)
-            await Admin.remove(entry)
+            let entry = await db.billing.Admin.findOne(id)
+            await db.billing.Admin.remove(entry)
             return 1
         } catch (err) {
             throw new BadRequestException(err)
@@ -167,7 +166,7 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
     async searchOne(pattern: {}): Promise<AdminResponseDto> {
         try {
             return this.toResponse(
-                await Admin.findOne(pattern)
+                await db.billing.Admin.findOne(pattern)
             )
         } catch (err) {
             throw new BadRequestException(err)

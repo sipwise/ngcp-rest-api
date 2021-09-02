@@ -1,9 +1,9 @@
 import {Injectable} from '@nestjs/common'
-import {Journal} from '../../entities/db/billing/journal.entity'
 import {JournalCreateDto} from './dto/journal-create.dto'
 import {FindOptions, Op, WhereOptions} from 'sequelize'
 import {JournalResponseDto} from './dto/journal-response.dto'
 import {AppService} from 'app.sevice'
+import {db} from 'entities'
 
 @Injectable()
 export class JournalsService {
@@ -16,7 +16,7 @@ export class JournalsService {
     ) {
     }
 
-    private static toResponse(db: Journal): JournalResponseDto {
+    private static toResponse(db: db.billing.Journal): JournalResponseDto {
         return {
             id: db.id,
             content: db.content,
@@ -34,8 +34,8 @@ export class JournalsService {
      * @param journal Journal to be created
      */
     async create(journal: JournalCreateDto): Promise<JournalResponseDto> {
-        const dbJournal = Journal.create(journal)
-        await Journal.insert(dbJournal)
+        const dbJournal = db.billing.Journal.create(journal)
+        await db.billing.Journal.insert(dbJournal)
         return JournalsService.toResponse(dbJournal)
     }
 
@@ -59,7 +59,7 @@ export class JournalsService {
                          ]
             }
         }
-        let result = await Journal.find({
+        let result = await db.billing.Journal.find({
             take: +rows,
             skip: +rows * (+page - 1),
             where: filter,
@@ -75,7 +75,7 @@ export class JournalsService {
      * @param id ID of Journal
      */
     async readOne(id: number): Promise<JournalResponseDto> {
-        return JournalsService.toResponse(await Journal.findOne(id))
+        return JournalsService.toResponse(await db.billing.Journal.findOne(id))
     }
 
     /**
@@ -83,6 +83,6 @@ export class JournalsService {
      * @param pattern FindOptions to filter results
      */
     async searchOne(pattern: FindOptions): Promise<JournalResponseDto> {
-        return JournalsService.toResponse(await Journal.findOne({where: pattern}))
+        return JournalsService.toResponse(await db.billing.Journal.findOne({where: pattern}))
     }
 }

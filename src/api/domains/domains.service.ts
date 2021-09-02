@@ -1,5 +1,4 @@
 import {BadRequestException, Injectable, InternalServerErrorException, NotFoundException} from '@nestjs/common'
-import {Domain} from '../../entities/db/billing/domain.entity'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {DomainBaseDto} from './dto/domain-base.dto'
 import {DomainCreateDto} from './dto/domain-create.dto'
@@ -8,6 +7,7 @@ import {DomainResponseDto} from './dto/domain-response.dto'
 import {handleSequelizeError} from '../../helpers/errors.helper'
 import {applyPatch, Operation as PatchOperation} from 'fast-json-patch'
 import {AppService} from 'app.sevice'
+import {db} from 'entities'
 
 @Injectable()
 export class DomainsService implements CrudService<DomainCreateDto, DomainResponseDto> {
@@ -16,15 +16,15 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
     ) {
     }
 
-    private inflate(dto: DomainBaseDto): Domain {
+    private inflate(dto: DomainBaseDto): db.billing.Domain {
         return Object.assign(dto)
 }
 
-    private deflate(entry: Domain): DomainBaseDto {
+    private deflate(entry: db.billing.Domain): DomainBaseDto {
             return Object.assign(entry)
     }
 
-    private toResponse(db: Domain): DomainResponseDto {
+    private toResponse(db: db.billing.Domain): DomainResponseDto {
         return {
             domain: db.domain,
             id: db.id,
@@ -33,9 +33,9 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
     }
 
     async create(domain: DomainCreateDto): Promise<DomainResponseDto> {
-        const dbDomain = Domain.create(domain)
+        const dbDomain = db.billing.Domain.create(domain)
         try {
-            await Domain.insert(dbDomain)
+            await db.billing.Domain.insert(dbDomain)
             return this.toResponse(dbDomain)
         } catch (err) {
             throw new BadRequestException(err)
@@ -44,7 +44,7 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
 
     async readAll(page: string, rows: string): Promise<DomainResponseDto[]> {
         try {
-            const result = await Domain.find(
+            const result = await db.billing.Domain.find(
                 {take: +rows, skip: +rows * (+page - 1)}
             )
             return result.map(d => this.toResponse(d))
@@ -54,9 +54,9 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
     }
 
     async read(id: number): Promise<DomainResponseDto> {
-        let entry: Domain
+        let entry: db.billing.Domain
         try {
-            entry = await Domain.findOne(id)
+            entry = await db.billing.Domain.findOne(id)
         } catch (err) {
             throw new BadRequestException(err)
         }
@@ -72,9 +72,9 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
     }
 
     async update(id: number, domain: DomainUpdateDto): Promise<DomainResponseDto> {
-        let entry: Domain
+        let entry: db.billing.Domain
         try {
-            entry = await Domain.findOne(id)
+            entry = await db.billing.Domain.findOne(id)
         } catch (err) {
             throw new BadRequestException(handleSequelizeError(err))
         }
@@ -83,8 +83,8 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
         throw new NotFoundException()
 
         try {
-            Domain.merge(entry, domain)
-            Domain.update(entry.id, entry)
+            entry = db.billing.Domain.merge(entry, domain)
+            db.billing.Domain.update(entry.id, entry)
             return this.toResponse(entry)
         } catch (err) {
             throw new BadRequestException(err)
@@ -92,11 +92,11 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
     }
 
     async adjust(id: number, patch: PatchOperation[]): Promise<DomainResponseDto> {
-        let entry: Domain
+        let entry: db.billing.Domain
         let domain: DomainBaseDto
 
         try {
-            entry = await Domain.findOne(id)
+            entry = await db.billing.Domain.findOne(id)
         } catch (err) {
             throw new BadRequestException(handleSequelizeError(err))
         }
@@ -112,8 +112,8 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
         }
 
         try {
-            Domain.merge(entry, this.inflate(domain))
-            Domain.update(entry.id, entry)
+            entry = db.billing.Domain.merge(entry, this.inflate(domain))
+            db.billing.Domain.update(entry.id, entry)
             return this.toResponse(entry)
         } catch (err) {
             throw new BadRequestException(handleSequelizeError(err))
@@ -122,7 +122,7 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
 
     async delete(id: number): Promise<number> {
         try {
-            Domain.delete(id)
+            db.billing.Domain.delete(id)
             return 1
         } catch (err) {
             throw new InternalServerErrorException(handleSequelizeError(err))
