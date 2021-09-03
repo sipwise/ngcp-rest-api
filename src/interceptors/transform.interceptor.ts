@@ -1,9 +1,9 @@
 import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestjs/common'
+import * as halson from 'halson'
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
-import * as halson from 'halson'
+import {AppService} from '../app.sevice'
 import {extractResourceName} from '../helpers/uri.helper'
-import {AppService} from 'app.sevice'
 
 /**
  * Defines the names of query parameters for pagination

@@ -2,8 +2,8 @@ import {Injectable} from '@nestjs/common'
 import * as cluster from 'cluster'
 import * as fs from 'fs'
 import * as sdNotify from 'sd-notify'
+import {AppService} from './app.sevice'
 import {LoggerService} from './logger/logger.service'
-import {AppService} from 'app.sevice'
 
 const workersAmount = AppService.config.common.workers
 

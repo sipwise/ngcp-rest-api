@@ -1,5 +1,5 @@
-import {Inject, Injectable} from "@nestjs/common";
-import {Connection, Entity, EntityTarget} from "typeorm";
+import {Inject, Injectable} from '@nestjs/common'
+import {Connection, EntityTarget} from 'typeorm'
 import {config as AppConfig} from './config/main.config'
 
 @Injectable()

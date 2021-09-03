@@ -1,11 +1,11 @@
-import {applyDecorators, UseGuards, UseInterceptors} from "@nestjs/common";
-import {OmniGuard} from "../guards/omni.guard";
-import {RolesGuard} from "../guards/roles.guard";
-import {ApiBasicAuth, ApiBearerAuth, ApiSecurity} from "@nestjs/swagger";
-import {LoggingInterceptor} from "../interceptors/logging.interceptor";
-import {JournalingInterceptor} from "../interceptors/journaling.interceptor";
-import {Roles} from "./roles.decorator";
-import {ReadOnlyGuard} from "../guards/read-only.guard";
+import {applyDecorators, UseGuards, UseInterceptors} from '@nestjs/common'
+import {ApiBasicAuth, ApiBearerAuth, ApiSecurity} from '@nestjs/swagger'
+import {OmniGuard} from '../guards/omni.guard'
+import {ReadOnlyGuard} from '../guards/read-only.guard'
+import {RolesGuard} from '../guards/roles.guard'
+import {JournalingInterceptor} from '../interceptors/journaling.interceptor'
+import {LoggingInterceptor} from '../interceptors/logging.interceptor'
+import {Roles} from './roles.decorator'
 
 export function Auth(...roles: string[]) {
     //console.log(`Roles in ${Auth.name}`, roles)

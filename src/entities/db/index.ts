@@ -1,1 +1,1 @@
-export * as billing from 'entities/db/billing'
+export * as billing from './billing'

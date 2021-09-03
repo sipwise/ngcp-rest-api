@@ -1,9 +1,9 @@
 import {Injectable} from '@nestjs/common'
+import {FindOptions} from 'sequelize'
+import {AppService} from '../../app.sevice'
+import {db} from '../../entities'
 import {JournalCreateDto} from './dto/journal-create.dto'
-import {FindOptions, Op, WhereOptions} from 'sequelize'
 import {JournalResponseDto} from './dto/journal-response.dto'
-import {AppService} from 'app.sevice'
-import {db} from 'entities'
 
 @Injectable()
 export class JournalsService {

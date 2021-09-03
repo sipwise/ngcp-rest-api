@@ -1,13 +1,13 @@
 import {NestFactory} from '@nestjs/core'
-import {AppModule} from 'app.module'
-import {AppService} from 'app.sevice'
-
-import {readFileSync} from 'fs'
 import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger'
-import {ValidateInputPipe} from './pipes/validate.pipe'
+import {readFileSync} from 'fs'
 import {AppClusterService} from './app-cluster.service'
+import {AppModule} from './app.module'
+import {AppService} from './app.sevice'
 import {TransformInterceptor} from './interceptors/transform.interceptor'
 import {LoggerService} from './logger/logger.service'
+import {ValidateInputPipe} from './pipes/validate.pipe'
+
 
 async function bootstrap() {
     // TODO: evaluate and compare default Express vs Fastify

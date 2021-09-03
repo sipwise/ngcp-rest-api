@@ -1,1 +1,1 @@
-export * as db from 'entities/db'
+export * as db from './db'

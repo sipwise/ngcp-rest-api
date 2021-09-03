@@ -1,9 +1,11 @@
-import {Controller, Get, Inject, Param, Query, UseGuards} from '@nestjs/common'
+import {Controller, Get, Param, Query, UseGuards} from '@nestjs/common'
 import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {AppService} from '../../app.sevice'
+import {Auth} from '../../decorators/auth.decorator'
 import {OmniGuard} from '../../guards/omni.guard'
 import {JournalsService} from './journals.service'
-import {AppService} from 'app.sevice'
 
+@Auth('system','admin','reseller')
 @ApiTags('journals')
 @Controller('journals')
 @UseGuards(OmniGuard)

@@ -1,9 +1,9 @@
 import {CallHandler, ExecutionContext, Logger, NestInterceptor} from '@nestjs/common'
+import {classToPlain} from 'class-transformer'
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
+import {AppService} from '../app.sevice'
 import {extractResourceName} from '../helpers/uri.helper'
-import {plainToClass} from 'class-transformer'
-import {AppService} from 'app.sevice'
 
 /**
  * LoggingInterceptor intercepts requests and writes relevant information to log.
@@ -76,7 +76,7 @@ export class LoggingInterceptor implements NestInterceptor {
             // value.constructor returns the constructor of a specific object.
             // This allows the call of the correct ClassConstructor in plainToClass()
             data.forEach(function (value) {
-                let redacted = plainToClass(value.constructor, value)
+                let redacted = classToPlain(value.constructor, value)
                 redactedArr.push(redacted)
             })
             return redactedArr
@@ -84,7 +84,7 @@ export class LoggingInterceptor implements NestInterceptor {
             // get plain version object
             // value.constructor returns the constructor of a specific object.
             // This allows the call of the correct ClassConstructor in plainToClass()
-            let redacted = plainToClass(data.constructor, data)
+            let redacted = classToPlain(data.constructor, data)
             return redacted
         }
     }

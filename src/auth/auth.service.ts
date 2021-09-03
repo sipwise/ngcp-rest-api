@@ -1,10 +1,10 @@
-import {ForbiddenException, Inject, Injectable} from '@nestjs/common'
-import {compare} from 'bcrypt'
+import {ForbiddenException, Injectable} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
+import {compare} from 'bcrypt'
+import {AppService} from '../app.sevice'
 import {RBAC_ROLES} from '../config/constants.config'
+import {db} from '../entities'
 import {AuthResponseDto} from './dto/auth-response.dto'
-import {AppService} from 'app.sevice'
-import {db} from 'entities'
 
 
 /**

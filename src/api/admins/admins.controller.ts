@@ -1,15 +1,15 @@
-import {BadRequestException, Body, Controller, Delete, Get, Inject, Logger, Param, Post, Put, Patch, Query, Request} from '@nestjs/common'
+import {BadRequestException, Body, Controller, Delete, Get, Logger, Param, Patch, Post, Put, Query, Request} from '@nestjs/common'
 import {ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {Operation as PatchOperation, validate} from 'fast-json-patch'
+import {AppService} from '../../app.sevice'
+import {Auth} from '../../decorators/auth.decorator'
+import {JournalsService} from '../journals/journals.service'
 import {AdminsService} from './admins.service'
 import {AdminCreateDto} from './dto/admin-create.dto'
-import {AdminUpdateDto} from './dto/admin-update.dto'
-import {RBAC_ROLES} from '../../config/constants.config'
-import {JournalsService} from '../journals/journals.service'
 import {AdminResponseDto} from './dto/admin-response.dto'
-import {Auth} from "../../decorators/auth.decorator";
-import {validate, Operation as PatchOperation} from 'fast-json-patch'
-import {AppService} from 'app.sevice'
+import {AdminUpdateDto} from './dto/admin-update.dto'
 
+@Auth("system","admin","reseller")
 @ApiTags('admins')
 @Controller('admins')
 export class AdminsController {

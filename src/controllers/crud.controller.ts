@@ -1,8 +1,8 @@
-import {JournalsService} from "../api/journals/journals.service";
-import {BadRequestException, Body, Delete, Get, Param, Post, Put, Patch, Query} from '@nestjs/common'
+import {BadRequestException, Body, Delete, Get, Param, Patch, Post, Put, Query} from '@nestjs/common'
+import {Operation as PatchOperation, validate} from 'fast-json-patch'
+import {JournalsService} from "../api/journals/journals.service"
+import {AppService} from '../app.sevice'
 import {CrudService} from '../interfaces/crud-service.interface'
-import {validate, Operation as PatchOperation} from 'fast-json-patch'
-import {AppService} from 'app.sevice';
 
 // @Auth()
 export class CrudController<CreateDTO, ResponseDTO> {

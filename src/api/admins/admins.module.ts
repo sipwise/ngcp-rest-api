@@ -1,7 +1,7 @@
 import {Module} from '@nestjs/common'
+import {InterceptorModule} from '../../interceptors/interceptor.module'
 import {AdminsController} from './admins.controller'
 import {AdminsService} from './admins.service'
-import {InterceptorModule} from '../../interceptors/interceptor.module'
 
 @Module({
     imports: [InterceptorModule],

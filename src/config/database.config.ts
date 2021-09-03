@@ -1,5 +1,5 @@
 import {ConnectionOptions} from 'typeorm'
-import {AppService} from 'app.sevice'
+import {AppService} from '../app.sevice'
 
 const db_user = process.env.API_DB_USER || AppService.config.database.user
 const db_pass = process.env.API_DB_PASS || AppService.config.database.pass
