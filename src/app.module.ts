@@ -11,6 +11,7 @@ import {DatabaseModule} from './database/database.module'
 import {InterceptorModule} from './interceptors/interceptor.module'
 import {ContextMiddleware} from './middleware/context.middleware'
 import {ResellersModule} from './api/resellers/resellers.module'
+import {SystemcontactsModule} from './api/systemcontacts/systemcontacts.module'
 import {TimestampMiddleware} from './middleware/timestamp.middleware'
 import {TxIDMiddleware} from './middleware/txid.middleware'
 import {CustomercontactsModule} from './api/customercontacts/customercontacts.module'
@@ -39,6 +40,7 @@ import {CustomercontactsModule} from './api/customercontacts/customercontacts.mo
         CustomercontactsModule,
         InterceptorModule,
         ResellersModule,
+        SystemcontactsModule,
     ],
     exports: [
         AppService,
