@@ -13,6 +13,7 @@ import {ContextMiddleware} from './middleware/context.middleware'
 import {ResellersModule} from './api/resellers/resellers.module'
 import {TimestampMiddleware} from './middleware/timestamp.middleware'
 import {TxIDMiddleware} from './middleware/txid.middleware'
+import {CustomercontactsModule} from './api/customercontacts/customercontacts.module'
 
 @Global()
 @Module({
@@ -35,6 +36,7 @@ import {TxIDMiddleware} from './middleware/txid.middleware'
         AuthModule,
         JournalsModule,
         ContractsModule,
+        CustomercontactsModule,
         InterceptorModule,
         ResellersModule,
     ],
