@@ -6,6 +6,7 @@ import {RolesGuard} from '../guards/roles.guard'
 import {JournalingInterceptor} from '../interceptors/journaling.interceptor'
 import {LoggingInterceptor} from '../interceptors/logging.interceptor'
 import {Roles} from './roles.decorator'
+import {JournalsService} from '../api/journals/journals.service'
 
 export function Auth(...roles: string[]) {
     //console.log(`Roles in ${Auth.name}`, roles)
@@ -13,9 +14,9 @@ export function Auth(...roles: string[]) {
         Roles(...roles),
         // OmniGuard binds user auth object to request, Guards requiring user object must always come after
         UseGuards(OmniGuard, RolesGuard, ReadOnlyGuard),
-        UseInterceptors(LoggingInterceptor, JournalingInterceptor),
+        UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService())),
         ApiBasicAuth(),
         ApiBearerAuth(),
-        ApiSecurity('cert')
+        ApiSecurity('cert'),
     )
 }

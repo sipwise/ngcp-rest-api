@@ -22,8 +22,8 @@ export class LoggerService implements NestLoggerService {
             format: winston.format.simple(),
             transports: [
                 process.env.NODE_ENV == 'development'
-                                            ? new winston.transports.Console()
-                                            : new Syslog(opt),
+                    ? new winston.transports.Console()
+                    : new Syslog(opt),
             ],
         })
         /*
@@ -42,7 +42,7 @@ export class LoggerService implements NestLoggerService {
     }
 
     error(message: any, trace?: string, context?: string): any {
-        this.logger.error(message, trace)
+        this.logger.error(message, trace, [context])
     }
 
     log(message: any, context?: string): any {

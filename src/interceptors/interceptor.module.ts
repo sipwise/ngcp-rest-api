@@ -4,10 +4,11 @@ import {LoggerModule} from '../logger/logger.module'
 import {LoggerService} from '../logger/logger.service'
 import {JournalingInterceptor} from './journaling.interceptor'
 import {LoggingInterceptor} from './logging.interceptor'
+import {JournalsService} from '../api/journals/journals.service'
 
 @Module({
     imports: [JournalsModule, LoggerModule],
-    providers: [JournalingInterceptor, LoggingInterceptor, LoggerService],
+    providers: [JournalingInterceptor, LoggingInterceptor, LoggerService, JournalsService],
     exports: [JournalsModule, LoggerModule],
 })
 export class InterceptorModule {
