@@ -1,13 +1,12 @@
-import {NestFactory} from '@nestjs/core'
-import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger'
-import {readFileSync} from 'fs'
 import {AppClusterService} from './app-cluster.service'
 import {AppModule} from './app.module'
-import {AppService} from './app.sevice'
-import {TransformInterceptor} from './interceptors/transform.interceptor'
+import {AppService} from './app.service'
+import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger'
 import {LoggerService} from './logger/logger.service'
+import {NestFactory} from '@nestjs/core'
+import {TransformInterceptor} from './interceptors/transform.interceptor'
 import {ValidateInputPipe} from './pipes/validate.pipe'
-
+import {readFileSync} from 'fs'
 
 async function bootstrap() {
     // TODO: evaluate and compare default Express vs Fastify
@@ -28,6 +27,8 @@ async function bootstrap() {
     )
     app.useLogger(app.get(LoggerService))
 
+    app.setGlobalPrefix(config.common.api_prefix)
+
     // Another way of getting the config data
     // const config: ConfigService = app.get('ConfigService');
     // config.get<number>('database.port');
@@ -36,19 +37,17 @@ async function bootstrap() {
         .setTitle('NGCP API')
         .setDescription('This is the NGCP API description')
         .setVersion('2.0')
-        .addTag('NGCP')
         .addBasicAuth()
         .addBearerAuth()
         .addSecurity('cert', {
             type: 'http',
-            scheme: 'cert'
+            scheme: 'cert',
         })
         .build()
 
     const document = SwaggerModule.createDocument(app, doc_config)
     SwaggerModule.setup(config.common.api_prefix, app, document)
 
-    app.setGlobalPrefix(config.common.api_prefix)
     app.useGlobalPipes(new ValidateInputPipe())
 
     app.useGlobalInterceptors(

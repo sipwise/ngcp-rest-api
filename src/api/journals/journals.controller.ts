@@ -1,14 +1,14 @@
-import {Controller, Get, Param, Query, UseGuards} from '@nestjs/common'
-import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
-import {AppService} from '../../app.sevice'
+import {RBAC_ROLES} from '../../config/constants.config'
+import {JournalResponseDto} from './dto/journal-response.dto'
 import {Auth} from '../../decorators/auth.decorator'
-import {OmniGuard} from '../../guards/omni.guard'
+import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {Controller, Get, Param, ParseIntPipe, Query} from '@nestjs/common'
+import {AppService} from '../../app.service'
 import {JournalsService} from './journals.service'
 
-@Auth('system','admin','reseller')
-@ApiTags('journals')
+@Auth(RBAC_ROLES.system, RBAC_ROLES.admin, RBAC_ROLES.reseller)
+@ApiTags('Journals')
 @Controller('journals')
-@UseGuards(OmniGuard)
 export class JournalsController {
     constructor(
         private readonly app: AppService,
@@ -17,35 +17,44 @@ export class JournalsController {
     }
 
     @Get()
-    @ApiOkResponse()
-    async findAll(@Query('page') page: string, @Query('rows') row: string) {
-        page = page ? page : `${this.app.config.common.api_default_query_page}`
-        row = row ? row : `${this.app.config.common.api_default_query_rows}`
+    @ApiOkResponse({
+        type: [JournalResponseDto],
+    })
+    async findAll(
+        @Query('page', ParseIntPipe) page: number,
+        @Query('rows', ParseIntPipe) row: number,
+    ): Promise<JournalResponseDto[]> {
+        page = page ? page : this.app.config.common.api_default_query_page
+        row = row ? row : this.app.config.common.api_default_query_rows
         return await this.journalsService.readAll(page, row)
     }
 
     @Get(':resource_name')
-    @ApiOkResponse()
+    @ApiOkResponse({
+        type: [JournalResponseDto],
+    })
     async findResource(
-        @Query('page') page: string,
-        @Query('rows') row: string,
+        @Query('page', ParseIntPipe) page: number,
+        @Query('rows', ParseIntPipe) row: number,
         @Param('resource_name') resourceName: string,
-    ) {
-        page = page ? page : `${this.app.config.common.api_default_query_page}`
-        row = row ? row : `${this.app.config.common.api_default_query_rows}`
+    ): Promise<JournalResponseDto[]> {
+        page = page ? page : this.app.config.common.api_default_query_page
+        row = row ? row : this.app.config.common.api_default_query_rows
         return await this.journalsService.readAll(page, row, resourceName)
     }
 
     @Get(':resource_name/:id')
-    @ApiOkResponse()
+    @ApiOkResponse({
+        type: [JournalResponseDto],
+    })
     async findResourceID(
-        @Query('page') page: string,
-        @Query('rows') row: string,
+        @Query('page', ParseIntPipe) page: number,
+        @Query('rows', ParseIntPipe) row: number,
         @Param('resource_name') resourceName: string,
-        @Param('id') resourceId: string,
-    ) {
-        page = page ? page : `${this.app.config.common.api_default_query_page}`
-        row = row ? row : `${this.app.config.common.api_default_query_rows}`
+        @Param('id', ParseIntPipe) resourceId: number,
+    ): Promise<JournalResponseDto[]> {
+        page = page ? page : this.app.config.common.api_default_query_page
+        row = row ? row : this.app.config.common.api_default_query_rows
         return await this.journalsService.readAll(page, row, resourceName, resourceId)
     }
 }

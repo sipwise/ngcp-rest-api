@@ -4,7 +4,6 @@ import {DialectMySQL, IConfig, ModelBuilder} from 'sequelize-typescript-generato
 import {hyphenate, pascalCase, snakeCase} from './string-utils'
 import {config} from '../config/main.config'
 
-
 const dbs = ['billing']
 const modelsPath = '../../src/generated/db'
 const assocPath = '.'

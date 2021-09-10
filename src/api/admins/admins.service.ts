@@ -1,30 +1,23 @@
-import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common'
-import {genSalt, hash} from 'bcrypt'
-import {applyPatch, Operation as PatchOperation} from 'fast-json-patch'
-import {AppService} from '../../app.sevice'
-import {db} from '../../entities'
-import {CrudService} from '../../interfaces/crud-service.interface'
 import {AdminBaseDto} from './dto/admin-base.dto'
 import {AdminCreateDto} from './dto/admin-create.dto'
 import {AdminResponseDto} from './dto/admin-response.dto'
 import {AdminUpdateDto} from './dto/admin-update.dto'
+import {AppService} from '../../app.service'
+import {CrudService} from '../../interfaces/crud-service.interface'
+import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
+import {Injectable} from '@nestjs/common'
+import {applyPatch, Operation as PatchOperation} from 'fast-json-patch'
+import {db} from '../../entities'
+import {genSalt, hash} from 'bcrypt'
 
 @Injectable()
 export class AdminsService implements CrudService<AdminCreateDto, AdminResponseDto> {
     constructor(
-        private readonly app: AppService
+        private readonly app: AppService,
     ) {
     }
 
-    private inflate(dto: AdminBaseDto): db.billing.Admin {
-            return Object.assign(dto)
-    }
-
-    private deflate(entry: db.billing.Admin): AdminBaseDto {
-            return Object.assign(entry)
-    }
-
-    private toResponse(db: db.billing.Admin): AdminResponseDto {
+    toResponse(db: db.billing.Admin): AdminResponseDto {
         return {
             billing_data: db.billing_data,
             call_data: db.call_data,
@@ -44,6 +37,7 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
         }
     }
 
+    @HandleDbErrors
     async create(admin: AdminCreateDto): Promise<AdminResponseDto> {
         let dbAdmin = db.billing.Admin.create(admin)
         const bcrypt_version = 'b'
@@ -54,122 +48,75 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
         const hashPwd = (await hash(admin.password, salt)).match(re)[1]
         const b64salt = hashPwd.slice(0, 22)
         const b64hash = hashPwd.slice(22)
-        dbAdmin.saltedpass = b64salt + "$" + b64hash
-        try {
-            await db.billing.Admin.insert(dbAdmin)
-            return this.toResponse(dbAdmin)
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
+        dbAdmin.saltedpass = b64salt + '$' + b64hash
+
+        await db.billing.Admin.insert(dbAdmin)
+        return this.toResponse(dbAdmin)
     }
 
-    async readAll(page?: string, rows?: string): Promise<AdminResponseDto[]> {
-        try {
-            const result = await db.billing.Admin.find(
-                {take: +rows, skip: +rows * (+page - 1)}
-            )
-            return result.map(adm => this.toResponse(adm))
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
+    @HandleDbErrors
+    async readAll(page?: number, rows?: number): Promise<AdminResponseDto[]> {
+        const result = await db.billing.Admin.find(
+            {take: rows, skip: rows * (page - 1)},
+        )
+        return result.map(adm => this.toResponse(adm))
     }
 
+    @HandleDbErrors
     async read(id: number): Promise<AdminResponseDto> {
-        let entry: db.billing.Admin
-        try {
-            entry = await db.billing.Admin.findOne(id)
-        } catch(err) {
-            throw new BadRequestException(err)
-        }
-
-        if (!entry)
-            throw new NotFoundException()
-
-        try {
-            return this.toResponse(entry)
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
+        let entry = await db.billing.Admin.findOneOrFail(id)
+        return this.toResponse(entry)
     }
 
+    @HandleDbErrors
     async readOneByLogin(login: string): Promise<AdminResponseDto> {
-        try {
-            return this.toResponse(
-                await db.billing.Admin.findOne(
-                    {where: {login: login}}
-                )
-            )
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
+        return this.toResponse(
+            await db.billing.Admin.findOneOrFail(
+                {where: {login: login}},
+            ),
+        )
     }
 
+    @HandleDbErrors
     async update(id: number, admin: AdminUpdateDto): Promise<AdminResponseDto> {
-        let entry: db.billing.Admin
-        try {
-            entry = await db.billing.Admin.findOne(id)
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
-
-        if (!entry)
-            throw new NotFoundException()
-
-        try {
-            entry = db.billing.Admin.merge(entry, admin)
-            await db.billing.Admin.update(entry.id, entry)
-            return this.toResponse(entry)
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
+        let entry = await db.billing.Admin.findOneOrFail(id)
+        entry = db.billing.Admin.merge(entry, admin)
+        await db.billing.Admin.update(entry.id, entry)
+        return this.toResponse(entry)
     }
 
+    @HandleDbErrors
     async adjust(id: number, patch: PatchOperation[]): Promise<AdminResponseDto> {
-        let entry: db.billing.Admin
         let admin: AdminBaseDto
+        let entry = await db.billing.Admin.findOneOrFail(id)
 
-        try {
-            entry = await db.billing.Admin.findOne(id)
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
+        admin = this.deflate(entry)
+        admin = applyPatch(admin, patch).newDocument
 
-        if (!entry)
-            throw new NotFoundException()
-
-        try {
-            admin = this.deflate(entry)
-            admin = applyPatch(admin, patch).newDocument
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
-
-        try {
-            entry = db.billing.Admin.merge(entry, this.inflate(admin))
-            await db.billing.Admin.update(entry.id, entry)
-            return this.toResponse(entry)
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
+        entry = db.billing.Admin.merge(entry, this.inflate(admin))
+        await db.billing.Admin.update(entry.id, entry)
+        return this.toResponse(entry)
     }
 
+    @HandleDbErrors
     async delete(id: number) {
-        try {
-            let entry = await db.billing.Admin.findOne(id)
-            await db.billing.Admin.remove(entry)
-            return 1
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
+        let entry = await db.billing.Admin.findOneOrFail(id)
+        await db.billing.Admin.remove(entry)
+        return 1
     }
 
+    @HandleDbErrors
     async searchOne(pattern: {}): Promise<AdminResponseDto> {
-        try {
-            return this.toResponse(
-                await db.billing.Admin.findOne(pattern)
-            )
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
+        return this.toResponse(
+            await db.billing.Admin.findOneOrFail(pattern),
+        )
+    }
+
+    private inflate(dto: AdminBaseDto): db.billing.Admin {
+        return db.billing.Admin.create(dto)
+    }
+
+    private deflate(entry: db.billing.Admin): AdminBaseDto {
+        return Object.assign(entry)
     }
 }

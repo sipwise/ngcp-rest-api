@@ -1,8 +1,19 @@
-import {ValidationError} from 'sequelize'
+import {InternalServerErrorException, NotFoundException} from '@nestjs/common'
+import {EntityNotFoundError, TypeORMError} from 'typeorm'
 
-export function handleSequelizeError(err: Error) {
-    if (err instanceof ValidationError) {
-        return err.errors.map(e => e.message)
+enum DbError {
+    EntityNotFound = ''
+}
+
+export function handleTypeORMError(err: Error) {
+    if (err instanceof TypeORMError) {
+        switch (err.constructor) {
+            case EntityNotFoundError:
+                return new NotFoundException()
+
+        }
+        return new InternalServerErrorException(err.message)
+        //return new InternalServerErrorException(err.errors.map(e => e.message))
     }
     return err
 }

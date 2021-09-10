@@ -12,7 +12,7 @@ import {JournalsService} from './journals.service'
     ],
     exports: [
         JournalsService,
-    ]
+    ],
 })
 export class JournalsModule {
 }

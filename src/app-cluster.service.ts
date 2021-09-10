@@ -2,14 +2,14 @@ import {Injectable} from '@nestjs/common'
 import * as cluster from 'cluster'
 import * as fs from 'fs'
 import * as sdNotify from 'sd-notify'
-import {AppService} from './app.sevice'
 import {LoggerService} from './logger/logger.service'
+import {AppService} from './app.service'
 
 const workersAmount = AppService.config.common.workers
 
 const pidDir = process.env.NODE_ENV == 'development'
-                                        ? '/tmp/ngcp-rest-api'
-                                        : '/run/ngcp-rest-api'
+    ? '/tmp/ngcp-rest-api'
+    : '/run/ngcp-rest-api'
 const pidFile = 'ngcp-rest-api.pid'
 var started = 0
 var workersOnline = 0
@@ -52,7 +52,7 @@ export class AppClusterService {
                 workersOnline += 1
                 if (!started && workersOnline == workersAmount) {
                     if (!fs.existsSync(pidDir)) {
-                        fs.mkdir(pidDir, (err) => {
+                        fs.mkdir(pidDir, {recursive: true}, (err) => {
                             logger.log(err)
                         })
                     }

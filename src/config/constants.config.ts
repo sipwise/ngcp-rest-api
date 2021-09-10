@@ -1,4 +1,4 @@
-import { AppService } from 'app.sevice'
+import {AppService} from '../app.service'
 
 export const DATABASES = {
     accounting: {
@@ -17,10 +17,11 @@ export const jwtConstants = {
     secret: AppService.config.common.jwt_key,
 }
 
+// TODO: Rename to singular RBAC_ROLE
 export const RBAC_ROLES = {
     system: 'system',
     admin: 'admin',
     reseller: 'reseller',
     ccare: 'ccare',
-    ccareadmin: 'ccareadmin'
+    ccareadmin: 'ccareadmin',
 }

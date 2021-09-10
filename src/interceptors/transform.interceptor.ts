@@ -1,9 +1,9 @@
-import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestjs/common'
 import * as halson from 'halson'
+import {AppService} from '../app.service'
+import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestjs/common'
 import {Observable} from 'rxjs'
-import {map} from 'rxjs/operators'
-import {AppService} from '../app.sevice'
 import {extractResourceName} from '../helpers/uri.helper'
+import {map} from 'rxjs/operators'
 
 /**
  * Defines the names of query parameters for pagination
@@ -46,9 +46,9 @@ export class TransformInterceptor implements NestInterceptor {
      */
     async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
         const ctx = context.switchToHttp()
-        return next.handle().pipe(map(async data => {
+        return next.handle().pipe(map(data => {
             const req = ctx.getRequest()
-            data = await data // TODO: Take a closer look. No idea why data is a promise in the first place
+            // data = await data // TODO: Take a closer look. No idea why data is a promise in the first place
             const accept = (req.headers.accept || '').split(',')
             if (accept.length == 1 && accept[0] === 'application/json') {
                 return data
@@ -93,6 +93,5 @@ export class TransformInterceptor implements NestInterceptor {
 
         return resource
     }
-
 
 }

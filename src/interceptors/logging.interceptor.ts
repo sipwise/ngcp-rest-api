@@ -2,8 +2,8 @@ import {CallHandler, ExecutionContext, Logger, NestInterceptor} from '@nestjs/co
 import {classToPlain} from 'class-transformer'
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
-import {AppService} from '../app.sevice'
 import {extractResourceName} from '../helpers/uri.helper'
+import {AppService} from '../app.service'
 
 /**
  * LoggingInterceptor intercepts requests and writes relevant information to log.
@@ -21,7 +21,7 @@ export class LoggingInterceptor implements NestInterceptor {
      */
     intercept(context: ExecutionContext, next: CallHandler<any>): Observable<any> | Promise<Observable<any>> {
         return next.handle().pipe(
-            map(async data => {
+            map(data => {
                 // TODO: only log to console when executed in Debug mode
                 let httpCtx = context.switchToHttp()
                 const req = httpCtx.getRequest()
@@ -36,7 +36,7 @@ export class LoggingInterceptor implements NestInterceptor {
 
                 // Get resourceID from data values if method is POST else from request params 'id'
                 let resourceID
-                data = await data
+                // data = await data
 
                 // Get redacted version of response data
                 let redacted: any = this.getRedactedPlain(data)

@@ -1,11 +1,10 @@
 import {ForbiddenException, Injectable} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
-import {compare} from 'bcrypt'
-import {AppService} from '../app.sevice'
-import {RBAC_ROLES} from '../config/constants.config'
-import {db} from '../entities'
+import {AppService} from '../app.service'
 import {AuthResponseDto} from './dto/auth-response.dto'
-
+import {RBAC_ROLES} from '../config/constants.config'
+import {compare} from 'bcrypt'
+import {db} from '../entities'
 
 /**
  * `AuthService` provides functionality to authenticate Admins and to sign JWTs for authenticated users
@@ -43,7 +42,7 @@ export class AuthService {
             showPasswords: db.show_passwords,
             ssl_client_certificate: db.ssl_client_certificate,
             ssl_client_m_serial: db.ssl_client_m_serial,
-            username: db.login
+            username: db.login,
         }
         if (db.is_system) {
             response.role = RBAC_ROLES.system
@@ -113,7 +112,7 @@ export class AuthService {
     async signJwt(user: any) {
         const payload = {username: user.username, id: user.id}
         return {
-            access_token: this.jwtService.sign(payload, {algorithm: 'HS256', noTimestamp: true,}),
+            access_token: this.jwtService.sign(payload, {algorithm: 'HS256', noTimestamp: true}),
         }
     }
 }

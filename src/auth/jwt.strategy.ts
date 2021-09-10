@@ -26,33 +26,34 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
      * @returns token User information contained in the JWT
      */
     async validate(payload: any) {
+        // TODO: fetch Admin from DB to set correct permissons for user object
         return {id: payload.id, username: payload.username}
+        // TODO: return AuthResponseDto generated from payload
     }
 }
 
 var re = /(\S+)\s+(\S+)/
-var AUTH_HEADER = "authorization"
-var AUTH_SCHEME = "bearer"
-
+var AUTH_HEADER = 'authorization'
+var AUTH_SCHEME = 'bearer'
 
 function parseAuthHeader(hdrValue) {
     if (typeof hdrValue !== 'string') {
-        return null;
+        return null
     }
-    var matches = hdrValue.match(re);
-    return matches && {scheme: matches[1], value: matches[2]};
+    var matches = hdrValue.match(re)
+    return matches && {scheme: matches[1], value: matches[2]}
 }
 
 function fromAuthHeaderAsBearerToken() {
     return function (request) {
-        var token = null;
+        var token = null
         if (request.headers[AUTH_HEADER]) {
-            var auth_params = parseAuthHeader(request.headers[AUTH_HEADER]);
+            var auth_params = parseAuthHeader(request.headers[AUTH_HEADER])
             if (auth_params && AUTH_SCHEME.toLowerCase() === auth_params.scheme.toLowerCase()) {
-                token = auth_params.value;
+                token = auth_params.value
 
             }
         }
-        return token;
-    };
+        return token
+    }
 }

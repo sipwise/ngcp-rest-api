@@ -1,68 +1,95 @@
-import {BadRequestException, Body, Delete, Get, Param, Patch, Post, Put, Query} from '@nestjs/common'
+import {BadRequestException, Body, DefaultValuePipe, Get, Param, ParseIntPipe, Query, Req} from '@nestjs/common'
 import {Operation as PatchOperation, validate} from 'fast-json-patch'
-import {JournalsService} from "../api/journals/journals.service"
-import {AppService} from '../app.sevice'
+import {JournalsService} from '../api/journals/journals.service'
 import {CrudService} from '../interfaces/crud-service.interface'
+import {AppService} from '../app.service'
+import {Request} from 'express'
+import {Auth} from '../decorators/auth.decorator'
+import {ServiceRequest} from '../interfaces/service-request.interface'
 
-// @Auth()
+// TODO: should default permissions be RBAC_ROLES.admin, RBAC_ROLES.system?
+@Auth()
 export class CrudController<CreateDTO, ResponseDTO> {
 
     constructor(
         private readonly resourceName: string,
-        private readonly repo: CrudService<any, any>,
+        private readonly repo: CrudService<CreateDTO, ResponseDTO>,
         private readonly journals?: JournalsService) {
     }
 
-    @Post()
-    async create(@Body() entity: CreateDTO) {
-        return await this.repo.create(entity)
+    async create(@Body() entity: CreateDTO, @Req() req: Request) {
+        const sr: ServiceRequest = {
+            headers: [req.rawHeaders], params: [req.params], user: req.user,
+        }
+        return await this.repo.create(entity, sr)
     }
 
-    @Get()
     async readAll(
-        @Query('page') page: string,
-        @Query('rows') row: string
+        @Query(
+            'page',
+            new DefaultValuePipe(AppService.config.common.api_default_query_page),
+            ParseIntPipe,
+        ) page: number,
+        @Query(
+            'rows',
+            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
+            ParseIntPipe,
+        ) rows: number,
     ) {
-        page = page ? page : `${AppService.config.common.api_default_query_page}`
-        row = row ? row : `${AppService.config.common.api_default_query_rows}`
-        return await this.repo.readAll(page, row)
+        // TODO: should readAll return total count of available items?
+        return await this.repo.readAll(page, rows)
     }
 
-    @Get(':id')
     async read(
-        @Param('id') id: string,
+        @Param('id', ParseIntPipe) id: number,
     ) {
-        return await this.repo.read(+id)
+        return await this.repo.read(id)
     }
 
-    @Put(':id')
-    async update(@Param('id') id: string, @Body() dto: CreateDTO) {
-        return await this.repo.update(+id, dto)
+    async update(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: CreateDTO,
+        @Req() req: Request,
+    ) {
+        const sr: ServiceRequest = {
+            headers: [req.rawHeaders], params: [req.params], user: req.user,
+        }
+        return await this.repo.update(id, dto, sr)
     }
 
-    @Patch(':id')
-    async adjust(@Param('id') id: string, @Body() patch: PatchOperation[]) {
+    async adjust(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() patch: PatchOperation[],
+        @Req() req: Request,
+    ) {
+        const sr: ServiceRequest = {
+            headers: [req.rawHeaders], params: [req.params], user: req.user,
+        }
         const err = validate(patch)
         if (err) {
-            let message = err.message.replace(/[\n\s]+/g,' ').replace(/\"/g, "'")
+            let message = err.message.replace(/[\n\s]+/g, ' ').replace(/\"/g, '\'')
             throw new BadRequestException(message)
         }
-        return await this.repo.adjust(+id, patch)
+        return await this.repo.adjust(id, patch, sr)
     }
 
-    @Delete(':id')
-    async delete(@Param('id') id: string) {
+    async delete(@Param('id', ParseIntPipe) id: number) {
         return await this.repo.delete(+id)
     }
 
     @Get(':id/journal')
     async journal(
-        @Param('id') id: string,
-        @Query('page') page: string,
-        @Query('rows') row: string,
+        @Param('id', ParseIntPipe) id: number,
+        @Query(
+            'page',
+            new DefaultValuePipe(AppService.config.common.api_default_query_page),
+            ParseIntPipe,
+        ) page: number,
+        @Query(
+            'rows',
+            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
+            ParseIntPipe) row: number,
     ) {
-        page = page ? page : `${AppService.config.common.api_default_query_page}`
-        row = row ? row : `${AppService.config.common.api_default_query_rows}`
         return this.journals.readAll(page, row, this.resourceName, id)
     }
 }

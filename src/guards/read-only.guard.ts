@@ -1,4 +1,4 @@
-import {CanActivate, ExecutionContext, Injectable} from "@nestjs/common";
+import {CanActivate, ExecutionContext, Injectable} from '@nestjs/common'
 
 @Injectable()
 export class ReadOnlyGuard implements CanActivate {
@@ -8,6 +8,6 @@ export class ReadOnlyGuard implements CanActivate {
         if (!request.user.readOnly) {
             return true
         }
-        return request.method.toLowerCase() === "get"
+        return request.method.toLowerCase() === 'get'
     }
 }

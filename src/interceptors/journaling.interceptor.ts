@@ -1,11 +1,11 @@
 import {CallHandler, ExecutionContext, NestInterceptor} from '@nestjs/common'
-import {AppService} from 'app.sevice'
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
 import {TextEncoder} from 'util'
 import {JournalCreateDto} from '../api/journals/dto/journal-create.dto'
 import {JournalsService} from '../api/journals/journals.service'
 import {extractResourceName} from '../helpers/uri.helper'
+import {AppService} from '../app.service'
 
 /**
  * Lookup-table for HTTP operations
@@ -29,7 +29,7 @@ export class JournalingInterceptor implements NestInterceptor {
 
     /**
      * Creates a new `JournalingInterceptor`
-     * @param journalService Injected JournalService to access database
+     * @param journalsService Injected JournalService to access database
      */
     constructor(private readonly journalsService: JournalsService) {
     }
@@ -52,7 +52,7 @@ export class JournalingInterceptor implements NestInterceptor {
      */
     intercept(context: ExecutionContext, next: CallHandler<any>): Observable<any> | Promise<Observable<any>> {
         return next.handle().pipe(
-            map(async data => {
+            map(data => {
                 // TODO: only log to console when executed in Debug mode
                 let httpCtx = context.switchToHttp()
                 const req = httpCtx.getRequest()
@@ -92,9 +92,8 @@ export class JournalingInterceptor implements NestInterceptor {
                     username: req['user'] !== undefined ? req.user.username : '',
                 }
 
-
                 // write Journal entry to database
-                await this.journalsService.create(entry)
+                this.journalsService.create(entry)
                 return data
             }),
         )

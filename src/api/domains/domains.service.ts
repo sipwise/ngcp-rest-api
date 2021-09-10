@@ -1,30 +1,22 @@
-import {BadRequestException, Injectable, InternalServerErrorException, NotFoundException} from '@nestjs/common'
-import {applyPatch, Operation as PatchOperation} from 'fast-json-patch'
-import {AppService} from '../../app.sevice'
-import {db} from '../../entities'
-import {handleSequelizeError} from '../../helpers/errors.helper'
+import {AppService} from '../../app.service'
+import {Injectable} from '@nestjs/common'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {DomainBaseDto} from './dto/domain-base.dto'
 import {DomainCreateDto} from './dto/domain-create.dto'
 import {DomainResponseDto} from './dto/domain-response.dto'
 import {DomainUpdateDto} from './dto/domain-update.dto'
+import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
+import {applyPatch, Operation as PatchOperation} from 'fast-json-patch'
+import {db} from '../../entities'
 
 @Injectable()
 export class DomainsService implements CrudService<DomainCreateDto, DomainResponseDto> {
     constructor(
-        private readonly app: AppService
+        private readonly app: AppService,
     ) {
     }
 
-    private inflate(dto: DomainBaseDto): db.billing.Domain {
-        return Object.assign(dto)
-}
-
-    private deflate(entry: db.billing.Domain): DomainBaseDto {
-            return Object.assign(entry)
-    }
-
-    private toResponse(db: db.billing.Domain): DomainResponseDto {
+    toResponse(db: db.billing.Domain): DomainResponseDto {
         return {
             domain: db.domain,
             id: db.id,
@@ -32,100 +24,62 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
         }
     }
 
+    @HandleDbErrors
     async create(domain: DomainCreateDto): Promise<DomainResponseDto> {
         const dbDomain = db.billing.Domain.create(domain)
-        try {
-            await db.billing.Domain.insert(dbDomain)
-            return this.toResponse(dbDomain)
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
+
+        await db.billing.Domain.insert(dbDomain)
+        return this.toResponse(dbDomain)
     }
 
-    async readAll(page: string, rows: string): Promise<DomainResponseDto[]> {
-        try {
-            const result = await db.billing.Domain.find(
-                {take: +rows, skip: +rows * (+page - 1)}
-            )
-            return result.map(d => this.toResponse(d))
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
+    @HandleDbErrors
+    async readAll(page: number, rows: number): Promise<DomainResponseDto[]> {
+        const result = await db.billing.Domain.find(
+            {take: rows, skip: rows * (page - 1)},
+        )
+        return result.map(d => this.toResponse(d))
     }
 
+    @HandleDbErrors
     async read(id: number): Promise<DomainResponseDto> {
-        let entry: db.billing.Domain
-        try {
-            entry = await db.billing.Domain.findOne(id)
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
-
-        if (!entry)
-        throw new NotFoundException()
-
-        try {
-            return this.toResponse(entry)
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
+        return this.toResponse(await db.billing.Domain.findOneOrFail(id))
     }
 
+    @HandleDbErrors
     async update(id: number, domain: DomainUpdateDto): Promise<DomainResponseDto> {
-        let entry: db.billing.Domain
-        try {
-            entry = await db.billing.Domain.findOne(id)
-        } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
-        }
+        let entry = await db.billing.Domain.findOneOrFail(id)
 
-        if (!entry)
-        throw new NotFoundException()
-
-        try {
-            entry = db.billing.Domain.merge(entry, domain)
-            db.billing.Domain.update(entry.id, entry)
-            return this.toResponse(entry)
-        } catch (err) {
-            throw new BadRequestException(err)
-        }
+        entry = db.billing.Domain.merge(entry, domain)
+        db.billing.Domain.update(entry.id, entry)
+        return this.toResponse(entry)
     }
 
+    @HandleDbErrors
     async adjust(id: number, patch: PatchOperation[]): Promise<DomainResponseDto> {
-        let entry: db.billing.Domain
         let domain: DomainBaseDto
+        let entry = await db.billing.Domain.findOneOrFail(id)
 
-        try {
-            entry = await db.billing.Domain.findOne(id)
-        } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
-        }
+        domain = this.deflate(entry)
+        domain = applyPatch(domain, patch).newDocument
 
-        if (!entry)
-        throw new NotFoundException()
-
-        try {
-            domain = this.deflate(entry)
-            domain = applyPatch(domain, patch).newDocument
-        } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
-        }
-
-        try {
-            entry = db.billing.Domain.merge(entry, this.inflate(domain))
-            db.billing.Domain.update(entry.id, entry)
-            return this.toResponse(entry)
-        } catch (err) {
-            throw new BadRequestException(handleSequelizeError(err))
-        }
+        entry = db.billing.Domain.merge(entry, this.inflate(domain))
+        db.billing.Domain.update(entry.id, entry)
+        return this.toResponse(entry)
     }
 
+    @HandleDbErrors
     async delete(id: number): Promise<number> {
-        try {
-            db.billing.Domain.delete(id)
-            return 1
-        } catch (err) {
-            throw new InternalServerErrorException(handleSequelizeError(err))
-        }
+        await db.billing.Domain.findOneOrFail(id)
+
+        await db.billing.Domain.delete(id)
+        return 1
+    }
+
+    private inflate(dto: DomainBaseDto): db.billing.Domain {
+        return db.billing.Domain.create(dto)
+    }
+
+    private deflate(entry: db.billing.Domain): DomainBaseDto {
+        return Object.assign(entry)
     }
 }
