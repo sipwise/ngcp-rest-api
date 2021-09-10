@@ -10,6 +10,7 @@ import {ContractsModule} from './api/contracts/contracts.module'
 import {DatabaseModule} from './database/database.module'
 import {InterceptorModule} from './interceptors/interceptor.module'
 import {ContextMiddleware} from './middleware/context.middleware'
+import {ResellersModule} from './api/resellers/resellers.module'
 import {TimestampMiddleware} from './middleware/timestamp.middleware'
 import {TxIDMiddleware} from './middleware/txid.middleware'
 
@@ -35,6 +36,7 @@ import {TxIDMiddleware} from './middleware/txid.middleware'
         JournalsModule,
         ContractsModule,
         InterceptorModule,
+        ResellersModule,
     ],
     exports: [
         AppService,
