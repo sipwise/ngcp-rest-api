@@ -6,6 +6,7 @@ import {JournalsModule} from './api/journals/journals.module'
 import {AppController} from './app.controller'
 import {AppService} from './app.service'
 import {AuthModule} from './auth/auth.module'
+import {ContractsModule} from './api/contracts/contracts.module'
 import {DatabaseModule} from './database/database.module'
 import {InterceptorModule} from './interceptors/interceptor.module'
 import {ContextMiddleware} from './middleware/context.middleware'
@@ -32,6 +33,7 @@ import {TxIDMiddleware} from './middleware/txid.middleware'
         DomainsModule,
         AuthModule,
         JournalsModule,
+        ContractsModule,
         InterceptorModule,
     ],
     exports: [
