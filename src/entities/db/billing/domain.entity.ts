@@ -9,6 +9,6 @@ export class Domain extends BaseEntity {
     @PrimaryGeneratedColumn()
     id?: number
 
-    @Column({ length: 127 })
+    @Column({length: 127})
     domain!: string
 }

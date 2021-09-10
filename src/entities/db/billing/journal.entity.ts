@@ -14,22 +14,29 @@ export class Journal extends BaseEntity {
     })
     operation!: string
 
-    @Column({ length: 64 })
+    @Column({
+        type: 'varchar',
+        length: 64,
+    })
     resource_name!: string
 
-    @Column()
+    @Column({
+        type: 'int',
+        width: 11,
+    })
     resource_id!: number
 
     @Column({
         type: 'decimal',
         precision: 13,
-        scale: 3 ,
+        scale: 3,
     })
     timestamp!: number
 
     @Column({
         nullable: true,
-        length: 127
+        type: 'varchar',
+        length: 127,
     })
     username?: string
 
@@ -41,7 +48,8 @@ export class Journal extends BaseEntity {
 
     @Column({
         nullable: true,
-        type: 'blob'
+        type: 'blob',
+        default: null,
     })
     content?: Uint8Array
 }

@@ -1,4 +1,9 @@
 export {Admin} from './admin.entity'
+export {Contact} from './contact.entity'
+export {Contract} from './contract.entity'
+export {Customer} from './customer.entity'
 export {Domain} from './domain.entity'
+export {EmailTemplate} from './email-template.entity'
 export {Journal} from './journal.entity'
-
+export {Product} from './product.entity'
+export {Reseller} from './reseller.entity'

@@ -14,54 +14,108 @@ export class Admin extends BaseEntity {
     })
     reseller_id?: number
 
-    @Column({ length: 31 })
+    @Column({
+        type: 'varchar',
+        length: 31,
+    })
     login!: string
 
-    @Column({ nullable: true })
+    @Column({
+        type: 'varchar',
+        nullable: true,
+        length: 32,
+    })
     md5pass?: string
 
-    @Column({ nullable: true })
+    @Column({
+        type: 'varchar',
+        length: 54,
+        nullable: true,
+    })
     saltedpass?: string
 
-    @Column({ default: 0 })
+    @Column({
+        type: 'boolean',
+        default: false,
+    })
     is_master?: boolean
 
-    @Column({ default: 0 })
+    @Column({
+        type: 'boolean',
+        default: 0,
+    })
     is_superuser?: boolean
 
-    @Column({ default: 0 })
+    @Column({
+        type: 'boolean',
+        default: 0,
+    })
     is_ccare?: boolean
 
-    @Column({ default: 1 })
+    @Column({
+        type: 'boolean',
+        default: 1,
+    })
     is_active?: boolean
 
-    @Column({ default: 0 })
+    @Column({
+        type: 'boolean',
+        default: 0,
+    })
     read_only?: boolean
 
-    @Column({ default: 1 })
+    @Column({
+        type: 'boolean',
+        default: 1,
+    })
     show_passwords?: boolean
 
-    @Column({ default: 0 })
+    @Column({
+        type: 'boolean',
+        default: 0,
+    })
     call_data?: boolean
 
-    @Column({ default: 1 })
+    @Column({
+        type: 'boolean',
+        default: 1,
+    })
     billing_data?: boolean
 
-    @Column({ default: 0 })
+    @Column({
+        type: 'boolean',
+        default: 0,
+    })
     lawful_intercept?: boolean
 
-    @Column({ nullable: true })
+    @Column({
+        type: 'bigint',
+        nullable: true,
+    })
     ssl_client_m_serial?: number
 
-    @Column({ nullable: true })
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
     ssl_client_certificate?: string
 
-    @Column({ nullable: true })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: true,
+    })
     email?: string
 
-    @Column({ default: 1 })
+    @Column({
+        type: 'boolean',
+        default: 1,
+    })
     can_reset_password?: boolean
 
-    @Column()
+    @Column({
+        type: 'boolean',
+        default: 0,
+    })
     is_system!: boolean
 }
