@@ -6,10 +6,7 @@ import {DomainsService} from './domains.service'
 @Module({
     imports: [JournalsModule],
     controllers: [DomainsController],
-    exports: [DomainsService],
-    providers: [
-        DomainsService,
-    ],
+    providers: [DomainsService],
 })
 export class DomainsModule {
 }

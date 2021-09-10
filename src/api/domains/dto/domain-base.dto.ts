@@ -1,4 +1,5 @@
+// TODO: check why all parameters can be optional
 export class DomainBaseDto {
-    domain: string
+    domain?: string
     reseller_id?: number
 }
