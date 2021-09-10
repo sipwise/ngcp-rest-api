@@ -1,4 +1,4 @@
-import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {ApiProperty} from '@nestjs/swagger'
 import {IsEmail, IsNotEmpty} from 'class-validator'
 import {AdminBaseDto} from './admin-base.dto'
 
