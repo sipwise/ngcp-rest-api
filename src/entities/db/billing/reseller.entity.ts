@@ -6,6 +6,7 @@
 import {Contact} from './contact.entity'
 import {Contract} from './contract.entity'
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
+import {ResellerStatus} from '../../../api/resellers/dto/reseller-base.dto'
 // import {VoipNumber} from './voip-number.entity'
 // import {NcosLevel} from './ncos-level.entity'
 // import {Order} from './order.entity'
@@ -36,11 +37,11 @@ export class Reseller extends BaseEntity {
     name!: string
 
     @Column({
-        type: 'set',
-        enum: Status,
-        default: Status.Active,
+        type: 'enum',
+        enum: ResellerStatus,
+        default: ResellerStatus.Active,
     })
-    status!: string
+    status!: ResellerStatus
 
     @ManyToOne(type => Contract, contract => contract.resellers)
     @JoinColumn({name: 'contract_id'})

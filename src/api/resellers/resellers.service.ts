@@ -3,8 +3,8 @@ import {CrudService} from '../../interfaces/crud-service.interface'
 import {ResellerCreateDto} from './dto/reseller-create.dto'
 import {ResellerResponseDto} from './dto/reseller-response.dto'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
-import {applyPatch, Operation} from 'fast-json-patch'
-import {ResellerBaseDto} from './dto/reseller-base.dto'
+import {applyPatch, Operation, Validator} from 'fast-json-patch'
+import {ResellerBaseDto, ResellerStatus} from './dto/reseller-base.dto'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {AppService} from '../../app.service'
@@ -33,12 +33,6 @@ enum ResellerError {
     ChangeUnassociatedForbidden = 'updating items not associated with a reseller is not allowed'
 }
 
-enum ResellerStatus {
-    Active = 'active',
-    Locked = 'locked',
-    Terminated = 'terminated'
-}
-
 @Injectable()
 export class ResellersService implements CrudService<ResellerCreateDto, ResellerResponseDto> {
     constructor(
@@ -49,15 +43,15 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
     // TODO: should toResponse be private as it is an internal helper func?
     toResponse(d: db.billing.Reseller): ResellerResponseDto {
         return {
-            contract_id: d.contract_id,
             id: d.id,
+            contract_id: d.contract_id,
             name: d.name,
-            status: d.status,
+            status: d.status
         }
     }
 
     async createEmailTemplates(reseller_id: number) {
-        const pattern: FindManyOptions = {
+        const pattern: FindManyOptions<db.billing.EmailTemplate> = {
             where: {
                 reseller_id: IsNull(),
             },
@@ -78,9 +72,10 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
         await this.validateCreate(dto)
         const resellerOld = await db.billing.Reseller.findOne({where: {name: dto.name}})
         if (resellerOld) {
-            await this.renameIfTerminated(resellerOld)
+            if(!await this.renameIfTerminated(resellerOld)) {
+                throw new UnprocessableEntityException(ResellerError.NameExists)
+            }
         }
-        //result = await this.resellerRepo.create<Reseller>(r)
         result = await r.save()
         await this.createEmailTemplates(result.id)
         // TODO: add rtc part
@@ -123,13 +118,13 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
         let entry = await db.billing.Reseller.findOneOrFail(id)
 
         reseller = this.deflate(entry)
-        // TODO: check if id could be changed with patch
         reseller = applyPatch(reseller, patch).newDocument
+        // TODO: add reseller validity check here, no idea how to do that here
         await this.validateUpdate(id, reseller, req)
 
         return this.toResponse(await this.save(id, reseller))
-
     }
+
 
     private inflate(dto: ResellerBaseDto): db.billing.Reseller {
         return Object.assign(dto)
@@ -159,7 +154,6 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
 
     private async validateUpdate(id: number, newReseller: ResellerBaseDto, req: ServiceRequest): Promise<boolean> {
         const oldReseller = await db.billing.Reseller.findOneOrFail(id)
-
         // TODO: check if there is a case where IDs could differ - I think this check is redundant
         if (req.user.role === RBAC_ROLES.admin) {
             if (oldReseller.id != id) {
@@ -174,12 +168,20 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
             }
         }
 
+        // check if reseller with new contract_id already exists
         if (oldReseller.contract_id != newReseller.contract_id) {
-            if (db.billing.Reseller.find({where: {contract_id: newReseller.contract_id}})) {
+            if (await db.billing.Reseller.find({where: {contract_id: newReseller.contract_id}})) {
                 throw new UnprocessableEntityException(ResellerError.ContractExists)
             }
         }
 
+        // check if reseller with new name already exists
+        if (oldReseller.name != newReseller.name) {
+            const res = await db.billing.Reseller.find({where: {name: newReseller.name}})
+            if (res.length != 0) {
+                throw new UnprocessableEntityException(ResellerError.NameExists)
+            }
+        }
         return true
     }
 
@@ -194,12 +196,18 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
 
     // TODO: handle reseller status change
 
-    private async renameIfTerminated(entry: db.billing.Reseller) {
+    /**
+     * Rename reseller if it is terminated
+     * @param entry
+     * @private
+     * @returns true if reseller was renamed else false
+     */
+    private async renameIfTerminated(entry: db.billing.Reseller): Promise<boolean> {
         if (entry.status === ResellerStatus.Terminated) {
             entry = await db.billing.Reseller.merge(entry, {name: `old_${entry.id}_${entry.name}`})
             await entry.save()
-        } else {
-            new UnprocessableEntityException(ResellerError.NameExists)
+            return true
         }
+        return false
     }
 }

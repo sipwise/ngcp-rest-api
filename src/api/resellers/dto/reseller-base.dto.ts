@@ -1,8 +1,9 @@
-import {IsNotEmpty} from 'class-validator'
+import {IsEnum, IsNotEmpty} from 'class-validator'
 
-enum ResellerStatus {
+export enum ResellerStatus {
     Active = 'active',
-
+    Locked = 'locked',
+    Terminated = 'terminated'
 }
 
 // TODO: change rtc related fields to required when functionality is implemented in service
@@ -16,5 +17,7 @@ export class ResellerBaseDto {
     name?: string
 
     rtc_networks?: any //TODO there is no definition in v1 OpenAPI documentation
-    status?: string
+
+    @IsEnum(ResellerStatus)
+    status?: ResellerStatus
 }
