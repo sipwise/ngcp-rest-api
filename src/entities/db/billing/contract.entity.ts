@@ -43,11 +43,11 @@ export class Contract extends BaseEntity {
     profile_package_id?: number
 
     @Column({
-        type: 'set',
+        type: 'enum',
         enum: ContractStatus,
         default: [ContractStatus.Active],
     })
-    status!: string
+    status!: ContractStatus
 
     @Column({
         nullable: true,

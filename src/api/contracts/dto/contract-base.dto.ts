@@ -4,14 +4,12 @@ import {ApiProperty} from '@nestjs/swagger'
 
 export class ContractBaseDto {
     @ApiProperty({description: 'Explicitly declare the way how you want to set billing profiles for this API call.'})
-    @IsNotEmpty()
     billing_profile_definition: ContractBillingProfileDefinition
 
     @ApiProperty({
         description: 'The billing profile id used to charge this contract, which will become active immediately. ' +
             'This field is required if the profile definition mode is not defined or the "id" mode is used.',
     })
-    @IsNotEmpty()
     billing_profile_id: number
 
     @ApiProperty({description: 'The contact id this contract belongs to'})

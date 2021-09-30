@@ -113,7 +113,7 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
             contact_id: c.contact_id,
             external_id: '',
             id: c.id,
-            status: ContractStatus[c.status],
+            status: c.status,
             type: ContractType.Reseller,
         }
     }
@@ -121,12 +121,11 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
     async update(id: number, dto: ContractCreateDto): Promise<ContractResponseDto> {
         // TODO: Implement PUT logic
         await db.billing.Contract.findOneOrFail(id)
-
         return Promise.resolve(undefined)
     }
 
     private inflate(dto: ContractBaseDto): db.billing.Contract {
-        return Object.assign(dto)
+        return db.billing.Contract.create(dto)
     }
 
     private deflate(entry: db.billing.Contract): ContractBaseDto {
