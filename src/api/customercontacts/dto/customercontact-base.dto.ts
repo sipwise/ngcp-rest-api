@@ -1,4 +1,6 @@
 // TODO: Check which fields are optional/required
+import {ContactGender, ContactStatus} from '../../../entities/db/billing/contact.entity'
+
 export class CustomercontactBaseDto {
     bankname?: string
     bic?: string
@@ -10,7 +12,7 @@ export class CustomercontactBaseDto {
     email?: string
     faxnumber?: string
     firstname?: string
-    gender?: string
+    gender?: ContactGender
     gpp0?: string
     gpp1?: string
     gpp2?: string
@@ -29,7 +31,7 @@ export class CustomercontactBaseDto {
     phonenumber?: string
     postcode?: string
     reseller_id?: number
-    status: string
+    status: ContactStatus
     street?: string
     terminate_timestamp?: Date
     timezone?: string

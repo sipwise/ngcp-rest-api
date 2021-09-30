@@ -2,12 +2,12 @@ import {Reseller} from './reseller.entity'
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
 import {Contract} from './contract.entity'
 
-enum Status {
+export enum ContactStatus {
     Active = 'active',
     Terminated = 'terminated'
 }
 
-enum Gender {
+export enum ContactGender {
     Male = 'male',
     Female = 'female'
 }
@@ -29,10 +29,10 @@ export class Contact extends BaseEntity {
 
     @Column({
         nullable: true,
-        type: 'set',
-        enum: Gender,
+        type: 'enum',
+        enum: ContactGender,
     })
-    gender?: string
+    gender?: ContactGender
 
     @Column({
         nullable: true,
@@ -232,11 +232,11 @@ export class Contact extends BaseEntity {
     gpp9?: string
 
     @Column({
-        type: 'set',
-        enum: Status,
-        default: Status.Active,
+        type: 'enum',
+        enum: ContactStatus,
+        default: ContactStatus.Active,
     })
-    status!: string
+    status!: ContactStatus
 
     @Column({
         nullable: true,

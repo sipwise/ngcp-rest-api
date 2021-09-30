@@ -10,6 +10,7 @@ import {FindManyOptions, FindOneOptions, IsNull, Not} from 'typeorm'
 import {AppService} from '../../app.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ContractStatus} from '../contracts/contracts.constants'
+import {ContactStatus} from '../../entities/db/billing/contact.entity'
 
 @Injectable()
 export class CustomercontactsService implements CrudService<CustomercontactCreateDto, CustomercontactResponseDto> {
@@ -69,7 +70,7 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
             },
         })
         if (contract) {
-            await db.billing.Contact.update(id, {status: ContractStatus.Terminated})
+            await db.billing.Contact.update(id, {status: ContactStatus.Terminated})
         } else {
             await contact.remove()
         }

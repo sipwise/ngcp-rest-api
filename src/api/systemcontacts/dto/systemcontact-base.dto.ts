@@ -1,11 +1,11 @@
 // TODO: Check which fields are optional/required
-// TODO: should SystemcontactBaseDto extend CustomercontactBaseDto?
 
 // TODO: maybe it would be better to have CreateDto and BaseDto extends the Create, else we have
 //  partial inheritance problems as we previously did
 
 // TODO: add input validation; according to v1 API definition all fields are required; not sure if that is correct
 import {IsEmail} from 'class-validator'
+import {ContactGender, ContactStatus} from '../../../entities/db/billing/contact.entity'
 
 export class SystemcontactBaseDto {
     bankname?: string
@@ -19,7 +19,7 @@ export class SystemcontactBaseDto {
     email?: string
     faxnumber?: string
     firstname?: string
-    gender?: string
+    gender?: ContactGender
     gpp0?: string
     gpp1?: string
     gpp2?: string
@@ -37,7 +37,7 @@ export class SystemcontactBaseDto {
     phonenumber?: string
     postcode?: string
     reseller_id?: number // TODO: remove reseller_id from BaseDto?
-    status: string
+    status: ContactStatus
     street?: string
     timezone?: string
     vatnum?: string

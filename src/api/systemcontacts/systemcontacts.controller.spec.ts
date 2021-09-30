@@ -12,6 +12,7 @@ import {SystemcontactCreateDto} from './dto/systemcontact-create.dto'
 import {SystemcontactResponseDto} from './dto/systemcontact-response.dto'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Operation} from 'fast-json-patch'
+import {ContactStatus} from '../../entities/db/billing/contact.entity'
 
 class MockSystemcontactsService implements CrudService<SystemcontactCreateDto, SystemcontactResponseDto> {
     adjust(id: number, patch: Operation[], req?: ServiceRequest): Promise<SystemcontactResponseDto> {
@@ -31,7 +32,7 @@ class MockSystemcontactsService implements CrudService<SystemcontactCreateDto, S
             throw new NotFoundException()
         }
         let res: SystemcontactResponseDto = {
-            id: 0, newsletter: false, status: '',
+            id: 0, newsletter: false, status: ContactStatus.Terminated
         }
         return Promise.resolve(res)
     }
