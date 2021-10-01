@@ -5,10 +5,15 @@ import {AdminUpdateDto} from './dto/admin-update.dto'
 import {AppService} from '../../app.service'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
-import {Injectable} from '@nestjs/common'
+import {ForbiddenException, Injectable} from '@nestjs/common'
 import {applyPatch, Operation as PatchOperation} from 'fast-json-patch'
 import {db} from '../../entities'
 import {genSalt, hash} from 'bcrypt'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {AuthResponseDto} from '../../auth/dto/auth-response.dto'
+import {Admin} from '../../entities/db/billing'
+
+const SPECIAL_USER_LOGIN = 'sipwise'
 
 @Injectable()
 export class AdminsService implements CrudService<AdminCreateDto, AdminResponseDto> {
@@ -39,16 +44,10 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
 
     @HandleDbErrors
     async create(admin: AdminCreateDto): Promise<AdminResponseDto> {
+        // TODO: only allow creation when is_master flag is set for user
         let dbAdmin = db.billing.Admin.create(admin)
-        const bcrypt_version = 'b'
-        const bcrypt_cost = 13
-        const re = new RegExp(`^\\$2${bcrypt_version}\\$${bcrypt_cost}\\$(.*)$`)
 
-        const salt = await genSalt(bcrypt_cost, bcrypt_version)
-        const hashPwd = (await hash(admin.password, salt)).match(re)[1]
-        const b64salt = hashPwd.slice(0, 22)
-        const b64hash = hashPwd.slice(22)
-        dbAdmin.saltedpass = b64salt + '$' + b64hash
+        dbAdmin.saltedpass = await this.generateSaltedpass(admin.password)
 
         await db.billing.Admin.insert(dbAdmin)
         return this.toResponse(dbAdmin)
@@ -78,29 +77,56 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
     }
 
     @HandleDbErrors
-    async update(id: number, admin: AdminUpdateDto): Promise<AdminResponseDto> {
-        let entry = await db.billing.Admin.findOneOrFail(id)
-        entry = db.billing.Admin.merge(entry, admin)
-        await db.billing.Admin.update(entry.id, entry)
-        return this.toResponse(entry)
+    async update(id: number, admin: AdminUpdateDto, req: ServiceRequest): Promise<AdminResponseDto> {
+        const userId = req.user.id
+        let oldAdmin = await db.billing.Admin.findOneOrFail(id)
+
+        let newAdmin = db.billing.Admin.merge(oldAdmin, admin)
+
+        // generate saltedpass if new password was provided
+        if (admin['password'] !== undefined) {
+            newAdmin.saltedpass = await this.generateSaltedpass(admin.password)
+        }
+        newAdmin = this.validateUpdate(oldAdmin, newAdmin, userId)
+        await db.billing.Admin.update(oldAdmin.id, newAdmin)
+        return this.toResponse(oldAdmin)
     }
 
     @HandleDbErrors
-    async adjust(id: number, patch: PatchOperation[]): Promise<AdminResponseDto> {
+    async adjust(id: number, patch: PatchOperation[], req: ServiceRequest): Promise<AdminResponseDto> {
+        const userId = req.user.id
         let admin: AdminBaseDto
-        let entry = await db.billing.Admin.findOneOrFail(id)
+        let oldAdmin = await db.billing.Admin.findOneOrFail(id)
 
-        admin = this.deflate(entry)
+        admin = this.deflate(oldAdmin)
+
+        // set password to current salted pass and compare if changed after patch
+        // if it was changed, generated new saltedpass from password
+        admin.password = oldAdmin.saltedpass
         admin = applyPatch(admin, patch).newDocument
 
-        entry = db.billing.Admin.merge(entry, this.inflate(admin))
-        await db.billing.Admin.update(entry.id, entry)
-        return this.toResponse(entry)
+        let newAdmin = this.inflate(admin)
+        if (admin.password != oldAdmin.saltedpass) {
+            newAdmin.saltedpass = await this.generateSaltedpass(admin.password)
+        }
+
+        newAdmin = this.validateUpdate(oldAdmin, newAdmin, userId)
+        await db.billing.Admin.update(oldAdmin.id, newAdmin)
+        return this.toResponse(oldAdmin)
     }
 
     @HandleDbErrors
-    async delete(id: number) {
+    async delete(id: number, req: ServiceRequest) {
+        const usr: AuthResponseDto = req.user
+        if (usr.id == id) {
+            throw new ForbiddenException('cannot delete own user')
+        }
+
         let entry = await db.billing.Admin.findOneOrFail(id)
+        if (entry.login == SPECIAL_USER_LOGIN) {
+            throw new ForbiddenException('cannot delete special user ' + SPECIAL_USER_LOGIN)
+        }
+
         await db.billing.Admin.remove(entry)
         return 1
     }
@@ -112,11 +138,49 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
         )
     }
 
+    /**
+     * Prevents change of passwords of other admin users and prevents change of
+     * protected fields when updating self (admin.id == user.id)
+     * @param oldAdmin
+     * @param newAdmin
+     * @param userId
+     * @private
+     *
+     * @returns admin object used to update the current entry
+     */
+    private validateUpdate(oldAdmin: Admin, newAdmin: Admin, userId: number): Admin {
+        if (oldAdmin.saltedpass != newAdmin.saltedpass && newAdmin.id != userId) {
+            throw new ForbiddenException('password can only be changed for self')
+        }
+
+        // remove fields that are not changable by self
+        if (newAdmin.id == userId) {
+            ['is_master', 'is_active', 'read_only'].map(s => {
+                if (newAdmin[s] !== undefined) {
+                    delete newAdmin[s]
+                }
+            })
+        }
+        return newAdmin
+    }
+
     private inflate(dto: AdminBaseDto): db.billing.Admin {
         return db.billing.Admin.create(dto)
     }
 
     private deflate(entry: db.billing.Admin): AdminBaseDto {
         return Object.assign(entry)
+    }
+
+    private async generateSaltedpass(password: string): Promise<string> {
+        const bcrypt_version = 'b'
+        const bcrypt_cost = 13
+        const re = new RegExp(`^\\$2${bcrypt_version}\\$${bcrypt_cost}\\$(.*)$`)
+
+        const salt = await genSalt(bcrypt_cost, bcrypt_version)
+        const hashPwd = (await hash(password, salt)).match(re)[1]
+        const b64salt = hashPwd.slice(0, 22)
+        const b64hash = hashPwd.slice(22)
+        return b64salt + '$' + b64hash
     }
 }

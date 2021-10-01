@@ -8,7 +8,4 @@ export class AdminCreateDto extends AdminBaseDto {
     @ApiProperty({description: 'Email address', example: 'admin@example.com'})
     readonly email?: string
 
-    @IsNotEmpty()
-    @ApiProperty({description: 'Password to be set for user'})
-    readonly password: string
 }

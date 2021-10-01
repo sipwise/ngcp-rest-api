@@ -1,7 +1,7 @@
 import {
     BadRequestException,
     Body,
-    Controller,
+    Controller, DefaultValuePipe,
     Delete,
     Get,
     Param,
@@ -10,8 +10,7 @@ import {
     Post,
     Put,
     Query,
-    Request,
-    UseInterceptors,
+    Req, UseInterceptors,
 } from '@nestjs/common'
 import {AdminCreateDto} from './dto/admin-create.dto'
 import {AdminResponseDto} from './dto/admin-response.dto'
@@ -26,6 +25,8 @@ import {Operation as PatchOperation, validate} from 'fast-json-patch'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {number} from 'yargs'
 import {PatchDto} from '../patch.dto'
+import {Request} from 'express'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {LoggingInterceptor} from '../../interceptors/logging.interceptor'
 import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 
@@ -46,7 +47,7 @@ export class AdminsController {
     @ApiCreatedResponse({
         type: AdminResponseDto,
     })
-    async create(@Body() admin: AdminCreateDto, @Request() r): Promise<AdminResponseDto> {
+    async create(@Body() admin: AdminCreateDto, @Req() req): Promise<AdminResponseDto> {
         return await this.adminsService.create(admin)
     }
 
@@ -55,9 +56,15 @@ export class AdminsController {
         type: [AdminResponseDto],
     })
     async findAll(
-        @Query('page', ParseIntPipe) page: number,
-        @Query('rows', ParseIntPipe) row: number,
-        @Request() req,
+        @Query(
+            'page',
+            new DefaultValuePipe(AppService.config.common.api_default_query_page)
+            ,ParseIntPipe) page: number,
+        @Query(
+            'rows',
+            new DefaultValuePipe(AppService.config.common.api_default_query_page),
+            ParseIntPipe) row: number,
+        @Req() req,
     ): Promise<AdminResponseDto[]> {
         page = page ? page : this.app.config.common.api_default_query_page
         row = row ? row : this.app.config.common.api_default_query_rows
@@ -79,8 +86,12 @@ export class AdminsController {
     async update(
         @Param('id', ParseIntPipe) id: number,
         @Body() admin: AdminUpdateDto,
+        @Req() req: Request
     ): Promise<AdminResponseDto> {
-        return await this.adminsService.update(+id, admin)
+        const sr: ServiceRequest = {
+            headers: [req.rawHeaders], params: [req.params], user: req.user,
+        }
+        return await this.adminsService.update(id, admin, sr)
     }
 
     @Patch(':id')
@@ -93,21 +104,28 @@ export class AdminsController {
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body() patch: PatchOperation[],
+        @Req() req: Request
     ): Promise<AdminResponseDto> {
+        const sr: ServiceRequest = {
+            headers: [req.rawHeaders], params: [req.params], user: req.user,
+        }
         const err = validate(patch)
         if (err) {
             let message = err.message.replace(/[\n\s]+/g, ' ').replace(/\"/g, '\'')
             throw new BadRequestException(message)
         }
-        return await this.adminsService.adjust(id, patch)
+        return await this.adminsService.adjust(id, patch, sr)
     }
 
     @Delete(':id')
     @ApiOkResponse({
         type: number,
     })
-    async remove(@Param('id', ParseIntPipe) id: number): Promise<number> {
-        return await this.adminsService.delete(id)
+    async remove(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<number> {
+        const sr: ServiceRequest = {
+            headers: [req.rawHeaders], params: [req.params], user: req.user,
+        }
+        return await this.adminsService.delete(id, sr)
     }
 
     @Get(':id/journal')

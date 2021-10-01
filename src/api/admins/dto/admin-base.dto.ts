@@ -57,4 +57,8 @@ export class AdminBaseDto {
     @IsNotEmpty()
     @ApiProperty({description: 'Is system user'})
     readonly is_system: boolean
+
+
+    @ApiProperty({description: 'Password to be set for user'})
+    password: string
 }
