@@ -32,7 +32,7 @@ export class AuthService {
         return true
     }
 
-    private static toResponse(db: db.billing.Admin): AuthResponseDto {
+    static toResponse(db: db.billing.Admin): AuthResponseDto {
         let response: AuthResponseDto = {
             active: db.is_active,
             id: db.id,

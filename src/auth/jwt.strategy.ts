@@ -2,6 +2,9 @@ import {Injectable} from '@nestjs/common'
 import {PassportStrategy} from '@nestjs/passport'
 import {ExtractJwt, Strategy} from 'passport-jwt'
 import {jwtConstants} from '../config/constants.config'
+import {db} from '../entities'
+import {AuthService} from './auth.service'
+import {AppService} from '../app.service'
 
 /**
  * Implementation of the JWT authentication strategy
@@ -11,7 +14,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     /**
      * Extracts the JWT from the passed bearer token
      */
-    constructor() {
+    constructor(
+        private readonly app: AppService,
+    ) {
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
@@ -27,7 +32,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
      */
     async validate(payload: any) {
         // TODO: fetch Admin from DB to set correct permissons for user object
-        return {id: payload.id, username: payload.username}
+
+        const admin = await this.app.dbRepo(db.billing.Admin).findOne(payload.id)
+        if (!AuthService.isAdminValid(admin)) {
+            return null
+        }
+        return AuthService.toResponse(admin)
         // TODO: return AuthResponseDto generated from payload
     }
 }
