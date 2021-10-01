@@ -11,6 +11,7 @@ import {
     Put,
     Query,
     Request,
+    UseInterceptors,
 } from '@nestjs/common'
 import {AdminCreateDto} from './dto/admin-create.dto'
 import {AdminResponseDto} from './dto/admin-response.dto'
@@ -25,9 +26,12 @@ import {Operation as PatchOperation, validate} from 'fast-json-patch'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {number} from 'yargs'
 import {PatchDto} from '../patch.dto'
+import {LoggingInterceptor} from '../../interceptors/logging.interceptor'
+import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 
 @ApiTags('Admins')
 @Controller('admins')
+@UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
 @Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller)
 export class AdminsController {
 

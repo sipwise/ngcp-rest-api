@@ -14,7 +14,6 @@ export function Auth(...roles: string[]) {
         Roles(...roles),
         // OmniGuard binds user auth object to request, Guards requiring user object must always come after
         UseGuards(OmniGuard, RolesGuard, ReadOnlyGuard),
-        UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService())),
         ApiBasicAuth(),
         ApiBearerAuth(),
         ApiSecurity('cert'),
