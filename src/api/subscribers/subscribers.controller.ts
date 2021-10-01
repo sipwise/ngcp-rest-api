@@ -74,8 +74,8 @@ export class SubscribersController extends CrudController<SubscriberCreateDto, S
     @ApiOkResponse({
         type: number,
     })
-    async delete(id: number): Promise<number> {
-        return super.delete(id)
+    async delete(id, req ): Promise<number> {
+        return super.delete(id, req)
     }
 
     @Get(':id/journal')

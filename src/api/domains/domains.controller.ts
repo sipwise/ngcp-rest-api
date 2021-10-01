@@ -76,8 +76,8 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
 
     @Delete(':id')
     @ApiOkResponse({})
-    async delete(id): Promise<number> {
-        return super.delete(id)
+    async delete(id, req): Promise<number> {
+        return super.delete(id, req)
     }
 
     @Get(':id/journal')

@@ -73,8 +73,11 @@ export class CrudController<CreateDTO, ResponseDTO> {
         return await this.repo.adjust(id, patch, sr)
     }
 
-    async delete(@Param('id', ParseIntPipe) id: number) {
-        return await this.repo.delete(+id)
+    async delete(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
+        const sr: ServiceRequest = {
+            headers: [req.rawHeaders], params: [req.params], user: req.user,
+        }
+        return await this.repo.delete(id, sr)
     }
 
     @Get(':id/journal')

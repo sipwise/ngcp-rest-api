@@ -70,8 +70,8 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
     @ApiOkResponse({
         type: number,
     })
-    async delete(id): Promise<number> {
-        return super.delete(id)
+    async delete(id, req): Promise<number> {
+        return super.delete(id, req)
     }
 
     @Get(':id/journal')

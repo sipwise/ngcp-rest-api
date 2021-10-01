@@ -12,7 +12,7 @@ export interface CrudService<CreateDto, ResponseDto> {
 
     adjust(id: number, patch: PatchOperation[], req?: ServiceRequest): Promise<ResponseDto>
 
-    delete(id: number): Promise<number>
+    delete(id: number, req?: ServiceRequest): Promise<number>
 
     toResponse(entity: any): ResponseDto
 }
