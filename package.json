@@ -44,6 +44,7 @@
     "fastify-swagger": "4.7.0",
     "halson": "3.0.0",
     "mysql2": "2.2.5",
+    "nest-winston": "1.6.1",
     "passport": "0.4.1",
     "passport-http": "0.3.0",
     "passport-http-header-strategy": "1.1.0",

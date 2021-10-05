@@ -1,9 +1,5 @@
-import {InternalServerErrorException, NotFoundException} from '@nestjs/common'
+import {NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {EntityNotFoundError, TypeORMError} from 'typeorm'
-
-enum DbError {
-    EntityNotFound = ''
-}
 
 export function handleTypeORMError(err: Error) {
     if (err instanceof TypeORMError) {
@@ -12,8 +8,8 @@ export function handleTypeORMError(err: Error) {
                 return new NotFoundException()
 
         }
-        return new InternalServerErrorException(err.message)
-        //return new InternalServerErrorException(err.errors.map(e => e.message))
+        // return new UnprocessableEntityException(err.message)
+        return new UnprocessableEntityException()
     }
     return err
 }

@@ -19,12 +19,12 @@ export class AppClusterService {
     static clusterize(callback: Function): void {
         const logger = new LoggerService()
         if (cluster.isMaster) {
-            logger.log(`Master server started with PID: ${process.pid} Workers: ${workersAmount}`)
+            logger.log(`Master server started with PID: ${process.pid} Workers: ${workersAmount}`, AppClusterService.name)
             for (let i = 0; i < workersAmount; i++) {
                 cluster.fork()
             }
             cluster.on('exit', (worker, code, signal) => {
-                logger.log(`Worker ${worker.process.pid} died (${code} ${signal})`)
+                logger.log(`Worker ${worker.process.pid} died (${code} ${signal})`, AppClusterService.name)
                 if (workersOnline > 0) {
                     workersOnline -= 1
                 }
@@ -33,7 +33,7 @@ export class AppClusterService {
                     if (fs.existsSync(`${pidDir}/${pidFile}`)) {
                         fs.unlinkSync(`${pidDir}/${pidFile}`)
                     }
-                    logger.log('Server is stopped')
+                    logger.log('Server is stopped', AppClusterService.name)
                     started = 0
                 }
             })
@@ -43,12 +43,12 @@ export class AppClusterService {
                     if (fs.existsSync(`${pidDir}/${pidFile}`)) {
                         fs.unlinkSync(`${pidDir}/${pidFile}`)
                     }
-                    logger.log('Server is stopped')
+                    logger.log('Server is stopped', AppClusterService.name)
                     started = 0
                 }
             })
             cluster.on('listening', (worker) => {
-                logger.log(`Worker ${worker.process.pid} is ready`)
+                logger.log(`Worker ${worker.process.pid} is ready`, AppClusterService.name)
                 workersOnline += 1
                 if (!started && workersOnline == workersAmount) {
                     if (!fs.existsSync(pidDir)) {
@@ -57,14 +57,14 @@ export class AppClusterService {
                         })
                     }
                     fs.writeFileSync(`${pidDir}/${pidFile}`, `${process.pid}\n`)
-                    logger.log('Server is started')
+                    logger.log('Server is started', AppClusterService.name)
                     sdNotify.sendStatus('READY=1')
                     sdNotify.ready()
                     started = 1
                 }
             })
         } else {
-            logger.log(`Cluster worker PID: ${process.pid}`)
+            logger.log(`Cluster worker PID: ${process.pid}`, AppClusterService.name)
             callback()
         }
     }

@@ -6,21 +6,20 @@ export function HandleDbErrors(
     propertyKey: string,
     descriptor: PropertyDescriptor,
 ) {
-    const logger = new Logger(target, true)
+    const logger = new Logger()
     const fn = descriptor.value
     descriptor.value = async function DescriptorValue(...args: any[]) {
         try {
             const result = await fn.apply(this, args)
-
             if (result && typeof result.then === 'function' && typeof result.catch === 'function') {
                 return result.catch((err: any) => {
-                    logger.error(err + '' + propertyKey)
+                    logger.error(err, err.stack, `${target.constructor.name}/${propertyKey}`)
                     throw handleTypeORMError(err)
                 })
             }
             return result
         } catch (err) {
-            logger.error(err, '', propertyKey)
+            logger.error(err, err.stack, `${target.constructor.name}/${propertyKey}`)
             throw handleTypeORMError(err)
         }
     }

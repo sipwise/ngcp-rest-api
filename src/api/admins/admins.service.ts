@@ -5,7 +5,7 @@ import {AdminUpdateDto} from './dto/admin-update.dto'
 import {AppService} from '../../app.service'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
-import {ForbiddenException, Injectable} from '@nestjs/common'
+import {ForbiddenException, Injectable, Logger} from '@nestjs/common'
 import {applyPatch, Operation as PatchOperation} from 'fast-json-patch'
 import {db} from '../../entities'
 import {genSalt, hash} from 'bcrypt'
@@ -17,9 +17,12 @@ const SPECIAL_USER_LOGIN = 'sipwise'
 
 @Injectable()
 export class AdminsService implements CrudService<AdminCreateDto, AdminResponseDto> {
+    private l: Logger
+
     constructor(
         private readonly app: AppService,
     ) {
+        this.l = new Logger('AdminService')
     }
 
     toResponse(db: db.billing.Admin): AdminResponseDto {
@@ -153,7 +156,7 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
             throw new ForbiddenException('password can only be changed for self')
         }
 
-        // remove fields that are not changable by self
+        // remove fields that are not changeable by self
         if (newAdmin.id == userId) {
             ['is_master', 'is_active', 'read_only'].map(s => {
                 if (newAdmin[s] !== undefined) {

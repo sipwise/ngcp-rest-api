@@ -2,15 +2,14 @@ import {AppClusterService} from './app-cluster.service'
 import {AppModule} from './app.module'
 import {AppService} from './app.service'
 import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger'
-import {LoggerService} from './logger/logger.service'
 import {NestFactory} from '@nestjs/core'
 import {TransformInterceptor} from './interceptors/transform.interceptor'
 import {ValidateInputPipe} from './pipes/validate.pipe'
 import {readFileSync} from 'fs'
+import {WinstonModule} from 'nest-winston'
+import {winstonLoggerConfig} from './config/logger.config'
 
 async function bootstrap() {
-    // TODO: evaluate and compare default Express vs Fastify
-    //       https://docs.nestjs.com/techniques/performance#adapter
     const config = AppService.config
     const app = await NestFactory.create(
         AppModule,
@@ -22,16 +21,11 @@ async function bootstrap() {
                 requestCert: true,
                 rejectUnauthorized: false,
             },
-            logger: ['error', 'warn', 'log'],
+            logger: WinstonModule.createLogger(winstonLoggerConfig),
         },
     )
-    app.useLogger(app.get(LoggerService))
 
     app.setGlobalPrefix(config.common.api_prefix)
-
-    // Another way of getting the config data
-    // const config: ConfigService = app.get('ConfigService');
-    // config.get<number>('database.port');
 
     const doc_config = new DocumentBuilder()
         .setTitle('NGCP API')

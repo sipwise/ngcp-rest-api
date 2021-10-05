@@ -1,4 +1,4 @@
-import {Global, MiddlewareConsumer, Module, NestModule, RequestMethod} from '@nestjs/common'
+import {Global, Logger, MiddlewareConsumer, Module, NestModule, RequestMethod} from '@nestjs/common'
 import {AdminsModule} from './api/admins/admins.module'
 import {AppController} from './app.controller'
 import {AppService} from './app.service'
@@ -44,9 +44,11 @@ import {TxIDMiddleware} from './middleware/txid.middleware'
     ],
     exports: [
         AppService,
+        Logger,
     ],
     providers: [
         AppService,
+        Logger,
     ],
 })
 
