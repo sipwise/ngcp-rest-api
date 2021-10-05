@@ -65,7 +65,7 @@ export class CallforwardsController extends CrudController<CallforwardCreateDto,
     @ApiOkResponse({
         type: CallforwardResponseDto,
     })
-    async delete(id , req): Promise<number> {
+    async delete(id, req): Promise<number> {
         return super.delete(id, req)
     }
 

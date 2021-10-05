@@ -32,7 +32,7 @@ class MockSystemcontactsService implements CrudService<SystemcontactCreateDto, S
             throw new NotFoundException()
         }
         let res: SystemcontactResponseDto = {
-            id: 0, newsletter: false, status: ContactStatus.Terminated
+            id: 0, newsletter: false, status: ContactStatus.Terminated,
         }
         return Promise.resolve(res)
     }

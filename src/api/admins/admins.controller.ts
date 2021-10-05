@@ -1,7 +1,8 @@
 import {
     BadRequestException,
     Body,
-    Controller, DefaultValuePipe,
+    Controller,
+    DefaultValuePipe,
     Delete,
     Get,
     Param,
@@ -10,7 +11,8 @@ import {
     Post,
     Put,
     Query,
-    Req, UseInterceptors,
+    Req,
+    UseInterceptors,
 } from '@nestjs/common'
 import {AdminCreateDto} from './dto/admin-create.dto'
 import {AdminResponseDto} from './dto/admin-response.dto'
@@ -59,7 +61,7 @@ export class AdminsController {
         @Query(
             'page',
             new DefaultValuePipe(AppService.config.common.api_default_query_page)
-            ,ParseIntPipe) page: number,
+            , ParseIntPipe) page: number,
         @Query(
             'rows',
             new DefaultValuePipe(AppService.config.common.api_default_query_page),
@@ -86,7 +88,7 @@ export class AdminsController {
     async update(
         @Param('id', ParseIntPipe) id: number,
         @Body() admin: AdminUpdateDto,
-        @Req() req: Request
+        @Req() req: Request,
     ): Promise<AdminResponseDto> {
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user,
@@ -104,7 +106,7 @@ export class AdminsController {
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body() patch: PatchOperation[],
-        @Req() req: Request
+        @Req() req: Request,
     ): Promise<AdminResponseDto> {
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user,

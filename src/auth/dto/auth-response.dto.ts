@@ -1,4 +1,4 @@
-export class AuthResponseDto{
+export class AuthResponseDto {
     active: boolean
     id: number
     readOnly: boolean

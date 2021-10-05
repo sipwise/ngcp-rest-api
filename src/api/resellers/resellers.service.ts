@@ -3,7 +3,7 @@ import {CrudService} from '../../interfaces/crud-service.interface'
 import {ResellerCreateDto} from './dto/reseller-create.dto'
 import {ResellerResponseDto} from './dto/reseller-response.dto'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
-import {applyPatch, Operation, Validator} from 'fast-json-patch'
+import {applyPatch, Operation} from 'fast-json-patch'
 import {ResellerBaseDto, ResellerStatus} from './dto/reseller-base.dto'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {RBAC_ROLES} from '../../config/constants.config'
@@ -46,7 +46,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
             id: d.id,
             contract_id: d.contract_id,
             name: d.name,
-            status: d.status
+            status: d.status,
         }
     }
 
@@ -72,7 +72,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
         await this.validateCreate(dto)
         const resellerOld = await db.billing.Reseller.findOne({where: {name: dto.name}})
         if (resellerOld) {
-            if(!await this.renameIfTerminated(resellerOld)) {
+            if (!await this.renameIfTerminated(resellerOld)) {
                 throw new UnprocessableEntityException(ResellerError.NameExists)
             }
         }
@@ -124,7 +124,6 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
 
         return this.toResponse(await this.save(id, reseller))
     }
-
 
     private inflate(dto: ResellerBaseDto): db.billing.Reseller {
         return Object.assign(dto)
