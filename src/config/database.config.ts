@@ -1,6 +1,7 @@
 import {ConnectionOptions} from 'typeorm'
 import {db} from '../entities'
 import {AppService} from '../app.service'
+import {TypeormLoggerService} from '../logger/typeorm-logger.service'
 
 const db_user = process.env.API_DB_USER || AppService.config.database.user
 const db_pass = process.env.API_DB_PASS || AppService.config.database.pass
@@ -25,5 +26,8 @@ export const databaseConfig: ConnectionOptions = {
     host: db_host,
     type: 'mariadb',
     entities: entities,
+    connectTimeout: 20000,
+    logger: new TypeormLoggerService(),
+    // logging: ['info', 'error'],
     logging: ['info', 'error', 'query'],
 }
