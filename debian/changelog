@@ -1,3 +1,44 @@
+ngcp-rest-api (10.2.0.0+0~mr10.2.0.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [74e0e67] TT#125651 Migration to TypeORM
+  * [72e51a2] TT#125651 fix domain.entity database
+  * [2089b9e] TT#125651 use exported tree of entities/*
+  * [26ca052] TT#125651 fix logging interceptor, import adjustments
+  * [22c4c43] TT#125651 change db entities load mechanism
+
+  [ Michael Berger ]
+  * [4dde8c4] TT#125650 add NODE_ENV to nest scripts
+  * [e55a4ce] TT#125650 add request and query param validation
+  * [caa5f58] TT#125650 add/enhance TypeORM entities
+  * [0d7fba2] TT#125650 fix journaling and logging
+  * [c6f778e] TT#125650 remove password field from admins base DTO
+  * [ad79f4b] TT#124250 extend domains controller
+  * [bbf2e2f] TT#137150 add basic contracts implementation
+  * [f2bd564] TT#124266 add basic reseller implementation
+  * [a4bce0a] TT#126705 add basic customercontacts implementation
+  * [6d788f1] TT#124255 add basic systemcontacts implementation
+  * [b3c3bbc] TT#126703 add stub implementation of customers
+  * [1755f8c] TT#126707 add stub implementation of callforwards
+  * [7749fd5] TT#126702 add stub implementation of customerpreferences
+  * [d92b914] TT#124252 add stub implementation of resellerbrandinglogos
+  * [16aa0f3] TT#126700 add stub implementation of subscribers
+  * [9797360] TT#126701 add stub implementation of subscriberpreferences
+  * [52a021a] TT#126706 add stub implementation of voicemails
+  * [0616d7f] TT#126704 add stub implementation of voicemailsettings
+  * [3d70728] TT#125650 add stub implementation of emailtemplates
+  * [540d490] TT#125650 sort imports
+  * [8ee9224] TT#124266 enhance reseller validation
+  * [5b8df1f] TT#126705 use enums in contract entities and DTOs
+  * [9e78b79] TT#137150 correctly use enums in contracts
+  * [55936a3] TT#125651 add basic test file for endpoints
+  * [67c47af] TT#125651 provide service request to delete methods
+  * [0538025] TT#125651 add user object to request on jwt login
+  * [611b2c9] TT#125651 decouple log/journal from Auth decorator
+  * [359a90c] TT#125651 extend admin validation
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 05 Oct 2021 13:20:13 +0200
+
 ngcp-rest-api (10.1.0.0+0~mr10.1.0.0) unstable; urgency=medium
 
   [ Michael Berger ]
