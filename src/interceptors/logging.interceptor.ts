@@ -1,5 +1,5 @@
 import {CallHandler, ExecutionContext, Logger, NestInterceptor} from '@nestjs/common'
-import {classToPlain} from 'class-transformer'
+import {plainToClass} from 'class-transformer'
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
 import {extractResourceName} from '../helpers/uri.helper'
@@ -69,6 +69,7 @@ export class LoggingInterceptor implements NestInterceptor {
      * @private
      */
     private getRedactedPlain(data: any): any {
+        this.logger.debug("generating redacted data")
         // check if data is array
         if (Array.isArray(data)) {
             let redactedArr = []
@@ -76,7 +77,7 @@ export class LoggingInterceptor implements NestInterceptor {
             // value.constructor returns the constructor of a specific object.
             // This allows the call of the correct ClassConstructor in plainToClass()
             data.forEach(function (value) {
-                let redacted = classToPlain(value.constructor, value)
+                let redacted = plainToClass(value.constructor, value)
                 redactedArr.push(redacted)
             })
             return redactedArr
@@ -84,8 +85,7 @@ export class LoggingInterceptor implements NestInterceptor {
             // get plain version object
             // value.constructor returns the constructor of a specific object.
             // This allows the call of the correct ClassConstructor in plainToClass()
-            let redacted = classToPlain(data.constructor, data)
-            return redacted
+            return plainToClass(data.constructor, data)
         }
     }
 }
