@@ -1,6 +1,6 @@
-import {Injectable} from '@nestjs/common'
+import {Injectable, Logger} from '@nestjs/common'
 import {PassportStrategy} from '@nestjs/passport'
-import {ExtractJwt, Strategy} from 'passport-jwt'
+import {Strategy} from 'passport-jwt'
 import {jwtConstants} from '../config/constants.config'
 import {db} from '../entities'
 import {AuthService} from './auth.service'
@@ -11,18 +11,21 @@ import {AppService} from '../app.service'
  */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+    private readonly logger: Logger
     /**
      * Extracts the JWT from the passed bearer token
      */
     constructor(
         private readonly app: AppService,
+        private readonly auth: AuthService
     ) {
         super({
-            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+            jwtFromRequest: fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
             secretOrKey: jwtConstants.secret,
 
         })
+        this.logger = new Logger(JwtStrategy.name)
     }
 
     /**
@@ -31,37 +34,38 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
      * @returns token User information contained in the JWT
      */
     async validate(payload: any) {
-        // TODO: fetch Admin from DB to set correct permissons for user object
-
+        this.logger.debug("got payload in validate " + JSON.stringify(payload))
         const admin = await this.app.dbRepo(db.billing.Admin).findOne(payload.id)
-        if (!AuthService.isAdminValid(admin)) {
+        if (!this.auth.isAdminValid(admin)) {
             return null
         }
-        return AuthService.toResponse(admin)
-        // TODO: return AuthResponseDto generated from payload
+        return this.auth.toResponse(admin)
     }
 }
 
-var re = /(\S+)\s+(\S+)/
-var AUTH_HEADER = 'authorization'
-var AUTH_SCHEME = 'bearer'
+const re = /(\S+)\s+(\S+)/
+const AUTH_HEADER = 'authorization'
+const AUTH_SCHEME = 'bearer'
 
 function parseAuthHeader(hdrValue) {
     if (typeof hdrValue !== 'string') {
         return null
     }
-    var matches = hdrValue.match(re)
+    const matches = hdrValue.match(re)
     return matches && {scheme: matches[1], value: matches[2]}
 }
 
 function fromAuthHeaderAsBearerToken() {
     return function (request) {
-        var token = null
+        let token = null
+        let l = new Logger(fromAuthHeaderAsBearerToken.name)
+        l.debug("get bearer token from auth header")
         if (request.headers[AUTH_HEADER]) {
-            var auth_params = parseAuthHeader(request.headers[AUTH_HEADER])
+            const auth_params = parseAuthHeader(request.headers[AUTH_HEADER])
             if (auth_params && AUTH_SCHEME.toLowerCase() === auth_params.scheme.toLowerCase()) {
                 token = auth_params.value
-
+                l.debug('successfully parsed token ' + token)
+                l.debug('if auth failed the token is invalid')
             }
         }
         return token

@@ -1,4 +1,4 @@
-import {ForbiddenException, Injectable} from '@nestjs/common'
+import {ForbiddenException, Injectable, Logger} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
 import {AppService} from '../app.service'
 import {AuthResponseDto} from './dto/auth-response.dto'
@@ -11,6 +11,7 @@ import {db} from '../entities'
  */
 @Injectable()
 export class AuthService {
+    private readonly logger = new Logger(AuthService.name)
 
     /**
      * Creates a new `AuthService`
@@ -22,17 +23,19 @@ export class AuthService {
     ) {
     }
 
-    static isAdminValid(admin: db.billing.Admin): boolean {
+    isAdminValid(admin: db.billing.Admin): boolean {
         if (!admin) {
+            this.logger.debug('got invalid admin')
             return false
         }
         if (!admin.is_active) {
+            this.logger.debug(`got inactive admin: ${admin.login}`)
             throw new ForbiddenException()
         }
         return true
     }
 
-    static toResponse(db: db.billing.Admin): AuthResponseDto {
+    toResponse(db: db.billing.Admin): AuthResponseDto {
         let response: AuthResponseDto = {
             active: db.is_active,
             id: db.id,
@@ -55,6 +58,7 @@ export class AuthService {
         } else {
             response.role = RBAC_ROLES.reseller
         }
+        this.logger.debug(`RBAC_ROLE: ${response.role}`)
         return response
     }
 
@@ -68,8 +72,9 @@ export class AuthService {
      * @returns Authenticated `Admin` on success else `null`
      */
     async validateAdmin(username: string, password: string): Promise<AuthResponseDto> {
+        this.logger.debug(`attempting to authenticate user: '${username}'`)
         const admin = await this.app.dbRepo(db.billing.Admin).findOne({where: {login: username}})
-        if (!AuthService.isAdminValid(admin)) {
+        if (!this.isAdminValid(admin)) {
             return null
         }
         const [b64salt, b64hash] = admin.saltedpass.split('$')
@@ -77,8 +82,10 @@ export class AuthService {
         const bcrypt_cost = 13
 
         if (admin && await compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`) !== false) {
-            return AuthService.toResponse(admin)
+            this.logger.debug(`successfully authenticated as '${username}'`)
+            return this.toResponse(admin)
         }
+        this.logger.debug(`authentication failed as ${username}`)
         return null
     }
 
@@ -91,15 +98,18 @@ export class AuthService {
      * @returns Authenticated `Admin` on success else `null`
      */
     async validateAdminCert(serial: string): Promise<any> {
+        this.logger.debug(`attempting to authenticate serial: ${serial}`)
         const sn = parseInt(serial, 16)
         if (!sn) {
+            this.logger.debug('could not parse serial')
             return null
         }
         const admin = await this.app.dbRepo(db.billing.Admin).findOne({where: {ssl_client_m_serial: sn}})
-        if (!AuthService.isAdminValid(admin)) {
+        if (!this.isAdminValid(admin)) {
             return null
         }
-        return AuthService.toResponse(admin)
+        this.logger.debug(`successfully authenticated with serial: ${serial}`)
+        return this.toResponse(admin)
     }
 
     /**
@@ -111,6 +121,7 @@ export class AuthService {
      */
     async signJwt(user: any) {
         const payload = {username: user.username, id: user.id}
+        this.logger.debug(`signing JWT token for ${user.username} (id: ${user.id})`)
         return {
             access_token: this.jwtService.sign(payload, {algorithm: 'HS256', noTimestamp: true}),
         }
