@@ -30,16 +30,16 @@ export class CallforwardsController extends CrudController<CallforwardCreateDto,
     @ApiOkResponse({
         type: [CallforwardResponseDto],
     })
-    async readAll(page: number, rows: number): Promise<CallforwardResponseDto[]> {
-        return super.readAll(page, rows)
+    async readAll(page, rows, req): Promise<CallforwardResponseDto[]> {
+        return super.readAll(page, rows, req)
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: CallforwardResponseDto,
     })
-    async read(id: number): Promise<CallforwardResponseDto> {
-        return super.read(id)
+    async read(id, req): Promise<CallforwardResponseDto> {
+        return super.read(id, req)
     }
 
     @Put(':id')

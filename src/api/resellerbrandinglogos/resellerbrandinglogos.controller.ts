@@ -27,16 +27,16 @@ export class ResellerbrandinglogosController extends CrudController<Resellerbran
     @ApiOkResponse({
         type: [ResellerbrandinglogoResponseDto],
     })
-    async readAll(page: number, rows: number): Promise<ResellerbrandinglogoResponseDto[]> {
-        return super.readAll(page, rows)
+    async readAll(page, rows, req): Promise<ResellerbrandinglogoResponseDto[]> {
+        return super.readAll(page, rows, req)
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: ResellerbrandinglogoResponseDto,
     })
-    async read(id: number): Promise<ResellerbrandinglogoResponseDto> {
-        return super.read(id)
+    async read(id, req): Promise<ResellerbrandinglogoResponseDto> {
+        return super.read(id, req)
     }
 
     @Get(':id/journal')

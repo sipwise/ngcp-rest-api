@@ -38,16 +38,16 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
     @ApiOkResponse({
         type: SystemcontactResponseDto,
     })
-    async readAll(page, rows): Promise<SystemcontactResponseDto[]> {
-        return super.readAll(page, rows)
+    async readAll(page, rows, req): Promise<SystemcontactResponseDto[]> {
+        return super.readAll(page, rows, req)
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: SystemcontactResponseDto,
     })
-    async read(id): Promise<SystemcontactResponseDto> {
-        return super.read(id)
+    async read(id, req): Promise<SystemcontactResponseDto> {
+        return super.read(id, req)
     }
 
     @Put(':id')

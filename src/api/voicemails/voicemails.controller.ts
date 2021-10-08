@@ -31,16 +31,16 @@ export class VoicemailsController extends CrudController<VoicemailCreateDto, Voi
     @ApiOkResponse({
         type: [VoicemailResponseDto],
     })
-    async readAll(page: number, rows: number): Promise<VoicemailResponseDto[]> {
-        return super.readAll(page, rows)
+    async readAll(page, rows, req): Promise<VoicemailResponseDto[]> {
+        return super.readAll(page, rows, req)
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: VoicemailResponseDto,
     })
-    async read(id: number): Promise<VoicemailResponseDto> {
-        return super.read(id)
+    async read(id, req): Promise<VoicemailResponseDto> {
+        return super.read(id, req)
     }
 
     @Put(':id')

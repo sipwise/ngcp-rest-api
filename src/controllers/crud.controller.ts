@@ -31,10 +31,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
     }
 
     async create(@Body() entity: CreateDTO, @Req() req: Request) {
-        const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user,
-        }
-        return await this.repo.create(entity, sr)
+        return await this.repo.create(entity, this.newServiceRequest(req))
     }
 
     async readAll(
@@ -48,15 +45,17 @@ export class CrudController<CreateDTO, ResponseDTO> {
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe,
         ) rows: number,
+        @Req() req: Request,
     ) {
         // TODO: should readAll return total count of available items?
-        return await this.repo.readAll(page, rows)
+        return await this.repo.readAll(page, rows, this.newServiceRequest(req))
     }
 
     async read(
         @Param('id', ParseIntPipe) id: number,
+        @Req() req: Request,
     ) {
-        return await this.repo.read(id)
+        return await this.repo.read(id, this.newServiceRequest(req))
     }
 
     async update(
@@ -64,10 +63,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
         @Body() dto: CreateDTO,
         @Req() req: Request,
     ) {
-        const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user,
-        }
-        return await this.repo.update(id, dto, sr)
+        return await this.repo.update(id, dto, this.newServiceRequest(req))
     }
 
     async adjust(
@@ -75,22 +71,16 @@ export class CrudController<CreateDTO, ResponseDTO> {
         @Body() patch: PatchOperation[],
         @Req() req: Request,
     ) {
-        const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user,
-        }
         const err = validate(patch)
         if (err) {
             let message = err.message.replace(/[\n\s]+/g, ' ').replace(/\"/g, '\'')
             throw new BadRequestException(message)
         }
-        return await this.repo.adjust(id, patch, sr)
+        return await this.repo.adjust(id, patch, this.newServiceRequest(req))
     }
 
     async delete(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
-        const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user,
-        }
-        return await this.repo.delete(id, sr)
+        return await this.repo.delete(id, this.newServiceRequest(req))
     }
 
     @Get(':id/journal')
@@ -107,5 +97,13 @@ export class CrudController<CreateDTO, ResponseDTO> {
             ParseIntPipe) row: number,
     ) {
         return this.journals.readAll(page, row, this.resourceName, id)
+    }
+
+    private newServiceRequest(req: Request): ServiceRequest {
+        return {
+            headers: [req.rawHeaders],
+            params: [req.params],
+            user: req.user,
+        }
     }
 }

@@ -4,9 +4,9 @@ import {ServiceRequest} from './service-request.interface'
 export interface CrudService<CreateDto, ResponseDto> {
     create(dto: CreateDto, req?: ServiceRequest): Promise<ResponseDto>
 
-    readAll(page: number, rows: number): Promise<ResponseDto[]>
+    readAll(page: number, rows: number, req?: ServiceRequest): Promise<ResponseDto[]>
 
-    read(id: number): Promise<ResponseDto>
+    read(id: number, req?: ServiceRequest): Promise<ResponseDto>
 
     update(id: number, dto: CreateDto, req?: ServiceRequest): Promise<ResponseDto>
 

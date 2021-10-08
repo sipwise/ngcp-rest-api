@@ -39,16 +39,16 @@ export class EmailtemplatesController extends CrudController<EmailtemplateCreate
     @ApiOkResponse({
         type: [EmailtemplateResponseDto],
     })
-    async readAll(page: number, rows: number): Promise<EmailtemplateResponseDto[]> {
-        return super.readAll(page, rows)
+    async readAll(page, rows, req): Promise<EmailtemplateResponseDto[]> {
+        return super.readAll(page, rows, req)
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: EmailtemplateResponseDto,
     })
-    async read(id: number): Promise<EmailtemplateResponseDto> {
-        return super.read(id)
+    async read(id, req): Promise<EmailtemplateResponseDto> {
+        return super.read(id, req)
     }
 
     @Put(':id')

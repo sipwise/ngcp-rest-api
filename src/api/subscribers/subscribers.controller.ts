@@ -39,16 +39,16 @@ export class SubscribersController extends CrudController<SubscriberCreateDto, S
     @ApiOkResponse({
         type: [SubscriberResponseDto],
     })
-    async readAll(page: number, rows: number): Promise<SubscriberResponseDto[]> {
-        return super.readAll(page, rows)
+    async readAll(page, rows, req): Promise<SubscriberResponseDto[]> {
+        return super.readAll(page, rows, req)
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: SubscriberResponseDto,
     })
-    async read(id: number): Promise<SubscriberResponseDto> {
-        return super.read(id)
+    async read(id, req): Promise<SubscriberResponseDto> {
+        return super.read(id, req)
     }
 
     @Put(':id')

@@ -38,16 +38,16 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     @ApiOkResponse({
         type: [CustomercontactResponseDto],
     })
-    async readAll(page, rows): Promise<CustomercontactResponseDto[]> {
-        return super.readAll(page, rows)
+    async readAll(page, rows, req): Promise<CustomercontactResponseDto[]> {
+        return super.readAll(page, rows, req)
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: CustomercontactResponseDto,
     })
-    async read(id): Promise<CustomercontactResponseDto> {
-        return super.read(id)
+    async read(id, req): Promise<CustomercontactResponseDto> {
+        return super.read(id, req)
     }
 
     @Patch(':id')

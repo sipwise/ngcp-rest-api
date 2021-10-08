@@ -30,16 +30,16 @@ export class CustomerpreferencesController extends CrudController<Customerprefer
     @ApiOkResponse({
         type: [CustomerpreferenceResponseDto],
     })
-    async readAll(page: number, rows: number): Promise<CustomerpreferenceResponseDto[]> {
-        return super.readAll(page, rows)
+    async readAll(page, rows, req): Promise<CustomerpreferenceResponseDto[]> {
+        return super.readAll(page, rows, req)
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: CustomerpreferenceResponseDto,
     })
-    async read(id: number): Promise<CustomerpreferenceResponseDto> {
-        return super.read(id)
+    async read(id, req): Promise<CustomerpreferenceResponseDto> {
+        return super.read(id, req)
     }
 
     @Put(':id')

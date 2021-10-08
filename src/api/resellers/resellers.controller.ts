@@ -39,16 +39,16 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     @ApiOkResponse({
         type: [ResellerResponseDto],
     })
-    async readAll(page, rows) {
-        return super.readAll(page, rows)
+    async readAll(page, rows, req) {
+        return super.readAll(page, rows, req)
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: ResellerResponseDto,
     })
-    async read(id): Promise<ResellerResponseDto> {
-        return super.read(id)
+    async read(id, req): Promise<ResellerResponseDto> {
+        return super.read(id, req)
     }
 
     @Put(':id')

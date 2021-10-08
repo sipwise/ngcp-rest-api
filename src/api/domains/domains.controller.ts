@@ -43,16 +43,16 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     @ApiOkResponse({
         type: [DomainResponseDto],
     })
-    async readAll(page, rows): Promise<DomainResponseDto[]> {
-        return super.readAll(page, rows)
+    async readAll(page, rows, req): Promise<DomainResponseDto[]> {
+        return super.readAll(page, rows, req)
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: DomainResponseDto,
     })
-    async read(id): Promise<DomainResponseDto> {
-        return super.read(id)
+    async read(id, req): Promise<DomainResponseDto> {
+        return super.read(id, req)
     }
 
     @Patch(':id')

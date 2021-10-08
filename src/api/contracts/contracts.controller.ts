@@ -38,16 +38,16 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     @ApiOkResponse({
         type: [ContractResponseDto],
     })
-    async readAll(page, rows): Promise<ContractResponseDto[]> {
-        return super.readAll(page, rows)
+    async readAll(page, rows, req): Promise<ContractResponseDto[]> {
+        return super.readAll(page, rows, req)
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: ContractResponseDto,
     })
-    async read(id): Promise<ContractResponseDto> {
-        return super.read(id)
+    async read(id, req): Promise<ContractResponseDto> {
+        return super.read(id, req)
     }
 
     @Put(':id')

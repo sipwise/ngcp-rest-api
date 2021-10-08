@@ -45,16 +45,16 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     @ApiOkResponse({
         type: [CustomerResponseDto],
     })
-    async readAll(page, rows): Promise<CustomerResponseDto[]> {
-        return super.readAll(page, rows)
+    async readAll(page, rows, req): Promise<CustomerResponseDto[]> {
+        return super.readAll(page, rows, req)
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: CustomerResponseDto,
     })
-    async read(id): Promise<CustomerResponseDto> {
-        return super.read(id)
+    async read(id, req): Promise<CustomerResponseDto> {
+        return super.read(id, req)
     }
 
     @Put(':id')
