@@ -11,11 +11,7 @@ import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 @Injectable()
 export class SystemcontactsService implements CrudService<SystemcontactCreateDto, SystemcontactResponseDto> {
-    private l: Logger
-
-    constructor() {
-        this.l = new Logger(SystemcontactsService.name)
-    }
+    private readonly log = new Logger(SystemcontactsService.name)
 
     @HandleDbErrors
     async create(entity: SystemcontactCreateDto, req: ServiceRequest): Promise<SystemcontactResponseDto> {
@@ -32,7 +28,7 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
         // $resource->{timezone}{name} = delete $resource->{timezone}; // TODO: why set the timezone as timezone.name
         // $resource->{timezone} = $resource->{timezone}{name}; // TODO: what's happening? Prev steps just for form validation?
         await db.billing.Contact.insert(contact)
-        this.l.debug('exit create method')
+        this.log.debug('exit create method')
         return this.toResponse(contact)
     }
 
@@ -58,7 +54,7 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
 
     @HandleDbErrors
     async readAll(page: number, rows: number): Promise<SystemcontactResponseDto[]> {
-        this.l.debug('Entering method readAll')
+        this.log.debug('Entering method readAll')
         const pattern: FindManyOptions = {
             where: {
                 reseller_id: IsNull(),
@@ -67,7 +63,7 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
             skip: rows * (page - 1),
         }
         const result = await db.billing.Contact.find(pattern)
-        this.l.debug('Exiting method readAll')
+        this.log.debug('Exiting method readAll')
         return result.map(r => this.toResponse(r))
     }
 

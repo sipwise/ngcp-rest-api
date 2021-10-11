@@ -17,7 +17,7 @@ const SPECIAL_USER_LOGIN = 'sipwise'
 
 @Injectable()
 export class AdminsService implements CrudService<AdminCreateDto, AdminResponseDto> {
-    private readonly logger = new Logger(AdminsService.name)
+    private readonly log = new Logger(AdminsService.name)
 
     constructor(
         private readonly app: AppService,
@@ -47,13 +47,13 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
     @HandleDbErrors
     async create(admin: AdminCreateDto): Promise<AdminResponseDto> {
         // TODO: only allow creation when is_master flag is set for user
-        this.logger.debug('Entering create method')
+        this.log.debug('Entering create method')
         let dbAdmin = db.billing.Admin.create(admin)
 
         dbAdmin.saltedpass = await this.generateSaltedpass(admin.password)
 
         await db.billing.Admin.insert(dbAdmin)
-        this.logger.debug('Exiting create method')
+        this.log.debug('Exiting create method')
         return this.toResponse(dbAdmin)
     }
 

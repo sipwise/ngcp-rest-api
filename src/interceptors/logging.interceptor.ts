@@ -9,7 +9,7 @@ import {AppService} from '../app.service'
  * LoggingInterceptor intercepts requests and writes relevant information to log.
  */
 export class LoggingInterceptor implements NestInterceptor {
-    private readonly logger = new Logger(LoggingInterceptor.name)
+    private readonly log = new Logger(LoggingInterceptor.name)
 
     /**
      * Intercept implements the logging part for all HTTP requests
@@ -57,7 +57,7 @@ export class LoggingInterceptor implements NestInterceptor {
                     'response': redacted,
                 }
                 logEntry['username'] = req['user'] !== undefined ? req.user.username : 'unknown'
-                this.logger.log(JSON.stringify(logEntry), LoggingInterceptor.name)
+                this.log.log(JSON.stringify(logEntry), LoggingInterceptor.name)
                 return data
             }),
         )
@@ -69,7 +69,7 @@ export class LoggingInterceptor implements NestInterceptor {
      * @private
      */
     private getRedactedPlain(data: any): any {
-        this.logger.debug("generating redacted data")
+        this.log.debug('generating redacted data')
         // check if data is array
         if (Array.isArray(data)) {
             let redactedArr = []

@@ -11,13 +11,14 @@ import {AppService} from '../app.service'
  */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-    private readonly logger: Logger
+    private readonly log = new Logger(JwtStrategy.name)
+
     /**
      * Extracts the JWT from the passed bearer token
      */
     constructor(
         private readonly app: AppService,
-        private readonly auth: AuthService
+        private readonly auth: AuthService,
     ) {
         super({
             jwtFromRequest: fromAuthHeaderAsBearerToken(),
@@ -25,7 +26,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             secretOrKey: jwtConstants.secret,
 
         })
-        this.logger = new Logger(JwtStrategy.name)
     }
 
     /**
@@ -34,7 +34,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
      * @returns token User information contained in the JWT
      */
     async validate(payload: any) {
-        this.logger.debug("got payload in validate " + JSON.stringify(payload))
+        this.log.debug('got payload in validate ' + JSON.stringify(payload))
         const admin = await this.app.dbRepo(db.billing.Admin).findOne(payload.id)
         if (!this.auth.isAdminValid(admin)) {
             return null
@@ -59,7 +59,7 @@ function fromAuthHeaderAsBearerToken() {
     return function (request) {
         let token = null
         let l = new Logger(fromAuthHeaderAsBearerToken.name)
-        l.debug("get bearer token from auth header")
+        l.debug('get bearer token from auth header')
         if (request.headers[AUTH_HEADER]) {
             const auth_params = parseAuthHeader(request.headers[AUTH_HEADER])
             if (auth_params && AUTH_SCHEME.toLowerCase() === auth_params.scheme.toLowerCase()) {

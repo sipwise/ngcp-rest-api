@@ -11,7 +11,7 @@ import {db} from '../entities'
  */
 @Injectable()
 export class AuthService {
-    private readonly logger = new Logger(AuthService.name)
+    private readonly log = new Logger(AuthService.name)
 
     /**
      * Creates a new `AuthService`
@@ -25,11 +25,11 @@ export class AuthService {
 
     isAdminValid(admin: db.billing.Admin): boolean {
         if (!admin) {
-            this.logger.debug('got invalid admin')
+            this.log.debug('got invalid admin')
             return false
         }
         if (!admin.is_active) {
-            this.logger.debug(`got inactive admin: ${admin.login}`)
+            this.log.debug(`got inactive admin: ${admin.login}`)
             throw new ForbiddenException()
         }
         return true
@@ -58,7 +58,7 @@ export class AuthService {
         } else {
             response.role = RBAC_ROLES.reseller
         }
-        this.logger.debug(`RBAC_ROLE: ${response.role}`)
+        this.log.debug(`RBAC_ROLE: ${response.role}`)
         return response
     }
 
@@ -72,7 +72,7 @@ export class AuthService {
      * @returns Authenticated `Admin` on success else `null`
      */
     async validateAdmin(username: string, password: string): Promise<AuthResponseDto> {
-        this.logger.debug(`attempting to authenticate user: '${username}'`)
+        this.log.debug(`attempting to authenticate user: '${username}'`)
         const admin = await this.app.dbRepo(db.billing.Admin).findOne({where: {login: username}})
         if (!this.isAdminValid(admin)) {
             return null
@@ -82,10 +82,10 @@ export class AuthService {
         const bcrypt_cost = 13
 
         if (admin && await compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`) !== false) {
-            this.logger.debug(`successfully authenticated as '${username}'`)
+            this.log.debug(`successfully authenticated as '${username}'`)
             return this.toResponse(admin)
         }
-        this.logger.debug(`authentication failed as ${username}`)
+        this.log.debug(`authentication failed as ${username}`)
         return null
     }
 
@@ -98,17 +98,17 @@ export class AuthService {
      * @returns Authenticated `Admin` on success else `null`
      */
     async validateAdminCert(serial: string): Promise<any> {
-        this.logger.debug(`attempting to authenticate serial: ${serial}`)
+        this.log.debug(`attempting to authenticate serial: ${serial}`)
         const sn = parseInt(serial, 16)
         if (!sn) {
-            this.logger.debug('could not parse serial')
+            this.log.debug('could not parse serial')
             return null
         }
         const admin = await this.app.dbRepo(db.billing.Admin).findOne({where: {ssl_client_m_serial: sn}})
         if (!this.isAdminValid(admin)) {
             return null
         }
-        this.logger.debug(`successfully authenticated with serial: ${serial}`)
+        this.log.debug(`successfully authenticated with serial: ${serial}`)
         return this.toResponse(admin)
     }
 
@@ -121,7 +121,7 @@ export class AuthService {
      */
     async signJwt(user: any) {
         const payload = {username: user.username, id: user.id}
-        this.logger.debug(`signing JWT token for ${user.username} (id: ${user.id})`)
+        this.log.debug(`signing JWT token for ${user.username} (id: ${user.id})`)
         return {
             access_token: this.jwtService.sign(payload, {algorithm: 'HS256', noTimestamp: true}),
         }
