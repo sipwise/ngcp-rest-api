@@ -55,7 +55,7 @@ export class AdminBaseDto {
     readonly can_reset_password: boolean
 
     @IsNotEmpty()
-    @ApiProperty({description: 'Is system user'})
+    @ApiProperty({description: 'System administrator is used to configure the platform and has the highest level of access'})
     readonly is_system: boolean
 
     @ApiProperty({description: 'Password to be set for user'})

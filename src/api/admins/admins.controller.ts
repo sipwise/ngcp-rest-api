@@ -64,7 +64,7 @@ export class AdminsController {
             , ParseIntPipe) page: number,
         @Query(
             'rows',
-            new DefaultValuePipe(AppService.config.common.api_default_query_page),
+            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) row: number,
         @Req() req,
     ): Promise<AdminResponseDto[]> {
