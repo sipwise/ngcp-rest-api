@@ -7,6 +7,7 @@ import {Contact} from './contact.entity'
 import {Contract} from './contract.entity'
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
 import {ResellerStatus} from '../../../api/resellers/dto/reseller-base.dto'
+import {Domain} from './domain.entity'
 // import {VoipNumber} from './voip-number.entity'
 // import {NcosLevel} from './ncos-level.entity'
 // import {Order} from './order.entity'
@@ -74,6 +75,9 @@ export class Reseller extends BaseEntity {
 
     @OneToMany(type => Contact, contact => contact.reseller)
     contacts?: Contact[]
+
+    @OneToMany(type => Domain, domain => domain.reseller)
+    domains?: Domain[]
 
     // @HasMany(() => VoipNumber, {
     //     sourceKey: 'id',

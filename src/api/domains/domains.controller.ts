@@ -1,6 +1,6 @@
-import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {Controller, Delete, Get, Patch, Post, Put} from '@nestjs/common'
+import {Controller, Delete, Get, Post} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {DomainCreateDto} from './dto/domain-create.dto'
 import {DomainResponseDto} from './dto/domain-response.dto'
@@ -9,15 +9,12 @@ import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalsService} from '../journals/journals.service'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {Request} from 'express'
-import {Operation} from 'fast-json-patch'
-import {PatchDto} from '../patch.dto'
+import {Roles} from '../../decorators/roles.decorator'
 
 const resourceName = 'domains'
 
 @Auth(
     RBAC_ROLES.admin,
-    RBAC_ROLES.ccare,
-    RBAC_ROLES.ccareadmin,
     RBAC_ROLES.reseller,
     RBAC_ROLES.system,
 )
@@ -40,6 +37,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     }
 
     @Get()
+    @Roles(RBAC_ROLES.ccare, RBAC_ROLES.ccareadmin)
     @ApiOkResponse({
         type: [DomainResponseDto],
     })
@@ -51,27 +49,9 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     @ApiOkResponse({
         type: DomainResponseDto,
     })
+    @Roles(RBAC_ROLES.ccare, RBAC_ROLES.ccareadmin)
     async read(id, req): Promise<DomainResponseDto> {
         return super.read(id, req)
-    }
-
-    @Patch(':id')
-    @ApiOkResponse({
-        type: DomainResponseDto,
-    })
-    @ApiBody({
-        type: [PatchDto],
-    })
-    async adjust(id: number, patch: Operation[], req: Request): Promise<DomainResponseDto> {
-        return super.adjust(id, patch, req)
-    }
-
-    @Put('id')
-    @ApiOkResponse({
-        type: DomainResponseDto,
-    })
-    async update(id, entity: DomainCreateDto, req: Request): Promise<DomainResponseDto> {
-        return super.update(id, entity, req)
     }
 
     @Delete(':id')

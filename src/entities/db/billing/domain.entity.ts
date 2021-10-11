@@ -1,4 +1,5 @@
-import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
+import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
+import {Reseller} from './reseller.entity'
 
 @Entity({
     name: 'domains',
@@ -11,4 +12,14 @@ export class Domain extends BaseEntity {
 
     @Column({length: 127})
     domain!: string
+
+    @Column({
+        type: 'int',
+        width: 11,
+    })
+    reseller_id: number
+
+    @ManyToOne(type => Reseller, reseller => reseller.domains)
+    @JoinColumn({name: 'reseller_id'})
+    reseller?: Reseller
 }
