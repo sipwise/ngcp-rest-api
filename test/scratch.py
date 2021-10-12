@@ -207,6 +207,37 @@ def test_contracts(ngcp: Ngcp, username: str, formatted: bool = False):
     ])
     print_response(response, formatted=formatted)
 
+
+def test_domains(ngcp: Ngcp, username: str, formatted: bool = False):
+    print(f"\nGET all domains as {username}")
+    response = ngcp.request("GET", "/domains")
+    print_response(response, formatted)
+
+    print(f"\nPOST domain as {username}")
+    response = ngcp.request("POST", "/domains", {"domain": "test_domain", "reseller_id": 1})
+    print_response(response, formatted)
+    domain_id = response.json()["id"]
+
+    print(f"\nGET created domain")
+    response = ngcp.request("GET", f"/domains/{domain_id}")
+    print_response(response, formatted)
+
+    print("\nDELETE domain")
+    response = ngcp.request("DELETE", f"/domains/{domain_id}")
+    print_response(response, formatted)
+
+    if (username == "reseller"):
+        print("\nCreating domain with different reseller_id")
+        response = requests.post("https://localhost:3443/api/domains", auth=('administrator','administrator'), json={"domain": "test_domain", "reseller_id": 1}, verify=False)
+        domain_id = response.json()["id"]
+
+        print("\nDELETE domain with different reseller_id")
+        response = ngcp.request("DELETE", f"/domains/{domain_id}")
+        print_response(response, formatted)
+
+        print("\nDELETE domain as admin")
+        requests.delete(f"https://localhost:3443/api/domains/{domain_id}", auth=('administrator', 'administrator'), verify=False)
+
 def print_response(r: requests.Response, formatted: bool = False):
     if r is None:
         return
@@ -217,15 +248,183 @@ def print_response(r: requests.Response, formatted: bool = False):
         print(r.text)
 
 
+def test_admins(ngcp: Ngcp, role: str):
+
+    cases = {
+        "system": [
+            {"system": True, "admin_master": True, "admin": True, "reseller_master": True, "reseller": True},
+        ],
+        "admin_master": [
+            {"system": False, "admin_master": True, "admin": True, "reseller_master": True, "reseller": True},
+        ],
+        "admin": [
+            {"system": False, "admin_master": False, "admin": True, "reseller_master": True, "reseller": True},
+        ],
+        "reseller_master": [
+            {"system": False, "admin_master": False, "admin": False, "reseller_master": True, "reseller": True},
+        ],
+        "reseller": [
+            {"system": False, "admin_master": False, "admin": False, "reseller_master": True, "reseller": True},
+        ]
+    }
+
+    suffix = random.randint(10000, 99999)
+    ngcp.request("POST", "/admins", {
+        "reseller_id": 1,
+        "login": f"api_reseller{suffix}",
+        "is_master": False,
+        "is_superuser": False,
+        "is_ccare": False,
+        "is_active": True,
+        "read_only": False,
+        "show_passwords": False,
+        "call_data": False,
+        "billing_data": False,
+        "lawful_intercept": False,
+        "email": f"api_reseller{suffix}@example.com",
+        "can_reset_password": True,
+        "is_system": False,
+        "password": f"api_reseller{suffix}"
+    })
+    ngcp.request("POST", "/admins", {
+        "reseller_id": 1,
+        "login": f"api_reseller_master{suffix}",
+        "is_master": True,
+        "is_superuser": False,
+        "is_ccare": False,
+        "is_active": True,
+        "read_only": False,
+        "show_passwords": False,
+        "call_data": False,
+        "billing_data": False,
+        "lawful_intercept": False,
+        "email": f"api_reseller{suffix}@example.com",
+        "can_reset_password": True,
+        "is_system": False,
+        "password": f"api_reseller_master{suffix}"
+    })
+    ngcp.request("POST", "/admins", {
+        "reseller_id": 1,
+        "login": f"api_admin{suffix}",
+        "is_master": False,
+        "is_superuser": True,
+        "is_ccare": False,
+        "is_active": True,
+        "read_only": False,
+        "show_passwords": False,
+        "call_data": False,
+        "billing_data": False,
+        "lawful_intercept": False,
+        "email": f"api_admin{suffix}@example.com",
+        "can_reset_password": True,
+        "is_system": False,
+        "password": f"api_admin{suffix}"
+    })
+    ngcp.request("POST", "/admins", {
+        "reseller_id": 1,
+        "login": f"api_admin_master{suffix}",
+        "is_master": True,
+        "is_superuser": True,
+        "is_ccare": False,
+        "is_active": True,
+        "read_only": False,
+        "show_passwords": False,
+        "call_data": False,
+        "billing_data": False,
+        "lawful_intercept": False,
+        "email": f"api_admin{suffix}@example.com",
+        "can_reset_password": True,
+        "is_system": False,
+        "password": f"api_admin_master{suffix}"
+    })
+
+
+def init_users(ngcp: Ngcp):
+    ngcp.request("POST", "/admins", {
+        "reseller_id": 3,
+        "login": "api_reseller",
+        "is_master": False,
+        "is_superuser": False,
+        "is_ccare": False,
+        "is_active": True,
+        "read_only": False,
+        "show_passwords": False,
+        "call_data": False,
+        "billing_data": False,
+        "lawful_intercept": False,
+        "email": "api_reseller@example.com",
+        "can_reset_password": True,
+        "is_system": False,
+        "password": "api_reseller"
+    })
+    ngcp.request("POST", "/admins", {
+        "reseller_id": 3,
+        "login": "api_reseller_master",
+        "is_master": True,
+        "is_superuser": False,
+        "is_ccare": False,
+        "is_active": True,
+        "read_only": False,
+        "show_passwords": False,
+        "call_data": False,
+        "billing_data": False,
+        "lawful_intercept": False,
+        "email": "api_reseller@example.com",
+        "can_reset_password": True,
+        "is_system": False,
+        "password": "api_reseller_master"
+    })
+    ngcp.request("POST", "/admins", {
+        "reseller_id": 1,
+        "login": "api_admin",
+        "is_master": False,
+        "is_superuser": True,
+        "is_ccare": False,
+        "is_active": True,
+        "read_only": False,
+        "show_passwords": False,
+        "call_data": False,
+        "billing_data": False,
+        "lawful_intercept": False,
+        "email": "api_admin@example.com",
+        "can_reset_password": True,
+        "is_system": False,
+        "password": "api_admin"
+    })
+    ngcp.request("POST", "/admins", {
+        "reseller_id": 1,
+        "login": "api_admin_master",
+        "is_master": True,
+        "is_superuser": True,
+        "is_ccare": False,
+        "is_active": True,
+        "read_only": False,
+        "show_passwords": False,
+        "call_data": False,
+        "billing_data": False,
+        "lawful_intercept": False,
+        "email": "api_admin@example.com",
+        "can_reset_password": True,
+        "is_system": False,
+        "password": "api_admin_master"
+    })
+
+
 if __name__ == '__main__':
+    ngcp = Ngcp(addr="https://localhost:3443", username="administrator", password="administrator")
+    # init_users(ngcp)
     users = [
         {"username": "administrator", "role": "system"},
-        # {"username": "api_reseller", "role": "reseller"},
-        # {"username": "api_test", "role": "admin"},
+        {"username": "api_admin", "role": "admin"},
+        {"username": "api_reseller", "role": "reseller"},
+        {"username": "api_admin_master", "role": "admin_master"},
+        {"username": "api_reseller_master", "role": "reseller_master"},
     ]
     for user in users:
         username, password = user["username"], user["username"]
         ngcp = Ngcp(addr="https://localhost:3443", username=username, password=password)
+
         # test_systemcontacts(ngcp, user["role"], formatted=False)
-        test_resellers(ngcp, user["role"], formatted=False)
+        # test_resellers(ngcp, user["role"], formatted=False)
         # test_contracts(ngcp, user["role"], formatted=False)
+        test_domains(ngcp, user["role"], formatted=True)

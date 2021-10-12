@@ -46,6 +46,7 @@ export class AuthService {
             ssl_client_certificate: db.ssl_client_certificate,
             ssl_client_m_serial: db.ssl_client_m_serial,
             username: db.login,
+            is_master: db.is_master,
         }
         if (db.is_system) {
             response.role = RBAC_ROLES.system

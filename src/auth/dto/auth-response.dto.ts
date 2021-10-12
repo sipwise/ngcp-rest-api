@@ -8,4 +8,5 @@ export class AuthResponseDto {
     ssl_client_certificate: string
     ssl_client_m_serial: number
     username: string
+    is_master: boolean
 }

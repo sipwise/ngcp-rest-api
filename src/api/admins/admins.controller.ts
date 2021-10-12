@@ -50,7 +50,7 @@ export class AdminsController {
         type: AdminResponseDto,
     })
     async create(@Body() admin: AdminCreateDto, @Req() req): Promise<AdminResponseDto> {
-        return await this.adminsService.create(admin)
+        return await this.adminsService.create(admin, req)
     }
 
     @Get()
@@ -70,15 +70,15 @@ export class AdminsController {
     ): Promise<AdminResponseDto[]> {
         page = page ? page : this.app.config.common.api_default_query_page
         row = row ? row : this.app.config.common.api_default_query_rows
-        return await this.adminsService.readAll(page, row)
+        return await this.adminsService.readAll(page, row, req)
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: AdminResponseDto,
     })
-    async findOne(@Param('id', ParseIntPipe) id: number): Promise<AdminResponseDto> {
-        return await this.adminsService.read(id)
+    async findOne(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<AdminResponseDto> {
+        return await this.adminsService.read(id, req)
     }
 
     @Put(':id')
