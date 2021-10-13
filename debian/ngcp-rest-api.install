@@ -1,6 +1,2 @@
 etc/api.conf                                            etc/ngcp-rest-api
-node_modules/bcrypt/lib/binding/napi-v3/bcrypt_lib.node usr/share/ngcp-rest-api/build
-node_modules/sd-notify/build/Release/notify.node        usr/share/ngcp-rest-api/build
-node_modules/unix-dgram/build/Release/unix_dgram.node   usr/share/ngcp-rest-api/build
-package.json                                            usr/share/ngcp-rest-api
 prod/*                                                  usr/share/ngcp-rest-api

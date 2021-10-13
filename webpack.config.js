@@ -2,6 +2,7 @@ const path = require("path")
 const webpack = require('webpack')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const { TsconfigPathsPlugin } = require('tsconfig-paths-webpack-plugin')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 module.exports =
 {
@@ -145,6 +146,26 @@ module.exports =
 
         return false
       }
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: './node_modules/bcrypt/lib/binding/napi-v3/bcrypt_lib.node',
+          to: './build/bcrypt_lib.node',
+        },
+        {
+          from: './node_modules/sd-notify/build/Release/notify.node',
+          to: './build/notify.node',
+        },
+        {
+          from: './node_modules/unix-dgram/build/Release/unix_dgram.node',
+          to: './build/unix_dgram.node',
+        },
+        {
+          from: './package.json',
+          to: './package.json',
+        },
+      ],
     })
   ],
   ignoreWarnings:
