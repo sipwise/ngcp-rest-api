@@ -23,7 +23,7 @@ import {AppService} from '../../app.service'
 import {Auth} from '../../decorators/auth.decorator'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalsService} from '../journals/journals.service'
-import {Operation as PatchOperation, validate} from 'fast-json-patch'
+import {Operation as PatchOperation, validate} from '../../helpers/patch.helper'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {number} from 'yargs'
 import {PatchDto} from '../patch.dto'
@@ -105,7 +105,7 @@ export class AdminsController {
     })
     async adjust(
         @Param('id', ParseIntPipe) id: number,
-        @Body() patch: PatchOperation[],
+        @Body() patch: PatchOperation | PatchOperation[],
         @Req() req: Request,
     ): Promise<AdminResponseDto> {
         const sr: ServiceRequest = {

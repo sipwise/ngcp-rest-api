@@ -2,7 +2,7 @@ import {Controller, Delete, Get, Patch, Post, Put} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {CustomerCreateDto} from './dto/customer-create.dto'
 import {CustomerResponseDto} from './dto/customer-response.dto'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {CustomersService} from './customers.service'
 import {JournalsService} from '../journals/journals.service'
@@ -72,7 +72,7 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id, patch: Operation[], req: Request): Promise<CustomerResponseDto> {
+    async adjust(id, patch: Operation | Operation[], req: Request): Promise<CustomerResponseDto> {
         return super.adjust(id, patch, req)
     }
 

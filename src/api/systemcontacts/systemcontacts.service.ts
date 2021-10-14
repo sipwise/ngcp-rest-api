@@ -1,6 +1,6 @@
 import {BadRequestException, Injectable, Logger, UnprocessableEntityException} from '@nestjs/common'
 import {CrudService} from '../../interfaces/crud-service.interface'
-import {applyPatch, Operation as PatchOperation} from 'fast-json-patch'
+import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 import {SystemcontactCreateDto} from './dto/systemcontact-create.dto'
 import {SystemcontactResponseDto} from './dto/systemcontact-response.dto'
@@ -78,7 +78,7 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
     }
 
     @HandleDbErrors
-    async adjust(id: number, patch: PatchOperation[]): Promise<SystemcontactResponseDto> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[]): Promise<SystemcontactResponseDto> {
         let oldContact = await db.billing.Contact.findOneOrFail(id)
 
         let contact = this.deflate(oldContact)

@@ -6,7 +6,7 @@ import {AppService} from '../../app.service'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 import {ForbiddenException, Injectable, Logger} from '@nestjs/common'
-import {applyPatch, Operation as PatchOperation} from 'fast-json-patch'
+import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {db} from '../../entities'
 import {genSalt, hash} from 'bcrypt'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -134,7 +134,7 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
     }
 
     @HandleDbErrors
-    async adjust(id: number, patch: PatchOperation[], req: ServiceRequest): Promise<AdminResponseDto> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[], req: ServiceRequest): Promise<AdminResponseDto> {
         const userId = req.user.id
         let admin: AdminBaseDto
         let oldAdmin = await db.billing.Admin.findOneOrFail(id)

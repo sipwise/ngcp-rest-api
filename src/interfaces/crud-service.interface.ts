@@ -1,4 +1,4 @@
-import {Operation as PatchOperation} from 'fast-json-patch'
+import {Operation as PatchOperation} from '../helpers/patch.helper'
 import {ServiceRequest} from './service-request.interface'
 
 export interface CrudService<CreateDto, ResponseDto> {
@@ -10,7 +10,7 @@ export interface CrudService<CreateDto, ResponseDto> {
 
     update(id: number, dto: CreateDto, req?: ServiceRequest): Promise<ResponseDto>
 
-    adjust(id: number, patch: PatchOperation[], req?: ServiceRequest): Promise<ResponseDto>
+    adjust(id: number, patch: PatchOperation | PatchOperation[], req?: ServiceRequest): Promise<ResponseDto>
 
     delete(id: number, req?: ServiceRequest): Promise<number>
 

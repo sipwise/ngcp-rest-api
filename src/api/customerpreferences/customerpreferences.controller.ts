@@ -3,7 +3,7 @@ import {ApiBody, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'
 import {CustomerpreferenceCreateDto} from './dto/customerpreference-create.dto'
 import {CustomerpreferenceResponseDto} from './dto/customerpreference-response.dto'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {Request} from 'express'
 import {PatchDto} from '../patch.dto'
@@ -57,7 +57,7 @@ export class CustomerpreferencesController extends CrudController<Customerprefer
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id: number, patch: Operation[], req: Request): Promise<CustomerpreferenceResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req: Request): Promise<CustomerpreferenceResponseDto> {
         return super.adjust(id, patch, req)
     }
 

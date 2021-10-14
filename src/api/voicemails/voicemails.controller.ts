@@ -2,7 +2,7 @@ import {Controller, Delete, Get, Patch, Put} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {VoicemailCreateDto} from './dto/voicemail-create.dto'
 import {VoicemailResponseDto} from './dto/voicemail-response.dto'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {Request} from 'express'
 import {JournalsService} from '../journals/journals.service'
@@ -58,7 +58,7 @@ export class VoicemailsController extends CrudController<VoicemailCreateDto, Voi
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id: number, patch: Operation[], req: Request): Promise<VoicemailResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req: Request): Promise<VoicemailResponseDto> {
         return super.adjust(id, patch, req)
     }
 

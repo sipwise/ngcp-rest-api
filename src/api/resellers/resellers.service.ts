@@ -3,7 +3,7 @@ import {CrudService} from '../../interfaces/crud-service.interface'
 import {ResellerCreateDto} from './dto/reseller-create.dto'
 import {ResellerResponseDto} from './dto/reseller-response.dto'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
-import {applyPatch, Operation} from 'fast-json-patch'
+import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {ResellerBaseDto, ResellerStatus} from './dto/reseller-base.dto'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {RBAC_ROLES} from '../../config/constants.config'
@@ -112,7 +112,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
     }
 
     @HandleDbErrors
-    async adjust(id: number, patch: Operation[], req: ServiceRequest): Promise<ResellerResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req: ServiceRequest): Promise<ResellerResponseDto> {
         let reseller: ResellerBaseDto
 
         let entry = await db.billing.Reseller.findOneOrFail(id)

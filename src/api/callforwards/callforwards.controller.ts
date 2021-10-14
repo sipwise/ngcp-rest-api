@@ -7,7 +7,7 @@ import {Controller, Delete, Get, Patch, Put} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalsService} from '../journals/journals.service'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {PatchDto} from '../patch.dto'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {Request} from 'express'
@@ -57,7 +57,7 @@ export class CallforwardsController extends CrudController<CallforwardCreateDto,
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id: number, patch: Operation[], req: Request): Promise<CallforwardResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req: Request): Promise<CallforwardResponseDto> {
         return super.adjust(id, patch, req)
     }
 

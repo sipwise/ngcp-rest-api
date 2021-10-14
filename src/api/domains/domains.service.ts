@@ -6,7 +6,7 @@ import {DomainCreateDto} from './dto/domain-create.dto'
 import {DomainResponseDto} from './dto/domain-response.dto'
 import {DomainUpdateDto} from './dto/domain-update.dto'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
-import {Operation as PatchOperation} from 'fast-json-patch'
+import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {db} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {RBAC_ROLES} from '../../config/constants.config'
@@ -68,7 +68,7 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
     }
 
     @HandleDbErrors
-    async adjust(id: number, patch: PatchOperation[]): Promise<DomainResponseDto> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[]): Promise<DomainResponseDto> {
         throw new NotImplementedException()
     }
 

@@ -4,7 +4,7 @@ import {CrudController} from '../../controllers/crud.controller'
 import {VoicemailsettingCreateDto} from './dto/voicemailsetting-create.dto'
 import {VoicemailsettingResponseDto} from './dto/voicemailsetting-response.dto'
 import {VoicemailsettingsService} from './voicemailsettings.service'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {Request} from 'express'
 import {ApiBody, ApiOkResponse, ApiTags} from '@nestjs/swagger'
@@ -57,7 +57,7 @@ export class VoicemailsettingsController extends CrudController<Voicemailsetting
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id: number, patch: Operation[], req: Request): Promise<VoicemailsettingResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req: Request): Promise<VoicemailsettingResponseDto> {
         return super.adjust(id, patch, req)
     }
 

@@ -7,7 +7,7 @@ import {CrudService} from '../../interfaces/crud-service.interface'
 import {Equal, FindOneOptions, IsNull, Not} from 'typeorm'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 import {Injectable, MethodNotAllowedException, UnprocessableEntityException} from '@nestjs/common'
-import {applyPatch, Operation} from 'fast-json-patch'
+import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {db} from '../../entities'
 
 enum ContractError {
@@ -22,7 +22,7 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
     }
 
     @HandleDbErrors
-    async adjust(id: number, patch: Operation[]): Promise<ContractResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[]): Promise<ContractResponseDto> {
         let entry = await db.billing.Contract.findOneOrFail(id)
         let contract: ContractBaseDto
 

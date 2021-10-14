@@ -5,7 +5,7 @@ import {RBAC_ROLES} from '../../config/constants.config'
 import {CrudController} from '../../controllers/crud.controller'
 import {EmailtemplateCreateDto} from './dto/emailtemplate-create.dto'
 import {EmailtemplateResponseDto} from './dto/emailtemplate-response.dto'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {Request} from 'express'
 import {JournalsService} from '../journals/journals.service'
@@ -66,7 +66,7 @@ export class EmailtemplatesController extends CrudController<EmailtemplateCreate
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id: number, patch: Operation[], req: Request): Promise<EmailtemplateResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req: Request): Promise<EmailtemplateResponseDto> {
         return super.adjust(id, patch, req)
     }
 

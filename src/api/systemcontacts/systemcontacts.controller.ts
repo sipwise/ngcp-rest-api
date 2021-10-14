@@ -9,7 +9,7 @@ import {SystemcontactsService} from './systemcontacts.service'
 import {Request} from 'express'
 import {Auth} from '../../decorators/auth.decorator'
 import {RBAC_ROLES} from '../../config/constants.config'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {PatchDto} from '../patch.dto'
 import {number} from 'yargs'
 
@@ -62,7 +62,7 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id, patch: Operation[], req: Request): Promise<SystemcontactResponseDto> {
+    async adjust(id, patch: Operation | Operation[], req: Request): Promise<SystemcontactResponseDto> {
         return super.adjust(id, patch, req)
     }
 

@@ -2,7 +2,7 @@ import {Controller, Delete, Get, Patch, Post, Put} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {SubscriberCreateDto} from './dto/subscriber-create.dto'
 import {SubscriberResponseDto} from './dto/subscriber-response.dto'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {Request} from 'express'
 import {JournalsService} from '../journals/journals.service'
@@ -66,7 +66,7 @@ export class SubscribersController extends CrudController<SubscriberCreateDto, S
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id: number, patch: Operation[], req: Request): Promise<SubscriberResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req: Request): Promise<SubscriberResponseDto> {
         return super.adjust(id, patch, req)
     }
 

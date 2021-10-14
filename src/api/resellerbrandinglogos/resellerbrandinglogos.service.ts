@@ -3,11 +3,11 @@ import {CrudService} from '../../interfaces/crud-service.interface'
 import {ResellerbrandinglogoCreateDto} from './dto/resellerbrandinglogo-create.dto'
 import {ResellerbrandinglogoResponseDto} from './dto/resellerbrandinglogo-response.dto'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 
 @Injectable()
 export class ResellerbrandinglogosService implements CrudService<ResellerbrandinglogoCreateDto, ResellerbrandinglogoResponseDto> {
-    async adjust(id: number, patch: Operation[], req?: ServiceRequest): Promise<ResellerbrandinglogoResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req?: ServiceRequest): Promise<ResellerbrandinglogoResponseDto> {
         return Promise.resolve(undefined)
     }
 

@@ -7,7 +7,7 @@ import {SubscriberpreferencesService} from './subscriberpreferences.service'
 import {ApiBody, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {RBAC_ROLES} from '../../config/constants.config'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {Request} from 'express'
 import {PatchDto} from '../patch.dto'
@@ -56,7 +56,7 @@ export class SubscriberpreferencesController extends CrudController<Subscriberpr
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id: number, patch: Operation[], req: Request): Promise<SubscriberpreferenceResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req: Request): Promise<SubscriberpreferenceResponseDto> {
         return super.adjust(id, patch, req)
     }
 

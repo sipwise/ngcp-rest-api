@@ -9,7 +9,7 @@ import {
     Req,
     UseInterceptors,
 } from '@nestjs/common'
-import {Operation as PatchOperation, validate} from 'fast-json-patch'
+import {Operation as PatchOperation, validate} from '../helpers/patch.helper'
 import {JournalsService} from '../api/journals/journals.service'
 import {CrudService} from '../interfaces/crud-service.interface'
 import {AppService} from '../app.service'
@@ -68,7 +68,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
 
     async adjust(
         @Param('id', ParseIntPipe) id: number,
-        @Body() patch: PatchOperation[],
+        @Body() patch: PatchOperation | PatchOperation[],
         @Req() req: Request,
     ) {
         const err = validate(patch)

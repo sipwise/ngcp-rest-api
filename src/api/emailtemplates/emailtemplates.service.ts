@@ -3,11 +3,11 @@ import {CrudService} from '../../interfaces/crud-service.interface'
 import {EmailtemplateCreateDto} from './dto/emailtemplate-create.dto'
 import {EmailtemplateResponseDto} from './dto/emailtemplate-response.dto'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 
 @Injectable()
 export class EmailtemplatesService implements CrudService<EmailtemplateCreateDto, EmailtemplateResponseDto> {
-    async adjust(id: number, patch: Operation[], req?: ServiceRequest): Promise<EmailtemplateResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req?: ServiceRequest): Promise<EmailtemplateResponseDto> {
         return Promise.resolve(undefined)
     }
 

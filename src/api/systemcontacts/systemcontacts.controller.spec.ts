@@ -11,7 +11,7 @@ import {CrudService} from '../../interfaces/crud-service.interface'
 import {SystemcontactCreateDto} from './dto/systemcontact-create.dto'
 import {SystemcontactResponseDto} from './dto/systemcontact-response.dto'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {ContactStatus} from '../../entities/db/billing/contact.entity'
 
 class MockSystemcontactsService implements CrudService<SystemcontactCreateDto, SystemcontactResponseDto> {

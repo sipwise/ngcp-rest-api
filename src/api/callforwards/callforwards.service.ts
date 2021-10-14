@@ -2,14 +2,14 @@ import {Injectable} from '@nestjs/common'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {CallforwardCreateDto} from './dto/callforward-create.dto'
 import {CallforwardResponseDto} from './dto/callforward-response.dto'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 
 @Injectable()
 export class CallforwardsService implements CrudService<CallforwardCreateDto, CallforwardResponseDto> {
     @HandleDbErrors
-    async adjust(id: number, patch: Operation[], req?: ServiceRequest): Promise<CallforwardResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req?: ServiceRequest): Promise<CallforwardResponseDto> {
         return Promise.resolve(undefined)
     }
 

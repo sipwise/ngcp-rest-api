@@ -10,7 +10,7 @@ import {Request} from 'express'
 import {Auth} from '../../decorators/auth.decorator'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {number} from 'yargs'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {PatchDto} from '../patch.dto'
 
 const resourceName = 'customercontacts'
@@ -57,7 +57,7 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id: number, patch: Operation[], req: Request): Promise<CustomercontactResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req: Request): Promise<CustomercontactResponseDto> {
         return super.adjust(id, patch, req)
     }
 

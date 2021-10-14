@@ -6,7 +6,7 @@ import {ContractCreateDto} from './dto/contract-create.dto'
 import {ContractResponseDto} from './dto/contract-response.dto'
 import {ContractsService} from './contracts.service'
 import {JournalsService} from '../journals/journals.service'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {Request} from 'express'
 import {RBAC_ROLES} from '../../config/constants.config'
@@ -65,7 +65,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id, patch: Operation[], req: Request): Promise<ContractResponseDto> {
+    async adjust(id, patch: Operation | Operation[], req: Request): Promise<ContractResponseDto> {
         return super.adjust(id, patch, req)
     }
 

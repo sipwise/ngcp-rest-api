@@ -2,7 +2,7 @@ import {BadRequestException, HttpException, Injectable, UnprocessableEntityExcep
 import {CustomercontactCreateDto} from './dto/customercontact-create.dto'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {CustomercontactResponseDto} from './dto/customercontact-response.dto'
-import {applyPatch, Operation as PatchOperation} from 'fast-json-patch'
+import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {CustomercontactBaseDto} from './dto/customercontact-base.dto'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 import {db} from '../../entities'
@@ -115,7 +115,7 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
     }
 
     @HandleDbErrors
-    async adjust(id: number, patch: PatchOperation[]): Promise<CustomercontactResponseDto> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[]): Promise<CustomercontactResponseDto> {
         let oldContact = await db.billing.Contact.findOneOrFail(id)
 
         let contact = this.deflate(oldContact)

@@ -7,7 +7,7 @@ import {ResellerResponseDto} from './dto/reseller-response.dto'
 import {Auth} from '../../decorators/auth.decorator'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {Roles} from '../../decorators/roles.decorator'
 import {Request} from 'express'
 import {RBAC_ROLES} from '../../config/constants.config'
@@ -72,7 +72,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id, patch: Operation[], req: Request): Promise<ResellerResponseDto> {
+    async adjust(id, patch: Operation | Operation[], req: Request): Promise<ResellerResponseDto> {
         return super.adjust(id, patch, req)
     }
 

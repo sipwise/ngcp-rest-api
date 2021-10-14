@@ -3,11 +3,11 @@ import {CrudService} from '../../interfaces/crud-service.interface'
 import {SubscriberCreateDto} from './dto/subscriber-create.dto'
 import {SubscriberResponseDto} from './dto/subscriber-response.dto'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 
 @Injectable()
 export class SubscribersService implements CrudService<SubscriberCreateDto, SubscriberResponseDto> {
-    async adjust(id: number, patch: Operation[], req?: ServiceRequest): Promise<SubscriberResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req?: ServiceRequest): Promise<SubscriberResponseDto> {
         return Promise.resolve(undefined)
     }
 

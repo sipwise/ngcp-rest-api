@@ -2,7 +2,7 @@ import {Injectable, MethodNotAllowedException} from '@nestjs/common'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {CustomerCreateDto} from './dto/customer-create.dto'
 import {CustomerResponseDto} from './dto/customer-response.dto'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 import {CustomerBaseDto} from './dto/customer-base.dto'
 import {AppService} from '../../app.service'
@@ -65,7 +65,7 @@ export class CustomersService implements CrudService<CustomerCreateDto, Customer
         return Promise.resolve(undefined)
     }
 
-    async adjust(id: number, patch: Operation[]): Promise<CustomerResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[]): Promise<CustomerResponseDto> {
         return Promise.resolve(undefined)
     }
 

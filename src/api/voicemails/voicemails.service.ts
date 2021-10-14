@@ -3,11 +3,11 @@ import {CrudService} from '../../interfaces/crud-service.interface'
 import {VoicemailCreateDto} from './dto/voicemail-create.dto'
 import {VoicemailResponseDto} from './dto/voicemail-response.dto'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {Operation} from 'fast-json-patch'
+import {Operation} from '../../helpers/patch.helper'
 
 @Injectable()
 export class VoicemailsService implements CrudService<VoicemailCreateDto, VoicemailResponseDto> {
-    async adjust(id: number, patch: Operation[], req?: ServiceRequest): Promise<VoicemailResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req?: ServiceRequest): Promise<VoicemailResponseDto> {
         return Promise.resolve(undefined)
     }
 
