@@ -147,6 +147,14 @@ module.exports =
         return false
       }
     }),
+    new webpack.ContextReplacementPlugin(
+      /yargs/,
+      (data) => {
+        for (let d of data.dependencies)
+          delete d.critical
+        return data;
+      },
+    ),
     new CopyWebpackPlugin({
       patterns: [
         {
