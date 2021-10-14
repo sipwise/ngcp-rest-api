@@ -2,7 +2,7 @@ import {RBAC_ROLES} from '../../config/constants.config'
 import {JournalResponseDto} from './dto/journal-response.dto'
 import {Auth} from '../../decorators/auth.decorator'
 import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
-import {Controller, Get, Param, ParseIntPipe, Query} from '@nestjs/common'
+import {Controller, DefaultValuePipe, Get, Param, ParseIntPipe, Query} from '@nestjs/common'
 import {AppService} from '../../app.service'
 import {JournalsService} from './journals.service'
 
@@ -21,11 +21,17 @@ export class JournalsController {
         type: [JournalResponseDto],
     })
     async findAll(
-        @Query('page', ParseIntPipe) page: number,
-        @Query('rows', ParseIntPipe) row: number,
+        @Query(
+            'page',
+            new DefaultValuePipe(AppService.config.common.api_default_query_page),
+            ParseIntPipe,
+        ) page: number,
+        @Query(
+            'rows',
+            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
+            ParseIntPipe,
+        ) row: number,
     ): Promise<JournalResponseDto[]> {
-        page = page ? page : this.app.config.common.api_default_query_page
-        row = row ? row : this.app.config.common.api_default_query_rows
         return await this.journalsService.readAll(page, row)
     }
 
@@ -34,12 +40,18 @@ export class JournalsController {
         type: [JournalResponseDto],
     })
     async findResource(
-        @Query('page', ParseIntPipe) page: number,
-        @Query('rows', ParseIntPipe) row: number,
+        @Query(
+            'page',
+            new DefaultValuePipe(AppService.config.common.api_default_query_page),
+            ParseIntPipe,
+        ) page: number,
+        @Query(
+            'rows',
+            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
+            ParseIntPipe,
+        ) row: number,
         @Param('resource_name') resourceName: string,
     ): Promise<JournalResponseDto[]> {
-        page = page ? page : this.app.config.common.api_default_query_page
-        row = row ? row : this.app.config.common.api_default_query_rows
         return await this.journalsService.readAll(page, row, resourceName)
     }
 
@@ -48,13 +60,19 @@ export class JournalsController {
         type: [JournalResponseDto],
     })
     async findResourceID(
-        @Query('page', ParseIntPipe) page: number,
-        @Query('rows', ParseIntPipe) row: number,
+        @Query(
+            'page',
+            new DefaultValuePipe(AppService.config.common.api_default_query_page),
+            ParseIntPipe,
+        ) page: number,
+        @Query(
+            'rows',
+            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
+            ParseIntPipe,
+        ) row: number,
         @Param('resource_name') resourceName: string,
         @Param('id', ParseIntPipe) resourceId: number,
     ): Promise<JournalResponseDto[]> {
-        page = page ? page : this.app.config.common.api_default_query_page
-        row = row ? row : this.app.config.common.api_default_query_rows
         return await this.journalsService.readAll(page, row, resourceName, resourceId)
     }
 }

@@ -1,4 +1,4 @@
-import {Injectable} from '@nestjs/common'
+import {Injectable, Logger} from '@nestjs/common'
 import {FindOptions} from 'sequelize'
 import {db} from '../../entities'
 import {JournalCreateDto} from './dto/journal-create.dto'
@@ -7,6 +7,8 @@ import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 
 @Injectable()
 export class JournalsService {
+    private readonly log = new Logger(JournalsService.name)
+
     /**
      * Creates a new `JournalsService`
      * @param journalRepo Injected journal repository to access database
@@ -52,6 +54,12 @@ export class JournalsService {
                 ]
             }
         }
+        this.log.debug({
+            message: 'finding journal entries',
+            resourceName: resourceName,
+            resourceId: resourceId,
+            filter: filter,
+        })
         let result = await db.billing.Journal.find({
             take: +rows,
             skip: +rows * (+page - 1),
