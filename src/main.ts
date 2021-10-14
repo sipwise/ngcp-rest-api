@@ -8,6 +8,7 @@ import {ValidateInputPipe} from './pipes/validate.pipe'
 import {readFileSync} from 'fs'
 import {WinstonModule} from 'nest-winston'
 import {winstonLoggerConfig} from './config/logger.config'
+import * as bodyParser from 'body-parser'
 
 async function bootstrap() {
     const config = AppService.config
@@ -50,6 +51,10 @@ async function bootstrap() {
             perPageName: config.common.api_default_query_rows_name,
         }),
     )
+
+    app.use(bodyParser.json({
+        type: ['application/json-patch+json', 'application/json'],
+    }))
 
     await app.listen(config.common.api_port, '0.0.0.0')
 }

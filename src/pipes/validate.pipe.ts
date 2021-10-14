@@ -2,6 +2,7 @@ import {
     ArgumentMetadata,
     HttpStatus,
     Injectable,
+    Logger,
     Optional,
     PipeTransform,
     Type,
@@ -14,6 +15,7 @@ import {classToPlain, plainToClass} from 'class-transformer'
 import {validate} from 'class-validator'
 import {ValidationError} from 'sequelize/types'
 import {isUndefined} from 'util'
+import {formatValidationErrors} from '../helpers/errors.helper'
 
 export interface ValidationPipeOptions extends ValidatorOptions {
     transform?: boolean;
@@ -38,6 +40,7 @@ export class ValidateInputPipe implements PipeTransform<any> {
     protected expectedType: Type<any>
     protected exceptionFactory: (errors: ValidationError[]) => any
     protected validateCustomDecorators: boolean
+    private readonly log = new Logger(ValidateInputPipe.name)
 
     constructor(@Optional() options?: ValidationPipeOptions) {
         options = options || {}
@@ -86,7 +89,8 @@ export class ValidateInputPipe implements PipeTransform<any> {
 
         const errors = await validate(entity, this.validatorOptions)
         if (errors.length > 0) {
-            throw new UnprocessableEntityException(this.formatErrors(errors))
+            this.log.debug({message: 'input validation failed', errors: errors})
+            throw new UnprocessableEntityException(formatValidationErrors(errors))
         }
         if (isPrimitive) {
             // if the value is a primitive value and the validation process has been successfully completed
@@ -140,25 +144,4 @@ export class ValidateInputPipe implements PipeTransform<any> {
         return value
     }
 
-    private formatErrors(errors: any[]) {
-        const data = new Map()
-        errors.forEach(err => {
-            for (let key in err.constraints) {
-                let hash = {}
-                hash[key] = err.constraints[key]
-                if (data.has(err.property)) {
-                    data.get(err.property).push(hash)
-                } else {
-                    data.set(err.property, [hash])
-                }
-            }
-        })
-        const message = []
-        for (const [k, v] of data) {
-            let hash = {}
-            hash[k] = v
-            message.push(hash)
-        }
-        return message
-    }
 }
