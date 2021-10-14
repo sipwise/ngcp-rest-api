@@ -5,6 +5,7 @@ import {
     DefaultValuePipe,
     Delete,
     Get,
+    Logger,
     Param,
     ParseIntPipe,
     Patch,
@@ -37,6 +38,7 @@ import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 @UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
 @Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller)
 export class AdminsController {
+    private readonly log = new Logger(AdminsController.name)
 
     constructor(
         private readonly app: AppService,
@@ -50,6 +52,7 @@ export class AdminsController {
         type: AdminResponseDto,
     })
     async create(@Body() admin: AdminCreateDto, @Req() req): Promise<AdminResponseDto> {
+        this.log.debug({message: 'create admin', func: this.create.name, url: req.url, method: req.method})
         return await this.adminsService.create(admin, req)
     }
 
@@ -60,14 +63,15 @@ export class AdminsController {
     async findAll(
         @Query(
             'page',
-            new DefaultValuePipe(AppService.config.common.api_default_query_page)
-            , ParseIntPipe) page: number,
+            new DefaultValuePipe(AppService.config.common.api_default_query_page),
+            ParseIntPipe) page: number,
         @Query(
             'rows',
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) row: number,
         @Req() req,
     ): Promise<AdminResponseDto[]> {
+        this.log.debug({message: 'fetch all admins', func: this.findAll.name, url: req.url, method: req.method})
         page = page ? page : this.app.config.common.api_default_query_page
         row = row ? row : this.app.config.common.api_default_query_rows
         return await this.adminsService.readAll(page, row, req)
@@ -78,6 +82,7 @@ export class AdminsController {
         type: AdminResponseDto,
     })
     async findOne(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<AdminResponseDto> {
+        this.log.debug({message: 'fetch admin by id', func: this.findOne.name, url: req.url, method: req.method})
         return await this.adminsService.read(id, req)
     }
 
@@ -90,6 +95,7 @@ export class AdminsController {
         @Body() admin: AdminUpdateDto,
         @Req() req: Request,
     ): Promise<AdminResponseDto> {
+        this.log.debug({message: 'update admin by id', func: this.update.name, url: req.url, method: req.method})
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user,
         }
@@ -108,6 +114,7 @@ export class AdminsController {
         @Body() patch: PatchOperation | PatchOperation[],
         @Req() req: Request,
     ): Promise<AdminResponseDto> {
+        this.log.debug({message: 'patch admin by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user,
         }
@@ -124,6 +131,7 @@ export class AdminsController {
         type: number,
     })
     async remove(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<number> {
+        this.log.debug({message: 'delete admin by id', func: this.remove.name, url: req.url, method: req.method})
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user,
         }
@@ -136,11 +144,15 @@ export class AdminsController {
     })
     async journal(
         @Param('id', ParseIntPipe) id: number,
-        @Query('page', ParseIntPipe) page: number,
-        @Query('rows', ParseIntPipe) row: number,
+        @Query(
+            'page',
+            new DefaultValuePipe(AppService.config.common.api_default_query_page),
+            ParseIntPipe) page: number,
+        @Query(
+            'rows',
+            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
+            ParseIntPipe) row: number,
     ): Promise<JournalResponseDto[]> {
-        page = page ? page : this.app.config.common.api_default_query_page
-        row = row ? row : this.app.config.common.api_default_query_rows
         return this.journalsService.readAll(page, row, 'admins', id)
     }
 }

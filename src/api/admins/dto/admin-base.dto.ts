@@ -10,27 +10,36 @@ export class AdminBaseDto {
     readonly login: string
 
     @IsNotEmpty()
-    @ApiProperty({description: 'Is master'})
+    @ApiProperty({
+        description: 'Can manage other admin users within the same or level permission levels ' +
+            '(only applies to "System", "Admin" and "Reseller") roles',
+    })
     readonly is_master: boolean
 
     @IsNotEmpty()
-    @ApiProperty({description: 'Is superuser'})
+    @ApiProperty({
+        description: 'Sets the role to "Admin"; can manage everything except of "lawful intercept" ' +
+            'admin users',
+    })
     readonly is_superuser: boolean
 
     @IsNotEmpty()
-    @ApiProperty({description: 'Is ccare'})
+    @ApiProperty({
+        description: 'Sets the role to "CCare"; can manage "Customers" and "Subscribers" only and is ' +
+            'restricted to the reseller_id when is_superuser is not set',
+    })
     readonly is_ccare: boolean
 
     @IsNotEmpty()
-    @ApiProperty({description: 'Is active'})
+    @ApiProperty({description: 'Can use the UI/API'})
     readonly is_active: boolean
 
     @IsNotEmpty()
-    @ApiProperty({description: 'Is read-only'})
+    @ApiProperty({description: 'Set access to read-only, cannot change any data'})
     readonly read_only: boolean
 
     @IsNotEmpty()
-    @ApiProperty({description: 'Show passwords'})
+    @ApiProperty({description: 'Can see passwords'})
     readonly show_passwords: boolean
 
     @IsNotEmpty()
@@ -38,7 +47,7 @@ export class AdminBaseDto {
     readonly call_data: boolean
 
     @IsNotEmpty()
-    @ApiProperty({description: 'Billing data'})
+    @ApiProperty({description: 'Can manage "topup vouchers"'})
     readonly billing_data: boolean
 
     @IsNotEmpty()
@@ -55,7 +64,10 @@ export class AdminBaseDto {
     readonly can_reset_password: boolean
 
     @IsNotEmpty()
-    @ApiProperty({description: 'System administrator is used to configure the platform and has the highest level of access'})
+    @ApiProperty({
+        description: 'Sets the role to "System"; can configure the platform and has the highest ' +
+            'level of access',
+    })
     readonly is_system: boolean
 
     @ApiProperty({description: 'Password to be set for user'})

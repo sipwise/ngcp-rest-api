@@ -13,3 +13,25 @@ export function handleTypeORMError(err: Error) {
     }
     return err
 }
+
+export function formatValidationErrors(errors: any[]) {
+    const data = new Map()
+    errors.forEach(err => {
+        for (let key in err.constraints) {
+            let hash = {}
+            hash[key] = err.constraints[key]
+            if (data.has(err.property)) {
+                data.get(err.property).push(hash)
+            } else {
+                data.set(err.property, [hash])
+            }
+        }
+    })
+    const message = []
+    for (const [k, v] of data) {
+        let hash = {}
+        hash[k] = v
+        message.push(hash)
+    }
+    return message
+}
