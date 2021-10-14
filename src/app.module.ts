@@ -15,6 +15,7 @@ import {ResellersModule} from './api/resellers/resellers.module'
 import {SystemcontactsModule} from './api/systemcontacts/systemcontacts.module'
 import {TimestampMiddleware} from './middleware/timestamp.middleware'
 import {TxIDMiddleware} from './middleware/txid.middleware'
+import {LoggerMiddleware} from './middleware/logger.middleware'
 
 @Global()
 @Module({
@@ -54,7 +55,7 @@ import {TxIDMiddleware} from './middleware/txid.middleware'
 
 export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer): any {
-        consumer.apply(ContextMiddleware, TxIDMiddleware, TimestampMiddleware).forRoutes({
+        consumer.apply(ContextMiddleware, TxIDMiddleware, TimestampMiddleware, LoggerMiddleware).forRoutes({
             path: '*',
             method: RequestMethod.ALL,
         })
