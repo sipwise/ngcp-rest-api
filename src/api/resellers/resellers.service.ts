@@ -1,4 +1,4 @@
-import {ForbiddenException, Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {ForbiddenException, Injectable, Logger, UnprocessableEntityException} from '@nestjs/common'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {ResellerCreateDto} from './dto/reseller-create.dto'
 import {ResellerResponseDto} from './dto/reseller-response.dto'
@@ -35,6 +35,8 @@ enum ResellerError {
 
 @Injectable()
 export class ResellersService implements CrudService<ResellerCreateDto, ResellerResponseDto> {
+    private readonly log = new Logger(ResellersService.name)
+
     constructor(
         private readonly app: AppService,
     ) {
@@ -51,6 +53,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
     }
 
     async createEmailTemplates(reseller_id: number) {
+        this.log.debug({message: 'create email templates', func: this.update.name, id: reseller_id})
         const pattern: FindManyOptions<db.billing.EmailTemplate> = {
             where: {
                 reseller_id: IsNull(),
@@ -66,6 +69,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
 
     @HandleDbErrors
     async create(dto: ResellerCreateDto, req: ServiceRequest): Promise<ResellerResponseDto> {
+        this.log.debug({message: 'create reseller', func: this.create.name, user: req.user.username})
         const r = db.billing.Reseller.create(dto)
         // TODO: Transaction guard
         let result: db.billing.Reseller
@@ -85,6 +89,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
     // TODO: could we use DELETE to terminate resellers?
     @HandleDbErrors
     async delete(id: number): Promise<number> {
+        this.log.debug({message: 'delete reseller by id', func: this.delete.name, id: id})
         let reseller = await db.billing.Reseller.findOneOrFail(id)
         reseller = await db.billing.Reseller.merge(reseller, {status: ResellerStatus.Terminated})
         await db.billing.Reseller.update(reseller.id, reseller)
@@ -92,12 +97,14 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
     }
 
     @HandleDbErrors
-    async read(id: number): Promise<ResellerResponseDto> {
+    async read(id: number, req: ServiceRequest): Promise<ResellerResponseDto> {
+        this.log.debug({message: 'read reseller by id', func: this.read.name, user: req.user.username, id: id})
         return this.toResponse(await db.billing.Reseller.findOneOrFail(id))
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number): Promise<ResellerResponseDto[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<ResellerResponseDto[]> {
+        this.log.debug({message: 'read all resellers', func: this.readAll.name, user: req.user.username})
         const result = await db.billing.Reseller.find(
             {take: +rows, skip: +rows * (+page - 1)},
         )
@@ -106,6 +113,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
 
     @HandleDbErrors
     async update(id: number, reseller: ResellerCreateDto, req: ServiceRequest): Promise<ResellerResponseDto> {
+        this.log.debug({message: 'update reseller by id', func: this.update.name, user: req.user.username, id: id})
         await db.billing.Reseller.findOneOrFail(id)
         await this.validateUpdate(id, reseller, req)
         return this.toResponse(await this.save(id, reseller))
@@ -113,6 +121,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
 
     @HandleDbErrors
     async adjust(id: number, patch: Operation | Operation[], req: ServiceRequest): Promise<ResellerResponseDto> {
+        this.log.debug({message: 'adjust reseller by id', func: this.adjust.name, user: req.user.username, id: id})
         let reseller: ResellerBaseDto
 
         let entry = await db.billing.Reseller.findOneOrFail(id)
