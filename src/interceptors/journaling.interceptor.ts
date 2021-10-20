@@ -6,6 +6,7 @@ import {JournalCreateDto} from '../api/journals/dto/journal-create.dto'
 import {JournalsService} from '../api/journals/journals.service'
 import {extractResourceName} from '../helpers/uri.helper'
 import {AppService} from '../app.service'
+import Context from '../helpers/context.helper'
 
 /**
  * Lookup-table for HTTP operations
@@ -81,6 +82,8 @@ export class JournalingInterceptor implements NestInterceptor {
 
                 const enc = new TextEncoder()
 
+                const ctx = Context.get(req)
+
                 // create new Journal entry
                 const entry: JournalCreateDto = {
                     content: enc.encode(JSON.stringify(req.body)),
@@ -88,7 +91,7 @@ export class JournalingInterceptor implements NestInterceptor {
                     operation: op,
                     resource_id: resourceID,
                     resource_name: resourceName,
-                    timestamp: req.ctx.startTimestamp / 1000,
+                    timestamp: ctx.startTime / 1000,
                     username: req['user'] !== undefined ? req.user.username : '',
                 }
 

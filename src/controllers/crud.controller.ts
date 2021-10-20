@@ -16,12 +16,11 @@ import {AppService} from '../app.service'
 import {Request} from 'express'
 import {Auth} from '../decorators/auth.decorator'
 import {ServiceRequest} from '../interfaces/service-request.interface'
-import {LoggingInterceptor} from '../interceptors/logging.interceptor'
 import {JournalingInterceptor} from '../interceptors/journaling.interceptor'
 
 // TODO: should default permissions be RBAC_ROLES.admin, RBAC_ROLES.system?
 @Auth()
-@UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
+@UseInterceptors(new JournalingInterceptor(new JournalsService()))
 export class CrudController<CreateDTO, ResponseDTO> {
 
     constructor(

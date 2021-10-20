@@ -1,16 +1,14 @@
 import {Injectable, NestMiddleware} from '@nestjs/common'
 import {NextFunction, Response} from 'express'
-import {Context} from '../interfaces/context.interface'
+import Context from '../helpers/context.helper'
 
 /**
  * ContextMiddleware that adds Context interface to the request object
  */
 @Injectable()
 export class ContextMiddleware implements NestMiddleware {
-    ctx: Context = {startTimestamp: 0, txId: ''}
-
     use(req: any, res: Response, next: NextFunction): any {
-        req.ctx = this.ctx
+        Context.bind(req)
         next()
     }
 }

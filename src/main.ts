@@ -9,6 +9,8 @@ import {readFileSync} from 'fs'
 import {WinstonModule} from 'nest-winston'
 import {winstonLoggerConfig} from './config/logger.config'
 import * as bodyParser from 'body-parser'
+import {LoggingInterceptor} from './interceptors/logging.interceptor'
+import {HttpExceptionFilter} from './helpers/http-exception.filter'
 
 async function bootstrap() {
     const config = AppService.config
@@ -44,12 +46,14 @@ async function bootstrap() {
     SwaggerModule.setup(config.common.api_prefix, app, document)
 
     app.useGlobalPipes(new ValidateInputPipe())
+    app.useGlobalFilters(new HttpExceptionFilter())
 
     app.useGlobalInterceptors(
         new TransformInterceptor({
             pageName: config.common.api_default_query_page_name,
             perPageName: config.common.api_default_query_rows_name,
         }),
+        new LoggingInterceptor(),
     )
 
     app.use(bodyParser.json({

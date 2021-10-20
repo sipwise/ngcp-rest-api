@@ -30,12 +30,11 @@ import {number} from 'yargs'
 import {PatchDto} from '../patch.dto'
 import {Request} from 'express'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {LoggingInterceptor} from '../../interceptors/logging.interceptor'
 import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 
 @ApiTags('Admins')
 @Controller('admins')
-@UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
+@UseInterceptors(new JournalingInterceptor(new JournalsService()))
 @Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller)
 export class AdminsController {
     private readonly log = new Logger(AdminsController.name)

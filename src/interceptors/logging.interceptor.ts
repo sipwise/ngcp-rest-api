@@ -2,8 +2,7 @@ import {CallHandler, ExecutionContext, Logger, NestInterceptor} from '@nestjs/co
 import {plainToClass} from 'class-transformer'
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
-import {extractResourceName} from '../helpers/uri.helper'
-import {AppService} from '../app.service'
+import Context from '../helpers/context.helper'
 
 /**
  * LoggingInterceptor intercepts requests and writes relevant information to log.
@@ -12,7 +11,7 @@ export class LoggingInterceptor implements NestInterceptor {
     private readonly log = new Logger(LoggingInterceptor.name)
 
     /**
-     * Intercept implements the logging part for all HTTP requests
+     * Intercept implements the response logging part for all HTTP requests
      *
      * @param context ExecutionContext to access HTTP request
      * @param next  Next CallHandler
@@ -26,38 +25,29 @@ export class LoggingInterceptor implements NestInterceptor {
                 let httpCtx = context.switchToHttp()
                 const req = httpCtx.getRequest()
 
-                // Set content format and default to json
-                let contentType = req.get('Content-Type')
-                if (contentType === undefined) {
-                    contentType = 'application/json'
-                }
-
-                const resourceName = extractResourceName(req.path, AppService.config.common.api_prefix)
-
-                // Get resourceID from data values if method is POST else from request params 'id'
-                let resourceID
-                // data = await data
-
                 // Get redacted version of response data
                 let redacted: any = this.getRedactedPlain(data)
-                if (req.method == 'POST') {
-                    resourceID = data.id
-                } else {
-                    resourceID = req.params.id
-                }
 
-                const logEntry = {
-                    'resource_id': resourceID,
-                    'resource_name': resourceName,
-                    'content_type': contentType,
-                    'tx_id': req.ctx.txId,
-                    'received_at': req.ctx.startTimestamp,
-                    'response_at': Date.now(),
-                    'method': req.method,
-                    'response': redacted,
-                }
-                logEntry['username'] = req['user'] !== undefined ? req.user.username : 'unknown'
-                this.log.log(JSON.stringify(logEntry), LoggingInterceptor.name)
+                const ctx = Context.get(req)
+                const now = Date.now()
+                this.log.log({
+                    message: 'RESPONSE',
+                    tx: ctx.txid,
+                    username: req['user'] !== undefined ? req.user.username : 'unknown',
+                    role: {
+                        role: req['user'] !== undefined ? req.user.role : 'unknown',
+                        is_master: req['user'] !== undefined ? req.user.is_master : 'unknown',
+                    },
+                    ip: req.ip,
+                    url: `${req.protocol}://${req.header('host')}${req.baseUrl}`,
+                    query_params: req.query,
+                    content_type: req.header('content-type'),
+                    method: req.method,
+                    received_at: ctx.startTime,
+                    response_at: now,
+                    elapsed: now - ctx.startTime,
+                    body: redacted,
+                })
                 return data
             }),
         )
@@ -85,6 +75,7 @@ export class LoggingInterceptor implements NestInterceptor {
             // get plain version object
             // value.constructor returns the constructor of a specific object.
             // This allows the call of the correct ClassConstructor in plainToClass()
+
             return plainToClass(data.constructor, data)
         }
     }

@@ -1,12 +1,17 @@
 import {NotFoundException, UnprocessableEntityException} from '@nestjs/common'
-import {EntityNotFoundError, TypeORMError} from 'typeorm'
+import {EntityNotFoundError, QueryFailedError, TypeORMError} from 'typeorm'
 
 export function handleTypeORMError(err: Error) {
     if (err instanceof TypeORMError) {
         switch (err.constructor) {
             case EntityNotFoundError:
                 return new NotFoundException()
-
+            case QueryFailedError:
+                let qErr = <QueryFailedError>err
+                switch (qErr.driverError.code) {
+                    case 'ER_DUP_ENTRY':
+                        return new UnprocessableEntityException('duplicate entry')
+                }
         }
         // return new UnprocessableEntityException(err.message)
         return new UnprocessableEntityException()
@@ -15,6 +20,9 @@ export function handleTypeORMError(err: Error) {
 }
 
 export function formatValidationErrors(errors: any[]) {
+    if (errors === undefined) {
+        return []
+    }
     const data = new Map()
     errors.forEach(err => {
         for (let key in err.constraints) {
