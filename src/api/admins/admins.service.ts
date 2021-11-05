@@ -20,7 +20,7 @@ const SPECIAL_USER_LOGIN = 'sipwise'
 const PERMISSION_DENIED = 'permission denied'
 
 @Injectable()
-export class AdminsService implements CrudService<AdminCreateDto, AdminResponseDto> {
+export class AdminsService { // implements CrudService<AdminCreateDto, AdminResponseDto> {
     private readonly log = new Logger(AdminsService.name)
 
     constructor(
@@ -28,7 +28,7 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
     ) {
     }
 
-    toResponse(db: db.billing.Admin): AdminResponseDto {
+    async toResponse(db: db.billing.Admin): Promise<AdminResponseDto> {
         this.log.debug({message: 'converting admin to response', func: this.toResponse.name})
         return {
             billing_data: db.billing_data,
@@ -45,6 +45,7 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
             login: db.login,
             read_only: db.read_only,
             reseller_id: db.reseller_id,
+            role: await this.getRBACRole(db),
             show_passwords: db.show_passwords,
         }
     }
@@ -109,7 +110,7 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
             options.where = {id: req.user.id}
         }
         const result = await db.billing.Admin.find(options)
-        return result.map(adm => this.toResponse(adm))
+        return await Promise.all(result.map(async (adm) => this.toResponse(adm)))
     }
 
     @HandleDbErrors
@@ -266,9 +267,9 @@ export class AdminsService implements CrudService<AdminCreateDto, AdminResponseD
 
     @HandleDbErrors
     async delete(id: number, req: ServiceRequest) {
-        this.log.debug({message: 'update admin by id', func: this.update.name, user: req.user.username, id: id})
+        this.log.debug({message: 'delete admin by id', func: this.delete.name, user: req.user.username, id: id})
         if (req.user.id == id) {
-            throw new ForbiddenException('cannot delete own user')
+            throw new ForbiddenException('cannot delete self')
         }
 
         let entry = await db.billing.Admin.findOneOrFail(id)
