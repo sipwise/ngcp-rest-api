@@ -99,6 +99,9 @@
     "webpack-cli": "4.7.2",
     "yargs": "17.1.0"
   },
+  "resolutions": {
+    "**/ua-parser-js": "0.7.24"
+  },
   "jest": {
     "moduleFileExtensions": [
       "js",
