@@ -20,14 +20,17 @@ const getDBEntries = () => {
 const entities = process.env.NODE_ENV == 'test' ? ['src/entities/db/**/*.ts'] : [...getDBEntries()]
 
 export const databaseConfig: ConnectionOptions = {
+    name: 'default',
     username: db_user,
     password: db_pass,
     port: db_port,
     host: db_host,
     type: 'mariadb',
     entities: entities,
-    connectTimeout: 20000,
+    connectTimeout: 2000,
+    trace: false,
+    debug: false,
+    supportBigNumbers: true,
     logger: new TypeormLoggerService(),
-    // logging: ['info', 'error'],
     logging: ['info', 'error', 'query'],
 }

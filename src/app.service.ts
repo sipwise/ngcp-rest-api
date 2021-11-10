@@ -1,5 +1,6 @@
-import {Inject, Injectable} from '@nestjs/common'
-import {Connection, EntityTarget} from 'typeorm'
+import {Inject, Injectable, Logger} from '@nestjs/common'
+import {Interval} from '@nestjs/schedule'
+import {ConnectionManager, EntityTarget} from 'typeorm'
 import {config as AppConfig} from './config/main.config'
 
 @Injectable()
@@ -8,12 +9,30 @@ export class AppService {
     public config = AppConfig
     public db = this.defaultDatabase
 
+    private dbAvailable = true
+
     constructor(
-        @Inject('DB') private readonly defaultDatabase: Connection,
+        @Inject('DB') private readonly defaultDatabase: ConnectionManager,
     ) {
     }
 
+    get isDbInitialised() {
+        return this.dbConnection().isConnected
+    }
+
+    get isDbAvailable() {
+        return this.dbAvailable
+    }
+
+    set setDbAvailable(dbAvailable: boolean) {
+        this.dbAvailable = dbAvailable
+    }
+
+    public dbConnection() {
+        return this.defaultDatabase.get()
+    }
+
     public dbRepo<Entity>(target: EntityTarget<Entity>) {
-        return this.defaultDatabase.getRepository(target)
+        return this.dbConnection().getRepository(target)
     }
 }

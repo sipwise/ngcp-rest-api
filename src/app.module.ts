@@ -1,4 +1,5 @@
 import {Global, Logger, MiddlewareConsumer, Module, NestModule, RequestMethod} from '@nestjs/common'
+import {ScheduleModule} from '@nestjs/schedule';
 import {AdminsModule} from './api/admins/admins.module'
 import {AppController} from './app.controller'
 import {AppService} from './app.service'
@@ -14,6 +15,8 @@ import {JournalsModule} from './api/journals/journals.module'
 import {ResellersModule} from './api/resellers/resellers.module'
 import {SystemcontactsModule} from './api/systemcontacts/systemcontacts.module'
 import {LoggerMiddleware} from './middleware/logger.middleware'
+import {StateMiddleware} from './middleware/state.middleware';
+import {DbStateSchedule} from './schedules/dbstate.schedule';
 
 @Global()
 @Module({
@@ -35,10 +38,12 @@ import {LoggerMiddleware} from './middleware/logger.middleware'
         ContractsModule,
         CustomercontactsModule,
         DatabaseModule,
+        DbStateSchedule,
         DomainsModule,
         InterceptorModule,
         JournalsModule,
         ResellersModule,
+        ScheduleModule.forRoot(),
         SystemcontactsModule,
     ],
     exports: [
@@ -53,7 +58,7 @@ import {LoggerMiddleware} from './middleware/logger.middleware'
 
 export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer): any {
-        consumer.apply(ContextMiddleware, LoggerMiddleware).forRoutes({
+        consumer.apply(ContextMiddleware, LoggerMiddleware, StateMiddleware).forRoutes({
             path: '*',
             method: RequestMethod.ALL,
         })

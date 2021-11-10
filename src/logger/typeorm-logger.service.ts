@@ -21,6 +21,10 @@ export class TypeormLoggerService implements TypeormLogger {
     }
 
     logQuery(query: string, parameters?: any[], queryRunner?: QueryRunner): any {
+        if (query == "select 1") {
+            // do not log ping queries
+            return
+        }
         this.logger.debug(query, {parameters: parameters, context: this.context})
     }
 

@@ -1,4 +1,6 @@
-import {createConnection} from 'typeorm'
+import {Logger} from '@nestjs/common'
+import {getConnectionManager} from 'typeorm'
+import {LoggerService} from '../logger/logger.service'
 import {databaseConfig} from '../config/database.config'
 
 export const databaseProviders = [
@@ -6,7 +8,16 @@ export const databaseProviders = [
         provide: 'DB',
 
         useFactory: async () => {
-            return await createConnection(databaseConfig)
+            const log = new Logger("databaseProviders[DB]")
+            let manager = getConnectionManager()
+            manager.create(databaseConfig)
+            try {
+                await manager.get(databaseConfig.name).connect()
+                log.debug('Connected to the database')
+            } catch(err) {
+                log.error({message: 'Could not connect to the database', err: err})
+            }
+            return manager
         },
     },
 ]
