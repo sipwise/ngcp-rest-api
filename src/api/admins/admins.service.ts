@@ -3,18 +3,16 @@ import {AdminCreateDto} from './dto/admin-create.dto'
 import {AdminResponseDto} from './dto/admin-response.dto'
 import {AdminUpdateDto} from './dto/admin-update.dto'
 import {AppService} from '../../app.service'
-import {CrudService} from '../../interfaces/crud-service.interface'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 import {applyPatch, normalisePatch, Operation as PatchOperation} from '../../helpers/patch.helper'
-import {ForbiddenException, Injectable, Logger, UnprocessableEntityException} from '@nestjs/common'
+import {ForbiddenException, Injectable, Logger} from '@nestjs/common'
 import {db} from '../../entities'
 import {genSalt, hash} from 'bcrypt'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {Admin} from '../../entities/db/billing'
+import {AclRole, Admin} from '../../entities/db/billing'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {FindManyOptions} from 'typeorm'
-import {isEmpty, ValidationError} from 'class-validator'
-import {formatValidationErrors} from '../../helpers/errors.helper'
+import {AuthResponseDto} from '../../auth/dto/auth-response.dto'
 
 const SPECIAL_USER_LOGIN = 'sipwise'
 const PERMISSION_DENIED = 'permission denied'
@@ -28,25 +26,25 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
     ) {
     }
 
-    async toResponse(db: db.billing.Admin): Promise<AdminResponseDto> {
+    async toResponse(dbAdmin: db.billing.Admin): Promise<AdminResponseDto> {
         this.log.debug({message: 'converting admin to response', func: this.toResponse.name})
         return {
-            billing_data: db.billing_data,
-            call_data: db.call_data,
-            can_reset_password: db.can_reset_password,
-            email: db.email,
-            id: db.id,
-            is_active: db.is_active,
-            is_ccare: db.is_ccare,
-            is_master: db.is_master,
-            is_superuser: db.is_superuser,
-            is_system: db.is_system,
-            lawful_intercept: db.lawful_intercept,
-            login: db.login,
-            read_only: db.read_only,
-            reseller_id: db.reseller_id,
-            role: await this.getRBACRole(db),
-            show_passwords: db.show_passwords,
+            billing_data: dbAdmin.billing_data,
+            call_data: dbAdmin.call_data,
+            can_reset_password: dbAdmin.can_reset_password,
+            email: dbAdmin.email,
+            id: dbAdmin.id,
+            is_active: dbAdmin.is_active,
+            is_ccare: dbAdmin.is_ccare,
+            is_master: dbAdmin.is_master,
+            is_superuser: dbAdmin.is_superuser,
+            is_system: dbAdmin.is_system,
+            lawful_intercept: dbAdmin.lawful_intercept,
+            login: dbAdmin.login,
+            read_only: dbAdmin.read_only,
+            reseller_id: dbAdmin.reseller_id,
+            role: dbAdmin.role.role,
+            show_passwords: dbAdmin.show_passwords,
         }
     }
 
@@ -57,24 +55,27 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
             this.log.debug({
                 message: 'check user permission level',
                 success: false,
-                user_score: await this.getPermissionScore(req.user),
-                requested_score: await this.getPermissionScore(admin),
+                role: req.user.role,
+                requested_role: admin.role,
+                is_master: req.user.is_master,
             })
             throw new ForbiddenException(PERMISSION_DENIED)
         }
         this.log.debug({
             message: 'check user permission level',
             success: true,
+            role: req.user.role,
+            is_master: req.user.is_master,
         })
-        let dbAdmin = db.billing.Admin.create(admin)
-        const role = await this.getRBACRole(dbAdmin)
+        const aclRole = await db.billing.AclRole.findOne({where: {role: admin.role}})
+        const {role, ...adminWithoutRole} = admin
+        let dbAdmin = db.billing.Admin.create(adminWithoutRole)
+        dbAdmin = await db.billing.Admin.merge(dbAdmin, await this.getPermissionFlags(role))
+        dbAdmin.role_id = aclRole.id
+        dbAdmin.role = aclRole
 
-        if (role != RBAC_ROLES.system && isEmpty(admin.reseller_id)) {
-            let err = new ValidationError()
-            err.property = 'reseller_id'
-            err.constraints = {isNotEmpty: 'reseller_id should not be empty'}
-            this.log.debug({message: 'reseller_id is empty'})
-            throw new UnprocessableEntityException(formatValidationErrors([err]))
+        if (req.user.reseller_id_required || admin.reseller_id == undefined) {
+            dbAdmin.reseller_id = req.user.reseller_id
         }
 
         dbAdmin.saltedpass = await this.generateSaltedpass(admin.password)
@@ -99,13 +100,18 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
         })
         let options: FindManyOptions = {take: rows, skip: rows * (page - 1)}
         if (req.user.is_master) {
-            switch (req.user.role) {
-                case RBAC_ROLES.reseller:
-                    options.where = {reseller_id: req.user.reseller_id, is_superuser: false, is_system: false}
-                    break
-                case RBAC_ROLES.admin:
-                    options.where = {is_system: false}
+            let hasAccessTo = await req.user.role_data.has_access_to
+            let roleIds = hasAccessTo.map(role => role.id)
+            const query = await db.billing.Admin.createQueryBuilder('admin')
+                .limit(rows)
+                .offset(rows * (page - 1))
+                .leftJoinAndSelect('admin.role', 'role')
+                .where('admin.role_id IN (:...roleIds)', {roleIds: roleIds})
+            if (req.user.reseller_id_required) {
+                query.andWhere('admin.reseller_id = :reseller_id', {reseller_id: req.user.reseller_id})
             }
+            const result = await query.getMany()
+            return await Promise.all(result.map(async (adm) => this.toResponse(adm)))
         } else {
             options.where = {id: req.user.id}
         }
@@ -123,9 +129,9 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
             if (id != req.user.id) {
                 throw new ForbiddenException(PERMISSION_DENIED)
             }
-            return this.toResponse(await db.billing.Admin.findOneOrFail(id))
+            return this.toResponse(await db.billing.Admin.findOneOrFail(id, {relations: ['role']}))
         }
-        let entry = await db.billing.Admin.findOneOrFail(id)
+        let entry = await db.billing.Admin.findOneOrFail(id, {relations: ['role']})
         if (!await this.hasPermission(req.user, entry)) {
             this.log.debug({
                 message: 'check user permission level',
@@ -136,7 +142,7 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
             throw new ForbiddenException(PERMISSION_DENIED)
         }
         // check that reseller role can only request admins of same reseller_id
-        if (req.user.role == RBAC_ROLES.reseller && entry.reseller_id != req.user.reseller_id) {
+        if (req.user.reseller_id_required && entry.reseller_id != req.user.reseller_id) {
             throw new ForbiddenException(PERMISSION_DENIED)
         }
         return this.toResponse(entry)
@@ -159,7 +165,7 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
     async update(id: number, admin: AdminUpdateDto, req: ServiceRequest): Promise<AdminResponseDto> {
         this.log.debug({message: 'update admin by id', func: this.update.name, user: req.user.username, id: id})
         const userId = req.user.id
-        let oldAdmin = await db.billing.Admin.findOneOrFail(id)
+        let oldAdmin = await db.billing.Admin.findOneOrFail(id, {relations: ['role']})
 
         if (!req.user.is_master) {
             if (id != req.user.id)
@@ -172,8 +178,10 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
             await db.billing.Admin.update(oldAdmin.id, oldAdmin)
             return this.toResponse(newAdmin)
         }
-
-        let newAdmin = db.billing.Admin.merge(oldAdmin, admin)
+        const newRole = await db.billing.AclRole.findOne({where: {role: admin.role}})
+        const {role, ...adminWithoutRole} = admin
+        let newAdmin = db.billing.Admin.merge(oldAdmin, adminWithoutRole, await this.getPermissionFlags(role))
+        newAdmin.role_id = newRole.id
 
         if (!await this.hasPermission(req.user, newAdmin)) {
             this.log.debug({
@@ -209,7 +217,7 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
         })
         const userId = req.user.id
         let admin: AdminBaseDto
-        let oldAdmin = await db.billing.Admin.findOneOrFail(id)
+        let oldAdmin = await db.billing.Admin.findOneOrFail(id, {relations: ['role']})
 
         if (!req.user.is_master) {
             if (id != req.user.id)
@@ -242,7 +250,8 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
         admin.password = oldAdmin.saltedpass
         admin = applyPatch(admin, patch).newDocument
 
-        let newAdmin = this.inflate(admin)
+        let newAdmin = await this.inflate(admin)
+        newAdmin = db.billing.Admin.merge(newAdmin, await this.getPermissionFlags(newAdmin.role.role))
         if (!await this.hasPermission(req.user, newAdmin)) {
             this.log.debug({
                 message: 'check user permission level',
@@ -315,10 +324,10 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
         // if (oldAdmin.saltedpass != newAdmin.saltedpass && newAdmin.id != userId) {
         //     throw new ForbiddenException('password can only be changed for self')
         // }
-
+        this.log.debug({message: 'validating update', user_id: userId, updated_user_id: newAdmin.id})
         // remove fields that are not changeable by self
         if (newAdmin.id == userId) {
-            ['is_master', 'is_active', 'read_only', 'is_system', 'is_superuser'].map(s => {
+            ['is_master', 'is_active', 'read_only', 'role', 'role_id'].map(s => {
                 if (newAdmin[s] !== undefined) {
                     this.log.debug({message: 'cannot change field for self', id: userId, field: s})
                     delete newAdmin[s]
@@ -328,12 +337,31 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
         return newAdmin
     }
 
-    private inflate(dto: AdminBaseDto): db.billing.Admin {
-        return db.billing.Admin.create(dto)
+    private async inflate(dto: AdminBaseDto): Promise<db.billing.Admin> {
+        const aclRole = await db.billing.AclRole.findOne({where: {role: dto.role}})
+        const {role, ...adminWithoutRole} = dto
+        let admin = db.billing.Admin.create(adminWithoutRole)
+        admin.role_id = aclRole.id
+        admin.role = aclRole
+        return admin
     }
 
     private deflate(entry: db.billing.Admin): AdminBaseDto {
-        return Object.assign(entry)
+        return {
+            id: entry.id,
+            billing_data: entry.billing_data,
+            call_data: entry.call_data,
+            can_reset_password: entry.can_reset_password,
+            email: entry.email,
+            is_active: entry.is_active,
+            is_master: entry.is_master,
+            login: entry.login,
+            password: entry.saltedpass,
+            read_only: entry.read_only,
+            reseller_id: entry.reseller_id,
+            role: entry.role.role,
+            show_passwords: entry.show_passwords,
+        }
     }
 
     /**
@@ -352,6 +380,53 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
         const b64salt = hashPwd.slice(0, 22)
         const b64hash = hashPwd.slice(22)
         return b64salt + '$' + b64hash
+    }
+
+    private async getPermissionFlags(role: string): Promise<any> {
+        switch (role) {
+            case RBAC_ROLES.system:
+                return {
+                    is_system: true,
+                    is_superuser: false,
+                    is_ccare: false,
+                    lawful_intercept: false,
+                }
+            case RBAC_ROLES.admin:
+                return {
+                    is_system: false,
+                    is_superuser: true,
+                    is_ccare: false,
+                    lawful_intercept: false,
+                }
+            case RBAC_ROLES.reseller:
+                return {
+                    is_system: false,
+                    is_superuser: false,
+                    is_ccare: false,
+                    lawful_intercept: false,
+                }
+            case RBAC_ROLES.ccareadmin:
+                return {
+                    is_system: false,
+                    is_superuser: true,
+                    is_ccare: true,
+                    lawful_intercept: false,
+                }
+            case RBAC_ROLES.ccare:
+                return {
+                    is_system: false,
+                    is_superuser: false,
+                    is_ccare: true,
+                    lawful_intercept: false,
+                }
+            case RBAC_ROLES.lintercept:
+                return {
+                    is_system: false,
+                    is_superuser: false,
+                    is_ccare: false,
+                    lawful_intercept: true,
+                }
+        }
     }
 
     /**
@@ -420,12 +495,21 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
      * @param newPermissions admin object with new permissions
      * @private
      */
-    private async hasPermission(curUser, newPermissions): Promise<boolean> {
+    private async hasPermission(curUser: AuthResponseDto, newPermissions): Promise<boolean> {
         if (!curUser.is_master) {
             return false
         }
-        let scoreDifference = await this.getPermissionScore(curUser) - await this.getPermissionScore(newPermissions)
+        const hasAccessToIds = (await curUser.role_data.has_access_to).map(role => role.id)
+
+        let accessedRole: AclRole
+        if (newPermissions.role_id === undefined) {
+            accessedRole = await db.billing.AclRole.findOne({where: {role: newPermissions.role}})
+        } else {
+            accessedRole = await db.billing.AclRole.findOne(newPermissions.role_id)
+        }
+        // let scoreDifference = await this.getPermissionScore(curUser) - await this.getPermissionScore(newPermissions)
         // returns true if scoreDifference >= 0; else false
-        return scoreDifference >= 0
+        this.log.debug({ids: hasAccessToIds, requested: accessedRole.id})
+        return hasAccessToIds.includes(accessedRole.id)
     }
 }

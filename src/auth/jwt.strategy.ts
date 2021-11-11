@@ -35,7 +35,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
      */
     async validate(payload: any) {
         this.log.debug('got payload in validate ' + JSON.stringify(payload))
-        const admin = await this.app.dbRepo(db.billing.Admin).findOne(payload.id)
+        const admin = await this.app.dbRepo(db.billing.Admin).findOne(payload.id, {relations: ['role']})
         if (!this.auth.isAdminValid(admin)) {
             return null
         }

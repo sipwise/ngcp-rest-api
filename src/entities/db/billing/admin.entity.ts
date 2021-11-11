@@ -1,4 +1,5 @@
-import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
+import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
+import {AclRole} from './acl-role.entity'
 
 @Entity({
     name: 'admins',
@@ -118,4 +119,14 @@ export class Admin extends BaseEntity {
         default: 0,
     })
     is_system!: boolean
+
+    @Column({
+        type: 'int',
+        width: 11
+    })
+    role_id: number
+
+    @ManyToOne(() => AclRole, role => role.admins)
+    @JoinColumn({name: 'role_id'})
+    role: AclRole
 }

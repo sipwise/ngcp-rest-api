@@ -151,7 +151,11 @@ export class AdminsController {
             'rows',
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) row: number,
+        @Req() req: Request
     ): Promise<JournalResponseDto[]> {
+        const sr: ServiceRequest = {
+            headers: [req.rawHeaders], params: [req.params], user: req.user,
+        }
         return this.journalsService.readAll(page, row, 'admins', id)
     }
 }

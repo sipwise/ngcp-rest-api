@@ -24,12 +24,6 @@ export class JournalsService {
     async create(journal: JournalCreateDto): Promise<JournalResponseDto> {
         delete journal.content
         let dbJournal = db.billing.Journal.create(journal)
-        // dbJournal.operation = journal.operation
-        // dbJournal.resource_name = journal.resource_name
-        // dbJournal.resource_id = journal.resource_id
-        // dbJournal.timestamp = journal.timestamp
-        // dbJournal.username = journal.username
-        // dbJournal.content_format = journal.content_format
         await db.billing.Journal.insert(dbJournal)
         return this.toResponse(dbJournal)
     }
@@ -92,13 +86,17 @@ export class JournalsService {
     private toResponse(db: db.billing.Journal): JournalResponseDto {
         return {
             id: db.id,
+            reseller_id: db.reseller_id,
+            role_id: db.role_id,
+            tx_id: db.tx_id,
+            user_id: db.user_id,
             content: db.content,
             content_format: db.content_format,
             operation: db.operation,
             resource_id: db.resource_id,
             resource_name: db.resource_name,
             timestamp: db.timestamp,
-            username: db.username,
+            username: db.username
         }
     }
 }

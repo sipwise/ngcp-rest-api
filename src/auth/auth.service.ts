@@ -2,9 +2,9 @@ import {ForbiddenException, Injectable, Logger} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
 import {AppService} from '../app.service'
 import {AuthResponseDto} from './dto/auth-response.dto'
-import {RBAC_ROLES} from '../config/constants.config'
 import {compare} from 'bcrypt'
 import {db} from '../entities'
+import {RBAC_ROLES} from '../config/constants.config'
 
 /**
  * `AuthService` provides functionality to authenticate Admins and to sign JWTs for authenticated users
@@ -36,29 +36,20 @@ export class AuthService {
         return true
     }
 
-    toResponse(db: db.billing.Admin): AuthResponseDto {
+    toResponse(dbAdmin: db.billing.Admin): AuthResponseDto {
         let response: AuthResponseDto = {
-            active: db.is_active,
-            id: db.id,
-            readOnly: db.read_only,
-            reseller_id: db.reseller_id,
-            role: '',
-            showPasswords: db.show_passwords,
-            ssl_client_certificate: db.ssl_client_certificate,
-            ssl_client_m_serial: db.ssl_client_m_serial,
-            username: db.login,
-            is_master: db.is_master,
-        }
-        if (db.is_system) {
-            response.role = RBAC_ROLES.system
-        } else if (db.is_superuser) {
-            response.role = RBAC_ROLES.admin
-            if (db.is_ccare)
-                response.role = RBAC_ROLES.ccareadmin
-        } else if (db.is_ccare) {
-            response.role = RBAC_ROLES.ccare
-        } else {
-            response.role = RBAC_ROLES.reseller
+            active: dbAdmin.is_active,
+            id: dbAdmin.id,
+            readOnly: dbAdmin.read_only,
+            reseller_id: dbAdmin.reseller_id,
+            role: dbAdmin.role.role,
+            role_data: dbAdmin.role,
+            showPasswords: dbAdmin.show_passwords,
+            ssl_client_certificate: dbAdmin.ssl_client_certificate,
+            ssl_client_m_serial: dbAdmin.ssl_client_m_serial,
+            username: dbAdmin.login,
+            is_master: dbAdmin.is_master,
+            reseller_id_required: dbAdmin.role.role == RBAC_ROLES.reseller || dbAdmin.role.role == RBAC_ROLES.ccare
         }
         this.log.debug({
             message: 'user authentication',
@@ -80,7 +71,10 @@ export class AuthService {
      */
     async validateAdmin(username: string, password: string): Promise<AuthResponseDto> {
         this.log.debug({message: 'starting user authentication', method: this.validateAdmin.name, username: username})
-        const admin = await this.app.dbRepo(db.billing.Admin).findOne({where: {login: username}})
+        const admin = await this.app.dbRepo(db.billing.Admin).findOne({
+            where: {login: username},
+            relations: ['role'],
+        })
         if (!this.isAdminValid(admin)) {
             return null
         }
@@ -110,7 +104,10 @@ export class AuthService {
             this.log.debug({message: 'could not parse serial', serial: serial})
             return null
         }
-        const admin = await this.app.dbRepo(db.billing.Admin).findOne({where: {ssl_client_m_serial: sn}})
+        const admin = await this.app.dbRepo(db.billing.Admin).findOne({
+            where: {ssl_client_m_serial: sn},
+            relations: ['role'],
+        })
         if (!this.isAdminValid(admin)) {
             return null
         }

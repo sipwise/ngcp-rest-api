@@ -1,4 +1,6 @@
-import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
+import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
+import {Reseller} from './reseller.entity'
+import {AclRole} from './acl-role.entity'
 
 @Entity({
     name: 'journals',
@@ -52,4 +54,40 @@ export class Journal extends BaseEntity {
         default: null,
     })
     content?: Uint8Array
+
+    @Column({
+        nullable: true,
+        type: 'int',
+        width: 11,
+    })
+    role_id: number
+
+    @ManyToOne(type => AclRole, role => role.journals)
+    @JoinColumn({name: 'role_id'})
+    role: AclRole
+
+    @Column({
+        nullable: true,
+        type: 'varchar',
+        length: 36,
+    })
+    tx_id: string
+
+    @Column({
+        nullable: true,
+        type: 'int',
+        width: 11,
+    })
+    reseller_id: number
+
+    @ManyToOne(type => Reseller, reseller => reseller.journals)
+    @JoinColumn({name: 'reseller_id'})
+    reseller?: Reseller
+
+    @Column({
+        nullable: true,
+        type: 'int',
+        width: 11
+    })
+    user_id: number
 }

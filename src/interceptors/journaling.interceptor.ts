@@ -86,13 +86,17 @@ export class JournalingInterceptor implements NestInterceptor {
 
                 // create new Journal entry
                 const entry: JournalCreateDto = {
+                    reseller_id: req.user.reseller_id,
+                    role_id: req.user.role.id,
+                    user_id: req.user.id,
+                    tx_id: ctx.txid,
                     content: enc.encode(JSON.stringify(req.body)),
                     content_format: cf,
                     operation: op,
                     resource_id: resourceID,
                     resource_name: resourceName,
                     timestamp: ctx.startTime / 1000,
-                    username: req['user'] !== undefined ? req.user.username : '',
+                    username: req['user'] !== undefined ? req.user.username : ''
                 }
 
                 // write Journal entry to database

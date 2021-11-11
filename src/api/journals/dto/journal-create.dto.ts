@@ -1,19 +1,13 @@
-interface JournalCreateDtoAttributes {
+export class JournalCreateDto {
+    content?: Uint8Array
+    content_format: string
     operation: string
-    resource_name: string
+    reseller_id: number
     resource_id: number
+    resource_name: string
+    role_id: number
     timestamp: number
-    username?: string
-    content_format
-    content?: Uint8Array
-}
-
-export class JournalCreateDto implements JournalCreateDtoAttributes {
-    operation!: string
-    resource_name!: string
-    resource_id!: number
-    timestamp!: number
-    username?: string
-    content_format!: string
-    content?: Uint8Array
+    tx_id: string
+    username: string
+    user_id: number
 }
