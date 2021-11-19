@@ -4,6 +4,7 @@ import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestj
 import {Observable} from 'rxjs'
 import {extractResourceName} from '../helpers/uri.helper'
 import {map} from 'rxjs/operators'
+import {Response} from 'express'
 
 /**
  * Defines the names of query parameters for pagination
@@ -48,6 +49,7 @@ export class TransformInterceptor implements NestInterceptor {
         const ctx = context.switchToHttp()
         return next.handle().pipe(map(data => {
             const req = ctx.getRequest()
+            const resp: Response = ctx.getResponse()
             // data = await data // TODO: Take a closer look. No idea why data is a promise in the first place
             const accept = (req.headers.accept || '').split(',')
             if (accept.length == 1 && accept[0] === 'application/json') {
@@ -56,6 +58,7 @@ export class TransformInterceptor implements NestInterceptor {
             if (req.method === 'DELETE') {
                 return data
             }
+            resp.setHeader("content-type", "application/hal+json")
             let hal = this.generateHALResource(req, data)
             return hal
         }))
