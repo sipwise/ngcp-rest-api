@@ -156,6 +156,6 @@ export class AdminsController {
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user,
         }
-        return this.journalsService.readAll(page, row, 'admins', id)
+        return this.journalsService.readAll(sr, page, row, 'admins', id)
     }
 }

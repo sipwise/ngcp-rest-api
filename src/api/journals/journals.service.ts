@@ -4,6 +4,8 @@ import {db} from '../../entities'
 import {JournalCreateDto} from './dto/journal-create.dto'
 import {JournalResponseDto} from './dto/journal-response.dto'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {AuthResponseDto} from '../../auth/dto/auth-response.dto'
 
 @Injectable()
 export class JournalsService {
@@ -22,7 +24,6 @@ export class JournalsService {
      */
     @HandleDbErrors
     async create(journal: JournalCreateDto): Promise<JournalResponseDto> {
-        delete journal.content
         let dbJournal = db.billing.Journal.create(journal)
         await db.billing.Journal.insert(dbJournal)
         return this.toResponse(dbJournal)
@@ -35,8 +36,10 @@ export class JournalsService {
      * @param resourceName Name of the resource
      * @param resourceId ID of the named resource
      */
-    async readAll(page?: number, rows?: number, resourceName?: string, resourceId?: number | string): Promise<JournalResponseDto[]> {
+    async readAll(req: ServiceRequest, page?: number, rows?: number, resourceName?: string, resourceId?: number | string): Promise<JournalResponseDto[]> {
+        const user: AuthResponseDto = req.user
         let filter = {}
+
         if (resourceName !== undefined) {
             filter = {resource_name: resourceName}
             if (resourceId !== undefined) {
@@ -47,6 +50,9 @@ export class JournalsService {
                     {id: resourceName},
                 ]
             }
+        }
+        if (user.reseller_id_required) {
+            filter["reseller_id"] = user.reseller_id
         }
         this.log.debug({
             message: 'finding journal entries',
@@ -59,8 +65,11 @@ export class JournalsService {
             skip: +rows * (+page - 1),
             where: filter,
         })
+        const hasAccessToContent = (await user.role_data.has_access_to).map(role => role.id)
         return result.map(j => {
-            delete j.content
+            this.log.debug(Buffer.from(j.content).toString())
+            if (!hasAccessToContent.includes(j.role_id))
+                delete j.content
             return this.toResponse(j)
         })
     }

@@ -54,7 +54,6 @@ export class JournalingInterceptor implements NestInterceptor {
     intercept(context: ExecutionContext, next: CallHandler<any>): Observable<any> | Promise<Observable<any>> {
         return next.handle().pipe(
             map(data => {
-                // TODO: only log to console when executed in Debug mode
                 let httpCtx = context.switchToHttp()
                 const req = httpCtx.getRequest()
 
@@ -80,17 +79,15 @@ export class JournalingInterceptor implements NestInterceptor {
                     resourceID = req.params.id
                 }
 
-                const enc = new TextEncoder()
-
                 const ctx = Context.get(req)
 
                 // create new Journal entry
                 const entry: JournalCreateDto = {
                     reseller_id: req.user.reseller_id,
-                    role_id: req.user.role.id,
+                    role_id: req.user.role_data.id,
                     user_id: req.user.id,
                     tx_id: ctx.txid,
-                    content: enc.encode(JSON.stringify(req.body)),
+                    content: req.body.toString('base64'),
                     content_format: cf,
                     operation: op,
                     resource_id: resourceID,

@@ -78,7 +78,7 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(id, page, row): Promise<JournalResponseDto[]> {
-        return super.journal(id, page, row)
+    async journal(id, page, row, req): Promise<JournalResponseDto[]> {
+        return super.journal(id, page, row, req)
     }
 }

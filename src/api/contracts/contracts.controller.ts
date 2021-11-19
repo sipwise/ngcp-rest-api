@@ -54,7 +54,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     @ApiOkResponse({
         type: ContractResponseDto,
     })
-    async update(id, dto: ContractCreateDto, req: Request): Promise<ContractResponseDto> {
+    async update(id, dto: ContractCreateDto, req): Promise<ContractResponseDto> {
         return super.update(id, dto, req)
     }
 
@@ -65,7 +65,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id, patch: Operation | Operation[], req: Request): Promise<ContractResponseDto> {
+    async adjust(id, patch: Operation | Operation[], req): Promise<ContractResponseDto> {
         return super.adjust(id, patch, req)
     }
 
@@ -79,7 +79,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(id, page, row): Promise<JournalResponseDto[]> {
-        return super.journal(id, page, row)
+    async journal(id, page, row, req): Promise<JournalResponseDto[]> {
+        return super.journal(id, page, row, req)
     }
 }

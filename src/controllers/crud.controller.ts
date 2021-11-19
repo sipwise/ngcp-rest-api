@@ -94,8 +94,12 @@ export class CrudController<CreateDTO, ResponseDTO> {
             'rows',
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) row: number,
+        @Req() req: Request
     ) {
-        return this.journals.readAll(page, row, this.resourceName, id)
+        const sr: ServiceRequest = {
+            headers: [req.rawHeaders], params: [req.params], user: req.user,
+        }
+        return this.journals.readAll(sr, page, row, this.resourceName, id)
     }
 
     private newServiceRequest(req: Request): ServiceRequest {

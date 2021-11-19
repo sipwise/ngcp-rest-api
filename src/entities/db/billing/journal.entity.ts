@@ -53,7 +53,7 @@ export class Journal extends BaseEntity {
         type: 'blob',
         default: null,
     })
-    content?: Uint8Array
+    content?: Buffer
 
     @Column({
         nullable: true,
