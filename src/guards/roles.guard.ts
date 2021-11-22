@@ -1,5 +1,6 @@
 import {CanActivate, ExecutionContext, Injectable} from '@nestjs/common'
 import {Reflector} from '@nestjs/core'
+import {PublicGuard} from './public.guard'
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -7,6 +8,9 @@ export class RolesGuard implements CanActivate {
     }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
+        const isPublic = new PublicGuard(this.reflector)
+        if (await isPublic.canActivate(context))
+            return true
         const roles = this.reflector.getAllAndMerge<string[]>('rbacroles', [
             context.getHandler(),
             context.getClass(),
