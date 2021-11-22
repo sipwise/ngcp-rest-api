@@ -11,8 +11,9 @@ import {genSalt, hash} from 'bcrypt'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AclRole, Admin} from '../../entities/db/billing'
 import {RBAC_ROLES} from '../../config/constants.config'
-import {FindManyOptions} from 'typeorm'
 import {AuthResponseDto} from '../../auth/dto/auth-response.dto'
+import {configureQueryBuilder} from '../../helpers/query-builder.helper'
+import { AdminSearchDto } from './dto/admin-search.dto';
 
 const SPECIAL_USER_LOGIN = 'sipwise'
 const PERMISSION_DENIED = 'permission denied'
@@ -98,24 +99,20 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
             page: page,
             rows: rows,
         })
-        let options: FindManyOptions = {take: rows, skip: rows * (page - 1)}
+        let queryBuilder = db.billing.Admin.createQueryBuilder("admin")
+        let adminSearchDtoKeys = Object.keys(new AdminSearchDto())
+        await configureQueryBuilder(queryBuilder, req.query, {joins: [{alias: 'role', property: 'role'}], where: adminSearchDtoKeys, rows: +rows, page: +page})
         if (req.user.is_master) {
             let hasAccessTo = await req.user.role_data.has_access_to
             let roleIds = hasAccessTo.map(role => role.id)
-            const query = await db.billing.Admin.createQueryBuilder('admin')
-                .limit(rows)
-                .offset(rows * (page - 1))
-                .leftJoinAndSelect('admin.role', 'role')
-                .where('admin.role_id IN (:...roleIds)', {roleIds: roleIds})
+            queryBuilder.andWhere('admin.role_id IN (:...roleIds)', {roleIds: roleIds})
             if (req.user.reseller_id_required) {
-                query.andWhere('admin.reseller_id = :reseller_id', {reseller_id: req.user.reseller_id})
+                queryBuilder.andWhere('admin.reseller_id = :reseller_id', {reseller_id: req.user.reseller_id})
             }
-            const result = await query.getMany()
-            return await Promise.all(result.map(async (adm) => this.toResponse(adm)))
         } else {
-            options.where = {id: req.user.id}
+            queryBuilder.andWhere("admin.id = :id", {id: req.user.id})
         }
-        const result = await db.billing.Admin.find(options)
+        const result = await queryBuilder.getMany()
         return await Promise.all(result.map(async (adm) => this.toResponse(adm)))
     }
 

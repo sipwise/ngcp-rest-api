@@ -67,13 +67,14 @@ export class AdminsController {
         @Query(
             'rows',
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
-            ParseIntPipe) row: number,
+            ParseIntPipe) rows: number,
         @Req() req,
     ): Promise<AdminResponseDto[]> {
         this.log.debug({message: 'fetch all admins', func: this.findAll.name, url: req.url, method: req.method})
-        page = page ? page : this.app.config.common.api_default_query_page
-        row = row ? row : this.app.config.common.api_default_query_rows
-        return await this.adminsService.readAll(page, row, req)
+        const sr: ServiceRequest = {
+            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
+        }
+        return await this.adminsService.readAll(page, rows, sr)
     }
 
     @Get(':id')
