@@ -6,7 +6,7 @@ import {AppModule} from '../../app.module'
 import {HttpStatus, INestApplication, NotFoundException} from '@nestjs/common'
 import {SystemcontactsModule} from './systemcontacts.module'
 
-import * as request from 'supertest'
+import request from 'supertest'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {SystemcontactCreateDto} from './dto/systemcontact-create.dto'
 import {SystemcontactResponseDto} from './dto/systemcontact-response.dto'

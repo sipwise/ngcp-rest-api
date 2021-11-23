@@ -13,7 +13,6 @@ import {ValidatorOptions} from '@nestjs/common/interfaces/external/validator-opt
 import {ErrorHttpStatusCode} from '@nestjs/common/utils/http-error-by-code.util'
 import {classToPlain, plainToClass} from 'class-transformer'
 import {validate} from 'class-validator'
-import {ValidationError} from 'sequelize/types'
 import {isUndefined} from 'util'
 import {formatValidationErrors} from '../helpers/errors.helper'
 
@@ -22,7 +21,7 @@ export interface ValidationPipeOptions extends ValidatorOptions {
     disableErrorMessages?: boolean;
     transformOptions?: ClassTransformOptions;
     errorHttpStatusCode?: ErrorHttpStatusCode;
-    exceptionFactory?: (errors: ValidationError[]) => any;
+    //exceptionFactory?: (errors: ValidationError[]) => any;
     validateCustomDecorators?: boolean;
     expectedType?: Type<any>;
 }
@@ -38,7 +37,7 @@ export class ValidateInputPipe implements PipeTransform<any> {
     protected transformOptions: ClassTransformOptions
     protected errorHttpStatusCode: ErrorHttpStatusCode
     protected expectedType: Type<any>
-    protected exceptionFactory: (errors: ValidationError[]) => any
+    //protected exceptionFactory: (errors: ValidationError[]) => any
     protected validateCustomDecorators: boolean
     private readonly log = new Logger(ValidateInputPipe.name)
 

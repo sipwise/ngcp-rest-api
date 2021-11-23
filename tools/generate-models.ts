@@ -191,4 +191,3 @@ async function getRelationsForTable(db: string, table: string, connection: Conne
 }
 
 main()
-

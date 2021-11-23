@@ -1,5 +1,5 @@
 import {Injectable, Logger} from '@nestjs/common'
-import {FindOptions} from 'sequelize'
+import {FindManyOptions} from 'typeorm'
 import {db} from '../../entities'
 import {JournalCreateDto} from './dto/journal-create.dto'
 import {JournalResponseDto} from './dto/journal-response.dto'
@@ -41,7 +41,7 @@ export class JournalsService {
      * @param resourceName Name of the resource
      * @param resourceId ID of the named resource
      */
-    async readAll(page?: number, rows?: number, resourceName?: string, resourceId?: number): Promise<JournalResponseDto[]> {
+    async readAll(page?: number, rows?: number, resourceName?: string, resourceId?: number | string): Promise<JournalResponseDto[]> {
         let filter = {}
         if (resourceName !== undefined) {
             filter = {resource_name: resourceName}
@@ -85,7 +85,7 @@ export class JournalsService {
      * @param pattern FindOptions to filter results
      */
     @HandleDbErrors
-    async searchOne(pattern: FindOptions): Promise<JournalResponseDto> {
+    async searchOne(pattern: FindManyOptions): Promise<JournalResponseDto> {
         return this.toResponse(await db.billing.Journal.findOne({where: pattern}))
     }
 
