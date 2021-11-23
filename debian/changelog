@@ -1,3 +1,40 @@
+ngcp-rest-api (10.3.0.0+0~mr10.3.0.0) unstable; urgency=medium
+
+  [ Michael Berger ]
+  * [01faaa7] TT#144150 Improve logging and errors
+  * [357a0b8] TT#125651 remove unused imports
+  * [52249a8] TT#144150 add typeorm logger
+  * [e497c3c] TT#144150 fix logging response data in interceptor
+  * [d0b813d] TT#144150 add authentication logging
+  * [83fc702] TT#125651 add ServiceRequest to CRUD read methods
+  * [597b7c8] TT#125651 fix query value in admins controller
+  * [8f54060] TT#124250 add provisioning part to domains service
+  * [d293e98] TT#125651 consistently set logger name to log
+  * [f1b3981] TT#145401 improve RBAC validation in AdminsService
+  * [42c2080] TT#145401 improve admin RBAC role implementation
+  * [da4169f] TT#145801 fix default query params for journals
+  * [3213a4f] TT#125651 add LoggerMiddleware
+  * [6efbdf6] TT#125651 parse json-patch+json
+  * [7f4830a] TT#125651 add method debug logging for resellers
+  * [702bb83] TT#146950 improve request and response logging
+  * [5766650] TT#149400 add role property to admin response DTO
+
+  [ Kirill Solomko ]
+  * [542fd8f] TT#145700 copy prod external dependencies during webpack build
+  * [07dbcd5] TT#146050 add PATCH single Operation object support
+  * [ef82942] TT#145700 webpack suppress critical dependency warnings for yargs
+  * [87b21e5] TT#126706 remove voicemails voicemailsettings stubs
+  * [78a2b4f] TT#125650 remove stub endpoints
+  * [153e5ed] TT#149706 ua-parser-js vulnerability fix
+  * [17684df] TT#150100 add server status and db connection check support
+  * [27fde8b] TT#151703 server listens on 127.0.0.1 now
+
+  [ Guillem Jover ]
+  * [d2b0bb0] TT#124273 Update packaging for bullseye
+  * [51b9783] TT#124273 Move override_dh_auto_clean actions into debian/clean
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 23 Nov 2021 14:19:07 +0100
+
 ngcp-rest-api (10.2.0.0+0~mr10.2.0.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
