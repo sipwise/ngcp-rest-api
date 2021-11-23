@@ -21,7 +21,7 @@ export class TypeormLoggerService implements TypeormLogger {
     }
 
     logQuery(query: string, parameters?: any[], queryRunner?: QueryRunner): any {
-        if (query == "select 1") {
+        if (query == "select 1" || query == "SELECT DATABASE() AS `db_name`") {
             // do not log ping queries
             return
         }
