@@ -1,4 +1,4 @@
-import * as halson from 'halson'
+import halson from 'halson'
 import {AppService} from '../app.service'
 import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestjs/common'
 import {Observable} from 'rxjs'

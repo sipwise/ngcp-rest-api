@@ -1,7 +1,7 @@
 import {Injectable} from '@nestjs/common'
-import * as cluster from 'cluster'
-import * as fs from 'fs'
-import * as sdNotify from 'sd-notify'
+import cluster from 'cluster'
+import fs from 'fs'
+import sdNotify from 'sd-notify'
 import {LoggerService} from './logger/logger.service'
 import {AppService} from './app.service'
 

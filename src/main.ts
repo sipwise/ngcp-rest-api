@@ -8,7 +8,7 @@ import {ValidateInputPipe} from './pipes/validate.pipe'
 import {readFileSync} from 'fs'
 import {WinstonModule} from 'nest-winston'
 import {winstonLoggerConfig} from './config/logger.config'
-import * as bodyParser from 'body-parser'
+import bodyParser from 'body-parser'
 import {LoggingInterceptor} from './interceptors/logging.interceptor'
 import {HttpExceptionFilter} from './helpers/http-exception.filter'
 
