@@ -60,7 +60,10 @@ async function bootstrap() {
         type: ['application/json-patch+json', 'application/json'],
     }))
 
-    await app.listen(config.common.api_port, '127.0.0.1')
+    await app.listen(config.common.api_port, process.env.NODE_ENV == 'development'
+                                                ? '0.0.0.0'
+                                                : '127.0.0.1'
+    )
 }
 
 AppClusterService.clusterize(bootstrap)

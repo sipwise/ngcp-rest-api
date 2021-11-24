@@ -31,5 +31,6 @@ export enum RBAC_ROLES {
     reseller = 'reseller',
     ccare = 'ccare',
     ccareadmin = 'ccareadmin',
-    lintercept = 'lintercept'
+    lintercept = 'lintercept',
+    subscriber = 'subscriber'
 }

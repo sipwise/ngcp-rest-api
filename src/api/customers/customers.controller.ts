@@ -1,4 +1,4 @@
-import {Controller, Delete, Get, Patch, Post, Put} from '@nestjs/common'
+import {Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {CustomerCreateDto} from './dto/customer-create.dto'
 import {CustomerResponseDto} from './dto/customer-response.dto'
@@ -53,16 +53,16 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     @ApiOkResponse({
         type: CustomerResponseDto,
     })
-    async read(id, req): Promise<CustomerResponseDto> {
-        return super.read(id, req)
+    async read(@Param('id', ParseIntPipe) id: number): Promise<CustomerResponseDto> {
+        return this.customerService.read(id)
     }
 
     @Put(':id')
     @ApiOkResponse({
         type: CustomerResponseDto,
     })
-    async update(id, dto: CustomerCreateDto, req: Request): Promise<CustomerResponseDto> {
-        return super.update(id, dto, req)
+    async update(@Param('id', ParseIntPipe) id: number, dto: CustomerCreateDto): Promise<CustomerResponseDto> {
+        return this.customerService.update(id, dto)
     }
 
     @Patch(':id')
@@ -72,23 +72,23 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id, patch: Operation | Operation[], req: Request): Promise<CustomerResponseDto> {
-        return super.adjust(id, patch, req)
+    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[]): Promise<CustomerResponseDto> {
+        return this.customerService.adjust(id, patch)
     }
 
     @Delete(':id')
     @ApiOkResponse({
         type: number,
     })
-    async delete(id, req): Promise<number> {
-        return super.delete(id, req)
+    async delete(@Param('id', ParseIntPipe) id: number): Promise<number> {
+        return this.customerService.delete(id)
     }
 
     @Get(':id/journal')
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(id, page, row): Promise<JournalResponseDto[]> {
+    async journal(@Param('id', ParseIntPipe) id: number, page, row): Promise<JournalResponseDto[]> {
         return super.journal(id, page, row)
     }
 }
