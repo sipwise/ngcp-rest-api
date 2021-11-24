@@ -20,7 +20,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
         this.log.log({
             message: 'RESPONSE',
-            tx: ctx.txid,
+            tx: ctx != null ? ctx.txid : '',
             username: request['user'] !== undefined ? user.username : 'unknown',
             role: {
                 role: request['user'] !== undefined ? user.role : 'unknown',
@@ -31,13 +31,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
             query_params: request.query,
             content_type: request.header('content-type'),
             method: request.method,
-            received_at: ctx.startTime,
+            received_at: ctx != null ? ctx.startTime : now,
             response_at: now,
-            elapsed: now - ctx.startTime,
+            elapsed: ctx != null ? now - ctx.startTime : 0,
             body: exception.response,
         })
         response.status(status).json({
-            tx: ctx.txid,
+            tx: ctx != null ? ctx.txid : '',
             statusCode: status,
             path: request.url,
             error: exception.response.error,

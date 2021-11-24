@@ -1,4 +1,4 @@
-import {Controller, Get, Post, Request, UseGuards} from '@nestjs/common'
+import {Controller, Get, Post, Req, UseGuards} from '@nestjs/common'
 import {AuthService} from './auth/auth.service'
 import {JwtGuard} from './guards/jwt.guard'
 import {PasswordGuard} from './guards/password.guard'
@@ -9,14 +9,14 @@ export class AppController {
     }
 
     @UseGuards(PasswordGuard)
-    @Post('auth/login')
-    async login(@Request() req) {
+    @Post('auth/jwt')
+    async login(@Req() req) {
         return this.authService.signJwt(req.user)
     }
 
     @UseGuards(JwtGuard)
     @Get('userinfo')
-    async userinfo(@Request() req) {
+    async userinfo(@Req() req) {
         return req.user
     }
 }
