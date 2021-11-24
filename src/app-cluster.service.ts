@@ -18,7 +18,10 @@ var workersOnline = 0
 export class AppClusterService {
     static clusterize(callback: Function): void {
         const logger = new LoggerService()
-        if (cluster.isMaster) {
+        if (cluster.isWorker) {
+            logger.log(`Cluster worker PID: ${process.pid}`, AppClusterService.name)
+            callback()
+        } else {
             logger.log(`Master server started with PID: ${process.pid} Workers: ${workersAmount}`, AppClusterService.name)
             for (let i = 0; i < workersAmount; i++) {
                 cluster.fork()
@@ -63,9 +66,6 @@ export class AppClusterService {
                     started = 1
                 }
             })
-        } else {
-            logger.log(`Cluster worker PID: ${process.pid}`, AppClusterService.name)
-            callback()
         }
     }
 }

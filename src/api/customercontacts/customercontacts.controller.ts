@@ -1,4 +1,4 @@
-import {Controller, Delete, Get, Patch, Post, Put} from '@nestjs/common'
+import {Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
 import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {CustomercontactsService} from './customercontacts.service'
 import {CustomercontactCreateDto} from './dto/customercontact-create.dto'
@@ -46,8 +46,8 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     @ApiOkResponse({
         type: CustomercontactResponseDto,
     })
-    async read(id, req): Promise<CustomercontactResponseDto> {
-        return super.read(id, req)
+    async read(@Param('id', ParseIntPipe) id: number): Promise<CustomercontactResponseDto> {
+        return this.contactsService.read(id)
     }
 
     @Patch(':id')
@@ -57,31 +57,31 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id: number, patch: Operation | Operation[], req: Request): Promise<CustomercontactResponseDto> {
-        return super.adjust(id, patch, req)
+    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[]): Promise<CustomercontactResponseDto> {
+        return this.contactsService.adjust(id, patch)
     }
 
     @Put(':id')
     @ApiOkResponse({
         type: CustomercontactResponseDto,
     })
-    async update(id, entity: CustomercontactCreateDto, req: Request): Promise<CustomercontactResponseDto> {
-        return super.update(id, entity, req)
+    async update(@Param('id', ParseIntPipe) id: number, entity: CustomercontactCreateDto): Promise<CustomercontactResponseDto> {
+        return this.contactsService.update(id, entity)
     }
 
     @Delete(':id')
     @ApiOkResponse({
         type: number,
     })
-    async delete(id, req): Promise<number> {
-        return super.delete(id, req)
+    async delete(@Param('id', ParseIntPipe) id: number): Promise<number> {
+        return this.contactsService.delete(id)
     }
 
     @Get(':id/journal')
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(id, page, row): Promise<JournalResponseDto[]> {
+    async journal(@Param('id', ParseIntPipe) id: number, page, row): Promise<JournalResponseDto[]> {
         return super.journal(id, page, row)
     }
 

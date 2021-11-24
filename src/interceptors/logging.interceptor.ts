@@ -1,5 +1,6 @@
 import {CallHandler, ExecutionContext, Logger, NestInterceptor} from '@nestjs/common'
 import {plainToClass} from 'class-transformer'
+import {isObject} from 'class-validator'
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
 import Context from '../helpers/context.helper'
@@ -61,7 +62,9 @@ export class LoggingInterceptor implements NestInterceptor {
     private getRedactedPlain(data: any): any {
         this.log.debug('generating redacted data')
         // check if data is array
-        if (Array.isArray(data)) {
+        if (isObject(data) && 'stream' in data) {
+            return "stream"
+        } else if (Array.isArray(data)) {
             let redactedArr = []
             // get plain version of stored object in array
             // value.constructor returns the constructor of a specific object.

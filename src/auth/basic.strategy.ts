@@ -1,5 +1,6 @@
 import {Injectable, UnauthorizedException} from '@nestjs/common'
 import {PassportStrategy} from '@nestjs/passport'
+import {ServiceRequest} from 'interfaces/service-request.interface'
 import {BasicStrategy} from 'passport-http'
 import {Strategy} from 'passport-local'
 import {AuthService} from './auth.service'
@@ -9,7 +10,7 @@ import {AuthResponseDto} from './dto/auth-response.dto'
  * Defines authentication function format
  */
 interface Authenticator {
-    (username: string, password: string, service: AuthService): Promise<AuthResponseDto>
+    (username: string, password: string, realm: string, service: AuthService): Promise<AuthResponseDto>
 }
 
 /**
@@ -18,12 +19,23 @@ interface Authenticator {
  * @param password Login password
  * @param service AuthService that is called to validate the Admin
  */
-async function pwd_auth(username: string, password: string, service: AuthService): Promise<AuthResponseDto> {
-    const admin = await service.validateAdmin(username, password)
-    if (!admin) {
-        throw new UnauthorizedException()
+async function pwd_auth(username: string, password: string, realm: string, service: AuthService): Promise<AuthResponseDto> {
+    if (realm == 'subscriber') {
+        const userInfo = username.split('@')
+        if (userInfo.length != 2)
+            throw new UnauthorizedException()
+        const subscriber = await service.validateSubscriber(userInfo[0], userInfo[1], password)
+        if (!subscriber) {
+            throw new UnauthorizedException()
+        }
+        return subscriber
+    } else {
+        const admin = await service.validateAdmin(username, password)
+        if (!admin) {
+            throw new UnauthorizedException()
+        }
+        return admin
     }
-    return admin
 }
 
 /**
@@ -38,7 +50,9 @@ export class BasicHTTPStrategy extends PassportStrategy(BasicStrategy) {
      * @param authService AuthService to validate the Admin
      */
     constructor(private authService: AuthService) {
-        super()
+        super({
+            passReqToCallback: true
+        })
         this.auth = pwd_auth
     }
 
@@ -47,8 +61,11 @@ export class BasicHTTPStrategy extends PassportStrategy(BasicStrategy) {
      * @param username Username in 'Authorization' header
      * @param password Password in 'Authorization' header
      */
-    async validate(username: string, password: string): Promise<AuthResponseDto> {
-        return await this.auth(username, password, this.authService)
+    async validate(req: ServiceRequest, username: string, password: string): Promise<AuthResponseDto> {
+        let realm = 'admin'
+        if ('x-auth-realm' in req.headers)
+            realm = req.headers['x-auth-realm']
+        return await this.auth(username, password, realm, this.authService)
     }
 }
 
@@ -64,7 +81,9 @@ export class BasicJSONStrategy extends PassportStrategy(Strategy) {
      * @param authService AuthService to validate the Admin
      */
     constructor(private authService: AuthService) {
-        super()
+        super({
+            passReqToCallback: true
+        })
         this.auth = pwd_auth
     }
 
@@ -73,8 +92,11 @@ export class BasicJSONStrategy extends PassportStrategy(Strategy) {
      * @param username Username from JSON
      * @param password Password from JSON
      */
-    async validate(username: string, password: string): Promise<AuthResponseDto> {
-        return await this.auth(username, password, this.authService)
+    async validate(req: ServiceRequest, username: string, password: string): Promise<AuthResponseDto> {
+        let realm = 'admin'
+        if ('x-auth-realm' in req.headers)
+            realm = req.headers['x-auth-realm']
+        return await this.auth(username, password, realm, this.authService)
     }
 }
 
