@@ -17,6 +17,7 @@ import {SystemcontactsModule} from './api/systemcontacts/systemcontacts.module'
 import {LoggerMiddleware} from './middleware/logger.middleware'
 import {StateMiddleware} from './middleware/state.middleware';
 import {DbStateSchedule} from './schedules/dbstate.schedule';
+import {FileshareModule} from './api/fileshare/fileshare.module';
 
 @Global()
 @Module({
@@ -40,6 +41,7 @@ import {DbStateSchedule} from './schedules/dbstate.schedule';
         DatabaseModule,
         DbStateSchedule,
         DomainsModule,
+        FileshareModule,
         InterceptorModule,
         JournalsModule,
         ResellersModule,

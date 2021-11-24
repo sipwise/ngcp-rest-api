@@ -5,6 +5,7 @@ import {jwtConstants} from '../config/constants.config'
 import {db} from '../entities'
 import {AuthService} from './auth.service'
 import {AppService} from '../app.service'
+import {ServiceRequest} from 'interfaces/service-request.interface'
 
 /**
  * Implementation of the JWT authentication strategy
@@ -21,25 +22,51 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         private readonly auth: AuthService,
     ) {
         super({
+            passReqToCallback: true,
             jwtFromRequest: fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
             secretOrKey: jwtConstants.secret,
-
         })
     }
 
     /**
      * Validate is only called if the JWT was successfully extracted from the authentication header
+     * @param req ServiceRequest
      * @param payload Extracted JWT
      * @returns token User information contained in the JWT
      */
-    async validate(payload: any) {
+    async validate(req: ServiceRequest, payload: any) {
         this.log.debug('got payload in validate ' + JSON.stringify(payload))
-        const admin = await this.app.dbRepo(db.billing.Admin).findOne(payload.id, {relations: ['role']})
-        if (!this.auth.isAdminValid(admin)) {
-            return null
+        let realm = 'admin'
+        if ('x-auth-realm' in req.headers)
+            realm = req.headers['x-auth-realm']
+        if (realm == 'subscriber') {
+            if (!('subscriber_uuid' in payload))
+                return null
+            const subscriber = await this.app.dbRepo(db.provisioning.VoipSubscriber).findOne({
+                where: {
+                    uuid: payload.subscriber_uuid
+                },
+                relations: [
+                    "domain",
+                    "contract",
+                    "contract.contact",
+                    "billing_voip_subscriber"
+                ]
+            })
+            if (!this.auth.isSubscriberValid(subscriber)) {
+                return null
+            }
+            return this.auth.subscriberAuthToResponse(subscriber)
+        } else {
+            if (!('id' in payload))
+                return null
+            const admin = await this.app.dbRepo(db.billing.Admin).findOne(payload.id, {relations: ['role']})
+            if (!this.auth.isAdminValid(admin)) {
+                return null
+            }
+            return this.auth.adminAuthToResponse(admin)
         }
-        return this.auth.toResponse(admin)
     }
 }
 

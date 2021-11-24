@@ -1,4 +1,4 @@
-import {Controller, Get, Patch, Post, Put} from '@nestjs/common'
+import {Controller, Get, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
 import {JournalsService} from '../journals/journals.service'
 import {ResellersService} from './resellers.service'
 import {CrudController} from '../../controllers/crud.controller'
@@ -39,7 +39,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     @ApiOkResponse({
         type: [ResellerResponseDto],
     })
-    async readAll(page, rows, req) {
+    async readAll(page, rows, req): Promise<ResellerResponseDto[]> {
         return super.readAll(page, rows, req)
     }
 
@@ -47,15 +47,15 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     @ApiOkResponse({
         type: ResellerResponseDto,
     })
-    async read(id, req): Promise<ResellerResponseDto> {
-        return super.read(id, req)
+    async read(@Param('id', ParseIntPipe) id: number, req): Promise<ResellerResponseDto> {
+        return this.resellersService.read(id, req)
     }
 
     @Put(':id')
     @ApiOkResponse({
         type: ResellerResponseDto,
     })
-    async update(id, entity: ResellerCreateDto, req: Request): Promise<ResellerResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, entity: ResellerCreateDto, req: Request): Promise<ResellerResponseDto> {
         return super.update(id, entity, req)
     }
 
@@ -72,7 +72,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id, patch: Operation | Operation[], req: Request): Promise<ResellerResponseDto> {
+    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req: Request): Promise<ResellerResponseDto> {
         return super.adjust(id, patch, req)
     }
 
@@ -80,7 +80,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(id, page, row, req): Promise<JournalResponseDto[]> {
+    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<JournalResponseDto[]> {
         return super.journal(id, page, row, req)
     }
 }

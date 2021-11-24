@@ -49,18 +49,23 @@ export class TransformInterceptor implements NestInterceptor {
         const ctx = context.switchToHttp()
         return next.handle().pipe(map(data => {
             const req = ctx.getRequest()
-            const resp: Response = ctx.getResponse()
+            const res = ctx.getResponse()
+
             // data = await data // TODO: Take a closer look. No idea why data is a promise in the first place
             const accept = (req.headers.accept || '').split(',')
+            if (res.passthrough) {
+                return data
+            }
             if (accept.length == 1 && accept[0] === 'application/json') {
                 return data
             }
             if (req.method === 'DELETE') {
                 return data
             }
-            resp.setHeader("content-type", "application/hal+json")
-            let hal = this.generateHALResource(req, data)
-            return hal
+
+            res.setHeader("content-type", "application/hal+json")
+
+            return this.generateHALResource(req, data)
         }))
     }
 

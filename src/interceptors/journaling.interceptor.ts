@@ -72,9 +72,10 @@ export class JournalingInterceptor implements NestInterceptor {
                 const resourceName = extractResourceName(req.path, AppService.config.common.api_prefix)
 
                 // Get resourceID from data values if method is POST else from request params 'id'
-                let resourceID
+                let resourceID = 0
                 if (req.method == 'POST') {
-                    resourceID = data.id
+                    if (data && 'id' in data && data.id)
+                        resourceID = data.id
                 } else {
                     resourceID = req.params.id
                 }
@@ -84,10 +85,12 @@ export class JournalingInterceptor implements NestInterceptor {
                 // create new Journal entry
                 const entry: JournalCreateDto = {
                     reseller_id: req.user.reseller_id,
-                    role_id: req.user.role_data.id,
+                    role_id: req.user.role_data ? req.user.role_data.id : 0,
                     user_id: req.user.id,
                     tx_id: ctx.txid,
-                    content: req.body.toString('base64'),
+                    content: Object.keys(req.body).length > 0
+                                ? req.body.toString('base64')
+                                : '',
                     content_format: cf,
                     operation: op,
                     resource_id: resourceID,

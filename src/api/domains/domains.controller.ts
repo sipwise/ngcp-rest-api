@@ -1,6 +1,6 @@
 import {ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {Controller, Delete, Get, Post} from '@nestjs/common'
+import {Controller, Delete, Get, Param, ParseIntPipe, Post} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {DomainCreateDto} from './dto/domain-create.dto'
 import {DomainResponseDto} from './dto/domain-response.dto'
@@ -41,8 +41,8 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     @ApiOkResponse({
         type: [DomainResponseDto],
     })
-    async readAll(page, rows, req): Promise<DomainResponseDto[]> {
-        return super.readAll(page, rows, req)
+    async readAll(page, rows): Promise<DomainResponseDto[]> {
+        return this.domainsService.readAll(page, rows)
     }
 
     @Get(':id')
@@ -50,21 +50,21 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
         type: DomainResponseDto,
     })
     @Roles(RBAC_ROLES.ccare, RBAC_ROLES.ccareadmin)
-    async read(id, req): Promise<DomainResponseDto> {
-        return super.read(id, req)
+    async read(@Param('id', ParseIntPipe) id: number): Promise<DomainResponseDto> {
+        return this.domainsService.read(id)
     }
 
     @Delete(':id')
     @ApiOkResponse({})
-    async delete(id, req): Promise<number> {
-        return super.delete(id, req)
+    async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
+        return this.domainsService.delete(id, req)
     }
 
     @Get(':id/journal')
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(id, page, row, req): Promise<JournalResponseDto[]> {
+    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<JournalResponseDto[]> {
         return super.journal(id, page, row, req)
     }
 

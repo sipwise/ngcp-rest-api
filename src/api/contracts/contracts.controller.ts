@@ -1,4 +1,4 @@
-import {Controller, Get, Patch, Post, Put} from '@nestjs/common'
+import {Controller, Get, Param, ParseIntPipe, Patch, Post, Put, StreamableFile} from '@nestjs/common'
 import {Auth} from '../../decorators/auth.decorator'
 import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'
@@ -38,24 +38,24 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     @ApiOkResponse({
         type: [ContractResponseDto],
     })
-    async readAll(page, rows, req): Promise<ContractResponseDto[]> {
-        return super.readAll(page, rows, req)
+    async readAll(page, rows): Promise<ContractResponseDto[]> {
+        return this.contractsService.readAll(page, rows)
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: ContractResponseDto,
     })
-    async read(id, req): Promise<ContractResponseDto> {
-        return super.read(id, req)
+    async read(@Param('id', ParseIntPipe) id: number): Promise<ContractResponseDto> {
+        return this.contractsService.read(id)
     }
 
     @Put(':id')
     @ApiOkResponse({
         type: ContractResponseDto,
     })
-    async update(id, dto: ContractCreateDto, req): Promise<ContractResponseDto> {
-        return super.update(id, dto, req)
+    async update(@Param('id', ParseIntPipe) id: number, dto: ContractCreateDto): Promise<ContractResponseDto> {
+        return this.contractsService.update(id, dto)
     }
 
     @Patch(':id')
@@ -65,8 +65,8 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(id, patch: Operation | Operation[], req): Promise<ContractResponseDto> {
-        return super.adjust(id, patch, req)
+    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[]): Promise<ContractResponseDto> {
+        return this.contractsService.adjust(id, patch)
     }
 
     // DELETE is not allowed for Contracts
@@ -79,7 +79,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(id, page, row, req): Promise<JournalResponseDto[]> {
+    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<JournalResponseDto[]> {
         return super.journal(id, page, row, req)
     }
 }
