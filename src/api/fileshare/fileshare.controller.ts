@@ -8,8 +8,7 @@ import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalsService} from '../journals/journals.service'
 import {Public} from '../../decorators/public.decorator'
 import {FileInterceptor} from '@nestjs/platform-express'
-import {AppService} from 'app.service'
-import {appendFile} from 'fs'
+import {AppService} from '../../app.service'
 
 const resourceName = 'fileshare'
 
