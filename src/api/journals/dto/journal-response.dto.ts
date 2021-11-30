@@ -6,7 +6,7 @@ export class JournalResponseDto {
     reseller_id: number
     resource_id: number
     resource_name: string
-    role_id: number
+    role_id: number | null
     timestamp: number
     tx_id: string
     username: string

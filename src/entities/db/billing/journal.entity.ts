@@ -60,7 +60,7 @@ export class Journal extends BaseEntity {
         type: 'int',
         width: 11,
     })
-    role_id: number
+    role_id?: number
 
     @ManyToOne(type => AclRole, role => role.journals)
     @JoinColumn({name: 'role_id'})
