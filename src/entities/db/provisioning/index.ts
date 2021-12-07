@@ -1,2 +1,5 @@
 export {VoipDomain} from './voip-domain.entity'
 export {VoipSubscriber} from './voip-subscriber.entity'
+export {XmlGroup} from './xml-group'
+export {XmlHost} from './xml-host'
+export {XmlQueue} from './xml-queue'
