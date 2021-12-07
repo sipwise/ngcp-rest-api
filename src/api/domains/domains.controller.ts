@@ -36,7 +36,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     @ApiCreatedResponse({
         type: DomainResponseDto,
     })
-    async create(entity: DomainCreateDto, req: Request): Promise<DomainResponseDto> {
+    async create(entity: DomainCreateDto, req ): Promise<DomainResponseDto> {
         return super.create(entity, req)
     }
 
@@ -61,6 +61,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
             headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
         }
         return this.domainsService.readAll(page, rows, sr)
+
     }
 
     @Get(':id')
@@ -68,7 +69,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
         type: DomainResponseDto,
     })
     @Roles(RBAC_ROLES.ccare, RBAC_ROLES.ccareadmin)
-    async read(@Param('id', ParseIntPipe) id: number): Promise<DomainResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, req) : Promise<DomainResponseDto> {
         return this.domainsService.read(id)
     }
 

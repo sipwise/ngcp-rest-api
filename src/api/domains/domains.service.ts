@@ -1,5 +1,12 @@
 import {AppService} from '../../app.service'
-import {ForbiddenException, Injectable, Logger, NotImplementedException, UnprocessableEntityException} from '@nestjs/common'
+import {
+    ForbiddenException,
+    Injectable,
+    InternalServerErrorException,
+    Logger,
+    NotImplementedException,
+    UnprocessableEntityException,
+} from '@nestjs/common'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {DomainBaseDto} from './dto/domain-base.dto'
 import {DomainCreateDto} from './dto/domain-create.dto'
@@ -12,6 +19,8 @@ import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {configureQueryBuilder} from '../../helpers/query-builder.helper'
 import {DomainSearchDto} from './dto/domain-search.dto'
+import {XmlDispatcher} from '../../helpers/xml-dispatcher'
+import {TelnetDispatcher} from '../../helpers/telnet-dispatcher'
 
 @Injectable()
 export class DomainsService implements CrudService<DomainCreateDto, DomainResponseDto> {
@@ -48,8 +57,19 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
         await db.billing.Domain.insert(dbDomain)
         await db.provisioning.VoipDomain.insert(dbVoipDomain)
 
-        // TODO: xmpp domain reload
-        // TODO: sip domain reload
+        let telnetDispatcher = new TelnetDispatcher()
+        let xmlDispatcher = new XmlDispatcher()
+
+        let errors = await telnetDispatcher.activateDomain(dbDomain.domain)
+
+        // roll back changes if errors occured
+        if (errors.length > 0) {
+            await telnetDispatcher.deactivateDomain(dbDomain.domain)
+            await db.billing.Domain.remove(dbDomain)
+            await db.provisioning.VoipDomain.remove(dbVoipDomain)
+            throw new InternalServerErrorException(errors)
+        }
+        await xmlDispatcher.sipDomainReload(dbDomain.domain)
         return this.toResponse(dbDomain)
     }
 
@@ -94,6 +114,11 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
         const provDomain = await db.provisioning.VoipDomain.findOneOrFail({where: {domain: domain.domain}})
         await db.billing.Domain.delete(id)
         await db.provisioning.VoipDomain.delete(provDomain.id)
+        let telnetDispatcher = new TelnetDispatcher()
+
+        let xmlDispatcher = new XmlDispatcher()
+        await telnetDispatcher.deactivateDomain(domain.domain)
+        await xmlDispatcher.sipDomainReload(domain.domain)
         return 1
     }
 

@@ -4,7 +4,6 @@ import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestj
 import {Observable} from 'rxjs'
 import {extractResourceName} from '../helpers/uri.helper'
 import {map} from 'rxjs/operators'
-import {Response} from 'express'
 
 /**
  * Defines the names of query parameters for pagination
@@ -63,7 +62,7 @@ export class TransformInterceptor implements NestInterceptor {
                 return data
             }
 
-            res.setHeader("content-type", "application/hal+json")
+            res.setHeader('content-type', 'application/hal+json')
 
             return this.generateHALResource(req, data)
         }))
@@ -83,8 +82,10 @@ export class TransformInterceptor implements NestInterceptor {
 
         const prefix = AppService.config.common.api_prefix
 
+        let resource
+
         if (Array.isArray(data)) {
-            let resource = halson()
+            resource = halson()
                 .addLink('self', `/${prefix}/${resName}?page=${page}&rows=${row}`)
             data.map(async (row) => {
                 await resource.addLink(`ngcp:${resName}`, `/${prefix}/${resName}/${row.id}`)
@@ -94,11 +95,11 @@ export class TransformInterceptor implements NestInterceptor {
             resource['total_count'] = data.length
 
             return resource
+        } else if (data && 'id' in data) {
+            resource = halson(data)
+                .addLink('self', `/${prefix}/${resName}/${data.id}`)
+                .addLink('collection', `/${prefix}/${resName}`)
         }
-        let resource = halson(data)
-            .addLink('self', `/${prefix}/${resName}/${data.id}`)
-            .addLink('collection', `/${prefix}/${resName}`)
-
         return resource
     }
 

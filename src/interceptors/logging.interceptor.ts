@@ -74,11 +74,10 @@ export class LoggingInterceptor implements NestInterceptor {
                 redactedArr.push(redacted)
             })
             return redactedArr
-        } else {
+        } else if (data) {
             // get plain version object
             // value.constructor returns the constructor of a specific object.
             // This allows the call of the correct ClassConstructor in plainToClass()
-
             return plainToClass(data.constructor, data)
         }
     }

@@ -107,7 +107,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
         return this.journals.readAll(sr, page, row, this.resourceName, id)
     }
 
-    private newServiceRequest(req: Request): ServiceRequest {
+    protected newServiceRequest(req: Request): ServiceRequest {
         return {
             headers: [req.rawHeaders],
             params: [req.params],
