@@ -57,6 +57,7 @@
     "rxjs": "^7.4.0",
     "sd-notify": "2.8.0",
     "swagger-ui-express": "4.1.6",
+    "telnet-client": "1.4.11",
     "typeorm": "0.2.41",
     "uuid": "8.3.2",
     "winston": "3.3.3",
