@@ -34,7 +34,8 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
             mime_type: db.mime_type,
             ttl: db.ttl,
             created_at: db.created_at,
-            expires_at: db.expires_at
+            expires_at: db.expires_at,
+            size: db.size
         }
 
         if (['system','admin','reseller'].includes(req.user.role))
@@ -67,7 +68,7 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
         const userFilesLimit = this.app.config.fileshare.limits.user_files
         if (userFilesLimit > 0) {
             const count = await db.fileshare.Upload.count(filter)
-            if (count > userFilesLimit)
+            if (count >= userFilesLimit)
                 throw new UnprocessableEntityException('Files limit reached')
         }
 
@@ -83,13 +84,16 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
         }
 
         const now = new Date()
+        const updateDate = new Date(now.getTime())
+        const expireDate = new Date(now.getTime() + (createDto.ttl || 86400) * 1000)
         let upload = new fileshare.Upload()
         upload.id = uuidv4()
         upload.mime_type = file.mimetype
         upload.original_name = file.originalname
         upload.ttl = createDto.ttl || 86400
         upload.created_at = now
-        upload.expires_at = new Date(now.getTime() + (createDto.ttl || 86400) * 1000)
+        upload.updated_at = updateDate
+        upload.expires_at = expireDate
         upload.data = file.buffer
         upload.size = file.size
         upload.reseller_id = req.user.reseller_id
