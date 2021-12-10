@@ -1,4 +1,4 @@
-import {Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
+import {Controller, DefaultValuePipe, Delete, Get, Logger, Param, ParseIntPipe, Patch, Post, Put, Query, Req} from '@nestjs/common'
 import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {CustomercontactsService} from './customercontacts.service'
 import {CustomercontactCreateDto} from './dto/customercontact-create.dto'
@@ -12,6 +12,8 @@ import {RBAC_ROLES} from '../../config/constants.config'
 import {number} from 'yargs'
 import {Operation} from '../../helpers/patch.helper'
 import {PatchDto} from '../patch.dto'
+import { AppService } from '../../app.service'
+import { ServiceRequest } from '../../interfaces/service-request.interface'
 
 const resourceName = 'customercontacts'
 
@@ -19,6 +21,8 @@ const resourceName = 'customercontacts'
 @ApiTags('Customer Contacts')
 @Controller(resourceName)
 export class CustomercontactsController extends CrudController<CustomercontactCreateDto, CustomercontactResponseDto> {
+    private readonly log = new Logger(CustomercontactsController.name)
+
     constructor(
         private readonly contactsService: CustomercontactsService,
         private readonly journalsService: JournalsService,
@@ -38,8 +42,22 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     @ApiOkResponse({
         type: [CustomercontactResponseDto],
     })
-    async readAll(page, rows, req): Promise<CustomercontactResponseDto[]> {
-        return super.readAll(page, rows, req)
+    async readAll(
+        @Query(
+            'page',
+            new DefaultValuePipe(AppService.config.common.api_default_query_page),
+            ParseIntPipe) page: number,
+        @Query(
+            'rows',
+            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
+            ParseIntPipe) rows: number,
+        @Req() req,
+    ): Promise<CustomercontactResponseDto[]> {
+        this.log.debug({message: 'fetch all customer contacts', func: this.readAll.name, url: req.url, method: req.method})
+        const sr: ServiceRequest = {
+            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
+        }
+        return this.contactsService.readAll(page, rows, req)
     }
 
     @Get(':id')

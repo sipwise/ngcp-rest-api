@@ -1,4 +1,4 @@
-import {BadRequestException, HttpException, Injectable, UnprocessableEntityException} from '@nestjs/common'
+import { BadRequestException, HttpException, Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
 import {CustomercontactCreateDto} from './dto/customercontact-create.dto'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {CustomercontactResponseDto} from './dto/customercontact-response.dto'
@@ -6,14 +6,18 @@ import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helpe
 import {CustomercontactBaseDto} from './dto/customercontact-base.dto'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 import {db} from '../../entities'
-import {FindManyOptions, FindOneOptions, IsNull, Not} from 'typeorm'
+import {FindOneOptions, IsNull, Not} from 'typeorm'
 import {AppService} from '../../app.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ContractStatus} from '../contracts/contracts.constants'
 import {ContactStatus} from '../../entities/db/billing/contact.entity'
+import {configureQueryBuilder} from '../../helpers/query-builder.helper'
+import {CustomercontactSearchDto} from './dto/customercontact-search.dto'
 
 @Injectable()
 export class CustomercontactsService implements CrudService<CustomercontactCreateDto, CustomercontactResponseDto> {
+    private readonly log = new Logger(CustomercontactsService.name)
+
     constructor(
         private readonly app: AppService,
     ) {
@@ -89,15 +93,20 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number): Promise<CustomercontactResponseDto[]> {
-        const pattern: FindManyOptions = {
-            where: {
-                reseller_id: Not(IsNull()),
-            },
-            take: +rows,
-            skip: +rows * (+page - 1),
-        }
-        const result = await db.billing.Contact.find(pattern)
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<CustomercontactResponseDto[]> {
+        this.log.debug({
+            message: 'read all customer contacts',
+            func: this.readAll.name,
+            user: req.user.username,
+            page: page,
+            rows: rows,
+        })
+        let queryBuilder = db.billing.Contact.createQueryBuilder("contact")
+        let customercontactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
+        await configureQueryBuilder(queryBuilder, req.query,
+            {where: customercontactSearchDtoKeys, rows: +rows, page: +page})
+        queryBuilder.andWhere("contact.reseller_id IS NOT NULL")
+        const result = await queryBuilder.getMany()
         return result.map(r => this.toResponse(r))
     }
 
