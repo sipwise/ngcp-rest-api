@@ -1,5 +1,5 @@
 import {AppService} from '../../app.service'
-import {ForbiddenException, Injectable, NotImplementedException, UnprocessableEntityException} from '@nestjs/common'
+import {ForbiddenException, Injectable, Logger, NotImplementedException, UnprocessableEntityException} from '@nestjs/common'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {DomainBaseDto} from './dto/domain-base.dto'
 import {DomainCreateDto} from './dto/domain-create.dto'
@@ -10,9 +10,13 @@ import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {db} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {RBAC_ROLES} from '../../config/constants.config'
+import {configureQueryBuilder} from '../../helpers/query-builder.helper'
+import {DomainSearchDto} from './dto/domain-search.dto'
 
 @Injectable()
 export class DomainsService implements CrudService<DomainCreateDto, DomainResponseDto> {
+    private readonly log = new Logger(DomainsService.name)
+
     constructor(
         private readonly app: AppService,
     ) {
@@ -50,10 +54,19 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number): Promise<DomainResponseDto[]> {
-        const result = await db.billing.Domain.find(
-            {take: rows, skip: rows * (page - 1)},
-        )
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<DomainResponseDto[]> {
+        this.log.debug({
+            message: 'read all domains',
+            func: this.readAll.name,
+            user: req.user.username,
+            page: page,
+            rows: rows,
+        })
+        let queryBuilder = db.billing.Domain.createQueryBuilder("domain")
+        let domainSearchDtoKeys = Object.keys(new DomainSearchDto())
+        await configureQueryBuilder(queryBuilder, req.query,
+            {where: domainSearchDtoKeys, rows: +rows, page: +page})
+        const result = await queryBuilder.getMany()
         return result.map(d => this.toResponse(d))
     }
 

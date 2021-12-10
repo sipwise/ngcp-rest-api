@@ -1,6 +1,6 @@
 import {ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {Controller, Delete, Get, Param, ParseIntPipe, Post} from '@nestjs/common'
+import {Controller, DefaultValuePipe, Delete, Get, Logger, Param, ParseIntPipe, Post, Query, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {DomainCreateDto} from './dto/domain-create.dto'
 import {DomainResponseDto} from './dto/domain-response.dto'
@@ -10,6 +10,8 @@ import {JournalsService} from '../journals/journals.service'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {Request} from 'express'
 import {Roles} from '../../decorators/roles.decorator'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {AppService} from '../../app.service'
 
 const resourceName = 'domains'
 
@@ -21,6 +23,8 @@ const resourceName = 'domains'
 @ApiTags('Domains')
 @Controller(resourceName)
 export class DomainsController extends CrudController<DomainCreateDto, DomainResponseDto> {
+    private readonly log = new Logger(DomainsController.name)
+
     constructor(
         private readonly domainsService: DomainsService,
         private readonly journalsService: JournalsService,
@@ -41,8 +45,22 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     @ApiOkResponse({
         type: [DomainResponseDto],
     })
-    async readAll(page, rows): Promise<DomainResponseDto[]> {
-        return this.domainsService.readAll(page, rows)
+    async readAll(
+        @Query(
+            'page',
+            new DefaultValuePipe(AppService.config.common.api_default_query_page),
+            ParseIntPipe) page: number,
+        @Query(
+            'rows',
+            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
+            ParseIntPipe) rows: number,
+        @Req() req,
+    ): Promise<DomainResponseDto[]> {
+        this.log.debug({message: 'fetch all domains', func: this.readAll.name, url: req.url, method: req.method})
+        const sr: ServiceRequest = {
+            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
+        }
+        return this.domainsService.readAll(page, rows, sr)
     }
 
     @Get(':id')
