@@ -101,7 +101,7 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
         if (req.user.role == 'subscriber')
             upload.subscriber_id = req.user.id
 
-        upload.save()
+        await upload.save()
 
         return this.toResponse(upload, req)
     }
