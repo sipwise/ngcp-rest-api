@@ -6,8 +6,10 @@ import {SystemcontactCreateDto} from './dto/systemcontact-create.dto'
 import {SystemcontactResponseDto} from './dto/systemcontact-response.dto'
 import {SystemcontactBaseDto} from './dto/systemcontact-base.dto'
 import {db} from '../../entities'
-import {FindManyOptions, FindOneOptions, IsNull} from 'typeorm'
+import {FindOneOptions, IsNull} from 'typeorm'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {configureQueryBuilder} from '../../helpers/query-builder.helper'
+import {SystemcontactSearchDto} from './dto/systemcontact-search.dto'
 
 @Injectable()
 export class SystemcontactsService implements CrudService<SystemcontactCreateDto, SystemcontactResponseDto> {
@@ -53,16 +55,21 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number): Promise<SystemcontactResponseDto[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<SystemcontactResponseDto[]> {
         this.log.debug('Entering method readAll')
-        const pattern: FindManyOptions = {
-            where: {
-                reseller_id: IsNull(),
-            },
-            take: rows,
-            skip: rows * (page - 1),
-        }
-        const result = await db.billing.Contact.find(pattern)
+        this.log.debug({
+            message: 'read all system contacts',
+            func: this.readAll.name,
+            user: req.user.username,
+            page: page,
+            rows: rows,
+        })
+        let queryBuilder = db.billing.Contact.createQueryBuilder("contact")
+        let systemcontactSearchDtoKeys = Object.keys(new SystemcontactSearchDto())
+        await configureQueryBuilder(queryBuilder, req.query,
+            {where: systemcontactSearchDtoKeys, rows: +rows, page: +page})
+        queryBuilder.andWhere("contact.reseller_id IS NULL")
+        const result = await queryBuilder.getMany()
         this.log.debug('Exiting method readAll')
         return result.map(r => this.toResponse(r))
     }
