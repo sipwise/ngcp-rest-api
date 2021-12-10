@@ -1,4 +1,4 @@
-import {Controller, Get, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
+import {Controller, DefaultValuePipe, Get, Logger, Param, ParseIntPipe, Patch, Post, Put, Query, Req} from '@nestjs/common'
 import {JournalsService} from '../journals/journals.service'
 import {ResellersService} from './resellers.service'
 import {CrudController} from '../../controllers/crud.controller'
@@ -12,6 +12,8 @@ import {Roles} from '../../decorators/roles.decorator'
 import {Request} from 'express'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {PatchDto} from '../patch.dto'
+import {AppService} from '../../app.service'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 const resourceName = 'resellers'
 
@@ -19,6 +21,8 @@ const resourceName = 'resellers'
 @ApiTags('Resellers')
 @Controller(resourceName)
 export class ResellersController extends CrudController<ResellerCreateDto, ResellerResponseDto> {
+    private readonly log = new Logger(ResellersController.name)
+
     constructor(
         private readonly resellersService: ResellersService,
         private readonly journalsService: JournalsService,
@@ -39,8 +43,22 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     @ApiOkResponse({
         type: [ResellerResponseDto],
     })
-    async readAll(page, rows, req): Promise<ResellerResponseDto[]> {
-        return super.readAll(page, rows, req)
+    async readAll(
+        @Query(
+            'page',
+            new DefaultValuePipe(AppService.config.common.api_default_query_page),
+            ParseIntPipe) page: number,
+        @Query(
+            'rows',
+            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
+            ParseIntPipe) rows: number,
+        @Req() req,
+    ): Promise<ResellerResponseDto[]> {
+        this.log.debug({message: 'fetch all resellers', func: this.readAll.name, url: req.url, method: req.method})
+        const sr: ServiceRequest = {
+            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
+        }
+        return this.resellersService.readAll(page, rows, req)
     }
 
     @Get(':id')

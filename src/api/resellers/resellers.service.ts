@@ -10,6 +10,8 @@ import {RBAC_ROLES} from '../../config/constants.config'
 import {AppService} from '../../app.service'
 import {db} from '../../entities'
 import {FindManyOptions, IsNull} from 'typeorm'
+import {configureQueryBuilder} from '../../helpers/query-builder.helper'
+import {ResellerSearchDto} from './dto/reseller-search.dto'
 
 enum ResellerError {
     ContractExists = 'invalid \'contract_id\', reseller with this contract already exists',
@@ -104,10 +106,18 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
 
     @HandleDbErrors
     async readAll(page: number, rows: number, req: ServiceRequest): Promise<ResellerResponseDto[]> {
-        this.log.debug({message: 'read all resellers', func: this.readAll.name, user: req.user.username})
-        const result = await db.billing.Reseller.find(
-            {take: +rows, skip: +rows * (+page - 1)},
-        )
+        this.log.debug({
+            message: 'read all resellers',
+            func: this.readAll.name,
+            user: req.user.username,
+            page: page,
+            rows: rows
+        })
+        let queryBuilder = db.billing.Reseller.createQueryBuilder("reseller")
+        let resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
+        await configureQueryBuilder(queryBuilder, req.query,
+            {where: resellerSearchDtoKeys, rows: +rows, page: +page})
+        const result = await queryBuilder.getMany()
         return result.map(r => this.toResponse(r))
     }
 
