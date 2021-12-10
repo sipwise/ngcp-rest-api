@@ -75,7 +75,7 @@ export class JournalingInterceptor implements NestInterceptor {
                 // Get resourceID from data values if method is POST else from request params 'id'
                 let resourceID = 0
                 if (req.method == 'POST') {
-                    if (data && 'id' in data && data.id)
+                    if (data && 'id' in data && data.id && Number.isInteger(data.id))
                         resourceID = data.id
                 } else {
                     resourceID = req.params.id
