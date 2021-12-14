@@ -34,3 +34,10 @@ export enum RBAC_ROLES {
     lintercept = 'lintercept',
     subscriber = 'subscriber'
 }
+
+export interface RBAC_FLAGS {
+    is_system: boolean
+    is_superuser: boolean
+    is_ccare: boolean
+    lawful_intercept: boolean
+}
