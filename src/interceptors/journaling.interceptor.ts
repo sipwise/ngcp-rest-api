@@ -7,6 +7,7 @@ import {JournalsService} from '../api/journals/journals.service'
 import {extractResourceName} from '../helpers/uri.helper'
 import {AppService} from '../app.service'
 import Context from '../helpers/context.helper'
+import {isObject} from 'class-validator'
 
 /**
  * Lookup-table for HTTP operations
@@ -89,7 +90,9 @@ export class JournalingInterceptor implements NestInterceptor {
                     user_id: req.user.id,
                     tx_id: ctx.txid,
                     content: Object.keys(req.body).length > 0
-                                ? req.body.toString('base64')
+                                ? isObject(req.body)
+                                    ? Buffer.from(JSON.stringify(req.body)).toString('base64')
+                                    : req.body.toString('base64')
                                 : '',
                     content_format: cf,
                     operation: op,
