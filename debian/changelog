@@ -1,3 +1,20 @@
+ngcp-rest-api (10.2.1.2+0~mr10.2.1.2) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [314565e] TT#151703 introduce @Public decorator
+  * [f0ae5c1] TT#151850 update to latest modules, sequelize cleanup
+  * [d024ad7] TT#151850 skip SELECT DATABASE() ping requests
+  * [865ac05] TT#145602 add /api/fileshare endpoint
+  * [bab5b13] TT#145602 fileshare.controller fix AppServer import
+  * [e5d90e6] TT#145602 fileshare add size and updated_at
+  * [59ac25a] TT#145602 fileshare fix await in make db upload save
+  * [67e4a2f] TT#145602 journaling accept req.body as an object
+
+  [ Michael Berger ]
+  * [3df4812] TT#151201 correctly set content-type for hal+json
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 17 Dec 2021 14:23:30 +0100
+
 ngcp-rest-api (10.2.1.1+0~mr10.2.1.1) unstable; urgency=medium
 
   * New release.
