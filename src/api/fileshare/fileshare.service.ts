@@ -121,7 +121,7 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
         let upload = await db.fileshare.Upload.findOneOrFail(id)
         let stream = new StreamableFile(upload.data, {
             type: upload.mime_type,
-            disposition: `attachment; filename="${upload.original_name}"`
+            disposition: `attachment; filename="${upload.original_name}"; size=${upload.size}`
         })
 
         return stream

@@ -50,7 +50,15 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     })
     async read(@Param('id', ParseUUIDPipe) id: string, req, @Response({passthrough: true}) res): Promise<StreamableFile> {
         const stream = await this.fileshareService.read(id)
+        let size = 0
+        stream.options.disposition.split(/;\s*/).map(pair => {
+            let p = pair.split('=')
+            if (p[0] && p[0] == 'size' && p[1])
+                size = Number(p[1])
+        })
+
         res.set({
+            ...(size > 0 && {'Content-Length': size}),
             'Content-Type': stream.options.type,
             'Content-Disposition': stream.options.disposition
         })
