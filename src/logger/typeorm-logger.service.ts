@@ -1,14 +1,15 @@
-import {Logger as TypeormLogger, QueryRunner} from 'typeorm'
+import {Logger as TypeormLogger, LoggerOptions, QueryRunner} from 'typeorm'
 import {Injectable} from '@nestjs/common'
 import winston from 'winston'
 import {winstonLoggerConfig} from '../config/logger.config'
+import {databaseConfig} from '../config/database.config'
 
 @Injectable()
 export class TypeormLoggerService implements TypeormLogger {
     private logger: winston.Logger
     private context = 'TypeORM'
 
-    constructor() {
+    constructor(private options?: LoggerOptions) {
         this.logger = winston.createLogger(winstonLoggerConfig)
     }
 
@@ -21,6 +22,10 @@ export class TypeormLoggerService implements TypeormLogger {
     }
 
     logQuery(query: string, parameters?: any[], queryRunner?: QueryRunner): any {
+        if ( ! (this.options === 'all' ||
+                this.options === true ||
+                (Array.isArray(this.options) && this.options.indexOf('query') !== -1)))
+            return
         if (query == "select 1" || query == "SELECT DATABASE() AS `db_name`") {
             // do not log ping queries
             return
@@ -29,16 +34,22 @@ export class TypeormLoggerService implements TypeormLogger {
     }
 
     logQueryError(error: string | Error, query: string, parameters?: any[], queryRunner?: QueryRunner): any {
-        let message: string
-
-        message = error instanceof Error ? error.message : error
+        if ( ! (this.options === 'all' ||
+                this.options === true ||
+                (Array.isArray(this.options) && this.options.indexOf('error') !== -1)))
+            return
+        let message: string = error instanceof Error ? error.message : error
         this.logger.error(message, {query: query, parameters: parameters, context: this.context})
     }
 
     logQuerySlow(time: number, query: string, parameters?: any[], queryRunner?: QueryRunner): any {
+        this.logger.warn(`query is slow (+${time}): ` + query, {parameters: parameters, context: this.context})
     }
 
     logSchemaBuild(message: string, queryRunner?: QueryRunner): any {
+        if (this.options === "all" || (Array.isArray(this.options) && this.options.indexOf("schema") !== -1)) {
+            this.logger.info(message, {context: this.context});
+        }
     }
 
 }

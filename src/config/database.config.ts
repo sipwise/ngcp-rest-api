@@ -31,6 +31,5 @@ export const databaseConfig: ConnectionOptions = {
     trace: false,
     debug: false,
     supportBigNumbers: true,
-    logger: new TypeormLoggerService(),
-    logging: ['info', 'error', 'query'],
+    logger: new TypeormLoggerService(['info', 'error']),
 }
