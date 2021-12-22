@@ -39,6 +39,7 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
             login: admin.login,
             read_only: admin.read_only,
             reseller_id: admin.reseller_id,
+            reseller_id_expand: admin.reseller_id_expand,
             role: admin.role,
             show_passwords: admin.show_passwords,
         }

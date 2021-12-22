@@ -9,15 +9,23 @@ import {RBAC_FLAGS, RBAC_ROLES} from '../../config/constants.config'
 import {configureQueryBuilder} from '../../helpers/query-builder.helper'
 import {AdminSearchDto} from './dto/admin-search.dto';
 import {SelectQueryBuilder} from 'typeorm'
+import {ExpandHelper} from '../../helpers/expand.helper'
+import {ResellersController} from '../resellers/resellers.controller'
+import {CustomercontactsController} from '../customercontacts/customercontacts.controller'
+import {ContractsController} from '../contracts/contracts.controller'
 
 const SPECIAL_USER_LOGIN = 'sipwise'
 
 @Injectable()
 export class AdminsRepository {
     private readonly log = new Logger(AdminsRepository.name)
+    private readonly expandHelper = new ExpandHelper(this.resellersController, this.customercontactsController, this.contractsController)
 
     constructor(
         private readonly app: AppService,
+        private readonly resellersController: ResellersController,
+        private readonly customercontactsController: CustomercontactsController,
+        private readonly contractsController: ContractsController
     ) {
     }
 
@@ -93,7 +101,12 @@ export class AdminsRepository {
         await this.applySearchQuery(page, rows, req.query, query)
         await this.applyAdminFilter(req, query)
         const result = await query.getMany()
-        return Promise.all(result.map(async (adm) => this.toObject(adm)))
+        const responseList = await Promise.all(result.map(async (adm) => this.toObject(adm)))
+        if (req.query.expand) {
+            let adminSearchDtoKeys = Object.keys(new AdminSearchDto())
+            await this.expandHelper.expandObjects(responseList, adminSearchDtoKeys, req)
+        }
+        return responseList
     }
 
     @HandleDbErrors
