@@ -15,6 +15,8 @@ export class FileshareSchedule {
 
     @Interval(5000)
     private async cleanupExpiredUploads() {
+        if (!this.app.isDbInitialised || !this.app.isDbAvailable)
+            return
         db.fileshare.Upload.delete({
             expires_at: LessThanOrEqual(new Date())
         })
