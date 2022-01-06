@@ -19,6 +19,7 @@ import {StateMiddleware} from './middleware/state.middleware'
 import {DbStateSchedule} from './schedules/dbstate.schedule'
 import {FileshareSchedule} from './schedules/fileshare.schedule'
 import {FileshareModule} from './api/fileshare/fileshare.module'
+import {ProductsModule} from 'api/products/products.module'
 import {VoicemailsModule} from 'api/voicemails/voicemails.module'
 
 @Global()
@@ -47,6 +48,7 @@ import {VoicemailsModule} from 'api/voicemails/voicemails.module'
         FileshareSchedule,
         InterceptorModule,
         JournalsModule,
+        ProductsModule,
         ResellersModule,
         ScheduleModule.forRoot(),
         SystemcontactsModule,
