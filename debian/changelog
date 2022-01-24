@@ -1,3 +1,41 @@
+ngcp-rest-api (10.4.0.0+0~mr10.4.0.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [fb1f853] TT#151703 introduce @Public decorator
+  * [16fde06] TT#151850 update to latest modules, sequelize cleanup
+  * [887ceae] TT#151850 skip SELECT DATABASE() ping requests
+  * [c479191] TT#145602 add /api/fileshare endpoint
+  * [8c12cb1] TT#145602 fileshare.controller fix AppServer import
+  * [434a5dc] TT#145602 journals.role_id can be null
+  * [2450c3c] TT#145602 fileshare add size and updated_at
+  * [34c69ed] TT#145602 fileshare fix await in make db upload save
+  * [101d90b] TT#145602 journaling accept req.body as an object
+  * [709d6fc] TT#156101 /api/fileshare add Content-Length header
+  * [9c702ab] TT#156102 add fileshare cleanup schedule
+  * [725c743] TT#156300 improve typeorm logging
+  * [20a9fec] TT#156102 fileshare.schedule check for db connectivity
+  * [7b1a00c] TT#156600 /api/admins repository
+
+  [ Michael Berger ]
+  * [cd876b4] TT#150200 add support for new role schema
+  * [c0afc67] TT#145801 add permission checks to JournalsService
+  * [826e2d6] TT#151201 correctly set content-type for hal+json
+  * [d816db7] TT#152100 handle routes not prefixed with /api
+  * [f10d10e] TT#145600 add xmlrpc support
+  * [d617b67] TT#145600 add telnet command dispatcher
+  * [25b032d] TT#145600 add xmlrpc and xmpp reload for domains
+
+  [ Alexandros Perikleous ]
+  * [54c688b] TT#150302 add search/filter by query parameters for the API endpoint api/admins/
+  * [ce77812] TT#150302 add search/filter by query parameters for the API endpoint api/customercontacts/
+  * [05e6bf1] TT#150302 add search/filter by query parameters for the API endpoint api/domains/
+  * [29a9df9] TT#150302 add search/filter by query parameters for the API endpoint api/resellers/
+  * [5bb4dfc] TT#150302 add search/filter by query parameters for the API endpoint api/systemcontacts/
+  * [9f2a653] TT#156500 add expand support for api/admins
+  * [3d8b2b7] TT#156603 Centralised response messages handling
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 24 Jan 2022 16:56:57 +0100
+
 ngcp-rest-api (10.3.0.0+0~mr10.3.0.0) unstable; urgency=medium
 
   [ Michael Berger ]
