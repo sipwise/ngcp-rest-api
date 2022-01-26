@@ -104,7 +104,7 @@ export class AdminsRepository {
         const responseList = await Promise.all(result.map(async (adm) => this.toObject(adm)))
         if (req.query.expand) {
             let adminSearchDtoKeys = Object.keys(new AdminSearchDto())
-            await this.expandHelper.expandObjects(responseList, adminSearchDtoKeys, req)
+            await this.expandHelper.expandMultipleObjects(responseList, adminSearchDtoKeys, req)
         }
         return responseList
     }

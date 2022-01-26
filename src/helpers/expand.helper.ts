@@ -21,25 +21,28 @@ export class ExpandHelper {
      * @param parentObject - Contains the object keys. Used to check whether the field requested to be expanded belongs to them
      * @param request
      */
-    async expandObjects(responseList: any, parentObject: any, request: ServiceRequest) {
-        const firstObjectToExpand = request.query.expand.split(".")[0]
-        if (!parentObject.includes(firstObjectToExpand) || !expandLogic[firstObjectToExpand] || !expandLogic[firstObjectToExpand].roles.includes(request.user.role)) {
-            if (await this.handleSoftExpand(request, `Expanding ${firstObjectToExpand} not allowed or impossible`))
+    async expandMultipleObjects(responseList: any, parentObject: any, request: ServiceRequest) {
+        const firstFieldToExpand = request.query.expand.split(".")[0]
+        if (!parentObject.includes(firstFieldToExpand) || !expandLogic[firstFieldToExpand] || !expandLogic[firstFieldToExpand].roles.includes(request.user.role)) {
+            if (await this.handleSoftExpand(request, `Expanding ${firstFieldToExpand} not allowed or impossible`))
                 return
         }
-        const nextObjectsToExpand = request.query.expand.substring(request.query.expand.indexOf('.') + 1)
+        let nextFieldsToExpand = null
+        if (request.query.expand.indexOf('.') !== -1) {
+            nextFieldsToExpand = request.query.expand.substring(request.query.expand.indexOf('.') + 1)
+        }
         for (let i = 0; i < responseList.length; i++) {
-            const controller = expandLogic[firstObjectToExpand].controller
+            const controller = expandLogic[firstFieldToExpand].controller
             let returnObject
             try {
-                returnObject = await this?.[controller]?.read(responseList[i][`${firstObjectToExpand}`], request)
+                returnObject = await this?.[controller]?.read(responseList[i][`${firstFieldToExpand}`], request)
             } catch(err) {
-                if (await this.handleSoftExpand(request, `Cannot expand field ${firstObjectToExpand}`))
+                if (await this.handleSoftExpand(request, `Cannot expand field ${firstFieldToExpand}`))
                     continue
             }
-            if (nextObjectsToExpand && returnObject != null)
-                await this.expandObject(returnObject, nextObjectsToExpand, request)
-            const newProp = `${firstObjectToExpand}_expand`
+            if (nextFieldsToExpand && returnObject != null)
+                await this.expandSingleObject(returnObject, nextFieldsToExpand, request)
+            const newProp = `${firstFieldToExpand}_expand`
             responseList[i][`${newProp}`] = returnObject
         }
     }
@@ -47,27 +50,30 @@ export class ExpandHelper {
     /**
      * Recursively expands fields and adds them to the parentObject
      * @param parentObject
-     * @param expandObjects - a string of fields to be expanded, split by dots
+     * @param expandFields - a string of fields to be expanded, split by dots
      * @param request
      */
-    async expandObject(parentObject: any, expandObjects: string, request: ServiceRequest){
-        const firstObjectToExpand = expandObjects.split(".")[0]
-        const nextObjectsToExpand = expandObjects.substring(request.query.expand.indexOf('.') + 1)
-        if (parentObject[firstObjectToExpand] && expandLogic[firstObjectToExpand] && expandLogic[firstObjectToExpand].roles.includes(request.user.role)) {
-            const controller = expandLogic[firstObjectToExpand].controller
+    async expandSingleObject(parentObject: any, expandFields: string, request: ServiceRequest){
+        const firstFieldToExpand = expandFields.split(".")[0]
+        let nextFieldsToExpand = null
+        if (expandFields.indexOf('.') !== -1) {
+            nextFieldsToExpand = expandFields.substring(expandFields.indexOf('.') + 1)
+        }
+        if (parentObject[firstFieldToExpand] && expandLogic[firstFieldToExpand] && expandLogic[firstFieldToExpand].roles.includes(request.user.role)) {
+            const controller = expandLogic[firstFieldToExpand].controller
             let returnObject
             try {
-                returnObject = await this?.[controller]?.read(parentObject[`${firstObjectToExpand}`], request)
+                returnObject = await this?.[controller]?.read(parentObject[`${firstFieldToExpand}`], request)
             } catch(err) {
-                if (await this.handleSoftExpand(request, `Cannot expand field ${firstObjectToExpand}`))
+                if (await this.handleSoftExpand(request, `Cannot expand field ${firstFieldToExpand}`))
                     return
             }
-            if (nextObjectsToExpand && returnObject != null)
-                await this.expandObject(returnObject, nextObjectsToExpand, request)
-            const newProp = `${firstObjectToExpand}_expand`
+            if (nextFieldsToExpand && returnObject != null)
+                await this.expandSingleObject(returnObject, nextFieldsToExpand, request)
+            const newProp = `${firstFieldToExpand}_expand`
             parentObject[`${newProp}`] = returnObject
         } else {
-            if (await this.handleSoftExpand(request, `Expanding ${firstObjectToExpand} not allowed or impossible`))
+            if (await this.handleSoftExpand(request, `Expanding ${firstFieldToExpand} not allowed or impossible`))
                 return
         }
     }
