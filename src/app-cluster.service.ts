@@ -55,9 +55,7 @@ export class AppClusterService {
                 workersOnline += 1
                 if (!started && workersOnline == workersAmount) {
                     if (!fs.existsSync(pidDir)) {
-                        fs.mkdir(pidDir, {recursive: true}, (err) => {
-                            logger.log(err)
-                        })
+                        fs.mkdirSync(pidDir, {recursive: true})
                     }
                     fs.writeFileSync(`${pidDir}/${pidFile}`, `${process.pid}\n`)
                     logger.log('Server is started', AppClusterService.name)
