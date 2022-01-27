@@ -9,14 +9,14 @@ export class PublicGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const isPublicMethod = this.reflector.get<boolean>(
             'isPublic',
-            context.getHandler()
+            context.getHandler(),
         )
         const isPublicController = this.reflector.get<boolean>(
             'isPublic',
-            context.getClass()
+            context.getClass(),
         )
 
         return isPublicMethod === undefined ? isPublicController
-                                            : isPublicMethod
+            : isPublicMethod
     }
 }

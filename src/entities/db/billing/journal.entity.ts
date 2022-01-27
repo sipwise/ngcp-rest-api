@@ -87,7 +87,7 @@ export class Journal extends BaseEntity {
     @Column({
         nullable: true,
         type: 'int',
-        width: 11
+        width: 11,
     })
     user_id: number
 }

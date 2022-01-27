@@ -11,36 +11,36 @@ export class XmlQueue extends BaseEntity {
 
     @Column({
         type: 'varchar',
-        length: 255
+        length: 255,
     })
     target: string
 
     @Column({
-        type: 'text'
+        type: 'text',
     })
     body: string
 
     @Column({
         type: 'int',
-        width: 10
+        width: 10,
     })
     ctime: number
 
     @Column({
         type: 'int',
-        width: 10
+        width: 10,
     })
     atime: number
 
     @Column({
         type: 'int',
-        width: 10
+        width: 10,
     })
     tries: number
 
     @Column({
         type: 'int',
-        width: 10
+        width: 10,
     })
     next_try: number
 }

@@ -1,6 +1,6 @@
 import {Injectable, Logger} from '@nestjs/common'
 import {Interval} from '@nestjs/schedule'
-import {FindManyOptions, LessThanOrEqual} from 'typeorm'
+import {LessThanOrEqual} from 'typeorm'
 import {AppService} from '../app.service'
 import {db} from '../entities'
 
@@ -9,7 +9,7 @@ export class FileshareSchedule {
     private readonly log = new Logger(FileshareSchedule.name)
 
     constructor(
-        private readonly app: AppService
+        private readonly app: AppService,
     ) {
     }
 
@@ -18,7 +18,7 @@ export class FileshareSchedule {
         if (!this.app.isDbInitialised || !this.app.isDbAvailable)
             return
         db.fileshare.Upload.delete({
-            expires_at: LessThanOrEqual(new Date())
+            expires_at: LessThanOrEqual(new Date()),
         })
     }
 }

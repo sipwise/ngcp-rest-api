@@ -4,7 +4,7 @@ import {AdminUpdateDto} from './dto/admin-update.dto'
 import {AdminDto} from './dto/admin.dto'
 import {AppService} from '../../app.service'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
-import {applyPatch, normalisePatch, Operation as PatchOperation} from '../../helpers/patch.helper'
+import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {ForbiddenException, Injectable, Logger, UnprocessableEntityException} from '@nestjs/common'
 import {genSalt, hash} from 'bcrypt'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -95,8 +95,8 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
 
         return await Promise.all(
             (await this.dbRepo.readAllAdmin(page, rows, req)).map(
-                async (admin) => this.toResponse(admin)
-            )
+                async (admin) => this.toResponse(admin),
+            ),
         )
     }
 
@@ -150,7 +150,7 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
                 requested_role: admin.role,
                 is_master: req.user.is_master,
             })
-            throw new ForbiddenException(PERMISSION_DENIED, "invalid user role")
+            throw new ForbiddenException(PERMISSION_DENIED, 'invalid user role')
         }
 
         if (admin.password)
@@ -181,12 +181,12 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
      *
      * @returns admin object used to update the current entry
      */
-    async validateUpdate(selfId: number, oldAdmin: AdminDto, admin: AdminDto): Promise<boolean>  {
+    async validateUpdate(selfId: number, oldAdmin: AdminDto, admin: AdminDto): Promise<boolean> {
         if (admin.id == selfId) {
             ['login', 'role', 'is_master', 'is_active',
-             'is_system', 'is_superuser', 'lawful_intercept',
-             'read_only', 'show_passwords',
-             'call_data', 'billing_data'].map(s => {
+                'is_system', 'is_superuser', 'lawful_intercept',
+                'read_only', 'show_passwords',
+                'call_data', 'billing_data'].map(s => {
                 if (admin[s] && (!oldAdmin[s] || oldAdmin[s] != admin[s])) {
                     this.log.debug({message: 'Cannot change own property', id: selfId, field: s})
                     throw new ForbiddenException(PERMISSION_DENIED, 'Cannot change own property')

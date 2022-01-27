@@ -61,8 +61,8 @@ async function bootstrap() {
     }))
 
     await app.listen(config.common.api_port, process.env.NODE_ENV == 'development'
-                                                ? '0.0.0.0'
-                                                : '127.0.0.1'
+        ? '0.0.0.0'
+        : '127.0.0.1',
     )
 }
 

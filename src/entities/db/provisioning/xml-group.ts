@@ -1,5 +1,4 @@
 import {BaseEntity, Column, Entity, ManyToMany, PrimaryGeneratedColumn} from 'typeorm'
-import {XmlHostgroup} from './xml-hostgroup'
 import {XmlHost} from './xml-host'
 
 @Entity({

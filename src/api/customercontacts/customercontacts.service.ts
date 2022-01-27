@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
+import {BadRequestException, HttpException, Injectable, Logger, UnprocessableEntityException} from '@nestjs/common'
 import {CustomercontactCreateDto} from './dto/customercontact-create.dto'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {CustomercontactResponseDto} from './dto/customercontact-response.dto'
@@ -101,11 +101,11 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
             page: page,
             rows: rows,
         })
-        let queryBuilder = db.billing.Contact.createQueryBuilder("contact")
+        let queryBuilder = db.billing.Contact.createQueryBuilder('contact')
         let customercontactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
         await configureQueryBuilder(queryBuilder, req.query,
             {where: customercontactSearchDtoKeys, rows: +rows, page: +page})
-        queryBuilder.andWhere("contact.reseller_id IS NOT NULL")
+        queryBuilder.andWhere('contact.reseller_id IS NOT NULL')
         const result = await queryBuilder.getMany()
         return result.map(r => this.toResponse(r))
     }

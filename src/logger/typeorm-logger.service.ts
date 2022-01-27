@@ -2,7 +2,6 @@ import {Logger as TypeormLogger, LoggerOptions, QueryRunner} from 'typeorm'
 import {Injectable} from '@nestjs/common'
 import winston from 'winston'
 import {winstonLoggerConfig} from '../config/logger.config'
-import {databaseConfig} from '../config/database.config'
 
 @Injectable()
 export class TypeormLoggerService implements TypeormLogger {
@@ -22,11 +21,11 @@ export class TypeormLoggerService implements TypeormLogger {
     }
 
     logQuery(query: string, parameters?: any[], queryRunner?: QueryRunner): any {
-        if ( ! (this.options === 'all' ||
-                this.options === true ||
-                (Array.isArray(this.options) && this.options.indexOf('query') !== -1)))
+        if (!(this.options === 'all' ||
+            this.options === true ||
+            (Array.isArray(this.options) && this.options.indexOf('query') !== -1)))
             return
-        if (query == "select 1" || query == "SELECT DATABASE() AS `db_name`") {
+        if (query == 'select 1' || query == 'SELECT DATABASE() AS `db_name`') {
             // do not log ping queries
             return
         }
@@ -34,9 +33,9 @@ export class TypeormLoggerService implements TypeormLogger {
     }
 
     logQueryError(error: string | Error, query: string, parameters?: any[], queryRunner?: QueryRunner): any {
-        if ( ! (this.options === 'all' ||
-                this.options === true ||
-                (Array.isArray(this.options) && this.options.indexOf('error') !== -1)))
+        if (!(this.options === 'all' ||
+            this.options === true ||
+            (Array.isArray(this.options) && this.options.indexOf('error') !== -1)))
             return
         let message: string = error instanceof Error ? error.message : error
         this.logger.error(message, {query: query, parameters: parameters, context: this.context})
@@ -47,8 +46,8 @@ export class TypeormLoggerService implements TypeormLogger {
     }
 
     logSchemaBuild(message: string, queryRunner?: QueryRunner): any {
-        if (this.options === "all" || (Array.isArray(this.options) && this.options.indexOf("schema") !== -1)) {
-            this.logger.info(message, {context: this.context});
+        if (this.options === 'all' || (Array.isArray(this.options) && this.options.indexOf('schema') !== -1)) {
+            this.logger.info(message, {context: this.context})
         }
     }
 

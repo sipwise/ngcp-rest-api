@@ -14,6 +14,6 @@ export class AclRoleMapping extends BaseEntity {
     has_access_to_id?: number
 
     @ManyToOne(() => AclRole)
-    @JoinColumn({ name: "accessor_id" })
+    @JoinColumn({name: 'accessor_id'})
     id?: AclRole
 }

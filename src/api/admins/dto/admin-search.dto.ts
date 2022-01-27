@@ -1,4 +1,4 @@
-import { AdminResponseDto } from './admin-response.dto';
+import {AdminResponseDto} from './admin-response.dto'
 
 export class AdminSearchDto implements AdminResponseDto {
     billing_data: boolean = undefined

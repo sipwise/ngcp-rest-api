@@ -63,7 +63,7 @@ export class LoggingInterceptor implements NestInterceptor {
         this.log.debug('generating redacted data')
         // check if data is array
         if (isObject(data) && 'stream' in data) {
-            return "stream"
+            return 'stream'
         } else if (Array.isArray(data)) {
             let redactedArr = []
             // get plain version of stored object in array

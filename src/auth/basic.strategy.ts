@@ -51,7 +51,7 @@ export class BasicHTTPStrategy extends PassportStrategy(BasicStrategy) {
      */
     constructor(private authService: AuthService) {
         super({
-            passReqToCallback: true
+            passReqToCallback: true,
         })
         this.auth = pwd_auth
     }
@@ -82,7 +82,7 @@ export class BasicJSONStrategy extends PassportStrategy(Strategy) {
      */
     constructor(private authService: AuthService) {
         super({
-            passReqToCallback: true
+            passReqToCallback: true,
         })
         this.auth = pwd_auth
     }

@@ -52,7 +52,7 @@ export class JournalsService {
             }
         }
         if (user.reseller_id_required) {
-            filter["reseller_id"] = user.reseller_id
+            filter['reseller_id'] = user.reseller_id
         }
         this.log.debug({
             message: 'finding journal entries',
@@ -105,7 +105,7 @@ export class JournalsService {
             resource_id: db.resource_id,
             resource_name: db.resource_name,
             timestamp: db.timestamp,
-            username: db.username
+            username: db.username,
         }
     }
 }

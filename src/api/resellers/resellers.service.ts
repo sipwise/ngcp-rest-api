@@ -111,9 +111,9 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
             func: this.readAll.name,
             user: req.user.username,
             page: page,
-            rows: rows
+            rows: rows,
         })
-        let queryBuilder = db.billing.Reseller.createQueryBuilder("reseller")
+        let queryBuilder = db.billing.Reseller.createQueryBuilder('reseller')
         let resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
         await configureQueryBuilder(queryBuilder, req.query,
             {where: resellerSearchDtoKeys, rows: +rows, page: +page})

@@ -14,60 +14,60 @@ export class VoipSubscriber extends BaseEntity {
 
     @Column({
         type: 'varchar',
-        length: 127
+        length: 127,
     })
     username: string
 
     @Column({
-        unsigned: true
+        unsigned: true,
     })
     domain_id: number
 
     @Column({
         type: 'char',
-        length: 36
+        length: 36,
     })
     uuid: string
 
     @Column({
         type: 'varchar',
         length: 40,
-        nullable: true
+        nullable: true,
     })
     password: string
 
     @Column({
-        default: 0
+        default: 0,
     })
     admin: boolean
 
     @Column({
         unsigned: true,
-        nullable: true
+        nullable: true,
     })
     account_id: number
 
     @Column({
         type: 'varchar',
         length: 127,
-        nullable: true
+        nullable: true,
     })
     webusername: string
 
     @Column({
         type: 'char',
         length: 56,
-        nullable: true
+        nullable: true,
     })
     webpassword: string
 
     @Column({
-        default: 0
+        default: 0,
     })
     is_pbx_pilot: boolean
 
     @Column({
-        default: 0
+        default: 0,
     })
     is_pbx_group: boolean
 
@@ -77,58 +77,58 @@ export class VoipSubscriber extends BaseEntity {
             'serial',
             'parallel',
             'random',
-            'circular'
+            'circular',
         ],
-        nullable: true
+        nullable: true,
     })
     pbx_hunt_policy: string
 
     @Column({
         unsigned: true,
-        nullable: true
+        nullable: true,
     })
     pbx_hunt_timeout: number
 
     @Column({
         type: 'varchar',
         length: 255,
-        nullable: true
+        nullable: true,
     })
     pbx_extension: string
 
     @Column({
         unsigned: true,
-        nullable: true
+        nullable: true,
     })
     profile_set_id: number
 
     @Column({
         unsigned: true,
-        nullable: true
+        nullable: true,
     })
     profile_id: number
 
     @Column({
         type: 'timestamp',
-        default: 'current_timestamp'
+        default: 'current_timestamp',
     })
     modify_timestamp: string
 
     @Column({
         type: 'timestamp',
-        default: '0000-00-00 00:00:00'
+        default: '0000-00-00 00:00:00',
     })
     create_timestamp: string
 
     @OneToOne(() => BillingVoipSubscriber)
-    @JoinColumn({ name: 'uuid', referencedColumnName: 'uuid' })
+    @JoinColumn({name: 'uuid', referencedColumnName: 'uuid'})
     billing_voip_subscriber: BillingVoipSubscriber
 
     @ManyToOne(() => VoipDomain, domain => domain.id)
-    @JoinColumn({ name: 'domain_id' })
+    @JoinColumn({name: 'domain_id'})
     domain: VoipDomain
 
     @ManyToOne(() => Contract)
-    @JoinColumn({ name: "account_id" })
+    @JoinColumn({name: 'account_id'})
     contract?: Contract
 }

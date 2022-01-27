@@ -18,11 +18,11 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
     }
 
     filterOptions(req: ServiceRequest): FindManyOptions {
-        let filter: FindManyOptions= {}
+        let filter: FindManyOptions = {}
         if (['reseller', 'ccare'].includes(req.user.role))
-            filter.where = { reseller_id: req.user.reseller_id }
+            filter.where = {reseller_id: req.user.reseller_id}
         if (req.user.role == 'subscriber')
-            filter.where = { subscriber_id: req.user.id }
+            filter.where = {subscriber_id: req.user.id}
 
         return filter
     }
@@ -35,12 +35,12 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
             ttl: db.ttl,
             created_at: db.created_at,
             expires_at: db.expires_at,
-            size: db.size
+            size: db.size,
         }
 
-        if (['system','admin','reseller'].includes(req.user.role))
-            response.subscriber_id  = db.subscriber_id
-        if (['system','admin'].includes(req.user.role))
+        if (['system', 'admin', 'reseller'].includes(req.user.role))
+            response.subscriber_id = db.subscriber_id
+        if (['system', 'admin'].includes(req.user.role))
             response.reseller_id = db.reseller_id
 
         return response
@@ -53,14 +53,14 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
         const totalQuota = this.app.config.fileshare.limits.quota
         if (totalQuota > 0) {
             const totalSize = await db.fileshare.Upload
-                                .createQueryBuilder('info')
-                                .select('info.data_length + info.index_length as size')
-                                .from('information_schema.tables', 'info')
-                                .where('table_schema = :db and table_name = :table', {
-                                        db: "fileshare",
-                                        table: "uploads"
-                                })
-                                .getRawOne()
+                .createQueryBuilder('info')
+                .select('info.data_length + info.index_length as size')
+                .from('information_schema.tables', 'info')
+                .where('table_schema = :db and table_name = :table', {
+                    db: 'fileshare',
+                    table: 'uploads',
+                })
+                .getRawOne()
             if (totalSize && totalSize['size'] + file.size > totalQuota)
                 throw new UnprocessableEntityException('Quota exceeded')
         }
@@ -75,10 +75,10 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
         const userQuota = this.app.config.fileshare.limits.user_quota
         if (userQuota > 0) {
             const userSize = await db.fileshare.Upload
-                                .createQueryBuilder('upload')
-                                .select('SUM(upload.size) as sum')
-                                .where(filter.where)
-                                .getRawOne()
+                .createQueryBuilder('upload')
+                .select('SUM(upload.size) as sum')
+                .where(filter.where)
+                .getRawOne()
             if (userSize['sum'] + file.size > userQuota)
                 throw new UnprocessableEntityException('Quota exceeded')
         }
@@ -121,7 +121,7 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
         let upload = await db.fileshare.Upload.findOneOrFail(id)
         let stream = new StreamableFile(upload.data, {
             type: upload.mime_type,
-            disposition: `attachment; filename="${upload.original_name}"; size=${upload.size}`
+            disposition: `attachment; filename="${upload.original_name}"; size=${upload.size}`,
         })
 
         return stream

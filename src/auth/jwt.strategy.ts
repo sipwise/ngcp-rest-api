@@ -45,14 +45,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
                 return null
             const subscriber = await this.app.dbRepo(db.provisioning.VoipSubscriber).findOne({
                 where: {
-                    uuid: payload.subscriber_uuid
+                    uuid: payload.subscriber_uuid,
                 },
                 relations: [
-                    "domain",
-                    "contract",
-                    "contract.contact",
-                    "billing_voip_subscriber"
-                ]
+                    'domain',
+                    'contract',
+                    'contract.contact',
+                    'billing_voip_subscriber',
+                ],
             })
             if (!this.auth.isSubscriberValid(subscriber)) {
                 return null

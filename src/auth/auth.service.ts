@@ -74,7 +74,11 @@ export class AuthService {
      * @returns Authenticated `AuthResponseDto` on success else `null`
      */
     async validateAdminCert(serial: string): Promise<any> {
-        this.log.debug({message: 'starting admin user certificate authentication', method: this.validateAdminCert.name, serial: serial})
+        this.log.debug({
+            message: 'starting admin user certificate authentication',
+            method: this.validateAdminCert.name,
+            serial: serial,
+        })
         const sn = parseInt(serial, 16)
         if (!sn) {
             this.log.debug({message: 'could not parse serial', serial: serial})
@@ -102,7 +106,7 @@ export class AuthService {
             showPasswords: admin.show_passwords,
             username: admin.login,
             is_master: admin.is_master,
-            reseller_id_required: admin.role.role == RBAC_ROLES.reseller || admin.role.role == RBAC_ROLES.ccare
+            reseller_id_required: admin.role.role == RBAC_ROLES.reseller || admin.role.role == RBAC_ROLES.ccare,
         }
         this.log.debug({
             message: 'admin user authentication',
@@ -132,18 +136,22 @@ export class AuthService {
      * @returns Authenticated `AuthResponseDto` on success else `null`
      */
     async validateSubscriber(username: string, domain: string, password: string): Promise<AuthResponseDto> {
-        this.log.debug({message: 'starting subscriber user authentication', method: this.validateAdmin.name, username: username})
+        this.log.debug({
+            message: 'starting subscriber user authentication',
+            method: this.validateAdmin.name,
+            username: username,
+        })
         const subscriber = await this.app.dbRepo(db.provisioning.VoipSubscriber).findOne({
             where: {
                 username: username,
-                domain: { domain: domain }
+                domain: {domain: domain},
             },
             relations: [
-                "domain",
-                "contract",
-                "contract.contact",
-                "billing_voip_subscriber"
-            ]
+                'domain',
+                'contract',
+                'contract.contact',
+                'billing_voip_subscriber',
+            ],
         })
         if (!this.isSubscriberValid(subscriber)) {
             return null
@@ -170,7 +178,7 @@ export class AuthService {
             showPasswords: false,
             username: subscriber.username,
             is_master: false,
-            uuid: subscriber.uuid
+            uuid: subscriber.uuid,
         }
         this.log.debug({
             message: 'subscriber user authentication',
@@ -189,9 +197,9 @@ export class AuthService {
      * @returns JSON Web Token
      */
     async signJwt(user: AuthResponseDto) {
-        const payload = user.role == "subscriber"
-                            ? {username: user.username, subscriber_uuid: user.uuid}
-                            : {username: user.username, id: user.id}
+        const payload = user.role == 'subscriber'
+            ? {username: user.username, subscriber_uuid: user.uuid}
+            : {username: user.username, id: user.id}
         this.log.debug({message: 'signing JWT token', payload})
         return {
             access_token: this.jwtService.sign(payload, {algorithm: 'HS256', noTimestamp: true}),

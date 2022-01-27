@@ -13,8 +13,8 @@ export class Download extends BaseEntity {
         type: 'enum',
         enum: [
             'NEW',
-            'DOWNLOADED'
-        ]
+            'DOWNLOADED',
+        ],
     })
     state: string
 
@@ -31,13 +31,13 @@ export class Download extends BaseEntity {
     @Column({
         type: 'char',
         length: 36,
-        nullable: true
+        nullable: true,
     })
     upload_id: string
 
     @Column({
         type: 'datetime',
-        nullable: true
+        nullable: true,
     })
     expires_at: Date
 }

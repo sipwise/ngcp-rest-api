@@ -11,31 +11,31 @@ export class Upload extends BaseEntity {
 
     @Column({
         type: 'longblob',
-        nullable: true
+        nullable: true,
     })
     data: Buffer
 
     @Column({
         type: 'varchar',
         length: 255,
-        nullable: true
+        nullable: true,
     })
     original_name: string
 
     @Column({
         type: 'varchar',
         length: 255,
-        nullable: true
+        nullable: true,
     })
     mime_type: string
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     size: number
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     ttl: number
 
@@ -43,8 +43,8 @@ export class Upload extends BaseEntity {
         type: 'enum',
         enum: [
             'NEW',
-            'UPLOADED'
-        ]
+            'UPLOADED',
+        ],
     })
     state: string
 
@@ -61,23 +61,23 @@ export class Upload extends BaseEntity {
     @Column({
         type: 'char',
         length: 36,
-        nullable: true
+        nullable: true,
     })
     session_id: string
 
     @Column({
         type: 'datetime',
-        nullable: true
+        nullable: true,
     })
     expires_at: Date
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     reseller_id?: number
 
     @Column({
-        nullable: true
+        nullable: true,
     })
     subscriber_id?: number
 }

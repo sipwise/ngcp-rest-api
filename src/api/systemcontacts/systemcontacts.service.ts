@@ -64,11 +64,11 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
             page: page,
             rows: rows,
         })
-        let queryBuilder = db.billing.Contact.createQueryBuilder("contact")
+        let queryBuilder = db.billing.Contact.createQueryBuilder('contact')
         let systemcontactSearchDtoKeys = Object.keys(new SystemcontactSearchDto())
         await configureQueryBuilder(queryBuilder, req.query,
             {where: systemcontactSearchDtoKeys, rows: +rows, page: +page})
-        queryBuilder.andWhere("contact.reseller_id IS NULL")
+        queryBuilder.andWhere('contact.reseller_id IS NULL')
         const result = await queryBuilder.getMany()
         this.log.debug('Exiting method readAll')
         return result.map(r => this.toResponse(r))

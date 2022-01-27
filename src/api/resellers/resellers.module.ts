@@ -7,6 +7,7 @@ import {JournalsModule} from '../journals/journals.module'
     imports: [JournalsModule],
     providers: [ResellersService],
     controllers: [ResellersController],
+    exports: [ResellersService],
 })
 export class ResellersModule {
 }

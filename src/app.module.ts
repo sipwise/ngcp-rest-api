@@ -1,5 +1,5 @@
 import {Global, Logger, MiddlewareConsumer, Module, NestModule, RequestMethod} from '@nestjs/common'
-import {ScheduleModule} from '@nestjs/schedule';
+import {ScheduleModule} from '@nestjs/schedule'
 import {AdminsModule} from './api/admins/admins.module'
 import {AppController} from './app.controller'
 import {AppService} from './app.service'
@@ -15,10 +15,10 @@ import {JournalsModule} from './api/journals/journals.module'
 import {ResellersModule} from './api/resellers/resellers.module'
 import {SystemcontactsModule} from './api/systemcontacts/systemcontacts.module'
 import {LoggerMiddleware} from './middleware/logger.middleware'
-import {StateMiddleware} from './middleware/state.middleware';
-import {DbStateSchedule} from './schedules/dbstate.schedule';
-import {FileshareSchedule} from './schedules/fileshare.schedule';
-import {FileshareModule} from './api/fileshare/fileshare.module';
+import {StateMiddleware} from './middleware/state.middleware'
+import {DbStateSchedule} from './schedules/dbstate.schedule'
+import {FileshareSchedule} from './schedules/fileshare.schedule'
+import {FileshareModule} from './api/fileshare/fileshare.module'
 
 @Global()
 @Module({

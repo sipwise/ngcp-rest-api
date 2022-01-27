@@ -33,7 +33,7 @@ export class JournalsController {
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe,
         ) row: number,
-        @Req() req: Request
+        @Req() req: Request,
     ): Promise<JournalResponseDto[]> {
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user,
@@ -57,7 +57,7 @@ export class JournalsController {
             ParseIntPipe,
         ) row: number,
         @Param('resource_name') resourceName: string,
-        @Req() req: Request
+        @Req() req: Request,
     ): Promise<JournalResponseDto[]> {
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user,
@@ -82,7 +82,7 @@ export class JournalsController {
         ) row: number,
         @Param('resource_name') resourceName: string,
         @Param('id', ParseIntPipe) resourceId: number,
-        @Req() req: Request
+        @Req() req: Request,
     ): Promise<JournalResponseDto[]> {
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user,

@@ -1,5 +1,4 @@
-import winston from 'winston'
-import {LoggerOptions} from 'winston'
+import winston, {LoggerOptions} from 'winston'
 import {Syslog} from 'winston-syslog'
 import {utilities} from 'nest-winston'
 

@@ -1,4 +1,16 @@
-import {Controller, DefaultValuePipe, Get, Logger, Param, ParseIntPipe, Patch, Post, Put, Query, Req} from '@nestjs/common'
+import {
+    Controller,
+    DefaultValuePipe,
+    Get,
+    Logger,
+    Param,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Put,
+    Query,
+    Req,
+} from '@nestjs/common'
 import {JournalsService} from '../journals/journals.service'
 import {ResellersService} from './resellers.service'
 import {CrudController} from '../../controllers/crud.controller'
@@ -8,12 +20,12 @@ import {Auth} from '../../decorators/auth.decorator'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Operation} from '../../helpers/patch.helper'
-import {Roles} from '../../decorators/roles.decorator'
 import {Request} from 'express'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {PatchDto} from '../patch.dto'
 import {AppService} from '../../app.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {Reflector} from '@nestjs/core'
 
 const resourceName = 'resellers'
 
@@ -24,6 +36,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     private readonly log = new Logger(ResellersController.name)
 
     constructor(
+        private reflector: Reflector,
         private readonly resellersService: ResellersService,
         private readonly journalsService: JournalsService,
     ) {
@@ -31,7 +44,6 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     }
 
     @Post()
-    @Roles(RBAC_ROLES.reseller)
     @ApiCreatedResponse({
         type: ResellerResponseDto,
     })
@@ -56,7 +68,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     ): Promise<ResellerResponseDto[]> {
         this.log.debug({message: 'fetch all resellers', func: this.readAll.name, url: req.url, method: req.method})
         const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
+            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
         return this.resellersService.readAll(page, rows, req)
     }
@@ -76,12 +88,6 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     async update(@Param('id', ParseIntPipe) id: number, entity: ResellerCreateDto, req: Request): Promise<ResellerResponseDto> {
         return super.update(id, entity, req)
     }
-
-    // DELETE is not allowed for Resellers
-    // @Delete(':id')
-    // async delete(id): Promise<number> {
-    //     return super.delete(id)
-    // }
 
     @Patch(':id')
     @ApiOkResponse({

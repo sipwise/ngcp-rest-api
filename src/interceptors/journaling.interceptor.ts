@@ -1,7 +1,6 @@
 import {CallHandler, ExecutionContext, NestInterceptor} from '@nestjs/common'
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
-import {TextEncoder} from 'util'
 import {JournalCreateDto} from '../api/journals/dto/journal-create.dto'
 import {JournalsService} from '../api/journals/journals.service'
 import {extractResourceName} from '../helpers/uri.helper'
@@ -90,16 +89,16 @@ export class JournalingInterceptor implements NestInterceptor {
                     user_id: req.user.id,
                     tx_id: ctx.txid,
                     content: Object.keys(req.body).length > 0
-                                ? isObject(req.body)
-                                    ? Buffer.from(JSON.stringify(req.body)).toString('base64')
-                                    : req.body.toString('base64')
-                                : '',
+                        ? isObject(req.body)
+                            ? Buffer.from(JSON.stringify(req.body)).toString('base64')
+                            : req.body.toString('base64')
+                        : '',
                     content_format: cf,
                     operation: op,
                     resource_id: resourceID,
                     resource_name: resourceName,
                     timestamp: ctx.startTime / 1000,
-                    username: req['user'] !== undefined ? req.user.username : ''
+                    username: req['user'] !== undefined ? req.user.username : '',
                 }
 
                 // write Journal entry to database

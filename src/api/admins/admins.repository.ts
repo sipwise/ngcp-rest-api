@@ -7,7 +7,7 @@ import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AclRole, AclRoleMapping, Admin} from '../../entities/db/billing'
 import {RBAC_FLAGS, RBAC_ROLES} from '../../config/constants.config'
 import {configureQueryBuilder} from '../../helpers/query-builder.helper'
-import {AdminSearchDto} from './dto/admin-search.dto';
+import {AdminSearchDto} from './dto/admin-search.dto'
 import {SelectQueryBuilder} from 'typeorm'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ResellersController} from '../resellers/resellers.controller'
@@ -25,7 +25,7 @@ export class AdminsRepository {
         private readonly app: AppService,
         private readonly resellersController: ResellersController,
         private readonly customercontactsController: CustomercontactsController,
-        private readonly contractsController: ContractsController
+        private readonly contractsController: ContractsController,
     ) {
     }
 
@@ -75,13 +75,18 @@ export class AdminsRepository {
     @HandleDbErrors
     async applySearchQuery(page: number, rows: number, params: any, query: SelectQueryBuilder<any>): Promise<void> {
         let adminSearchDtoKeys = Object.keys(new AdminSearchDto())
-        await configureQueryBuilder(query, params, {joins: [{alias: 'role', property: 'role'}], where: adminSearchDtoKeys, rows: +rows, page: +page})
+        await configureQueryBuilder(query, params, {
+            joins: [{alias: 'role', property: 'role'}],
+            where: adminSearchDtoKeys,
+            rows: +rows,
+            page: +page,
+        })
     }
 
     @HandleDbErrors
     async applyAdminFilter(req: ServiceRequest, query?: SelectQueryBuilder<any>): Promise<SelectQueryBuilder<any>> {
-        query ||= db.billing.Admin.createQueryBuilder("admin")
-                                  .leftJoinAndSelect('admin.role', 'role')
+        query ||= db.billing.Admin.createQueryBuilder('admin')
+            .leftJoinAndSelect('admin.role', 'role')
         if (req.user.is_master) {
             let hasAccessTo = await req.user.role_data.has_access_to
             let roleIds = hasAccessTo.map(role => role.id)
@@ -90,14 +95,14 @@ export class AdminsRepository {
                 query.andWhere('admin.reseller_id = :reseller_id', {reseller_id: req.user.reseller_id})
             }
         } else {
-            query.andWhere("admin.id = :req_user_id", {req_user_id: req.user.id})
+            query.andWhere('admin.id = :req_user_id', {req_user_id: req.user.id})
         }
         return query
     }
 
     @HandleDbErrors
     async readAllAdmin(page: number, rows: number, req: ServiceRequest): Promise<AdminDto[]> {
-        let query = db.billing.Admin.createQueryBuilder("admin")
+        let query = db.billing.Admin.createQueryBuilder('admin')
         await this.applySearchQuery(page, rows, req.query, query)
         await this.applyAdminFilter(req, query)
         const result = await query.getMany()
@@ -112,15 +117,15 @@ export class AdminsRepository {
     @HandleDbErrors
     async readAdmin(id: number, req: ServiceRequest): Promise<AdminDto> {
         let query = await this.applyAdminFilter(req)
-        query.andWhere("admin.id = :id", {id: id})
+        query.andWhere('admin.id = :id', {id: id})
         return this.toObject(await query.getOneOrFail())
     }
 
     @HandleDbErrors
     async updateAdmin(id: number, admin: AdminDto, req: ServiceRequest): Promise<AdminDto> {
         let query = await this.applyAdminFilter(req)
-        let dbAdmin: Admin = await query.andWhere("admin.id = :id", {id: id})
-                                 .getOneOrFail()
+        let dbAdmin: Admin = await query.andWhere('admin.id = :id', {id: id})
+            .getOneOrFail()
         Object.keys(admin).forEach(key => {
             if (key == 'password')
                 return
@@ -138,8 +143,8 @@ export class AdminsRepository {
     @HandleDbErrors
     async deleteAdmin(id: number, req: ServiceRequest): Promise<number> {
         let query = await this.applyAdminFilter(req)
-        let dbAdmin = await query.andWhere("admin.id = :id", {id: id})
-                                 .getOneOrFail()
+        let dbAdmin = await query.andWhere('admin.id = :id', {id: id})
+            .getOneOrFail()
         if (dbAdmin.login == SPECIAL_USER_LOGIN) {
             throw new ForbiddenException('cannot delete special user ' + SPECIAL_USER_LOGIN)
         }
@@ -210,8 +215,8 @@ export class AdminsRepository {
     async getRoleIdByRole(role: string): Promise<number> {
         const aclRole = await AclRole.findOne({
             where: {
-                role: role
-            }
+                role: role,
+            },
         })
         if (!aclRole)
             throw new UnprocessableEntityException(`Unknown role ${role}`)
@@ -222,8 +227,8 @@ export class AdminsRepository {
         return await AclRoleMapping.findOne({
             where: {
                 accessor_id: roleId,
-                has_access_to_id: accessToRoleId
-            }
+                has_access_to_id: accessToRoleId,
+            },
         }) ? true : false
     }
 
@@ -233,8 +238,8 @@ export class AdminsRepository {
         return await AclRoleMapping.findOne({
             where: {
                 accessor_id: accessor.role_id,
-                has_access_to_id: hasAccessTo.role_id
-            }
+                has_access_to_id: hasAccessTo.role_id,
+            },
         }) ? true : false
     }
 }

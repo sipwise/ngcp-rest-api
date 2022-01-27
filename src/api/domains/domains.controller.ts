@@ -8,10 +8,10 @@ import {DomainsService} from './domains.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalsService} from '../journals/journals.service'
 import {RBAC_ROLES} from '../../config/constants.config'
-import {Request} from 'express'
 import {Roles} from '../../decorators/roles.decorator'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AppService} from '../../app.service'
+import {ResellersController} from '../resellers/resellers.controller'
 
 const resourceName = 'domains'
 
@@ -28,6 +28,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     constructor(
         private readonly domainsService: DomainsService,
         private readonly journalsService: JournalsService,
+        private readonly resellersController: ResellersController,
     ) {
         super(resourceName, domainsService, journalsService)
     }
@@ -36,7 +37,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     @ApiCreatedResponse({
         type: DomainResponseDto,
     })
-    async create(entity: DomainCreateDto, req ): Promise<DomainResponseDto> {
+    async create(entity: DomainCreateDto, req): Promise<DomainResponseDto> {
         return super.create(entity, req)
     }
 
@@ -58,10 +59,9 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     ): Promise<DomainResponseDto[]> {
         this.log.debug({message: 'fetch all domains', func: this.readAll.name, url: req.url, method: req.method})
         const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
+            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
         return this.domainsService.readAll(page, rows, sr)
-
     }
 
     @Get(':id')
@@ -69,7 +69,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
         type: DomainResponseDto,
     })
     @Roles(RBAC_ROLES.ccare, RBAC_ROLES.ccareadmin)
-    async read(@Param('id', ParseIntPipe) id: number, req) : Promise<DomainResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, req): Promise<DomainResponseDto> {
         return this.domainsService.read(id)
     }
 

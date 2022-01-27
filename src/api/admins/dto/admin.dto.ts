@@ -1,4 +1,4 @@
-import {AdminBaseDto} from "./admin-base.dto"
+import {AdminBaseDto} from './admin-base.dto'
 import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
 
 export interface AdminDto extends Partial<AdminBaseDto> {

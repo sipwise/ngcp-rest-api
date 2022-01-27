@@ -12,6 +12,14 @@ interface TelnetError {
 export class TelnetDispatcher {
     private readonly log = new Logger(TelnetDispatcher.name)
 
+    async activateDomain(domain: string): Promise<TelnetError[]> {
+        return await this.dispatchCommand('xmpp', domain, 'activate')
+    }
+
+    async deactivateDomain(domain: string): Promise<TelnetError[]> {
+        return await this.dispatchCommand('xmpp', domain, 'deactivate')
+    }
+
     private async dispatchCommand(target: string, domain: string, command: 'activate' | 'deactivate'): Promise<TelnetError[]> {
         let connection = new Telnet()
         let group = await db.provisioning.XmlGroup.findOne({where: {name: target}, relations: ['hosts']})
@@ -43,7 +51,7 @@ export class TelnetDispatcher {
                 errors.push({
                     command: command,
                     host: `${host.ip}:${host.port}${host.path}`,
-                    message: 'connection error'
+                    message: 'connection error',
                 })
                 continue
             }
@@ -70,19 +78,11 @@ export class TelnetDispatcher {
                 errors.push({
                     command: command,
                     host: `${host.ip}:${host.port}${host.path}`,
-                    message: 'telnet command error'
+                    message: 'telnet command error',
                 })
             }
             await connection.send('quit')
         }
         return errors
-    }
-
-    async activateDomain(domain: string): Promise<TelnetError[]> {
-        return await this.dispatchCommand('xmpp', domain, 'activate')
-    }
-
-    async deactivateDomain(domain: string): Promise<TelnetError[]> {
-        return await this.dispatchCommand('xmpp', domain, 'deactivate')
     }
 }

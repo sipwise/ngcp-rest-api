@@ -1,5 +1,4 @@
-import {Inject, Injectable, Logger} from '@nestjs/common'
-import {Interval} from '@nestjs/schedule'
+import {Inject, Injectable} from '@nestjs/common'
 import {ConnectionManager, EntityTarget} from 'typeorm'
 import {config as AppConfig} from './config/main.config'
 

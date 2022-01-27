@@ -1,5 +1,15 @@
 import {ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
-import {Controller, Delete, Get, Param, ParseUUIDPipe, Post, Response, StreamableFile, UseInterceptors} from '@nestjs/common'
+import {
+    Controller,
+    Delete,
+    Get,
+    Param,
+    ParseUUIDPipe,
+    Post,
+    Response,
+    StreamableFile,
+    UseInterceptors,
+} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {FileshareCreateDto} from './dto/fileshare-create.dto'
 import {FileshareResponseDto} from './dto/fileshare-response.dto'
@@ -28,8 +38,8 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     })
     @UseInterceptors(FileInterceptor('file', {
         limits: {
-            fileSize: AppService.config.fileshare.limits.upload_size || null
-        }
+            fileSize: AppService.config.fileshare.limits.upload_size || null,
+        },
     }))
     async create(createDto: FileshareCreateDto, req, file): Promise<FileshareResponseDto> {
         return await this.fileshareService.create(createDto, req, file)
@@ -46,7 +56,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     @Public(AppService.config.fileshare.public_links)
     @Get(':id')
     @ApiOkResponse({
-        type: StreamableFile
+        type: StreamableFile,
     })
     async readFile(@Param('id', ParseUUIDPipe) id: string, req, @Response({passthrough: true}) res): Promise<StreamableFile> {
         const stream = await this.fileshareService.read(id)
@@ -60,7 +70,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
         res.set({
             ...(size > 0 && {'Content-Length': size}),
             'Content-Type': stream.options.type,
-            'Content-Disposition': stream.options.disposition
+            'Content-Disposition': stream.options.disposition,
         })
         res.passthrough = true
 

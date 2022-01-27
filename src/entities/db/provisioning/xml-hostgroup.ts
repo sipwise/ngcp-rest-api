@@ -1,6 +1,4 @@
-import {BaseEntity, Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
-import {Contact, Contract} from '../billing'
-import {XmlGroup} from './xml-group'
+import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
 
 @Entity({
     name: 'xmlhostgroups',
@@ -12,14 +10,14 @@ export class XmlHostgroup extends BaseEntity {
     id?: number
 
     @Column({
-        type: "int",
-        width: 11
+        type: 'int',
+        width: 11,
     })
     group_id: number
 
     @Column({
-        type: "int",
-        width: 11
+        type: 'int',
+        width: 11,
     })
     host_id: number
 }

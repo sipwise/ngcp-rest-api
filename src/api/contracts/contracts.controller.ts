@@ -1,4 +1,4 @@
-import {Controller, Get, Param, ParseIntPipe, Patch, Post, Put, StreamableFile} from '@nestjs/common'
+import {Controller, Get, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
 import {Auth} from '../../decorators/auth.decorator'
 import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'

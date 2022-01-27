@@ -1,7 +1,6 @@
-import {Injectable, Logger, NestMiddleware, ServiceUnavailableException} from '@nestjs/common'
+import {Injectable, NestMiddleware, ServiceUnavailableException} from '@nestjs/common'
 import {NextFunction, Request, Response} from 'express'
 import {AppService} from '../app.service'
-import Context from '../helpers/context.helper'
 
 @Injectable()
 export class StateMiddleware implements NestMiddleware {
@@ -12,8 +11,8 @@ export class StateMiddleware implements NestMiddleware {
 
     use(req: Request, res: Response, next: NextFunction): any {
         next(this.app.isDbInitialised && this.app.isDbAvailable
-                ? null
-                : new ServiceUnavailableException()
+            ? null
+            : new ServiceUnavailableException(),
         )
     }
 }

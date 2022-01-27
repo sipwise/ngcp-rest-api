@@ -1,5 +1,5 @@
-import { ResellerStatus } from './reseller-base.dto';
-import { ResellerResponseDto } from './reseller-response.dto';
+import {ResellerStatus} from './reseller-base.dto'
+import {ResellerResponseDto} from './reseller-response.dto'
 
 export class ResellerSearchDto implements ResellerResponseDto {
     id: number = undefined

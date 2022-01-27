@@ -28,7 +28,7 @@ export class XmlDispatcher {
                     'User-Agent': 'Sipwise XML Dispatcher',
                     'Content-Type': 'text/xml',
                     'Content-Length': body.length,
-                }
+                },
             }
             try {
                 let res = await request.send(options, body)
@@ -50,7 +50,7 @@ export class XmlDispatcher {
 <methodName>domain.reload</methodName>
 <params/>
 </methodCall>`
-        let response = this.dispatch("proxy-ng", true, true, reloadCommand)
+        let response = this.dispatch('proxy-ng', true, true, reloadCommand)
         this.log.debug({message: 'response', response})
     }
 

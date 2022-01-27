@@ -122,7 +122,7 @@ export class Admin extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11
+        width: 11,
     })
     role_id: number
 

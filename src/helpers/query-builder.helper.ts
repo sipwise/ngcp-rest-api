@@ -1,4 +1,4 @@
-import { SelectQueryBuilder } from 'typeorm';
+import {SelectQueryBuilder} from 'typeorm'
 
 export interface SearchLogic {
     joins?: {
@@ -17,7 +17,7 @@ export async function configureQueryBuilder(queryBuilder: SelectQueryBuilder<any
         if (joinTable != undefined && joinColumn != undefined) {
             queryBuilder.leftJoinAndSelect(`${queryBuilder.alias}.${joinColumn}`, `${joinColumn}`)
             if (requestParams[joinColumn] != null) {
-                queryBuilder.where(`${joinTable}.${joinColumn} = :${joinColumn}`, { [`${joinColumn}`]: requestParams[joinColumn] })
+                queryBuilder.where(`${joinTable}.${joinColumn} = :${joinColumn}`, {[`${joinColumn}`]: requestParams[joinColumn]})
             }
         }
     }
@@ -28,9 +28,9 @@ export async function configureQueryBuilder(queryBuilder: SelectQueryBuilder<any
             continue
         }
         if (requestParams[paramName] != null)
-            queryBuilder = (requestParams["search_or"] === "1") ?
-                queryBuilder.orWhere(`${queryBuilder.alias}.${paramName} = :${paramName}`, { [`${paramName}`] : requestParams[paramName] }) :
-                queryBuilder.andWhere(`${queryBuilder.alias}.${paramName} = :${paramName}`, { [`${paramName}`] : requestParams[paramName] })
+            queryBuilder = (requestParams['search_or'] === '1') ?
+                queryBuilder.orWhere(`${queryBuilder.alias}.${paramName} = :${paramName}`, {[`${paramName}`]: requestParams[paramName]}) :
+                queryBuilder.andWhere(`${queryBuilder.alias}.${paramName} = :${paramName}`, {[`${paramName}`]: requestParams[paramName]})
     }
     if (searchLogic.rows != null) {
         queryBuilder.limit(searchLogic.rows)
@@ -38,5 +38,5 @@ export async function configureQueryBuilder(queryBuilder: SelectQueryBuilder<any
     if (searchLogic.rows != null && searchLogic.page != null) {
         queryBuilder.offset(searchLogic.rows * (searchLogic.page - 1))
     }
-    queryBuilder.andWhere("1 = 1")
+    queryBuilder.andWhere('1 = 1')
 }

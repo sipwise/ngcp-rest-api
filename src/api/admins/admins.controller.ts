@@ -72,7 +72,7 @@ export class AdminsController {
     ): Promise<AdminResponseDto[]> {
         this.log.debug({message: 'fetch all admins', func: this.findAll.name, url: req.url, method: req.method})
         const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
+            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
         return await this.adminsService.readAll(page, rows, sr)
     }
@@ -152,7 +152,7 @@ export class AdminsController {
             'rows',
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) row: number,
-        @Req() req: Request
+        @Req() req: Request,
     ): Promise<JournalResponseDto[]> {
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user,

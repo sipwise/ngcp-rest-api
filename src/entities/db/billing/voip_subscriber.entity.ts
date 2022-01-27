@@ -10,7 +10,7 @@ export class VoipSubscriber extends BaseEntity {
     id?: number
 
     @Column({
-        unsigned: true
+        unsigned: true,
     })
     contract_id: number
 
@@ -38,7 +38,7 @@ export class VoipSubscriber extends BaseEntity {
             'locked',
             'terminated',
         ],
-        default: 'active'
+        default: 'active',
     })
     status: string
 
@@ -60,6 +60,6 @@ export class VoipSubscriber extends BaseEntity {
     contact_id?: number
 
     @ManyToOne(() => Contract)
-    @JoinColumn({ name: "contract_id" })
+    @JoinColumn({name: 'contract_id'})
     contract?: Contract
 }

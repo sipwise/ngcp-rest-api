@@ -7,9 +7,6 @@ import {
     ParseIntPipe,
     Query,
     Req,
-    Res,
-    Response,
-    StreamableFile,
     UploadedFile,
     UseInterceptors,
 } from '@nestjs/common'
@@ -22,7 +19,6 @@ import {Auth} from '../decorators/auth.decorator'
 import {ServiceRequest} from '../interfaces/service-request.interface'
 import {JournalingInterceptor} from '../interceptors/journaling.interceptor'
 
-// TODO: should default permissions be RBAC_ROLES.admin, RBAC_ROLES.system?
 @Auth()
 @UseInterceptors(new JournalingInterceptor(new JournalsService()))
 export class CrudController<CreateDTO, ResponseDTO> {
@@ -98,7 +94,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
             'rows',
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) row: number,
-        @Req() req: Request
+        @Req() req: Request,
     ) {
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user,

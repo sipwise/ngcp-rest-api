@@ -1,4 +1,17 @@
-import {Controller, DefaultValuePipe, Delete, Get, Logger, Param, ParseIntPipe, Patch, Post, Put, Query, Req} from '@nestjs/common'
+import {
+    Controller,
+    DefaultValuePipe,
+    Delete,
+    Get,
+    Logger,
+    Param,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Put,
+    Query,
+    Req,
+} from '@nestjs/common'
 import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'
 import {JournalsService} from '../journals/journals.service'
@@ -53,9 +66,14 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
             ParseIntPipe) rows: number,
         @Req() req,
     ): Promise<SystemcontactResponseDto[]> {
-        this.log.debug({message: 'fetch all system contacts', func: this.readAll.name, url: req.url, method: req.method})
+        this.log.debug({
+            message: 'fetch all system contacts',
+            func: this.readAll.name,
+            url: req.url,
+            method: req.method,
+        })
         const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
+            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
         return this.contactsService.readAll(page, rows, sr)
     }

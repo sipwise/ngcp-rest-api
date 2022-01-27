@@ -28,7 +28,7 @@ export class HttpRequest {
                         let body = result
                         resolve(body)
                     } catch (err) {
-                        this.log.debug({message: 'error in response end' , err: err})
+                        this.log.debug({message: 'error in response end', err: err})
                         reject(err)
                     }
                 })

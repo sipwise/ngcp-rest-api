@@ -82,7 +82,7 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
             page: page,
             rows: rows,
         })
-        let queryBuilder = db.billing.Domain.createQueryBuilder("domain")
+        let queryBuilder = db.billing.Domain.createQueryBuilder('domain')
         let domainSearchDtoKeys = Object.keys(new DomainSearchDto())
         await configureQueryBuilder(queryBuilder, req.query,
             {where: domainSearchDtoKeys, rows: +rows, page: +page})
