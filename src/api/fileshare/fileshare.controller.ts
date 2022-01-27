@@ -48,7 +48,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     @ApiOkResponse({
         type: StreamableFile
     })
-    async read(@Param('id', ParseUUIDPipe) id: string, req, @Response({passthrough: true}) res): Promise<StreamableFile> {
+    async readFile(@Param('id', ParseUUIDPipe) id: string, req, @Response({passthrough: true}) res): Promise<StreamableFile> {
         const stream = await this.fileshareService.read(id)
         let size = 0
         stream.options.disposition.split(/;\s*/).map(pair => {

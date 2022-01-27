@@ -57,8 +57,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
     async read(
         @Param('id') id: number | string,
         @Req() req: Request,
-        @Res() res?: Response,
-    ): Promise<ResponseDTO | StreamableFile> {
+    ) {
         return await this.repo.read(id, this.newServiceRequest(req))
     }
 
