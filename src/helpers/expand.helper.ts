@@ -4,6 +4,7 @@ import {ContractsController} from '../api/contracts/contracts.controller'
 import {CustomercontactsController} from '../api/customercontacts/customercontacts.controller'
 import {ServiceRequest} from '../interfaces/service-request.interface'
 import {UnprocessableEntityException} from '@nestjs/common'
+import {ProtectedReadCall} from './protocted-controller-calls.helper'
 
 export class ExpandHelper {
 
@@ -22,8 +23,8 @@ export class ExpandHelper {
      * @param request
      */
     async expandMultipleObjects(responseList: any, parentObject: any, request: ServiceRequest) {
-        const firstFieldToExpand = request.query.expand.split(".")[0]
-        if (!parentObject.includes(firstFieldToExpand) || !expandLogic[firstFieldToExpand] || !expandLogic[firstFieldToExpand].roles.includes(request.user.role)) {
+        const firstFieldToExpand = request.query.expand.split('.')[0]
+        if (!parentObject.includes(firstFieldToExpand) || !expandLogic[firstFieldToExpand]) {
             if (await this.handleSoftExpand(request, `Expanding ${firstFieldToExpand} not allowed or impossible`))
                 return
         }
@@ -35,8 +36,8 @@ export class ExpandHelper {
             const controller = expandLogic[firstFieldToExpand].controller
             let returnObject
             try {
-                returnObject = await this?.[controller]?.read(responseList[i][`${firstFieldToExpand}`], request)
-            } catch(err) {
+                returnObject = await ProtectedReadCall(this?.[controller], responseList[i][`${firstFieldToExpand}`], request)
+            } catch (err) {
                 if (await this.handleSoftExpand(request, `Cannot expand field ${firstFieldToExpand}`))
                     continue
             }
@@ -53,18 +54,18 @@ export class ExpandHelper {
      * @param expandFields - a string of fields to be expanded, split by dots
      * @param request
      */
-    async expandSingleObject(parentObject: any, expandFields: string, request: ServiceRequest){
-        const firstFieldToExpand = expandFields.split(".")[0]
+    async expandSingleObject(parentObject: any, expandFields: string, request: ServiceRequest) {
+        const firstFieldToExpand = expandFields.split('.')[0]
         let nextFieldsToExpand = null
         if (expandFields.indexOf('.') !== -1) {
             nextFieldsToExpand = expandFields.substring(expandFields.indexOf('.') + 1)
         }
-        if (parentObject[firstFieldToExpand] && expandLogic[firstFieldToExpand] && expandLogic[firstFieldToExpand].roles.includes(request.user.role)) {
+        if (parentObject[firstFieldToExpand] && expandLogic[firstFieldToExpand]) {
             const controller = expandLogic[firstFieldToExpand].controller
             let returnObject
             try {
-                returnObject = await this?.[controller]?.read(parentObject[`${firstFieldToExpand}`], request)
-            } catch(err) {
+                returnObject = await ProtectedReadCall(this?.[controller], parentObject[`${firstFieldToExpand}`], request)
+            } catch (err) {
                 if (await this.handleSoftExpand(request, `Cannot expand field ${firstFieldToExpand}`))
                     return
             }
@@ -86,7 +87,7 @@ export class ExpandHelper {
      * @param errorMessage
      */
     async handleSoftExpand(request: ServiceRequest, errorMessage: string) {
-        if (request.query.soft_expand === "1")
+        if (request.query.soft_expand === '1')
             return true
         else
             throw new UnprocessableEntityException(errorMessage)
