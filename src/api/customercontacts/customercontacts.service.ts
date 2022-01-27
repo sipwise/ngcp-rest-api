@@ -13,6 +13,7 @@ import {ContractStatus} from '../contracts/contracts.constants'
 import {ContactStatus} from '../../entities/db/billing/contact.entity'
 import {configureQueryBuilder} from '../../helpers/query-builder.helper'
 import {CustomercontactSearchDto} from './dto/customercontact-search.dto'
+import {Messages} from '../../config/messages.config'
 
 @Injectable()
 export class CustomercontactsService implements CrudService<CustomercontactCreateDto, CustomercontactResponseDto> {
@@ -43,7 +44,7 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
 
         let reseller = db.billing.Reseller.findOne(contact.reseller_id)
         if (reseller) {
-            throw new UnprocessableEntityException('invalid "reseller_id"')
+            throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID, req))
         }
         await db.billing.Contact.insert(contact)
         // TODO: contact does not contain id at this point
@@ -54,7 +55,7 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
     async delete(id: number): Promise<number> {
         let contact = await db.billing.Contact.findOneOrFail(id)
         if (!contact.reseller_id) {
-            throw new BadRequestException('cannot delete systemcontact') // TODO: find better description
+            throw new BadRequestException(Messages.invoke(Messages.DELETE_SYSTEMCONTACT)) // TODO: find better description
         }
         let contract = db.billing.Contract.find({
             where: {
@@ -64,7 +65,7 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
         })
         // TODO: check for un-terminated subscribers
         if (contract) {
-            throw new HttpException('contact is still in use', 423) // 423 HTTP LOCKED
+            throw new HttpException(Messages.invoke(Messages.CONTACT_STILL_IN_USE), 423) // 423 HTTP LOCKED
         }
         // TODO: do we delete (instead of terminate) if no related contracts/subscribers as in v1?
         contract = db.billing.Contract.find({
@@ -116,7 +117,7 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
         if (oldContact.reseller_id != dto.reseller_id) {
             let reseller = db.billing.Reseller.findOne(dto.reseller_id)
             if (!reseller) {
-                throw new UnprocessableEntityException('invalid reseller_id')
+                throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID))
             }
         }
         let newContact = db.billing.Contact.merge(oldContact, dto)

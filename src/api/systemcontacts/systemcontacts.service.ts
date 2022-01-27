@@ -10,6 +10,7 @@ import {FindOneOptions, IsNull} from 'typeorm'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {configureQueryBuilder} from '../../helpers/query-builder.helper'
 import {SystemcontactSearchDto} from './dto/systemcontact-search.dto'
+import {Messages} from '../../config/messages.config'
 
 @Injectable()
 export class SystemcontactsService implements CrudService<SystemcontactCreateDto, SystemcontactResponseDto> {
@@ -18,7 +19,7 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
     @HandleDbErrors
     async create(entity: SystemcontactCreateDto, req: ServiceRequest): Promise<SystemcontactResponseDto> {
         if (entity['reseller_id'] !== undefined) {
-            throw new BadRequestException('reseller_id not allowed on systemcontacts') // TODO: proper error message
+            throw new BadRequestException(Messages.invoke(Messages.RESELLER_ID_SYSTEMCONTACTS, req)) // TODO: proper error message
         }
         let contact = db.billing.Contact.create(entity)
 
@@ -38,7 +39,7 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
     async delete(id: number): Promise<number> {
         let contact = await db.billing.Contact.findOneOrFail(id)
         if (contact.reseller_id) {
-            throw new BadRequestException('cannot delete customercontact') // TODO: find better description
+            throw new BadRequestException(Messages.invoke(Messages.DELETE_CUSTOMERCONTACT)) // TODO: find better description
         }
         await contact.remove()
         return 1
@@ -78,7 +79,7 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
     async update(id: number, dto: SystemcontactCreateDto): Promise<SystemcontactResponseDto> {
         const oldContact = await db.billing.Contact.findOneOrFail(id)
         if (dto.reseller_id || oldContact.reseller_id) {
-            throw new UnprocessableEntityException('invalid reseller_id')
+            throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID))
         }
         let newContact = db.billing.Contact.merge(oldContact, dto) // TODO: Should set new object and not merge
         return this.toResponse(await newContact.save())

@@ -13,6 +13,7 @@ import {ExpandHelper} from '../../helpers/expand.helper'
 import {ResellersController} from '../resellers/resellers.controller'
 import {CustomercontactsController} from '../customercontacts/customercontacts.controller'
 import {ContractsController} from '../contracts/contracts.controller'
+import {Messages} from '../../config/messages.config'
 
 const SPECIAL_USER_LOGIN = 'sipwise'
 
@@ -146,7 +147,7 @@ export class AdminsRepository {
         let dbAdmin = await query.andWhere('admin.id = :id', {id: id})
             .getOneOrFail()
         if (dbAdmin.login == SPECIAL_USER_LOGIN) {
-            throw new ForbiddenException('cannot delete special user ' + SPECIAL_USER_LOGIN)
+            throw new ForbiddenException(Messages.invoke(Messages.DELETE_SPECIAL_USER, req).description + SPECIAL_USER_LOGIN)
         }
 
         await db.billing.Admin.remove(dbAdmin)
@@ -219,7 +220,7 @@ export class AdminsRepository {
             },
         })
         if (!aclRole)
-            throw new UnprocessableEntityException(`Unknown role ${role}`)
+            throw new UnprocessableEntityException(Messages.invoke(Messages.UNKNOWN_ROLE, null, role))
         return aclRole.id
     }
 

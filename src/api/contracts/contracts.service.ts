@@ -9,10 +9,7 @@ import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 import {Injectable, MethodNotAllowedException, UnprocessableEntityException} from '@nestjs/common'
 import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {db} from '../../entities'
-
-enum ContractError {
-    InvalidSystemContact = 'The contact_id is not a valid ngcp:systemcontacts item, but an ngcp:customercontacts item'
-}
+import {Messages} from '../../config/messages.config'
 
 @Injectable()
 export class ContractsService implements CrudService<ContractCreateDto, ContractResponseDto> {
@@ -63,13 +60,13 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
         let systemContact = await db.billing.Contact.find(systemContactPattern)
         if (!systemContact) {
             // TODO: move validation out of creation
-            throw new UnprocessableEntityException('invalid contact_id')
+            throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_CONTACT_ID))
         }
         // TODO: Utils::BillingMappings::prepare_billing_mappings
         let product = await db.billing.Product.findOne({where: {class: dto.type}})
         if (!product) {
             // TODO: move validation out of creation
-            throw new UnprocessableEntityException('invalid "type"')
+            throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_TYPE))
         }
         contract.product_id = product.id
         await db.billing.Contract.insert(contract)
@@ -78,7 +75,7 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
 
         // TODO: I don't think it is possible to have a CustomerContact here because we explicitly search for SystemContacts before
         // if (contract.contact.reseller_id) {
-        //     throw new UnprocessableEntityException(ContractError.InvalidSystemContact)
+        //     throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_SYSTEM_CONTACT))
         // }
 
         // TODO: Utils::BillingMappings::append_billing_mappings
@@ -172,7 +169,7 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
         if (oldContract.contact_id != newContract.contact_id) {
             const systemContact = await db.billing.Contact.findOne(pattern)
             if (!systemContact) {
-                throw new UnprocessableEntityException('invalid contact_id')
+                throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_CONTACT_ID))
             }
         }
 
@@ -188,12 +185,12 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
         }
         const systemContact = db.billing.Contact.findOne(pattern)
         if (!systemContact) {
-            throw new UnprocessableEntityException('invalid \'contact_id\'')
+            throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_CONTACT_ID))
         }
 
         let product = await db.billing.Product.findOne({where: {class: contract.type}})
         if (!product) {
-            throw new UnprocessableEntityException('invalid "type"')
+            throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_TYPE))
         }
     }
 }

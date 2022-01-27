@@ -1,6 +1,7 @@
 import {ArgumentMetadata, HttpStatus, Injectable, Optional, PipeTransform} from '@nestjs/common'
 import {ErrorHttpStatusCode, HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
 import {isUUID} from '@nestjs/common/utils/is-uuid'
+import {Messages} from '../config/messages.config'
 
 export interface ParseIdPipeOptions {
     errorHttpStatusCode?: ErrorHttpStatusCode;
@@ -34,7 +35,7 @@ export class ParseIdPipe implements PipeTransform {
             return parseInt(value, 10)
 
         throw this.exceptionFactory(
-            'Validation failed (unsupported :id format)',
+            Messages.invoke(Messages.VALIDATION_FAILED_UNSUPPORTED_ID).description,
         )
     }
 }

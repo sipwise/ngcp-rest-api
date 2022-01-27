@@ -9,6 +9,7 @@ import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {fileshare} from '../../entities/db'
 import {v4 as uuidv4} from 'uuid'
 import {FindManyOptions} from 'typeorm'
+import {Messages} from '../../config/messages.config'
 
 @Injectable()
 export class FileshareService implements CrudService<FileshareCreateDto, FileshareResponseDto> {
@@ -62,14 +63,14 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
                 })
                 .getRawOne()
             if (totalSize && totalSize['size'] + file.size > totalQuota)
-                throw new UnprocessableEntityException('Quota exceeded')
+                throw new UnprocessableEntityException(Messages.invoke(Messages.QUOTA_EXCEEDED, req))
         }
 
         const userFilesLimit = this.app.config.fileshare.limits.user_files
         if (userFilesLimit > 0) {
             const count = await db.fileshare.Upload.count(filter)
             if (count >= userFilesLimit)
-                throw new UnprocessableEntityException('Files limit reached')
+                throw new UnprocessableEntityException(Messages.invoke(Messages.FILES_LIMIT_REACHED, req))
         }
 
         const userQuota = this.app.config.fileshare.limits.user_quota
@@ -80,7 +81,7 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
                 .where(filter.where)
                 .getRawOne()
             if (userSize['sum'] + file.size > userQuota)
-                throw new UnprocessableEntityException('Quota exceeded')
+                throw new UnprocessableEntityException(Messages.invoke(Messages.QUOTA_EXCEEDED, req))
         }
 
         const now = new Date()

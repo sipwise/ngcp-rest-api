@@ -9,8 +9,7 @@ import {ForbiddenException, Injectable, Logger, UnprocessableEntityException} fr
 import {genSalt, hash} from 'bcrypt'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AdminsRepository} from './admins.repository'
-
-const PERMISSION_DENIED = 'permission denied'
+import {Messages} from '../../config/messages.config'
 
 @Injectable()
 export class AdminsService { // implements CrudService<AdminCreateDto, AdminResponseDto> {
@@ -62,7 +61,7 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
                 requested_role: admin.role,
                 is_master: req.user.is_master,
             })
-            throw new ForbiddenException(PERMISSION_DENIED)
+            throw new ForbiddenException(Messages.invoke(Messages.PERMISSION_DENIED, req))
         }
         this.log.debug({
             message: 'check user permission level',
@@ -150,7 +149,7 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
                 requested_role: admin.role,
                 is_master: req.user.is_master,
             })
-            throw new ForbiddenException(PERMISSION_DENIED, 'invalid user role')
+            throw new ForbiddenException(Messages.invoke(Messages.PERMISSION_DENIED, req), Messages.invoke(Messages.INVALID_USER_ROLE, req).description)
         }
 
         if (admin.password)
@@ -166,7 +165,7 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
         this.log.debug({message: 'delete admin by id', func: this.delete.name, user: req.user.username, id: id})
 
         if (id == req.user.id)
-            throw new UnprocessableEntityException('cannot delete own user')
+            throw new UnprocessableEntityException(Messages.invoke(Messages.DELETE_OWN_USER, req))
 
         return await this.dbRepo.deleteAdmin(id, req)
     }
@@ -189,7 +188,7 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
                 'call_data', 'billing_data'].map(s => {
                 if (admin[s] && (!oldAdmin[s] || oldAdmin[s] != admin[s])) {
                     this.log.debug({message: 'Cannot change own property', id: selfId, field: s})
-                    throw new ForbiddenException(PERMISSION_DENIED, 'Cannot change own property')
+                    throw new ForbiddenException(Messages.invoke(Messages.PERMISSION_DENIED), Messages.invoke(Messages.CHANGE_OWN_PROPERTY).description)
                 }
             })
         }

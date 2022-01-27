@@ -5,6 +5,7 @@ import {CustomercontactsController} from '../api/customercontacts/customercontac
 import {ServiceRequest} from '../interfaces/service-request.interface'
 import {UnprocessableEntityException} from '@nestjs/common'
 import {ProtectedReadCall} from './protocted-controller-calls.helper'
+import {Messages} from '../config/messages.config'
 
 export class ExpandHelper {
 
@@ -25,7 +26,7 @@ export class ExpandHelper {
     async expandMultipleObjects(responseList: any, parentObject: any, request: ServiceRequest) {
         const firstFieldToExpand = request.query.expand.split('.')[0]
         if (!parentObject.includes(firstFieldToExpand) || !expandLogic[firstFieldToExpand]) {
-            if (await this.handleSoftExpand(request, `Expanding ${firstFieldToExpand} not allowed or impossible`))
+            if (await this.handleSoftExpand(request, Messages.invoke(Messages.EXPAND_OBJECT_IMPOSSIBLE, request, firstFieldToExpand).description))
                 return
         }
         let nextFieldsToExpand = null
@@ -38,7 +39,7 @@ export class ExpandHelper {
             try {
                 returnObject = await ProtectedReadCall(this?.[controller], responseList[i][`${firstFieldToExpand}`], request)
             } catch (err) {
-                if (await this.handleSoftExpand(request, `Cannot expand field ${firstFieldToExpand}`))
+                if (await this.handleSoftExpand(request, Messages.invoke(Messages.EXPAND_OBJECT_FAILED, request, firstFieldToExpand).description))
                     continue
             }
             if (nextFieldsToExpand && returnObject != null)
@@ -66,7 +67,7 @@ export class ExpandHelper {
             try {
                 returnObject = await ProtectedReadCall(this?.[controller], parentObject[`${firstFieldToExpand}`], request)
             } catch (err) {
-                if (await this.handleSoftExpand(request, `Cannot expand field ${firstFieldToExpand}`))
+                if (await this.handleSoftExpand(request, Messages.invoke(Messages.EXPAND_OBJECT_FAILED, request, firstFieldToExpand).description))
                     return
             }
             if (nextFieldsToExpand && returnObject != null)
@@ -74,7 +75,7 @@ export class ExpandHelper {
             const newProp = `${firstFieldToExpand}_expand`
             parentObject[`${newProp}`] = returnObject
         } else {
-            if (await this.handleSoftExpand(request, `Expanding ${firstFieldToExpand} not allowed or impossible`))
+            if (await this.handleSoftExpand(request, Messages.invoke(Messages.EXPAND_OBJECT_IMPOSSIBLE, request, firstFieldToExpand).description))
                 return
         }
     }

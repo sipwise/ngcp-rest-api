@@ -21,6 +21,7 @@ import {configureQueryBuilder} from '../../helpers/query-builder.helper'
 import {DomainSearchDto} from './dto/domain-search.dto'
 import {XmlDispatcher} from '../../helpers/xml-dispatcher'
 import {TelnetDispatcher} from '../../helpers/telnet-dispatcher'
+import {Messages} from '../../config/messages.config'
 
 @Injectable()
 export class DomainsService implements CrudService<DomainCreateDto, DomainResponseDto> {
@@ -48,7 +49,7 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
         await db.billing.Reseller.findOneOrFail(domain.reseller_id)
         const result = await db.billing.Domain.findOne({where: {domain: domain.domain}})
         if (!result == undefined) {
-            throw new UnprocessableEntityException(`domain ${domain.domain} already exists`)
+            throw new UnprocessableEntityException(Messages.invoke(Messages.DOMAIN_ALREADY_EXISTS, req, domain.domain))
         }
 
         const dbDomain = db.billing.Domain.create(domain)
@@ -109,7 +110,7 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
     async delete(id: number, req: ServiceRequest): Promise<number> {
         const domain = await db.billing.Domain.findOneOrFail(id)
         if (RBAC_ROLES.reseller == req.user.role && domain.reseller_id != req.user.reseller_id) {
-            throw new ForbiddenException('domain does not belong to reseller')
+            throw new ForbiddenException(Messages.invoke(Messages.DOMAIN_DOES_NOT_BELONG_TO_RESELLER, req))
         }
         const provDomain = await db.provisioning.VoipDomain.findOneOrFail({where: {domain: domain.domain}})
         await db.billing.Domain.delete(id)

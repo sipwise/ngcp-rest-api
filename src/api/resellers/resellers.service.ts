@@ -12,14 +12,9 @@ import {db} from '../../entities'
 import {FindManyOptions, IsNull} from 'typeorm'
 import {configureQueryBuilder} from '../../helpers/query-builder.helper'
 import {ResellerSearchDto} from './dto/reseller-search.dto'
+import {Messages} from '../../config/messages.config'
 
 enum ResellerError {
-    ContractExists = 'invalid \'contract_id\', reseller with this contract already exists',
-    NameExists = 'invalid \'name\', reseller with this name already exists',
-    ContractNotFound = 'invalid \'contract_id\'',
-
-    ContractInvalidLink = 'invalid \'contract_id\', linking to a customer contact',
-
     // TODO: Can these conditions even occur?
     ResellerInvalidId = 'reseller ID other than the user\'s reseller ID is not allowed',
     ResellerUndefinedId = 'undefined reseller ID is not allowed',
@@ -31,8 +26,6 @@ enum ResellerError {
     // TODO: What is the difference of both?
     ChangeIdForbidden = 'changing the reseller ID is not allowed',
     ResellerSetIdForbidden = 'cannot set the reseller Id if it was unset before',
-
-    ChangeUnassociatedForbidden = 'updating items not associated with a reseller is not allowed'
 }
 
 @Injectable()
@@ -79,7 +72,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
         const resellerOld = await db.billing.Reseller.findOne({where: {name: dto.name}})
         if (resellerOld) {
             if (!await this.renameIfTerminated(resellerOld)) {
-                throw new UnprocessableEntityException(ResellerError.NameExists)
+                throw new UnprocessableEntityException(Messages.invoke(Messages.NAME_EXISTS, req))
             }
         }
         result = await r.save()
@@ -156,16 +149,16 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
         let resellers = await db.billing.Reseller.find({where: {contract_id: r.contract_id}})
 
         if (resellers.length != 0) {
-            throw new UnprocessableEntityException(ResellerError.ContractExists)
+            throw new UnprocessableEntityException(Messages.invoke(Messages.CONTRACT_EXISTS))
         }
 
         //TODO: Get Contracts from ORM association
         let contract = await db.billing.Contract.findOne(r.contract_id, {relations: ['contact']})
         if (!contract) {
-            throw new UnprocessableEntityException(ResellerError.ContractNotFound)
+            throw new UnprocessableEntityException(Messages.invoke(Messages.CONTRACT_NOT_FOUND))
         }
         if (contract.contact.reseller_id) {
-            throw new UnprocessableEntityException(ResellerError.ContractInvalidLink)
+            throw new UnprocessableEntityException(Messages.invoke(Messages.CONTRACT_INVALID_LINK))
         }
 
     }
@@ -176,20 +169,20 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
         if (req.user.role === RBAC_ROLES.admin) {
             if (oldReseller.id != id) {
                 // TODO: check if HTTP Status code should be 422 UnprocessableEntity; or Forbidden
-                throw new UnprocessableEntityException(ResellerError.ChangeIdForbidden)
+                throw new UnprocessableEntityException(Messages.invoke(Messages.CHANGE_ID_FORBIDDEN, req))
             }
         }
 
         if (req.user.role === RBAC_ROLES.reseller) {
             if (req.user.reseller_id != id) {
-                throw new ForbiddenException(ResellerError.ChangeUnassociatedForbidden)
+                throw new ForbiddenException(Messages.invoke(Messages.CHANGE_UNASSOCIATED_FORBIDDEN, req))
             }
         }
 
         // check if reseller with new contract_id already exists
         if (oldReseller.contract_id != newReseller.contract_id) {
             if (await db.billing.Reseller.find({where: {contract_id: newReseller.contract_id}})) {
-                throw new UnprocessableEntityException(ResellerError.ContractExists)
+                throw new UnprocessableEntityException(Messages.invoke(Messages.CONTRACT_EXISTS, req))
             }
         }
 
@@ -197,7 +190,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
         if (oldReseller.name != newReseller.name) {
             const res = await db.billing.Reseller.find({where: {name: newReseller.name}})
             if (res.length != 0) {
-                throw new UnprocessableEntityException(ResellerError.NameExists)
+                throw new UnprocessableEntityException(Messages.invoke(Messages.NAME_EXISTS, req))
             }
         }
         return true

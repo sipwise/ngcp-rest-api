@@ -1,5 +1,6 @@
 import {NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {EntityNotFoundError, QueryFailedError, TypeORMError} from 'typeorm'
+import {Messages} from '../config/messages.config'
 
 export function handleTypeORMError(err: Error) {
     if (err instanceof TypeORMError) {
@@ -10,7 +11,7 @@ export function handleTypeORMError(err: Error) {
                 let qErr = <QueryFailedError>err
                 switch (qErr.driverError.code) {
                     case 'ER_DUP_ENTRY':
-                        return new UnprocessableEntityException('duplicate entry')
+                        return new UnprocessableEntityException(Messages.invoke(Messages.DUPLICATE_ENTRY))
                 }
         }
         // return new UnprocessableEntityException(err.message)
