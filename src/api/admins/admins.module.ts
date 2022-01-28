@@ -1,28 +1,25 @@
 import {Module} from '@nestjs/common'
-import {InterceptorModule} from '../../interceptors/interceptor.module'
 import {AdminsController} from './admins.controller'
 import {AdminsService} from './admins.service'
 import {AdminsRepository} from './admins.repository'
-import {ResellersController} from '../resellers/resellers.controller'
-import {CustomercontactsController} from '../customercontacts/customercontacts.controller'
-import {ContractsController} from '../contracts/contracts.controller'
-import {ResellersService} from '../resellers/resellers.service'
-import {CustomercontactsService} from '../customercontacts/customercontacts.service'
-import {ContractsService} from '../contracts/contracts.service'
+import {ExpandModule} from '../../helpers/expand.module'
+import {JournalsModule} from '../journals/journals.module'
+import {JournalsService} from '../journals/journals.service'
 
 @Module({
-    imports: [InterceptorModule],
+    imports: [
+        ExpandModule,
+        JournalsModule,
+    ],
     controllers: [AdminsController],
-    exports: [AdminsService, AdminsRepository],
+    exports: [
+        AdminsService,
+        AdminsRepository,
+    ],
     providers: [
         AdminsRepository,
         AdminsService,
-        ResellersController,
-        ResellersService,
-        CustomercontactsController,
-        CustomercontactsService,
-        ContractsController,
-        ContractsService,
+        JournalsService,
     ],
 })
 export class AdminsModule {

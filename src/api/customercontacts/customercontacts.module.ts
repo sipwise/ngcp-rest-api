@@ -6,7 +6,14 @@ import {JournalsModule} from '../journals/journals.module'
 @Module({
     imports: [JournalsModule],
     controllers: [CustomercontactsController],
-    providers: [CustomercontactsService],
+    providers: [
+        CustomercontactsService,
+        CustomercontactsController,
+    ],
+    exports: [
+        CustomercontactsController,
+        CustomercontactsService,
+    ],
 })
 export class CustomercontactsModule {
 }

@@ -10,9 +10,6 @@ import {configureQueryBuilder} from '../../helpers/query-builder.helper'
 import {AdminSearchDto} from './dto/admin-search.dto'
 import {SelectQueryBuilder} from 'typeorm'
 import {ExpandHelper} from '../../helpers/expand.helper'
-import {ResellersController} from '../resellers/resellers.controller'
-import {CustomercontactsController} from '../customercontacts/customercontacts.controller'
-import {ContractsController} from '../contracts/contracts.controller'
 import {Messages} from '../../config/messages.config'
 
 const SPECIAL_USER_LOGIN = 'sipwise'
@@ -20,13 +17,10 @@ const SPECIAL_USER_LOGIN = 'sipwise'
 @Injectable()
 export class AdminsRepository {
     private readonly log = new Logger(AdminsRepository.name)
-    private readonly expandHelper = new ExpandHelper(this.resellersController, this.customercontactsController, this.contractsController)
 
     constructor(
         private readonly app: AppService,
-        private readonly resellersController: ResellersController,
-        private readonly customercontactsController: CustomercontactsController,
-        private readonly contractsController: ContractsController,
+        private readonly expander: ExpandHelper,
     ) {
     }
 
@@ -110,7 +104,7 @@ export class AdminsRepository {
         const responseList = await Promise.all(result.map(async (adm) => this.toObject(adm)))
         if (req.query.expand) {
             let adminSearchDtoKeys = Object.keys(new AdminSearchDto())
-            await this.expandHelper.expandMultipleObjects(responseList, adminSearchDtoKeys, req)
+            await this.expander.expandMultipleObjects(responseList, adminSearchDtoKeys, req)
         }
         return responseList
     }
