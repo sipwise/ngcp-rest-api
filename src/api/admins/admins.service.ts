@@ -10,9 +10,10 @@ import {genSalt, hash} from 'bcrypt'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AdminsRepository} from './admins.repository'
 import {Messages} from '../../config/messages.config'
+import {CrudService} from '../../interfaces/crud-service.interface'
 
 @Injectable()
-export class AdminsService { // implements CrudService<AdminCreateDto, AdminResponseDto> {
+export class AdminsService implements CrudService<AdminCreateDto, AdminResponseDto> {
     private readonly log = new Logger(AdminsService.name)
 
     constructor(
@@ -21,7 +22,7 @@ export class AdminsService { // implements CrudService<AdminCreateDto, AdminResp
     ) {
     }
 
-    async toResponse(admin: AdminDto): Promise<AdminResponseDto> {
+    toResponse(admin: AdminDto, req?: ServiceRequest): AdminResponseDto {
         this.log.debug({message: 'converting admin to response', func: this.toResponse.name})
         return {
             billing_data: admin.billing_data,

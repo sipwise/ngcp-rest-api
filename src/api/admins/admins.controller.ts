@@ -31,12 +31,15 @@ import {PatchDto} from '../patch.dto'
 import {Request} from 'express'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
+import {CrudController} from '../../controllers/crud.controller'
+
+const resourceName = 'admins'
 
 @ApiTags('Admins')
-@Controller('admins')
+@Controller(resourceName)
 @UseInterceptors(new JournalingInterceptor(new JournalsService()))
 @Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller)
-export class AdminsController {
+export class AdminsController extends CrudController<AdminCreateDto, AdminResponseDto> {
     private readonly log = new Logger(AdminsController.name)
 
     constructor(
@@ -44,6 +47,7 @@ export class AdminsController {
         private readonly adminsService: AdminsService,
         private readonly journalsService: JournalsService,
     ) {
+        super(resourceName, adminsService, journalsService)
     }
 
     @Post()
@@ -51,7 +55,12 @@ export class AdminsController {
         type: AdminResponseDto,
     })
     async create(@Body() admin: AdminCreateDto, @Req() req): Promise<AdminResponseDto> {
-        this.log.debug({message: 'create admin', func: this.create.name, url: req.url, method: req.method})
+        this.log.debug({
+            message: 'create admin',
+            func: this.create.name,
+            url: req.url,
+            method: req.method,
+        })
         return await this.adminsService.create(admin, req)
     }
 
@@ -59,7 +68,7 @@ export class AdminsController {
     @ApiOkResponse({
         type: [AdminResponseDto],
     })
-    async findAll(
+    async readAll(
         @Query(
             'page',
             new DefaultValuePipe(AppService.config.common.api_default_query_page),
@@ -70,7 +79,13 @@ export class AdminsController {
             ParseIntPipe) rows: number,
         @Req() req,
     ): Promise<AdminResponseDto[]> {
-        this.log.debug({message: 'fetch all admins', func: this.findAll.name, url: req.url, method: req.method})
+        this.log.debug({
+            message: 'fetch all admins',
+            func: this.readAll.name,
+            url: req.url,
+            method:
+            req.method,
+        })
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
@@ -81,8 +96,13 @@ export class AdminsController {
     @ApiOkResponse({
         type: AdminResponseDto,
     })
-    async findOne(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<AdminResponseDto> {
-        this.log.debug({message: 'fetch admin by id', func: this.findOne.name, url: req.url, method: req.method})
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<AdminResponseDto> {
+        this.log.debug({
+            message: 'fetch admin by id',
+            func: this.read.name,
+            url: req.url,
+            method: req.method,
+        })
         return await this.adminsService.read(id, req)
     }
 
@@ -130,8 +150,8 @@ export class AdminsController {
     @ApiOkResponse({
         type: number,
     })
-    async remove(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<number> {
-        this.log.debug({message: 'delete admin by id', func: this.remove.name, url: req.url, method: req.method})
+    async delete(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<number> {
+        this.log.debug({message: 'delete admin by id', func: this.delete.name, url: req.url, method: req.method})
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user,
         }
