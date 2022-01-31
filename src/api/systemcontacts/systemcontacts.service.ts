@@ -36,7 +36,7 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
     }
 
     @HandleDbErrors
-    async delete(id: number): Promise<number> {
+    async delete(id: number, req: ServiceRequest): Promise<number> {
         let contact = await db.billing.Contact.findOneOrFail(id)
         if (contact.reseller_id) {
             throw new BadRequestException(Messages.invoke(Messages.DELETE_CUSTOMERCONTACT)) // TODO: find better description
@@ -46,7 +46,7 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
     }
 
     @HandleDbErrors
-    async read(id: number): Promise<SystemcontactResponseDto> {
+    async read(id: number, req: ServiceRequest): Promise<SystemcontactResponseDto> {
         const pattern: FindOneOptions = {
             where: {
                 reseller_id: IsNull(),
@@ -76,7 +76,7 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
     }
 
     @HandleDbErrors
-    async update(id: number, dto: SystemcontactCreateDto): Promise<SystemcontactResponseDto> {
+    async update(id: number, dto: SystemcontactCreateDto, req: ServiceRequest): Promise<SystemcontactResponseDto> {
         const oldContact = await db.billing.Contact.findOneOrFail(id)
         if (dto.reseller_id || oldContact.reseller_id) {
             throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID))
@@ -86,7 +86,7 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
     }
 
     @HandleDbErrors
-    async adjust(id: number, patch: PatchOperation | PatchOperation[]): Promise<SystemcontactResponseDto> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[], req: ServiceRequest): Promise<SystemcontactResponseDto> {
         let oldContact = await db.billing.Contact.findOneOrFail(id)
 
         let contact = this.deflate(oldContact)

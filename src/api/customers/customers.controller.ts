@@ -38,7 +38,7 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
         type: CustomerResponseDto,
     })
     async create(entity: CustomerCreateDto, req: Request): Promise<CustomerResponseDto> {
-        return super.create(entity, req)
+        return this.customerService.create(entity, this.newServiceRequest(req))
     }
 
     @Get()
@@ -46,23 +46,23 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
         type: [CustomerResponseDto],
     })
     async readAll(page, rows, req): Promise<CustomerResponseDto[]> {
-        return super.readAll(page, rows, req)
+        return this.customerService.readAll(page, rows, this.newServiceRequest(req))
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: CustomerResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number): Promise<CustomerResponseDto> {
-        return this.customerService.read(id)
+    async read(@Param('id', ParseIntPipe) id: number, req): Promise<CustomerResponseDto> {
+        return this.customerService.read(id, this.newServiceRequest(req))
     }
 
     @Put(':id')
     @ApiOkResponse({
         type: CustomerResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, dto: CustomerCreateDto): Promise<CustomerResponseDto> {
-        return this.customerService.update(id, dto)
+    async update(@Param('id', ParseIntPipe) id: number, dto: CustomerCreateDto, req): Promise<CustomerResponseDto> {
+        return this.customerService.update(id, dto, this.newServiceRequest(req))
     }
 
     @Patch(':id')
@@ -72,16 +72,16 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[]): Promise<CustomerResponseDto> {
-        return this.customerService.adjust(id, patch)
+    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<CustomerResponseDto> {
+        return this.customerService.adjust(id, patch, this.newServiceRequest(req))
     }
 
     @Delete(':id')
     @ApiOkResponse({
         type: number,
     })
-    async delete(@Param('id', ParseIntPipe) id: number): Promise<number> {
-        return this.customerService.delete(id)
+    async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
+        return this.customerService.delete(id, this.newServiceRequest(req))
     }
 
     @Get(':id/journal')

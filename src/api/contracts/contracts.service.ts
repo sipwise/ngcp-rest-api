@@ -10,6 +10,7 @@ import {Injectable, MethodNotAllowedException, UnprocessableEntityException} fro
 import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {db} from '../../entities'
 import {Messages} from '../../config/messages.config'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 @Injectable()
 export class ContractsService implements CrudService<ContractCreateDto, ContractResponseDto> {
@@ -19,7 +20,7 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
     }
 
     @HandleDbErrors
-    async adjust(id: number, patch: Operation | Operation[]): Promise<ContractResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req: ServiceRequest): Promise<ContractResponseDto> {
         let entry = await db.billing.Contract.findOneOrFail(id)
         let contract: ContractBaseDto
 
@@ -39,7 +40,7 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
     }
 
     @HandleDbErrors
-    async create(dto: ContractCreateDto): Promise<ContractResponseDto> {
+    async create(dto: ContractCreateDto, req: ServiceRequest): Promise<ContractResponseDto> {
 
         // TODO: Start transaction guard
         await this.validateCreate(dto)
@@ -86,24 +87,24 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
         return this.toResponse(contract)
     }
 
-    async delete(id: number): Promise<number> {
+    async delete(id: number, req: ServiceRequest): Promise<number> {
         throw new MethodNotAllowedException()
     }
 
     @HandleDbErrors
-    async read(id: number): Promise<ContractResponseDto> {
+    async read(id: number, req): Promise<ContractResponseDto> {
         return this.toResponse(await db.billing.Contract.findOneOrFail(id))
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number): Promise<ContractResponseDto[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<ContractResponseDto[]> {
         const result = await db.billing.Contract.find({
             take: +rows, skip: +rows * (+page - 1),
         })
-        return result.map(r => this.toResponse(r))
+        return result.map(r => this.toResponse(r, req))
     }
 
-    toResponse(c: db.billing.Contract): ContractResponseDto {
+    toResponse(c: db.billing.Contract, req?: ServiceRequest): ContractResponseDto {
         return {
             billing_profile_definition: undefined,
             billing_profile_id: 0,
@@ -115,7 +116,7 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
         }
     }
 
-    async update(id: number, dto: ContractCreateDto): Promise<ContractResponseDto> {
+    async update(id: number, dto: ContractCreateDto, req: ServiceRequest): Promise<ContractResponseDto> {
         // TODO: Implement PUT logic
         await db.billing.Contract.findOneOrFail(id)
         return Promise.resolve(undefined)

@@ -52,7 +52,7 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
     }
 
     @HandleDbErrors
-    async delete(id: number): Promise<number> {
+    async delete(id: number, req: ServiceRequest): Promise<number> {
         let contact = await db.billing.Contact.findOneOrFail(id)
         if (!contact.reseller_id) {
             throw new BadRequestException(Messages.invoke(Messages.DELETE_SYSTEMCONTACT)) // TODO: find better description
@@ -83,7 +83,7 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
     }
 
     @HandleDbErrors
-    async read(id: number): Promise<CustomercontactResponseDto> {
+    async read(id: number, req: ServiceRequest): Promise<CustomercontactResponseDto> {
         const pattern: FindOneOptions = {
             where: {
                 id: id,
@@ -112,7 +112,7 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
     }
 
     @HandleDbErrors
-    async update(id: number, dto: CustomercontactCreateDto): Promise<CustomercontactResponseDto> {
+    async update(id: number, dto: CustomercontactCreateDto, req: ServiceRequest): Promise<CustomercontactResponseDto> {
         const oldContact = await db.billing.Contact.findOneOrFail(id)
         if (oldContact.reseller_id != dto.reseller_id) {
             let reseller = db.billing.Reseller.findOne(dto.reseller_id)
@@ -125,7 +125,7 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
     }
 
     @HandleDbErrors
-    async adjust(id: number, patch: PatchOperation | PatchOperation[]): Promise<CustomercontactResponseDto> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[], req: ServiceRequest): Promise<CustomercontactResponseDto> {
         let oldContact = await db.billing.Contact.findOneOrFail(id)
 
         let contact = this.deflate(oldContact)

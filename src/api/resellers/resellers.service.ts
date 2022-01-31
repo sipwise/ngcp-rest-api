@@ -83,7 +83,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
 
     // TODO: could we use DELETE to terminate resellers?
     @HandleDbErrors
-    async delete(id: number): Promise<number> {
+    async delete(id: number, req: ServiceRequest): Promise<number> {
         this.log.debug({message: 'delete reseller by id', func: this.delete.name, id: id})
         let reseller = await db.billing.Reseller.findOneOrFail(id)
         reseller = await db.billing.Reseller.merge(reseller, {status: ResellerStatus.Terminated})

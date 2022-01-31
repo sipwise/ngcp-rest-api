@@ -29,7 +29,6 @@ import {RBAC_ROLES} from '../../config/constants.config'
 import {number} from 'yargs'
 import {PatchDto} from '../patch.dto'
 import {Request} from 'express'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 import {CrudController} from '../../controllers/crud.controller'
 
@@ -61,7 +60,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             url: req.url,
             method: req.method,
         })
-        return await this.adminsService.create(admin, req)
+        return await this.adminsService.create(admin, this.newServiceRequest(req))
     }
 
     @Get()
@@ -86,10 +85,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             method:
             req.method,
         })
-        const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
-        }
-        return await this.adminsService.readAll(page, rows, sr)
+        return await this.adminsService.readAll(page, rows, this.newServiceRequest(req))
     }
 
     @Get(':id')
@@ -103,7 +99,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             url: req.url,
             method: req.method,
         })
-        return await this.adminsService.read(id, req)
+        return await this.adminsService.read(id, this.newServiceRequest(req))
     }
 
     @Put(':id')
@@ -116,10 +112,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         @Req() req: Request,
     ): Promise<AdminResponseDto> {
         this.log.debug({message: 'update admin by id', func: this.update.name, url: req.url, method: req.method})
-        const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user,
-        }
-        return await this.adminsService.update(id, admin, sr)
+        return await this.adminsService.update(id, admin, this.newServiceRequest(req))
     }
 
     @Patch(':id')
@@ -135,15 +128,12 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         @Req() req: Request,
     ): Promise<AdminResponseDto> {
         this.log.debug({message: 'patch admin by id', func: this.adjust.name, url: req.url, method: req.method})
-        const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user,
-        }
         const err = validate(patch)
         if (err) {
             let message = err.message.replace(/[\n\s]+/g, ' ').replace(/\"/g, '\'')
             throw new BadRequestException(message)
         }
-        return await this.adminsService.adjust(id, patch, sr)
+        return await this.adminsService.adjust(id, patch, this.newServiceRequest(req))
     }
 
     @Delete(':id')
@@ -152,10 +142,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
     })
     async delete(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<number> {
         this.log.debug({message: 'delete admin by id', func: this.delete.name, url: req.url, method: req.method})
-        const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user,
-        }
-        return await this.adminsService.delete(id, sr)
+        return await this.adminsService.delete(id, this.newServiceRequest(req))
     }
 
     @Get(':id/journal')
@@ -174,9 +161,6 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             ParseIntPipe) row: number,
         @Req() req: Request,
     ): Promise<JournalResponseDto[]> {
-        const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user,
-        }
-        return this.journalsService.readAll(sr, page, row, 'admins', id)
+        return this.journalsService.readAll(this.newServiceRequest(req), page, row, 'admins', id)
     }
 }

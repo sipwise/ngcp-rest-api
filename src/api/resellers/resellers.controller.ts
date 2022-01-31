@@ -24,8 +24,6 @@ import {Request} from 'express'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {PatchDto} from '../patch.dto'
 import {AppService} from '../../app.service'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {Reflector} from '@nestjs/core'
 
 const resourceName = 'resellers'
 
@@ -36,7 +34,6 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     private readonly log = new Logger(ResellersController.name)
 
     constructor(
-        private reflector: Reflector,
         private readonly resellersService: ResellersService,
         private readonly journalsService: JournalsService,
     ) {
@@ -48,7 +45,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
         type: ResellerResponseDto,
     })
     async create(entity: ResellerCreateDto, req: Request): Promise<ResellerResponseDto> {
-        return super.create(entity, req)
+        return this.resellersService.create(entity, this.newServiceRequest(req))
     }
 
     @Get()
@@ -67,10 +64,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
         @Req() req,
     ): Promise<ResellerResponseDto[]> {
         this.log.debug({message: 'fetch all resellers', func: this.readAll.name, url: req.url, method: req.method})
-        const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
-        }
-        return this.resellersService.readAll(page, rows, req)
+        return this.resellersService.readAll(page, rows, this.newServiceRequest(req))
     }
 
     @Get(':id')
@@ -78,15 +72,15 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
         type: ResellerResponseDto,
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<ResellerResponseDto> {
-        return this.resellersService.read(id, req)
+        return this.resellersService.read(id, this.newServiceRequest(req))
     }
 
     @Put(':id')
     @ApiOkResponse({
         type: ResellerResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, entity: ResellerCreateDto, req: Request): Promise<ResellerResponseDto> {
-        return super.update(id, entity, req)
+    async update(@Param('id', ParseIntPipe) id: number, entity: ResellerCreateDto, req): Promise<ResellerResponseDto> {
+        return this.resellersService.update(id, entity, this.newServiceRequest(req))
     }
 
     @Patch(':id')
@@ -96,8 +90,8 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req: Request): Promise<ResellerResponseDto> {
-        return super.adjust(id, patch, req)
+    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ResellerResponseDto> {
+        return this.resellersService.adjust(id, patch, this.newServiceRequest(req))
     }
 
     @Get(':id/journal')

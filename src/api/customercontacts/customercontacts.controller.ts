@@ -82,8 +82,8 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     @ApiOkResponse({
         type: CustomercontactResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number): Promise<CustomercontactResponseDto> {
-        return this.contactsService.read(id)
+    async read(@Param('id', ParseIntPipe) id: number, req): Promise<CustomercontactResponseDto> {
+        return this.contactsService.read(id, this.newServiceRequest(req))
     }
 
     @Patch(':id')
@@ -93,24 +93,24 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[]): Promise<CustomercontactResponseDto> {
-        return this.contactsService.adjust(id, patch)
+    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<CustomercontactResponseDto> {
+        return this.contactsService.adjust(id, patch, this.newServiceRequest(req))
     }
 
     @Put(':id')
     @ApiOkResponse({
         type: CustomercontactResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, entity: CustomercontactCreateDto): Promise<CustomercontactResponseDto> {
-        return this.contactsService.update(id, entity)
+    async update(@Param('id', ParseIntPipe) id: number, entity: CustomercontactCreateDto, req): Promise<CustomercontactResponseDto> {
+        return this.contactsService.update(id, entity, this.newServiceRequest(req))
     }
 
     @Delete(':id')
     @ApiOkResponse({
         type: number,
     })
-    async delete(@Param('id', ParseIntPipe) id: number): Promise<number> {
-        return this.contactsService.delete(id)
+    async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
+        return this.contactsService.delete(id, this.newServiceRequest(req))
     }
 
     @Get(':id/journal')

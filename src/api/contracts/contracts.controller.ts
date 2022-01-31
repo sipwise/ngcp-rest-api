@@ -31,31 +31,31 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
         type: ContractResponseDto,
     })
     async create(entity: ContractCreateDto, req: Request): Promise<ContractResponseDto> {
-        return super.create(entity, req)
+        return this.contractsService.create(entity, this.newServiceRequest(req))
     }
 
     @Get()
     @ApiOkResponse({
         type: [ContractResponseDto],
     })
-    async readAll(page, rows): Promise<ContractResponseDto[]> {
-        return this.contractsService.readAll(page, rows)
+    async readAll(page, rows, req): Promise<ContractResponseDto[]> {
+        return this.contractsService.readAll(page, rows, this.newServiceRequest(req))
     }
 
     @Get(':id')
     @ApiOkResponse({
         type: ContractResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number): Promise<ContractResponseDto> {
-        return this.contractsService.read(id)
+    async read(@Param('id', ParseIntPipe) id: number, req): Promise<ContractResponseDto> {
+        return this.contractsService.read(id, this.newServiceRequest(req))
     }
 
     @Put(':id')
     @ApiOkResponse({
         type: ContractResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, dto: ContractCreateDto): Promise<ContractResponseDto> {
-        return this.contractsService.update(id, dto)
+    async update(@Param('id', ParseIntPipe) id: number, dto: ContractCreateDto, req): Promise<ContractResponseDto> {
+        return this.contractsService.update(id, dto, this.newServiceRequest(req))
     }
 
     @Patch(':id')
@@ -65,8 +65,8 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[]): Promise<ContractResponseDto> {
-        return this.contractsService.adjust(id, patch)
+    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ContractResponseDto> {
+        return this.contractsService.adjust(id, patch, this.newServiceRequest(req))
     }
 
     // DELETE is not allowed for Contracts

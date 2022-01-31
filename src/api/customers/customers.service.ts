@@ -7,6 +7,7 @@ import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 import {CustomerBaseDto} from './dto/customer-base.dto'
 import {AppService} from '../../app.service'
 import {db} from '../../entities'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 @Injectable()
 export class CustomersService implements CrudService<CustomerCreateDto, CustomerResponseDto> {
@@ -16,7 +17,7 @@ export class CustomersService implements CrudService<CustomerCreateDto, Customer
     ) {
     }
 
-    async create(dto: CustomerCreateDto): Promise<CustomerResponseDto> {
+    async create(dto: CustomerCreateDto, req: ServiceRequest): Promise<CustomerResponseDto> {
         const now = new Date(Date.now())
         const c = db.billing.Contract.create()
         // TODO: Transaction guard
@@ -24,19 +25,19 @@ export class CustomersService implements CrudService<CustomerCreateDto, Customer
         return
     }
 
-    async delete(id: number): Promise<number> {
+    async delete(id: number, req: ServiceRequest): Promise<number> {
         throw new MethodNotAllowedException()
         return Promise.resolve(0)
     }
 
     @HandleDbErrors
-    async read(id: number): Promise<CustomerResponseDto> {
+    async read(id: number, req: ServiceRequest): Promise<CustomerResponseDto> {
         //    return this.toResponse(await db.billing.Contract.findOneOrFail(id))
         return
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number): Promise<CustomerResponseDto[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<CustomerResponseDto[]> {
         const result = await db.billing.Contract.find({
             take: rows, skip: rows * (page - 1),
         })
@@ -61,11 +62,11 @@ export class CustomersService implements CrudService<CustomerCreateDto, Customer
         // }
     }
 
-    async update(id: number, dto: CustomerCreateDto): Promise<CustomerResponseDto> {
+    async update(id: number, dto: CustomerCreateDto, req: ServiceRequest): Promise<CustomerResponseDto> {
         return Promise.resolve(undefined)
     }
 
-    async adjust(id: number, patch: Operation | Operation[]): Promise<CustomerResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], req: ServiceRequest): Promise<CustomerResponseDto> {
         return Promise.resolve(undefined)
     }
 

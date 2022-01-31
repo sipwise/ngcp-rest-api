@@ -107,6 +107,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
             headers: [req.rawHeaders],
             params: [req.params],
             user: req.user,
+            query: req.query,
         }
     }
 }

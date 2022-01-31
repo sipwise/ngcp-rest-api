@@ -92,17 +92,17 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
     }
 
     @HandleDbErrors
-    async read(id: number): Promise<DomainResponseDto> {
+    async read(id: number, req: ServiceRequest): Promise<DomainResponseDto> {
         return this.toResponse(await db.billing.Domain.findOneOrFail(id))
     }
 
     @HandleDbErrors
-    async update(id: number, domain: DomainUpdateDto): Promise<DomainResponseDto> {
+    async update(id: number, domain: DomainUpdateDto, req: ServiceRequest): Promise<DomainResponseDto> {
         throw new NotImplementedException()
     }
 
     @HandleDbErrors
-    async adjust(id: number, patch: PatchOperation | PatchOperation[]): Promise<DomainResponseDto> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[], req: ServiceRequest): Promise<DomainResponseDto> {
         throw new NotImplementedException()
     }
 
