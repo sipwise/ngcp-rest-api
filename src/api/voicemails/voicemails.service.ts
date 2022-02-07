@@ -1,12 +1,12 @@
-import {BadRequestException, Injectable, Logger} from "@nestjs/common"
-import {CrudService} from "interfaces/crud-service.interface"
-import {db} from "entities"
-import {FindManyOptions} from "typeorm"
-import {HandleDbErrors} from "decorators/handle-db-errors.decorator"
-import {Operation as PatchOperation, applyPatch} from "helpers/patch.helper"
-import {ServiceRequest} from "interfaces/service-request.interface"
-import {VoicemailsBaseDto} from "./dto/voicemails-base.dto"
-import {VoicemailsResponseDto} from "./dto/voicemails-response.dto"
+import {BadRequestException, Injectable, Logger} from '@nestjs/common'
+import {CrudService} from '../../interfaces/crud-service.interface'
+import {db} from '../../entities'
+import {FindManyOptions} from 'typeorm'
+import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
+import {Operation as PatchOperation, applyPatch} from '../../helpers/patch.helper'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {VoicemailsBaseDto} from './dto/voicemails-base.dto'
+import {VoicemailsResponseDto} from './dto/voicemails-response.dto'
 
 @Injectable()
 export class VoicemailsService implements CrudService<VoicemailsBaseDto, VoicemailsResponseDto>{

@@ -1,14 +1,14 @@
 
-import {Controller, DefaultValuePipe, Get, ParseIntPipe, Param, Query, Req, UseInterceptors} from "@nestjs/common"
-import {ApiOkResponse, ApiTags} from "@nestjs/swagger"
-import {Auth} from "decorators/auth.decorator"
-import {AppService} from "app.service"
-import {JournalingInterceptor} from "interceptors/journaling.interceptor"
-import {JournalsService} from "api/journals/journals.service"
-import {LoggingInterceptor} from "interceptors/logging.interceptor"
-import {ProductsResponseDto} from "./dto/products-response.dto"
-import {ProductsService} from "./products.service"
-import {RBAC_ROLES} from "config/constants.config"
+import {Controller, DefaultValuePipe, Get, ParseIntPipe, Param, Query, Req, UseInterceptors} from '@nestjs/common'
+import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {Auth} from '../../decorators/auth.decorator'
+import {AppService} from '../../app.service'
+import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
+import {JournalsService} from '../journals/journals.service'
+import {LoggingInterceptor} from '../../interceptors/logging.interceptor'
+import {ProductsResponseDto} from './dto/products-response.dto'
+import {ProductsService} from './products.service'
+import {RBAC_ROLES} from '../../config/constants.config'
 
 @ApiTags('Products')
 @Controller('Products')

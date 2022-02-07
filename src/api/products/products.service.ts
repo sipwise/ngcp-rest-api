@@ -1,9 +1,9 @@
-import {db} from "entities"
-import {FindManyOptions} from "typeorm"
-import {HandleDbErrors} from "decorators/handle-db-errors.decorator"
-import {Injectable} from "@nestjs/common"
-import {ServiceRequest} from "interfaces/service-request.interface"
-import {ProductsResponseDto} from "./dto/products-response.dto"
+import {db} from '../../entities'
+import {FindManyOptions} from 'typeorm'
+import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
+import {Injectable} from '@nestjs/common'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {ProductsResponseDto} from './dto/products-response.dto'
 
 @Injectable()
 export class ProductsService {

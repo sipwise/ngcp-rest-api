@@ -1,18 +1,18 @@
-import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from "@nestjs/swagger"
-import {Auth} from "decorators/auth.decorator"
-import {AppService} from "app.service"
-import {Body, BadRequestException, Controller, DefaultValuePipe, Delete, Get, Patch, ParseIntPipe, Param, Post, Put, Query, Req, UseInterceptors} from "@nestjs/common"
-import {CrudController} from "controllers/crud.controller"
-import {JournalingInterceptor} from "interceptors/journaling.interceptor"
-import {JournalsService} from "api/journals/journals.service"
-import {LoggingInterceptor} from "interceptors/logging.interceptor"
-import {number} from "yargs"
-import {Operation as PatchOperation, validate} from "helpers/patch.helper"
-import {PatchDto} from "api/patch.dto"
-import {RBAC_ROLES} from "config/constants.config"
-import {VoicemailsBaseDto} from "./dto/voicemails-base.dto"
-import {VoicemailsResponseDto} from "./dto/voicemails-response.dto"
-import {VoicemailsService} from "./voicemails.services"
+import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {Auth} from '../../decorators/auth.decorator'
+import {AppService} from '../../app.service'
+import {Body, BadRequestException, Controller, DefaultValuePipe, Delete, Get, Patch, ParseIntPipe, Param, Post, Put, Query, Req, UseInterceptors} from '@nestjs/common'
+import {CrudController} from '../../controllers/crud.controller'
+import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
+import {JournalsService} from '../journals/journals.service'
+import {LoggingInterceptor} from '../../interceptors/logging.interceptor'
+import {number} from 'yargs'
+import {Operation as PatchOperation, validate} from '../../helpers/patch.helper'
+import {PatchDto} from '../patch.dto'
+import {RBAC_ROLES} from '../../config/constants.config'
+import {VoicemailsBaseDto} from './dto/voicemails-base.dto'
+import {VoicemailsResponseDto} from './dto/voicemails-response.dto'
+import {VoicemailsService} from './voicemails.service'
 
 const resourceName = 'voicemails'
 
