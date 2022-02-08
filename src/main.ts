@@ -28,7 +28,7 @@ async function bootstrap() {
         },
     )
 
-    app.setGlobalPrefix(config.common.api_prefix)
+    app.setGlobalPrefix(config.common.api_prefix, {exclude: ['login_jwt']})
 
     const doc_config = new DocumentBuilder()
         .setTitle('NGCP API')

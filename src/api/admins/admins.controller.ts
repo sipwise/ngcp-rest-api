@@ -31,8 +31,8 @@ import {PatchDto} from '../patch.dto'
 import {Request} from 'express'
 import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 import {CrudController} from '../../controllers/crud.controller'
-import {ExpandHelper} from '../../helpers/expand.helper'
 import {AdminSearchDto} from './dto/admin-search.dto'
+import {ExpandHelper} from '../../helpers/expand.helper'
 
 const resourceName = 'admins'
 
@@ -47,7 +47,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         private readonly app: AppService,
         private readonly adminsService: AdminsService,
         private readonly journalsService: JournalsService,
-        private readonly expander: ExpandHelper
+        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, adminsService, journalsService)
     }
@@ -56,14 +56,17 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
     @ApiCreatedResponse({
         type: AdminResponseDto,
     })
-    async create(@Body() admin: AdminCreateDto, @Req() req): Promise<AdminResponseDto> {
+    async create(@Body() create: AdminCreateDto, @Req() req): Promise<AdminResponseDto> {
         this.log.debug({
             message: 'create admin',
             func: this.create.name,
             url: req.url,
             method: req.method,
         })
-        return await this.adminsService.create(admin, this.newServiceRequest(req))
+        let admin = Object.assign(new AdminCreateDto(), create)
+        let newAdmin = await this.adminsService.create(await admin.toDomain(), this.newServiceRequest(req))
+        let response = new AdminResponseDto(newAdmin)
+        return response
     }
 
     @Get()
@@ -88,7 +91,9 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             method:
             req.method,
         })
-        const responseList = await this.adminsService.readAll(page, rows, this.newServiceRequest(req))
+
+        let admins = await this.adminsService.readAll(page, rows, this.newServiceRequest(req))
+        let responseList = admins.map((adm) => new AdminResponseDto(adm))
         if (req.query.expand) {
             let adminSearchDtoKeys = Object.keys(new AdminSearchDto())
             await this.expander.expandObjects(responseList, adminSearchDtoKeys, req)
@@ -112,7 +117,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             let adminSearchDtoKeys = Object.keys(new AdminSearchDto())
             await this.expander.expandObjects(responseItem, adminSearchDtoKeys, req)
         }
-        return responseItem
+        return new AdminResponseDto(responseItem)
     }
 
     @Put(':id')
@@ -121,11 +126,12 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
     })
     async update(
         @Param('id', ParseIntPipe) id: number,
-        @Body() admin: AdminUpdateDto,
+        @Body() update: AdminUpdateDto,
         @Req() req: Request,
     ): Promise<AdminResponseDto> {
         this.log.debug({message: 'update admin by id', func: this.update.name, url: req.url, method: req.method})
-        return await this.adminsService.update(id, admin, this.newServiceRequest(req))
+        let admin = Object.assign(new AdminUpdateDto(), update)
+        return new AdminResponseDto(await this.adminsService.update(id, await admin.toDomain(), this.newServiceRequest(req)))
     }
 
     @Patch(':id')
@@ -146,7 +152,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             let message = err.message.replace(/[\n\s]+/g, ' ').replace(/\"/g, '\'')
             throw new BadRequestException(message)
         }
-        return await this.adminsService.adjust(id, patch, this.newServiceRequest(req))
+        return new AdminResponseDto(await this.adminsService.adjust(id, patch, this.newServiceRequest(req)))
     }
 
     @Delete(':id')

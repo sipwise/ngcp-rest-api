@@ -9,7 +9,7 @@ export class AppController {
     }
 
     @UseGuards(PasswordGuard)
-    @Post('auth/jwt')
+    @Post('login_jwt')
     async login(@Req() req) {
         return this.authService.signJwt(req.user)
     }

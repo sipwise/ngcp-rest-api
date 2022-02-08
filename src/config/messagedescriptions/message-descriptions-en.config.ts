@@ -1,4 +1,4 @@
-export const MessageDescriptionsEN: { [id: string] : any} = {
+export const MessageDescriptionsEN: { [id: string]: any } = {
     PERMISSION_DENIED: 'Permission denied',
     DELETE_OWN_USER: 'Cannot delete own user',
     INVALID_USER_ROLE: 'Invalid user role',
@@ -31,5 +31,5 @@ export const MessageDescriptionsEN: { [id: string] : any} = {
     EXPAND_OBJECT_FAILED: (str: string) => `Cannot expand field ${str}`,
     DOMAIN_ALREADY_EXISTS: (str: string) => `domain ${str} already exists`,
     UNKNOWN_ROLE: (str: string) => `Unknown role ${str}`,
-    VALIDATION_FAILED_UNSUPPORTED_ID: 'Validation failed (unsupported :id format)'
+    VALIDATION_FAILED_UNSUPPORTED_ID: 'Validation failed (unsupported :id format)',
 }

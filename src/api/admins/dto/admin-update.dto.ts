@@ -1,4 +1,4 @@
-import {AdminBaseDto} from './admin-base.dto'
+import {AdminCreateDto} from './admin-create.dto'
 
-export class AdminUpdateDto extends AdminBaseDto {
+export class AdminUpdateDto extends AdminCreateDto {
 }

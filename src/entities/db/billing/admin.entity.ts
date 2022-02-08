@@ -1,5 +1,7 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
 import {AclRole} from './acl-role.entity'
+import {RBAC_FLAGS, RBAC_ROLES} from '../../../config/constants.config'
+import {internal} from '../../../entities'
 
 @Entity({
     name: 'admins',
@@ -129,4 +131,103 @@ export class Admin extends BaseEntity {
     @ManyToOne(() => AclRole, role => role.admins)
     @JoinColumn({name: 'role_id'})
     role: AclRole
+
+    fromDomain(admin: internal.Admin): Admin {
+        this.billing_data = admin.billing_data
+        this.call_data = admin.call_data
+        this.can_reset_password = admin.can_reset_password
+        this.email = admin.email
+        this.id = admin.id
+        this.is_active = admin.is_active
+        this.is_ccare = admin.is_ccare
+        this.is_master = admin.is_master
+        this.is_superuser = admin.is_superuser
+        this.is_system = admin.is_system
+        this.lawful_intercept = admin.lawful_intercept
+        this.login = admin.login
+        this.read_only = admin.read_only
+        this.reseller_id = admin.reseller_id
+        if (admin.role_data != undefined)
+            this.role = new AclRole().fromDomain(admin.role_data)
+        this.role_id = admin.role_id
+        this.show_passwords = admin.show_passwords
+        if(admin.saltedpass != undefined)
+            this.saltedpass = admin.saltedpass
+
+        return this
+    }
+
+    async toDomain(): Promise<internal.Admin> {
+        const admin = new internal.Admin()
+
+        admin.billing_data = this.billing_data
+        admin.call_data = this.call_data
+        admin.can_reset_password = this.can_reset_password
+        admin.email = this.email
+        admin.id = this.id
+        admin.is_active = this.is_active
+        admin.is_ccare = this.is_ccare
+        admin.is_master = this.is_master
+        admin.is_superuser = this.is_superuser
+        admin.is_system = this.is_system
+        admin.lawful_intercept = this.lawful_intercept
+        admin.login = this.login
+        admin.read_only = this.read_only
+        admin.reseller_id = this.reseller_id
+        if (this.role != undefined) {
+            admin.role = this.role.role
+            admin.role_data = await this.role.toDomain()
+        }
+        admin.role_id = this.role_id
+        admin.show_passwords = this.show_passwords
+
+        return admin
+    }
+
+    async getPermissionFlags(): Promise<RBAC_FLAGS> {
+        switch (this.role.role) {
+            case RBAC_ROLES.system:
+                return {
+                    is_system: true,
+                    is_superuser: false,
+                    is_ccare: false,
+                    lawful_intercept: false,
+                }
+            case RBAC_ROLES.admin:
+                return {
+                    is_system: false,
+                    is_superuser: true,
+                    is_ccare: false,
+                    lawful_intercept: false,
+                }
+            case RBAC_ROLES.reseller:
+                return {
+                    is_system: false,
+                    is_superuser: false,
+                    is_ccare: false,
+                    lawful_intercept: false,
+                }
+            case RBAC_ROLES.ccareadmin:
+                return {
+                    is_system: false,
+                    is_superuser: true,
+                    is_ccare: true,
+                    lawful_intercept: false,
+                }
+            case RBAC_ROLES.ccare:
+                return {
+                    is_system: false,
+                    is_superuser: false,
+                    is_ccare: true,
+                    lawful_intercept: false,
+                }
+            case RBAC_ROLES.lintercept:
+                return {
+                    is_system: false,
+                    is_superuser: false,
+                    is_ccare: false,
+                    lawful_intercept: true,
+                }
+        }
+    }
 }

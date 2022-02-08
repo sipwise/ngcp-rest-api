@@ -1,5 +1,7 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsEmail, IsNotEmpty, IsOptional} from 'class-validator'
+import {internal} from '../../../entities'
+import {RBAC_ROLES} from '../../../config/constants.config'
 
 export class AdminCreateDto {
     @IsOptional()
@@ -45,4 +47,23 @@ export class AdminCreateDto {
     @IsNotEmpty()
     @ApiProperty()
     role: string
+
+    async toDomain(): Promise<internal.Admin> {
+        const admin = new internal.Admin()
+
+        admin.billing_data = this.billing_data
+        admin.call_data = this.call_data
+        admin.can_reset_password = this.can_reset_password
+        admin.email = this.email
+        admin.is_active = this.is_active
+        admin.is_master = this.is_master
+        admin.login = this.login
+        admin.read_only = this.read_only
+        admin.reseller_id = this.reseller_id
+        admin.role = this.role
+        admin.show_passwords = this.show_passwords
+        admin.password = this.password
+
+        return admin
+    }
 }

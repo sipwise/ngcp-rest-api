@@ -62,6 +62,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             if (!('id' in payload))
                 return null
             const admin = await this.app.dbRepo(db.billing.Admin).findOne(payload.id, {relations: ['role']})
+            const role = await this.app.dbRepo(db.billing.AclRole).findOne({
+                where: {
+                    id: admin.role.id,
+                },
+                relations: ['has_access_to'],
+            })
+            admin.role = role
             if (!this.auth.isAdminValid(admin)) {
                 return null
             }

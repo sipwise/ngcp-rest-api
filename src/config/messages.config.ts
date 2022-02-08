@@ -4,8 +4,8 @@ import {ServiceRequest} from '../interfaces/service-request.interface'
 import {MessageDescriptionsEN} from './messagedescriptions/message-descriptions-en.config'
 
 export class Messages {
-    static MessageDescriptions: { [id: string] : any} = {
-        EN: MessageDescriptionsEN
+    static MessageDescriptions: { [id: string]: any } = {
+        EN: MessageDescriptionsEN,
     }
 
     static PERMISSION_DENIED = 'PERMISSION_DENIED'

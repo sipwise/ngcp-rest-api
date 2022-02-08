@@ -31,5 +31,5 @@ export const MessageCodes: { [id: string]: number } = {
     'EXPAND_OBJECT_FAILED': 1029,
     'DOMAIN_ALREADY_EXISTS': 1030,
     'UNKNOWN_ROLE': 1031,
-    'VALIDATION_FAILED_UNSUPPORTED_ID': 1032
+    'VALIDATION_FAILED_UNSUPPORTED_ID': 1032,
 }

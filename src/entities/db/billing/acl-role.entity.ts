@@ -1,6 +1,7 @@
 import {BaseEntity, Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
 import {Journal} from './journal.entity'
 import {Admin} from './admin.entity'
+import {internal} from '../../../entities'
 
 @Entity({
     name: 'acl_roles',
@@ -28,11 +29,57 @@ export class AclRole extends BaseEntity {
         joinColumn: {name: 'accessor_id', referencedColumnName: 'id'},
         inverseJoinColumn: {name: 'has_access_to_id', referencedColumnName: 'id'},
     })
-    has_access_to: Promise<AclRole[]>
+    has_access_to: AclRole[]
 
     @OneToMany(() => Admin, admin => admin.role)
     admins: Admin[]
 
     @OneToMany(() => Journal, journal => journal.role)
     journals: Journal[]
+
+    fromDomain(role: internal.AclRole): AclRole {
+        let admins: Admin[]
+        let hasAccess: AclRole[]
+        if (role == undefined)
+            return
+        if(role.admins != undefined)
+            admins = role.admins.map((adm) => new Admin().fromDomain(adm))
+        if(role.has_access_to != undefined)
+            hasAccess = role.has_access_to.map((r) => new AclRole().fromDomain(r))
+
+        this.role = role.role
+        this.id = role.id
+        this.is_acl = role.is_acl
+        this.admins = admins
+        this.has_access_to = hasAccess
+
+        return this
+    }
+
+    async toDomain(): Promise<internal.AclRole> {
+        const admins: internal.Admin[] = []
+
+        if (this.admins != undefined) {
+            for (let adm of this.admins) {
+                admins.push(await adm.toDomain())
+            }
+        }
+
+        const access_to: internal.AclRole[] = []
+        if (this.has_access_to != undefined) {
+            for (let r of this.has_access_to) {
+                access_to.push(await r.toDomain())
+            }
+        }
+
+        const role = new internal.AclRole()
+
+        role.role = this.role
+        role.id = this.id
+        role.is_acl = this.is_acl
+        role.admins = admins
+        role.has_access_to = access_to
+
+        return role
+    }
 }

@@ -18,7 +18,7 @@ import {AdminsController} from '../api/admins/admins.controller';
         CustomercontactsModule,
         ResellersModule,
         ContractsModule,
-        JournalsModule
+        JournalsModule,
     ],
     providers: [
         ExpandHelper,
@@ -26,9 +26,9 @@ import {AdminsController} from '../api/admins/admins.controller';
         CustomercontactsController,
         ResellersController,
         ContractsController,
-        JournalsService
+        JournalsService,
     ],
-    exports: [ExpandHelper]
+    exports: [ExpandHelper],
 })
 export class ExpandModule {
 

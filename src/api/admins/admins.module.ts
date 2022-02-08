@@ -5,18 +5,21 @@ import {AdminsRepository} from './admins.repository'
 import {ExpandModule} from '../../helpers/expand.module'
 import {JournalsModule} from '../journals/journals.module'
 import {JournalsService} from '../journals/journals.service'
+import {RepositoriesModule} from '../../repositories/repositories.module'
+import {AclRoleRepository} from '../../repositories/acl-role.repository'
 
 @Module({
     imports: [
         ExpandModule,
         JournalsModule,
+        RepositoriesModule,
     ],
     controllers: [AdminsController],
     exports: [
         AdminsService,
-        AdminsRepository,
     ],
     providers: [
+        AclRoleRepository,
         AdminsRepository,
         AdminsService,
         JournalsService,

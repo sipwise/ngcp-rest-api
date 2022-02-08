@@ -2,7 +2,7 @@ import {Logger} from '@nestjs/common'
 import {getConnectionManager} from 'typeorm'
 import {databaseConfig} from '../config/database.config'
 
-export const databaseProviders = [
+export const databaseProviders = process.env.NODE_ENV != 'test' ? [
     {
         provide: 'DB',
 
@@ -19,4 +19,8 @@ export const databaseProviders = [
             return manager
         },
     },
-]
+] : [{
+    provide: 'DB', useFactory: async () => {
+        return getConnectionManager()
+    },
+}]

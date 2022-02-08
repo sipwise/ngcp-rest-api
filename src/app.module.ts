@@ -23,6 +23,36 @@ import {ProductsModule} from './api/products/products.module'
 import {VoicemailsModule} from './api/voicemails/voicemails.module'
 import {ExpandModule} from './helpers/expand.module'
 
+let modulesImport: any[] = [
+    ConfigModule.forRoot({
+        isGlobal: true,
+        ignoreEnvFile: true,
+        load: [
+            function () {
+                return AppService.config
+            },
+        ],
+    }),
+    DatabaseModule,
+    AdminsModule,
+    AuthModule,
+    ContractsModule,
+    CustomercontactsModule,
+    DomainsModule,
+    FileshareModule,
+    FileshareSchedule,
+    ResellersModule,
+    SystemcontactsModule,
+]
+if (process.env.NODE_ENV != 'test') {
+    modulesImport.push([
+        DbStateSchedule,
+        InterceptorModule,
+        JournalsModule,
+        ScheduleModule.forRoot(),
+    ])
+}
+
 @Global()
 @Module({
     controllers: [
@@ -65,7 +95,6 @@ import {ExpandModule} from './helpers/expand.module'
         Logger,
     ],
 })
-
 export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer): any {
         consumer.apply(ContextMiddleware, LoggerMiddleware, StateMiddleware).forRoutes({

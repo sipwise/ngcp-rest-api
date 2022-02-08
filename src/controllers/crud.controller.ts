@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common'
 import {Operation as PatchOperation, validate} from '../helpers/patch.helper'
 import {JournalsService} from '../api/journals/journals.service'
-import {CrudService} from '../interfaces/crud-service.interface'
 import {AppService} from '../app.service'
 import {Request} from 'express'
 import {Auth} from '../decorators/auth.decorator'
@@ -25,7 +24,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
 
     constructor(
         private readonly resourceName: string,
-        private readonly repo: CrudService<CreateDTO, ResponseDTO>,
+        private readonly repo: any, //CrudService<CreateDTO, ResponseDTO>,
         private readonly journals?: JournalsService) {
     }
 

@@ -54,6 +54,12 @@ export class AuthService {
         if (!this.isAdminValid(admin)) {
             return null
         }
+        admin.role = await this.app.dbRepo(db.billing.AclRole).findOne({
+            where: {
+                id: admin.role.id,
+            },
+            relations: ['has_access_to'],
+        })
         const [b64salt, b64hash] = admin.saltedpass.split('$')
         const bcrypt_version = '2b'
         const bcrypt_cost = 13
@@ -88,6 +94,13 @@ export class AuthService {
             where: {ssl_client_m_serial: sn},
             relations: ['role'],
         })
+        const role = await this.app.dbRepo(db.billing.AclRole).findOne({
+            where: {
+                id: admin.role.id,
+            },
+            relations: ['has_access_to'],
+        })
+        admin.role = role
         if (!this.isAdminValid(admin)) {
             return null
         }
