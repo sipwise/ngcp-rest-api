@@ -31,6 +31,8 @@ import {PatchDto} from '../patch.dto'
 import {Request} from 'express'
 import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 import {CrudController} from '../../controllers/crud.controller'
+import {ExpandHelper} from '../../helpers/expand.helper'
+import {AdminSearchDto} from './dto/admin-search.dto'
 
 const resourceName = 'admins'
 
@@ -45,6 +47,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         private readonly app: AppService,
         private readonly adminsService: AdminsService,
         private readonly journalsService: JournalsService,
+        private readonly expander: ExpandHelper
     ) {
         super(resourceName, adminsService, journalsService)
     }
@@ -85,7 +88,12 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             method:
             req.method,
         })
-        return await this.adminsService.readAll(page, rows, this.newServiceRequest(req))
+        const responseList = await this.adminsService.readAll(page, rows, this.newServiceRequest(req))
+        if (req.query.expand) {
+            let adminSearchDtoKeys = Object.keys(new AdminSearchDto())
+            await this.expander.expandObjects(responseList, adminSearchDtoKeys, req)
+        }
+        return responseList
     }
 
     @Get(':id')
@@ -99,7 +107,12 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             url: req.url,
             method: req.method,
         })
-        return await this.adminsService.read(id, this.newServiceRequest(req))
+        const responseItem = await this.adminsService.read(id, this.newServiceRequest(req))
+        if (req.query.expand && !req.isRedirected) {
+            let adminSearchDtoKeys = Object.keys(new AdminSearchDto())
+            await this.expander.expandObjects(responseItem, adminSearchDtoKeys, req)
+        }
+        return responseItem
     }
 
     @Put(':id')

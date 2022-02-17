@@ -1,22 +1,22 @@
-enum CustomerStatus {
+export enum CustomerStatus {
     Active = 'active',
     Pending = 'pending',
     Locked = 'locked',
     Terminated = 'terminated'
 }
 
-enum CustomerType {
+export enum CustomerType {
     SipAccount = 'sippacount',
     PbxAccount = 'pbxaccount'
 }
 
-enum CustomerBillingProfileDefiniton {
+export enum CustomerBillingProfileDefiniton {
     Id = 'id',
     Profiles = 'profiles',
     Package = 'package',
 }
 
-class CustomerBillingProfile {
+export class CustomerBillingProfile {
     network_id: number
     profile_id?: number
     start!: string // TODO: why is timestamp not a date?; why is it required field in DTO?

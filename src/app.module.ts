@@ -21,6 +21,7 @@ import {FileshareSchedule} from './schedules/fileshare.schedule'
 import {FileshareModule} from './api/fileshare/fileshare.module'
 import {ProductsModule} from './api/products/products.module'
 import {VoicemailsModule} from './api/voicemails/voicemails.module'
+import {ExpandModule} from './helpers/expand.module'
 
 @Global()
 @Module({
@@ -44,6 +45,7 @@ import {VoicemailsModule} from './api/voicemails/voicemails.module'
         DatabaseModule,
         DbStateSchedule,
         DomainsModule,
+        ExpandModule,
         FileshareModule,
         FileshareSchedule,
         InterceptorModule,

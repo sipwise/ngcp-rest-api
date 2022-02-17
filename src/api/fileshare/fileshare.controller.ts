@@ -19,6 +19,8 @@ import {JournalsService} from '../journals/journals.service'
 import {Public} from '../../decorators/public.decorator'
 import {FileInterceptor} from '@nestjs/platform-express'
 import {AppService} from '../../app.service'
+import {ExpandHelper} from '../../helpers/expand.helper'
+import {FileshareSearchDto} from './dto/fileshare-search.dto'
 
 const resourceName = 'fileshare'
 
@@ -28,6 +30,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     constructor(
         private readonly fileshareService: FileshareService,
         private readonly journalsService: JournalsService,
+        private readonly expander: ExpandHelper
     ) {
         super(resourceName, fileshareService, journalsService)
     }
@@ -50,7 +53,12 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
         type: [FileshareResponseDto],
     })
     async readAll(page, row, req): Promise<FileshareResponseDto[]> {
-        return this.fileshareService.readAll(page, row, req)
+        const responseList = await this.fileshareService.readAll(page, row, req)
+        if (req.query.expand) {
+            let fileshareSearchDtoKeys = Object.keys(new FileshareSearchDto())
+            await this.expander.expandObjects(responseList, fileshareSearchDtoKeys, req)
+        }
+        return responseList
     }
 
     @Public(AppService.config.fileshare.public_links)

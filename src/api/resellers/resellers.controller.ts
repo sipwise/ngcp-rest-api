@@ -1,7 +1,7 @@
 import {
     Controller,
-    DefaultValuePipe,
-    Get,
+    DefaultValuePipe, forwardRef,
+    Get, Inject,
     Logger,
     Param,
     ParseIntPipe,
@@ -24,6 +24,8 @@ import {Request} from 'express'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {PatchDto} from '../patch.dto'
 import {AppService} from '../../app.service'
+import {ExpandHelper} from '../../helpers/expand.helper'
+import {ResellerSearchDto} from './dto/reseller-search.dto'
 
 const resourceName = 'resellers'
 
@@ -36,6 +38,8 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     constructor(
         private readonly resellersService: ResellersService,
         private readonly journalsService: JournalsService,
+        @Inject(forwardRef(() => ExpandHelper))
+        private readonly expander: ExpandHelper
     ) {
         super(resourceName, resellersService, journalsService)
     }
@@ -64,7 +68,12 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
         @Req() req,
     ): Promise<ResellerResponseDto[]> {
         this.log.debug({message: 'fetch all resellers', func: this.readAll.name, url: req.url, method: req.method})
-        return this.resellersService.readAll(page, rows, this.newServiceRequest(req))
+        const responseList = await this.resellersService.readAll(page, rows, this.newServiceRequest(req))
+        if (req.query.expand) {
+            let resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
+            await this.expander.expandObjects(responseList, resellerSearchDtoKeys, req)
+        }
+        return responseList
     }
 
     @Get(':id')
@@ -72,7 +81,12 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
         type: ResellerResponseDto,
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<ResellerResponseDto> {
-        return this.resellersService.read(id, this.newServiceRequest(req))
+        const responseItem = await this.resellersService.read(id, this.newServiceRequest(req))
+        if (req.query.expand && !req.isRedirected) {
+            let resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
+            await this.expander.expandObjects(responseItem, resellerSearchDtoKeys, req)
+        }
+        return responseItem
     }
 
     @Put(':id')

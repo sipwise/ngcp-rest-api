@@ -9,13 +9,19 @@ import {LoggingInterceptor} from '../../interceptors/logging.interceptor'
 import {ProductsResponseDto} from './dto/products-response.dto'
 import {ProductsService} from './products.service'
 import {RBAC_ROLES} from '../../config/constants.config'
+import {ExpandHelper} from '../../helpers/expand.helper'
+import {ProductSearchDto} from './dto/product-search.dto'
 
 @ApiTags('Products')
 @Controller('Products')
 @UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
 @Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller, RBAC_ROLES.lintercept)
 export class ProductsController {
-    constructor(private readonly productService: ProductsService, private readonly journalService: JournalsService) {
+    constructor(
+        private readonly productsService: ProductsService,
+        private readonly journalsService: JournalsService,
+        private readonly expander: ExpandHelper
+    ) {
     }
 
     @Get()
@@ -33,7 +39,12 @@ export class ProductsController {
             ParseIntPipe) row: number,
         @Req() req,
     ): Promise<ProductsResponseDto[]> {
-        return await this.productService.readAll(page, row, req)
+        const responseList = await this.productsService.readAll(page, row, req)
+        if (req.query.expand) {
+            let productSearchDtoKeys = Object.keys(new ProductSearchDto())
+            await this.expander.expandObjects(responseList, productSearchDtoKeys, req)
+        }
+        return responseList
     }
 
     @Get(':id')
@@ -41,6 +52,11 @@ export class ProductsController {
         type: ProductsResponseDto,
     })
     async findOne(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<ProductsResponseDto> {
-        return await this.productService.read(id, req)
+        const responseList = await this.productsService.read(id, req)
+        if (req.query.expand && !req.isRedirected) {
+            let productSearchDtoKeys = Object.keys(new ProductSearchDto())
+            await this.expander.expandObjects(responseList, productSearchDtoKeys, req)
+        }
+        return responseList
     }
 }

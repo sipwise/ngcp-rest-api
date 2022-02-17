@@ -9,7 +9,6 @@ import {RBAC_FLAGS, RBAC_ROLES} from '../../config/constants.config'
 import {configureQueryBuilder} from '../../helpers/query-builder.helper'
 import {AdminSearchDto} from './dto/admin-search.dto'
 import {SelectQueryBuilder} from 'typeorm'
-import {ExpandHelper} from '../../helpers/expand.helper'
 import {Messages} from '../../config/messages.config'
 
 const SPECIAL_USER_LOGIN = 'sipwise'
@@ -20,7 +19,6 @@ export class AdminsRepository {
 
     constructor(
         private readonly app: AppService,
-        private readonly expander: ExpandHelper,
     ) {
     }
 
@@ -101,12 +99,7 @@ export class AdminsRepository {
         await this.applySearchQuery(page, rows, req.query, query)
         await this.applyAdminFilter(req, query)
         const result = await query.getMany()
-        const responseList = await Promise.all(result.map(async (adm) => this.toObject(adm)))
-        if (req.query.expand) {
-            let adminSearchDtoKeys = Object.keys(new AdminSearchDto())
-            await this.expander.expandObjects(responseList, adminSearchDtoKeys, req)
-        }
-        return responseList
+        return await Promise.all(result.map(async (adm) => this.toObject(adm)))
     }
 
     @HandleDbErrors

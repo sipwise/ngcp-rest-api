@@ -26,6 +26,9 @@ async function hasPermissionToAccessController(role: string, controller: CrudCon
 
 /**
  * Calls `read()` method of provided `controller` and verifies user authorization.
+ * Also adds a boolean property 'isRedirected' to the request so that the provided 'controller'
+ * can know that this request has been redirected by another controller. This will prevent
+ * the expand process from being triggered again.
  *
  * @param controller controller that extends CrudController
  * @param id identifier of object to read
@@ -38,6 +41,7 @@ export async function ProtectedReadCall(controller: CrudController<any, any>, id
     if (!await hasPermissionToAccessController(role, controller)) {
         throw new UnauthorizedException()
     }
+    req.isRedirected = true
     return await controller.read(id, req)
 }
 

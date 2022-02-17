@@ -26,7 +26,7 @@ export class ContractBaseDto {
     type?: ContractType
 }
 
-enum ContractBillingProfileDefinition {
+export enum ContractBillingProfileDefinition {
     ID = 'id',
     Profiles = 'profiles',
     Package = 'package'

@@ -13,6 +13,8 @@ import {RBAC_ROLES} from '../../config/constants.config'
 import {VoicemailsBaseDto} from './dto/voicemails-base.dto'
 import {VoicemailsResponseDto} from './dto/voicemails-response.dto'
 import {VoicemailsService} from './voicemails.service'
+import {ExpandHelper} from '../../helpers/expand.helper'
+import {VoicemailSearchDto} from './dto/voicemail-search.dto'
 
 const resourceName = 'voicemails'
 
@@ -22,10 +24,11 @@ const resourceName = 'voicemails'
 @Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller, RBAC_ROLES.lintercept)
 export class VoicemailsController extends CrudController<VoicemailsBaseDto, VoicemailsResponseDto> {
     constructor(
-        private readonly voicemailService: VoicemailsService,
+        private readonly voicemailsService: VoicemailsService,
         private readonly journalService: JournalsService,
+        private readonly expander: ExpandHelper
     ) {
-        super(resourceName, voicemailService, journalService)
+        super(resourceName, voicemailsService, journalService)
     }
 
     @Post()
@@ -33,7 +36,7 @@ export class VoicemailsController extends CrudController<VoicemailsBaseDto, Voic
         type: VoicemailsResponseDto,
     })
     async create(@Body() voicemail: VoicemailsBaseDto, @Req() req): Promise<VoicemailsResponseDto> {
-        return await this.voicemailService.create(voicemail, req)
+        return await this.voicemailsService.create(voicemail, req)
     }
 
     @Get()
@@ -51,7 +54,12 @@ export class VoicemailsController extends CrudController<VoicemailsBaseDto, Voic
             ParseIntPipe) row: number,
         @Req() req,
     ): Promise<VoicemailsResponseDto[]> {
-        return await this.voicemailService.readAll(page, row, req)
+        const responseList = await this.voicemailsService.readAll(page, row, req)
+        if (req.query.expand) {
+            let voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
+            await this.expander.expandObjects(responseList, voicemailSearchDtoKeys, req)
+        }
+        return responseList
     }
 
     @Get(':id')
@@ -59,7 +67,12 @@ export class VoicemailsController extends CrudController<VoicemailsBaseDto, Voic
         type: VoicemailsResponseDto,
     })
     async findOne(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<VoicemailsResponseDto> {
-        return await this.voicemailService.read(id, req)
+        const responseItem = await this.voicemailsService.read(id, req)
+        if (req.query.expand && !req.isRedirected) {
+            let voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
+            await this.expander.expandObjects(responseItem, voicemailSearchDtoKeys, req)
+        }
+        return responseItem
     }
 
     @Delete(':id')
@@ -67,7 +80,7 @@ export class VoicemailsController extends CrudController<VoicemailsBaseDto, Voic
         type: number,
     })
     async delete(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<number> {
-        return await this.voicemailService.delete(id, req)
+        return await this.voicemailsService.delete(id, req)
     }
 
     @Patch(':id')
@@ -83,7 +96,7 @@ export class VoicemailsController extends CrudController<VoicemailsBaseDto, Voic
             let message = err.message.replace(/[\n\s]+/g, ' ').replace(/\"/g, '\'')
             throw new BadRequestException(message)
         }
-        return await this.voicemailService.adjust(id, patch, req)
+        return await this.voicemailsService.adjust(id, patch, req)
     }
 
     @Put(':id')
@@ -91,6 +104,6 @@ export class VoicemailsController extends CrudController<VoicemailsBaseDto, Voic
         type: VoicemailsResponseDto
     })
     async update(@Param('id', ParseIntPipe) id: number, @Body() voicemail: VoicemailsBaseDto, @Req() req): Promise<VoicemailsResponseDto> {
-        return await this.voicemailService.update(id, voicemail, req)
+        return await this.voicemailsService.update(id, voicemail, req)
     }
 }

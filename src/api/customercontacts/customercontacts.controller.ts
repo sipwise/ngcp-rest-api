@@ -1,8 +1,8 @@
 import {
     Controller,
     DefaultValuePipe,
-    Delete,
-    Get,
+    Delete, forwardRef,
+    Get, Inject,
     Logger,
     Param,
     ParseIntPipe,
@@ -27,6 +27,8 @@ import {Operation} from '../../helpers/patch.helper'
 import {PatchDto} from '../patch.dto'
 import {AppService} from '../../app.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {ExpandHelper} from '../../helpers/expand.helper'
+import {CustomercontactSearchDto} from './dto/customercontact-search.dto'
 
 const resourceName = 'customercontacts'
 
@@ -39,6 +41,8 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     constructor(
         private readonly contactsService: CustomercontactsService,
         private readonly journalsService: JournalsService,
+        @Inject(forwardRef(() => ExpandHelper))
+        private readonly expander: ExpandHelper
     ) {
         super(resourceName, contactsService, journalsService)
     }
@@ -75,7 +79,12 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
-        return this.contactsService.readAll(page, rows, req)
+        const responseList = await this.contactsService.readAll(page, rows, sr)
+        if (req.query.expand) {
+            let contactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
+            await this.expander.expandObjects(responseList, contactSearchDtoKeys, req)
+        }
+        return responseList
     }
 
     @Get(':id')
@@ -83,7 +92,12 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
         type: CustomercontactResponseDto,
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<CustomercontactResponseDto> {
-        return this.contactsService.read(id, this.newServiceRequest(req))
+        const responseItem = await this.contactsService.read(id, this.newServiceRequest(req))
+        if (req.query.expand && !req.isRedirected) {
+            let contactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
+            await this.expander.expandObjects(responseItem, contactSearchDtoKeys, req)
+        }
+        return responseItem
     }
 
     @Patch(':id')

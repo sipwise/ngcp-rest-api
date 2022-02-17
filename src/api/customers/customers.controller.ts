@@ -12,6 +12,8 @@ import {Auth} from '../../decorators/auth.decorator'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {number} from 'yargs'
 import {PatchDto} from '../patch.dto'
+import {ExpandHelper} from '../../helpers/expand.helper'
+import {CustomerSearchDto} from './dto/customer-search.dto'
 
 const resourceName = 'customers'
 
@@ -29,6 +31,7 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     constructor(
         private readonly customerService: CustomersService,
         private readonly journalService: JournalsService,
+        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, customerService, journalService)
     }
@@ -46,7 +49,12 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
         type: [CustomerResponseDto],
     })
     async readAll(page, rows, req): Promise<CustomerResponseDto[]> {
-        return this.customerService.readAll(page, rows, this.newServiceRequest(req))
+        const responseList = await this.customerService.readAll(page, rows, this.newServiceRequest(req))
+        if (req.query.expand) {
+            let customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
+            await this.expander.expandObjects(responseList, customerSearchDtoKeys, req)
+        }
+        return responseList
     }
 
     @Get(':id')
@@ -55,6 +63,12 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<CustomerResponseDto> {
         return this.customerService.read(id, this.newServiceRequest(req))
+        const responseItem = await this.customerService.read(id, this.newServiceRequest(req))
+        if (req.query.expand && !req.isRedirected) {
+            let customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
+            await this.expander.expandObjects(responseItem, customerSearchDtoKeys, req)
+        }
+        return responseItem
     }
 
     @Put(':id')

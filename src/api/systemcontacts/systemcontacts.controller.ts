@@ -25,6 +25,8 @@ import {Operation} from '../../helpers/patch.helper'
 import {PatchDto} from '../patch.dto'
 import {number} from 'yargs'
 import {AppService} from '../../app.service'
+import {ExpandHelper} from '../../helpers/expand.helper'
+import {SystemcontactSearchDto} from './dto/systemcontact-search.dto'
 
 const resourceName = 'systemcontacts'
 
@@ -37,6 +39,7 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
     constructor(
         private readonly contactsService: SystemcontactsService,
         private readonly journalsService: JournalsService,
+        private readonly expander: ExpandHelper
     ) {
         super(resourceName, contactsService, journalsService)
     }
@@ -70,7 +73,12 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
             url: req.url,
             method: req.method,
         })
-        return this.contactsService.readAll(page, rows, this.newServiceRequest(req))
+        const responseList = await this.contactsService.readAll(page, rows, this.newServiceRequest(req))
+        if (req.query.expand) {
+            let contactSearchDtoKeys = Object.keys(new SystemcontactSearchDto())
+            await this.expander.expandObjects(responseList, contactSearchDtoKeys, req)
+        }
+        return responseList
     }
 
     @Get(':id')
@@ -79,6 +87,12 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<SystemcontactResponseDto> {
         return this.contactsService.read(id, this.newServiceRequest(req))
+        const responseItem = await this.contactsService.read(id, this.newServiceRequest(req))
+        if (req.query.expand && !req.isRedirected) {
+            let contactSearchDtoKeys = Object.keys(new SystemcontactSearchDto())
+            await this.expander.expandObjects(responseItem, contactSearchDtoKeys, req)
+        }
+        return responseItem
     }
 
     @Put(':id')

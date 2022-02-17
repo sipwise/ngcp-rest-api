@@ -10,6 +10,8 @@ import {JournalsService} from '../journals/journals.service'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {Roles} from '../../decorators/roles.decorator'
 import {AppService} from '../../app.service'
+import {ExpandHelper} from '../../helpers/expand.helper'
+import {DomainSearchDto} from './dto/domain-search.dto'
 
 const resourceName = 'domains'
 
@@ -26,6 +28,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     constructor(
         private readonly domainsService: DomainsService,
         private readonly journalsService: JournalsService,
+        private readonly expander: ExpandHelper
     ) {
         super(resourceName, domainsService, journalsService)
     }
@@ -55,7 +58,12 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
         @Req() req,
     ): Promise<DomainResponseDto[]> {
         this.log.debug({message: 'fetch all domains', func: this.readAll.name, url: req.url, method: req.method})
-        return this.domainsService.readAll(page, rows, this.newServiceRequest(req))
+        const responseList = await this.domainsService.readAll(page, rows, this.newServiceRequest(req))
+        if (req.query.expand) {
+            let domainSearchDtoKeys = Object.keys(new DomainSearchDto())
+            await this.expander.expandObjects(responseList, domainSearchDtoKeys, req)
+        }
+        return responseList
     }
 
     @Get(':id')
@@ -64,7 +72,12 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     })
     @Roles(RBAC_ROLES.ccare, RBAC_ROLES.ccareadmin)
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<DomainResponseDto> {
-        return this.domainsService.read(id, this.newServiceRequest(req))
+        const responseList = await this.domainsService.read(id, this.newServiceRequest(req))
+        if (req.query.expand && !req.isRedirected) {
+            let domainSearchDtoKeys = Object.keys(new DomainSearchDto())
+            await this.expander.expandObjects(responseList, domainSearchDtoKeys, req)
+        }
+        return responseList
     }
 
     @Delete(':id')

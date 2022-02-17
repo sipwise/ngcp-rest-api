@@ -7,6 +7,8 @@ import {AppService} from '../../app.service'
 import {JournalsService} from './journals.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Request} from 'express'
+import {ExpandHelper} from '../../helpers/expand.helper'
+import {JournalSearchDto} from './dto/journal-search.dto'
 
 @Auth(RBAC_ROLES.system, RBAC_ROLES.admin, RBAC_ROLES.reseller)
 @ApiTags('Journals')
@@ -15,6 +17,7 @@ export class JournalsController {
     constructor(
         private readonly app: AppService,
         private readonly journalsService: JournalsService,
+        private readonly expander: ExpandHelper
     ) {
     }
 
@@ -33,12 +36,17 @@ export class JournalsController {
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe,
         ) row: number,
-        @Req() req: Request,
+        @Req() req,
     ): Promise<JournalResponseDto[]> {
         const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user,
+            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
         }
-        return await this.journalsService.readAll(sr, page, row)
+        const responseList = await this.journalsService.readAll(sr, page, row)
+        if (req.query.expand) {
+            let journalSearchDtoKeys = Object.keys(new JournalSearchDto())
+            await this.expander.expandObjects(responseList, journalSearchDtoKeys, sr)
+        }
+        return responseList
     }
 
     @Get(':resource_name')
@@ -57,12 +65,17 @@ export class JournalsController {
             ParseIntPipe,
         ) row: number,
         @Param('resource_name') resourceName: string,
-        @Req() req: Request,
+        @Req() req,
     ): Promise<JournalResponseDto[]> {
         const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user,
+            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
         }
-        return await this.journalsService.readAll(sr, page, row, resourceName)
+        const responseList = await this.journalsService.readAll(sr, page, row, resourceName)
+        if (req.query.expand && !req.isRedirected) {
+            let journalSearchDtoKeys = Object.keys(new JournalSearchDto())
+            await this.expander.expandObjects(responseList, journalSearchDtoKeys, sr)
+        }
+        return responseList
     }
 
     @Get(':resource_name/:id')
@@ -82,11 +95,16 @@ export class JournalsController {
         ) row: number,
         @Param('resource_name') resourceName: string,
         @Param('id', ParseIntPipe) resourceId: number,
-        @Req() req: Request,
+        @Req() req,
     ): Promise<JournalResponseDto[]> {
         const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user,
+            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
         }
-        return await this.journalsService.readAll(sr, page, row, resourceName, resourceId)
+        const responseList = await this.journalsService.readAll(sr, page, row, resourceName, resourceId)
+        if (req.query.expand && !req.isRedirected) {
+            let journalSearchDtoKeys = Object.keys(new JournalSearchDto())
+            await this.expander.expandObjects(responseList, journalSearchDtoKeys, sr)
+        }
+        return responseList
     }
 }
