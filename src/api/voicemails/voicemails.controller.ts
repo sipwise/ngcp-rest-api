@@ -10,8 +10,8 @@ import {number} from 'yargs'
 import {Operation as PatchOperation, validate} from '../../helpers/patch.helper'
 import {PatchDto} from '../patch.dto'
 import {RBAC_ROLES} from '../../config/constants.config'
-import {VoicemailsBaseDto} from './dto/voicemails-base.dto'
-import {VoicemailsResponseDto} from './dto/voicemails-response.dto'
+import {VoicemailBaseDto} from './dto/voicemail-base.dto'
+import {VoicemailResponseDto} from './dto/voicemail-response.dto'
 import {VoicemailsService} from './voicemails.service'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {VoicemailSearchDto} from './dto/voicemail-search.dto'
@@ -19,10 +19,10 @@ import {VoicemailSearchDto} from './dto/voicemail-search.dto'
 const resourceName = 'voicemails'
 
 @ApiTags('Voicemails')
-@Controller('voicemails')
+@Controller(resourceName)
 @UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
 @Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller, RBAC_ROLES.lintercept)
-export class VoicemailsController extends CrudController<VoicemailsBaseDto, VoicemailsResponseDto> {
+export class VoicemailsController extends CrudController<VoicemailBaseDto, VoicemailResponseDto> {
     constructor(
         private readonly voicemailsService: VoicemailsService,
         private readonly journalService: JournalsService,
@@ -33,15 +33,15 @@ export class VoicemailsController extends CrudController<VoicemailsBaseDto, Voic
 
     @Post()
     @ApiCreatedResponse({
-        type: VoicemailsResponseDto,
+        type: VoicemailResponseDto,
     })
-    async create(@Body() voicemail: VoicemailsBaseDto, @Req() req): Promise<VoicemailsResponseDto> {
+    async create(@Body() voicemail: VoicemailBaseDto, @Req() req): Promise<VoicemailResponseDto> {
         return await this.voicemailsService.create(voicemail, req)
     }
 
     @Get()
     @ApiOkResponse({
-        type: [VoicemailsResponseDto],
+        type: [VoicemailResponseDto],
     })
     async findAll(
         @Query(
@@ -53,7 +53,7 @@ export class VoicemailsController extends CrudController<VoicemailsBaseDto, Voic
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) row: number,
         @Req() req,
-    ): Promise<VoicemailsResponseDto[]> {
+    ): Promise<VoicemailResponseDto[]> {
         const responseList = await this.voicemailsService.readAll(page, row, req)
         if (req.query.expand) {
             let voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
@@ -64,9 +64,9 @@ export class VoicemailsController extends CrudController<VoicemailsBaseDto, Voic
 
     @Get(':id')
     @ApiOkResponse({
-        type: VoicemailsResponseDto,
+        type: VoicemailResponseDto,
     })
-    async findOne(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<VoicemailsResponseDto> {
+    async findOne(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<VoicemailResponseDto> {
         const responseItem = await this.voicemailsService.read(id, req)
         if (req.query.expand && !req.isRedirected) {
             let voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
@@ -85,12 +85,12 @@ export class VoicemailsController extends CrudController<VoicemailsBaseDto, Voic
 
     @Patch(':id')
     @ApiOkResponse({
-        type: VoicemailsResponseDto,
+        type: VoicemailResponseDto,
     })
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(@Param('id', ParseIntPipe) id: number, @Body() patch: PatchOperation | PatchOperation[], @Req() req): Promise<VoicemailsResponseDto> {
+    async adjust(@Param('id', ParseIntPipe) id: number, @Body() patch: PatchOperation | PatchOperation[], @Req() req): Promise<VoicemailResponseDto> {
         const err = validate(patch)
         if (err) {
             let message = err.message.replace(/[\n\s]+/g, ' ').replace(/\"/g, '\'')
@@ -101,9 +101,9 @@ export class VoicemailsController extends CrudController<VoicemailsBaseDto, Voic
 
     @Put(':id')
     @ApiOkResponse({
-        type: VoicemailsResponseDto
+        type: VoicemailResponseDto
     })
-    async update(@Param('id', ParseIntPipe) id: number, @Body() voicemail: VoicemailsBaseDto, @Req() req): Promise<VoicemailsResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, @Body() voicemail: VoicemailBaseDto, @Req() req): Promise<VoicemailResponseDto> {
         return await this.voicemailsService.update(id, voicemail, req)
     }
 }

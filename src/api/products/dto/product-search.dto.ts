@@ -1,6 +1,6 @@
-import {ProductsResponseDto} from './products-response.dto'
+import {ProductResponseDto} from './product-response.dto'
 
-export class ProductSearchDto implements ProductsResponseDto {
+export class ProductSearchDto implements ProductResponseDto {
     id: number = undefined
     class: string = undefined
     handle: string = undefined

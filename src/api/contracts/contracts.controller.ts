@@ -18,7 +18,7 @@ const resourceName = 'contracts'
 
 @Auth(RBAC_ROLES.admin, RBAC_ROLES.system)
 @ApiTags('Contracts')
-@Controller('contracts')
+@Controller(resourceName)
 export class ContractsController extends CrudController<ContractCreateDto, ContractResponseDto> {
 
     constructor(

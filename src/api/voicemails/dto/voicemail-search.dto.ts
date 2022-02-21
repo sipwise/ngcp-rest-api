@@ -1,6 +1,6 @@
-import {VoicemailsResponseDto} from './voicemails-response.dto'
+import {VoicemailResponseDto} from './voicemail-response.dto'
 
-export class VoicemailSearchDto implements VoicemailsResponseDto {
+export class VoicemailSearchDto implements VoicemailResponseDto {
     id: number = undefined
     folder: string = undefined
     caller: string = undefined

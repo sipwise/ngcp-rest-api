@@ -4,7 +4,7 @@ import {ContractsController} from '../api/contracts/contracts.controller'
 import {CustomercontactsController} from '../api/customercontacts/customercontacts.controller'
 import {ServiceRequest} from '../interfaces/service-request.interface'
 import {Injectable, UnprocessableEntityException} from '@nestjs/common'
-import {ProtectedReadCall} from './protocted-controller-calls.helper'
+import {ProtectedReadCall} from './protected-controller-calls.helper'
 
 @Injectable()
 export class ExpandHelper {

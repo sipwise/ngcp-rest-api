@@ -5,16 +5,16 @@ import {FindManyOptions} from 'typeorm'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 import {Operation as PatchOperation, applyPatch} from '../../helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {VoicemailsBaseDto} from './dto/voicemails-base.dto'
-import {VoicemailsResponseDto} from './dto/voicemails-response.dto'
+import {VoicemailBaseDto} from './dto/voicemail-base.dto'
+import {VoicemailResponseDto} from './dto/voicemail-response.dto'
 
 @Injectable()
-export class VoicemailsService implements CrudService<VoicemailsBaseDto, VoicemailsResponseDto>{
+export class VoicemailsService implements CrudService<VoicemailBaseDto, VoicemailResponseDto>{
     private readonly log = new Logger(VoicemailsService.name)
     readonly voicemailDir = "/var/spool/asterisk/voicemail/default/"
     authorized = ["Old", "INBOX", "Work", "Friends", "Family", "Cust1", "Cust2", "Cust3", 'Cust4', 'Cust5', 'Cust6']
 
-    toResponse(db: db.kamailio.VoicemailSpool): VoicemailsResponseDto {
+    toResponse(db: db.kamailio.VoicemailSpool): VoicemailResponseDto {
         const date = new Date(parseInt(db.origtime) * 1000)
         let stringDate = date.toString()
         stringDate = stringDate.split(' ').slice(1, 5).join(' ')
@@ -34,7 +34,7 @@ export class VoicemailsService implements CrudService<VoicemailsBaseDto, Voicema
     }
 
     @HandleDbErrors
-    async create(voicemail: VoicemailsBaseDto, req: ServiceRequest): Promise<VoicemailsResponseDto> {
+    async create(voicemail: VoicemailBaseDto, req: ServiceRequest): Promise<VoicemailResponseDto> {
         const dbVoicemail = db.kamailio.VoicemailSpool.create(voicemail)
         await db.kamailio.VoicemailSpool.insert(dbVoicemail)
         this.log.debug({
@@ -46,14 +46,14 @@ export class VoicemailsService implements CrudService<VoicemailsBaseDto, Voicema
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<VoicemailsResponseDto[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<VoicemailResponseDto[]> {
         const option: FindManyOptions = {take: rows, skip: rows * (page - 1), relations: ["provSubscriber"]}
         const result = await db.kamailio.VoicemailSpool.find(option)
         return result.map((vm: db.kamailio.VoicemailSpool) => this.toResponse(vm))
     }
 
     @HandleDbErrors
-    async read(id: number, req: ServiceRequest): Promise<VoicemailsResponseDto> {
+    async read(id: number, req: ServiceRequest): Promise<VoicemailResponseDto> {
         const result = await db.kamailio.VoicemailSpool.findOneOrFail(id, {relations: ["provSubscriber"]})
         return this.toResponse(result)
     }
@@ -66,9 +66,9 @@ export class VoicemailsService implements CrudService<VoicemailsBaseDto, Voicema
     }
 
     @HandleDbErrors
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], req: ServiceRequest): Promise<VoicemailsResponseDto> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[], req: ServiceRequest): Promise<VoicemailResponseDto> {
         const old = await db.kamailio.VoicemailSpool.findOneOrFail(id, {relations: ["provSubscriber"]})
-        let voicemail: VoicemailsBaseDto = this.deflate(old)
+        let voicemail: VoicemailBaseDto = this.deflate(old)
         if (!Array.isArray(patch)) {
             if (patch.path === "/folder")
                 patch.path = "/dir"
@@ -88,7 +88,7 @@ export class VoicemailsService implements CrudService<VoicemailsBaseDto, Voicema
     }
 
     @HandleDbErrors
-    async update(id: number, voicemail: VoicemailsBaseDto, req: ServiceRequest): Promise<VoicemailsResponseDto> {
+    async update(id: number, voicemail: VoicemailBaseDto, req: ServiceRequest): Promise<VoicemailResponseDto> {
         const oldVoicemail = await db.kamailio.VoicemailSpool.findOneOrFail(id, {relations: ["provSubscriber"]})
         if (voicemail.dir === undefined) {
             voicemail.dir = voicemail.folder
@@ -103,7 +103,7 @@ export class VoicemailsService implements CrudService<VoicemailsBaseDto, Voicema
         return this.toResponse(oldVoicemail)
     }
 
-    private deflate(entry: db.kamailio.VoicemailSpool): VoicemailsBaseDto {
+    private deflate(entry: db.kamailio.VoicemailSpool): VoicemailBaseDto {
         return Object.assign(entry)
     }
 }
