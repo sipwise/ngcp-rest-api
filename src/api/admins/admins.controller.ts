@@ -63,9 +63,9 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             url: req.url,
             method: req.method,
         })
-        let admin = Object.assign(new AdminCreateDto(), create)
-        let newAdmin = await this.adminsService.create(await admin.toDomain(), this.newServiceRequest(req))
-        let response = new AdminResponseDto(newAdmin)
+        const admin = Object.assign(new AdminCreateDto(), create)
+        const newAdmin = await this.adminsService.create(await admin.toDomain(), this.newServiceRequest(req))
+        const response = new AdminResponseDto(newAdmin)
         return response
     }
 
@@ -92,10 +92,10 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             req.method,
         })
 
-        let admins = await this.adminsService.readAll(page, rows, this.newServiceRequest(req))
-        let responseList = admins.map((adm) => new AdminResponseDto(adm))
+        const admins = await this.adminsService.readAll(page, rows, this.newServiceRequest(req))
+        const responseList = admins.map((adm) => new AdminResponseDto(adm))
         if (req.query.expand) {
-            let adminSearchDtoKeys = Object.keys(new AdminSearchDto())
+            const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
             await this.expander.expandObjects(responseList, adminSearchDtoKeys, req)
         }
         return responseList
@@ -114,7 +114,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         })
         const responseItem = await this.adminsService.read(id, this.newServiceRequest(req))
         if (req.query.expand && !req.isRedirected) {
-            let adminSearchDtoKeys = Object.keys(new AdminSearchDto())
+            const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
             await this.expander.expandObjects(responseItem, adminSearchDtoKeys, req)
         }
         return new AdminResponseDto(responseItem)
@@ -130,7 +130,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         @Req() req: Request,
     ): Promise<AdminResponseDto> {
         this.log.debug({message: 'update admin by id', func: this.update.name, url: req.url, method: req.method})
-        let admin = Object.assign(new AdminUpdateDto(), update)
+        const admin = Object.assign(new AdminUpdateDto(), update)
         return new AdminResponseDto(await this.adminsService.update(id, await admin.toDomain(), this.newServiceRequest(req)))
     }
 
@@ -149,7 +149,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         this.log.debug({message: 'patch admin by id', func: this.adjust.name, url: req.url, method: req.method})
         const err = validate(patch)
         if (err) {
-            let message = err.message.replace(/[\n\s]+/g, ' ').replace(/\"/g, '\'')
+            const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
             throw new BadRequestException(message)
         }
         return new AdminResponseDto(await this.adminsService.adjust(id, patch, this.newServiceRequest(req)))

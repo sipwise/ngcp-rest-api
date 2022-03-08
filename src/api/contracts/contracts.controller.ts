@@ -25,7 +25,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
         private readonly contractsService: ContractsService,
         private readonly journalsService: JournalsService,
         @Inject(forwardRef(() => ExpandHelper))
-        private readonly expander: ExpandHelper
+        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, contractsService, journalsService)
     }
@@ -45,7 +45,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     async readAll(page, rows, req): Promise<ContractResponseDto[]> {
         const responseList = await this.contractsService.readAll(page, rows, this.newServiceRequest(req))
         if (req.query.expand) {
-            let contractSearchDtoKeys = Object.keys(new ContractSearchDto())
+            const contractSearchDtoKeys = Object.keys(new ContractSearchDto())
             await this.expander.expandObjects(responseList, contractSearchDtoKeys, req)
         }
         return responseList
@@ -58,7 +58,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<ContractResponseDto> {
         const responseItem = await this.contractsService.read(id, this.newServiceRequest(req))
         if (req.query.expand && !req.isRedirected) {
-            let contractSearchDtoKeys = Object.keys(new ContractSearchDto())
+            const contractSearchDtoKeys = Object.keys(new ContractSearchDto())
             await this.expander.expandObjects(responseItem, contractSearchDtoKeys, req)
         }
         return responseItem

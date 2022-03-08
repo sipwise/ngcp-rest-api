@@ -7,41 +7,41 @@ import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
 export class EmailTemplate extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-    id?: number
+        id?: number
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    reseller_id?: number
+        reseller_id?: number
 
     @Column({
         type: 'varchar',
         length: 255,
     })
-    name!: string
+        name!: string
 
     @Column({
         type: 'varchar',
         length: 255,
     })
-    from_email!: string
+        from_email!: string
 
     @Column({
         type: 'varchar',
         length: 255,
     })
-    subject!: string
+        subject!: string
 
     @Column({
         type: 'varchar',
     })
-    body!: string
+        body!: string
 
     @Column({
         type: 'varchar',
         length: 255,
     })
-    attachment_name!: string
+        attachment_name!: string
 
 }

@@ -7,29 +7,29 @@ import {Contract} from './contract.entity'
 })
 export class VoipSubscriber extends BaseEntity {
     @PrimaryGeneratedColumn()
-    id?: number
+        id?: number
 
     @Column({
         unsigned: true,
     })
-    contract_id: number
+        contract_id: number
 
     @Column({
         type: 'char',
         length: 36,
     })
-    uuid: string
+        uuid: string
 
     @Column({
         type: 'varchar',
         length: 127,
     })
-    username: string
+        username: string
 
     @Column({
         unsigned: true,
     })
-    domain_id: number
+        domain_id: number
 
     @Column({
         type: 'enum',
@@ -40,26 +40,26 @@ export class VoipSubscriber extends BaseEntity {
         ],
         default: 'active',
     })
-    status: string
+        status: string
 
     @Column({
         unsigned: true,
     })
-    primary_number_id?: boolean
+        primary_number_id?: boolean
 
     @Column({
         type: 'varchar',
         length: 255,
     })
-    external_id?: string
+        external_id?: string
 
     @Column({
         unsigned: true,
         nullable: true,
     })
-    contact_id?: number
+        contact_id?: number
 
     @ManyToOne(() => Contract)
     @JoinColumn({name: 'contract_id'})
-    contract?: Contract
+        contract?: Contract
 }

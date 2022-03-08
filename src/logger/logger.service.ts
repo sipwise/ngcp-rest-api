@@ -28,5 +28,6 @@ export class LoggerService implements NestLoggerService {
     }
 
     verbose(message: any, context?: string): any {
+        this.logger.verbose(message, context)
     }
 }

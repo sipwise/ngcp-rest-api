@@ -48,7 +48,7 @@ export class Admin implements AdminInterface {
     show_passwords: boolean
 
     static create(data: AdminInterface): Admin {
-        let admin = new Admin()
+        const admin = new Admin()
 
         Object.keys(data).map(key => {
             admin[key] = data[key]

@@ -26,9 +26,9 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
 
     @HandleDbErrors
     async create(entity: CustomercontactCreateDto, req: ServiceRequest): Promise<CustomercontactResponseDto> {
-        let contact = await db.billing.Contact.create(entity)
+        const contact = await db.billing.Contact.create(entity)
 
-        let now = new Date(Date.now())
+        const now = new Date(Date.now())
         contact.create_timestamp = now
         contact.modify_timestamp = now
 
@@ -42,7 +42,7 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
             // $reseller_id = $c->user->contract->contact->reseller_id; // TODO: do we need to store contract in req.user?
         }
 
-        let reseller = db.billing.Reseller.findOne(contact.reseller_id)
+        const reseller = db.billing.Reseller.findOne(contact.reseller_id)
         if (reseller) {
             throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID, req))
         }
@@ -53,7 +53,7 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
 
     @HandleDbErrors
     async delete(id: number, req: ServiceRequest): Promise<number> {
-        let contact = await db.billing.Contact.findOneOrFail(id)
+        const contact = await db.billing.Contact.findOneOrFail(id)
         if (!contact.reseller_id) {
             throw new BadRequestException(Messages.invoke(Messages.DELETE_SYSTEMCONTACT)) // TODO: find better description
         }
@@ -102,8 +102,8 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
             page: page,
             rows: rows,
         })
-        let queryBuilder = db.billing.Contact.createQueryBuilder('contact')
-        let customercontactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
+        const queryBuilder = db.billing.Contact.createQueryBuilder('contact')
+        const customercontactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
         await configureQueryBuilder(queryBuilder, req.query,
             {where: customercontactSearchDtoKeys, rows: +rows, page: +page})
         queryBuilder.andWhere('contact.reseller_id IS NOT NULL')
@@ -115,18 +115,18 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
     async update(id: number, dto: CustomercontactCreateDto, req: ServiceRequest): Promise<CustomercontactResponseDto> {
         const oldContact = await db.billing.Contact.findOneOrFail(id)
         if (oldContact.reseller_id != dto.reseller_id) {
-            let reseller = db.billing.Reseller.findOne(dto.reseller_id)
+            const reseller = db.billing.Reseller.findOne(dto.reseller_id)
             if (!reseller) {
                 throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID))
             }
         }
-        let newContact = db.billing.Contact.merge(oldContact, dto)
+        const newContact = db.billing.Contact.merge(oldContact, dto)
         return this.toResponse(await newContact.save())
     }
 
     @HandleDbErrors
     async adjust(id: number, patch: PatchOperation | PatchOperation[], req: ServiceRequest): Promise<CustomercontactResponseDto> {
-        let oldContact = await db.billing.Contact.findOneOrFail(id)
+        const oldContact = await db.billing.Contact.findOneOrFail(id)
 
         let contact = this.deflate(oldContact)
         contact = applyPatch(contact, patch).newDocument

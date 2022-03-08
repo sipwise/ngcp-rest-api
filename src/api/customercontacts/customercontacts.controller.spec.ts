@@ -5,7 +5,7 @@ import {Contact} from '../../entities/db/billing/contact.entity'
 
 describe('ContactsController', () => {
     let controller: CustomercontactsController
-    let service = {findOne: async () => [new Contact()]}
+    const service = {findOne: async () => [new Contact()]}
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({

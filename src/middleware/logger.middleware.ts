@@ -43,7 +43,7 @@ export class LoggerMiddleware implements NestMiddleware {
 }
 
 function replacer(key, value) {
-    let redactedKeys = ['password', 'webpassword']
+    const redactedKeys = ['password', 'webpassword']
     if (redactedKeys.includes(key)) {
         return '********'
     }

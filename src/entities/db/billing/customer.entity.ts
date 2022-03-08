@@ -7,67 +7,67 @@ import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
 })
 export class Customer extends BaseEntity {
     @PrimaryGeneratedColumn()
-    id?: number
+        id?: number
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    reseller_id?: number
+        reseller_id?: number
 
     @Column({
         nullable: true,
         type: 'varchar',
         length: 31,
     })
-    shopuser?: string
+        shopuser?: string
 
     @Column({
         nullable: true,
         type: 'varchar',
         length: 31,
     })
-    shoppass?: string
+        shoppass?: string
 
     @Column({
         type: 'boolean',
     })
-    business!: boolean
+        business!: boolean
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    contact_id?: number
+        contact_id?: number
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    tech_contact_id?: number
+        tech_contact_id?: number
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    comm_contact_id?: number
+        comm_contact_id?: number
 
     @Column({
         nullable: true,
         type: 'varchar',
         length: 255,
     })
-    external_id?: string
+        external_id?: string
 
     @Column({
         type: 'date',
     })
-    modify_timestamp!: Date
+        modify_timestamp!: Date
 
     @Column({
         type: 'date',
     })
-    create_timestamp!: Date
+        create_timestamp!: Date
 
     // @ManyToOne(type => Contact, contact => contact.id)
     // contact?: Contact

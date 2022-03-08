@@ -9,7 +9,7 @@ const db_host = process.env.API_DB_HOST || AppService.config.database.host
 const db_port = process.env.API_DB_PORT || AppService.config.database.port
 
 const getDBEntries = () => {
-    let entities = Array()
+    const entities = []
     Object.entries(db).forEach(([, e]) => {
         Object.entries(e).forEach(([, t]) => {
             entities.push(t)

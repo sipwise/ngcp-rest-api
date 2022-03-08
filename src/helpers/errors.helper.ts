@@ -5,14 +5,15 @@ import {Messages} from '../config/messages.config'
 export function handleTypeORMError(err: Error) {
     if (err instanceof TypeORMError) {
         switch (err.constructor) {
-            case EntityNotFoundError:
-                return new NotFoundException()
-            case QueryFailedError:
-                let qErr = <QueryFailedError>err
-                switch (qErr.driverError.code) {
-                    case 'ER_DUP_ENTRY':
-                        return new UnprocessableEntityException(Messages.invoke(Messages.DUPLICATE_ENTRY))
-                }
+        case EntityNotFoundError:
+            return new NotFoundException()
+        case QueryFailedError:
+            // eslint-disable-next-line no-case-declarations
+            const qErr = <QueryFailedError>err
+            switch (qErr.driverError.code) {
+            case 'ER_DUP_ENTRY':
+                return new UnprocessableEntityException(Messages.invoke(Messages.DUPLICATE_ENTRY))
+            }
         }
         // return new UnprocessableEntityException(err.message)
         return new UnprocessableEntityException()
@@ -26,8 +27,8 @@ export function formatValidationErrors(errors: any[]) {
     }
     const data = new Map()
     errors.forEach(err => {
-        for (let key in err.constraints) {
-            let hash = {}
+        for (const key in err.constraints) {
+            const hash = {}
             hash[key] = err.constraints[key]
             if (data.has(err.property)) {
                 data.get(err.property).push(hash)
@@ -38,7 +39,7 @@ export function formatValidationErrors(errors: any[]) {
     })
     const message = []
     for (const [k, v] of data) {
-        let hash = {}
+        const hash = {}
         hash[k] = v
         message.push(hash)
     }

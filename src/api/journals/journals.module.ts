@@ -7,7 +7,7 @@ import {ExpandModule} from '../../helpers/expand.module'
     controllers: [JournalsController],
     imports: [
         //LoggingModule
-        forwardRef(() => ExpandModule)
+        forwardRef(() => ExpandModule),
     ],
     providers: [
         JournalsService,

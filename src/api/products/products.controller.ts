@@ -22,7 +22,7 @@ export class ProductsController {
     constructor(
         private readonly productsService: ProductsService,
         private readonly journalsService: JournalsService,
-        private readonly expander: ExpandHelper
+        private readonly expander: ExpandHelper,
     ) {
     }
 
@@ -43,7 +43,7 @@ export class ProductsController {
     ): Promise<ProductResponseDto[]> {
         const responseList = await this.productsService.readAll(page, row, req)
         if (req.query.expand) {
-            let productSearchDtoKeys = Object.keys(new ProductSearchDto())
+            const productSearchDtoKeys = Object.keys(new ProductSearchDto())
             await this.expander.expandObjects(responseList, productSearchDtoKeys, req)
         }
         return responseList
@@ -56,7 +56,7 @@ export class ProductsController {
     async findOne(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<ProductResponseDto> {
         const responseList = await this.productsService.read(id, req)
         if (req.query.expand && !req.isRedirected) {
-            let productSearchDtoKeys = Object.keys(new ProductSearchDto())
+            const productSearchDtoKeys = Object.keys(new ProductSearchDto())
             await this.expander.expandObjects(responseList, productSearchDtoKeys, req)
         }
         return responseList

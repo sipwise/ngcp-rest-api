@@ -7,8 +7,8 @@ import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
 export class VoipDomain extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-    id?: number
+        id?: number
 
     @Column({length: 127})
-    domain!: string
+        domain!: string
 }

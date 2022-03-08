@@ -23,7 +23,7 @@ export class AclRole implements AclRoleInterface {
 
     // journals: Journal[]
     async hasPermission(roleId: number): Promise<boolean> {
-        for (let role of this.has_access_to) {
+        for (const role of this.has_access_to) {
             if (role.id == roleId) {
                 return true
             }
@@ -32,7 +32,7 @@ export class AclRole implements AclRoleInterface {
     }
 
     static create(data: AclRoleInterface): AclRole {
-        let aclRole = new AclRole()
+        const aclRole = new AclRole()
         Object.keys(data).map(key => {
             aclRole[key] = data[key]
         })

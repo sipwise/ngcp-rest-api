@@ -16,7 +16,7 @@ export class SystemcontactBaseDto {
     country?: string
 
     @IsEmail()
-    email?: string
+        email?: string
     faxnumber?: string
     firstname?: string
     gender?: ContactGender

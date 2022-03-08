@@ -51,7 +51,7 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     async readAll(page, rows, req): Promise<CustomerResponseDto[]> {
         const responseList = await this.customerService.readAll(page, rows, this.newServiceRequest(req))
         if (req.query.expand) {
-            let customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
+            const customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
             await this.expander.expandObjects(responseList, customerSearchDtoKeys, req)
         }
         return responseList
@@ -65,7 +65,7 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
         return this.customerService.read(id, this.newServiceRequest(req))
         const responseItem = await this.customerService.read(id, this.newServiceRequest(req))
         if (req.query.expand && !req.isRedirected) {
-            let customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
+            const customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
             await this.expander.expandObjects(responseItem, customerSearchDtoKeys, req)
         }
         return responseItem

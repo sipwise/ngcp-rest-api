@@ -53,7 +53,7 @@ export class Messages {
      */
     static invoke(messageTitle: string, req?: ServiceRequest, arg?: string): Message {
         const lang = (req?.query?.lang && req.query.lang in Messages.MessageDescriptions) ? req.query.lang : 'EN'
-        let msg: Message = {description: '', errorCode: 0}
+        const msg: Message = {description: '', errorCode: 0}
         msg.description = (typeof Messages.MessageDescriptions[`${lang}`]?.[messageTitle] === 'string') ?
             Messages.MessageDescriptions[`${lang}`]?.[messageTitle] : Messages.MessageDescriptions[`${lang}`]?.[messageTitle](arg)
         msg.errorCode = MessageCodes[messageTitle]

@@ -176,7 +176,7 @@ function crop(str, maxChars, append) {
  * Escape RegExp string chars.
  */
 function escapeRegExp(str) {
-    var ESCAPE_CHARS = /[\\.+*?^$[\](){}/'#]/g
+    const ESCAPE_CHARS = /[\\.+*?^$[\](){}/'#]/g
     return str.replace(ESCAPE_CHARS, '\\$&')
 }
 
@@ -242,9 +242,9 @@ function removeNonASCII(str) {
  * String interpolation
  */
 function interpolate(template, replacements, syntax) {
-    var stache = /\{\{(\w+)\}\}/g //mustache-like
+    const stache = /\{\{(\w+)\}\}/g //mustache-like
 
-    var replaceFn = function (match, prop) {
+    const replaceFn = function (match, prop) {
         return prop in replacements ? replacements[prop] : ''
     }
 
@@ -292,7 +292,7 @@ function truncate(str, maxChars, append, onlyFullWords) {
     return str + append
 }
 
-var WHITE_SPACES = [
+const WHITE_SPACES = [
     ' ',
     '\n',
     '\r',
@@ -326,9 +326,10 @@ var WHITE_SPACES = [
 function ltrim(str, chars) {
     chars = chars || WHITE_SPACES
 
-    var start = 0,
-        len = str.length,
-        charLen = chars.length,
+    const len = str.length,
+        charLen = chars.length
+
+    let start = 0,
         found = true,
         i,
         c
@@ -356,7 +357,8 @@ function ltrim(str, chars) {
 function rtrim(str, chars) {
     chars = chars || WHITE_SPACES
 
-    var end = str.length - 1,
+    let end = str.length - 1,
+        // eslint-disable-next-line prefer-const
         charLen = chars.length,
         found = true,
         i,

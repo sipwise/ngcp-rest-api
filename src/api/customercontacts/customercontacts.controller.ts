@@ -42,7 +42,7 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
         private readonly contactsService: CustomercontactsService,
         private readonly journalsService: JournalsService,
         @Inject(forwardRef(() => ExpandHelper))
-        private readonly expander: ExpandHelper
+        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, contactsService, journalsService)
     }
@@ -81,7 +81,7 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
         }
         const responseList = await this.contactsService.readAll(page, rows, sr)
         if (req.query.expand) {
-            let contactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
+            const contactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
             await this.expander.expandObjects(responseList, contactSearchDtoKeys, req)
         }
         return responseList
@@ -94,7 +94,7 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<CustomercontactResponseDto> {
         const responseItem = await this.contactsService.read(id, this.newServiceRequest(req))
         if (req.query.expand && !req.isRedirected) {
-            let contactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
+            const contactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
             await this.expander.expandObjects(responseItem, contactSearchDtoKeys, req)
         }
         return responseItem

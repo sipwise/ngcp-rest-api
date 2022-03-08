@@ -8,38 +8,38 @@ import {XmlGroup} from './xml-group'
 export class XmlHost extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-    id?: number
+        id?: number
 
     @Column({
         type: 'varchar',
         length: 15,
     })
-    ip!: string
+        ip!: string
 
     @Column({
         type: 'int',
         width: 5,
     })
-    port: number
+        port: number
 
     @Column({
         type: 'varchar',
         length: 64,
         default: '/',
     })
-    path: string
+        path: string
 
     @Column({
         type: 'int',
         width: 5,
     })
-    sip_port: number
+        sip_port: number
 
     @Column({
         type: 'varchar',
         length: 255,
     })
-    description: string
+        description: string
 
     @ManyToMany(type => XmlGroup, group => group.hosts)
     @JoinTable({
@@ -47,5 +47,5 @@ export class XmlHost extends BaseEntity {
         joinColumn: {name: 'host_id', referencedColumnName: 'id'},
         inverseJoinColumn: {name: 'group_id', referencedColumnName: 'id'},
     })
-    groups: XmlGroup[]
+        groups: XmlGroup[]
 }

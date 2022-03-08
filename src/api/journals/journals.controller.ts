@@ -17,7 +17,7 @@ export class JournalsController {
     constructor(
         private readonly app: AppService,
         private readonly journalsService: JournalsService,
-        private readonly expander: ExpandHelper
+        private readonly expander: ExpandHelper,
     ) {
     }
 
@@ -39,11 +39,11 @@ export class JournalsController {
         @Req() req,
     ): Promise<JournalResponseDto[]> {
         const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
+            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
         const responseList = await this.journalsService.readAll(sr, page, row)
         if (req.query.expand) {
-            let journalSearchDtoKeys = Object.keys(new JournalSearchDto())
+            const journalSearchDtoKeys = Object.keys(new JournalSearchDto())
             await this.expander.expandObjects(responseList, journalSearchDtoKeys, sr)
         }
         return responseList
@@ -68,11 +68,11 @@ export class JournalsController {
         @Req() req,
     ): Promise<JournalResponseDto[]> {
         const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
+            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
         const responseList = await this.journalsService.readAll(sr, page, row, resourceName)
         if (req.query.expand && !req.isRedirected) {
-            let journalSearchDtoKeys = Object.keys(new JournalSearchDto())
+            const journalSearchDtoKeys = Object.keys(new JournalSearchDto())
             await this.expander.expandObjects(responseList, journalSearchDtoKeys, sr)
         }
         return responseList
@@ -98,11 +98,11 @@ export class JournalsController {
         @Req() req,
     ): Promise<JournalResponseDto[]> {
         const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query
+            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
         const responseList = await this.journalsService.readAll(sr, page, row, resourceName, resourceId)
         if (req.query.expand && !req.isRedirected) {
-            let journalSearchDtoKeys = Object.keys(new JournalSearchDto())
+            const journalSearchDtoKeys = Object.keys(new JournalSearchDto())
             await this.expander.expandObjects(responseList, journalSearchDtoKeys, sr)
         }
         return responseList

@@ -37,7 +37,7 @@ export class TypeormLoggerService implements TypeormLogger {
             this.options === true ||
             (Array.isArray(this.options) && this.options.indexOf('error') !== -1)))
             return
-        let message: string = error instanceof Error ? error.message : error
+        const message: string = error instanceof Error ? error.message : error
         this.logger.error(message, {query: query, parameters: parameters, context: this.context})
     }
 

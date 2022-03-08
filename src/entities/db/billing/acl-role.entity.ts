@@ -10,18 +10,18 @@ import {internal} from '../../../entities'
 export class AclRole extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-    id?: number
+        id?: number
 
     @Column({
         type: 'varchar',
         length: 64,
     })
-    role: string
+        role: string
 
     @Column({
         type: 'boolean',
     })
-    is_acl: boolean
+        is_acl: boolean
 
     @ManyToMany(() => AclRole)
     @JoinTable({
@@ -29,13 +29,13 @@ export class AclRole extends BaseEntity {
         joinColumn: {name: 'accessor_id', referencedColumnName: 'id'},
         inverseJoinColumn: {name: 'has_access_to_id', referencedColumnName: 'id'},
     })
-    has_access_to: AclRole[]
+        has_access_to: AclRole[]
 
     @OneToMany(() => Admin, admin => admin.role)
-    admins: Admin[]
+        admins: Admin[]
 
     @OneToMany(() => Journal, journal => journal.role)
-    journals: Journal[]
+        journals: Journal[]
 
     fromDomain(role: internal.AclRole): AclRole {
         let admins: Admin[]
@@ -60,14 +60,14 @@ export class AclRole extends BaseEntity {
         const admins: internal.Admin[] = []
 
         if (this.admins != undefined) {
-            for (let adm of this.admins) {
+            for (const adm of this.admins) {
                 admins.push(await adm.toDomain())
             }
         }
 
         const access_to: internal.AclRole[] = []
         if (this.has_access_to != undefined) {
-            for (let r of this.has_access_to) {
+            for (const r of this.has_access_to) {
                 access_to.push(await r.toDomain())
             }
         }

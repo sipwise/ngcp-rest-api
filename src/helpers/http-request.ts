@@ -7,7 +7,7 @@ export class HttpRequest {
 
     public async send(options: http.RequestOptions, data?: any): Promise<any> {
 
-        let result: string = ''
+        let result = ''
         return new Promise((resolve, reject) => {
             this.log.debug({message: 'starting http request', options: options})
             const req: ClientRequest = http.request(options, (res) => {
@@ -25,7 +25,7 @@ export class HttpRequest {
 
                 res.on('end', () => {
                     try {
-                        let body = result
+                        const body = result
                         resolve(body)
                     } catch (err) {
                         this.log.debug({message: 'error in response end', err: err})

@@ -109,7 +109,7 @@ export class AuthService {
     }
 
     adminAuthToResponse(admin: db.billing.Admin): AuthResponseDto {
-        let response: AuthResponseDto = {
+        const response: AuthResponseDto = {
             active: admin.is_active,
             id: admin.id,
             readOnly: admin.read_only,
@@ -181,7 +181,7 @@ export class AuthService {
     }
 
     subscriberAuthToResponse(subscriber: db.provisioning.VoipSubscriber): AuthResponseDto {
-        let response: AuthResponseDto = {
+        const response: AuthResponseDto = {
             active: true,
             id: subscriber.billing_voip_subscriber.id,
             readOnly: false,

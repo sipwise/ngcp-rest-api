@@ -20,7 +20,7 @@ export default class Context {
      * Sets a uuid v4 value for transaction id txid
      */
     constructor() {
-        let id: string = uuidv4()
+        const id: string = uuidv4()
         const re = new RegExp('-', 'g')
         this.txid = id.replace(re, '')
     }

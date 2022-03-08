@@ -12,8 +12,8 @@ export interface SearchLogic {
 
 export async function configureQueryBuilder(queryBuilder: SelectQueryBuilder<any>, requestParams: string[], searchLogic: SearchLogic) {
     for (const joinCondition in searchLogic.joins) {
-        let joinTable = searchLogic.joins[joinCondition].alias
-        let joinColumn = searchLogic.joins[joinCondition].property
+        const joinTable = searchLogic.joins[joinCondition].alias
+        const joinColumn = searchLogic.joins[joinCondition].property
         if (joinTable != undefined && joinColumn != undefined) {
             queryBuilder.leftJoinAndSelect(`${queryBuilder.alias}.${joinColumn}`, `${joinColumn}`)
             if (requestParams[joinColumn] != null) {
@@ -22,7 +22,7 @@ export async function configureQueryBuilder(queryBuilder: SelectQueryBuilder<any
         }
     }
     for (const paramIndex in searchLogic.where) {
-        let paramName = searchLogic.where[paramIndex]
+        const paramName = searchLogic.where[paramIndex]
         //if a JOIN has happened based on this request parameter, skip it for the WHERE clause
         if (searchLogic.joins?.some(j => j.property === paramName)) {
             continue

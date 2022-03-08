@@ -21,7 +21,7 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
 
     @HandleDbErrors
     async adjust(id: number, patch: Operation | Operation[], req: ServiceRequest): Promise<ContractResponseDto> {
-        let entry = await db.billing.Contract.findOneOrFail(id)
+        const entry = await db.billing.Contract.findOneOrFail(id)
         let contract: ContractBaseDto
 
         // TODO: Utils::BillingMappings::get_actual_billing_mapping
@@ -45,7 +45,7 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
         // TODO: Start transaction guard
         await this.validateCreate(dto)
 
-        let contract = db.billing.Contract.create(dto)
+        const contract = db.billing.Contract.create(dto)
 
         const now = new Date(Date.now())
         contract.create_timestamp = now
@@ -58,13 +58,13 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
             },
         }
 
-        let systemContact = await db.billing.Contact.find(systemContactPattern)
+        const systemContact = await db.billing.Contact.find(systemContactPattern)
         if (!systemContact) {
             // TODO: move validation out of creation
             throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_CONTACT_ID))
         }
         // TODO: Utils::BillingMappings::prepare_billing_mappings
-        let product = await db.billing.Product.findOne({where: {class: dto.type}})
+        const product = await db.billing.Product.findOne({where: {class: dto.type}})
         if (!product) {
             // TODO: move validation out of creation
             throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_TYPE))
@@ -151,9 +151,10 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
         //             c => $c,
         //             mappings_to_create => $mappings_to_create) )
         //     ) {
-        if (newContract.status == 'terminated') {
 
-        }
+        // if (newContract.status == 'terminated') {
+
+        // }
         oldContract = await db.billing.Contract.merge(oldContract, this.inflate(newContract))
         await oldContract.save()
         return oldContract
@@ -178,7 +179,7 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
 
     // TODO: have function return multiple errors so they can be returned together?
     private async validateCreate(contract: ContractCreateDto) {
-        let pattern: FindOneOptions = {
+        const pattern: FindOneOptions = {
             where: {
                 status: Not(Equal(ContractStatus.Terminated)),
                 id: contract.contact_id,
@@ -189,7 +190,7 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
             throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_CONTACT_ID))
         }
 
-        let product = await db.billing.Product.findOne({where: {class: contract.type}})
+        const product = await db.billing.Product.findOne({where: {class: contract.type}})
         if (!product) {
             throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_TYPE))
         }

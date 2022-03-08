@@ -11,12 +11,12 @@ export const winstonLoggerConfig: LoggerOptions = {
     transports: [
         process.env.NODE_ENV == 'development'
             ? new winston.transports.Console({
-                    format: winston.format.combine(
-                        winston.format.timestamp(),
-                        winston.format.ms(),
-                        utilities.format.nestLike('ngcp-rest-api', {prettyPrint: true}),
-                    ),
-                },
+                format: winston.format.combine(
+                    winston.format.timestamp(),
+                    winston.format.ms(),
+                    utilities.format.nestLike('ngcp-rest-api', {prettyPrint: true}),
+                ),
+            },
             )
             : new Syslog({
                 path: '/dev/log',

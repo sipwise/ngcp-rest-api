@@ -23,7 +23,7 @@ export const MessageDescriptionsEN: { [id: string]: any } = {
     DOMAIN_DOES_NOT_BELONG_TO_RESELLER: 'domain does not belong to reseller',
     CONTACT_STILL_IN_USE: 'Contact is still in use',
     DELETE_SYSTEMCONTACT: 'Cannot delete systemcontact',
-    INVALID_TYPE: 'invalid \"type\"',
+    INVALID_TYPE: 'invalid "type"',
     INVALID_CONTACT_ID: 'invalid contact_id',
     INVALID_SYSTEM_CONTACT: 'The contact_id is not a valid ngcp:systemcontacts item, but an ngcp:customercontacts item',
     DELETE_SPECIAL_USER: 'Cannot delete special user',

@@ -8,7 +8,7 @@ export const databaseProviders = process.env.NODE_ENV != 'test' ? [
 
         useFactory: async () => {
             const log = new Logger('databaseProviders[DB]')
-            let manager = getConnectionManager()
+            const manager = getConnectionManager()
             manager.create(databaseConfig)
             try {
                 await manager.get(databaseConfig.name).connect()

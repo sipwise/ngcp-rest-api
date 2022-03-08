@@ -7,10 +7,10 @@ export class XmlDispatcher {
     private readonly log = new Logger(XmlDispatcher.name)
 
     async dispatch(target: string, all: boolean, sync: boolean, body: string) {
-        let group = await db.provisioning.XmlGroup.findOne({where: {name: target}, relations: ['hosts']})
+        const group = await db.provisioning.XmlGroup.findOne({where: {name: target}, relations: ['hosts']})
 
-        let request = new HttpRequest()
-        for (let host of group.hosts) {
+        const request = new HttpRequest()
+        for (const host of group.hosts) {
             this.log.log({
                 message: 'dispatching xmlrpc request',
                 target: target,
@@ -19,7 +19,7 @@ export class XmlDispatcher {
             })
             this.log.debug({message: 'xmlrpc request body', body: body})
 
-            let options: RequestOptions = {
+            const options: RequestOptions = {
                 host: host.ip,
                 port: host.port,
                 path: host.path,
@@ -31,7 +31,7 @@ export class XmlDispatcher {
                 },
             }
             try {
-                let res = await request.send(options, body)
+                const res = await request.send(options, body)
                 this.log.debug({message: 'response', response: res})
             } catch (error) {
                 this.log.error({message: error.message}, error.stack, XmlDispatcher.name)
@@ -39,9 +39,9 @@ export class XmlDispatcher {
         }
     }
 
-    queuerunner() {
+    // queuerunner() {
 
-    }
+    // }
 
     async sipDomainReload(domain: string) {
         const reloadCommand = `
@@ -50,20 +50,20 @@ export class XmlDispatcher {
 <methodName>domain.reload</methodName>
 <params/>
 </methodCall>`
-        let response = this.dispatch('proxy-ng', true, true, reloadCommand)
+        const response = this.dispatch('proxy-ng', true, true, reloadCommand)
         this.log.debug({message: 'response', response})
     }
 
-    private queue() {
+    // private queue() {
 
-    }
+    // }
 
-    private dequeue() {
+    // private dequeue() {
 
-    }
+    // }
 
-    private unqueue() {
+    // private unqueue() {
 
-    }
+    // }
 
 }

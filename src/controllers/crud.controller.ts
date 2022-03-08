@@ -71,7 +71,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
     ) {
         const err = validate(patch)
         if (err) {
-            let message = err.message.replace(/[\n\s]+/g, ' ').replace(/\"/g, '\'')
+            const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
             throw new BadRequestException(message)
         }
         return await this.repo.adjust(id, patch, this.newServiceRequest(req))

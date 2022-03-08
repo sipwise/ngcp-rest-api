@@ -39,7 +39,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
         private readonly resellersService: ResellersService,
         private readonly journalsService: JournalsService,
         @Inject(forwardRef(() => ExpandHelper))
-        private readonly expander: ExpandHelper
+        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, resellersService, journalsService)
     }
@@ -70,7 +70,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
         this.log.debug({message: 'fetch all resellers', func: this.readAll.name, url: req.url, method: req.method})
         const responseList = await this.resellersService.readAll(page, rows, this.newServiceRequest(req))
         if (req.query.expand) {
-            let resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
+            const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
             await this.expander.expandObjects(responseList, resellerSearchDtoKeys, req)
         }
         return responseList
@@ -83,7 +83,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<ResellerResponseDto> {
         const responseItem = await this.resellersService.read(id, this.newServiceRequest(req))
         if (req.query.expand && !req.isRedirected) {
-            let resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
+            const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
             await this.expander.expandObjects(responseItem, resellerSearchDtoKeys, req)
         }
         return responseItem

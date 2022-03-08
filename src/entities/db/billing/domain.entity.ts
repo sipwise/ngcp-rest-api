@@ -8,18 +8,18 @@ import {Reseller} from './reseller.entity'
 export class Domain extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-    id?: number
+        id?: number
 
     @Column({length: 127})
-    domain!: string
+        domain!: string
 
     @Column({
         type: 'int',
         width: 11,
     })
-    reseller_id: number
+        reseller_id: number
 
     @ManyToOne(type => Reseller, reseller => reseller.domains)
     @JoinColumn({name: 'reseller_id'})
-    reseller?: Reseller
+        reseller?: Reseller
 }

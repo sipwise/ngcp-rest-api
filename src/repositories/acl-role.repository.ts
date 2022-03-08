@@ -1,7 +1,6 @@
 import {Injectable, Logger} from '@nestjs/common'
 import {db, internal} from '../entities'
 import {ServiceRequest} from '../interfaces/service-request.interface'
-import {AclRoleMapping} from '../entities/db/billing'
 
 @Injectable()
 export class AclRoleRepository {

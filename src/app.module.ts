@@ -23,7 +23,7 @@ import {ProductsModule} from './api/products/products.module'
 import {VoicemailsModule} from './api/voicemails/voicemails.module'
 import {ExpandModule} from './helpers/expand.module'
 
-let modulesImport: any[] = [
+const modulesImport: any[] = [
     ConfigModule.forRoot({
         isGlobal: true,
         ignoreEnvFile: true,

@@ -11,8 +11,8 @@ import {VoicemailResponseDto} from './dto/voicemail-response.dto'
 @Injectable()
 export class VoicemailsService implements CrudService<VoicemailBaseDto, VoicemailResponseDto>{
     private readonly log = new Logger(VoicemailsService.name)
-    readonly voicemailDir = "/var/spool/asterisk/voicemail/default/"
-    authorized = ["Old", "INBOX", "Work", "Friends", "Family", "Cust1", "Cust2", "Cust3", 'Cust4', 'Cust5', 'Cust6']
+    readonly voicemailDir = '/var/spool/asterisk/voicemail/default/'
+    authorized = ['Old', 'INBOX', 'Work', 'Friends', 'Family', 'Cust1', 'Cust2', 'Cust3', 'Cust4', 'Cust5', 'Cust6']
 
     toResponse(db: db.kamailio.VoicemailSpool): VoicemailResponseDto {
         const date = new Date(parseInt(db.origtime) * 1000)
@@ -40,65 +40,65 @@ export class VoicemailsService implements CrudService<VoicemailBaseDto, Voicemai
         this.log.debug({
             message: 'create Voicemail',
             success: true,
-            id: dbVoicemail.id
+            id: dbVoicemail.id,
         })
         return this.toResponse(dbVoicemail)
     }
 
     @HandleDbErrors
     async readAll(page: number, rows: number, req: ServiceRequest): Promise<VoicemailResponseDto[]> {
-        const option: FindManyOptions = {take: rows, skip: rows * (page - 1), relations: ["provSubscriber"]}
+        const option: FindManyOptions = {take: rows, skip: rows * (page - 1), relations: ['provSubscriber']}
         const result = await db.kamailio.VoicemailSpool.find(option)
         return result.map((vm: db.kamailio.VoicemailSpool) => this.toResponse(vm))
     }
 
     @HandleDbErrors
     async read(id: number, req: ServiceRequest): Promise<VoicemailResponseDto> {
-        const result = await db.kamailio.VoicemailSpool.findOneOrFail(id, {relations: ["provSubscriber"]})
+        const result = await db.kamailio.VoicemailSpool.findOneOrFail(id, {relations: ['provSubscriber']})
         return this.toResponse(result)
     }
 
     @HandleDbErrors
     async delete(id: number, req: ServiceRequest): Promise<number> {
-        const toDelete = await db.kamailio.VoicemailSpool.findOneOrFail(id, {relations: ["provSubscriber"]})
+        const toDelete = await db.kamailio.VoicemailSpool.findOneOrFail(id, {relations: ['provSubscriber']})
         await db.kamailio.VoicemailSpool.remove(toDelete)
         return 1
     }
 
     @HandleDbErrors
     async adjust(id: number, patch: PatchOperation | PatchOperation[], req: ServiceRequest): Promise<VoicemailResponseDto> {
-        const old = await db.kamailio.VoicemailSpool.findOneOrFail(id, {relations: ["provSubscriber"]})
+        const old = await db.kamailio.VoicemailSpool.findOneOrFail(id, {relations: ['provSubscriber']})
         let voicemail: VoicemailBaseDto = this.deflate(old)
         if (!Array.isArray(patch)) {
-            if (patch.path === "/folder")
-                patch.path = "/dir"
+            if (patch.path === '/folder')
+                patch.path = '/dir'
         }
         else {
-            if (patch[0].path === "/folder")
-                patch[0].path = "/dir"
+            if (patch[0].path === '/folder')
+                patch[0].path = '/dir'
         }
         voicemail = applyPatch(voicemail, patch).newDocument
         const folder = voicemail.dir
         if (this.authorized.indexOf(folder) == -1) {
-            throw new BadRequestException("not a valid entry (value)")
+            throw new BadRequestException('not a valid entry (value)')
         }
-        voicemail.dir = this.voicemailDir + voicemail.mailboxuser + "/" + folder
+        voicemail.dir = this.voicemailDir + voicemail.mailboxuser + '/' + folder
         await db.kamailio.VoicemailSpool.update(id, voicemail)
         return this.toResponse(old)
     }
 
     @HandleDbErrors
     async update(id: number, voicemail: VoicemailBaseDto, req: ServiceRequest): Promise<VoicemailResponseDto> {
-        const oldVoicemail = await db.kamailio.VoicemailSpool.findOneOrFail(id, {relations: ["provSubscriber"]})
+        const oldVoicemail = await db.kamailio.VoicemailSpool.findOneOrFail(id, {relations: ['provSubscriber']})
         if (voicemail.dir === undefined) {
             voicemail.dir = voicemail.folder
         }
-        let newVoicemail = db.kamailio.VoicemailSpool.merge(oldVoicemail, voicemail)
+        const newVoicemail = db.kamailio.VoicemailSpool.merge(oldVoicemail, voicemail)
         const folder = newVoicemail.dir
         if (this.authorized.indexOf(folder) == -1) {
-            throw new BadRequestException("not a valid entry (value)")
+            throw new BadRequestException('not a valid entry (value)')
         }
-        newVoicemail.dir = this.voicemailDir + newVoicemail.mailboxuser + "/" + folder
+        newVoicemail.dir = this.voicemailDir + newVoicemail.mailboxuser + '/' + folder
         await db.kamailio.VoicemailSpool.update(id, newVoicemail)
         return this.toResponse(oldVoicemail)
     }

@@ -28,7 +28,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     constructor(
         private readonly domainsService: DomainsService,
         private readonly journalsService: JournalsService,
-        private readonly expander: ExpandHelper
+        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, domainsService, journalsService)
     }
@@ -60,7 +60,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
         this.log.debug({message: 'fetch all domains', func: this.readAll.name, url: req.url, method: req.method})
         const responseList = await this.domainsService.readAll(page, rows, this.newServiceRequest(req))
         if (req.query.expand) {
-            let domainSearchDtoKeys = Object.keys(new DomainSearchDto())
+            const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
             await this.expander.expandObjects(responseList, domainSearchDtoKeys, req)
         }
         return responseList
@@ -74,7 +74,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<DomainResponseDto> {
         const responseList = await this.domainsService.read(id, this.newServiceRequest(req))
         if (req.query.expand && !req.isRedirected) {
-            let domainSearchDtoKeys = Object.keys(new DomainSearchDto())
+            const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
             await this.expander.expandObjects(responseList, domainSearchDtoKeys, req)
         }
         return responseList

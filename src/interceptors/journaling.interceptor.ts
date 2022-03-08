@@ -54,7 +54,7 @@ export class JournalingInterceptor implements NestInterceptor {
     intercept(context: ExecutionContext, next: CallHandler<any>): Observable<any> | Promise<Observable<any>> {
         return next.handle().pipe(
             map(data => {
-                let httpCtx = context.switchToHttp()
+                const httpCtx = context.switchToHttp()
                 const req = httpCtx.getRequest()
 
                 // Set content format and default to json
@@ -64,7 +64,7 @@ export class JournalingInterceptor implements NestInterceptor {
                 }
 
                 // skip journaling if request method is not POST, PUT or DELETE
-                let op = operation[req.method]
+                const op = operation[req.method]
                 if (op === undefined) {
                     return data
                 }

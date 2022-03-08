@@ -8,11 +8,11 @@ import {XmlHost} from './xml-host'
 export class XmlGroup extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-    id?: number
+        id?: number
 
     @Column({length: 32})
-    name!: string
+        name!: string
 
     @ManyToMany(type => XmlHost, host => host.groups)
-    hosts: XmlHost[]
+        hosts: XmlHost[]
 }

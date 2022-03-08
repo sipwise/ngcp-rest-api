@@ -7,40 +7,40 @@ import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
 export class XmlQueue extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-    id?: number
+        id?: number
 
     @Column({
         type: 'varchar',
         length: 255,
     })
-    target: string
+        target: string
 
     @Column({
         type: 'text',
     })
-    body: string
+        body: string
 
     @Column({
         type: 'int',
         width: 10,
     })
-    ctime: number
+        ctime: number
 
     @Column({
         type: 'int',
         width: 10,
     })
-    atime: number
+        atime: number
 
     @Column({
         type: 'int',
         width: 10,
     })
-    tries: number
+        tries: number
 
     @Column({
         type: 'int',
         width: 10,
     })
-    next_try: number
+        next_try: number
 }

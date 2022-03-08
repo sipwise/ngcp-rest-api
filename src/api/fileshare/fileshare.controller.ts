@@ -30,7 +30,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     constructor(
         private readonly fileshareService: FileshareService,
         private readonly journalsService: JournalsService,
-        private readonly expander: ExpandHelper
+        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, fileshareService, journalsService)
     }
@@ -55,7 +55,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     async readAll(page, row, req): Promise<FileshareResponseDto[]> {
         const responseList = await this.fileshareService.readAll(page, row, req)
         if (req.query.expand) {
-            let fileshareSearchDtoKeys = Object.keys(new FileshareSearchDto())
+            const fileshareSearchDtoKeys = Object.keys(new FileshareSearchDto())
             await this.expander.expandObjects(responseList, fileshareSearchDtoKeys, req)
         }
         return responseList
@@ -70,7 +70,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
         const stream = await this.fileshareService.read(id)
         let size = 0
         stream.options.disposition.split(/;\s*/).map(pair => {
-            let p = pair.split('=')
+            const p = pair.split('=')
             if (p[0] && p[0] == 'size' && p[1])
                 size = Number(p[1])
         })

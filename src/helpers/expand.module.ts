@@ -9,7 +9,7 @@ import {ContractsController} from '../api/contracts/contracts.controller'
 import {JournalsModule} from '../api/journals/journals.module'
 import {JournalsService} from '../api/journals/journals.service'
 import {AdminsModule} from '../api/admins/admins.module'
-import {AdminsController} from '../api/admins/admins.controller';
+import {AdminsController} from '../api/admins/admins.controller'
 
 @Module({
     imports: [

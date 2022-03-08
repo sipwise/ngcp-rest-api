@@ -54,7 +54,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
                 reseller_id: IsNull(),
             },
         }
-        let defaultTemplates = await db.billing.EmailTemplate.find(pattern)
+        const defaultTemplates = await db.billing.EmailTemplate.find(pattern)
         defaultTemplates.forEach(template => {
             delete template.id
             template.reseller_id = reseller_id
@@ -67,7 +67,6 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
         this.log.debug({message: 'create reseller', func: this.create.name, user: req.user.username})
         const r = db.billing.Reseller.create(dto)
         // TODO: Transaction guard
-        let result: db.billing.Reseller
         await this.validateCreate(dto)
         const resellerOld = await db.billing.Reseller.findOne({where: {name: dto.name}})
         if (resellerOld) {
@@ -75,7 +74,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
                 throw new UnprocessableEntityException(Messages.invoke(Messages.NAME_EXISTS, req))
             }
         }
-        result = await r.save()
+        const result = await r.save()
         await this.createEmailTemplates(result.id)
         // TODO: add rtc part
         return this.toResponse(result)
@@ -106,8 +105,8 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
             page: page,
             rows: rows,
         })
-        let queryBuilder = db.billing.Reseller.createQueryBuilder('reseller')
-        let resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
+        const queryBuilder = db.billing.Reseller.createQueryBuilder('reseller')
+        const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
         await configureQueryBuilder(queryBuilder, req.query,
             {where: resellerSearchDtoKeys, rows: +rows, page: +page})
         const result = await queryBuilder.getMany()
@@ -127,7 +126,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
         this.log.debug({message: 'adjust reseller by id', func: this.adjust.name, user: req.user.username, id: id})
         let reseller: ResellerBaseDto
 
-        let entry = await db.billing.Reseller.findOneOrFail(id)
+        const entry = await db.billing.Reseller.findOneOrFail(id)
 
         reseller = this.deflate(entry)
         reseller = applyPatch(reseller, patch).newDocument
@@ -146,14 +145,14 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
     }
 
     private async validateCreate(r: ResellerBaseDto) {
-        let resellers = await db.billing.Reseller.find({where: {contract_id: r.contract_id}})
+        const resellers = await db.billing.Reseller.find({where: {contract_id: r.contract_id}})
 
         if (resellers.length != 0) {
             throw new UnprocessableEntityException(Messages.invoke(Messages.CONTRACT_EXISTS))
         }
 
         //TODO: Get Contracts from ORM association
-        let contract = await db.billing.Contract.findOne(r.contract_id, {relations: ['contact']})
+        const contract = await db.billing.Contract.findOne(r.contract_id, {relations: ['contact']})
         if (!contract) {
             throw new UnprocessableEntityException(Messages.invoke(Messages.CONTRACT_NOT_FOUND))
         }

@@ -19,7 +19,7 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
     }
 
     filterOptions(req: ServiceRequest): FindManyOptions {
-        let filter: FindManyOptions = {}
+        const filter: FindManyOptions = {}
         if (['reseller', 'ccare'].includes(req.user.role))
             filter.where = {reseller_id: req.user.reseller_id}
         if (req.user.role == 'subscriber')
@@ -29,7 +29,7 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
     }
 
     toResponse(db: db.fileshare.Upload, req: ServiceRequest): FileshareResponseDto {
-        let response: FileshareResponseDto = {
+        const response: FileshareResponseDto = {
             id: db.id,
             name: db.original_name,
             mime_type: db.mime_type,
@@ -87,7 +87,7 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
         const now = new Date()
         const updateDate = new Date(now.getTime())
         const expireDate = new Date(now.getTime() + (createDto.ttl || 86400) * 1000)
-        let upload = new fileshare.Upload()
+        const upload = new fileshare.Upload()
         upload.id = uuidv4()
         upload.mime_type = file.mimetype
         upload.original_name = file.originalname
@@ -119,8 +119,8 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
 
     @HandleDbErrors
     async read(id: string): Promise<StreamableFile> {
-        let upload = await db.fileshare.Upload.findOneOrFail(id)
-        let stream = new StreamableFile(upload.data, {
+        const upload = await db.fileshare.Upload.findOneOrFail(id)
+        const stream = new StreamableFile(upload.data, {
             type: upload.mime_type,
             disposition: `attachment; filename="${upload.original_name}"; size=${upload.size}`,
         })

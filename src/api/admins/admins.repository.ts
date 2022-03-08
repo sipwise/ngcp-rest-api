@@ -59,8 +59,8 @@ export class AdminsRepository {
 
     @HandleDbErrors
     async delete(id: number, req: ServiceRequest): Promise<number> {
-        let query = await this.applyAdminFilter(req)
-        let dbAdmin = await query.andWhere('admin.id = :id', {id: id})
+        const query = await this.applyAdminFilter(req)
+        const dbAdmin = await query.andWhere('admin.id = :id', {id: id})
             .getOneOrFail()
         if (dbAdmin.login == SPECIAL_USER_LOGIN) {
             throw new ForbiddenException(Messages.invoke(Messages.DELETE_SPECIAL_USER, req).description + SPECIAL_USER_LOGIN)
@@ -84,7 +84,7 @@ export class AdminsRepository {
 
     @HandleDbErrors
     private async applySearchQuery(page: number, rows: number, params: any, query: SelectQueryBuilder<any>): Promise<void> {
-        let adminSearchDtoKeys = Object.keys(new AdminSearchDto())
+        const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
         await configureQueryBuilder(query, params, {
             joins: [{alias: 'role', property: 'role'}],
             where: adminSearchDtoKeys,
@@ -98,8 +98,8 @@ export class AdminsRepository {
         query ||= db.billing.Admin.createQueryBuilder('admin')
             .leftJoinAndSelect('admin.role', 'role')
         if (req.user.is_master) {
-            let hasAccessTo = req.user.role_data.has_access_to
-            let roleIds = hasAccessTo.map(role => role.id)
+            const hasAccessTo = req.user.role_data.has_access_to
+            const roleIds = hasAccessTo.map(role => role.id)
             query.andWhere('admin.role_id IN (:...roleIds)', {roleIds: roleIds})
             if (req.user.reseller_id_required) {
                 query.andWhere('admin.reseller_id = :reseller_id', {reseller_id: req.user.reseller_id})

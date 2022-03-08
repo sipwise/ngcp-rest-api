@@ -7,37 +7,37 @@ import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
 export class Upload extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-    id?: string
+        id?: string
 
     @Column({
         type: 'longblob',
         nullable: true,
     })
-    data: Buffer
+        data: Buffer
 
     @Column({
         type: 'varchar',
         length: 255,
         nullable: true,
     })
-    original_name: string
+        original_name: string
 
     @Column({
         type: 'varchar',
         length: 255,
         nullable: true,
     })
-    mime_type: string
+        mime_type: string
 
     @Column({
         nullable: true,
     })
-    size: number
+        size: number
 
     @Column({
         nullable: true,
     })
-    ttl: number
+        ttl: number
 
     @Column({
         type: 'enum',
@@ -46,38 +46,38 @@ export class Upload extends BaseEntity {
             'UPLOADED',
         ],
     })
-    state: string
+        state: string
 
     @Column({
         type: 'datetime',
     })
-    created_at: Date
+        created_at: Date
 
     @Column({
         type: 'datetime',
     })
-    updated_at: Date
+        updated_at: Date
 
     @Column({
         type: 'char',
         length: 36,
         nullable: true,
     })
-    session_id: string
+        session_id: string
 
     @Column({
         type: 'datetime',
         nullable: true,
     })
-    expires_at: Date
+        expires_at: Date
 
     @Column({
         nullable: true,
     })
-    reseller_id?: number
+        reseller_id?: number
 
     @Column({
         nullable: true,
     })
-    subscriber_id?: number
+        subscriber_id?: number
 }

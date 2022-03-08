@@ -39,7 +39,7 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
     constructor(
         private readonly contactsService: SystemcontactsService,
         private readonly journalsService: JournalsService,
-        private readonly expander: ExpandHelper
+        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, contactsService, journalsService)
     }
@@ -75,7 +75,7 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
         })
         const responseList = await this.contactsService.readAll(page, rows, this.newServiceRequest(req))
         if (req.query.expand) {
-            let contactSearchDtoKeys = Object.keys(new SystemcontactSearchDto())
+            const contactSearchDtoKeys = Object.keys(new SystemcontactSearchDto())
             await this.expander.expandObjects(responseList, contactSearchDtoKeys, req)
         }
         return responseList
@@ -89,7 +89,7 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
         return this.contactsService.read(id, this.newServiceRequest(req))
         const responseItem = await this.contactsService.read(id, this.newServiceRequest(req))
         if (req.query.expand && !req.isRedirected) {
-            let contactSearchDtoKeys = Object.keys(new SystemcontactSearchDto())
+            const contactSearchDtoKeys = Object.keys(new SystemcontactSearchDto())
             await this.expander.expandObjects(responseItem, contactSearchDtoKeys, req)
         }
         return responseItem

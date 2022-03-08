@@ -8,12 +8,12 @@ import {AclRole} from './acl-role.entity'
 export class AclRoleMapping extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-    accessor_id?: number
+        accessor_id?: number
 
     @Column()
-    has_access_to_id?: number
+        has_access_to_id?: number
 
     @ManyToOne(() => AclRole)
     @JoinColumn({name: 'accessor_id'})
-    id?: AclRole
+        id?: AclRole
 }

@@ -92,7 +92,7 @@ function parseAuthHeader(hdrValue) {
 function fromAuthHeaderAsBearerToken() {
     return function (request) {
         let token = null
-        let l = new Logger(fromAuthHeaderAsBearerToken.name)
+        const l = new Logger(fromAuthHeaderAsBearerToken.name)
         l.debug('get bearer token from auth header')
         if (request.headers[AUTH_HEADER]) {
             const auth_params = parseAuthHeader(request.headers[AUTH_HEADER])

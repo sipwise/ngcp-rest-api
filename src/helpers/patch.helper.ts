@@ -5,12 +5,12 @@ export function normalisePatch(patch: core.Operation | core.Operation[]) {
 }
 
 export function applyPatch<T>(document: T, patch: core.Operation | core.Operation[], validateOperation?: | core.Validator<T> | boolean, mutateDocument?: boolean) {
-    let patchArray = normalisePatch(patch)
+    const patchArray = normalisePatch(patch)
     return core.applyPatch<T>(document, patchArray, validateOperation, mutateDocument)
 }
 
 export function validate<T>(sequence: core.Operation | core.Operation[], document?: T, externalValidator?: core.Validator<T>) {
-    let patchArray = normalisePatch(sequence)
+    const patchArray = normalisePatch(sequence)
     return core.validate<T>(patchArray, document, externalValidator)
 }
 

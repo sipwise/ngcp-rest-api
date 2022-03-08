@@ -23,11 +23,11 @@ export class LoggingInterceptor implements NestInterceptor {
         return next.handle().pipe(
             map(data => {
                 // TODO: only log to console when executed in Debug mode
-                let httpCtx = context.switchToHttp()
+                const httpCtx = context.switchToHttp()
                 const req = httpCtx.getRequest()
 
                 // Get redacted version of response data
-                let redacted: any = this.getRedactedPlain(data)
+                const redacted: any = this.getRedactedPlain(data)
 
                 const ctx = Context.get(req)
                 const now = Date.now()
@@ -65,12 +65,12 @@ export class LoggingInterceptor implements NestInterceptor {
         if (isObject(data) && 'stream' in data) {
             return 'stream'
         } else if (Array.isArray(data)) {
-            let redactedArr = []
+            const redactedArr = []
             // get plain version of stored object in array
             // value.constructor returns the constructor of a specific object.
             // This allows the call of the correct ClassConstructor in plainToClass()
             data.forEach(function (value) {
-                let plain = classToPlain(value)
+                const plain = classToPlain(value)
                 //    let redacted = plainToClass(value.constructor, plain)
                 redactedArr.push(plain)
             })

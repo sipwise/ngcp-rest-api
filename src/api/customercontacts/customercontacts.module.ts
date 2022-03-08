@@ -7,7 +7,7 @@ import {ExpandModule} from '../../helpers/expand.module'
 @Module({
     imports: [
         JournalsModule,
-        forwardRef(() => ExpandModule)
+        forwardRef(() => ExpandModule),
     ],
     controllers: [CustomercontactsController],
     providers: [

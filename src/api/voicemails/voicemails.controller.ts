@@ -26,7 +26,7 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     constructor(
         private readonly voicemailsService: VoicemailsService,
         private readonly journalService: JournalsService,
-        private readonly expander: ExpandHelper
+        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, voicemailsService, journalService)
     }
@@ -56,7 +56,7 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     ): Promise<VoicemailResponseDto[]> {
         const responseList = await this.voicemailsService.readAll(page, row, req)
         if (req.query.expand) {
-            let voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
+            const voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
             await this.expander.expandObjects(responseList, voicemailSearchDtoKeys, req)
         }
         return responseList
@@ -69,7 +69,7 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     async findOne(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<VoicemailResponseDto> {
         const responseItem = await this.voicemailsService.read(id, req)
         if (req.query.expand && !req.isRedirected) {
-            let voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
+            const voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
             await this.expander.expandObjects(responseItem, voicemailSearchDtoKeys, req)
         }
         return responseItem
@@ -93,7 +93,7 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     async adjust(@Param('id', ParseIntPipe) id: number, @Body() patch: PatchOperation | PatchOperation[], @Req() req): Promise<VoicemailResponseDto> {
         const err = validate(patch)
         if (err) {
-            let message = err.message.replace(/[\n\s]+/g, ' ').replace(/\"/g, '\'')
+            const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
             throw new BadRequestException(message)
         }
         return await this.voicemailsService.adjust(id, patch, req)
@@ -101,7 +101,7 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
 
     @Put(':id')
     @ApiOkResponse({
-        type: VoicemailResponseDto
+        type: VoicemailResponseDto,
     })
     async update(@Param('id', ParseIntPipe) id: number, @Body() voicemail: VoicemailBaseDto, @Req() req): Promise<VoicemailResponseDto> {
         return await this.voicemailsService.update(id, voicemail, req)

@@ -17,63 +17,63 @@ enum Class {
 export class Product extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-    id?: number
+        id?: number
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    reseller_id?: number
+        reseller_id?: number
 
     @Column({
         type: 'set',
         enum: Class,
     })
-    class!: string
+        class!: string
 
     @Column({
         type: 'varchar',
         length: 63,
     })
-    handle!: string
+        handle!: string
 
     @Column({
         type: 'varchar',
         length: 127,
     })
-    name!: string
+        name!: string
 
     @Column({
         type: 'boolean',
     })
-    on_sale!: boolean
+        on_sale!: boolean
 
     @Column({
         nullable: true,
         type: 'double',
         width: 22,
     })
-    price?: number
+        price?: number
 
     @Column({
         nullable: true,
         type: 'mediumint',
     })
-    weight?: number
+        weight?: number
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    billing_profile_id?: number
+        billing_profile_id?: number
 
     // @ManyToOne(type => BillingProfile, billingProfile => billingProfile.id)
     // BillingProfile?: BillingProfile
 
     @OneToMany(type => Contract, contract => contract.id)
-    contracts?: Contract[]
+        contracts?: Contract[]
 
     @ManyToOne(type => Reseller, reseller => reseller.id)
     @JoinColumn({name: 'reseller_id'})
-    reseller?: Reseller
+        reseller?: Reseller
 }

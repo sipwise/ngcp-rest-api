@@ -58,10 +58,10 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
         await db.billing.Domain.insert(dbDomain)
         await db.provisioning.VoipDomain.insert(dbVoipDomain)
 
-        let telnetDispatcher = new TelnetDispatcher()
-        let xmlDispatcher = new XmlDispatcher()
+        const telnetDispatcher = new TelnetDispatcher()
+        const xmlDispatcher = new XmlDispatcher()
 
-        let errors = await telnetDispatcher.activateDomain(dbDomain.domain)
+        const errors = await telnetDispatcher.activateDomain(dbDomain.domain)
 
         // roll back changes if errors occured
         if (errors.length > 0) {
@@ -83,8 +83,8 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
             page: page,
             rows: rows,
         })
-        let queryBuilder = db.billing.Domain.createQueryBuilder('domain')
-        let domainSearchDtoKeys = Object.keys(new DomainSearchDto())
+        const queryBuilder = db.billing.Domain.createQueryBuilder('domain')
+        const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
         await configureQueryBuilder(queryBuilder, req.query,
             {where: domainSearchDtoKeys, rows: +rows, page: +page})
         const result = await queryBuilder.getMany()
@@ -115,9 +115,9 @@ export class DomainsService implements CrudService<DomainCreateDto, DomainRespon
         const provDomain = await db.provisioning.VoipDomain.findOneOrFail({where: {domain: domain.domain}})
         await db.billing.Domain.delete(id)
         await db.provisioning.VoipDomain.delete(provDomain.id)
-        let telnetDispatcher = new TelnetDispatcher()
+        const telnetDispatcher = new TelnetDispatcher()
 
-        let xmlDispatcher = new XmlDispatcher()
+        const xmlDispatcher = new XmlDispatcher()
         await telnetDispatcher.deactivateDomain(domain.domain)
         await xmlDispatcher.sipDomainReload(domain.domain)
         return 1

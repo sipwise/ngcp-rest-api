@@ -9,128 +9,128 @@ import {internal} from '../../../entities'
 })
 export class Admin extends BaseEntity {
     @PrimaryGeneratedColumn()
-    id?: number
+        id?: number
 
     @Column({
         nullable: true,
         unsigned: true,
     })
-    reseller_id?: number
+        reseller_id?: number
 
     @Column({
         type: 'varchar',
         length: 31,
     })
-    login!: string
+        login!: string
 
     @Column({
         type: 'varchar',
         nullable: true,
         length: 32,
     })
-    md5pass?: string
+        md5pass?: string
 
     @Column({
         type: 'varchar',
         length: 54,
         nullable: true,
     })
-    saltedpass?: string
+        saltedpass?: string
 
     @Column({
         type: 'boolean',
         default: false,
     })
-    is_master?: boolean
+        is_master?: boolean
 
     @Column({
         type: 'boolean',
         default: 0,
     })
-    is_superuser?: boolean
+        is_superuser?: boolean
 
     @Column({
         type: 'boolean',
         default: 0,
     })
-    is_ccare?: boolean
+        is_ccare?: boolean
 
     @Column({
         type: 'boolean',
         default: 1,
     })
-    is_active?: boolean
+        is_active?: boolean
 
     @Column({
         type: 'boolean',
         default: 0,
     })
-    read_only?: boolean
+        read_only?: boolean
 
     @Column({
         type: 'boolean',
         default: 1,
     })
-    show_passwords?: boolean
+        show_passwords?: boolean
 
     @Column({
         type: 'boolean',
         default: 0,
     })
-    call_data?: boolean
+        call_data?: boolean
 
     @Column({
         type: 'boolean',
         default: 1,
     })
-    billing_data?: boolean
+        billing_data?: boolean
 
     @Column({
         type: 'boolean',
         default: 0,
     })
-    lawful_intercept?: boolean
+        lawful_intercept?: boolean
 
     @Column({
         type: 'bigint',
         nullable: true,
     })
-    ssl_client_m_serial?: number
+        ssl_client_m_serial?: number
 
     @Column({
         type: 'text',
         nullable: true,
     })
-    ssl_client_certificate?: string
+        ssl_client_certificate?: string
 
     @Column({
         type: 'varchar',
         length: 255,
         nullable: true,
     })
-    email?: string
+        email?: string
 
     @Column({
         type: 'boolean',
         default: 1,
     })
-    can_reset_password?: boolean
+        can_reset_password?: boolean
 
     @Column({
         type: 'boolean',
         default: 0,
     })
-    is_system!: boolean
+        is_system!: boolean
 
     @Column({
         type: 'int',
         width: 11,
     })
-    role_id: number
+        role_id: number
 
     @ManyToOne(() => AclRole, role => role.admins)
     @JoinColumn({name: 'role_id'})
-    role: AclRole
+        role: AclRole
 
     fromDomain(admin: internal.Admin): Admin {
         this.billing_data = admin.billing_data
@@ -186,48 +186,48 @@ export class Admin extends BaseEntity {
 
     async getPermissionFlags(): Promise<RBAC_FLAGS> {
         switch (this.role.role) {
-            case RBAC_ROLES.system:
-                return {
-                    is_system: true,
-                    is_superuser: false,
-                    is_ccare: false,
-                    lawful_intercept: false,
-                }
-            case RBAC_ROLES.admin:
-                return {
-                    is_system: false,
-                    is_superuser: true,
-                    is_ccare: false,
-                    lawful_intercept: false,
-                }
-            case RBAC_ROLES.reseller:
-                return {
-                    is_system: false,
-                    is_superuser: false,
-                    is_ccare: false,
-                    lawful_intercept: false,
-                }
-            case RBAC_ROLES.ccareadmin:
-                return {
-                    is_system: false,
-                    is_superuser: true,
-                    is_ccare: true,
-                    lawful_intercept: false,
-                }
-            case RBAC_ROLES.ccare:
-                return {
-                    is_system: false,
-                    is_superuser: false,
-                    is_ccare: true,
-                    lawful_intercept: false,
-                }
-            case RBAC_ROLES.lintercept:
-                return {
-                    is_system: false,
-                    is_superuser: false,
-                    is_ccare: false,
-                    lawful_intercept: true,
-                }
+        case RBAC_ROLES.system:
+            return {
+                is_system: true,
+                is_superuser: false,
+                is_ccare: false,
+                lawful_intercept: false,
+            }
+        case RBAC_ROLES.admin:
+            return {
+                is_system: false,
+                is_superuser: true,
+                is_ccare: false,
+                lawful_intercept: false,
+            }
+        case RBAC_ROLES.reseller:
+            return {
+                is_system: false,
+                is_superuser: false,
+                is_ccare: false,
+                lawful_intercept: false,
+            }
+        case RBAC_ROLES.ccareadmin:
+            return {
+                is_system: false,
+                is_superuser: true,
+                is_ccare: true,
+                lawful_intercept: false,
+            }
+        case RBAC_ROLES.ccare:
+            return {
+                is_system: false,
+                is_superuser: false,
+                is_ccare: true,
+                lawful_intercept: false,
+            }
+        case RBAC_ROLES.lintercept:
+            return {
+                is_system: false,
+                is_superuser: false,
+                is_ccare: false,
+                lawful_intercept: true,
+            }
         }
     }
 }

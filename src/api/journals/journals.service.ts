@@ -12,19 +12,12 @@ export class JournalsService {
     private readonly log = new Logger(JournalsService.name)
 
     /**
-     * Creates a new `JournalsService`
-     * @param journalRepo Injected journal repository to access database
-     */
-    constructor() {
-    }
-
-    /**
      * Creates a new `Journal` entry in the database
      * @param journal Journal to be created
      */
     @HandleDbErrors
     async create(journal: JournalCreateDto): Promise<JournalResponseDto> {
-        let dbJournal = db.billing.Journal.create(journal)
+        const dbJournal = db.billing.Journal.create(journal)
         await db.billing.Journal.insert(dbJournal)
         return this.toResponse(dbJournal)
     }
@@ -60,7 +53,7 @@ export class JournalsService {
             resourceId: resourceId,
             filter: filter,
         })
-        let result = await db.billing.Journal.find({
+        const result = await db.billing.Journal.find({
             take: +rows,
             skip: +rows * (+page - 1),
             where: filter,

@@ -31,7 +31,7 @@ class MockSystemcontactsService implements CrudService<SystemcontactCreateDto, S
         if (id == 0) {
             throw new NotFoundException()
         }
-        let res: SystemcontactResponseDto = {
+        const res: SystemcontactResponseDto = {
             id: 0, newsletter: false, status: ContactStatus.Terminated,
         }
         return Promise.resolve(res)
@@ -53,7 +53,7 @@ class MockSystemcontactsService implements CrudService<SystemcontactCreateDto, S
 
 describe('SystemcontactsController', () => {
     let app: INestApplication
-    let sysContactService = new MockSystemcontactsService()
+    const sysContactService = new MockSystemcontactsService()
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({

@@ -108,6 +108,7 @@ export class ValidateInputPipe implements PipeTransform<any> {
             : value
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     protected toEmptyIfNil<T = any, R = any>(value: T): R | {} {
         return isNil(value) ? {} : value
     }

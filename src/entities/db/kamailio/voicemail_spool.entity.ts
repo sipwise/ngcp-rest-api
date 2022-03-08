@@ -1,5 +1,5 @@
-import {BaseEntity, Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn} from "typeorm"
-import {VoipSubscriber} from "../billing"
+import {BaseEntity, Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
+import {VoipSubscriber} from '../billing'
 
 
 @Entity({
@@ -9,78 +9,78 @@ import {VoipSubscriber} from "../billing"
 
 export class VoicemailSpool extends BaseEntity {
     @PrimaryGeneratedColumn()
-    id: number
+        id: number
 
     @Column({
         type: 'integer',
     })
-    msgnum: number
+        msgnum: number
 
     @Column({
         type: 'varchar',
     })
-    dir: string
-
-
-    @Column({
-        type: 'varchar',
-    })
-    context: string
+        dir: string
 
 
     @Column({
         type: 'varchar',
     })
-    macrocontext: string
+        context: string
 
 
     @Column({
         type: 'varchar',
     })
-    callerid: string
+        macrocontext: string
+
+
+    @Column({
+        type: 'varchar',
+    })
+        callerid: string
 
     @Column({
         type: 'varchar',
         length: 16,
     })
-    origtime: string
+        origtime: string
 
     @Column({
         type: 'varchar',
     })
-    duration: string
+        duration: string
 
     @Column({
         type: 'varchar',
     })
-    mailboxuser: string
+        mailboxuser: string
 
     @Column({
         type: 'varchar',
     })
-    mailboxcontext: string
+        mailboxcontext: string
 
     @Column({
         type: 'longblob',
     })
-    recording: Buffer
-
-    @Column({
-        type: 'varchar'
-    })
-    flag: string
+        recording: Buffer
 
     @Column({
         type: 'varchar',
     })
-    msg_id: string
+        flag: string
 
     @Column({
         type: 'varchar',
     })
-    call_id: string
+        msg_id: string
+
+    @Column({
+        type: 'varchar',
+    })
+        call_id: string
 
     @ManyToOne(() => VoipSubscriber, subscriber => subscriber.id)
     @JoinColumn({name: 'mailboxuser', referencedColumnName: 'uuid'})
-    provSubscriber: VoipSubscriber
+        provSubscriber: VoipSubscriber
 }

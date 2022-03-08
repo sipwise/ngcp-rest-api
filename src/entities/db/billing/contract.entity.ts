@@ -16,121 +16,121 @@ enum ContractStatus {
 })
 export class Contract extends BaseEntity {
     @PrimaryGeneratedColumn()
-    id?: number
+        id?: number
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    customer_id?: number
+        customer_id?: number
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    contact_id?: number
+        contact_id?: number
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    order_id?: number
+        order_id?: number
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    profile_package_id?: number
+        profile_package_id?: number
 
     @Column({
         type: 'enum',
         enum: ContractStatus,
         default: [ContractStatus.Active],
     })
-    status!: ContractStatus
+        status!: ContractStatus
 
     @Column({
         nullable: true,
         type: 'varchar',
         length: 255,
     })
-    external_id?: string
+        external_id?: string
 
     @Column({
         type: 'date',
     })
-    modify_timestamp!: Date
+        modify_timestamp!: Date
 
     @Column({
         type: 'date',
     })
-    create_timestamp!: Date
-
-    @Column({
-        nullable: true,
-        type: 'date',
-    })
-    activate_timestamp?: Date
+        create_timestamp!: Date
 
     @Column({
         nullable: true,
         type: 'date',
     })
-    terminate_timestamp?: Date
+        activate_timestamp?: Date
+
+    @Column({
+        nullable: true,
+        type: 'date',
+    })
+        terminate_timestamp?: Date
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    max_subscribers?: number
+        max_subscribers?: number
 
     @Column({
         type: 'boolean',
     })
-    send_invoice!: boolean
+        send_invoice!: boolean
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    subscriber_email_template_id?: number
+        subscriber_email_template_id?: number
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    passreset_email_template_id?: number
+        passreset_email_template_id?: number
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    invoice_email_template_id?: number
+        invoice_email_template_id?: number
 
     @Column({
         nullable: true,
         type: 'int',
     })
-    invoice_template_id?: number
+        invoice_template_id?: number
 
     @Column({
         type: 'boolean',
     })
-    vat_rate!: boolean
+        vat_rate!: boolean
 
     @Column({
         type: 'boolean',
     })
-    add_vat!: boolean
+        add_vat!: boolean
 
     @Column({
         type: 'int',
     })
-    product_id!: number
+        product_id!: number
 
     @ManyToOne(type => Contact, contact => contact.id)
     @JoinColumn({name: 'contact_id'})
-    contact?: Contact
+        contact?: Contact
 
     // @HasMany(() => ContractsBillingProfileNetwork, {
     //     sourceKey: 'id',
@@ -153,7 +153,7 @@ export class Contract extends BaseEntity {
     // VoipSubscribers?: VoipSubscriber[]
 
     @OneToMany(type => Reseller, reseller => reseller.contract)
-    resellers?: Reseller[]
+        resellers?: Reseller[]
 
     // @HasMany(() => ContractBalance, {
     //     sourceKey: 'id',
@@ -169,7 +169,7 @@ export class Contract extends BaseEntity {
 
     @ManyToOne(type => Product, product => product.contracts)
     @JoinColumn({name: 'product_id'})
-    product?: Product
+        product?: Product
 
     // @BelongsTo(() => ProfilePackage)
     // ProfilePackage?: ProfilePackage

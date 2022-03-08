@@ -11,11 +11,12 @@ const pidDir = process.env.NODE_ENV == 'development'
     ? '/tmp/ngcp-rest-api'
     : '/run/ngcp-rest-api'
 const pidFile = 'ngcp-rest-api.pid'
-var started = 0
-var workersOnline = 0
+let started = 0
+let workersOnline = 0
 
 @Injectable()
 export class AppClusterService {
+    // eslint-disable-next-line @typescript-eslint/ban-types
     static clusterize(callback: Function): void {
         const logger = new LoggerService()
         if (cluster.isWorker) {

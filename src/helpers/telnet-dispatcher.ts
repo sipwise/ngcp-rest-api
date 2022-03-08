@@ -21,12 +21,12 @@ export class TelnetDispatcher {
     }
 
     private async dispatchCommand(target: string, domain: string, command: 'activate' | 'deactivate'): Promise<TelnetError[]> {
-        let connection = new Telnet()
-        let group = await db.provisioning.XmlGroup.findOne({where: {name: target}, relations: ['hosts']})
-        let errors: TelnetError[] = []
+        const connection = new Telnet()
+        const group = await db.provisioning.XmlGroup.findOne({where: {name: target}, relations: ['hosts']})
+        const errors: TelnetError[] = []
         this.log.debug({message: 'dispatched telnet command', command: command, target: target, domain: domain})
-        for (let host of group.hosts) {
-            let params = {
+        for (const host of group.hosts) {
+            const params = {
                 host: host.ip,
                 port: host.port,
                 shellPrompt: 'http://prosody.im/doc/console',
@@ -55,7 +55,7 @@ export class TelnetDispatcher {
                 })
                 continue
             }
-            let response = await connection.send(
+            const response = await connection.send(
                 `host:${command}('${domain}')`,
                 {
                     timeout: 200,

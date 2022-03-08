@@ -97,7 +97,7 @@ export class AdminsService { //} implements CrudService<AdminCreateDto, AdminRes
         admin.role_id = role.id
         admin.role_data = role
 
-        let oldAdmin = await this.adminRepo.readById(id, req)
+        const oldAdmin = await this.adminRepo.readById(id, req)
         await this.validateUpdate(req.user.id, oldAdmin, admin)
 
         if (admin.password)
