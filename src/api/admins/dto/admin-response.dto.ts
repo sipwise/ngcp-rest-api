@@ -3,23 +3,40 @@ import {internal} from '../../../entities'
 import {ApiProperty} from '@nestjs/swagger'
 
 export class AdminResponseDto {
-    billing_data: boolean
-    call_data: boolean
-    can_reset_password: boolean
-    email: string
-    id: number
-    is_active: boolean
-    is_ccare: boolean
-    is_master: boolean
-    is_superuser: boolean
-    is_system: boolean
-    lawful_intercept: boolean
-    login: string
-    read_only: boolean
-    reseller_id?: number
-    reseller_id_expand?: ResellerResponseDto
-    role: string
-    show_passwords: boolean
+    @ApiProperty()
+        billing_data: boolean
+    @ApiProperty()
+        call_data: boolean
+    @ApiProperty()
+        can_reset_password: boolean
+    @ApiProperty()
+        email: string
+    @ApiProperty()
+        id: number
+    @ApiProperty()
+        is_active: boolean
+    @ApiProperty()
+        is_ccare: boolean
+    @ApiProperty()
+        is_master: boolean
+    @ApiProperty()
+        is_superuser: boolean
+    @ApiProperty()
+        is_system: boolean
+    @ApiProperty()
+        lawful_intercept: boolean
+    @ApiProperty()
+        login: string
+    @ApiProperty()
+        read_only: boolean
+    @ApiProperty()
+        reseller_id?: number
+    @ApiProperty()
+        reseller_id_expand?: ResellerResponseDto
+    @ApiProperty()
+        role: string
+    @ApiProperty()
+        show_passwords: boolean
 
     constructor(admin: internal.Admin) {
         this.billing_data = admin.billing_data

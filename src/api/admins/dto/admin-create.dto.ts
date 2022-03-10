@@ -19,25 +19,26 @@ export class AdminCreateDto {
     @ApiPropertyOptional({
         description: 'Can manage other admin users within the same or level permission levels ' +
             '(only applies to "System", "Admin" and "Reseller") roles',
+        default: false,
     })
         is_master?: boolean = false
 
-    @ApiPropertyOptional({description: 'Can use the UI/API'})
+    @ApiPropertyOptional({description: 'Can use the UI/API', default: true})
         is_active?: boolean = true
 
-    @ApiPropertyOptional({description: 'Set access to read-only, cannot change any data'})
+    @ApiPropertyOptional({description: 'Set access to read-only, cannot change any data', default: false})
         read_only?: boolean = false
 
-    @ApiPropertyOptional({description: 'Can see passwords'})
+    @ApiPropertyOptional({description: 'Can see passwords', default: true})
         show_passwords?: boolean = true
 
-    @ApiPropertyOptional({description: 'Call data'})
+    @ApiPropertyOptional({description: 'Call data', default: true})
         call_data?: boolean = true
 
-    @ApiPropertyOptional({description: 'Can manage "topup vouchers"'})
+    @ApiPropertyOptional({description: 'Can manage "topup vouchers"', default: true})
         billing_data?: boolean = true
 
-    @ApiPropertyOptional({description: 'Can reset password'})
+    @ApiPropertyOptional({description: 'Can reset password', default: true})
         can_reset_password?: boolean = true
 
     @IsNotEmpty()
@@ -45,8 +46,8 @@ export class AdminCreateDto {
         password: string
 
     @IsNotEmpty()
-    @ApiProperty()
-        role: string
+    @ApiProperty({description: 'Access level of the user', enum: RBAC_ROLES})
+        role: RBAC_ROLES
 
     async toDomain(): Promise<internal.Admin> {
         const admin = new internal.Admin()
