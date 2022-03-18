@@ -5,3 +5,5 @@ yarn-error.log
 coverage
 .nyc_output
 .idea
+prod
+etc/ssl
