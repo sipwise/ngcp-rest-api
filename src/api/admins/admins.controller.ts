@@ -64,7 +64,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             method: req.method,
         })
         const admin = Object.assign(new AdminCreateDto(), create)
-        const newAdmin = await this.adminsService.create(await admin.toDomain(), this.newServiceRequest(req))
+        const newAdmin = await this.adminsService.create(await admin.toInternal(), this.newServiceRequest(req))
         const response = new AdminResponseDto(newAdmin)
         return response
     }
@@ -131,7 +131,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
     ): Promise<AdminResponseDto> {
         this.log.debug({message: 'update admin by id', func: this.update.name, url: req.url, method: req.method})
         const admin = Object.assign(new AdminUpdateDto(), update)
-        return new AdminResponseDto(await this.adminsService.update(id, await admin.toDomain(), this.newServiceRequest(req)))
+        return new AdminResponseDto(await this.adminsService.update(id, await admin.toInternal(), this.newServiceRequest(req)))
     }
 
     @Patch(':id')

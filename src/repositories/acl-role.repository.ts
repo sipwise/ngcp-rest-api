@@ -11,6 +11,6 @@ export class AclRoleRepository {
             where: {role: role},
             relations: ['has_access_to', 'admins'],
         })
-        return dbRole.toDomain()
+        return dbRole.toInternal()
     }
 }

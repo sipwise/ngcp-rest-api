@@ -16,7 +16,7 @@ export class AdminsRepository {
 
     @HandleDbErrors
     async create(admin: internal.Admin): Promise<internal.Admin> {
-        const dbAdmin = await new db.billing.Admin().fromDomain(admin)
+        const dbAdmin = await new db.billing.Admin().fromInternal(admin)
 
         await db.billing.Admin.insert(dbAdmin)
         this.log.debug({
@@ -25,7 +25,7 @@ export class AdminsRepository {
             id: dbAdmin.id,
         })
 
-        return await dbAdmin.toDomain()
+        return await dbAdmin.toInternal()
     }
 
     @HandleDbErrors
@@ -34,7 +34,7 @@ export class AdminsRepository {
         await this.applySearchQuery(page, rows, req.query, query)
         await this.applyAdminFilter(req, query)
         const result = await query.getMany()
-        return await Promise.all(result.map(async (adm) => adm.toDomain()))
+        return await Promise.all(result.map(async (adm) => adm.toInternal()))
     }
 
     @HandleDbErrors
@@ -50,11 +50,11 @@ export class AdminsRepository {
         const query = await this.applyAdminFilter(req)
         await query.andWhere('admin.id = :id', {id: id}).getOneOrFail()
 
-        const update = new db.billing.Admin().fromDomain(admin)
+        const update = new db.billing.Admin().fromInternal(admin)
         await db.billing.Admin.update(id, update)
 
         const updated: db.billing.Admin = await query.andWhere('admin.id = :id', {id: id}).getOneOrFail()
-        return updated.toDomain()
+        return updated.toInternal()
     }
 
     @HandleDbErrors

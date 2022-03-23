@@ -1,6 +1,5 @@
 import {Admin} from './admin.internal.entity'
 
-
 export interface AclRoleInterface {
     id?: number,
     role?: string,

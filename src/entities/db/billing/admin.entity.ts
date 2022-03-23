@@ -132,7 +132,7 @@ export class Admin extends BaseEntity {
     @JoinColumn({name: 'role_id'})
         role: AclRole
 
-    fromDomain(admin: internal.Admin): Admin {
+    fromInternal(admin: internal.Admin): Admin {
         this.billing_data = admin.billing_data
         this.call_data = admin.call_data
         this.can_reset_password = admin.can_reset_password
@@ -148,7 +148,7 @@ export class Admin extends BaseEntity {
         this.read_only = admin.read_only
         this.reseller_id = admin.reseller_id
         if (admin.role_data != undefined)
-            this.role = new AclRole().fromDomain(admin.role_data)
+            this.role = new AclRole().fromInternal(admin.role_data)
         this.role_id = admin.role_id
         this.show_passwords = admin.show_passwords
         if(admin.saltedpass != undefined)
@@ -157,7 +157,7 @@ export class Admin extends BaseEntity {
         return this
     }
 
-    async toDomain(): Promise<internal.Admin> {
+    async toInternal(): Promise<internal.Admin> {
         const admin = new internal.Admin()
 
         admin.billing_data = this.billing_data
@@ -176,7 +176,7 @@ export class Admin extends BaseEntity {
         admin.reseller_id = this.reseller_id
         if (this.role != undefined) {
             admin.role = this.role.role
-            admin.role_data = await this.role.toDomain()
+            admin.role_data = await this.role.toInternal()
         }
         admin.role_id = this.role_id
         admin.show_passwords = this.show_passwords

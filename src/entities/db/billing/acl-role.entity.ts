@@ -37,15 +37,15 @@ export class AclRole extends BaseEntity {
     @OneToMany(() => Journal, journal => journal.role)
         journals: Journal[]
 
-    fromDomain(role: internal.AclRole): AclRole {
+    fromInternal(role: internal.AclRole): AclRole {
         let admins: Admin[]
         let hasAccess: AclRole[]
         if (role == undefined)
             return
         if(role.admins != undefined)
-            admins = role.admins.map((adm) => new Admin().fromDomain(adm))
+            admins = role.admins.map((adm) => new Admin().fromInternal(adm))
         if(role.has_access_to != undefined)
-            hasAccess = role.has_access_to.map((r) => new AclRole().fromDomain(r))
+            hasAccess = role.has_access_to.map((r) => new AclRole().fromInternal(r))
 
         this.role = role.role
         this.id = role.id
@@ -56,19 +56,19 @@ export class AclRole extends BaseEntity {
         return this
     }
 
-    async toDomain(): Promise<internal.AclRole> {
+    async toInternal(): Promise<internal.AclRole> {
         const admins: internal.Admin[] = []
 
         if (this.admins != undefined) {
             for (const adm of this.admins) {
-                admins.push(await adm.toDomain())
+                admins.push(await adm.toInternal())
             }
         }
 
         const access_to: internal.AclRole[] = []
         if (this.has_access_to != undefined) {
             for (const r of this.has_access_to) {
-                access_to.push(await r.toDomain())
+                access_to.push(await r.toInternal())
             }
         }
 

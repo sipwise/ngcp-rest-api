@@ -6,7 +6,6 @@ import {Controller, DefaultValuePipe, Get, Param, ParseIntPipe, Query, Req} from
 import {AppService} from '../../app.service'
 import {JournalsService} from './journals.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {Request} from 'express'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {JournalSearchDto} from './dto/journal-search.dto'
 

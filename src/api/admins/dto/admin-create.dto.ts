@@ -49,7 +49,7 @@ export class AdminCreateDto {
     @ApiProperty({description: 'Access level of the user', enum: RBAC_ROLES})
         role: RBAC_ROLES
 
-    async toDomain(): Promise<internal.Admin> {
+    async toInternal(): Promise<internal.Admin> {
         const admin = new internal.Admin()
 
         admin.billing_data = this.billing_data

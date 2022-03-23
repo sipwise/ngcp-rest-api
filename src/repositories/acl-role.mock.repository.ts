@@ -1,6 +1,5 @@
 import {ServiceRequest} from '../interfaces/service-request.interface'
 import {internal} from '../entities'
-import {Logger} from 'typeorm'
 import {NotFoundException} from '@nestjs/common'
 
 export class AclRoleMockRepository {

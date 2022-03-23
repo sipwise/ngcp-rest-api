@@ -1,7 +1,9 @@
 import {
     Controller,
-    DefaultValuePipe, forwardRef,
-    Get, Inject,
+    DefaultValuePipe,
+    forwardRef,
+    Get,
+    Inject,
     Logger,
     Param,
     ParseIntPipe,

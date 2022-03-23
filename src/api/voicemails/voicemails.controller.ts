@@ -1,7 +1,22 @@
 import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {AppService} from '../../app.service'
-import {Body, BadRequestException, Controller, DefaultValuePipe, Delete, Get, Patch, ParseIntPipe, Param, Post, Put, Query, Req, UseInterceptors} from '@nestjs/common'
+import {
+    BadRequestException,
+    Body,
+    Controller,
+    DefaultValuePipe,
+    Delete,
+    Get,
+    Param,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Put,
+    Query,
+    Req,
+    UseInterceptors,
+} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 import {JournalsService} from '../journals/journals.service'
