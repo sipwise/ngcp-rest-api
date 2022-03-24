@@ -1,7 +1,7 @@
-import {Contact} from './contact.entity'
-import {Reseller} from './reseller.entity'
+import {Contact} from './contact.mariadb.entity'
+import {Reseller} from './reseller.mariadb.entity'
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
-import {Product} from './product.entity'
+import {Product} from './product.mariadb.entity'
 
 enum ContractStatus {
     Pending = 'pending',

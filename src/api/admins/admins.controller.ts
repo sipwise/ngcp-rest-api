@@ -112,12 +112,13 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             url: req.url,
             method: req.method,
         })
-        const responseItem = await this.adminsService.read(id, this.newServiceRequest(req))
+        const admin = await this.adminsService.read(id, this.newServiceRequest(req))
+        const responseItem = new AdminResponseDto(admin)
         if (req.query.expand && !req.isRedirected) {
             const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
             await this.expander.expandObjects(responseItem, adminSearchDtoKeys, req)
         }
-        return new AdminResponseDto(responseItem)
+        return responseItem
     }
 
     @Put(':id')

@@ -12,7 +12,7 @@ import {SystemcontactCreateDto} from './dto/systemcontact-create.dto'
 import {SystemcontactResponseDto} from './dto/systemcontact-response.dto'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Operation} from '../../helpers/patch.helper'
-import {ContactStatus} from '../../entities/db/billing/contact.entity'
+import {ContactStatus} from '../../entities/db/billing/contact.mariadb.entity'
 
 class MockSystemcontactsService implements CrudService<SystemcontactCreateDto, SystemcontactResponseDto> {
     adjust(id: number, patch: Operation[], req?: ServiceRequest): Promise<SystemcontactResponseDto> {

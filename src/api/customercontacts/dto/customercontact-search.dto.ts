@@ -1,4 +1,4 @@
-import {ContactGender, ContactStatus} from '../../../entities/db/billing/contact.entity'
+import {ContactGender, ContactStatus} from '../../../entities/db/billing/contact.mariadb.entity'
 import {CustomercontactResponseDto} from './customercontact-response.dto'
 
 export class CustomercontactSearchDto implements CustomercontactResponseDto {

@@ -1,5 +1,5 @@
 import {BaseEntity, Column, Entity, ManyToMany, PrimaryGeneratedColumn} from 'typeorm'
-import {XmlHost} from './xml-host'
+import {XmlHost} from './xml-host.mariadb.entity'
 
 @Entity({
     name: 'xmlgroups',

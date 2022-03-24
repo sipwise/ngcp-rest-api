@@ -1,6 +1,6 @@
-import {Reseller} from './reseller.entity'
+import {Reseller} from './reseller.mariadb.entity'
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
-import {Contract} from './contract.entity'
+import {Contract} from './contract.mariadb.entity'
 
 export enum ContactStatus {
     Active = 'active',

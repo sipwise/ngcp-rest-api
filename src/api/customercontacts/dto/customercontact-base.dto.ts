@@ -1,5 +1,5 @@
 // TODO: Check which fields are optional/required
-import {ContactGender, ContactStatus} from '../../../entities/db/billing/contact.entity'
+import {ContactGender, ContactStatus} from '../../../entities/db/billing/contact.mariadb.entity'
 
 export class CustomercontactBaseDto {
     bankname?: string

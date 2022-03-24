@@ -2,7 +2,7 @@ import {AppService} from '../../app.service'
 import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {ForbiddenException, Injectable, Logger, UnprocessableEntityException} from '@nestjs/common'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {AdminsRepository} from './admins.repository'
+import {AdminsMariadbRepository} from './repositories/admins.mariadb.repository'
 import {Messages} from '../../config/messages.config'
 import {internal} from '../../entities'
 import {AclRoleRepository} from '../../repositories/acl-role.repository'
@@ -14,7 +14,7 @@ export class AdminsService { //} implements CrudService<AdminCreateDto, AdminRes
 
     constructor(
         private readonly app: AppService,
-        private readonly adminRepo: AdminsRepository,
+        private readonly adminRepo: AdminsMariadbRepository,
         private readonly aclRepo: AclRoleRepository,
     ) {
     }

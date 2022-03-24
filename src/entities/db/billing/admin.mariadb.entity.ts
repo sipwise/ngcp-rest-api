@@ -1,5 +1,5 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
-import {AclRole} from './acl-role.entity'
+import {AclRole} from './acl-role.mariadb.entity'
 import {RBAC_FLAGS, RBAC_ROLES} from '../../../config/constants.config'
 import {internal} from '../../../entities'
 

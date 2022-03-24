@@ -2,7 +2,7 @@ import {Test, TestingModule} from '@nestjs/testing'
 import {AdminsService} from './admins.service'
 import {AdminsModule} from './admins.module'
 import {ExpandModule} from '../../helpers/expand.module'
-import {AdminsRepository} from './admins.repository'
+import {AdminsMariadbRepository} from './repositories/admins.mariadb.repository'
 import {AppModule} from '../../app.module'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AuthResponseDto} from '../../auth/dto/auth-response.dto'
@@ -11,7 +11,7 @@ import {AclRoleMockRepository, deepCopy} from '../../repositories/acl-role.mock.
 import {AclRoleRepository} from '../../repositories/acl-role.repository'
 import {RepositoriesModule} from '../../repositories/repositories.module'
 import {ForbiddenException, UnprocessableEntityException} from '@nestjs/common'
-import {AdminsMockRepository} from './admins.mock.repository'
+import {AdminsMockRepository} from './repositories/admins.mock.repository'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {RBAC_ROLES} from '../../config/constants.config'
 
@@ -40,7 +40,7 @@ describe('AdminsService', () => {
             imports: [AdminsModule, ExpandModule, AppModule, RepositoriesModule],
         })
             .overrideProvider(AclRoleRepository).useValue(aclRoleMockRepo)
-            .overrideProvider(AdminsRepository).useValue(adminsMockRepo)
+            .overrideProvider(AdminsMariadbRepository).useValue(adminsMockRepo)
             .compile()
 
         service = module.get<AdminsService>(AdminsService)

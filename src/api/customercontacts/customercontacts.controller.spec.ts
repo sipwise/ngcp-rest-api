@@ -1,7 +1,7 @@
 import {Test, TestingModule} from '@nestjs/testing'
 import {CustomercontactsController} from './customercontacts.controller'
 import {CustomercontactsService} from './customercontacts.service'
-import {Contact} from '../../entities/db/billing/contact.entity'
+import {Contact} from '../../entities/db/billing/contact.mariadb.entity'
 
 describe('ContactsController', () => {
     let controller: CustomercontactsController

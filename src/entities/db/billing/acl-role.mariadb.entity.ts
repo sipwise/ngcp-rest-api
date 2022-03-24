@@ -1,6 +1,6 @@
 import {BaseEntity, Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
-import {Journal} from './journal.entity'
-import {Admin} from './admin.entity'
+import {Journal} from './journal.mariadb.entity'
+import {Admin} from './admin.mariadb.entity'
 import {internal} from '../../../entities'
 
 @Entity({

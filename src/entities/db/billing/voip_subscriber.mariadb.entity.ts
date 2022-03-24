@@ -1,5 +1,5 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
-import {Contract} from './contract.entity'
+import {Contract} from './contract.mariadb.entity'
 
 @Entity({
     name: 'voip_subscribers',

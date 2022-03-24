@@ -1,18 +1,19 @@
-import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
+import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ForbiddenException, Injectable, Logger} from '@nestjs/common'
-import {db, internal} from '../../entities'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {RBAC_FLAGS, RBAC_ROLES} from '../../config/constants.config'
-import {configureQueryBuilder} from '../../helpers/query-builder.helper'
-import {AdminSearchDto} from './dto/admin-search.dto'
+import {db, internal} from '../../../entities'
+import {ServiceRequest} from '../../../interfaces/service-request.interface'
+import {RBAC_FLAGS, RBAC_ROLES} from '../../../config/constants.config'
+import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
+import {AdminSearchDto} from '../dto/admin-search.dto'
 import {SelectQueryBuilder} from 'typeorm'
-import {Messages} from '../../config/messages.config'
+import {Messages} from '../../../config/messages.config'
+import {AdminsRepository} from '../interfaces/admins.repository'
 
 const SPECIAL_USER_LOGIN = 'sipwise'
 
 @Injectable()
-export class AdminsRepository {
-    private readonly log = new Logger(AdminsRepository.name)
+export class AdminsMariadbRepository implements AdminsRepository {
+    private readonly log = new Logger(AdminsMariadbRepository.name)
 
     @HandleDbErrors
     async create(admin: internal.Admin): Promise<internal.Admin> {

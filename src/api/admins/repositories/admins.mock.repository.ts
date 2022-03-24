@@ -1,13 +1,14 @@
-import {RBAC_ROLES} from '../../config/constants.config'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {RBAC_ROLES} from '../../../config/constants.config'
+import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {NotFoundException} from '@nestjs/common'
-import {internal} from '../../entities'
+import {internal} from '../../../entities'
+import {AdminsRepository} from '../interfaces/admins.repository'
 
 interface AdminsMockDB {
     [key: number]: internal.Admin
 }
 
-export class AdminsMockRepository {
+export class AdminsMockRepository implements AdminsRepository {
     private readonly db: AdminsMockDB
 
     constructor() {
