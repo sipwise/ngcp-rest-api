@@ -38,7 +38,8 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
         type: DomainResponseDto,
     })
     async create(entity: DomainCreateDto, req): Promise<DomainResponseDto> {
-        return this.domainsService.create(entity, this.newServiceRequest(req))
+        const domain = await this.domainsService.create(entity.toInternal(), this.newServiceRequest(req))
+        return new DomainResponseDto(domain)
     }
 
     @Get()
@@ -58,7 +59,8 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
         @Req() req,
     ): Promise<DomainResponseDto[]> {
         this.log.debug({message: 'fetch all domains', func: this.readAll.name, url: req.url, method: req.method})
-        const responseList = await this.domainsService.readAll(page, rows, this.newServiceRequest(req))
+        const domains = await this.domainsService.readAll(page, rows, this.newServiceRequest(req))
+        const responseList = domains.map(dom => new DomainResponseDto(dom))
         if (req.query.expand) {
             const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
             await this.expander.expandObjects(responseList, domainSearchDtoKeys, req)
@@ -72,12 +74,13 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     })
     @Roles(RBAC_ROLES.ccare, RBAC_ROLES.ccareadmin)
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<DomainResponseDto> {
-        const responseList = await this.domainsService.read(id, this.newServiceRequest(req))
+        const domain = await this.domainsService.read(id, this.newServiceRequest(req))
+        const responseItem = new DomainResponseDto(domain)
         if (req.query.expand && !req.isRedirected) {
             const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
-            await this.expander.expandObjects(responseList, domainSearchDtoKeys, req)
+            await this.expander.expandObjects(responseItem, domainSearchDtoKeys, req)
         }
-        return responseList
+        return responseItem
     }
 
     @Delete(':id')
