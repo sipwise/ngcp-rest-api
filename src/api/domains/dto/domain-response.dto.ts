@@ -9,13 +9,13 @@ interface DomainResponseDtoAttributes {
 
 export class DomainResponseDto implements DomainResponseDtoAttributes {
     @ApiProperty()
-    domain: string
+        domain: string
     @ApiProperty()
-    id: number
+        id: number
     @ApiProperty()
-    reseller_id: number
+        reseller_id: number
     @ApiProperty()
-    reseller_id_expand?: ResellerResponseDto
+        reseller_id_expand?: ResellerResponseDto
 
     constructor(domain: internal.Domain) {
         this.domain = domain.domain

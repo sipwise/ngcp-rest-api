@@ -1,0 +1,56 @@
+import {DomainsRepository} from '../interfaces/domains.repository'
+import {internal} from '../../../entities'
+import {ServiceRequest} from '../../../interfaces/service-request.interface'
+import {ForbiddenException, NotFoundException} from '@nestjs/common'
+
+interface DomainsMockDB {
+    [key: number]: internal.Domain
+}
+export class DomainsMockRepository implements DomainsRepository {
+
+    private readonly db: DomainsMockDB
+    private nextId: number
+
+    constructor() {
+        this.db = {
+            1: {id: 1, reseller_id: 1, domain: 'domain1'},
+            2: {id: 2, reseller_id: 2, domain: 'domain2'},
+            3: {id: 3, reseller_id: 3, domain: 'domain3'},
+            4: {id: 4, reseller_id: 1, domain: 'domain4'},
+        }
+        this.nextId = Object.keys(this.db).length + 1
+    }
+
+    async create(domain: internal.Domain, req: ServiceRequest): Promise<internal.Domain> {
+        domain.id = this.nextId
+        this.db[domain.id] = domain
+        this.nextId++
+        return Promise.resolve(domain)
+    }
+
+    async delete(id: number, req: ServiceRequest): Promise<number> {
+        this.throwErrorIfIdNotExists(id)
+        // if (req.user.reseller_id != this.db[id].reseller_id) {
+        //     throw new ForbiddenException()
+        // }
+        return Promise.resolve(1)
+    }
+
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<internal.Domain[]> {
+        const domains = Object.keys(this.db).map(id => this.db[id])
+        return Promise.resolve(domains)
+    }
+
+    async readByDomain(domain: string, req: ServiceRequest): Promise<internal.Domain> {
+        return Promise.resolve(undefined)
+    }
+
+    async readById(id: number, req: ServiceRequest): Promise<internal.Domain> {
+        return Promise.resolve(undefined)
+    }
+
+    private throwErrorIfIdNotExists(id: number) {
+        if (this.db[id] == undefined)
+            throw new NotFoundException()
+    }
+}

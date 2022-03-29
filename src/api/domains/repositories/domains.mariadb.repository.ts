@@ -1,4 +1,4 @@
-import {Injectable, InternalServerErrorException, Logger, NotImplementedException} from '@nestjs/common'
+import {Injectable, InternalServerErrorException, Logger} from '@nestjs/common'
 import {db, internal} from '../../../entities'
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
@@ -6,9 +6,10 @@ import {TelnetDispatcher} from '../../../helpers/telnet-dispatcher'
 import {XmlDispatcher} from '../../../helpers/xml-dispatcher'
 import {DomainSearchDto} from '../dto/domain-search.dto'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
+import {DomainsRepository} from '../interfaces/domains.repository'
 
 @Injectable()
-export class DomainsMariadbRepository {
+export class DomainsMariadbRepository implements DomainsRepository {
     private readonly log = new Logger(DomainsMariadbRepository.name)
 
     @HandleDbErrors
@@ -54,17 +55,22 @@ export class DomainsMariadbRepository {
 
     @HandleDbErrors
     async readById(id: number, req: ServiceRequest): Promise<internal.Domain> {
+        this.log.debug({
+            message: 'read domain by ID',
+            func: this.readById.name,
+            user: req.user.username,
+        })
         return (await db.billing.Domain.findOneOrFail(id)).toInternal()
     }
 
     @HandleDbErrors
     async readByDomain(domain: string, req: ServiceRequest): Promise<internal.Domain> {
+        this.log.debug({
+            message: 'read domain by domain name',
+            func: this.readByDomain.name,
+            user: req.user.username,
+        })
         return (await db.billing.Domain.findOne({where: {domain: domain}})).toInternal()
-    }
-
-    @HandleDbErrors
-    async update(id: number, domain: internal.Domain, req: ServiceRequest): Promise<internal.Domain> {
-        throw new NotImplementedException()
     }
 
     @HandleDbErrors
