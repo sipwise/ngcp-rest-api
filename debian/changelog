@@ -1,3 +1,35 @@
+ngcp-rest-api (10.4.1.0+0~mr10.4.1.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [642a702] TT#124400 use mkdirSync in app-cluster
+
+  [ Alexandros Perikleous ]
+  * [c9f9fa9] TT#150303 fix single expand issue
+  * [5284a29] TT#156603 centralised response message enhancements
+  * [3b57f7c] TT#162050 fix API SSL_ERROR_SYSCALL connection error
+  * [bbcd0ce] TT#150303 enhance expand functionality
+  * [c0283fe] TT#150303 add expand support to all endpoints
+  * [6d1cb19] TT#165000 Swagger documentation grammatical fixes
+
+  [ Michael Berger ]
+  * [5210c6b] TT#160150 fix read methods not writing a response
+  * [986b4ba] TT#156602 add protected controller calls
+  * [dd93353] TT#125651 improve formatting
+  * [6364431] TT#160450 create injectable ExpandModule
+  * [159b7ff] TT#160600 utilize CRUD interface/controller in admins
+  * [7e46e36] TT#160600 refactor services for more consistency
+  * [39419eb] TT#156604 improve repository pattern for admins
+  * [d8ca197] TT#166852 add eslint configuration
+  * [e68e562] TT#156604 add default values to Admin OpenAPI definition
+  * [06ef2c3] TT#156604 add prod and etc/ssl to .gitignore
+  * [3391d44] TT#156604 rename mapper methods to internal
+
+  [ Youness BASRI ]
+  * [c0e80e2] TT#126706 add /api/voicemails endpoint
+  * [90aa7e0] TT#108421 add /api/products endpoint
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 31 Mar 2022 00:00:58 +0200
+
 ngcp-rest-api (10.4.0.0+0~mr10.4.0.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
