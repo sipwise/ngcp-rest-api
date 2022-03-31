@@ -22,6 +22,7 @@ import {FileshareModule} from './api/fileshare/fileshare.module'
 import {ProductsModule} from './api/products/products.module'
 import {VoicemailsModule} from './api/voicemails/voicemails.module'
 import {ExpandModule} from './helpers/expand.module'
+import { PbxgroupsModule } from './api/pbxgroups/pbxgroups.module';
 
 const modulesImport: any[] = [
     ConfigModule.forRoot({
@@ -80,6 +81,7 @@ if (process.env.NODE_ENV != 'test') {
         FileshareSchedule,
         InterceptorModule,
         JournalsModule,
+        PbxgroupsModule,
         ProductsModule,
         ResellersModule,
         ScheduleModule.forRoot(),

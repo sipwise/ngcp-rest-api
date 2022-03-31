@@ -1,7 +1,19 @@
-import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn} from 'typeorm'
+import {
+    BaseEntity,
+    Column,
+    Entity,
+    JoinColumn,
+    JoinTable,
+    ManyToMany,
+    ManyToOne,
+    OneToOne,
+    PrimaryGeneratedColumn,
+} from 'typeorm'
 import {Contract} from '../billing/contract.mariadb.entity'
 import {VoipSubscriber as BillingVoipSubscriber} from '../billing/voip_subscriber.mariadb.entity'
 import {VoipDomain} from './voip-domain.mariadb.entity'
+import {VoipPbxGroup} from './voip-pbx-group.mariadb.entity'
+import {internal} from '../../../entities'
 
 @Entity({
     name: 'voip_subscribers',
@@ -131,4 +143,39 @@ export class VoipSubscriber extends BaseEntity {
     @ManyToOne(() => Contract)
     @JoinColumn({name: 'account_id'})
         contract?: Contract
+
+    @ManyToOne(() => VoipPbxGroup)
+    @JoinColumn({name: 'id', referencedColumnName: 'subscriber_id'})
+        pbx_group?: VoipPbxGroup
+
+    // @OneToMany(() => VoipPbxGroup, group => group.subscriber)
+    //     pbx_group_members?: VoipPbxGroup[]
+
+    @ManyToMany(() => VoipSubscriber)
+    @JoinTable({
+        name: 'voip_pbx_groups',
+        joinColumn: {name: 'group_id', referencedColumnName: 'id'},
+        inverseJoinColumn: {name: 'subscriber_id', referencedColumnName: 'id'},
+    })
+        pbx_group_members?: VoipSubscriber[]
+
+    members?: VoipSubscriber[]
+
+    toInternalPbxGroup (): internal.PbxGroup {
+        const group = new internal.PbxGroup()
+        group.id = this.id
+        group.name = this.username
+        group.extension = this.pbx_extension
+        group.huntPolicy = this.pbx_hunt_policy
+        group.huntTimeout = this.pbx_hunt_timeout
+        group.members = this.members.map(member => member.toInternalPbxGroupMemberItem())
+        return group
+    }
+
+    toInternalPbxGroupMemberItem (): internal.PbxGroupMemberItem {
+        const member = new internal.PbxGroupMemberItem()
+        member.subscriberId = this.id
+        member.extension = this.pbx_extension
+        return member
+    }
 }

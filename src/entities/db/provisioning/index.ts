@@ -1,4 +1,5 @@
 export {VoipDomain} from './voip-domain.mariadb.entity'
+export {VoipPbxGroup} from './voip-pbx-group.mariadb.entity'
 export {VoipSubscriber} from './voip-subscriber.mariadb.entity'
 export {XmlGroup} from './xml-group.mariadb.entity'
 export {XmlHost} from './xml-host.mariadb.entity'
