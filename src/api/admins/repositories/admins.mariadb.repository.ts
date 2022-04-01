@@ -43,7 +43,7 @@ export class AdminsMariadbRepository implements AdminsRepository {
         const query = await this.applyAdminFilter(req)
         query.andWhere('admin.id = :id', {id: id})
         const admin = await query.getOneOrFail()
-        return admin.toDomain()
+        return admin.toInternal()
     }
 
     @HandleDbErrors
@@ -84,7 +84,7 @@ export class AdminsMariadbRepository implements AdminsRepository {
     }
 
     @HandleDbErrors
-    private async applySearchQuery(page: number, rows: number, params: any, query: SelectQueryBuilder<any>): Promise<void> {
+    private async applySearchQuery(page: number, rows: number, params: any, query: SelectQueryBuilder<db.billing.Admin>): Promise<void> {
         const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
         await configureQueryBuilder(query, params, {
             joins: [{alias: 'role', property: 'role'}],
@@ -95,7 +95,7 @@ export class AdminsMariadbRepository implements AdminsRepository {
     }
 
     @HandleDbErrors
-    private async applyAdminFilter(req: ServiceRequest, query?: SelectQueryBuilder<any>): Promise<SelectQueryBuilder<any>> {
+    private async applyAdminFilter(req: ServiceRequest, query?: SelectQueryBuilder<db.billing.Admin>): Promise<SelectQueryBuilder<db.billing.Admin>> {
         query ||= db.billing.Admin.createQueryBuilder('admin')
             .leftJoinAndSelect('admin.role', 'role')
         if (req.user.is_master) {
