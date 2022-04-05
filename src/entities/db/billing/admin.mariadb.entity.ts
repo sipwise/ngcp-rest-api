@@ -174,11 +174,12 @@ export class Admin extends BaseEntity {
         admin.login = this.login
         admin.read_only = this.read_only
         admin.reseller_id = this.reseller_id
+        admin.role_id = this.role_id
         if (this.role != undefined) {
             admin.role = this.role.role
             admin.role_data = await this.role.toInternal()
+            admin.role_id = this.role.id
         }
-        admin.role_id = this.role_id
         admin.show_passwords = this.show_passwords
 
         return admin

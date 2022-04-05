@@ -119,9 +119,12 @@ export class AdminsService { //} implements CrudService<AdminCreateDto, AdminRes
 
         admin = applyPatch(admin, patch).newDocument
         admin.id = id
+        admin.role ||= oldAdmin.role
+
         await admin.setPermissionFlags()
 
         const role = await this.aclRepo.readOneByRole(admin.role, req)
+        admin.role_data = role
         const requestRole = await this.aclRepo.readOneByRole(req.user.role, req) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
 
         if (!await requestRole.hasPermission(role.id)) {
@@ -174,7 +177,6 @@ export class AdminsService { //} implements CrudService<AdminCreateDto, AdminRes
                 }
             })
         }
-
         return true
     }
 

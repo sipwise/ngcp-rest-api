@@ -30,7 +30,7 @@ export class LoggerMiddleware implements NestMiddleware {
             message: 'REQUEST',
             tx: ctx.txid,
             ip: req.ip,
-            url: `${req.protocol}://${req.header('host')}${req.baseUrl}`,
+            url: `${req.protocol}://${req.header('host')}${req.url}`,
             query_params: req.query,
             content_type: req.header('content-type'),
             method: req.method,
