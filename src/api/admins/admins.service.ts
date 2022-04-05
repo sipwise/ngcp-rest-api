@@ -57,7 +57,7 @@ export class AdminsService { //} implements CrudService<AdminCreateDto, AdminRes
         return await this.adminRepo.create(admin)
     }
 
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<internal.Admin[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[internal.Admin[], number]> {
         this.log.debug({
             message: 'read all admins',
             func: this.readAll.name,

@@ -30,12 +30,12 @@ export class AdminsMariadbRepository implements AdminsRepository {
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<internal.Admin[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[internal.Admin[], number]> {
         const query = db.billing.Admin.createQueryBuilder('admin')
         await this.applySearchQuery(page, rows, req.query, query)
         await this.applyAdminFilter(req, query)
-        const result = await query.getMany()
-        return await Promise.all(result.map(async (adm) => adm.toInternal()))
+        const [result, totalCount] = await query.getManyAndCount()
+        return [await Promise.all(result.map(async (adm) => adm.toInternal())), totalCount]
     }
 
     @HandleDbErrors

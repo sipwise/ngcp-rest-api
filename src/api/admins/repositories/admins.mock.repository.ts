@@ -58,8 +58,10 @@ export class AdminsMockRepository implements AdminsRepository {
         return Promise.resolve(this.db[id])
     }
 
-    readAll(page: number, rows: number, req: ServiceRequest): Promise<internal.Admin[]> {
-        return Promise.resolve([])
+    readAll(page: number, rows: number, req: ServiceRequest): Promise<[internal.Admin[], number]> {
+        const admins: [internal.Admin[], number] =
+            [Object.keys(this.db).map(id => this.db[id]), Object.keys(this.db).length]
+        return Promise.resolve(admins)
     }
 
     update(id: number, admin: internal.Admin, req: ServiceRequest): Promise<internal.Admin> {

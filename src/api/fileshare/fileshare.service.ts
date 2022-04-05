@@ -108,13 +108,15 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<FileshareResponseDto[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[FileshareResponseDto[], number]> {
         const filter = this.filterOptions(req)
+        const totalCount = await db.fileshare.Upload.count(
+            {...filter}
+        )
         const result = await db.fileshare.Upload.find(
             {...filter, take: rows, skip: rows * (page - 1)},
         )
-
-        return result.map(d => this.toResponse(d, req))
+        return [result.map(d => this.toResponse(d, req)), totalCount]
     }
 
     @HandleDbErrors

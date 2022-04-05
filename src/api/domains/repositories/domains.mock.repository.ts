@@ -36,8 +36,9 @@ export class DomainsMockRepository implements DomainsRepository {
         return Promise.resolve(1)
     }
 
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<internal.Domain[]> {
-        const domains = Object.keys(this.db).map(id => this.db[id])
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[internal.Domain[], number]> {
+        const domains: [internal.Domain[], number] =
+            [Object.keys(this.db).map(id => this.db[id]), Object.keys(this.db).length]
         return Promise.resolve(domains)
     }
 

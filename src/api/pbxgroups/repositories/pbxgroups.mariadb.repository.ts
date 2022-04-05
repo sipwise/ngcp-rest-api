@@ -10,14 +10,14 @@ export class PbxgroupsMariadbRepository implements PbxgroupsRepository {
     private readonly log: Logger = new Logger(PbxgroupsMariadbRepository.name)
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<internal.PbxGroup[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[internal.PbxGroup[], number]> {
 
-        const result = await this.generateBaseQuery(req)
+        const [result, totalCount] = await this.generateBaseQuery(req)
             .limit(rows)
             .offset(rows * (page - 1))
             .getRawMany()
 
-        return result.map(group => this.rawToInternalPbxGroup(group))
+        return [result.map(group => this.rawToInternalPbxGroup(group)), totalCount]
     }
 
     @HandleDbErrors

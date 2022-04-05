@@ -66,19 +66,20 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) rows: number,
         @Req() req,
-    ): Promise<SystemcontactResponseDto[]> {
+    ): Promise<[SystemcontactResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all system contacts',
             func: this.readAll.name,
             url: req.url,
             method: req.method,
         })
-        const responseList = await this.contactsService.readAll(page, rows, this.newServiceRequest(req))
+        const [responseList, totalCount] =
+            await this.contactsService.readAll(page, rows, this.newServiceRequest(req))
         if (req.query.expand) {
             const contactSearchDtoKeys = Object.keys(new SystemcontactSearchDto())
             await this.expander.expandObjects(responseList, contactSearchDtoKeys, req)
         }
-        return responseList
+        return [responseList, totalCount]
     }
 
     @Get(':id')
@@ -86,7 +87,6 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
         type: SystemcontactResponseDto,
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<SystemcontactResponseDto> {
-        return this.contactsService.read(id, this.newServiceRequest(req))
         const responseItem = await this.contactsService.read(id, this.newServiceRequest(req))
         if (req.query.expand && !req.isRedirected) {
             const contactSearchDtoKeys = Object.keys(new SystemcontactSearchDto())
@@ -123,7 +123,7 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<JournalResponseDto[]> {
+    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<[JournalResponseDto[], number]> {
         return super.journal(id, page, row, req)
     }
 }

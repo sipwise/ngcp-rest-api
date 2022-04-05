@@ -48,13 +48,14 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     @ApiOkResponse({
         type: [CustomerResponseDto],
     })
-    async readAll(page, rows, req): Promise<CustomerResponseDto[]> {
-        const responseList = await this.customerService.readAll(page, rows, this.newServiceRequest(req))
+    async readAll(page, rows, req): Promise<[CustomerResponseDto[], number]> {
+        const [responseList, totalCount] =
+            await this.customerService.readAll(page, rows, this.newServiceRequest(req))
         if (req.query.expand) {
             const customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
             await this.expander.expandObjects(responseList, customerSearchDtoKeys, req)
         }
-        return responseList
+        return [responseList, totalCount]
     }
 
     @Get(':id')
@@ -102,7 +103,7 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<JournalResponseDto[]> {
+    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<[JournalResponseDto[], number]> {
         return super.journal(id, page, row, req)
     }
 }

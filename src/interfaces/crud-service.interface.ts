@@ -5,7 +5,7 @@ import {ServiceRequest} from './service-request.interface'
 export interface CrudService<CreateDto, ResponseDto> {
     create(dto: CreateDto, req: ServiceRequest, file?: Express.Multer.File): Promise<ResponseDto>
 
-    readAll(page: number, rows: number, req: ServiceRequest): Promise<ResponseDto[]>
+    readAll(page: number, rows: number, req: ServiceRequest): Promise<[ResponseDto[], number]>
 
     read(id: number | string, req: ServiceRequest): Promise<ResponseDto> | Promise<StreamableFile>
 

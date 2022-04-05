@@ -94,7 +94,7 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<CustomercontactResponseDto[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[CustomercontactResponseDto[], number]> {
         this.log.debug({
             message: 'read all customer contacts',
             func: this.readAll.name,
@@ -107,8 +107,8 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
         await configureQueryBuilder(queryBuilder, req.query,
             {where: customercontactSearchDtoKeys, rows: +rows, page: +page})
         queryBuilder.andWhere('contact.reseller_id IS NOT NULL')
-        const result = await queryBuilder.getMany()
-        return result.map(r => this.toResponse(r))
+        const [result, totalCount] = await queryBuilder.getManyAndCount()
+        return [result.map(r => this.toResponse(r)), totalCount]
     }
 
     @HandleDbErrors

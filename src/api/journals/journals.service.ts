@@ -29,7 +29,7 @@ export class JournalsService {
      * @param resourceName Name of the resource
      * @param resourceId ID of the named resource
      */
-    async readAll(req: ServiceRequest, page?: number, rows?: number, resourceName?: string, resourceId?: number | string): Promise<JournalResponseDto[]> {
+    async readAll(req: ServiceRequest, page?: number, rows?: number, resourceName?: string, resourceId?: number | string): Promise<[JournalResponseDto[], number]> {
         const user: AuthResponseDto = req.user
         let filter = {}
 
@@ -53,18 +53,21 @@ export class JournalsService {
             resourceId: resourceId,
             filter: filter,
         })
+        const totalCount = await db.billing.Journal.count({
+            where: filter,
+        })
         const result = await db.billing.Journal.find({
             take: +rows,
             skip: +rows * (+page - 1),
             where: filter,
         })
         const hasAccessToContent = (await user.role_data.has_access_to).map(role => role.id)
-        return result.map(j => {
+        return [result.map(j => {
             this.log.debug(Buffer.from(j.content).toString())
             if (!hasAccessToContent.includes(j.role_id))
                 delete j.content
             return this.toResponse(j)
-        })
+        }), totalCount]
     }
 
     /**

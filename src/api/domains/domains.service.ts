@@ -38,7 +38,7 @@ export class DomainsService { // implements CrudService<DomainCreateDto, DomainR
         return await this.domainRepo.create(domain, req)
     }
 
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<internal.Domain[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[internal.Domain[], number]> {
         this.log.debug({
             message: 'read all domains',
             func: this.readAll.name,

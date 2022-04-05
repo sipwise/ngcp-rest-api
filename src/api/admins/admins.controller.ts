@@ -83,7 +83,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) rows: number,
         @Req() req,
-    ): Promise<AdminResponseDto[]> {
+    ): Promise<[AdminResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all admins',
             func: this.readAll.name,
@@ -92,13 +92,14 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             req.method,
         })
 
-        const admins = await this.adminsService.readAll(page, rows, this.newServiceRequest(req))
+        const [admins, totalCount] =
+            await this.adminsService.readAll(page, rows, this.newServiceRequest(req))
         const responseList = admins.map((adm) => new AdminResponseDto(adm))
         if (req.query.expand) {
             const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
             await this.expander.expandObjects(responseList, adminSearchDtoKeys, req)
         }
-        return responseList
+        return [responseList, totalCount]
     }
 
     @Get(':id')
@@ -180,7 +181,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) row: number,
         @Req() req: Request,
-    ): Promise<JournalResponseDto[]> {
+    ): Promise<[JournalResponseDto[], number]> {
         return this.journalsService.readAll(this.newServiceRequest(req), page, row, 'admins', id)
     }
 }

@@ -56,7 +56,7 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<SystemcontactResponseDto[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[SystemcontactResponseDto[], number]> {
         this.log.debug('Entering method readAll')
         this.log.debug({
             message: 'read all system contacts',
@@ -70,9 +70,8 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
         await configureQueryBuilder(queryBuilder, req.query,
             {where: systemcontactSearchDtoKeys, rows: +rows, page: +page})
         queryBuilder.andWhere('contact.reseller_id IS NULL')
-        const result = await queryBuilder.getMany()
-        this.log.debug('Exiting method readAll')
-        return result.map(r => this.toResponse(r))
+        const [result, totalCount] = await queryBuilder.getManyAndCount()
+        return [result.map(r => this.toResponse(r)), totalCount]
     }
 
     @HandleDbErrors

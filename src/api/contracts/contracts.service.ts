@@ -97,11 +97,12 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<ContractResponseDto[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[ContractResponseDto[], number]> {
+        const totalCount = await db.billing.Contract.count()
         const result = await db.billing.Contract.find({
-            take: +rows, skip: +rows * (+page - 1),
+            take: rows, skip: rows * (page - 1),
         })
-        return result.map(r => this.toResponse(r, req))
+        return [result.map(r => this.toResponse(r, req)), totalCount]
     }
 
     toResponse(c: db.billing.Contract, req?: ServiceRequest): ContractResponseDto {

@@ -18,10 +18,11 @@ export class ProductsService {
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<ProductResponseDto[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[ProductResponseDto[], number]> {
+        const totalCount = await db.billing.Product.count()
         const option: FindManyOptions = {take: rows, skip: rows * (page - 1)}
         const result = await db.billing.Product.find(option)
-        return result.map((vm: db.billing.Product) => this.toResponse(vm))
+        return [result.map((vm: db.billing.Product) => this.toResponse(vm)), totalCount]
     }
 
     @HandleDbErrors

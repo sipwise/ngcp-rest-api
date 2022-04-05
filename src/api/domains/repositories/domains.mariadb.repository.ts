@@ -37,7 +37,7 @@ export class DomainsMariadbRepository implements DomainsRepository {
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<internal.Domain[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[internal.Domain[], number]> {
         this.log.debug({
             message: 'read all domains',
             func: this.readAll.name,
@@ -49,8 +49,8 @@ export class DomainsMariadbRepository implements DomainsRepository {
         const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
         await configureQueryBuilder(queryBuilder, req.query,
             {where: domainSearchDtoKeys, rows: +rows, page: +page})
-        const result = await queryBuilder.getMany()
-        return result.map(d => d.toInternal())
+        const [result, totalCount] = await queryBuilder.getManyAndCount()
+        return [result.map(d => d.toInternal()), totalCount]
     }
 
     @HandleDbErrors

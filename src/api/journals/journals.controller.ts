@@ -36,16 +36,17 @@ export class JournalsController {
             ParseIntPipe,
         ) row: number,
         @Req() req,
-    ): Promise<JournalResponseDto[]> {
+    ): Promise<[JournalResponseDto[], number]> {
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
-        const responseList = await this.journalsService.readAll(sr, page, row)
+        const [responseList, totalCount] =
+            await this.journalsService.readAll(sr, page, row)
         if (req.query.expand) {
             const journalSearchDtoKeys = Object.keys(new JournalSearchDto())
             await this.expander.expandObjects(responseList, journalSearchDtoKeys, sr)
         }
-        return responseList
+        return [responseList, totalCount]
     }
 
     @Get(':resource_name')
@@ -65,16 +66,17 @@ export class JournalsController {
         ) row: number,
         @Param('resource_name') resourceName: string,
         @Req() req,
-    ): Promise<JournalResponseDto[]> {
+    ): Promise<[JournalResponseDto[], number]> {
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
-        const responseList = await this.journalsService.readAll(sr, page, row, resourceName)
+        const [responseList, totalCount] =
+            await this.journalsService.readAll(sr, page, row, resourceName)
         if (req.query.expand && !req.isRedirected) {
             const journalSearchDtoKeys = Object.keys(new JournalSearchDto())
             await this.expander.expandObjects(responseList, journalSearchDtoKeys, sr)
         }
-        return responseList
+        return [responseList, totalCount]
     }
 
     @Get(':resource_name/:id')
@@ -95,15 +97,16 @@ export class JournalsController {
         @Param('resource_name') resourceName: string,
         @Param('id', ParseIntPipe) resourceId: number,
         @Req() req,
-    ): Promise<JournalResponseDto[]> {
+    ): Promise<[JournalResponseDto[], number]> {
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
-        const responseList = await this.journalsService.readAll(sr, page, row, resourceName, resourceId)
+        const [responseList, totalCount] =
+            await this.journalsService.readAll(sr, page, row, resourceName, resourceId)
         if (req.query.expand && !req.isRedirected) {
             const journalSearchDtoKeys = Object.keys(new JournalSearchDto())
             await this.expander.expandObjects(responseList, journalSearchDtoKeys, sr)
         }
-        return responseList
+        return [responseList, totalCount]
     }
 }

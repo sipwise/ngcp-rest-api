@@ -56,6 +56,8 @@ export class TransformInterceptor implements NestInterceptor {
                 return data
             }
             if (accept.length == 1 && accept[0] === 'application/json') {
+                if (Array.isArray(data) && data.length == 2 && Number(data[data.length - 1]))
+                    return data[0]
                 return data
             }
             if (req.method === 'DELETE') {
@@ -85,6 +87,9 @@ export class TransformInterceptor implements NestInterceptor {
         let resource
 
         if (Array.isArray(data)) {
+            let totalCount: number = data.length
+            if (data.length == 2 && Number(data[data.length - 1]))
+                totalCount = data.pop()
             resource = halson()
                 .addLink('self', `/${prefix}/${resName}?page=${page}&rows=${row}`)
             data.map(async (row) => {
@@ -92,7 +97,7 @@ export class TransformInterceptor implements NestInterceptor {
                 await resource.addEmbed(`ngcp:${resName}`, row)
             })
             resource.addLink('collection', `/${prefix}/${resName}`)
-            resource['total_count'] = data.length
+            resource['total_count'] = totalCount
 
             return resource
         } else if (data && 'id' in data) {

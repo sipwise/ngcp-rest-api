@@ -57,15 +57,16 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) rows: number,
         @Req() req,
-    ): Promise<DomainResponseDto[]> {
+    ): Promise<[DomainResponseDto[], number]> {
         this.log.debug({message: 'fetch all domains', func: this.readAll.name, url: req.url, method: req.method})
-        const domains = await this.domainsService.readAll(page, rows, this.newServiceRequest(req))
+        const [domains, totalCount] =
+            await this.domainsService.readAll(page, rows, this.newServiceRequest(req))
         const responseList = domains.map(dom => new DomainResponseDto(dom))
         if (req.query.expand) {
             const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
             await this.expander.expandObjects(responseList, domainSearchDtoKeys, req)
         }
-        return responseList
+        return [responseList, totalCount]
     }
 
     @Get(':id')
@@ -93,7 +94,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<JournalResponseDto[]> {
+    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<[JournalResponseDto[], number]> {
         return super.journal(id, page, row, req)
     }
 

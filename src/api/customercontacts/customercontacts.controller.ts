@@ -71,7 +71,7 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) rows: number,
         @Req() req,
-    ): Promise<CustomercontactResponseDto[]> {
+    ): Promise<[CustomercontactResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all customer contacts',
             func: this.readAll.name,
@@ -81,12 +81,13 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
-        const responseList = await this.contactsService.readAll(page, rows, sr)
+        const [responseList, totalCount] =
+            await this.contactsService.readAll(page, rows, sr)
         if (req.query.expand) {
             const contactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
             await this.expander.expandObjects(responseList, contactSearchDtoKeys, req)
         }
-        return responseList
+        return [responseList, totalCount]
     }
 
     @Get(':id')
@@ -133,7 +134,7 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<JournalResponseDto[]> {
+    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<[JournalResponseDto[], number]> {
         return super.journal(id, page, row, req)
     }
 

@@ -12,7 +12,7 @@ export class PbxgroupsService {
     ) {
     }
 
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<internal.PbxGroup[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[internal.PbxGroup[], number]> {
         this.log.debug({
             message: 'read all pbxgroups',
             func: this.readAll.name,

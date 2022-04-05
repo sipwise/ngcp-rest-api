@@ -68,14 +68,15 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) rows: number,
         @Req() req,
-    ): Promise<ResellerResponseDto[]> {
+    ): Promise<[ResellerResponseDto[], number]> {
         this.log.debug({message: 'fetch all resellers', func: this.readAll.name, url: req.url, method: req.method})
-        const responseList = await this.resellersService.readAll(page, rows, this.newServiceRequest(req))
+        const [responseList, totalCount] =
+            await this.resellersService.readAll(page, rows, this.newServiceRequest(req))
         if (req.query.expand) {
             const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
             await this.expander.expandObjects(responseList, resellerSearchDtoKeys, req)
         }
-        return responseList
+        return [responseList, totalCount]
     }
 
     @Get(':id')
@@ -114,7 +115,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<JournalResponseDto[]> {
+    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<[JournalResponseDto[], number]> {
         return super.journal(id, page, row, req)
     }
 }

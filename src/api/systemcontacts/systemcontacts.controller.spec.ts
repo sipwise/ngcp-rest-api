@@ -37,8 +37,8 @@ class MockSystemcontactsService implements CrudService<SystemcontactCreateDto, S
         return Promise.resolve(res)
     }
 
-    readAll(page: number, rows: number): Promise<SystemcontactResponseDto[]> {
-        return Promise.resolve([])
+    readAll(page: number, rows: number): Promise<[SystemcontactResponseDto[], number]> {
+        return Promise.resolve([[],0])
     }
 
     toResponse(entity: any): SystemcontactResponseDto {

@@ -42,13 +42,14 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     @ApiOkResponse({
         type: [ContractResponseDto],
     })
-    async readAll(page, rows, req): Promise<ContractResponseDto[]> {
-        const responseList = await this.contractsService.readAll(page, rows, this.newServiceRequest(req))
+    async readAll(page, rows, req): Promise<[ContractResponseDto[], number]> {
+        const [responseList, totalCount] =
+            await this.contractsService.readAll(page, rows, this.newServiceRequest(req))
         if (req.query.expand) {
             const contractSearchDtoKeys = Object.keys(new ContractSearchDto())
             await this.expander.expandObjects(responseList, contractSearchDtoKeys, req)
         }
-        return responseList
+        return [responseList, totalCount]
     }
 
     @Get(':id')
@@ -93,7 +94,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<JournalResponseDto[]> {
+    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<[JournalResponseDto[], number]> {
         return super.journal(id, page, row, req)
     }
 }

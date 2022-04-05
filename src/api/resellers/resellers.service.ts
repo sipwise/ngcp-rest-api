@@ -97,7 +97,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<ResellerResponseDto[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[ResellerResponseDto[], number]> {
         this.log.debug({
             message: 'read all resellers',
             func: this.readAll.name,
@@ -109,8 +109,8 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
         const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
         await configureQueryBuilder(queryBuilder, req.query,
             {where: resellerSearchDtoKeys, rows: +rows, page: +page})
-        const result = await queryBuilder.getMany()
-        return result.map(r => this.toResponse(r))
+        const [result, totalCount] = await queryBuilder.getManyAndCount()
+        return [result.map(r => this.toResponse(r)), totalCount]
     }
 
     @HandleDbErrors

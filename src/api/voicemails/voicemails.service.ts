@@ -46,10 +46,11 @@ export class VoicemailsService implements CrudService<VoicemailBaseDto, Voicemai
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<VoicemailResponseDto[]> {
+    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[VoicemailResponseDto[], number]> {
+        const totalCount = await db.kamailio.VoicemailSpool.count()
         const option: FindManyOptions = {take: rows, skip: rows * (page - 1), relations: ['provSubscriber']}
         const result = await db.kamailio.VoicemailSpool.find(option)
-        return result.map((vm: db.kamailio.VoicemailSpool) => this.toResponse(vm))
+        return [result.map((vm: db.kamailio.VoicemailSpool) => this.toResponse(vm)), totalCount]
     }
 
     @HandleDbErrors

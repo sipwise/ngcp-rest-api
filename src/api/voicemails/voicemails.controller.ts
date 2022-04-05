@@ -68,13 +68,14 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) row: number,
         @Req() req,
-    ): Promise<VoicemailResponseDto[]> {
-        const responseList = await this.voicemailsService.readAll(page, row, req)
+    ): Promise<[VoicemailResponseDto[], number]> {
+        const [responseList, totalCount] =
+            await this.voicemailsService.readAll(page, row, req)
         if (req.query.expand) {
             const voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
             await this.expander.expandObjects(responseList, voicemailSearchDtoKeys, req)
         }
-        return responseList
+        return [responseList, totalCount]
     }
 
     @Get(':id')

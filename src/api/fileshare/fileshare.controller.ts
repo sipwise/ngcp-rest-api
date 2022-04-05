@@ -52,13 +52,14 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     @ApiOkResponse({
         type: [FileshareResponseDto],
     })
-    async readAll(page, row, req): Promise<FileshareResponseDto[]> {
-        const responseList = await this.fileshareService.readAll(page, row, req)
+    async readAll(page, row, req): Promise<[FileshareResponseDto[], number]> {
+        const [responseList, totalCount] =
+            await this.fileshareService.readAll(page, row, req)
         if (req.query.expand) {
             const fileshareSearchDtoKeys = Object.keys(new FileshareSearchDto())
             await this.expander.expandObjects(responseList, fileshareSearchDtoKeys, req)
         }
-        return responseList
+        return [responseList, totalCount]
     }
 
     @Public(AppService.config.fileshare.public_links)
@@ -95,7 +96,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(id, page, row, req): Promise<JournalResponseDto[]> {
+    async journal(id, page, row, req): Promise<[JournalResponseDto[], number]> {
         return super.journal(id, page, row, req)
     }
 

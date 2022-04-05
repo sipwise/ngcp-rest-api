@@ -39,13 +39,14 @@ export class ProductsController {
             new DefaultValuePipe(AppService.config.common.api_default_query_rows),
             ParseIntPipe) row: number,
         @Req() req,
-    ): Promise<ProductResponseDto[]> {
-        const responseList = await this.productsService.readAll(page, row, req)
+    ): Promise<[ProductResponseDto[], number]> {
+        const [responseList, totalCount] =
+            await this.productsService.readAll(page, row, req)
         if (req.query.expand) {
             const productSearchDtoKeys = Object.keys(new ProductSearchDto())
             await this.expander.expandObjects(responseList, productSearchDtoKeys, req)
         }
-        return responseList
+        return [responseList, totalCount]
     }
 
     @Get(':id')
