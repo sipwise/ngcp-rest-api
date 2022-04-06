@@ -108,7 +108,7 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
         const queryBuilder = db.billing.Reseller.createQueryBuilder('reseller')
         const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
         await configureQueryBuilder(queryBuilder, req.query,
-            {where: resellerSearchDtoKeys, rows: +rows, page: +page})
+        {searchableFields: resellerSearchDtoKeys, rows: +rows, page: +page})
         const [result, totalCount] = await queryBuilder.getManyAndCount()
         return [result.map(r => this.toResponse(r)), totalCount]
     }

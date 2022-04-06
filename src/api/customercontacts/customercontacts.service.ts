@@ -105,7 +105,7 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
         const queryBuilder = db.billing.Contact.createQueryBuilder('contact')
         const customercontactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
         await configureQueryBuilder(queryBuilder, req.query,
-            {where: customercontactSearchDtoKeys, rows: +rows, page: +page})
+            {searchableFields: customercontactSearchDtoKeys, rows: +rows, page: +page})
         queryBuilder.andWhere('contact.reseller_id IS NOT NULL')
         const [result, totalCount] = await queryBuilder.getManyAndCount()
         return [result.map(r => this.toResponse(r)), totalCount]

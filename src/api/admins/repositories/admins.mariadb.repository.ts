@@ -88,7 +88,7 @@ export class AdminsMariadbRepository implements AdminsRepository {
         const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
         await configureQueryBuilder(query, params, {
             joins: [{alias: 'role', property: 'role'}],
-            where: adminSearchDtoKeys,
+            searchableFields: adminSearchDtoKeys,
             rows: +rows,
             page: +page,
         })

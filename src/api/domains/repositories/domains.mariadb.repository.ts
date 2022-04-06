@@ -48,7 +48,7 @@ export class DomainsMariadbRepository implements DomainsRepository {
         const queryBuilder = db.billing.Domain.createQueryBuilder('domain')
         const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
         await configureQueryBuilder(queryBuilder, req.query,
-            {where: domainSearchDtoKeys, rows: +rows, page: +page})
+            {searchableFields: domainSearchDtoKeys, rows: +rows, page: +page})
         const [result, totalCount] = await queryBuilder.getManyAndCount()
         return [result.map(d => d.toInternal()), totalCount]
     }

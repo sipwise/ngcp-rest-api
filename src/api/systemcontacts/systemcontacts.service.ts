@@ -68,7 +68,7 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
         const queryBuilder = db.billing.Contact.createQueryBuilder('contact')
         const systemcontactSearchDtoKeys = Object.keys(new SystemcontactSearchDto())
         await configureQueryBuilder(queryBuilder, req.query,
-            {where: systemcontactSearchDtoKeys, rows: +rows, page: +page})
+            {searchableFields: systemcontactSearchDtoKeys, rows: +rows, page: +page})
         queryBuilder.andWhere('contact.reseller_id IS NULL')
         const [result, totalCount] = await queryBuilder.getManyAndCount()
         return [result.map(r => this.toResponse(r)), totalCount]
