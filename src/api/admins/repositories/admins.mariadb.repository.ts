@@ -8,6 +8,8 @@ import {AdminSearchDto} from '../dto/admin-search.dto'
 import {SelectQueryBuilder} from 'typeorm'
 import {Messages} from '../../../config/messages.config'
 import {AdminsRepository} from '../interfaces/admins.repository'
+import {SearchLogic} from '../../../helpers/search-logic.helper'
+import {AdminResponseDto} from '../dto/admin-response.dto'
 
 const SPECIAL_USER_LOGIN = 'sipwise'
 
@@ -30,9 +32,9 @@ export class AdminsMariadbRepository implements AdminsRepository {
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[internal.Admin[], number]> {
+    async readAll(req: ServiceRequest): Promise<[internal.Admin[], number]> {
         const query = db.billing.Admin.createQueryBuilder('admin')
-        await this.applySearchQuery(page, rows, req.query, query)
+        await configureQueryBuilder(query, req.query, new SearchLogic(req, Object.keys(new AdminSearchDto()),[{alias: 'role', property: 'role'}]))
         await this.applyAdminFilter(req, query)
         const [result, totalCount] = await query.getManyAndCount()
         return [await Promise.all(result.map(async (adm) => adm.toInternal())), totalCount]
@@ -84,14 +86,8 @@ export class AdminsMariadbRepository implements AdminsRepository {
     }
 
     @HandleDbErrors
-    private async applySearchQuery(page: number, rows: number, params: any, query: SelectQueryBuilder<db.billing.Admin>): Promise<void> {
-        const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
-        await configureQueryBuilder(query, params, {
-            joins: [{alias: 'role', property: 'role'}],
-            searchableFields: adminSearchDtoKeys,
-            rows: +rows,
-            page: +page,
-        })
+    private async applySearchQuery(sr: ServiceRequest, query: SelectQueryBuilder<db.billing.Admin>): Promise<void> {
+        await configureQueryBuilder(query, sr.params, new SearchLogic(sr, Object.keys(new AdminSearchDto()),[{alias: 'role', property: 'role'}]))
     }
 
     @HandleDbErrors

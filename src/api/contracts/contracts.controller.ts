@@ -42,12 +42,13 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     @ApiOkResponse({
         type: [ContractResponseDto],
     })
-    async readAll(page, rows, req): Promise<[ContractResponseDto[], number]> {
+    async readAll(req): Promise<[ContractResponseDto[], number]> {
+        const sr = this.newServiceRequest(req)
         const [responseList, totalCount] =
-            await this.contractsService.readAll(page, rows, this.newServiceRequest(req))
+            await this.contractsService.readAll(sr)
         if (req.query.expand) {
             const contractSearchDtoKeys = Object.keys(new ContractSearchDto())
-            await this.expander.expandObjects(responseList, contractSearchDtoKeys, req)
+            await this.expander.expandObjects(responseList, contractSearchDtoKeys, sr)
         }
         return [responseList, totalCount]
     }

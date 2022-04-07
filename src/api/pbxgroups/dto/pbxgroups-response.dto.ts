@@ -12,9 +12,9 @@ export class PbxgroupsResponseDto {
     hunt_timeout: number
     subscriber_id: number
     @ApiProperty({
-        type: PbxgroupMember
+        type: PbxgroupMember,
     })
-    members: PbxgroupMember[]
+        members: PbxgroupMember[]
     name: string
 
     constructor(pbxGroup: internal.PbxGroup) {

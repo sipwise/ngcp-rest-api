@@ -47,24 +47,15 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     @ApiOkResponse({
         type: [DomainResponseDto],
     })
-    async readAll(
-        @Query(
-            'page',
-            new DefaultValuePipe(AppService.config.common.api_default_query_page),
-            ParseIntPipe) page: number,
-        @Query(
-            'rows',
-            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
-            ParseIntPipe) rows: number,
-        @Req() req,
-    ): Promise<[DomainResponseDto[], number]> {
+    async readAll(@Req() req): Promise<[DomainResponseDto[], number]> {
         this.log.debug({message: 'fetch all domains', func: this.readAll.name, url: req.url, method: req.method})
+        const sr = this.newServiceRequest(req)
         const [domains, totalCount] =
-            await this.domainsService.readAll(page, rows, this.newServiceRequest(req))
+            await this.domainsService.readAll(sr)
         const responseList = domains.map(dom => new DomainResponseDto(dom))
         if (req.query.expand) {
             const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
-            await this.expander.expandObjects(responseList, domainSearchDtoKeys, req)
+            await this.expander.expandObjects(responseList, domainSearchDtoKeys, sr)
         }
         return [responseList, totalCount]
     }

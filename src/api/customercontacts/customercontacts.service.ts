@@ -14,6 +14,7 @@ import {ContactStatus} from '../../entities/db/billing/contact.mariadb.entity'
 import {configureQueryBuilder} from '../../helpers/query-builder.helper'
 import {CustomercontactSearchDto} from './dto/customercontact-search.dto'
 import {Messages} from '../../config/messages.config'
+import {SearchLogic} from '../../helpers/search-logic.helper'
 
 @Injectable()
 export class CustomercontactsService implements CrudService<CustomercontactCreateDto, CustomercontactResponseDto> {
@@ -94,18 +95,15 @@ export class CustomercontactsService implements CrudService<CustomercontactCreat
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[CustomercontactResponseDto[], number]> {
+    async readAll(req: ServiceRequest): Promise<[CustomercontactResponseDto[], number]> {
         this.log.debug({
             message: 'read all customer contacts',
             func: this.readAll.name,
             user: req.user.username,
-            page: page,
-            rows: rows,
         })
         const queryBuilder = db.billing.Contact.createQueryBuilder('contact')
         const customercontactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
-        await configureQueryBuilder(queryBuilder, req.query,
-            {searchableFields: customercontactSearchDtoKeys, rows: +rows, page: +page})
+        await configureQueryBuilder(queryBuilder, req.query, new SearchLogic(req, customercontactSearchDtoKeys))
         queryBuilder.andWhere('contact.reseller_id IS NOT NULL')
         const [result, totalCount] = await queryBuilder.getManyAndCount()
         return [result.map(r => this.toResponse(r)), totalCount]

@@ -56,28 +56,19 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
     @ApiOkResponse({
         type: SystemcontactResponseDto,
     })
-    async readAll(
-        @Query(
-            'page',
-            new DefaultValuePipe(AppService.config.common.api_default_query_page),
-            ParseIntPipe) page: number,
-        @Query(
-            'rows',
-            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
-            ParseIntPipe) rows: number,
-        @Req() req,
-    ): Promise<[SystemcontactResponseDto[], number]> {
+    async readAll(@Req() req): Promise<[SystemcontactResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all system contacts',
             func: this.readAll.name,
             url: req.url,
             method: req.method,
         })
+        const sr = this.newServiceRequest(req)
         const [responseList, totalCount] =
-            await this.contactsService.readAll(page, rows, this.newServiceRequest(req))
+            await this.contactsService.readAll(sr)
         if (req.query.expand) {
             const contactSearchDtoKeys = Object.keys(new SystemcontactSearchDto())
-            await this.expander.expandObjects(responseList, contactSearchDtoKeys, req)
+            await this.expander.expandObjects(responseList, contactSearchDtoKeys, sr)
         }
         return [responseList, totalCount]
     }

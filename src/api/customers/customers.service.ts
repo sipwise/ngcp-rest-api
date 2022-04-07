@@ -37,11 +37,10 @@ export class CustomersService implements CrudService<CustomerCreateDto, Customer
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[CustomerResponseDto[], number]> {
-        rows ||= 0
-        const result = await db.billing.Contract.find({
-            take: rows, skip: rows * (page - 1),
-        })
+    async readAll(req: ServiceRequest): Promise<[CustomerResponseDto[], number]> {
+        // const result = await db.billing.Contract.find({
+        //     take: rows, skip: rows * (page - 1),
+        // })
         //return result.map((c => this.toResponse(c)))
         return
     }

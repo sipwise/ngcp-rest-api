@@ -1,20 +1,5 @@
 import {BaseEntity, SelectQueryBuilder} from 'typeorm'
-import {BadRequestException} from '@nestjs/common'
-
-export interface SearchLogic {
-    joins?: {
-        alias: string,
-        property: string
-    }[],
-    searchableFields: string[],
-    rows?: number,
-    page?: number
-}
-
-enum Order {
-    ASC = 'ASC',
-    DESC = 'DESC'
-}
+import {SearchLogic} from './search-logic.helper'
 
 export async function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: string[], searchLogic: SearchLogic) {
     await addJoinFilterToQueryBuilder(qb, params, searchLogic)
@@ -49,7 +34,7 @@ async function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQue
             const whereComparator = value.includes('*') ? 'like' : '='
             value = value.replace(/\*/g, '%')
 
-            if (params['search_or'] === '1') {
+            if (searchLogic.searchOr) {
                 qb.orWhere(`${qb.alias}.${property} ${whereComparator} :${property}`, {[`${property}`]: value})
             } else {
                 qb.andWhere(`${qb.alias}.${property} ${whereComparator} :${property}`, {[`${property}`]: value})
@@ -59,20 +44,12 @@ async function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQue
 }
 
 async function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: string[], searchLogic: SearchLogic) {
-    if (params['order_by'] != null) {
-        if (searchLogic.searchableFields[params['order_by']] == null)
-            throw new BadRequestException()
-        // set default order to ASC
-        const order = params['order_by_direction'] != null && params['order_by_direction'].toUpperCase() === Order.DESC ? Order.DESC : Order.ASC
-        qb.addOrderBy(params['order_by'], order)
+    if (searchLogic.orderBy != null) {
+        qb.addOrderBy(searchLogic.orderBy, searchLogic.order)
     }
 }
 
 async function addPaginationToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, searchLogic: SearchLogic) {
-    if (searchLogic.rows != null) {
-        qb.limit(searchLogic.rows)
-    }
-    if (searchLogic.rows != null && searchLogic.page != null) {
-        qb.offset(searchLogic.rows * (searchLogic.page - 1))
-    }
+    qb.limit(searchLogic.rows)
+    qb.offset(searchLogic.rows * (searchLogic.page - 1))
 }

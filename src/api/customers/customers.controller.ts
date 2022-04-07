@@ -48,12 +48,13 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     @ApiOkResponse({
         type: [CustomerResponseDto],
     })
-    async readAll(page, rows, req): Promise<[CustomerResponseDto[], number]> {
+    async readAll(req): Promise<[CustomerResponseDto[], number]> {
+        const sr = this.newServiceRequest(req)
         const [responseList, totalCount] =
-            await this.customerService.readAll(page, rows, this.newServiceRequest(req))
+            await this.customerService.readAll(sr)
         if (req.query.expand) {
             const customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
-            await this.expander.expandObjects(responseList, customerSearchDtoKeys, req)
+            await this.expander.expandObjects(responseList, customerSearchDtoKeys, sr)
         }
         return [responseList, totalCount]
     }

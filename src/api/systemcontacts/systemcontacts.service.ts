@@ -11,6 +11,7 @@ import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {configureQueryBuilder} from '../../helpers/query-builder.helper'
 import {SystemcontactSearchDto} from './dto/systemcontact-search.dto'
 import {Messages} from '../../config/messages.config'
+import {SearchLogic} from '../../helpers/search-logic.helper'
 
 @Injectable()
 export class SystemcontactsService implements CrudService<SystemcontactCreateDto, SystemcontactResponseDto> {
@@ -56,19 +57,16 @@ export class SystemcontactsService implements CrudService<SystemcontactCreateDto
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[SystemcontactResponseDto[], number]> {
+    async readAll(req: ServiceRequest): Promise<[SystemcontactResponseDto[], number]> {
         this.log.debug('Entering method readAll')
         this.log.debug({
             message: 'read all system contacts',
             func: this.readAll.name,
             user: req.user.username,
-            page: page,
-            rows: rows,
         })
         const queryBuilder = db.billing.Contact.createQueryBuilder('contact')
         const systemcontactSearchDtoKeys = Object.keys(new SystemcontactSearchDto())
-        await configureQueryBuilder(queryBuilder, req.query,
-            {searchableFields: systemcontactSearchDtoKeys, rows: +rows, page: +page})
+        await configureQueryBuilder(queryBuilder, req.query, new SearchLogic(req, systemcontactSearchDtoKeys))
         queryBuilder.andWhere('contact.reseller_id IS NULL')
         const [result, totalCount] = await queryBuilder.getManyAndCount()
         return [result.map(r => this.toResponse(r)), totalCount]

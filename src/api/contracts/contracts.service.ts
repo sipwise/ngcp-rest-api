@@ -11,6 +11,10 @@ import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {db} from '../../entities'
 import {Messages} from '../../config/messages.config'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {ResellerSearchDto} from '../resellers/dto/reseller-search.dto'
+import {configureQueryBuilder} from '../../helpers/query-builder.helper'
+import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ContractSearchDto} from './dto/contract-search.dto'
 
 @Injectable()
 export class ContractsService implements CrudService<ContractCreateDto, ContractResponseDto> {
@@ -97,15 +101,15 @@ export class ContractsService implements CrudService<ContractCreateDto, Contract
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[ContractResponseDto[], number]> {
-        const totalCount = await db.billing.Contract.count()
-        const result = await db.billing.Contract.find({
-            take: rows, skip: rows * (page - 1),
-        })
-        return [result.map(r => this.toResponse(r, req)), totalCount]
+    async readAll(req: ServiceRequest): Promise<[ContractResponseDto[], number]> {
+        const queryBuilder = db.billing.Contract.createQueryBuilder('contract')
+        const constractSearchDtoKeys = Object.keys(new ContractSearchDto())
+        await configureQueryBuilder(queryBuilder, req.query, new SearchLogic(req, constractSearchDtoKeys))
+        const [result, totalCount] = await queryBuilder.getManyAndCount()
+        return [result.map(r => this.toResponse(r)), totalCount]
     }
 
-    toResponse(c: db.billing.Contract, req?: ServiceRequest): ContractResponseDto {
+    toResponse(c: db.billing.Contract): ContractResponseDto {
         return {
             billing_profile_definition: undefined,
             billing_profile_id: 0,

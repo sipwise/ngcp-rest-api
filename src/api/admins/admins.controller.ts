@@ -3,8 +3,8 @@ import {
     Body,
     Controller,
     DefaultValuePipe,
-    Delete,
-    Get,
+    Delete, forwardRef,
+    Get, Inject,
     Logger,
     Param,
     ParseIntPipe,
@@ -33,6 +33,7 @@ import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 import {CrudController} from '../../controllers/crud.controller'
 import {AdminSearchDto} from './dto/admin-search.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 const resourceName = 'admins'
 
@@ -47,6 +48,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         private readonly app: AppService,
         private readonly adminsService: AdminsService,
         private readonly journalsService: JournalsService,
+        // @Inject(forwardRef(() => ExpandHelper))
         private readonly expander: ExpandHelper,
     ) {
         super(resourceName, adminsService, journalsService)
@@ -73,17 +75,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
     @ApiOkResponse({
         type: [AdminResponseDto],
     })
-    async readAll(
-        @Query(
-            'page',
-            new DefaultValuePipe(AppService.config.common.api_default_query_page),
-            ParseIntPipe) page: number,
-        @Query(
-            'rows',
-            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
-            ParseIntPipe) rows: number,
-        @Req() req,
-    ): Promise<[AdminResponseDto[], number]> {
+    async readAll(@Req() req: Request): Promise<[AdminResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all admins',
             func: this.readAll.name,
@@ -91,13 +83,13 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             method:
             req.method,
         })
-
+        const sr = this.newServiceRequest(req)
+        const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
         const [admins, totalCount] =
-            await this.adminsService.readAll(page, rows, this.newServiceRequest(req))
+            await this.adminsService.readAll(sr)
         const responseList = admins.map((adm) => new AdminResponseDto(adm))
         if (req.query.expand) {
-            const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
-            await this.expander.expandObjects(responseList, adminSearchDtoKeys, req)
+            await this.expander.expandObjects(responseList, adminSearchDtoKeys, sr)
         }
         return [responseList, totalCount]
     }

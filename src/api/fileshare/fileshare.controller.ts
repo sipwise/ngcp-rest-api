@@ -52,12 +52,13 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     @ApiOkResponse({
         type: [FileshareResponseDto],
     })
-    async readAll(page, row, req): Promise<[FileshareResponseDto[], number]> {
+    async readAll(req): Promise<[FileshareResponseDto[], number]> {
+        const sr = this.newServiceRequest(req)
         const [responseList, totalCount] =
-            await this.fileshareService.readAll(page, row, req)
+            await this.fileshareService.readAll(sr)
         if (req.query.expand) {
             const fileshareSearchDtoKeys = Object.keys(new FileshareSearchDto())
-            await this.expander.expandObjects(responseList, fileshareSearchDtoKeys, req)
+            await this.expander.expandObjects(responseList, fileshareSearchDtoKeys, sr)
         }
         return [responseList, totalCount]
     }

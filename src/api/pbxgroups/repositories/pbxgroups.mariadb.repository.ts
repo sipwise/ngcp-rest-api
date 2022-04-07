@@ -5,13 +5,14 @@ import {Logger} from '@nestjs/common'
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {SelectQueryBuilder} from 'typeorm'
 import {RBAC_ROLES} from '../../../config/constants.config'
+import {SearchLogic} from '../../../helpers/search-logic.helper'
 
 export class PbxgroupsMariadbRepository implements PbxgroupsRepository {
     private readonly log: Logger = new Logger(PbxgroupsMariadbRepository.name)
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[internal.PbxGroup[], number]> {
-
+    async readAll(req: ServiceRequest): Promise<[internal.PbxGroup[], number]> {
+        const [page, rows] = SearchLogic.getPaginationFromServiceRequest(req)
         const [result, totalCount] = await this.generateBaseQuery(req)
             .limit(rows)
             .offset(rows * (page - 1))

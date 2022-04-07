@@ -61,31 +61,19 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     @ApiOkResponse({
         type: [CustomercontactResponseDto],
     })
-    async readAll(
-        @Query(
-            'page',
-            new DefaultValuePipe(AppService.config.common.api_default_query_page),
-            ParseIntPipe) page: number,
-        @Query(
-            'rows',
-            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
-            ParseIntPipe) rows: number,
-        @Req() req,
-    ): Promise<[CustomercontactResponseDto[], number]> {
+    async readAll(@Req() req): Promise<[CustomercontactResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all customer contacts',
             func: this.readAll.name,
             url: req.url,
             method: req.method,
         })
-        const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
-        }
+        const sr = this.newServiceRequest(req)
         const [responseList, totalCount] =
-            await this.contactsService.readAll(page, rows, sr)
+            await this.contactsService.readAll(sr)
         if (req.query.expand) {
             const contactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
-            await this.expander.expandObjects(responseList, contactSearchDtoKeys, req)
+            await this.expander.expandObjects(responseList, contactSearchDtoKeys, sr)
         }
         return [responseList, totalCount]
     }

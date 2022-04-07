@@ -25,17 +25,7 @@ export class PbxgroupsController extends CrudController<never, PbxgroupsResponse
     @ApiOkResponse({
         type: [PbxgroupsResponseDto],
     })
-    async readAll(
-        @Query(
-            'page',
-            new DefaultValuePipe(AppService.config.common.api_default_query_page),
-            ParseIntPipe) page: number,
-        @Query(
-            'rows',
-            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
-            ParseIntPipe) rows: number,
-        @Req() req,
-    ): Promise<[PbxgroupsResponseDto[], number]> {
+    async readAll(@Req() req): Promise<[PbxgroupsResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all pbx groups',
             func: this.readAll.name,
@@ -44,8 +34,9 @@ export class PbxgroupsController extends CrudController<never, PbxgroupsResponse
             req.method,
         })
 
+        const sr = this.newServiceRequest(req)
         const [pbxGroups, totalCount] =
-            await this.pbxgroupsService.readAll(page, rows, this.newServiceRequest(req))
+            await this.pbxgroupsService.readAll(sr)
         const responseList = pbxGroups.map((group) => new PbxgroupsResponseDto(group))
         // if (req.query.expand) {
         //     const adminSearchDtoKeys = Object.keys(new AdminSearchDto())

@@ -10,6 +10,7 @@ import {fileshare} from '../../entities/db'
 import {v4 as uuidv4} from 'uuid'
 import {FindManyOptions} from 'typeorm'
 import {Messages} from '../../config/messages.config'
+import {SearchLogic} from '../../helpers/search-logic.helper'
 
 @Injectable()
 export class FileshareService implements CrudService<FileshareCreateDto, FileshareResponseDto> {
@@ -108,11 +109,12 @@ export class FileshareService implements CrudService<FileshareCreateDto, Filesha
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[FileshareResponseDto[], number]> {
+    async readAll(req: ServiceRequest): Promise<[FileshareResponseDto[], number]> {
         const filter = this.filterOptions(req)
         const totalCount = await db.fileshare.Upload.count(
-            {...filter}
+            {...filter},
         )
+        const [page, rows] = SearchLogic.getPaginationFromServiceRequest(req)
         const result = await db.fileshare.Upload.find(
             {...filter, take: rows, skip: rows * (page - 1)},
         )

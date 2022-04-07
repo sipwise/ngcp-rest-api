@@ -58,19 +58,9 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     @ApiOkResponse({
         type: [VoicemailResponseDto],
     })
-    async findAll(
-        @Query(
-            'page',
-            new DefaultValuePipe(AppService.config.common.api_default_query_page)
-            , ParseIntPipe) page: number,
-        @Query(
-            'rows',
-            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
-            ParseIntPipe) row: number,
-        @Req() req,
-    ): Promise<[VoicemailResponseDto[], number]> {
+    async readAll(@Req() req): Promise<[VoicemailResponseDto[], number]> {
         const [responseList, totalCount] =
-            await this.voicemailsService.readAll(page, row, req)
+            await this.voicemailsService.readAll(req)
         if (req.query.expand) {
             const voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
             await this.expander.expandObjects(responseList, voicemailSearchDtoKeys, req)
@@ -82,7 +72,7 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     @ApiOkResponse({
         type: VoicemailResponseDto,
     })
-    async findOne(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<VoicemailResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<VoicemailResponseDto> {
         const responseItem = await this.voicemailsService.read(id, req)
         if (req.query.expand && !req.isRedirected) {
             const voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())

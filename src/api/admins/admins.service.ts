@@ -7,6 +7,7 @@ import {Messages} from '../../config/messages.config'
 import {internal} from '../../entities'
 import {AclRoleRepository} from '../../repositories/acl-role.repository'
 import {deepCopy} from '../../repositories/acl-role.mock.repository'
+import {SearchLogic} from '../../helpers/search-logic.helper'
 
 @Injectable()
 export class AdminsService { //} implements CrudService<AdminCreateDto, AdminResponseDto> {
@@ -57,16 +58,15 @@ export class AdminsService { //} implements CrudService<AdminCreateDto, AdminRes
         return await this.adminRepo.create(admin)
     }
 
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[internal.Admin[], number]> {
+    async readAll(req: ServiceRequest): Promise<[internal.Admin[], number]> {
+        this.log.debug(req)
         this.log.debug({
             message: 'read all admins',
             func: this.readAll.name,
             user: req.user.username,
-            page: page,
-            rows: rows,
         })
 
-        return (await this.adminRepo.readAll(page, rows, req))
+        return await this.adminRepo.readAll(req)
     }
 
     async read(id: number, req: ServiceRequest): Promise<internal.Admin> {

@@ -8,24 +8,24 @@ import {VoipSubscriber} from './voip-subscriber.mariadb.entity'
 export class VoipPbxGroup extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-    id?: number
+        id?: number
 
     @Column({
         type: 'int',
         width: 11,
     })
-    subscriber_id: number
+        subscriber_id: number
 
     @Column({
         type: 'int',
         width: 11,
     })
-    group_id: number
+        group_id: number
 
     //  @ManyToOne(() => VoipSubscriber, subscriber => subscriber.pbx_group_members)
     //  @JoinColumn({name: 'group_id'})
     //      subscriber: VoipSubscriber
 
     @OneToMany(() => VoipSubscriber, subscriber => subscriber.pbx_group)
-         members?: VoipSubscriber[]
+        members?: VoipSubscriber[]
 }

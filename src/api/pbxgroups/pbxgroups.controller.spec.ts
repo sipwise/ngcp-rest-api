@@ -1,18 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { PbxgroupsController } from './pbxgroups.controller';
+import {Test, TestingModule} from '@nestjs/testing'
+import {PbxgroupsController} from './pbxgroups.controller'
 
 describe('PbxgroupsController', () => {
-  let controller: PbxgroupsController;
+    let controller: PbxgroupsController
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [PbxgroupsController],
-    }).compile();
+    beforeEach(async () => {
+        const module: TestingModule = await Test.createTestingModule({
+            controllers: [PbxgroupsController],
+        }).compile()
 
-    controller = module.get<PbxgroupsController>(PbxgroupsController);
-  });
+        controller = module.get<PbxgroupsController>(PbxgroupsController)
+    })
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-});
+    it('should be defined', () => {
+        expect(controller).toBeDefined()
+    })
+})

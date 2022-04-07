@@ -7,6 +7,7 @@ import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helpe
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {VoicemailBaseDto} from './dto/voicemail-base.dto'
 import {VoicemailResponseDto} from './dto/voicemail-response.dto'
+import {SearchLogic} from '../../helpers/search-logic.helper'
 
 @Injectable()
 export class VoicemailsService implements CrudService<VoicemailBaseDto, VoicemailResponseDto>{
@@ -46,8 +47,9 @@ export class VoicemailsService implements CrudService<VoicemailBaseDto, Voicemai
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[VoicemailResponseDto[], number]> {
+    async readAll(req: ServiceRequest): Promise<[VoicemailResponseDto[], number]> {
         const totalCount = await db.kamailio.VoicemailSpool.count()
+        const [page, rows] = SearchLogic.getPaginationFromServiceRequest(req)
         const option: FindManyOptions = {take: rows, skip: rows * (page - 1), relations: ['provSubscriber']}
         const result = await db.kamailio.VoicemailSpool.find(option)
         return [result.map((vm: db.kamailio.VoicemailSpool) => this.toResponse(vm)), totalCount]

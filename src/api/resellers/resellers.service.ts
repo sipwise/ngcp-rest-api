@@ -13,6 +13,7 @@ import {FindManyOptions, IsNull} from 'typeorm'
 import {configureQueryBuilder} from '../../helpers/query-builder.helper'
 import {ResellerSearchDto} from './dto/reseller-search.dto'
 import {Messages} from '../../config/messages.config'
+import {SearchLogic} from '../../helpers/search-logic.helper'
 
 enum ResellerError {
     // TODO: Can these conditions even occur?
@@ -97,18 +98,15 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[ResellerResponseDto[], number]> {
+    async readAll(req: ServiceRequest): Promise<[ResellerResponseDto[], number]> {
         this.log.debug({
             message: 'read all resellers',
             func: this.readAll.name,
             user: req.user.username,
-            page: page,
-            rows: rows,
         })
         const queryBuilder = db.billing.Reseller.createQueryBuilder('reseller')
         const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
-        await configureQueryBuilder(queryBuilder, req.query,
-        {searchableFields: resellerSearchDtoKeys, rows: +rows, page: +page})
+        await configureQueryBuilder(queryBuilder, req.query, new SearchLogic(req, resellerSearchDtoKeys))
         const [result, totalCount] = await queryBuilder.getManyAndCount()
         return [result.map(r => this.toResponse(r)), totalCount]
     }

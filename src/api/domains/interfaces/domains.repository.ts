@@ -4,7 +4,7 @@ import {internal} from '../../../entities'
 export interface DomainsRepository {
     create(domain: internal.Domain, req: ServiceRequest): Promise<internal.Domain>
 
-    readAll(page: number, rows: number, req: ServiceRequest): Promise<[internal.Domain[], number]>
+    readAll(req: ServiceRequest): Promise<[internal.Domain[], number]>
 
     readById(id: number, req: ServiceRequest): Promise<internal.Domain>
 

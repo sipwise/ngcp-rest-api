@@ -7,6 +7,7 @@ import {XmlDispatcher} from '../../../helpers/xml-dispatcher'
 import {DomainSearchDto} from '../dto/domain-search.dto'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {DomainsRepository} from '../interfaces/domains.repository'
+import {SearchLogic} from '../../../helpers/search-logic.helper'
 
 @Injectable()
 export class DomainsMariadbRepository implements DomainsRepository {
@@ -37,18 +38,15 @@ export class DomainsMariadbRepository implements DomainsRepository {
     }
 
     @HandleDbErrors
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[internal.Domain[], number]> {
+    async readAll(req: ServiceRequest): Promise<[internal.Domain[], number]> {
         this.log.debug({
             message: 'read all domains',
             func: this.readAll.name,
             user: req.user.username,
-            page: page,
-            rows: rows,
         })
         const queryBuilder = db.billing.Domain.createQueryBuilder('domain')
         const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
-        await configureQueryBuilder(queryBuilder, req.query,
-            {searchableFields: domainSearchDtoKeys, rows: +rows, page: +page})
+        await configureQueryBuilder(queryBuilder, req.query, new SearchLogic(req, domainSearchDtoKeys))
         const [result, totalCount] = await queryBuilder.getManyAndCount()
         return [result.map(d => d.toInternal()), totalCount]
     }

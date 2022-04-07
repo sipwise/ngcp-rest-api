@@ -45,8 +45,8 @@ describe('DomainsService', () => {
 
     describe('readAll', () => {
         it('should return an array of domains', async () => {
-            const got = await service.readAll(1, 10, sr)
-            expect(got).toStrictEqual(await domainsMockRepo.readAll(1, 10, sr))
+            const got = await service.readAll(sr)
+            expect(got).toStrictEqual(await domainsMockRepo.readAll(sr))
         })
     })
 

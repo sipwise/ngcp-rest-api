@@ -37,7 +37,7 @@ class MockSystemcontactsService implements CrudService<SystemcontactCreateDto, S
         return Promise.resolve(res)
     }
 
-    readAll(page: number, rows: number): Promise<[SystemcontactResponseDto[], number]> {
+    readAll(): Promise<[SystemcontactResponseDto[], number]> {
         return Promise.resolve([[],0])
     }
 
@@ -79,7 +79,7 @@ describe('SystemcontactsController', () => {
                 .send({username: 'administrator', password: 'administrator'})
                 .expect(200)
                 .expect(
-                    await sysContactService.readAll(1, 10),
+                    await sysContactService.readAll(),
                 )
         })
         it('finds single valid id 1', async () => {

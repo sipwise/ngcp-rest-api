@@ -33,20 +33,9 @@ export class CrudController<CreateDTO, ResponseDTO> {
     }
 
     async readAll(
-        @Query(
-            'page',
-            new DefaultValuePipe(AppService.config.common.api_default_query_page),
-            ParseIntPipe,
-        ) page: number,
-        @Query(
-            'rows',
-            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
-            ParseIntPipe,
-        ) rows: number,
         @Req() req: Request,
     ) {
-        // TODO: should readAll return total count of available items?
-        return await this.repo.readAll(page, rows, this.newServiceRequest(req))
+        return await this.repo.readAll(this.newServiceRequest(req))
     }
 
     async read(

@@ -58,23 +58,14 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     @ApiOkResponse({
         type: [ResellerResponseDto],
     })
-    async readAll(
-        @Query(
-            'page',
-            new DefaultValuePipe(AppService.config.common.api_default_query_page),
-            ParseIntPipe) page: number,
-        @Query(
-            'rows',
-            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
-            ParseIntPipe) rows: number,
-        @Req() req,
-    ): Promise<[ResellerResponseDto[], number]> {
+    async readAll(@Req() req): Promise<[ResellerResponseDto[], number]> {
         this.log.debug({message: 'fetch all resellers', func: this.readAll.name, url: req.url, method: req.method})
+        const sr = this.newServiceRequest(req)
         const [responseList, totalCount] =
-            await this.resellersService.readAll(page, rows, this.newServiceRequest(req))
+            await this.resellersService.readAll(sr)
         if (req.query.expand) {
             const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
-            await this.expander.expandObjects(responseList, resellerSearchDtoKeys, req)
+            await this.expander.expandObjects(responseList, resellerSearchDtoKeys, sr)
         }
         return [responseList, totalCount]
     }

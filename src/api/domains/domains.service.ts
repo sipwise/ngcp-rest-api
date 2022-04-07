@@ -12,6 +12,8 @@ import {RBAC_ROLES} from '../../config/constants.config'
 import {Messages} from '../../config/messages.config'
 import {DomainsMariadbRepository} from './repositories/domains.mariadb.repository'
 import {DomainCreateDto} from './dto/domain-create.dto'
+import {CrudService} from '../../interfaces/crud-service.interface'
+import {DomainResponseDto} from './dto/domain-response.dto'
 
 @Injectable()
 export class DomainsService { // implements CrudService<DomainCreateDto, DomainResponseDto> {
@@ -38,15 +40,13 @@ export class DomainsService { // implements CrudService<DomainCreateDto, DomainR
         return await this.domainRepo.create(domain, req)
     }
 
-    async readAll(page: number, rows: number, req: ServiceRequest): Promise<[internal.Domain[], number]> {
+    async readAll(req: ServiceRequest): Promise<[internal.Domain[], number]> {
         this.log.debug({
             message: 'read all domains',
             func: this.readAll.name,
             user: req.user.username,
-            page: page,
-            rows: rows,
         })
-        return (await this.domainRepo.readAll(page, rows, req))
+        return (await this.domainRepo.readAll(req))
     }
 
     async read(id: number, req: ServiceRequest): Promise<internal.Domain> {
