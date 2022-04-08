@@ -241,7 +241,7 @@ describe('AdminsService', () => {
         })
     })
 
-    describe('adjust', () =>  {
+    describe('adjust', () => {
         it('should update role to admin', async () => {
             const id = 3
             const patch: PatchOperation[] = [
@@ -276,7 +276,7 @@ describe('AdminsService', () => {
             it(`should throw ForbiddenException when updating ${s} on self`, async () => {
                 const id = 1
                 const patch: PatchOperation[] = [
-                    {op: 'replace', path:`/${s}`, value: protectedFields[s]},
+                    {op: 'replace', path: `/${s}`, value: protectedFields[s]},
                 ]
                 await expect(service.adjust(id, patch, sr)).rejects.toThrow(ForbiddenException)
             })

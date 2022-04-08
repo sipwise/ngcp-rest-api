@@ -7,7 +7,6 @@ import {Messages} from '../../config/messages.config'
 import {internal} from '../../entities'
 import {AclRoleRepository} from '../../repositories/acl-role.repository'
 import {deepCopy} from '../../repositories/acl-role.mock.repository'
-import {SearchLogic} from '../../helpers/search-logic.helper'
 
 @Injectable()
 export class AdminsService { //} implements CrudService<AdminCreateDto, AdminResponseDto> {

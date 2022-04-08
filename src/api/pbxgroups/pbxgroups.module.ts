@@ -8,4 +8,5 @@ import {PbxgroupsMariadbRepository} from './repositories/pbxgroups.mariadb.repos
     controllers: [PbxgroupsController],
     exports: [PbxgroupsService],
 })
-export class PbxgroupsModule {}
+export class PbxgroupsModule {
+}

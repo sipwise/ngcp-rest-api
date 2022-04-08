@@ -10,10 +10,10 @@ import {VoicemailResponseDto} from './dto/voicemail-response.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 
 @Injectable()
-export class VoicemailsService implements CrudService<VoicemailBaseDto, VoicemailResponseDto>{
-    private readonly log = new Logger(VoicemailsService.name)
+export class VoicemailsService implements CrudService<VoicemailBaseDto, VoicemailResponseDto> {
     readonly voicemailDir = '/var/spool/asterisk/voicemail/default/'
     authorized = ['Old', 'INBOX', 'Work', 'Friends', 'Family', 'Cust1', 'Cust2', 'Cust3', 'Cust4', 'Cust5', 'Cust6']
+    private readonly log = new Logger(VoicemailsService.name)
 
     toResponse(db: db.kamailio.VoicemailSpool): VoicemailResponseDto {
         const date = new Date(parseInt(db.origtime) * 1000)
@@ -75,8 +75,7 @@ export class VoicemailsService implements CrudService<VoicemailBaseDto, Voicemai
         if (!Array.isArray(patch)) {
             if (patch.path === '/folder')
                 patch.path = '/dir'
-        }
-        else {
+        } else {
             if (patch[0].path === '/folder')
                 patch[0].path = '/dir'
         }

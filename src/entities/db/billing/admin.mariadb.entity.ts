@@ -151,7 +151,7 @@ export class Admin extends BaseEntity {
             this.role = new AclRole().fromInternal(admin.role_data)
         this.role_id = admin.role_id
         this.show_passwords = admin.show_passwords
-        if(admin.saltedpass != undefined)
+        if (admin.saltedpass != undefined)
             this.saltedpass = admin.saltedpass
 
         return this

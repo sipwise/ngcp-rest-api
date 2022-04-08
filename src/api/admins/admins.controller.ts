@@ -3,8 +3,8 @@ import {
     Body,
     Controller,
     DefaultValuePipe,
-    Delete, forwardRef,
-    Get, Inject,
+    Delete,
+    Get,
     Logger,
     Param,
     ParseIntPipe,
@@ -24,9 +24,8 @@ import {
     ApiConsumes,
     ApiCreatedResponse,
     ApiExtraModels,
-    ApiHeader,
     ApiOkResponse,
-    ApiProperty, ApiQuery,
+    ApiQuery,
     ApiTags,
 } from '@nestjs/swagger'
 import {AppService} from '../../app.service'
@@ -42,7 +41,6 @@ import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 import {CrudController} from '../../controllers/crud.controller'
 import {AdminSearchDto} from './dto/admin-search.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'

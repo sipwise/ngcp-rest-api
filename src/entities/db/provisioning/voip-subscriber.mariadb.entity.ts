@@ -161,7 +161,7 @@ export class VoipSubscriber extends BaseEntity {
 
     members?: VoipSubscriber[]
 
-    toInternalPbxGroup (): internal.PbxGroup {
+    toInternalPbxGroup(): internal.PbxGroup {
         const group = new internal.PbxGroup()
         group.id = this.id
         group.name = this.username
@@ -172,7 +172,7 @@ export class VoipSubscriber extends BaseEntity {
         return group
     }
 
-    toInternalPbxGroupMemberItem (): internal.PbxGroupMemberItem {
+    toInternalPbxGroupMemberItem(): internal.PbxGroupMemberItem {
         const member = new internal.PbxGroupMemberItem()
         member.subscriberId = this.id
         member.extension = this.pbx_extension

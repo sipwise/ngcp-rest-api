@@ -24,7 +24,6 @@ import {FileshareSearchDto} from './dto/fileshare-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
-import {DomainResponseDto} from '../domains/dto/domain-response.dto'
 
 const resourceName = 'fileshare'
 

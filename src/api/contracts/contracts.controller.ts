@@ -24,7 +24,6 @@ import {ContractSearchDto} from './dto/contract-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
-import {AdminResponseDto} from '../admins/dto/admin-response.dto'
 
 const resourceName = 'contracts'
 

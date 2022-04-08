@@ -20,18 +20,15 @@ export class VoicemailSpool extends BaseEntity {
     })
         dir: string
 
-
     @Column({
         type: 'varchar',
     })
         context: string
 
-
     @Column({
         type: 'varchar',
     })
         macrocontext: string
-
 
     @Column({
         type: 'varchar',

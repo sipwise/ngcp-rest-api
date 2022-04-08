@@ -25,7 +25,6 @@ import {CustomerSearchDto} from './dto/customer-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
-import {CustomercontactResponseDto} from '../customercontacts/dto/customercontact-response.dto'
 
 const resourceName = 'customers'
 

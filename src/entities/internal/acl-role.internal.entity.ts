@@ -20,6 +20,14 @@ export class AclRole implements AclRoleInterface {
 
     admins: Admin[]
 
+    static create(data: AclRoleInterface): AclRole {
+        const aclRole = new AclRole()
+        Object.keys(data).map(key => {
+            aclRole[key] = data[key]
+        })
+        return aclRole
+    }
+
     // journals: Journal[]
     async hasPermission(roleId: number): Promise<boolean> {
         for (const role of this.has_access_to) {
@@ -28,13 +36,5 @@ export class AclRole implements AclRoleInterface {
             }
         }
         return false
-    }
-
-    static create(data: AclRoleInterface): AclRole {
-        const aclRole = new AclRole()
-        Object.keys(data).map(key => {
-            aclRole[key] = data[key]
-        })
-        return aclRole
     }
 }

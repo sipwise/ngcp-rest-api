@@ -1,6 +1,5 @@
 import {
     Controller,
-    DefaultValuePipe,
     Delete,
     forwardRef,
     Get,
@@ -11,7 +10,6 @@ import {
     Patch,
     Post,
     Put,
-    Query,
     Req,
 } from '@nestjs/common'
 import {
@@ -35,14 +33,11 @@ import {RBAC_ROLES} from '../../config/constants.config'
 import {number} from 'yargs'
 import {Operation} from '../../helpers/patch.helper'
 import {PatchDto} from '../patch.dto'
-import {AppService} from '../../app.service'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {CustomercontactSearchDto} from './dto/customercontact-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
-import {ContractResponseDto} from '../contracts/dto/contract-response.dto'
 
 const resourceName = 'customercontacts'
 

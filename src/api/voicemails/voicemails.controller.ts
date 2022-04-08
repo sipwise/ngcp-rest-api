@@ -8,12 +8,10 @@ import {
     ApiTags,
 } from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {AppService} from '../../app.service'
 import {
     BadRequestException,
     Body,
     Controller,
-    DefaultValuePipe,
     Delete,
     Get,
     Param,
@@ -21,7 +19,6 @@ import {
     Patch,
     Post,
     Put,
-    Query,
     Req,
     UseInterceptors,
 } from '@nestjs/common'
@@ -41,7 +38,6 @@ import {VoicemailSearchDto} from './dto/voicemail-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
-import {SystemcontactResponseDto} from '../systemcontacts/dto/systemcontact-response.dto'
 
 const resourceName = 'voicemails'
 

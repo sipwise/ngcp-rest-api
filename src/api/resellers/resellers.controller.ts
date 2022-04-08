@@ -24,7 +24,6 @@ import {ResellerSearchDto} from './dto/reseller-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
-import {ProductResponseDto} from '../products/dto/product-response.dto'
 
 const resourceName = 'resellers'
 

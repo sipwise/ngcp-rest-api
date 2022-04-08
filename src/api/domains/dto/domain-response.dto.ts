@@ -1,6 +1,7 @@
 import {internal} from '../../../entities'
 import {ApiProperty} from '@nestjs/swagger'
 import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
+
 interface DomainResponseDtoAttributes {
     id: number;
     domain: string;

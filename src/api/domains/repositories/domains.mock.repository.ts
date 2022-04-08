@@ -1,11 +1,12 @@
 import {DomainsRepository} from '../interfaces/domains.repository'
 import {internal} from '../../../entities'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {ForbiddenException, NotFoundException} from '@nestjs/common'
+import {NotFoundException} from '@nestjs/common'
 
 interface DomainsMockDB {
     [key: number]: internal.Domain
 }
+
 export class DomainsMockRepository implements DomainsRepository {
 
     private readonly db: DomainsMockDB

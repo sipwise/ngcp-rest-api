@@ -11,7 +11,6 @@ import {JournalSearchDto} from './dto/journal-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
-import {FileshareResponseDto} from '../fileshare/dto/fileshare-response.dto'
 
 @Auth(RBAC_ROLES.system, RBAC_ROLES.admin, RBAC_ROLES.reseller)
 @ApiTags('Journals')

@@ -1,7 +1,6 @@
-import {Controller, DefaultValuePipe, Get, Logger, Param, ParseIntPipe, Query, Req} from '@nestjs/common'
+import {Controller, Get, Logger, Param, ParseIntPipe, Req} from '@nestjs/common'
 import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {AdminResponseDto} from '../admins/dto/admin-response.dto'
-import {AppService} from '../../app.service'
 import {PbxgroupsResponseDto} from './dto/pbxgroups-response.dto'
 import {PbxgroupsService} from './pbxgroups.service'
 import {CrudController} from '../../controllers/crud.controller'

@@ -1,6 +1,6 @@
 import {ServiceRequest} from '../interfaces/service-request.interface'
 import {BadRequestException} from '@nestjs/common'
-import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {ApiPropertyOptional} from '@nestjs/swagger'
 
 interface Join {
     alias: string

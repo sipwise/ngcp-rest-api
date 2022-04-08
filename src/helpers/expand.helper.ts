@@ -50,6 +50,7 @@ export class ExpandHelper {
             } while (++j < responseList.length)
         }
     }
+
     /**
      * Uses the response that is going to be returned and expands the fields specified by dots(.) with the help of a recursive function
      * @param responseList - List of objects that we are going to expand based on the fields requested
@@ -89,6 +90,7 @@ export class ExpandHelper {
             }
         } while (++i < responseList.length)
     }
+
     /**
      * Routes to the proper method based on whether the expand parameter in the request has commas(,) or dots(.).
      * In case of commas, this is going to be a multi-field expand where multiple fields at the same object level

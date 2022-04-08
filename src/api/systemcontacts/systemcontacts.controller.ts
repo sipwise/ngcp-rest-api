@@ -1,17 +1,4 @@
-import {
-    Controller,
-    DefaultValuePipe,
-    Delete,
-    Get,
-    Logger,
-    Param,
-    ParseIntPipe,
-    Patch,
-    Post,
-    Put,
-    Query,
-    Req,
-} from '@nestjs/common'
+import {Controller, Delete, Get, Logger, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {
     ApiBody,
     ApiConsumes,
@@ -32,13 +19,11 @@ import {RBAC_ROLES} from '../../config/constants.config'
 import {Operation} from '../../helpers/patch.helper'
 import {PatchDto} from '../patch.dto'
 import {number} from 'yargs'
-import {AppService} from '../../app.service'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {SystemcontactSearchDto} from './dto/systemcontact-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
-import {ResellerResponseDto} from '../resellers/dto/reseller-response.dto'
 
 const resourceName = 'systemcontacts'
 

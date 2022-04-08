@@ -13,7 +13,6 @@ import {ProductSearchDto} from './dto/product-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
-import {PbxgroupsResponseDto} from '../pbxgroups/dto/pbxgroups-response.dto'
 
 const resourceName = 'products'
 

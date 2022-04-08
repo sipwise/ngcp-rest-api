@@ -42,9 +42,9 @@ export class AclRole extends BaseEntity {
         let hasAccess: AclRole[]
         if (role == undefined)
             return
-        if(role.admins != undefined)
+        if (role.admins != undefined)
             admins = role.admins.map((adm) => new Admin().fromInternal(adm))
-        if(role.has_access_to != undefined)
+        if (role.has_access_to != undefined)
             hasAccess = role.has_access_to.map((r) => new AclRole().fromInternal(r))
 
         this.role = role.role

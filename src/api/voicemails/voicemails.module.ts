@@ -11,4 +11,5 @@ import {ExpandModule} from '../../helpers/expand.module'
     exports: [VoicemailsService],
 })
 
-export class VoicemailsModule {}
+export class VoicemailsModule {
+}

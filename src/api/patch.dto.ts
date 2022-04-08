@@ -12,10 +12,10 @@ enum PatchOperation {
 export class PatchDto {
     @ApiProperty()
         op!: PatchOperation
-    
+
     @ApiProperty()
         path!: string
-    
+
     @ApiPropertyOptional()
         value: any
 }

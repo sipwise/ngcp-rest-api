@@ -10,4 +10,5 @@ import {ExpandModule} from '../../helpers/expand.module'
     controllers: [ProductsController],
     exports: [ProductsService],
 })
-export class ProductsModule {}
+export class ProductsModule {
+}
