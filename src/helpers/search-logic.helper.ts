@@ -1,5 +1,6 @@
 import {ServiceRequest} from '../interfaces/service-request.interface'
 import {BadRequestException} from '@nestjs/common'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 interface Join {
     alias: string
@@ -14,11 +15,16 @@ enum Order {
 export class SearchLogic {
     joins?: Join[]
     searchableFields: string[]
-    rows: number
-    page: number
-    orderBy: string
-    order: Order = Order.ASC
-    searchOr: boolean
+    @ApiPropertyOptional({default: 1})
+        rows: number
+    @ApiPropertyOptional({default: 10})
+        page: number
+    @ApiPropertyOptional({description: 'field name to order by', name: 'order_by'})
+        orderBy: string
+    @ApiPropertyOptional({default: Order.ASC.toLowerCase()})
+        order: Order = Order.ASC
+    @ApiPropertyOptional({default: false, name: 'search_or'})
+        searchOr: boolean
 
     constructor(sr: ServiceRequest, searchableFields: string[], joins?: Join[]) {
         this.joins = joins

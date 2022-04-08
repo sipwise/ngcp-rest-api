@@ -1,5 +1,5 @@
 import {Controller, DefaultValuePipe, Get, Logger, Param, ParseIntPipe, Query, Req} from '@nestjs/common'
-import {ApiOkResponse} from '@nestjs/swagger'
+import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {AdminResponseDto} from '../admins/dto/admin-response.dto'
 import {AppService} from '../../app.service'
 import {PbxgroupsResponseDto} from './dto/pbxgroups-response.dto'
@@ -7,11 +7,16 @@ import {PbxgroupsService} from './pbxgroups.service'
 import {CrudController} from '../../controllers/crud.controller'
 import {Auth} from '../../decorators/auth.decorator'
 import {RBAC_ROLES} from '../../config/constants.config'
+import {PaginatedDto} from '../paginated.dto'
+import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 
 const resourceName = 'pbxgroups'
 
-@Controller(resourceName)
 @Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller, RBAC_ROLES.subscriber)
+@ApiTags('Pbx groups')
+@ApiExtraModels(PaginatedDto)
+@Controller(resourceName)
 export class PbxgroupsController extends CrudController<never, PbxgroupsResponseDto> {
     private readonly log: Logger = new Logger(PbxgroupsController.name)
 
@@ -22,9 +27,8 @@ export class PbxgroupsController extends CrudController<never, PbxgroupsResponse
     }
 
     @Get()
-    @ApiOkResponse({
-        type: [PbxgroupsResponseDto],
-    })
+    @ApiQuery({type: SearchLogic})
+    @ApiPaginatedResponse(PbxgroupsResponseDto)
     async readAll(@Req() req): Promise<[PbxgroupsResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all pbx groups',

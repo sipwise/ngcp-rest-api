@@ -1,3 +1,5 @@
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+
 enum PatchOperation {
     Add = 'add',
     Remove = 'remove',
@@ -8,7 +10,12 @@ enum PatchOperation {
 }
 
 export class PatchDto {
-    op!: PatchOperation
-    path!: string
-    value: any
+    @ApiProperty()
+        op!: PatchOperation
+    
+    @ApiProperty()
+        path!: string
+    
+    @ApiPropertyOptional()
+        value: any
 }

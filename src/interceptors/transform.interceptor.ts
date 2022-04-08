@@ -57,7 +57,7 @@ export class TransformInterceptor implements NestInterceptor {
             }
             if (accept.length == 1 && accept[0] === 'application/json') {
                 if (Array.isArray(data) && data.length == 2 && Number(data[data.length - 1]))
-                    return data[0]
+                    return {data: data[0], total_count: data[1]}
                 return data
             }
             if (req.method === 'DELETE') {

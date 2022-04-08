@@ -14,7 +14,15 @@ import {
     Query,
     Req,
 } from '@nestjs/common'
-import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {
+    ApiBody,
+    ApiConsumes,
+    ApiCreatedResponse,
+    ApiExtraModels,
+    ApiOkResponse,
+    ApiQuery,
+    ApiTags,
+} from '@nestjs/swagger'
 import {CustomercontactsService} from './customercontacts.service'
 import {CustomercontactCreateDto} from './dto/customercontact-create.dto'
 import {CrudController} from '../../controllers/crud.controller'
@@ -31,11 +39,16 @@ import {AppService} from '../../app.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {CustomercontactSearchDto} from './dto/customercontact-search.dto'
+import {PaginatedDto} from '../paginated.dto'
+import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {ContractResponseDto} from '../contracts/dto/contract-response.dto'
 
 const resourceName = 'customercontacts'
 
 @Auth(RBAC_ROLES.system, RBAC_ROLES.admin, RBAC_ROLES.ccare, RBAC_ROLES.ccareadmin, RBAC_ROLES.reseller)
 @ApiTags('Customer Contacts')
+@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class CustomercontactsController extends CrudController<CustomercontactCreateDto, CustomercontactResponseDto> {
     private readonly log = new Logger(CustomercontactsController.name)
@@ -58,9 +71,8 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     }
 
     @Get()
-    @ApiOkResponse({
-        type: [CustomercontactResponseDto],
-    })
+    @ApiQuery({type: SearchLogic})
+    @ApiPaginatedResponse(CustomercontactResponseDto)
     async readAll(@Req() req): Promise<[CustomercontactResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all customer contacts',
@@ -92,6 +104,7 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     }
 
     @Patch(':id')
+    @ApiConsumes('application/json-patch+json')
     @ApiOkResponse({
         type: CustomercontactResponseDto,
     })

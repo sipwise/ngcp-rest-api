@@ -1,5 +1,5 @@
 import {Controller, DefaultValuePipe, Get, Param, ParseIntPipe, Query, Req, UseInterceptors} from '@nestjs/common'
-import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {AppService} from '../../app.service'
 import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
@@ -10,13 +10,18 @@ import {ProductsService} from './products.service'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ProductSearchDto} from './dto/product-search.dto'
+import {PaginatedDto} from '../paginated.dto'
+import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {PbxgroupsResponseDto} from '../pbxgroups/dto/pbxgroups-response.dto'
 
 const resourceName = 'products'
 
-@ApiTags('Products')
-@Controller(resourceName)
-@UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
 @Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller, RBAC_ROLES.lintercept)
+@UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
+@ApiTags('Products')
+@ApiExtraModels(PaginatedDto)
+@Controller(resourceName)
 export class ProductsController {
     constructor(
         private readonly productsService: ProductsService,
@@ -26,9 +31,8 @@ export class ProductsController {
     }
 
     @Get()
-    @ApiOkResponse({
-        type: [ProductResponseDto],
-    })
+    @ApiQuery({type: SearchLogic})
+    @ApiPaginatedResponse(ProductResponseDto)
     async findAll(
         @Query(
             'page',

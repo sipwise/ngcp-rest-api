@@ -1,16 +1,21 @@
 import {RBAC_ROLES} from '../../config/constants.config'
 import {JournalResponseDto} from './dto/journal-response.dto'
 import {Auth} from '../../decorators/auth.decorator'
-import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Controller, DefaultValuePipe, Get, Param, ParseIntPipe, Query, Req} from '@nestjs/common'
 import {AppService} from '../../app.service'
 import {JournalsService} from './journals.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {JournalSearchDto} from './dto/journal-search.dto'
+import {PaginatedDto} from '../paginated.dto'
+import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {FileshareResponseDto} from '../fileshare/dto/fileshare-response.dto'
 
 @Auth(RBAC_ROLES.system, RBAC_ROLES.admin, RBAC_ROLES.reseller)
 @ApiTags('Journals')
+@ApiExtraModels(PaginatedDto)
 @Controller('journals')
 export class JournalsController {
     constructor(
@@ -21,9 +26,8 @@ export class JournalsController {
     }
 
     @Get()
-    @ApiOkResponse({
-        type: [JournalResponseDto],
-    })
+    @ApiQuery({type: SearchLogic})
+    @ApiPaginatedResponse(JournalResponseDto)
     async findAll(
         @Query(
             'page',

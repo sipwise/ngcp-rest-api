@@ -1,18 +1,4 @@
-import {
-    Controller,
-    DefaultValuePipe,
-    forwardRef,
-    Get,
-    Inject,
-    Logger,
-    Param,
-    ParseIntPipe,
-    Patch,
-    Post,
-    Put,
-    Query,
-    Req,
-} from '@nestjs/common'
+import {Controller, forwardRef, Get, Inject, Logger, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {JournalsService} from '../journals/journals.service'
 import {ResellersService} from './resellers.service'
 import {CrudController} from '../../controllers/crud.controller'
@@ -20,19 +6,31 @@ import {ResellerCreateDto} from './dto/reseller-create.dto'
 import {ResellerResponseDto} from './dto/reseller-response.dto'
 import {Auth} from '../../decorators/auth.decorator'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
-import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {
+    ApiBody,
+    ApiConsumes,
+    ApiCreatedResponse,
+    ApiExtraModels,
+    ApiOkResponse,
+    ApiQuery,
+    ApiTags,
+} from '@nestjs/swagger'
 import {Operation} from '../../helpers/patch.helper'
 import {Request} from 'express'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {PatchDto} from '../patch.dto'
-import {AppService} from '../../app.service'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ResellerSearchDto} from './dto/reseller-search.dto'
+import {PaginatedDto} from '../paginated.dto'
+import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {ProductResponseDto} from '../products/dto/product-response.dto'
 
 const resourceName = 'resellers'
 
 @Auth(RBAC_ROLES.admin, RBAC_ROLES.system)
 @ApiTags('Resellers')
+@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class ResellersController extends CrudController<ResellerCreateDto, ResellerResponseDto> {
     private readonly log = new Logger(ResellersController.name)
@@ -55,9 +53,8 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     }
 
     @Get()
-    @ApiOkResponse({
-        type: [ResellerResponseDto],
-    })
+    @ApiQuery({type: SearchLogic})
+    @ApiPaginatedResponse(ResellerResponseDto)
     async readAll(@Req() req): Promise<[ResellerResponseDto[], number]> {
         this.log.debug({message: 'fetch all resellers', func: this.readAll.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
@@ -92,6 +89,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     }
 
     @Patch(':id')
+    @ApiConsumes('application/json-patch+json')
     @ApiOkResponse({
         type: ResellerResponseDto,
     })

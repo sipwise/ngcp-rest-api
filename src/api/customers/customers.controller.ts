@@ -7,13 +7,25 @@ import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {CustomersService} from './customers.service'
 import {JournalsService} from '../journals/journals.service'
 import {Request} from 'express'
-import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {
+    ApiBody,
+    ApiConsumes,
+    ApiCreatedResponse,
+    ApiExtraModels,
+    ApiOkResponse,
+    ApiQuery,
+    ApiTags,
+} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {RBAC_ROLES} from '../../config/constants.config'
 import {number} from 'yargs'
 import {PatchDto} from '../patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {CustomerSearchDto} from './dto/customer-search.dto'
+import {PaginatedDto} from '../paginated.dto'
+import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {CustomercontactResponseDto} from '../customercontacts/dto/customercontact-response.dto'
 
 const resourceName = 'customers'
 
@@ -25,6 +37,7 @@ const resourceName = 'customers'
     RBAC_ROLES.ccareadmin,
 )
 @ApiTags('Customers')
+@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class CustomersController extends CrudController<CustomerCreateDto, CustomerResponseDto> {
 
@@ -45,9 +58,8 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     }
 
     @Get()
-    @ApiOkResponse({
-        type: [CustomerResponseDto],
-    })
+    @ApiQuery({type: SearchLogic})
+    @ApiPaginatedResponse(CustomerResponseDto)
     async readAll(req): Promise<[CustomerResponseDto[], number]> {
         const sr = this.newServiceRequest(req)
         const [responseList, totalCount] =
@@ -82,6 +94,7 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     }
 
     @Patch(':id')
+    @ApiConsumes('application/json-patch+json')
     @ApiOkResponse({
         type: CustomerResponseDto,
     })

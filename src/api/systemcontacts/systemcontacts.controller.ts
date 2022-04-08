@@ -12,7 +12,15 @@ import {
     Query,
     Req,
 } from '@nestjs/common'
-import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {
+    ApiBody,
+    ApiConsumes,
+    ApiCreatedResponse,
+    ApiExtraModels,
+    ApiOkResponse,
+    ApiQuery,
+    ApiTags,
+} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'
 import {JournalsService} from '../journals/journals.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
@@ -27,12 +35,17 @@ import {number} from 'yargs'
 import {AppService} from '../../app.service'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {SystemcontactSearchDto} from './dto/systemcontact-search.dto'
+import {PaginatedDto} from '../paginated.dto'
+import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {ResellerResponseDto} from '../resellers/dto/reseller-response.dto'
 
 const resourceName = 'systemcontacts'
 
-@ApiTags('System Contacts')
-@Controller(resourceName)
 @Auth(RBAC_ROLES.system, RBAC_ROLES.admin)
+@ApiTags('System Contacts')
+@ApiExtraModels(PaginatedDto)
+@Controller(resourceName)
 export class SystemcontactsController extends CrudController<SystemcontactCreateDto, SystemcontactResponseDto> {
     private readonly log = new Logger(SystemcontactsController.name)
 
@@ -53,9 +66,8 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
     }
 
     @Get()
-    @ApiOkResponse({
-        type: SystemcontactResponseDto,
-    })
+    @ApiQuery({type: SearchLogic})
+    @ApiPaginatedResponse(SystemcontactResponseDto)
     async readAll(@Req() req): Promise<[SystemcontactResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all system contacts',
@@ -95,6 +107,7 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
     }
 
     @Patch(':id')
+    @ApiConsumes('application/json-patch+json')
     @ApiBody({
         type: [PatchDto],
     })

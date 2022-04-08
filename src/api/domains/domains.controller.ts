@@ -1,4 +1,4 @@
-import {ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {ApiCreatedResponse, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {Controller, DefaultValuePipe, Delete, Get, Logger, Param, ParseIntPipe, Post, Query, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
@@ -12,6 +12,10 @@ import {Roles} from '../../decorators/roles.decorator'
 import {AppService} from '../../app.service'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {DomainSearchDto} from './dto/domain-search.dto'
+import {PaginatedDto} from '../paginated.dto'
+import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {CustomerResponseDto} from '../customers/dto/customer-response.dto'
 
 const resourceName = 'domains'
 
@@ -21,6 +25,7 @@ const resourceName = 'domains'
     RBAC_ROLES.system,
 )
 @ApiTags('Domains')
+@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class DomainsController extends CrudController<DomainCreateDto, DomainResponseDto> {
     private readonly log = new Logger(DomainsController.name)
@@ -44,9 +49,8 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
 
     @Get()
     @Roles(RBAC_ROLES.ccare, RBAC_ROLES.ccareadmin)
-    @ApiOkResponse({
-        type: [DomainResponseDto],
-    })
+    @ApiQuery({type: SearchLogic})
+    @ApiPaginatedResponse(DomainResponseDto)
     async readAll(@Req() req): Promise<[DomainResponseDto[], number]> {
         this.log.debug({message: 'fetch all domains', func: this.readAll.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)

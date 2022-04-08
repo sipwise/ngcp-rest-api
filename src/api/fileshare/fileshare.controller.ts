@@ -1,4 +1,4 @@
-import {ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {ApiCreatedResponse, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {
     Controller,
     Delete,
@@ -21,10 +21,15 @@ import {FileInterceptor} from '@nestjs/platform-express'
 import {AppService} from '../../app.service'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {FileshareSearchDto} from './dto/fileshare-search.dto'
+import {PaginatedDto} from '../paginated.dto'
+import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {DomainResponseDto} from '../domains/dto/domain-response.dto'
 
 const resourceName = 'fileshare'
 
 @ApiTags('Fileshare')
+@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class FileshareController extends CrudController<FileshareCreateDto, FileshareResponseDto> {
     constructor(
@@ -49,9 +54,8 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     }
 
     @Get()
-    @ApiOkResponse({
-        type: [FileshareResponseDto],
-    })
+    @ApiQuery({type: SearchLogic})
+    @ApiPaginatedResponse(FileshareResponseDto)
     async readAll(req): Promise<[FileshareResponseDto[], number]> {
         const sr = this.newServiceRequest(req)
         const [responseList, totalCount] =

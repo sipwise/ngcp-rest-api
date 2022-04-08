@@ -1,4 +1,12 @@
-import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {
+    ApiBody,
+    ApiConsumes,
+    ApiCreatedResponse,
+    ApiExtraModels,
+    ApiOkResponse,
+    ApiQuery,
+    ApiTags,
+} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {AppService} from '../../app.service'
 import {
@@ -30,13 +38,18 @@ import {VoicemailResponseDto} from './dto/voicemail-response.dto'
 import {VoicemailsService} from './voicemails.service'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {VoicemailSearchDto} from './dto/voicemail-search.dto'
+import {PaginatedDto} from '../paginated.dto'
+import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {SystemcontactResponseDto} from '../systemcontacts/dto/systemcontact-response.dto'
 
 const resourceName = 'voicemails'
 
-@ApiTags('Voicemails')
-@Controller(resourceName)
-@UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
 @Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller, RBAC_ROLES.lintercept)
+@UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
+@ApiTags('Voicemails')
+@ApiExtraModels(PaginatedDto)
+@Controller(resourceName)
 export class VoicemailsController extends CrudController<VoicemailBaseDto, VoicemailResponseDto> {
     constructor(
         private readonly voicemailsService: VoicemailsService,
@@ -55,9 +68,8 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     }
 
     @Get()
-    @ApiOkResponse({
-        type: [VoicemailResponseDto],
-    })
+    @ApiQuery({type: SearchLogic})
+    @ApiPaginatedResponse(VoicemailResponseDto)
     async readAll(@Req() req): Promise<[VoicemailResponseDto[], number]> {
         const [responseList, totalCount] =
             await this.voicemailsService.readAll(req)
@@ -90,6 +102,7 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     }
 
     @Patch(':id')
+    @ApiConsumes('application/json-patch+json')
     @ApiOkResponse({
         type: VoicemailResponseDto,
     })

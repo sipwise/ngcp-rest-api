@@ -19,7 +19,16 @@ import {AdminCreateDto} from './dto/admin-create.dto'
 import {AdminResponseDto} from './dto/admin-response.dto'
 import {AdminUpdateDto} from './dto/admin-update.dto'
 import {AdminsService} from './admins.service'
-import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {
+    ApiBody,
+    ApiConsumes,
+    ApiCreatedResponse,
+    ApiExtraModels,
+    ApiHeader,
+    ApiOkResponse,
+    ApiProperty, ApiQuery,
+    ApiTags,
+} from '@nestjs/swagger'
 import {AppService} from '../../app.service'
 import {Auth} from '../../decorators/auth.decorator'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
@@ -34,10 +43,14 @@ import {CrudController} from '../../controllers/crud.controller'
 import {AdminSearchDto} from './dto/admin-search.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {PaginatedDto} from '../paginated.dto'
+import {SearchLogic} from '../../helpers/search-logic.helper'
 
 const resourceName = 'admins'
 
 @ApiTags('Admins')
+@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 @UseInterceptors(new JournalingInterceptor(new JournalsService()))
 @Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller)
@@ -72,9 +85,8 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
     }
 
     @Get()
-    @ApiOkResponse({
-        type: [AdminResponseDto],
-    })
+    @ApiQuery({type: SearchLogic})
+    @ApiPaginatedResponse(AdminResponseDto)
     async readAll(@Req() req: Request): Promise<[AdminResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all admins',
@@ -129,6 +141,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
     }
 
     @Patch(':id')
+    @ApiConsumes('application/json-patch+json')
     @ApiOkResponse({
         type: AdminResponseDto,
     })
