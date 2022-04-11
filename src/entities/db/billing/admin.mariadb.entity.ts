@@ -176,7 +176,7 @@ export class Admin extends BaseEntity {
         admin.reseller_id = this.reseller_id
         admin.role_id = this.role_id
         if (this.role != undefined) {
-            admin.role = this.role.role
+            admin.role = RBAC_ROLES[this.role.role]
             admin.role_data = await this.role.toInternal()
             admin.role_id = this.role.id
         }

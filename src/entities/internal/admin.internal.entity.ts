@@ -42,7 +42,7 @@ export class Admin implements AdminInterface {
     read_only: boolean
     reseller_id?: number
     role_data?: internal.AclRole
-    role: string
+    role: RBAC_ROLES
     role_id: number
     saltedpass: string
     show_passwords: boolean

@@ -76,10 +76,10 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             url: req.url,
             method: req.method,
         })
+        const sr = this.newServiceRequest(req)
         const admin = Object.assign(new AdminCreateDto(), create)
-        const newAdmin = await this.adminsService.create(await admin.toInternal(), this.newServiceRequest(req))
-        const response = new AdminResponseDto(newAdmin)
-        return response
+        const newAdmin = await this.adminsService.create(await admin.toInternal(), sr)
+        return new AdminResponseDto(newAdmin, sr.user.role)
     }
 
     @Get()
@@ -97,7 +97,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
         const [admins, totalCount] =
             await this.adminsService.readAll(sr)
-        const responseList = admins.map((adm) => new AdminResponseDto(adm))
+        const responseList = admins.map((adm) => new AdminResponseDto(adm, sr.user.role))
         if (req.query.expand) {
             await this.expander.expandObjects(responseList, adminSearchDtoKeys, sr)
         }
@@ -115,8 +115,9 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             url: req.url,
             method: req.method,
         })
-        const admin = await this.adminsService.read(id, this.newServiceRequest(req))
-        const responseItem = new AdminResponseDto(admin)
+        const sr = this.newServiceRequest(req)
+        const admin = await this.adminsService.read(id, sr)
+        const responseItem = new AdminResponseDto(admin, sr.user.role)
         if (req.query.expand && !req.isRedirected) {
             const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
             await this.expander.expandObjects(responseItem, adminSearchDtoKeys, req)
@@ -135,7 +136,8 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
     ): Promise<AdminResponseDto> {
         this.log.debug({message: 'update admin by id', func: this.update.name, url: req.url, method: req.method})
         const admin = Object.assign(new AdminUpdateDto(), update)
-        return new AdminResponseDto(await this.adminsService.update(id, await admin.toInternal(), this.newServiceRequest(req)))
+        const sr = this.newServiceRequest(req)
+        return new AdminResponseDto(await this.adminsService.update(id, await admin.toInternal(), sr), sr.user.role)
     }
 
     @Patch(':id')
@@ -157,7 +159,8 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
             throw new BadRequestException(message)
         }
-        return new AdminResponseDto(await this.adminsService.adjust(id, patch, this.newServiceRequest(req)))
+        const sr = this.newServiceRequest(req)
+        return new AdminResponseDto(await this.adminsService.adjust(id, patch, sr), sr.user.role)
     }
 
     @Delete(':id')

@@ -1,6 +1,7 @@
 import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
 import {internal} from '../../../entities'
-import {ApiProperty} from '@nestjs/swagger'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {RBAC_ROLES} from '../../../config/constants.config'
 
 export class AdminResponseDto {
     @ApiProperty()
@@ -29,16 +30,16 @@ export class AdminResponseDto {
         login: string
     @ApiProperty()
         read_only: boolean
-    @ApiProperty()
+    @ApiPropertyOptional()
         reseller_id?: number
-    @ApiProperty()
+    @ApiPropertyOptional()
         reseller_id_expand?: ResellerResponseDto
     @ApiProperty()
-        role: string
+        role: RBAC_ROLES
     @ApiProperty()
         show_passwords: boolean
 
-    constructor(admin: internal.Admin) {
+    constructor(admin: internal.Admin, role: RBAC_ROLES) {
         this.billing_data = admin.billing_data
         this.call_data = admin.call_data
         this.can_reset_password = admin.can_reset_password
@@ -52,8 +53,11 @@ export class AdminResponseDto {
         this.lawful_intercept = admin.lawful_intercept
         this.login = admin.login
         this.read_only = admin.read_only
-        this.reseller_id = admin.reseller_id
         this.role = admin.role
         this.show_passwords = admin.show_passwords
+
+        if ([RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.ccareadmin].includes(role)) {
+            this.reseller_id = admin.reseller_id
+        }
     }
 }
