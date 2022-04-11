@@ -4,6 +4,8 @@ import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestj
 import {Observable} from 'rxjs'
 import {extractResourceName} from '../helpers/uri.helper'
 import {map} from 'rxjs/operators'
+import validator from 'validator'
+import isNumeric = validator.isNumeric
 
 /**
  * Defines the names of query parameters for pagination
@@ -50,7 +52,6 @@ export class TransformInterceptor implements NestInterceptor {
             const req = ctx.getRequest()
             const res = ctx.getResponse()
 
-            // data = await data // TODO: Take a closer look. No idea why data is a promise in the first place
             const accept = (req.headers.accept || '').split(',')
             if (res.passthrough) {
                 return data
@@ -78,32 +79,45 @@ export class TransformInterceptor implements NestInterceptor {
      */
     private generateHALResource(req: any, data: any) {
         const page: string = (req.query[this.pageName] as string) ?? `${AppService.config.common.api_default_query_page}`
-        const row: string = (req.query[this.perPageName] as string) ?? `${AppService.config.common.api_default_query_rows}`
+        const rows: string = (req.query[this.perPageName] as string) ?? `${AppService.config.common.api_default_query_rows}`
 
-        const resName = extractResourceName(req.url, AppService.config.common.api_prefix)
-
-        const prefix = AppService.config.common.api_prefix
+        const re = /^\/api\/(\S+?)(\/.*)?$/
+        const path: string = req.route.path
+        const resName = path.match(re)[1]
 
         let resource
 
         if (Array.isArray(data)) {
             let totalCount: number = data.length
-            if (data.length == 2 && Number(data[data.length - 1]))
+            if (data.length == 2 && Array.isArray(data[0]) && !isNaN(data[1])) {
                 totalCount = data.pop()
+                data = data.pop()
+            }
             resource = halson()
-                .addLink('self', `/${prefix}/${resName}?page=${page}&rows=${row}`)
+                .addLink('self', req.originalUrl)
             data.map(async (row) => {
-                await resource.addLink(`ngcp:${resName}`, `/${prefix}/${resName}/${row.id}`)
-                await resource.addEmbed(`ngcp:${resName}`, row)
+                if (data.length == 1) {
+                    await resource.addLink(`ngcp:${resName}`, [{href: `${path}/${row.id}`}])
+                } else {
+                    await resource.addLink(`ngcp:${resName}`, `${path}/${row.id}`)
+                }
+                await resource.addEmbed(`ngcp:${resName}`, [row])
             })
-            resource.addLink('collection', `/${prefix}/${resName}`)
+            resource.addLink('collection', req.route.path)
             resource['total_count'] = totalCount
 
+            const pageCount = Math.ceil(totalCount / +rows)
+            if (+page > 1) {
+                resource.addLink('prev', `${req.route.path}?page=${+page-1}&rows=${rows}`)
+            }
+            if (+page < pageCount) {
+                resource.addLink('next', `${req.route.path}?page=${+page+1}&rows=${rows}`)
+            }
             return resource
         } else if (data && 'id' in data) {
             resource = halson(data)
-                .addLink('self', `/${prefix}/${resName}/${data.id}`)
-                .addLink('collection', `/${prefix}/${resName}`)
+                .addLink('self', `/api/${resName}/${data.id}`)
+                .addLink('collection', `/api/${resName}`)
         }
         return resource
     }
