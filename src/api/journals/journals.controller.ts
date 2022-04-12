@@ -2,7 +2,7 @@ import {RBAC_ROLES} from '../../config/constants.config'
 import {JournalResponseDto} from './dto/journal-response.dto'
 import {Auth} from '../../decorators/auth.decorator'
 import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
-import {Controller, DefaultValuePipe, Get, Param, ParseIntPipe, Query, Req} from '@nestjs/common'
+import {Controller, DefaultValuePipe, Get, Logger, Param, ParseIntPipe, Query, Req} from '@nestjs/common'
 import {AppService} from '../../app.service'
 import {JournalsService} from './journals.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -17,6 +17,8 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 @ApiExtraModels(PaginatedDto)
 @Controller('journals')
 export class JournalsController {
+    private readonly log: Logger = new Logger(JournalsController.name)
+
     constructor(
         private readonly app: AppService,
         private readonly journalsService: JournalsService,
@@ -27,7 +29,7 @@ export class JournalsController {
     @Get()
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(JournalResponseDto)
-    async findAll(
+    async readAll(
         @Query(
             'page',
             new DefaultValuePipe(AppService.config.common.api_default_query_page),
@@ -40,6 +42,7 @@ export class JournalsController {
         ) row: number,
         @Req() req,
     ): Promise<[JournalResponseDto[], number]> {
+        this.log.debug({message: 'fetch all journals', func: this.readAll.name, url: req.url, method: req.method})
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
@@ -56,7 +59,7 @@ export class JournalsController {
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async findResource(
+    async readByResource(
         @Query(
             'page',
             new DefaultValuePipe(AppService.config.common.api_default_query_page),
@@ -70,6 +73,7 @@ export class JournalsController {
         @Param('resource_name') resourceName: string,
         @Req() req,
     ): Promise<[JournalResponseDto[], number]> {
+        this.log.debug({message: 'fetch journals by resource name', func: this.readByResource.name, url: req.url, method: req.method})
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }
@@ -86,7 +90,7 @@ export class JournalsController {
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async findResourceID(
+    async readByResourceAndId(
         @Query(
             'page',
             new DefaultValuePipe(AppService.config.common.api_default_query_page),
@@ -101,6 +105,7 @@ export class JournalsController {
         @Param('id', ParseIntPipe) resourceId: number,
         @Req() req,
     ): Promise<[JournalResponseDto[], number]> {
+        this.log.debug({message: 'fetch journals by resource name and id', func: this.readByResourceAndId.name, url: req.url, method: req.method})
         const sr: ServiceRequest = {
             headers: [req.rawHeaders], params: [req.params], user: req.user, query: req.query,
         }

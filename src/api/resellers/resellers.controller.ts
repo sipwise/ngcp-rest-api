@@ -48,6 +48,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
         type: ResellerResponseDto,
     })
     async create(entity: ResellerCreateDto, req: Request): Promise<ResellerResponseDto> {
+        this.log.debug({message: 'create reseller', func: this.create.name, url: req.url, method: req.method})
         return this.resellersService.create(entity, this.newServiceRequest(req))
     }
 
@@ -71,6 +72,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
         type: ResellerResponseDto,
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<ResellerResponseDto> {
+        this.log.debug({message: 'fetch reseller by id', func: this.read.name, url: req.url, method: req.method})
         const responseItem = await this.resellersService.read(id, this.newServiceRequest(req))
         if (req.query.expand && !req.isRedirected) {
             const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
@@ -84,6 +86,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
         type: ResellerResponseDto,
     })
     async update(@Param('id', ParseIntPipe) id: number, entity: ResellerCreateDto, req): Promise<ResellerResponseDto> {
+        this.log.debug({message: 'update reseller by id', func: this.update.name, url: req.url, method: req.method})
         return this.resellersService.update(id, entity, this.newServiceRequest(req))
     }
 
@@ -96,6 +99,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
         type: [PatchDto],
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ResellerResponseDto> {
+        this.log.debug({message: 'patch reseller by id', func: this.adjust.name, url: req.url, method: req.method})
         return this.resellersService.adjust(id, patch, this.newServiceRequest(req))
     }
 
@@ -104,6 +108,7 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
         type: [JournalResponseDto],
     })
     async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<[JournalResponseDto[], number]> {
+        this.log.debug({message: 'fetch reseller journal by id', func: this.journal.name, url: req.url, method: req.method})
         return super.journal(id, page, row, req)
     }
 }

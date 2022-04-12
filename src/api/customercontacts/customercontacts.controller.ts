@@ -62,6 +62,7 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
         type: CustomercontactResponseDto,
     })
     async create(entity: CustomercontactCreateDto, req: Request): Promise<CustomercontactResponseDto> {
+        this.log.debug({message: 'create customer contact', func: this.create.name, url: req.url, method: req.method})
         return super.create(entity, req)
     }
 
@@ -90,6 +91,7 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
         type: CustomercontactResponseDto,
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<CustomercontactResponseDto> {
+        this.log.debug({message: 'fetch customer contact by id', func: this.read.name, url: req.url, method: req.method})
         const responseItem = await this.contactsService.read(id, this.newServiceRequest(req))
         if (req.query.expand && !req.isRedirected) {
             const contactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
@@ -107,6 +109,7 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
         type: [PatchDto],
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<CustomercontactResponseDto> {
+        this.log.debug({message: 'patch customer contact by id', func: this.adjust.name, url: req.url, method: req.method})
         return this.contactsService.adjust(id, patch, this.newServiceRequest(req))
     }
 
@@ -115,6 +118,7 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
         type: CustomercontactResponseDto,
     })
     async update(@Param('id', ParseIntPipe) id: number, entity: CustomercontactCreateDto, req): Promise<CustomercontactResponseDto> {
+        this.log.debug({message: 'update customer contact by id', func: this.update.name, url: req.url, method: req.method})
         return this.contactsService.update(id, entity, this.newServiceRequest(req))
     }
 
@@ -123,6 +127,7 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
         type: number,
     })
     async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
+        this.log.debug({message: 'delete customer contact by id', func: this.delete.name, url: req.url, method: req.method})
         return this.contactsService.delete(id, this.newServiceRequest(req))
     }
 
@@ -131,6 +136,7 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
         type: [JournalResponseDto],
     })
     async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<[JournalResponseDto[], number]> {
+        this.log.debug({message: 'fetch customer contact journal by id', func: this.journal.name, url: req.url, method: req.method})
         return super.journal(id, page, row, req)
     }
 

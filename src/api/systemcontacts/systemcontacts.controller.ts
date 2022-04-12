@@ -47,6 +47,7 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
         type: SystemcontactResponseDto,
     })
     async create(entity: SystemcontactCreateDto, req): Promise<SystemcontactResponseDto> {
+        this.log.debug({message: 'create system contact', func: this.create.name, url: req.url, method: req.method})
         return this.contactsService.create(entity, this.newServiceRequest(req))
     }
 
@@ -75,6 +76,7 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
         type: SystemcontactResponseDto,
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<SystemcontactResponseDto> {
+        this.log.debug({message: 'fetch system contact by id', func: this.read.name, url: req.url, method: req.method})
         const responseItem = await this.contactsService.read(id, this.newServiceRequest(req))
         if (req.query.expand && !req.isRedirected) {
             const contactSearchDtoKeys = Object.keys(new SystemcontactSearchDto())
@@ -88,6 +90,7 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
         type: SystemcontactResponseDto,
     })
     async update(@Param('id', ParseIntPipe) id: number, entity: SystemcontactCreateDto, req): Promise<SystemcontactResponseDto> {
+        this.log.debug({message: 'update system contact by id', func: this.update.name, url: req.url, method: req.method})
         return this.contactsService.update(id, entity, this.newServiceRequest(req))
     }
 
@@ -97,6 +100,7 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
         type: [PatchDto],
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<SystemcontactResponseDto> {
+        this.log.debug({message: 'patch system contact by id', func: this.adjust.name, url: req.url, method: req.method})
         return this.contactsService.adjust(id, patch, this.newServiceRequest(req))
     }
 
@@ -105,6 +109,7 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
         type: number,
     })
     async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
+        this.log.debug({message: 'delete system contact by id', func: this.delete.name, url: req.url, method: req.method})
         return this.contactsService.delete(id, this.newServiceRequest(req))
     }
 
@@ -113,6 +118,7 @@ export class SystemcontactsController extends CrudController<SystemcontactCreate
         type: [JournalResponseDto],
     })
     async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<[JournalResponseDto[], number]> {
+        this.log.debug({message: 'fetch system contact journal by id', func: this.journal.name, url: req.url, method: req.method})
         return super.journal(id, page, row, req)
     }
 }

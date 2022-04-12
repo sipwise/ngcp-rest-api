@@ -41,6 +41,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
         type: DomainResponseDto,
     })
     async create(entity: DomainCreateDto, req): Promise<DomainResponseDto> {
+        this.log.debug({message: 'create domain', func: this.readAll.name, url: req.url, method: req.method})
         const domain = await this.domainsService.create(entity.toInternal(), this.newServiceRequest(req))
         return new DomainResponseDto(domain)
     }
@@ -68,6 +69,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     })
     @Roles(RBAC_ROLES.ccare, RBAC_ROLES.ccareadmin)
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<DomainResponseDto> {
+        this.log.debug({message: 'fetch domain by id', func: this.read.name, url: req.url, method: req.method})
         const domain = await this.domainsService.read(id, this.newServiceRequest(req))
         const responseItem = new DomainResponseDto(domain)
         if (req.query.expand && !req.isRedirected) {
@@ -80,6 +82,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     @Delete(':id')
     @ApiOkResponse({})
     async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
+        this.log.debug({message: 'delete domain by id', func: this.delete.name, url: req.url, method: req.method})
         return this.domainsService.delete(id, this.newServiceRequest(req))
     }
 
@@ -88,6 +91,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
         type: [JournalResponseDto],
     })
     async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<[JournalResponseDto[], number]> {
+        this.log.debug({message: 'read domain journal by id', func: this.delete.name, url: req.url, method: req.method})
         return super.journal(id, page, row, req)
     }
 

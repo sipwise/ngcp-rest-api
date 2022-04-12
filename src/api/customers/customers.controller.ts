@@ -1,4 +1,4 @@
-import {Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
+import {Controller, Delete, Get, Logger, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {CustomerCreateDto} from './dto/customer-create.dto'
 import {CustomerResponseDto} from './dto/customer-response.dto'
@@ -39,7 +39,7 @@ const resourceName = 'customers'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class CustomersController extends CrudController<CustomerCreateDto, CustomerResponseDto> {
-
+    private readonly log: Logger = new Logger(CustomersController.name)
     constructor(
         private readonly customerService: CustomersService,
         private readonly journalService: JournalsService,
@@ -53,6 +53,7 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
         type: CustomerResponseDto,
     })
     async create(entity: CustomerCreateDto, req: Request): Promise<CustomerResponseDto> {
+        this.log.debug({message: 'create customer', func: this.create.name, url: req.url, method: req.method})
         return this.customerService.create(entity, this.newServiceRequest(req))
     }
 
@@ -60,6 +61,7 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(CustomerResponseDto)
     async readAll(req): Promise<[CustomerResponseDto[], number]> {
+        this.log.debug({message: 'fetch all customers', func: this.readAll.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
         const [responseList, totalCount] =
             await this.customerService.readAll(sr)
@@ -75,6 +77,7 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
         type: CustomerResponseDto,
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<CustomerResponseDto> {
+        this.log.debug({message: 'fetch customer by id', func: this.read.name, url: req.url, method: req.method})
         return this.customerService.read(id, this.newServiceRequest(req))
         const responseItem = await this.customerService.read(id, this.newServiceRequest(req))
         if (req.query.expand && !req.isRedirected) {
@@ -89,6 +92,7 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
         type: CustomerResponseDto,
     })
     async update(@Param('id', ParseIntPipe) id: number, dto: CustomerCreateDto, req): Promise<CustomerResponseDto> {
+        this.log.debug({message: 'update customer by id', func: this.update.name, url: req.url, method: req.method})
         return this.customerService.update(id, dto, this.newServiceRequest(req))
     }
 
@@ -101,6 +105,7 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
         type: [PatchDto],
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<CustomerResponseDto> {
+        this.log.debug({message: 'patch customer by id', func: this.adjust.name, url: req.url, method: req.method})
         return this.customerService.adjust(id, patch, this.newServiceRequest(req))
     }
 
@@ -109,6 +114,7 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
         type: number,
     })
     async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
+        this.log.debug({message: 'delete customer by id', func: this.delete.name, url: req.url, method: req.method})
         return this.customerService.delete(id, this.newServiceRequest(req))
     }
 
@@ -117,6 +123,7 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
         type: [JournalResponseDto],
     })
     async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<[JournalResponseDto[], number]> {
+        this.log.debug({message: 'fetch customer journal by id', func: this.journal.name, url: req.url, method: req.method})
         return super.journal(id, page, row, req)
     }
 }

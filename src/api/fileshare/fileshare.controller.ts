@@ -2,7 +2,7 @@ import {ApiCreatedResponse, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} fr
 import {
     Controller,
     Delete,
-    Get,
+    Get, Logger,
     Param,
     ParseUUIDPipe,
     Post,
@@ -31,6 +31,8 @@ const resourceName = 'fileshare'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class FileshareController extends CrudController<FileshareCreateDto, FileshareResponseDto> {
+    private readonly log: Logger = new Logger(FileshareController.name)
+
     constructor(
         private readonly fileshareService: FileshareService,
         private readonly journalsService: JournalsService,
@@ -49,6 +51,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
         },
     }))
     async create(createDto: FileshareCreateDto, req, file): Promise<FileshareResponseDto> {
+        this.log.debug({message: 'create fileshare', func: this.create.name, url: req.url, method: req.method})
         return await this.fileshareService.create(createDto, req, file)
     }
 
@@ -56,6 +59,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(FileshareResponseDto)
     async readAll(req): Promise<[FileshareResponseDto[], number]> {
+        this.log.debug({message: 'fetch all fileshares', func: this.readAll.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
         const [responseList, totalCount] =
             await this.fileshareService.readAll(sr)
@@ -72,6 +76,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
         type: StreamableFile,
     })
     async readFile(@Param('id', ParseUUIDPipe) id: string, req, @Response({passthrough: true}) res): Promise<StreamableFile> {
+        this.log.debug({message: 'fetch fileshare by id', func: this.readFile.name, url: req.url, method: req.method})
         const stream = await this.fileshareService.read(id)
         let size = 0
         stream.options.disposition.split(/;\s*/).map(pair => {
@@ -93,6 +98,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     @Delete(':id')
     @ApiOkResponse({})
     async delete(@Param('id', ParseUUIDPipe) id: string, req) {
+        this.log.debug({message: 'delete fileshare by id', func: this.delete.name, url: req.url, method: req.method})
         return this.fileshareService.delete(id, req)
     }
 
@@ -101,6 +107,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
         type: [JournalResponseDto],
     })
     async journal(id, page, row, req): Promise<[JournalResponseDto[], number]> {
+        this.log.debug({message: 'fetch fileshare journal by id', func: this.journal.name, url: req.url, method: req.method})
         return super.journal(id, page, row, req)
     }
 

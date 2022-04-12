@@ -23,6 +23,11 @@ export class DomainsService { // implements CrudService<DomainCreateDto, DomainR
     }
 
     async create(domain: internal.Domain, req: ServiceRequest): Promise<internal.Domain> {
+        this.log.debug({
+            message: 'create domain',
+            func: this.create.name,
+            user: req.user.username,
+        })
         if (RBAC_ROLES.reseller == req.user.role) {
             domain.reseller_id = req.user.reseller_id
         }
@@ -48,6 +53,11 @@ export class DomainsService { // implements CrudService<DomainCreateDto, DomainR
     }
 
     async read(id: number, req: ServiceRequest): Promise<internal.Domain> {
+        this.log.debug({
+            message: 'read domain by id',
+            func: this.read.name,
+            user: req.user.username,
+        })
         return await this.domainRepo.readById(id, req)
     }
 
@@ -60,6 +70,11 @@ export class DomainsService { // implements CrudService<DomainCreateDto, DomainR
     }
 
     async delete(id: number, req: ServiceRequest): Promise<number> {
+        this.log.debug({
+            message: 'delete domain by id',
+            func: this.delete.name,
+            user: req.user.username,
+        })
         const domain = await this.domainRepo.readById(id, req)
         if (RBAC_ROLES.reseller == req.user.role && domain.reseller_id != req.user.reseller_id) {
             throw new ForbiddenException(Messages.invoke(Messages.DOMAIN_DOES_NOT_BELONG_TO_RESELLER, req))

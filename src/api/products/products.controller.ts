@@ -1,4 +1,14 @@
-import {Controller, DefaultValuePipe, Get, Param, ParseIntPipe, Query, Req, UseInterceptors} from '@nestjs/common'
+import {
+    Controller,
+    DefaultValuePipe,
+    Get,
+    Logger,
+    Param,
+    ParseIntPipe,
+    Query,
+    Req,
+    UseInterceptors,
+} from '@nestjs/common'
 import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {AppService} from '../../app.service'
@@ -22,6 +32,8 @@ const resourceName = 'products'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class ProductsController {
+    private readonly log: Logger = new Logger(ProductsController.name)
+
     constructor(
         private readonly productsService: ProductsService,
         private readonly journalsService: JournalsService,
@@ -32,7 +44,7 @@ export class ProductsController {
     @Get()
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(ProductResponseDto)
-    async findAll(
+    async readAll(
         @Query(
             'page',
             new DefaultValuePipe(AppService.config.common.api_default_query_page)
@@ -43,6 +55,7 @@ export class ProductsController {
             ParseIntPipe) row: number,
         @Req() req,
     ): Promise<[ProductResponseDto[], number]> {
+        this.log.debug({message: 'fetch all products', func: this.readAll.name, url: req.url, method: req.method})
         const [responseList, totalCount] =
             await this.productsService.readAll(page, row, req)
         if (req.query.expand) {
@@ -56,7 +69,8 @@ export class ProductsController {
     @ApiOkResponse({
         type: ProductResponseDto,
     })
-    async findOne(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<ProductResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<ProductResponseDto> {
+        this.log.debug({message: 'fetch product by id', func: this.read.name, url: req.url, method: req.method})
         const responseList = await this.productsService.read(id, req)
         if (req.query.expand && !req.isRedirected) {
             const productSearchDtoKeys = Object.keys(new ProductSearchDto())

@@ -1,4 +1,4 @@
-import {Controller, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
+import {Controller, forwardRef, Get, Inject, Logger, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
 import {Auth} from '../../decorators/auth.decorator'
 import {
     ApiBody,
@@ -33,6 +33,8 @@ const resourceName = 'contracts'
 @Controller(resourceName)
 export class ContractsController extends CrudController<ContractCreateDto, ContractResponseDto> {
 
+    private readonly log: Logger = new Logger(ContractsController.name)
+
     constructor(
         private readonly contractsService: ContractsService,
         private readonly journalsService: JournalsService,
@@ -47,6 +49,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
         type: ContractResponseDto,
     })
     async create(entity: ContractCreateDto, req: Request): Promise<ContractResponseDto> {
+        this.log.debug({message: 'create contract', func: this.create.name, url: req.url, method: req.method})
         return this.contractsService.create(entity, this.newServiceRequest(req))
     }
 
@@ -54,6 +57,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(ContractResponseDto)
     async readAll(req): Promise<[ContractResponseDto[], number]> {
+        this.log.debug({message: 'fetch all contracts', func: this.readAll.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
         const [responseList, totalCount] =
             await this.contractsService.readAll(sr)
@@ -69,6 +73,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
         type: ContractResponseDto,
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<ContractResponseDto> {
+        this.log.debug({message: 'fetch contract by id', func: this.read.name, url: req.url, method: req.method})
         const responseItem = await this.contractsService.read(id, this.newServiceRequest(req))
         if (req.query.expand && !req.isRedirected) {
             const contractSearchDtoKeys = Object.keys(new ContractSearchDto())
@@ -82,6 +87,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
         type: ContractResponseDto,
     })
     async update(@Param('id', ParseIntPipe) id: number, dto: ContractCreateDto, req): Promise<ContractResponseDto> {
+        this.log.debug({message: 'update contract by id', func: this.update.name, url: req.url, method: req.method})
         return this.contractsService.update(id, dto, this.newServiceRequest(req))
     }
 
@@ -94,6 +100,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
         type: [PatchDto],
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ContractResponseDto> {
+        this.log.debug({message: 'patch contract by id', func: this.adjust.name, url: req.url, method: req.method})
         return this.contractsService.adjust(id, patch, this.newServiceRequest(req))
     }
 
@@ -108,6 +115,7 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
         type: [JournalResponseDto],
     })
     async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<[JournalResponseDto[], number]> {
+        this.log.debug({message: 'fetch contract journal by id', func: this.journal.name, url: req.url, method: req.method})
         return super.journal(id, page, row, req)
     }
 }

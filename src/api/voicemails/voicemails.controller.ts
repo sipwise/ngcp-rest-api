@@ -13,7 +13,7 @@ import {
     Body,
     Controller,
     Delete,
-    Get,
+    Get, Logger,
     Param,
     ParseIntPipe,
     Patch,
@@ -47,6 +47,8 @@ const resourceName = 'voicemails'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class VoicemailsController extends CrudController<VoicemailBaseDto, VoicemailResponseDto> {
+    private readonly log: Logger = new Logger(VoicemailsController.name)
+
     constructor(
         private readonly voicemailsService: VoicemailsService,
         private readonly journalService: JournalsService,
@@ -60,6 +62,7 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
         type: VoicemailResponseDto,
     })
     async create(@Body() voicemail: VoicemailBaseDto, @Req() req): Promise<VoicemailResponseDto> {
+        this.log.debug({message: 'create voicemail', func: this.create.name, url: req.url, method: req.method})
         return await this.voicemailsService.create(voicemail, req)
     }
 
@@ -67,6 +70,7 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(VoicemailResponseDto)
     async readAll(@Req() req): Promise<[VoicemailResponseDto[], number]> {
+        this.log.debug({message: 'fetch all voicemails', func: this.readAll.name, url: req.url, method: req.method})
         const [responseList, totalCount] =
             await this.voicemailsService.readAll(req)
         if (req.query.expand) {
@@ -81,6 +85,7 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
         type: VoicemailResponseDto,
     })
     async read(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<VoicemailResponseDto> {
+        this.log.debug({message: 'fetch voicemail by id', func: this.read.name, url: req.url, method: req.method})
         const responseItem = await this.voicemailsService.read(id, req)
         if (req.query.expand && !req.isRedirected) {
             const voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
@@ -94,6 +99,7 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
         type: number,
     })
     async delete(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<number> {
+        this.log.debug({message: 'delete voicemail by id', func: this.delete.name, url: req.url, method: req.method})
         return await this.voicemailsService.delete(id, req)
     }
 
@@ -106,6 +112,7 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
         type: [PatchDto],
     })
     async adjust(@Param('id', ParseIntPipe) id: number, @Body() patch: PatchOperation | PatchOperation[], @Req() req): Promise<VoicemailResponseDto> {
+        this.log.debug({message: 'patch voicemail by id', func: this.adjust.name, url: req.url, method: req.method})
         const err = validate(patch)
         if (err) {
             const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
@@ -119,6 +126,7 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
         type: VoicemailResponseDto,
     })
     async update(@Param('id', ParseIntPipe) id: number, @Body() voicemail: VoicemailBaseDto, @Req() req): Promise<VoicemailResponseDto> {
+        this.log.debug({message: 'update voicemail by id', func: this.update.name, url: req.url, method: req.method})
         return await this.voicemailsService.update(id, voicemail, req)
     }
 }
