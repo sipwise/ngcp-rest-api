@@ -2,10 +2,7 @@ import halson from 'halson'
 import {AppService} from '../app.service'
 import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestjs/common'
 import {Observable} from 'rxjs'
-import {extractResourceName} from '../helpers/uri.helper'
 import {map} from 'rxjs/operators'
-import validator from 'validator'
-import isNumeric = validator.isNumeric
 
 /**
  * Defines the names of query parameters for pagination
@@ -31,7 +28,7 @@ export class TransformInterceptor implements NestInterceptor {
      * @param options Query parameter names
      */
     constructor(options: TransformInterceptorOptions) {
-        const {pageName = 'page', perPageName = 'row'} = options
+        const {pageName = 'page', perPageName = 'rows'} = options
         this.pageName = pageName
         this.perPageName = perPageName
     }
@@ -41,6 +38,9 @@ export class TransformInterceptor implements NestInterceptor {
      *
      * If content type explicitly is set to 'application/json' normal JSON is returned. In all other cases
      * JSON+HAL is returned.
+     *
+     * header prefer determines whether content is sent back or not
+     *
      * @param context ExecutionContext to access HTTP request
      * @param next  Next CallHandler
      *
@@ -51,6 +51,26 @@ export class TransformInterceptor implements NestInterceptor {
         return next.handle().pipe(map(data => {
             const req = ctx.getRequest()
             const res = ctx.getResponse()
+
+            /**
+             * if prefer header is empty we return 204 no content on all methods except POST and GET
+             * if return=minimal we return 204 on all http methods
+             * else we return content
+             */
+            const prefer = req.headers.prefer || ''
+            switch (prefer) {
+            case 'return=minimal':
+                res.status(204)
+                return
+            case 'return=representation':
+                break
+            default:
+                if (['PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+                    res.status(204)
+                    return
+                }
+                break
+            }
 
             const accept = (req.headers.accept || '').split(',')
             if (res.passthrough) {
@@ -108,10 +128,10 @@ export class TransformInterceptor implements NestInterceptor {
 
             const pageCount = Math.ceil(totalCount / +rows)
             if (+page > 1) {
-                resource.addLink('prev', `${req.route.path}?page=${+page-1}&rows=${rows}`)
+                resource.addLink('prev', `${req.route.path}?page=${+page - 1}&rows=${rows}`)
             }
             if (+page < pageCount) {
-                resource.addLink('next', `${req.route.path}?page=${+page+1}&rows=${rows}`)
+                resource.addLink('next', `${req.route.path}?page=${+page + 1}&rows=${rows}`)
             }
             return resource
         } else if (data && 'id' in data) {
