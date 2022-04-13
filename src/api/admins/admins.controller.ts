@@ -17,7 +17,6 @@ import {
 } from '@nestjs/common'
 import {AdminCreateDto} from './dto/admin-create.dto'
 import {AdminResponseDto} from './dto/admin-response.dto'
-import {AdminUpdateDto} from './dto/admin-update.dto'
 import {AdminsService} from './admins.service'
 import {
     ApiBody,
@@ -131,11 +130,11 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
     })
     async update(
         @Param('id', ParseIntPipe) id: number,
-        @Body() update: AdminUpdateDto,
+        @Body() update: AdminCreateDto,
         @Req() req: Request,
     ): Promise<AdminResponseDto> {
         this.log.debug({message: 'update admin by id', func: this.update.name, url: req.url, method: req.method})
-        const admin = Object.assign(new AdminUpdateDto(), update)
+        const admin = Object.assign(new AdminCreateDto(), update)
         const sr = this.newServiceRequest(req)
         return new AdminResponseDto(await this.adminsService.update(id, await admin.toInternal(), sr), sr.user.role)
     }

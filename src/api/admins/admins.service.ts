@@ -20,45 +20,14 @@ export class AdminsService { //} implements CrudService<AdminCreateDto, AdminRes
     }
 
     async create(admin: internal.Admin, req: ServiceRequest): Promise<internal.Admin> {
-        await admin.setPermissionFlags()
-        const role = await this.aclRepo.readOneByRole(admin.role, req)
-
-        admin.role_id = role.id  // TODO: admin.role already contains id
-        admin.role_data = role
-
-        this.log.debug({message: 'create admin', func: this.create.name, user: req.user.username})
-        const requestRole = await this.aclRepo.readOneByRole(req.user.role, req) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
-        if (!await requestRole.hasPermission(admin.role_id)) {
-            this.log.debug({
-                message: 'check user permission level',
-                success: false,
-                role: req.user.role,
-                requested_role: admin.role,
-                is_master: req.user.is_master,
-            })
-            throw new ForbiddenException(Messages.invoke(Messages.PERMISSION_DENIED, req))
-        }
-        this.log.debug({
-            message: 'check user permission level',
-            success: true,
-            role: req.user.role,
-            is_master: req.user.is_master,
-        })
-
         this.log.debug({message: 'create admin', func: this.create.name, user: req.user.username})
 
-        if (req.user.reseller_id_required || admin.reseller_id == undefined) {
-            admin.reseller_id = req.user.reseller_id
-        }
-
-        if (admin.password)
-            await admin.generateSaltedpass()
+        await this.populateAdmin(admin, req)
 
         return await this.adminRepo.create(admin)
     }
 
     async readAll(req: ServiceRequest): Promise<[internal.Admin[], number]> {
-        this.log.debug(req)
         this.log.debug({
             message: 'read all admins',
             func: this.readAll.name,
@@ -75,32 +44,11 @@ export class AdminsService { //} implements CrudService<AdminCreateDto, AdminRes
 
     async update(id: number, admin: internal.Admin, req: ServiceRequest): Promise<internal.Admin> {
         this.log.debug({message: 'update admin by id', func: this.update.name, user: req.user.username, id: id})
-
-        await admin.setPermissionFlags()
-
-        const role = await this.aclRepo.readOneByRole(admin.role, req)
-
-        const requestRole = await this.aclRepo.readOneByRole(req.user.role, req) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
-        if (!await requestRole.hasPermission(role.id)) {
-            this.log.debug({
-                message: 'check user permission level',
-                success: false,
-                role: req.user.role,
-                requested_role: admin.role,
-                is_master: req.user.is_master,
-            })
-            throw new ForbiddenException(Messages.invoke(Messages.PERMISSION_DENIED, req), Messages.invoke(Messages.INVALID_USER_ROLE, req).description)
-        }
-
         admin.id = id
-        admin.role_id = role.id
-        admin.role_data = role
+        await this.populateAdmin(admin, req)
 
         const oldAdmin = await this.adminRepo.readById(id, req)
         await this.validateUpdate(req.user.id, oldAdmin, admin)
-
-        if (admin.password)
-            await admin.generateSaltedpass()
 
         return await this.adminRepo.update(id, admin, req)
     }
@@ -111,34 +59,15 @@ export class AdminsService { //} implements CrudService<AdminCreateDto, AdminRes
             func: this.adjust.name,
             user: req.user.username,
             id: id,
-            patch: patch,
         })
         let admin = await this.adminRepo.readById(id, req)
         const oldAdmin = deepCopy(admin)
 
         admin = applyPatch(admin, patch).newDocument
-        admin.id = id
         admin.role ||= oldAdmin.role
+        admin.id = id
 
-        await admin.setPermissionFlags()
-
-        const role = await this.aclRepo.readOneByRole(admin.role, req)
-        admin.role_data = role
-        const requestRole = await this.aclRepo.readOneByRole(req.user.role, req) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
-
-        if (!await requestRole.hasPermission(role.id)) {
-            this.log.debug({
-                message: 'check user permission level',
-                success: false,
-                role: req.user.role,
-                requested_role: admin.role,
-                is_master: req.user.is_master,
-            })
-            throw new ForbiddenException(Messages.invoke(Messages.PERMISSION_DENIED, req), Messages.invoke(Messages.INVALID_USER_ROLE, req).description)
-        }
-
-        if (admin.password)
-            await admin.generateSaltedpass()
+        await this.populateAdmin(admin, req)
 
         await this.validateUpdate(req.user.id, oldAdmin, admin)
 
@@ -152,6 +81,34 @@ export class AdminsService { //} implements CrudService<AdminCreateDto, AdminRes
             throw new UnprocessableEntityException(Messages.invoke(Messages.DELETE_OWN_USER, req)) // TODO: should we use forbidden?
 
         return await this.adminRepo.delete(id, req)
+    }
+
+    private async populateAdmin(admin: internal.Admin, sr: ServiceRequest) {
+        const role = await this.aclRepo.readOneByRole(admin.role, sr)
+        await admin.setPermissionFlags()
+        admin.role_id = role.id
+        admin.role_data = role
+
+        const requestRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
+        if (!await requestRole.hasPermission(role.id)) {
+            this.log.debug({
+                message: 'check user permission level',
+                success: false,
+                role: sr.user.role,
+                requested_role: admin.role,
+                is_master: sr.user.is_master,
+            })
+            throw new ForbiddenException(
+                Messages.invoke(Messages.PERMISSION_DENIED, sr),
+                Messages.invoke(Messages.INVALID_USER_ROLE, sr).description,
+            )
+        }
+        if (admin.password)
+            await admin.generateSaltedpass()
+
+        if (sr.user.reseller_id_required || admin.reseller_id == undefined) {
+            admin.reseller_id = sr.user.reseller_id
+        }
     }
 
     /**
@@ -172,7 +129,10 @@ export class AdminsService { //} implements CrudService<AdminCreateDto, AdminRes
                 'call_data', 'billing_data'].map(s => {
                 if (admin[s] != undefined && (oldAdmin[s] == undefined || oldAdmin[s] != admin[s])) {
                     this.log.debug({message: 'Cannot change own property', id: selfId, field: s})
-                    throw new ForbiddenException(Messages.invoke(Messages.PERMISSION_DENIED), Messages.invoke(Messages.CHANGE_OWN_PROPERTY).description)
+                    throw new ForbiddenException(
+                        Messages.invoke(Messages.PERMISSION_DENIED),
+                        Messages.invoke(Messages.CHANGE_OWN_PROPERTY).description,
+                    )
                 }
             })
         }

@@ -56,6 +56,10 @@ export class AdminsMariadbRepository implements AdminsRepository {
         await query.andWhere('admin.id = :id', {id: id}).getOneOrFail()
 
         const update = new db.billing.Admin().fromInternal(admin)
+        Object.keys(update).map(key => {
+            if (update[key] == undefined)
+                delete update[key]
+        })
         await db.billing.Admin.update(id, update)
 
         const updated: db.billing.Admin = await query.andWhere('admin.id = :id', {id: id}).getOneOrFail()
