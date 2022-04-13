@@ -1,4 +1,4 @@
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 import {JournalResponseDto} from './dto/journal-response.dto'
 import {Auth} from '../../decorators/auth.decorator'
 import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
@@ -12,7 +12,7 @@ import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 
-@Auth(RBAC_ROLES.system, RBAC_ROLES.admin, RBAC_ROLES.reseller)
+@Auth(RbacRole.system, RbacRole.admin, RbacRole.reseller)
 @ApiTags('Journals')
 @ApiExtraModels(PaginatedDto)
 @Controller('journals')

@@ -4,7 +4,7 @@ import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {Logger} from '@nestjs/common'
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {SelectQueryBuilder} from 'typeorm'
-import {RBAC_ROLES} from '../../../config/constants.config'
+import {RbacRole} from '../../../config/constants.config'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 
 export class PbxgroupsMariadbRepository implements PbxgroupsRepository {
@@ -60,12 +60,12 @@ export class PbxgroupsMariadbRepository implements PbxgroupsRepository {
     }
 
     private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<any>, req: ServiceRequest) {
-        if (req.user.role == RBAC_ROLES.reseller) {
+        if (req.user.role == RbacRole.reseller) {
             qb
                 .innerJoin('bg.contract', 'contract')
                 .innerJoin('contract.contact', 'contact')
                 .where('contact.reseller_id = :reseller_id', {reseller_id: req.user.reseller_id})
-        } else if (req.user.role == RBAC_ROLES.subscriber) {
+        } else if (req.user.role == RbacRole.subscriber) {
             qb.where('bg.id = :subscriber_id', {subscriber_id: req.user.id})
         }
     }

@@ -6,7 +6,7 @@ import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {ResellerBaseDto, ResellerStatus} from './dto/reseller-base.dto'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 import {AppService} from '../../app.service'
 import {db} from '../../entities'
 import {FindManyOptions, IsNull} from 'typeorm'
@@ -163,14 +163,14 @@ export class ResellersService implements CrudService<ResellerCreateDto, Reseller
     private async validateUpdate(id: number, newReseller: ResellerBaseDto, req: ServiceRequest): Promise<boolean> {
         const oldReseller = await db.billing.Reseller.findOneOrFail(id)
         // TODO: check if there is a case where IDs could differ - I think this check is redundant
-        if (req.user.role === RBAC_ROLES.admin) {
+        if (req.user.role === RbacRole.admin) {
             if (oldReseller.id != id) {
                 // TODO: check if HTTP Status code should be 422 UnprocessableEntity; or Forbidden
                 throw new UnprocessableEntityException(Messages.invoke(Messages.CHANGE_ID_FORBIDDEN, req))
             }
         }
 
-        if (req.user.role === RBAC_ROLES.reseller) {
+        if (req.user.role === RbacRole.reseller) {
             if (req.user.reseller_id != id) {
                 throw new ForbiddenException(Messages.invoke(Messages.CHANGE_UNASSOCIATED_FORBIDDEN, req))
             }

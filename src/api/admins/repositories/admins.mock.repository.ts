@@ -1,4 +1,4 @@
-import {RBAC_ROLES} from '../../../config/constants.config'
+import {RbacRole} from '../../../config/constants.config'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {NotFoundException} from '@nestjs/common'
 import {internal} from '../../../entities'
@@ -16,27 +16,27 @@ export class AdminsMockRepository implements AdminsRepository {
             1: internal.Admin.create({
                 id: 1,
                 login: 'administrator_master',
-                role: RBAC_ROLES.admin,
+                role: RbacRole.admin,
                 is_master: true,
                 billing_data: false,
                 is_superuser: true,
             }),
-            2: internal.Admin.create({id: 2, login: 'administrator', role: RBAC_ROLES.admin}),
+            2: internal.Admin.create({id: 2, login: 'administrator', role: RbacRole.admin}),
             3: internal.Admin.create({
                 id: 3,
                 login: 'reseller_master',
                 saltedpass: 'verysalty',
-                role: RBAC_ROLES.reseller,
+                role: RbacRole.reseller,
                 is_master: true,
             }),
-            4: internal.Admin.create({id: 4, login: 'reseller', role: RBAC_ROLES.reseller}),
+            4: internal.Admin.create({id: 4, login: 'reseller', role: RbacRole.reseller}),
             5: internal.Admin.create({
                 id: 5,
                 login: 'ccareadmin_master',
-                role: RBAC_ROLES.ccareadmin,
+                role: RbacRole.ccareadmin,
                 is_master: true,
             }),
-            6: internal.Admin.create({id: 6, login: 'ccareadmin', role: RBAC_ROLES.ccareadmin}),
+            6: internal.Admin.create({id: 6, login: 'ccareadmin', role: RbacRole.ccareadmin}),
         }
     }
 

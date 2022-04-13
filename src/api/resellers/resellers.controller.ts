@@ -17,7 +17,7 @@ import {
 } from '@nestjs/swagger'
 import {Operation} from '../../helpers/patch.helper'
 import {Request} from 'express'
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 import {PatchDto} from '../patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ResellerSearchDto} from './dto/reseller-search.dto'
@@ -27,7 +27,7 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 
 const resourceName = 'resellers'
 
-@Auth(RBAC_ROLES.admin, RBAC_ROLES.system)
+@Auth(RbacRole.admin, RbacRole.system)
 @ApiTags('Resellers')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)

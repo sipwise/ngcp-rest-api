@@ -17,7 +17,7 @@ import {
     ApiTags,
 } from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 import {number} from 'yargs'
 import {PatchDto} from '../patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
@@ -29,11 +29,11 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 const resourceName = 'customers'
 
 @Auth(
-    RBAC_ROLES.system,
-    RBAC_ROLES.admin,
-    RBAC_ROLES.reseller,
-    RBAC_ROLES.ccare,
-    RBAC_ROLES.ccareadmin,
+    RbacRole.system,
+    RbacRole.admin,
+    RbacRole.reseller,
+    RbacRole.ccare,
+    RbacRole.ccareadmin,
 )
 @ApiTags('Customers')
 @ApiExtraModels(PaginatedDto)

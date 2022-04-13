@@ -29,7 +29,7 @@ import {JournalsService} from '../journals/journals.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {Request} from 'express'
 import {Auth} from '../../decorators/auth.decorator'
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 import {number} from 'yargs'
 import {Operation} from '../../helpers/patch.helper'
 import {PatchDto} from '../patch.dto'
@@ -41,7 +41,7 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 
 const resourceName = 'customercontacts'
 
-@Auth(RBAC_ROLES.system, RBAC_ROLES.admin, RBAC_ROLES.ccare, RBAC_ROLES.ccareadmin, RBAC_ROLES.reseller)
+@Auth(RbacRole.system, RbacRole.admin, RbacRole.ccare, RbacRole.ccareadmin, RbacRole.reseller)
 @ApiTags('Customer Contacts')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)

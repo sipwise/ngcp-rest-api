@@ -13,7 +13,7 @@ import {RepositoriesModule} from '../../repositories/repositories.module'
 import {ForbiddenException, UnprocessableEntityException} from '@nestjs/common'
 import {AdminsMockRepository} from './repositories/admins.mock.repository'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 
 const user: AuthResponseDto = {
     readOnly: false,
@@ -245,11 +245,11 @@ describe('AdminsService', () => {
         it('should update role to admin', async () => {
             const id = 3
             const patch: PatchOperation[] = [
-                {op: 'replace', path: '/role', value: RBAC_ROLES.admin},
+                {op: 'replace', path: '/role', value: RbacRole.admin},
             ]
             const got = await service.adjust(id, patch, sr)
             const want = await adminsMockRepo.readById(id, sr)
-            expect(got.role).toStrictEqual(RBAC_ROLES.admin)
+            expect(got.role).toStrictEqual(RbacRole.admin)
         })
         it('throw ForbiddenException with wrong permissions', async () => {
             const id = 2

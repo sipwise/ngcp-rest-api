@@ -17,7 +17,7 @@ import {JournalsService} from '../journals/journals.service'
 import {LoggingInterceptor} from '../../interceptors/logging.interceptor'
 import {ProductResponseDto} from './dto/product-response.dto'
 import {ProductsService} from './products.service'
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ProductSearchDto} from './dto/product-search.dto'
 import {PaginatedDto} from '../paginated.dto'
@@ -26,7 +26,7 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 
 const resourceName = 'products'
 
-@Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller, RBAC_ROLES.lintercept)
+@Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.lintercept)
 @UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
 @ApiTags('Products')
 @ApiExtraModels(PaginatedDto)

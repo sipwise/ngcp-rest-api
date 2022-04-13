@@ -17,15 +17,7 @@ export const jwtConstants = {
     secret: AppService.config.common.jwt_key,
 }
 
-// TODO: Rename to singular RBAC_ROLE
-// export const RBAC_ROLES = {
-//     system: 'system',
-//     admin: 'admin',
-//     reseller: 'reseller',
-//     ccare: 'ccare',
-//     ccareadmin: 'ccareadmin',
-// }
-export enum RBAC_ROLES {
+export enum RbacRole {
     system = 'system',
     admin = 'admin',
     reseller = 'reseller',
@@ -35,7 +27,7 @@ export enum RBAC_ROLES {
     subscriber = 'subscriber'
 }
 
-export interface RBAC_FLAGS {
+export interface RbacFlag {
     is_system: boolean
     is_superuser: boolean
     is_ccare: boolean

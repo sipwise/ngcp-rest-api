@@ -1,6 +1,6 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
 import {AclRole} from './acl-role.mariadb.entity'
-import {RBAC_FLAGS, RBAC_ROLES} from '../../../config/constants.config'
+import {RbacFlag, RbacRole} from '../../../config/constants.config'
 import {internal} from '../../../entities'
 
 @Entity({
@@ -176,7 +176,7 @@ export class Admin extends BaseEntity {
         admin.reseller_id = this.reseller_id
         admin.role_id = this.role_id
         if (this.role != undefined) {
-            admin.role = RBAC_ROLES[this.role.role]
+            admin.role = RbacRole[this.role.role]
             admin.role_data = await this.role.toInternal()
             admin.role_id = this.role.id
         }
@@ -185,44 +185,44 @@ export class Admin extends BaseEntity {
         return admin
     }
 
-    async getPermissionFlags(): Promise<RBAC_FLAGS> {
+    async getPermissionFlags(): Promise<RbacFlag> {
         switch (this.role.role) {
-        case RBAC_ROLES.system:
+        case RbacRole.system:
             return {
                 is_system: true,
                 is_superuser: false,
                 is_ccare: false,
                 lawful_intercept: false,
             }
-        case RBAC_ROLES.admin:
+        case RbacRole.admin:
             return {
                 is_system: false,
                 is_superuser: true,
                 is_ccare: false,
                 lawful_intercept: false,
             }
-        case RBAC_ROLES.reseller:
+        case RbacRole.reseller:
             return {
                 is_system: false,
                 is_superuser: false,
                 is_ccare: false,
                 lawful_intercept: false,
             }
-        case RBAC_ROLES.ccareadmin:
+        case RbacRole.ccareadmin:
             return {
                 is_system: false,
                 is_superuser: true,
                 is_ccare: true,
                 lawful_intercept: false,
             }
-        case RBAC_ROLES.ccare:
+        case RbacRole.ccare:
             return {
                 is_system: false,
                 is_superuser: false,
                 is_ccare: true,
                 lawful_intercept: false,
             }
-        case RBAC_ROLES.lintercept:
+        case RbacRole.lintercept:
             return {
                 is_system: false,
                 is_superuser: false,

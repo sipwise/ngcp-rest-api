@@ -17,7 +17,7 @@ import {JournalsService} from '../journals/journals.service'
 import {Operation} from '../../helpers/patch.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {Request} from 'express'
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 import {PatchDto} from '../patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ContractSearchDto} from './dto/contract-search.dto'
@@ -27,7 +27,7 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 
 const resourceName = 'contracts'
 
-@Auth(RBAC_ROLES.admin, RBAC_ROLES.system)
+@Auth(RbacRole.admin, RbacRole.system)
 @ApiTags('Contracts')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)

@@ -1,4 +1,4 @@
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 import {internal} from './../../entities'
 import {genSalt, hash} from 'bcrypt'
 
@@ -42,7 +42,7 @@ export class Admin implements AdminInterface {
     read_only: boolean
     reseller_id?: number
     role_data?: internal.AclRole
-    role: RBAC_ROLES
+    role: RbacRole
     role_id: number
     saltedpass: string
     show_passwords: boolean
@@ -58,37 +58,37 @@ export class Admin implements AdminInterface {
 
     async setPermissionFlags() {
         switch (this.role) {
-        case RBAC_ROLES.system:
+        case RbacRole.system:
             this.is_system = true
             this.is_superuser = false
             this.is_ccare = false
             this.lawful_intercept = false
             break
-        case RBAC_ROLES.admin:
+        case RbacRole.admin:
             this.is_system = false
             this.is_superuser = true
             this.is_ccare = false
             this.lawful_intercept = false
             break
-        case RBAC_ROLES.reseller:
+        case RbacRole.reseller:
             this.is_system = false
             this.is_superuser = false
             this.is_ccare = false
             this.lawful_intercept = false
             break
-        case RBAC_ROLES.ccareadmin:
+        case RbacRole.ccareadmin:
             this.is_system = false
             this.is_superuser = true
             this.is_ccare = true
             this.lawful_intercept = false
             break
-        case RBAC_ROLES.ccare:
+        case RbacRole.ccare:
             this.is_system = false
             this.is_superuser = false
             this.is_ccare = true
             this.lawful_intercept = false
             break
-        case RBAC_ROLES.lintercept:
+        case RbacRole.lintercept:
             this.is_system = false
             this.is_superuser = false
             this.is_ccare = false

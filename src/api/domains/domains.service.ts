@@ -8,7 +8,7 @@ import {
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {db, internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 import {Messages} from '../../config/messages.config'
 import {DomainsMariadbRepository} from './repositories/domains.mariadb.repository'
 import {DomainCreateDto} from './dto/domain-create.dto'
@@ -28,7 +28,7 @@ export class DomainsService { // implements CrudService<DomainCreateDto, DomainR
             func: this.create.name,
             user: req.user.username,
         })
-        if (RBAC_ROLES.reseller == req.user.role) {
+        if (RbacRole.reseller == req.user.role) {
             domain.reseller_id = req.user.reseller_id
         }
 
@@ -76,7 +76,7 @@ export class DomainsService { // implements CrudService<DomainCreateDto, DomainR
             user: req.user.username,
         })
         const domain = await this.domainRepo.readById(id, req)
-        if (RBAC_ROLES.reseller == req.user.role && domain.reseller_id != req.user.reseller_id) {
+        if (RbacRole.reseller == req.user.role && domain.reseller_id != req.user.reseller_id) {
             throw new ForbiddenException(Messages.invoke(Messages.DOMAIN_DOES_NOT_BELONG_TO_RESELLER, req))
         }
         return await this.domainRepo.delete(id, req)

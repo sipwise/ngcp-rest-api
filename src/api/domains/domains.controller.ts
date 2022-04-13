@@ -7,7 +7,7 @@ import {DomainResponseDto} from './dto/domain-response.dto'
 import {DomainsService} from './domains.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalsService} from '../journals/journals.service'
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 import {Roles} from '../../decorators/roles.decorator'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {DomainSearchDto} from './dto/domain-search.dto'
@@ -18,9 +18,9 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 const resourceName = 'domains'
 
 @Auth(
-    RBAC_ROLES.admin,
-    RBAC_ROLES.reseller,
-    RBAC_ROLES.system,
+    RbacRole.admin,
+    RbacRole.reseller,
+    RbacRole.system,
 )
 @ApiTags('Domains')
 @ApiExtraModels(PaginatedDto)
@@ -47,7 +47,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     }
 
     @Get()
-    @Roles(RBAC_ROLES.ccare, RBAC_ROLES.ccareadmin)
+    @Roles(RbacRole.ccare, RbacRole.ccareadmin)
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(DomainResponseDto)
     async readAll(@Req() req): Promise<[DomainResponseDto[], number]> {
@@ -67,7 +67,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     @ApiOkResponse({
         type: DomainResponseDto,
     })
-    @Roles(RBAC_ROLES.ccare, RBAC_ROLES.ccareadmin)
+    @Roles(RbacRole.ccare, RbacRole.ccareadmin)
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<DomainResponseDto> {
         this.log.debug({message: 'fetch domain by id', func: this.read.name, url: req.url, method: req.method})
         const domain = await this.domainsService.read(id, this.newServiceRequest(req))

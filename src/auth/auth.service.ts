@@ -4,7 +4,7 @@ import {AppService} from '../app.service'
 import {AuthResponseDto} from './dto/auth-response.dto'
 import {compare} from 'bcrypt'
 import {db} from '../entities'
-import {RBAC_ROLES} from '../config/constants.config'
+import {RbacRole} from '../config/constants.config'
 
 /**
  * `AuthService` provides functionality to authenticate Admins and to sign JWTs for authenticated users
@@ -119,7 +119,7 @@ export class AuthService {
             showPasswords: admin.show_passwords,
             username: admin.login,
             is_master: admin.is_master,
-            reseller_id_required: admin.role.role == RBAC_ROLES.reseller || admin.role.role == RBAC_ROLES.ccare,
+            reseller_id_required: admin.role.role == RbacRole.reseller || admin.role.role == RbacRole.ccare,
         }
         this.log.debug({
             message: 'admin user authentication',

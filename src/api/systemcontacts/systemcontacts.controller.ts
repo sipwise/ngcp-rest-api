@@ -15,7 +15,7 @@ import {SystemcontactResponseDto} from './dto/systemcontact-response.dto'
 import {SystemcontactCreateDto} from './dto/systemcontact-create.dto'
 import {SystemcontactsService} from './systemcontacts.service'
 import {Auth} from '../../decorators/auth.decorator'
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 import {Operation} from '../../helpers/patch.helper'
 import {PatchDto} from '../patch.dto'
 import {number} from 'yargs'
@@ -27,7 +27,7 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 
 const resourceName = 'systemcontacts'
 
-@Auth(RBAC_ROLES.system, RBAC_ROLES.admin)
+@Auth(RbacRole.system, RbacRole.admin)
 @ApiTags('System Contacts')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)

@@ -29,7 +29,7 @@ import {LoggingInterceptor} from '../../interceptors/logging.interceptor'
 import {number} from 'yargs'
 import {Operation as PatchOperation, validate} from '../../helpers/patch.helper'
 import {PatchDto} from '../patch.dto'
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 import {VoicemailBaseDto} from './dto/voicemail-base.dto'
 import {VoicemailResponseDto} from './dto/voicemail-response.dto'
 import {VoicemailsService} from './voicemails.service'
@@ -41,7 +41,7 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 
 const resourceName = 'voicemails'
 
-@Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller, RBAC_ROLES.lintercept)
+@Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.lintercept)
 @UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
 @ApiTags('Voicemails')
 @ApiExtraModels(PaginatedDto)

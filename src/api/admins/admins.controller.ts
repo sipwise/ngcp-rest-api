@@ -33,7 +33,7 @@ import {Auth} from '../../decorators/auth.decorator'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalsService} from '../journals/journals.service'
 import {Operation as PatchOperation, validate} from '../../helpers/patch.helper'
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 import {number} from 'yargs'
 import {PatchDto} from '../patch.dto'
 import {Request} from 'express'
@@ -51,7 +51,7 @@ const resourceName = 'admins'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 @UseInterceptors(new JournalingInterceptor(new JournalsService()))
-@Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller)
+@Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller)
 export class AdminsController extends CrudController<AdminCreateDto, AdminResponseDto> {
     private readonly log = new Logger(AdminsController.name)
 

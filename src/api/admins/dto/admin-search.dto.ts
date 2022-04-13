@@ -1,5 +1,5 @@
 import {AdminResponseDto} from './admin-response.dto'
-import {RBAC_ROLES} from '../../../config/constants.config'
+import {RbacRole} from '../../../config/constants.config'
 
 export class AdminSearchDto implements AdminResponseDto {
     billing_data: boolean = undefined
@@ -16,6 +16,6 @@ export class AdminSearchDto implements AdminResponseDto {
     login: string = undefined
     read_only: boolean = undefined
     reseller_id?: number = undefined
-    role: RBAC_ROLES = undefined
+    role: RbacRole = undefined
     show_passwords: boolean = undefined
 }

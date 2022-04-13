@@ -2,7 +2,7 @@ import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ForbiddenException, Injectable, Logger} from '@nestjs/common'
 import {db, internal} from '../../../entities'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {RBAC_FLAGS, RBAC_ROLES} from '../../../config/constants.config'
+import {RbacFlag, RbacRole} from '../../../config/constants.config'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {AdminSearchDto} from '../dto/admin-search.dto'
 import {SelectQueryBuilder} from 'typeorm'
@@ -75,16 +75,16 @@ export class AdminsMariadbRepository implements AdminsRepository {
         return 1
     }
 
-    async getRoleByPermissionFlags(flags: RBAC_FLAGS): Promise<RBAC_ROLES> {
+    async getRoleByPermissionFlags(flags: RbacFlag): Promise<RbacRole> {
         if (flags.lawful_intercept)
-            return RBAC_ROLES.lintercept
+            return RbacRole.lintercept
         if (flags.is_system)
-            return RBAC_ROLES.system
+            return RbacRole.system
         if (flags.is_superuser)
-            return flags.is_ccare ? RBAC_ROLES.ccareadmin : RBAC_ROLES.admin
+            return flags.is_ccare ? RbacRole.ccareadmin : RbacRole.admin
         if (flags.is_ccare)
-            return RBAC_ROLES.ccare
-        return RBAC_ROLES.reseller
+            return RbacRole.ccare
+        return RbacRole.reseller
     }
 
     @HandleDbErrors

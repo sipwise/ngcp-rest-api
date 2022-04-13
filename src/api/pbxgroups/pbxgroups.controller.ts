@@ -5,14 +5,14 @@ import {PbxgroupsResponseDto} from './dto/pbxgroups-response.dto'
 import {PbxgroupsService} from './pbxgroups.service'
 import {CrudController} from '../../controllers/crud.controller'
 import {Auth} from '../../decorators/auth.decorator'
-import {RBAC_ROLES} from '../../config/constants.config'
+import {RbacRole} from '../../config/constants.config'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 
 const resourceName = 'pbxgroups'
 
-@Auth(RBAC_ROLES.admin, RBAC_ROLES.system, RBAC_ROLES.reseller, RBAC_ROLES.subscriber)
+@Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.subscriber)
 @ApiTags('Pbx groups')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
