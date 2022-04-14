@@ -1,10 +1,13 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsEmail, IsEnum, IsNotEmpty, IsOptional} from 'class-validator'
+import {IsEmail, IsEnum, IsNotEmpty, IsOptional, MaxLength, MinLength} from 'class-validator'
 import {internal} from '../../../entities'
 import {RbacRole} from '../../../config/constants.config'
+import {IsValidPassword} from '../../../decorators/is-valid-password.decorator'
+import {generate as passwordGenerator} from 'generate-password'
 
 export class AdminCreateDto {
     @IsEmail()
+    @MaxLength(255)
     @ApiProperty({description: 'Email address', example: 'admin@example.com'})
         email: string
 
@@ -13,6 +16,8 @@ export class AdminCreateDto {
         reseller_id: number
 
     @IsNotEmpty()
+    @MinLength(5)
+    @MaxLength(31)
     @ApiProperty({example: 'jsmith', description: 'Username used for authentication'})
         login: string
 
@@ -41,9 +46,10 @@ export class AdminCreateDto {
     @ApiPropertyOptional({description: 'Can reset password', default: true})
         can_reset_password?: boolean
 
-    @IsNotEmpty()
+    @IsOptional()
+    @IsValidPassword()
     @ApiProperty({description: 'Password to be set for the user'})
-        password: string
+        password?: string
 
     @IsNotEmpty()
     @IsEnum(RbacRole)
@@ -80,5 +86,12 @@ export class AdminCreateDto {
         this.call_data ??= true
         this.billing_data ??= true
         this.can_reset_password ??= true
+        this.password ??= passwordGenerator({
+            length: 16,
+            lowercase: true,
+            uppercase: true,
+            symbols: true,
+            numbers: true,
+        })
     }
 }
