@@ -53,6 +53,17 @@ export class AdminsService { //} implements CrudService<AdminCreateDto, AdminRes
         return await this.adminRepo.update(id, admin, req)
     }
 
+    async updateOrCreate(id: number, admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin> {
+        this.log.debug({message: 'update admin by id or create', func: this.update.name, user: sr.user.username, id: id})
+        admin.id = id
+        try {
+            await this.adminRepo.readById(id, sr)
+            return await this.update(id, admin, sr)
+        } catch (e) {
+            return await this.create(admin, sr)
+        }
+    }
+
     async adjust(id: number, patch: PatchOperation | PatchOperation[], req: ServiceRequest): Promise<internal.Admin> {
         this.log.debug({
             message: 'patching admin',
