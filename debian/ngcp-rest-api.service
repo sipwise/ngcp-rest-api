@@ -16,5 +16,99 @@ RuntimeDirectoryPreserve=yes
 PIDFile=/run/ngcp-rest-api/ngcp-rest-api.pid
 ExecStart=/usr/bin/node --title ngcp-rest-api /usr/share/ngcp-rest-api/server
 
+# Service cannot create writable executable memory mappings that are writable and executable at the same time
+# NOTE: libnode depends on executable stacks
+MemoryDenyWriteExecute=false
+
+# Files + directories not directly associated are made invisible in the /proc/ file system
+ProcSubset=pid
+
+# Writes to the hardware clock or system clock will be denied
+ProtectClock=true
+
+# Service cannot modify the control group file system (via /sys/fs/cgroup)
+ProtectControlGroups=true
+
+# Service has no access to home directories
+ProtectHome=true
+
+# Set up new UTS namespace for the executed processes + changing hostname or domainname is prevented
+ProtectHostname=true
+
+# Service cannot load or read kernel modules
+ProtectKernelModules=true
+
+# Service cannot alter kernel tunables (/proc + /sys)
+ProtectKernelTunables=true
+
+# Service has strict read-only access to the OS file hierarchy
+ProtectSystem=strict
+
+# Access to the kernel log ring buffer will be denied
+ProtectKernelLogs=true
+
+# Processes owned by other users are hidden from /proc/
+ProtectProc=invisible
+
+# Service may execute system calls only with native ABI
+SystemCallArchitectures=native
+
+# Limit set of capabilities
+CapabilityBoundingSet=
+
+# Service process does not receive ambient capabilities
+AmbientCapabilities=
+
+# Service has no access to other software's temporary files
+PrivateTmp=true
+
+# Service has no access to hardware devices
+PrivateDevices=true
+
+# Service cannot change ABI personality
+LockPersonality=true
+
+# Turn off acquisition of new privileges system-wide
+NoNewPrivileges=true
+
+# Service has own user namespace, only root, nobody, and the uid/gid under which the service is running are mapped
+PrivateUsers=true
+
+# Service user cannot leave SysV IPC objects around
+RemoveIPC=true
+
+# Restrict service to allocation of certain address families only
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+# Restrict access to the various process namespace types the Linux kernel provides
+RestrictNamespaces=true
+
+# Service may not acquire realtime scheduling
+RestrictRealtime=true
+
+# Attempts to set SUID or SGID bits on files or directories will be denied
+RestrictSUIDSGID=true
+
+# Files created by service are accessible only by service's own user by default
+UMask=0077
+
+# NOTE: Service needs access to the host's network
+PrivateNetwork=false
+
+# Control access to specific device nodes by the executed processes
+DevicePolicy=closed
+
+# Block all IP address ranges
+# NOTE: allow access from localhost
+IPAddressAllow=localhost
+IPAddressDeny=any
+
+# Maximum number of bytes of memory that may be locked into RAM
+LimitMEMLOCK=0
+
+# Restrict system calls that are allowed to be executed
+SystemCallFilter=@system-service
+SystemCallFilter=~@chown @clock @cpu-emulation @debug @module @mount @obsolete @privileged @raw-io @reboot @resources @swap memfd_create mincore mlock mlockall personality
+
 [Install]
 WantedBy=multi-user.target
