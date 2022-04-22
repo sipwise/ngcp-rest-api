@@ -35,9 +35,9 @@ export class SearchLogic {
         this.rows = rows
 
         if (sr.query['order_by'] != null) {
-            if (searchableFields[sr.query['order_by']] == null)
-                throw new BadRequestException()
             this.orderBy = sr.query['order_by']
+            if (!searchableFields.includes(this.orderBy))
+                throw new BadRequestException()
             this.order = sr.query['order_by_direction'] != null && sr.query['order_by_direction'].toUpperCase() === Order.DESC ? Order.DESC : Order.ASC
         }
 
