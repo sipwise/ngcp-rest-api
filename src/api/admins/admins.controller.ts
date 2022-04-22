@@ -136,8 +136,8 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         this.log.debug({message: 'update admin by id', func: this.update.name, url: req.url, method: req.method})
         const admin = Object.assign(new AdminCreateDto(), update)
         const sr = this.newServiceRequest(req)
-        this.log.debug({message: 'put mode legacy', enabled: this.app.config.legacy.put.enable})
-        if (this.app.config.legacy.put.enable) {
+        this.log.debug({message: 'put mode legacy', enabled: this.app.config.legacy.put})
+        if (this.app.config.legacy.put) {
             return new AdminResponseDto(await this.adminsService.update(id, await admin.toInternal(false), sr), sr.user.role)
         }
         return new AdminResponseDto(await this.adminsService.updateOrCreate(id, await admin.toInternal(), sr), sr.user.role)
