@@ -1,6 +1,6 @@
 export class JournalResponseDto {
     id: number
-    content?: Uint8Array
+    content?: string | Buffer
     content_format: string
     operation: string
     reseller_id: number

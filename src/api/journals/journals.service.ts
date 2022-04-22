@@ -63,7 +63,6 @@ export class JournalsService {
         })
         const hasAccessToContent = (await user.role_data.has_access_to).map(role => role.id)
         return [result.map(j => {
-            this.log.debug(Buffer.from(j.content).toString())
             if (!hasAccessToContent.includes(j.role_id))
                 delete j.content
             return this.toResponse(j)
@@ -88,6 +87,15 @@ export class JournalsService {
         return this.toResponse(await db.billing.Journal.findOne({where: pattern}))
     }
 
+    private decodeContent(content_format: string, content: string | Buffer) {
+        if (content_format == 'application/json' || content_format == 'json')  {
+            return content && content instanceof Buffer
+                ? JSON.parse(content.toString())
+                : content
+        }
+        return content
+    }
+
     private toResponse(db: db.billing.Journal): JournalResponseDto {
         return {
             id: db.id,
@@ -95,7 +103,7 @@ export class JournalsService {
             role_id: db.role_id,
             tx_id: db.tx_id,
             user_id: db.user_id,
-            content: db.content,
+            content: this.decodeContent(db.content_format, db.content),
             content_format: db.content_format,
             operation: db.operation,
             resource_id: db.resource_id,
