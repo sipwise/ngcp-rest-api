@@ -1,20 +1,8 @@
-import {
-    Controller,
-    DefaultValuePipe,
-    Get,
-    Logger,
-    Param,
-    ParseIntPipe,
-    Query,
-    Req,
-    UseInterceptors,
-} from '@nestjs/common'
+import {Controller, DefaultValuePipe, Get, Logger, Param, ParseIntPipe, Query, Req} from '@nestjs/common'
 import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {AppService} from '../../app.service'
-import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 import {JournalsService} from '../journals/journals.service'
-import {LoggingInterceptor} from '../../interceptors/logging.interceptor'
 import {ProductResponseDto} from './dto/product-response.dto'
 import {ProductsService} from './products.service'
 import {RbacRole} from '../../config/constants.config'
@@ -27,7 +15,7 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 const resourceName = 'products'
 
 @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.lintercept)
-@UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
+// @UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
 @ApiTags('Products')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)

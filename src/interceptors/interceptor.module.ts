@@ -1,4 +1,4 @@
-import {Module} from '@nestjs/common'
+import {forwardRef, Module} from '@nestjs/common'
 import {JournalsModule} from '../api/journals/journals.module'
 import {LoggerModule} from '../logger/logger.module'
 import {LoggerService} from '../logger/logger.service'
@@ -7,7 +7,10 @@ import {LoggingInterceptor} from './logging.interceptor'
 import {JournalsService} from '../api/journals/journals.service'
 
 @Module({
-    imports: [JournalsModule, LoggerModule],
+    imports: [
+        forwardRef(() => JournalsModule),
+        LoggerModule
+    ],
     providers: [JournalingInterceptor, LoggingInterceptor, LoggerService, JournalsService],
     exports: [JournalsModule, LoggerModule],
 })

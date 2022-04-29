@@ -2,7 +2,6 @@ import {
     BadRequestException,
     Body,
     Controller,
-    DefaultValuePipe,
     Delete,
     Get,
     Logger,
@@ -11,7 +10,6 @@ import {
     Patch,
     Post,
     Put,
-    Query,
     Req,
     UseInterceptors,
 } from '@nestjs/common'
@@ -49,7 +47,7 @@ const resourceName = 'admins'
 @ApiTags('Admins')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
-@UseInterceptors(new JournalingInterceptor(new JournalsService()))
+@UseInterceptors(JournalingInterceptor)
 @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller)
 export class AdminsController extends CrudController<AdminCreateDto, AdminResponseDto> {
     private readonly log = new Logger(AdminsController.name)
@@ -180,17 +178,12 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         type: [JournalResponseDto],
     })
     async journal(
-        @Param('id', ParseIntPipe) id: number,
-        @Query(
-            'page',
-            new DefaultValuePipe(AppService.config.common.api_default_query_page),
-            ParseIntPipe) page: number,
-        @Query(
-            'rows',
-            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
-            ParseIntPipe) row: number,
-        @Req() req: Request,
-    ): Promise<[JournalResponseDto[], number]> {
-        return this.journalsService.readAll(this.newServiceRequest(req), page, row, 'admins', id)
+        @Param('id') id: number | string,
+        @Req() req,
+    ) {
+        const [journals, count] = await this.journalsService.readAll(this.newServiceRequest(req), 'admins', id)
+        const test = await this.journalsService.readAll(this.newServiceRequest(req), 'admins', id)
+        const responseList = journals.map(j => new JournalResponseDto(j))
+        return [responseList, count]
     }
 }

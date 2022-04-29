@@ -13,19 +13,17 @@ import {
     Body,
     Controller,
     Delete,
-    Get, Logger,
+    Get,
+    Logger,
     Param,
     ParseIntPipe,
     Patch,
     Post,
     Put,
     Req,
-    UseInterceptors,
 } from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
-import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 import {JournalsService} from '../journals/journals.service'
-import {LoggingInterceptor} from '../../interceptors/logging.interceptor'
 import {number} from 'yargs'
 import {Operation as PatchOperation, validate} from '../../helpers/patch.helper'
 import {PatchDto} from '../patch.dto'
@@ -42,7 +40,7 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 const resourceName = 'voicemails'
 
 @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.lintercept)
-@UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
+// @UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
 @ApiTags('Voicemails')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)

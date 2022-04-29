@@ -1,6 +1,7 @@
 import {Injectable, Logger, NestMiddleware} from '@nestjs/common'
 import {NextFunction, Request, Response} from 'express'
 import Context from '../helpers/context.helper'
+import {obfuscatePassword} from '../helpers/password-obfuscator.helper'
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
@@ -8,7 +9,7 @@ export class LoggerMiddleware implements NestMiddleware {
 
     use(req: Request, res: Response, next: NextFunction): any {
         const ctx = Context.get(req)
-        let body = JSON.stringify(req.body, replacer)
+        let body = JSON.stringify(req.body, obfuscatePassword)
 
         /**
          * If the body is longer than 4096 characters, it is truncated to a length of 4096 and only the string
@@ -39,13 +40,4 @@ export class LoggerMiddleware implements NestMiddleware {
         })
         next()
     }
-
-}
-
-function replacer(key, value) {
-    const redactedKeys = ['password', 'webpassword']
-    if (redactedKeys.includes(key)) {
-        return '********'
-    }
-    return value
 }

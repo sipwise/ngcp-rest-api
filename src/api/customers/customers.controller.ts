@@ -122,8 +122,8 @@ export class CustomersController extends CrudController<CustomerCreateDto, Custo
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id', ParseIntPipe) id: number, page, row, req): Promise<[JournalResponseDto[], number]> {
+    async journal(@Param('id') id: number | string, req) {
         this.log.debug({message: 'fetch customer journal by id', func: this.journal.name, url: req.url, method: req.method})
-        return super.journal(id, page, row, req)
+        return super.journal(id, req)
     }
 }

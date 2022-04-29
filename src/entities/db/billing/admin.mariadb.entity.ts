@@ -1,6 +1,6 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
 import {AclRole} from './acl-role.mariadb.entity'
-import {RbacFlag, RbacRole} from '../../../config/constants.config'
+import {RbacRole} from '../../../config/constants.config'
 import {internal} from '../../../entities'
 
 @Entity({
@@ -183,52 +183,5 @@ export class Admin extends BaseEntity {
         admin.show_passwords = this.show_passwords
 
         return admin
-    }
-
-    async getPermissionFlags(): Promise<RbacFlag> {
-        switch (this.role.role) {
-        case RbacRole.system:
-            return {
-                is_system: true,
-                is_superuser: false,
-                is_ccare: false,
-                lawful_intercept: false,
-            }
-        case RbacRole.admin:
-            return {
-                is_system: false,
-                is_superuser: true,
-                is_ccare: false,
-                lawful_intercept: false,
-            }
-        case RbacRole.reseller:
-            return {
-                is_system: false,
-                is_superuser: false,
-                is_ccare: false,
-                lawful_intercept: false,
-            }
-        case RbacRole.ccareadmin:
-            return {
-                is_system: false,
-                is_superuser: true,
-                is_ccare: true,
-                lawful_intercept: false,
-            }
-        case RbacRole.ccare:
-            return {
-                is_system: false,
-                is_superuser: false,
-                is_ccare: true,
-                lawful_intercept: false,
-            }
-        case RbacRole.lintercept:
-            return {
-                is_system: false,
-                is_superuser: false,
-                is_ccare: false,
-                lawful_intercept: true,
-            }
-        }
     }
 }

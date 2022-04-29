@@ -2,7 +2,8 @@ import {ApiCreatedResponse, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} fr
 import {
     Controller,
     Delete,
-    Get, Logger,
+    Get,
+    Logger,
     Param,
     ParseUUIDPipe,
     Post,
@@ -106,9 +107,9 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(id, page, row, req): Promise<[JournalResponseDto[], number]> {
+    async journal(@Param('id') id: number | string, req) {
         this.log.debug({message: 'fetch fileshare journal by id', func: this.journal.name, url: req.url, method: req.method})
-        return super.journal(id, page, row, req)
+        return super.journal(id, req)
     }
 
 }

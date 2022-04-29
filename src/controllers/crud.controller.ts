@@ -1,25 +1,13 @@
-import {
-    BadRequestException,
-    Body,
-    DefaultValuePipe,
-    Get,
-    Param,
-    ParseIntPipe,
-    Query,
-    Req,
-    UploadedFile,
-    UseInterceptors,
-} from '@nestjs/common'
+import {BadRequestException, Body, Get, Param, Req, UploadedFile} from '@nestjs/common'
 import {Operation as PatchOperation, validate} from '../helpers/patch.helper'
 import {JournalsService} from '../api/journals/journals.service'
-import {AppService} from '../app.service'
 import {Request} from 'express'
 import {Auth} from '../decorators/auth.decorator'
 import {ServiceRequest} from '../interfaces/service-request.interface'
-import {JournalingInterceptor} from '../interceptors/journaling.interceptor'
+import {JournalResponseDto} from '../api/journals/dto/journal-response.dto'
 
 @Auth()
-@UseInterceptors(new JournalingInterceptor(new JournalsService()))
+// @UseInterceptors(new JournalingInterceptor(new JournalsService()))
 export class CrudController<CreateDTO, ResponseDTO> {
 
     constructor(
@@ -73,21 +61,11 @@ export class CrudController<CreateDTO, ResponseDTO> {
     @Get(':id/journal')
     async journal(
         @Param('id') id: number | string,
-        @Query(
-            'page',
-            new DefaultValuePipe(AppService.config.common.api_default_query_page),
-            ParseIntPipe,
-        ) page: number,
-        @Query(
-            'rows',
-            new DefaultValuePipe(AppService.config.common.api_default_query_rows),
-            ParseIntPipe) row: number,
-        @Req() req: Request,
+        @Req() req,
     ) {
-        const sr: ServiceRequest = {
-            headers: [req.rawHeaders], params: [req.params], user: req.user,
-        }
-        return this.journals.readAll(sr, page, row, this.resourceName, id)
+        const sr = this.newServiceRequest(req)
+        const [result, count] = await this.journals.readAll(sr, this.resourceName, id)
+        return [result.map(j => new JournalResponseDto(j)), count]
     }
 
     protected newServiceRequest(req: Request): ServiceRequest {

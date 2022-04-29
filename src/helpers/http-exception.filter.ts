@@ -40,8 +40,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
             tx: ctx != null ? ctx.txid : '',
             statusCode: status,
             path: request.url,
-            error: exception.response.error,
-            message: exception.response.message,
+            error: exception.response.errorCode || exception.response.error,
+            message: exception.response.description || exception.response.message,
         })
     }
 }

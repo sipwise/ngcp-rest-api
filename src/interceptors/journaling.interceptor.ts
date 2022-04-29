@@ -1,21 +1,24 @@
-import {CallHandler, ExecutionContext, NestInterceptor} from '@nestjs/common'
+import {CallHandler, ExecutionContext, forwardRef, Inject, NestInterceptor} from '@nestjs/common'
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
-import {JournalCreateDto} from '../api/journals/dto/journal-create.dto'
 import {JournalsService} from '../api/journals/journals.service'
 import {extractResourceName} from '../helpers/uri.helper'
 import {AppService} from '../app.service'
 import Context from '../helpers/context.helper'
 import {isObject} from 'class-validator'
+import {internal} from '../entities'
+import {obfuscatePassword} from '../helpers/password-obfuscator.helper'
 
 /**
  * Lookup-table for HTTP operations
  */
 const operation = {
+    'PATCH': 'update',
     'POST': 'create',
     'PUT': 'update',
     'DELETE': 'delete',
 }
+
 /**
  * Lookup-table for Content-Type
  */
@@ -32,7 +35,10 @@ export class JournalingInterceptor implements NestInterceptor {
      * Creates a new `JournalingInterceptor`
      * @param journalsService Injected JournalService to access database
      */
-    constructor(private readonly journalsService: JournalsService) {
+    constructor(
+        @Inject(forwardRef(() => JournalsService))
+        private readonly journalsService: JournalsService,
+    ) {
     }
 
     /**
@@ -83,15 +89,15 @@ export class JournalingInterceptor implements NestInterceptor {
                 const ctx = Context.get(req)
 
                 // create new Journal entry
-                const entry: JournalCreateDto = {
+                const entry = internal.Journal.create({
                     reseller_id: req.user.reseller_id,
                     role_id: req.user.role_data ? req.user.role_data.id : null,
                     user_id: req.user.id,
                     tx_id: ctx.txid,
                     content: Object.keys(req.body).length > 0
-                        ? isObject(req.body)
-                            ? Buffer.from(JSON.stringify(req.body)).toString('base64')
-                            : req.body.toString('base64')
+                        ? isObject(req.body) || Array.isArray(req.body)
+                            ? JSON.stringify(req.body, obfuscatePassword)
+                            : Buffer.from(req.body)
                         : '',
                     content_format: cf,
                     operation: op,
@@ -99,7 +105,7 @@ export class JournalingInterceptor implements NestInterceptor {
                     resource_name: resourceName,
                     timestamp: ctx.startTime / 1000,
                     username: req['user'] !== undefined ? req.user.username : '',
-                }
+                })
 
                 // write Journal entry to database
                 this.journalsService.create(entry)
@@ -107,5 +113,4 @@ export class JournalingInterceptor implements NestInterceptor {
             }),
         )
     }
-
 }
