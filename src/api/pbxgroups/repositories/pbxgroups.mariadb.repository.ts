@@ -6,17 +6,26 @@ import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {SelectQueryBuilder} from 'typeorm'
 import {RbacRole} from '../../../config/constants.config'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
+import {PbxgroupsSearchDto} from '../dto/pbxgroups-search.dto'
 
 export class PbxgroupsMariadbRepository implements PbxgroupsRepository {
     private readonly log: Logger = new Logger(PbxgroupsMariadbRepository.name)
 
     @HandleDbErrors
     async readAll(req: ServiceRequest): Promise<[internal.PbxGroup[], number]> {
-        const [page, rows] = SearchLogic.getPaginationFromServiceRequest(req)
-        const [result, totalCount] = await this.generateBaseQuery(req)
-            .limit(rows)
-            .offset(rows * (page - 1))
-            .getRawMany()
+        const searchLogic = new SearchLogic(req, Object.keys(new PbxgroupsSearchDto()))
+        const query = this.generateBaseQuery(req, searchLogic)
+
+        query.limit(searchLogic.rows).offset(searchLogic.rows * (searchLogic.page - 1))
+
+        if (searchLogic.orderBy != null) {
+            query.addOrderBy(searchLogic.orderBy, searchLogic.order)
+        }
+
+        this.addSearchFilterToQueryBuilder(query, searchLogic, req)
+
+        const result = await query.getRawMany()
+        const totalCount = await query.getCount()
 
         return [result.map(group => this.rawToInternalPbxGroup(group)), totalCount]
     }
@@ -34,7 +43,7 @@ export class PbxgroupsMariadbRepository implements PbxgroupsRepository {
         return this.rawToInternalPbxGroup(result)
     }
 
-    private generateBaseQuery(req: ServiceRequest): SelectQueryBuilder<any> {
+    private generateBaseQuery(req: ServiceRequest, searchLogic?: SearchLogic): SelectQueryBuilder<db.provisioning.VoipSubscriber> {
         const distinctGroupQuery = db.provisioning.VoipPbxGroup.createQueryBuilder('pg')
             .select('group_id')
             .distinct(true)
@@ -48,8 +57,10 @@ export class PbxgroupsMariadbRepository implements PbxgroupsRepository {
             .select('sg.username', 'group_name')
             .addSelect('sg.pbx_hunt_policy')
             .addSelect('sg.pbx_hunt_timeout')
+            .addSelect('sg.pbx_extension')
             .addSelect('bg.id', 'group_bsub_id')
             .addSelect('pg.group_id', 'group_psub_id')
+            .addSelect('bg.contract_id', 'customer_id')
             .addSelect('(' + memberSubQuery.getQuery() + ')', 'members')
             .innerJoin('(' + distinctGroupQuery.getQuery() + ')', 'pg', 'pg.group_id = sg.id')
             .innerJoin('sg.billing_voip_subscriber', 'bg')
@@ -59,7 +70,44 @@ export class PbxgroupsMariadbRepository implements PbxgroupsRepository {
         return query
     }
 
-    private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<any>, req: ServiceRequest) {
+    private addSearchFilterToQueryBuilder(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, searchLogic: SearchLogic, req: ServiceRequest) {
+        const params = req.query
+        for (const property of searchLogic.searchableFields) {
+            if (params[property] != null) {
+                let value: string = params[property]
+
+                const whereComparator = value.includes('*') ? 'like' : '='
+                value = value.replace(/\*/g, '%')
+
+                let where: string
+
+                switch (property) {
+                case 'customer_id':
+                    where = 'bg.contract_id'
+                    break
+                case 'extension':
+                    where = 'bg.contract_id'
+                    break
+                case 'hunt_policy':
+                    where = 'sg.pbx_hunt_policy'
+                    break
+                case 'hunt_timeout':
+                    where = 'sg.pbx_hunt_timeout'
+                    break
+                case 'name':
+                    where = 'sg.username'
+                    break
+                }
+                if (searchLogic.searchOr) {
+                    qb.orWhere(`${where} ${whereComparator} :${property}`, {[`${property}`]: value})
+                } else {
+                    qb.andWhere(`${where} ${whereComparator} :${property}`, {[`${property}`]: value})
+                }
+            }
+        }
+    }
+
+    private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, req: ServiceRequest) {
         if (req.user.role == RbacRole.reseller) {
             qb
                 .innerJoin('bg.contract', 'contract')
@@ -73,10 +121,12 @@ export class PbxgroupsMariadbRepository implements PbxgroupsRepository {
     private rawToInternalPbxGroup(raw: any): internal.PbxGroup {
         const group = new internal.PbxGroup()
         group.id = raw['group_bsub_id']
+        group.extension = raw['sg_pbx_extension']
         group.name = raw['group_name']
         group.huntPolicy = raw['sg_pbx_hunt_policy']
         group.huntTimeout = raw['sg_pbx_hunt_timeout']
         group.members = JSON.parse(raw['members'])
+        group.customer_id = raw['customer_id']
         return group
     }
 

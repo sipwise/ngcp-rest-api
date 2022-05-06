@@ -7,10 +7,11 @@ export class PbxgroupMember {
 }
 
 export class PbxgroupsResponseDto {
+    customer_id: number
     extension: string
     hunt_policy: string
     hunt_timeout: number
-    subscriber_id: number
+    id: number
     @ApiProperty({
         type: PbxgroupMember,
     })
@@ -18,10 +19,11 @@ export class PbxgroupsResponseDto {
     name: string
 
     constructor(pbxGroup: internal.PbxGroup) {
+        this.customer_id = pbxGroup.customer_id
         this.extension = pbxGroup.extension
         this.hunt_policy = pbxGroup.huntPolicy
         this.hunt_timeout = pbxGroup.huntTimeout
-        this.subscriber_id = pbxGroup.id
+        this.id = pbxGroup.id
         this.members = pbxGroup.members.map(member => ({
             extension: member.extension,
             subscriber_id: member.subscriberId,
