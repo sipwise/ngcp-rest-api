@@ -15,6 +15,7 @@ import {classToPlain, plainToClass} from 'class-transformer'
 import {validate} from 'class-validator'
 import {isUndefined} from 'util'
 import {formatValidationErrors} from '../helpers/errors.helper'
+import {obfuscatePasswordValidationErrors} from '../helpers/password-obfuscator.helper'
 
 export interface ValidationPipeOptions extends ValidatorOptions {
     transform?: boolean;
@@ -88,6 +89,7 @@ export class ValidateInputPipe implements PipeTransform<any> {
 
         const errors = await validate(entity, this.validatorOptions)
         if (errors.length > 0) {
+            obfuscatePasswordValidationErrors(errors)
             this.log.debug({message: 'input validation failed', errors: errors})
             throw new UnprocessableEntityException(formatValidationErrors(errors))
         }

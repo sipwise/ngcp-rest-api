@@ -8,8 +8,8 @@ import {generate as passwordGenerator} from 'generate-password'
 export class AdminCreateDto {
     @IsEmail()
     @MaxLength(255)
-    @ApiProperty({description: 'Email address', example: 'admin@example.com'})
-        email: string
+    @ApiPropertyOptional({description: 'Email address', example: 'admin@example.com'})
+        email?: string
 
     @IsNotEmpty()
     @ApiPropertyOptional({example: 1, description: 'Unique identifier of a reseller', type: 'integer'})

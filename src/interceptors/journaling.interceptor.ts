@@ -7,7 +7,7 @@ import {AppService} from '../app.service'
 import Context from '../helpers/context.helper'
 import {isObject} from 'class-validator'
 import {internal} from '../entities'
-import {obfuscatePassword} from '../helpers/password-obfuscator.helper'
+import {obfuscatePasswordJSON} from '../helpers/password-obfuscator.helper'
 
 /**
  * Lookup-table for HTTP operations
@@ -96,7 +96,7 @@ export class JournalingInterceptor implements NestInterceptor {
                     tx_id: ctx.txid,
                     content: Object.keys(req.body).length > 0
                         ? isObject(req.body) || Array.isArray(req.body)
-                            ? JSON.stringify(req.body, obfuscatePassword)
+                            ? JSON.stringify(req.body, obfuscatePasswordJSON)
                             : Buffer.from(req.body)
                         : '',
                     content_format: cf,
