@@ -1,6 +1,7 @@
 import {ArgumentsHost, Catch, ExceptionFilter, HttpException, Logger} from '@nestjs/common'
 import {Request, Response} from 'express'
 import Context from '../helpers/context.helper'
+import {config} from '../config/main.config'
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -36,12 +37,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
             elapsed: ctx != null ? now - ctx.startTime : 0,
             body: exception.response,
         })
+        const message = exception.response.description ? exception.response.description :
+            config.legacy.errors ? JSON.stringify(exception.response.message) : exception.response.message
         response.status(status).json({
             tx: ctx != null ? ctx.txid : '',
             statusCode: status,
             path: request.url,
             error: exception.response.errorCode || exception.response.error,
-            message: exception.response.description || exception.response.message,
+            message: message
         })
     }
 }
