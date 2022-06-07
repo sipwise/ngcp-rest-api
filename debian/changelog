@@ -1,3 +1,43 @@
+ngcp-rest-api (10.5.1.0+0~mr10.5.1.0) unstable; urgency=medium
+
+  [ Michael Berger ]
+  * [c8dad2f] TT#168700 rename db entities and repositories
+  * [7ed027b] TT#168400 rework /api/domains to repository pattern
+  * [a15e667] TT#168400 add internal domain tests
+  * [9ed6c2f] TT#169150 implement endpoint /api/pbxgroups
+  * [d0661f3] TT#168700 fix error admin repo readById method
+  * [d95e64e] TT#170150 correctly update admin role in PATCH
+  * [2e69527] TT#170200 implement wildcard search
+  * [fe7684f] TT#170201 implement response ordering
+  * [a484696] TT#170454 improve search logic
+  * [d26c870] TT#170652 add pagination for OpenAPI
+  * [16bcd58] TT#125651 improve formatting and imports
+  * [940e83f] TT#170901 conditionally filter out reseller_id from admin response
+  * [3881238] TT#170902 improve json+hal return representation
+  * [aad467a] TT#170950 add debug logging in controller methods
+  * [393314c] TT#170955 fix circular dependency in PaginatedDto
+  * [11be078] TT#167151 add support for 'prefer' header
+  * [5f408de] TT#125651 rename enums to be singular
+  * [b876246] TT#169756 refactor admins service
+  * [1ad17a4] TT#171100 improve admins password validation
+  * [41b4e57] TT#171350 create resource with PUT in admins
+  * [103f1ca] TT#171350 simplify legacy put config
+  * [b21c018] TT#172850 fix error in SearchLogic
+  * [dc79f87] TT#174404 rework journals to use repository pattern
+  * [2f8f4a5] TT#176250 improve pbxgroups endpoint
+  * [2d8d769] TT#178250 improve password validation
+  * [d52c0fd] TT#178900 add legacy config option for errors
+
+  [ Kirill Solomko ]
+  * [711745a] TT#169150 fix pbxgroups-response swagger circular dependency
+  * [eb50562] TT#169768 improve total_count support
+  * [434fb90] TT#125651 journals decode JSON content
+
+  [ Michael Prokop ]
+  * [4a3f259] TT#76552 Harden ngcp-rest-api service
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 07 Jun 2022 11:44:31 +0200
+
 ngcp-rest-api (10.5.0.0+0~mr10.5.0.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
