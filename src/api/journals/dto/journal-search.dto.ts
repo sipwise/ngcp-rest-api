@@ -8,7 +8,7 @@ export class JournalSearchDto implements JournalResponseDto {
     reseller_id: number = undefined
     resource_id: number = undefined
     resource_name: string = undefined
-    role_id: number | null = undefined
+    role: string | null = undefined
     timestamp: number = undefined
     tx_id: string = undefined
     username: string = undefined

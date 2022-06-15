@@ -25,6 +25,7 @@ export class JournalsMariadbRepository {
         const user: AuthResponseDto = req.user
         const qb = db.billing.Journal.createQueryBuilder('journal')
         qb.where('journal.id = :id', {id: id})
+        qb.leftJoinAndSelect('journal.role', 'role')
 
         if (user.reseller_id_required) {
             qb.andWhere('journal.reseller_id = :resellerId', {resellerId: user.reseller_id})
@@ -39,6 +40,7 @@ export class JournalsMariadbRepository {
     async readAll(req: ServiceRequest, resourceName?: string, resourceId?: number | string): Promise<[internal.Journal[], number]> {
         const user: AuthResponseDto = req.user
         const qb = db.billing.Journal.createQueryBuilder('journal')
+        qb.leftJoinAndSelect('journal.role', 'role')
         await configureQueryBuilder(qb, req.query, new SearchLogic(req, Object.keys(new JournalSearchDto())))
 
         if (resourceName !== undefined) {

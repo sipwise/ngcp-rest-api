@@ -6,6 +6,7 @@ interface JournalInterface {
     reseller_id: number
     resource_id: number
     resource_name: string
+    role: string | null
     role_id: number | null
     timestamp: number
     tx_id: string
@@ -21,6 +22,7 @@ export class Journal implements JournalInterface {
     reseller_id: number
     resource_id: number
     resource_name: string
+    role: string | null
     role_id: number | null
     timestamp: number
     tx_id: string

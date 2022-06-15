@@ -8,7 +8,7 @@ export class JournalResponseDto {
     reseller_id: number
     resource_id: number
     resource_name: string
-    role_id: number | null
+    role: string | null
     timestamp: number
     tx_id: string
     username: string
@@ -22,7 +22,7 @@ export class JournalResponseDto {
 
         this.id = journal.id
         this.reseller_id = journal.reseller_id
-        this.role_id = journal.role_id
+        this.role = journal.role
         this.tx_id = journal.tx_id
         this.user_id = journal.user_id
         this.content = journal.content

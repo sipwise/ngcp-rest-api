@@ -92,6 +92,7 @@ export class JournalingInterceptor implements NestInterceptor {
                 const entry = internal.Journal.create({
                     reseller_id: req.user.reseller_id,
                     role_id: req.user.role_data ? req.user.role_data.id : null,
+                    role: req.user.role,
                     user_id: req.user.id,
                     tx_id: ctx.txid,
                     content: Object.keys(req.body).length > 0
