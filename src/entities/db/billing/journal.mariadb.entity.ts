@@ -91,7 +91,7 @@ export class Journal extends BaseEntity {
         width: 11,
     })
         user_id: number
-    
+
     fromInternal(journal: internal.Journal) {
         this.id = journal.id
         this.reseller_id = journal.reseller_id
@@ -112,6 +112,7 @@ export class Journal extends BaseEntity {
 
         journal.id = this.id
         journal.reseller_id = this.reseller_id
+        journal.role = this.role ? this.role.role : null
         journal.role_id = this.role_id
         journal.tx_id = this.tx_id
         journal.user_id = this.user_id
