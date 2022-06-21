@@ -27,7 +27,7 @@ export const databaseConfig: ConnectionOptions = {
     host: db_host,
     type: 'mariadb',
     entities: entities,
-    connectTimeout: 2000,
+    connectTimeout: 10000,
     trace: false,
     debug: false,
     supportBigNumbers: true,

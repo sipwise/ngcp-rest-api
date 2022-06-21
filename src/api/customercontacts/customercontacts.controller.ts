@@ -63,7 +63,10 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     })
     async create(entity: CustomercontactCreateDto, req: Request): Promise<CustomercontactResponseDto> {
         this.log.debug({message: 'create customer contact', func: this.create.name, url: req.url, method: req.method})
-        return super.create(entity, req)
+        const sr = this.newServiceRequest(req)
+        const response = await super.create(entity, req)
+        await this.journalsService.writeJournal(sr, response.id, response)
+        return response
     }
 
     @Get()
@@ -110,7 +113,10 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<CustomercontactResponseDto> {
         this.log.debug({message: 'patch customer contact by id', func: this.adjust.name, url: req.url, method: req.method})
-        return this.contactsService.adjust(id, patch, this.newServiceRequest(req))
+        const sr = this.newServiceRequest(req)
+        const response = await this.contactsService.adjust(id, patch, sr)
+        await this.journalsService.writeJournal(sr, id, response)
+        return response
     }
 
     @Put(':id')
@@ -119,7 +125,10 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     })
     async update(@Param('id', ParseIntPipe) id: number, entity: CustomercontactCreateDto, req): Promise<CustomercontactResponseDto> {
         this.log.debug({message: 'update customer contact by id', func: this.update.name, url: req.url, method: req.method})
-        return this.contactsService.update(id, entity, this.newServiceRequest(req))
+        const sr = this.newServiceRequest(req)
+        const response = await this.contactsService.update(id, entity, sr)
+        await this.journalsService.writeJournal(sr, id, response)
+        return response
     }
 
     @Delete(':id')
@@ -128,7 +137,10 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     })
     async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
         this.log.debug({message: 'delete customer contact by id', func: this.delete.name, url: req.url, method: req.method})
-        return this.contactsService.delete(id, this.newServiceRequest(req))
+        const sr = this.newServiceRequest(req)
+        const response = await this.contactsService.delete(id, sr)
+        await this.journalsService.writeJournal(sr, id, {})
+        return response
     }
 
     @Get(':id/journal')

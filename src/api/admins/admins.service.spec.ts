@@ -44,7 +44,7 @@ describe('AdminsService', () => {
             .compile()
 
         service = module.get<AdminsService>(AdminsService)
-        sr = {headers: [undefined], params: [undefined], query: undefined, user: user}
+        sr = {headers: [undefined], params: [undefined], query: undefined, user: user, init: undefined}
     })
 
     it('should be defined', () => {

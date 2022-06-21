@@ -42,8 +42,11 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     })
     async create(entity: DomainCreateDto, req): Promise<DomainResponseDto> {
         this.log.debug({message: 'create domain', func: this.readAll.name, url: req.url, method: req.method})
-        const domain = await this.domainsService.create(entity.toInternal(), this.newServiceRequest(req))
-        return new DomainResponseDto(domain)
+        const sr = this.newServiceRequest(req)
+        const domain = await this.domainsService.create(entity.toInternal(), sr)
+        const response = new DomainResponseDto(domain)
+        await this.journalsService.writeJournal(sr, response.id, response)
+        return response
     }
 
     @Get()
@@ -83,7 +86,10 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     @ApiOkResponse({})
     async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
         this.log.debug({message: 'delete domain by id', func: this.delete.name, url: req.url, method: req.method})
-        return this.domainsService.delete(id, this.newServiceRequest(req))
+        const sr = this.newServiceRequest(req)
+        const response = await this.domainsService.delete(id, sr)
+        await this.journalsService.writeJournal(sr, id, {})
+        return response
     }
 
     @Get(':id/journal')

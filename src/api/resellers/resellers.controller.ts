@@ -49,7 +49,10 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     })
     async create(entity: ResellerCreateDto, req: Request): Promise<ResellerResponseDto> {
         this.log.debug({message: 'create reseller', func: this.create.name, url: req.url, method: req.method})
-        return this.resellersService.create(entity, this.newServiceRequest(req))
+        const sr = this.newServiceRequest(req)
+        const response = await this.resellersService.create(entity, sr)
+        await this.journalsService.writeJournal(sr, response.id, response)
+        return response
     }
 
     @Get()
@@ -87,7 +90,10 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     })
     async update(@Param('id', ParseIntPipe) id: number, entity: ResellerCreateDto, req): Promise<ResellerResponseDto> {
         this.log.debug({message: 'update reseller by id', func: this.update.name, url: req.url, method: req.method})
-        return this.resellersService.update(id, entity, this.newServiceRequest(req))
+        const sr = this.newServiceRequest(req)
+        const response = await this.resellersService.update(id, entity, sr)
+        await this.journalsService.writeJournal(sr, id, response)
+        return response
     }
 
     @Patch(':id')
@@ -100,7 +106,10 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ResellerResponseDto> {
         this.log.debug({message: 'patch reseller by id', func: this.adjust.name, url: req.url, method: req.method})
-        return this.resellersService.adjust(id, patch, this.newServiceRequest(req))
+        const sr = this.newServiceRequest(req)
+        const response = await this.resellersService.adjust(id, patch, sr)
+        await this.journalsService.writeJournal(sr, id, response)
+        return response
     }
 
     @Get(':id/journal')
