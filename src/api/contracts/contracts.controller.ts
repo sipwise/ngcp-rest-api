@@ -50,7 +50,10 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     })
     async create(entity: ContractCreateDto, req: Request): Promise<ContractResponseDto> {
         this.log.debug({message: 'create contract', func: this.create.name, url: req.url, method: req.method})
-        return this.contractsService.create(entity, this.newServiceRequest(req))
+        const sr = this.newServiceRequest(req)
+        const response = await this.contractsService.create(entity, sr)
+        await this.journalsService.writeJournal(sr, response.id, response)
+        return response
     }
 
     @Get()
@@ -88,7 +91,10 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     })
     async update(@Param('id', ParseIntPipe) id: number, dto: ContractCreateDto, req): Promise<ContractResponseDto> {
         this.log.debug({message: 'update contract by id', func: this.update.name, url: req.url, method: req.method})
-        return this.contractsService.update(id, dto, this.newServiceRequest(req))
+        const sr = this.newServiceRequest(req)
+        const response = await this.contractsService.update(id, dto, sr)
+        await this.journalsService.writeJournal(sr, id, response)
+        return response
     }
 
     @Patch(':id')
@@ -101,7 +107,10 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ContractResponseDto> {
         this.log.debug({message: 'patch contract by id', func: this.adjust.name, url: req.url, method: req.method})
-        return this.contractsService.adjust(id, patch, this.newServiceRequest(req))
+        const sr = this.newServiceRequest(req)
+        const response = await this.contractsService.adjust(id, patch, sr)
+        await this.journalsService.writeJournal(sr, id, response)
+        return response
     }
 
     // DELETE is not allowed for Contracts

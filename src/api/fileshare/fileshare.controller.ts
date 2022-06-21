@@ -53,7 +53,10 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     }))
     async create(createDto: FileshareCreateDto, req, file): Promise<FileshareResponseDto> {
         this.log.debug({message: 'create fileshare', func: this.create.name, url: req.url, method: req.method})
-        return await this.fileshareService.create(createDto, req, file)
+        const sr = this.newServiceRequest(req)
+        const response = await this.fileshareService.create(createDto, sr, file)
+        await this.journalsService.writeJournal(sr, 0, response)
+        return response
     }
 
     @Get()
@@ -100,7 +103,10 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     @ApiOkResponse({})
     async delete(@Param('id', ParseUUIDPipe) id: string, req) {
         this.log.debug({message: 'delete fileshare by id', func: this.delete.name, url: req.url, method: req.method})
-        return this.fileshareService.delete(id, req)
+        const sr = this.newServiceRequest(req)
+        const response = await this.fileshareService.delete(id, sr)
+        await this.journalsService.writeJournal(sr, 0, response)
+        return response
     }
 
     @Get(':id/journal')

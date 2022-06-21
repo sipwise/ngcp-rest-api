@@ -61,7 +61,10 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     })
     async create(@Body() voicemail: VoicemailBaseDto, @Req() req): Promise<VoicemailResponseDto> {
         this.log.debug({message: 'create voicemail', func: this.create.name, url: req.url, method: req.method})
-        return await this.voicemailsService.create(voicemail, req)
+        const sr = this.newServiceRequest(req)
+        const response =  await this.voicemailsService.create(voicemail, sr)
+        await this.journalService.writeJournal(sr, response.id, response)
+        return response
     }
 
     @Get()
@@ -98,7 +101,10 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     })
     async delete(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<number> {
         this.log.debug({message: 'delete voicemail by id', func: this.delete.name, url: req.url, method: req.method})
-        return await this.voicemailsService.delete(id, req)
+        const sr = this.newServiceRequest(req)
+        const response = await this.voicemailsService.delete(id, sr)
+        await this.journalService.writeJournal(sr, id, {})
+        return response
     }
 
     @Patch(':id')
@@ -111,12 +117,15 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     })
     async adjust(@Param('id', ParseIntPipe) id: number, @Body() patch: PatchOperation | PatchOperation[], @Req() req): Promise<VoicemailResponseDto> {
         this.log.debug({message: 'patch voicemail by id', func: this.adjust.name, url: req.url, method: req.method})
+        const sr = this.newServiceRequest(req)
         const err = validate(patch)
         if (err) {
             const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
             throw new BadRequestException(message)
         }
-        return await this.voicemailsService.adjust(id, patch, req)
+        const response = await this.voicemailsService.adjust(id, patch, sr)
+        await this.journalService.writeJournal(sr, id, response)
+        return response
     }
 
     @Put(':id')
@@ -125,6 +134,9 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     })
     async update(@Param('id', ParseIntPipe) id: number, @Body() voicemail: VoicemailBaseDto, @Req() req): Promise<VoicemailResponseDto> {
         this.log.debug({message: 'update voicemail by id', func: this.update.name, url: req.url, method: req.method})
-        return await this.voicemailsService.update(id, voicemail, req)
+        const sr = this.newServiceRequest(req)
+        const response = await this.voicemailsService.update(id, voicemail, sr)
+        await this.journalService.writeJournal(sr, id, response)
+        return response
     }
 }

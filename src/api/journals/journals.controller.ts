@@ -92,6 +92,7 @@ export class JournalsController {
             params: [req.params],
             user: req.user,
             query: req.query,
+            init: req,
         }
     }
 }

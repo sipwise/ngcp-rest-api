@@ -35,7 +35,7 @@ describe('DomainsService', () => {
             .compile()
 
         service = module.get<DomainsService>(DomainsService)
-        sr = {headers: [undefined], params: [undefined], query: undefined, user: user}
+        sr = {headers: [undefined], params: [undefined], query: undefined, user: user, init: undefined}
     })
 
     it('should be defined', () => {

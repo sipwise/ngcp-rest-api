@@ -34,7 +34,6 @@ import {RbacRole} from '../../config/constants.config'
 import {number} from 'yargs'
 import {PatchDto} from '../patch.dto'
 import {Request} from 'express'
-import {JournalingInterceptor} from '../../interceptors/journaling.interceptor'
 import {CrudController} from '../../controllers/crud.controller'
 import {AdminSearchDto} from './dto/admin-search.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
@@ -47,7 +46,6 @@ const resourceName = 'admins'
 @ApiTags('Admins')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
-@UseInterceptors(JournalingInterceptor)
 @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller)
 export class AdminsController extends CrudController<AdminCreateDto, AdminResponseDto> {
     private readonly log = new Logger(AdminsController.name)
@@ -76,7 +74,9 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         const sr = this.newServiceRequest(req)
         const admin = Object.assign(new AdminCreateDto(), create)
         const newAdmin = await this.adminsService.create(await admin.toInternal(), sr)
-        return new AdminResponseDto(newAdmin, sr.user.role)
+        const response = new AdminResponseDto(newAdmin, sr.user.role)
+        await this.journalsService.writeJournal(sr, response.id, response)
+        return response
     }
 
     @Get()
@@ -135,10 +135,15 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         const admin = Object.assign(new AdminCreateDto(), update)
         const sr = this.newServiceRequest(req)
         this.log.debug({message: 'put mode legacy', enabled: this.app.config.legacy.put})
+        let response: AdminResponseDto
         if (this.app.config.legacy.put) {
-            return new AdminResponseDto(await this.adminsService.update(id, await admin.toInternal(false), sr), sr.user.role)
+            const updateAdmin = await this.adminsService.update(id, await admin.toInternal(false), sr)
+            response = new AdminResponseDto(updateAdmin, sr.user.role)
         }
-        return new AdminResponseDto(await this.adminsService.updateOrCreate(id, await admin.toInternal(), sr), sr.user.role)
+        const updateAdmin = await this.adminsService.updateOrCreate(id, await admin.toInternal(), sr)
+        response = new AdminResponseDto(updateAdmin, sr.user.role)
+        await this.journalsService.writeJournal(sr, id, response)
+        return response
     }
 
     @Patch(':id')
@@ -161,7 +166,10 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
             throw new BadRequestException(message)
         }
         const sr = this.newServiceRequest(req)
-        return new AdminResponseDto(await this.adminsService.adjust(id, patch, sr), sr.user.role)
+        const response = new AdminResponseDto(await this.adminsService.adjust(id, patch, sr), sr.user.role)
+        await this.journalsService.writeJournal(sr, id, response)
+        return response
+
     }
 
     @Delete(':id')
@@ -169,8 +177,11 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         type: number,
     })
     async delete(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<number> {
+        const sr = this.newServiceRequest(req)
         this.log.debug({message: 'delete admin by id', func: this.delete.name, url: req.url, method: req.method})
-        return await this.adminsService.delete(id, this.newServiceRequest(req))
+        const response = await this.adminsService.delete(id, sr)
+        await this.journalsService.writeJournal(sr, id, {})
+        return response
     }
 
     @Get(':id/journal')
