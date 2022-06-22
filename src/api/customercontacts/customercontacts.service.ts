@@ -1,183 +1,116 @@
 import {BadRequestException, HttpException, Injectable, Logger, UnprocessableEntityException} from '@nestjs/common'
-import {CustomercontactCreateDto} from './dto/customercontact-create.dto'
-import {CrudService} from '../../interfaces/crud-service.interface'
-import {CustomercontactResponseDto} from './dto/customercontact-response.dto'
 import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
-import {CustomercontactBaseDto} from './dto/customercontact-base.dto'
-import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
-import {db} from '../../entities'
-import {FindOneOptions, IsNull, Not} from 'typeorm'
+import {internal} from '../../entities'
 import {AppService} from '../../app.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {ContractStatus} from '../contracts/contracts.constants'
-import {configureQueryBuilder} from '../../helpers/query-builder.helper'
-import {CustomercontactSearchDto} from './dto/customercontact-search.dto'
 import {Messages} from '../../config/messages.config'
-import {SearchLogic} from '../../helpers/search-logic.helper'
-import {ContactStatus} from '../../entities/internal/contact.internal.entity'
+import {ContactsMariadbRepository} from '../contacts/repositories/contacts.mariadb.repository'
 
 @Injectable()
-export class CustomercontactsService implements CrudService<CustomercontactCreateDto, CustomercontactResponseDto> {
+export class CustomercontactsService { // implements CrudService<CustomercontactCreateDto, CustomercontactResponseDto> {
     private readonly log = new Logger(CustomercontactsService.name)
 
     constructor(
         private readonly app: AppService,
+        private readonly contactRepo: ContactsMariadbRepository,
     ) {
     }
 
-    @HandleDbErrors
-    async create(entity: CustomercontactCreateDto, req: ServiceRequest): Promise<CustomercontactResponseDto> {
-        const contact = await db.billing.Contact.create(entity)
-
-        const now = new Date(Date.now())
-        contact.create_timestamp = now
-        contact.modify_timestamp = now
-
-        // $resource->{country}{id} = delete $resource->{country}} // TODO: why set the country as country.id
-        // $resource->{timezone}{name} = delete $resource->{timezone}; // TODO: why set the timezone as timezone.name
-        // $resource->{timezone} = $resource->{timezone}{name}; // TODO: what's happening? Prev steps just for form validation?
-        // my $reseller_id;
-        if (req.user.role === 'reseller') {
-            contact.reseller_id = req.user.reseller_id
-        } else if (req.user.role !== 'admin') { // TODO: how do we handle system user?
-            // $reseller_id = $c->user->contract->contact->reseller_id; // TODO: do we need to store contract in req.user?
+    async create(contact: internal.Contact, sr: ServiceRequest): Promise<internal.Contact> {
+        this.log.debug({
+            message: 'create customer contact',
+            func: this.create.name,
+            user: sr.user.username,
+        })
+        if (sr.user.reseller_id_required) {
+            contact.reseller_id = sr.user.reseller_id
         }
-
-        const reseller = db.billing.Reseller.findOne(contact.reseller_id)
-        if (reseller) {
-            throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID, req))
+        const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
+        if (!reseller) {
+            throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID, sr))
         }
-        await db.billing.Contact.insert(contact)
-        // TODO: contact does not contain id at this point
-        return this.toResponse(contact)
+        return await this.contactRepo.create(contact, sr)
     }
 
-    @HandleDbErrors
-    async delete(id: number, req: ServiceRequest): Promise<number> {
-        const contact = await db.billing.Contact.findOneOrFail(id)
+    async delete(id: number, sr: ServiceRequest): Promise<number> {
+        this.log.debug({
+            message: 'delete customer contact by id',
+            func: this.delete.name,
+            contactId: id,
+            user: sr.user.username,
+        })
+        const contact = await this.contactRepo.readCustomerContactById(id, sr)
         if (!contact.reseller_id) {
             throw new BadRequestException(Messages.invoke(Messages.DELETE_SYSTEMCONTACT)) // TODO: find better description
         }
-        let contract = db.billing.Contract.find({
-            where: {
-                status: Not(ContractStatus.Terminated),
-                contact_id: id,
-            },
-        })
-        // TODO: check for un-terminated subscribers
-        if (contract) {
+
+        if (await this.contactRepo.hasContactActiveContract(contact.id, sr)) {
             throw new HttpException(Messages.invoke(Messages.CONTACT_STILL_IN_USE), 423) // 423 HTTP LOCKED
         }
-        // TODO: do we delete (instead of terminate) if no related contracts/subscribers as in v1?
-        contract = db.billing.Contract.find({
-            where: {
-                status: ContractStatus.Terminated,
-                contact_id: id,
-            },
+
+        if (await this.contactRepo.hasContactActiveSubscriber(contact.id, sr)) {
+            throw new HttpException(Messages.invoke(Messages.CONTACT_STILL_IN_USE), 423) // 423 HTTP LOCKED
+        }
+
+        if (await this.contactRepo.hasContactTerminatedContract(contact.id, sr) || await this.contactRepo.hasContactTerminatedSubscriber(contact.id, sr)) {
+            return await this.contactRepo.terminate(contact.id, sr)
+        }
+        return await this.contactRepo.delete(id, sr)
+    }
+
+    async read(id: number, sr: ServiceRequest): Promise<internal.Contact> {
+        this.log.debug({
+            message: 'read customer contact by id',
+            func: this.read.name,
+            contactId: id,
+            user: sr.user.username,
         })
-        if (contract) {
-            await db.billing.Contact.update(id, {status: ContactStatus.Terminated})
-        } else {
-            await contact.remove()
-        }
-        return 1
+        return this.contactRepo.readCustomerContactById(id, sr)
     }
 
-    @HandleDbErrors
-    async read(id: number, req: ServiceRequest): Promise<CustomercontactResponseDto> {
-        const pattern: FindOneOptions = {
-            where: {
-                id: id,
-                reseller_id: Not(IsNull()),
-            },
-        }
-        return this.toResponse(await db.billing.Contact.findOneOrFail(id, pattern))
-    }
-
-    @HandleDbErrors
-    async readAll(req: ServiceRequest): Promise<[CustomercontactResponseDto[], number]> {
+    async readAll(sr: ServiceRequest): Promise<[internal.Contact[], number]> {
         this.log.debug({
             message: 'read all customer contacts',
             func: this.readAll.name,
-            user: req.user.username,
+            user: sr.user.username,
         })
-        const queryBuilder = db.billing.Contact.createQueryBuilder('contact')
-        const customercontactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
-        await configureQueryBuilder(queryBuilder, req.query, new SearchLogic(req, customercontactSearchDtoKeys))
-        queryBuilder.andWhere('contact.reseller_id IS NOT NULL')
-        const [result, totalCount] = await queryBuilder.getManyAndCount()
-        return [result.map(r => this.toResponse(r)), totalCount]
+        return await this.contactRepo.readAllCustomerContacts(sr)
     }
 
-    @HandleDbErrors
-    async update(id: number, dto: CustomercontactCreateDto, req: ServiceRequest): Promise<CustomercontactResponseDto> {
-        const oldContact = await db.billing.Contact.findOneOrFail(id)
-        if (oldContact.reseller_id != dto.reseller_id) {
-            const reseller = db.billing.Reseller.findOne(dto.reseller_id)
+    async update(id: number, contact: internal.Contact, sr: ServiceRequest): Promise<internal.Contact> {
+        this.log.debug({
+            message: 'update customer contact',
+            func: this.update.name,
+            contactId: id,
+            user: sr.user.username,
+        })
+        const oldContact = await this.contactRepo.readCustomerContactById(id, sr)
+        if (oldContact.reseller_id != contact.reseller_id) {
+            const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
             if (!reseller) {
                 throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID))
             }
         }
-        const newContact = db.billing.Contact.merge(oldContact, dto)
-        return this.toResponse(await newContact.save())
+        return await this.contactRepo.update(id, contact, sr)
     }
 
-    @HandleDbErrors
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], req: ServiceRequest): Promise<CustomercontactResponseDto> {
-        const oldContact = await db.billing.Contact.findOneOrFail(id)
+    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.Contact> {
+        this.log.debug({
+            message: 'adjust customer contact',
+            func: this.adjust.name,
+            contactId: id,
+            user: sr.user.username,
+        })
+        let contact = await this.contactRepo.readCustomerContactById(id, sr)
 
-        let contact = this.deflate(oldContact)
         contact = applyPatch(contact, patch).newDocument
-        const newReseller = db.billing.Contact.merge(oldContact, contact)
-        return this.toResponse(await newReseller.save())
-    }
+        contact.id = id
 
-    toResponse(c: db.billing.Contact): CustomercontactResponseDto {
-        return {
-            bankname: c.bankname,
-            bic: c.bic,
-            city: c.city,
-            company: c.company,
-            comregnum: c.comregnum,
-            country: c.country,
-            create_timestamp: c.create_timestamp,
-            email: c.email,
-            faxnumber: c.faxnumber,
-            firstname: c.firstname,
-            gender: c.gender,
-            gpp0: c.gpp0,
-            gpp1: c.gpp1,
-            gpp2: c.gpp2,
-            gpp3: c.gpp3,
-            gpp4: c.gpp4,
-            gpp5: c.gpp5,
-            gpp6: c.gpp6,
-            gpp7: c.gpp7,
-            gpp8: c.gpp8,
-            gpp9: c.gpp9,
-            iban: c.iban,
-            id: c.id,
-            lastname: c.lastname,
-            mobilenumber: c.mobilenumber,
-            modify_timestamp: c.modify_timestamp,
-            newsletter: c.newsletter,
-            phonenumber: c.phonenumber,
-            postcode: c.postcode,
-            reseller_id: c.reseller_id,
-            status: c.status,
-            street: c.street,
-            terminate_timestamp: c.terminate_timestamp,
-            timezone: c.timezone,
-            vatnum: c.vatnum,
+        const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
+        if (!reseller) {
+            throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID))
         }
-    }
-
-    private inflate(dto: CustomercontactBaseDto): db.billing.Contact {
-        return db.billing.Contact.create(dto)
-    }
-
-    private deflate(entry: db.billing.Contact): CustomercontactBaseDto {
-        return Object.assign(entry)
+        return await this.contactRepo.update(id, contact, sr)
     }
 }
 

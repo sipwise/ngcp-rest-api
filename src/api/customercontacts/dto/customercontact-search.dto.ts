@@ -1,7 +1,6 @@
-import {CustomercontactResponseDto} from './customercontact-response.dto'
 import {ContactGender, ContactStatus} from '../../../entities/internal/contact.internal.entity'
 
-export class CustomercontactSearchDto implements CustomercontactResponseDto {
+export class CustomercontactSearchDto {
     id: number = undefined
     bankname?: string = undefined
     bic?: string = undefined

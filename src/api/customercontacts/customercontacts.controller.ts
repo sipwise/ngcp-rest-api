@@ -64,9 +64,10 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     async create(entity: CustomercontactCreateDto, req: Request): Promise<CustomercontactResponseDto> {
         this.log.debug({message: 'create customer contact', func: this.create.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
-        const response = await super.create(entity, req)
+        const contact = await this.contactsService.create(entity.toInternal(), sr)
+        const response = new CustomercontactResponseDto(contact, sr.user.role)
         await this.journalsService.writeJournal(sr, response.id, response)
-        return response
+        return  response
     }
 
     @Get()
@@ -80,8 +81,10 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
             method: req.method,
         })
         const sr = this.newServiceRequest(req)
-        const [responseList, totalCount] =
+        const [contacts, totalCount] =
             await this.contactsService.readAll(sr)
+
+        const responseList = contacts.map((con) => new CustomercontactResponseDto(con, sr.user.role))
         if (req.query.expand) {
             const contactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
             await this.expander.expandObjects(responseList, contactSearchDtoKeys, sr)
@@ -93,12 +96,13 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     @ApiOkResponse({
         type: CustomercontactResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, req): Promise<CustomercontactResponseDto> {
-        this.log.debug({message: 'fetch customer contact by id', func: this.read.name, url: req.url, method: req.method})
-        const responseItem = await this.contactsService.read(id, this.newServiceRequest(req))
-        if (req.query.expand && !req.isRedirected) {
+    async read(@Param('id', ParseIntPipe) id: number, sr): Promise<CustomercontactResponseDto> {
+        this.log.debug({message: 'fetch customer contact by id', func: this.read.name, url: sr.url, method: sr.method})
+        const contact = await this.contactsService.read(id, this.newServiceRequest(sr))
+        const responseItem = new CustomercontactResponseDto(contact, sr.user.role)
+        if (sr.query.expand && !sr.isRedirected) {
             const contactSearchDtoKeys = Object.keys(new CustomercontactSearchDto())
-            await this.expander.expandObjects(responseItem, contactSearchDtoKeys, req)
+            await this.expander.expandObjects(responseItem, contactSearchDtoKeys, sr)
         }
         return responseItem
     }
@@ -114,7 +118,8 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<CustomercontactResponseDto> {
         this.log.debug({message: 'patch customer contact by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
-        const response = await this.contactsService.adjust(id, patch, sr)
+        const contact = await this.contactsService.adjust(id, patch, sr)
+        const response = new CustomercontactResponseDto(contact, sr.user.role)
         await this.journalsService.writeJournal(sr, id, response)
         return response
     }
@@ -126,7 +131,8 @@ export class CustomercontactsController extends CrudController<CustomercontactCr
     async update(@Param('id', ParseIntPipe) id: number, entity: CustomercontactCreateDto, req): Promise<CustomercontactResponseDto> {
         this.log.debug({message: 'update customer contact by id', func: this.update.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
-        const response = await this.contactsService.update(id, entity, sr)
+        const contact = await this.contactsService.update(id, entity.toInternal(), sr)
+        const response = new CustomercontactResponseDto(contact, sr.user.role)
         await this.journalsService.writeJournal(sr, id, response)
         return response
     }
