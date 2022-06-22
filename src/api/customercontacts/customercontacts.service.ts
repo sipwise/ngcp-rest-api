@@ -10,11 +10,11 @@ import {FindOneOptions, IsNull, Not} from 'typeorm'
 import {AppService} from '../../app.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ContractStatus} from '../contracts/contracts.constants'
-import {ContactStatus} from '../../entities/db/billing/contact.mariadb.entity'
 import {configureQueryBuilder} from '../../helpers/query-builder.helper'
 import {CustomercontactSearchDto} from './dto/customercontact-search.dto'
 import {Messages} from '../../config/messages.config'
 import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ContactStatus} from '../../entities/internal/contact.internal.entity'
 
 @Injectable()
 export class CustomercontactsService implements CrudService<CustomercontactCreateDto, CustomercontactResponseDto> {

@@ -23,6 +23,7 @@ import {ProductsModule} from './api/products/products.module'
 import {VoicemailsModule} from './api/voicemails/voicemails.module'
 import {ExpandModule} from './helpers/expand.module'
 import {PbxgroupsModule} from './api/pbxgroups/pbxgroups.module'
+import {ContactsModule} from './api/contacts/contacts.module'
 
 const modulesImport: any[] = [
     ConfigModule.forRoot({
@@ -71,6 +72,7 @@ if (process.env.NODE_ENV != 'test') {
         }),
         AdminsModule,
         AuthModule,
+        ContactsModule,
         ContractsModule,
         CustomercontactsModule,
         DatabaseModule,

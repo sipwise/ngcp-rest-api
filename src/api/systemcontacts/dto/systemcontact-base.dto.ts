@@ -5,7 +5,7 @@
 
 // TODO: add input validation; according to v1 API definition all fields are required; not sure if that is correct
 import {IsEmail} from 'class-validator'
-import {ContactGender, ContactStatus} from '../../../entities/db/billing/contact.mariadb.entity'
+import {ContactGender, ContactStatus} from '../../../entities/internal/contact.internal.entity'
 
 export class SystemcontactBaseDto {
     bankname?: string

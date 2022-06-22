@@ -1,8 +1,7 @@
-// TODO: Check which fields are optional/required
-
 import {ContactGender, ContactStatus} from '../../../entities/internal/contact.internal.entity'
 
-export class CustomercontactBaseDto {
+export class ContactSearchDto {
+    id: number
     bankname?: string
     bic?: string
     city?: string

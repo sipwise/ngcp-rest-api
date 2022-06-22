@@ -1,16 +1,8 @@
 import {Reseller} from './reseller.mariadb.entity'
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
 import {Contract} from './contract.mariadb.entity'
-
-export enum ContactStatus {
-    Active = 'active',
-    Terminated = 'terminated'
-}
-
-export enum ContactGender {
-    Male = 'male',
-    Female = 'female'
-}
+import {ContactGender, ContactInternalEntity, ContactStatus} from '../../internal/contact.internal.entity'
+import {internal} from '../../../entities'
 
 @Entity({
     name: 'contacts',
@@ -266,4 +258,84 @@ export class Contact extends BaseEntity {
     @JoinColumn({name: 'reseller_id'})
         reseller?: Reseller
 
+    toInternal(): internal.Contact {
+        const t: ContactInternalEntity = {
+            bankname: this.bankname,
+            bic: this.bic,
+            city: this.city,
+            company: this.company,
+            comregnum: this.comregnum,
+            country: this.country,
+            create_timestamp: this.create_timestamp,
+            email: this.email,
+            faxnumber: this.faxnumber,
+            firstname: this.firstname,
+            gender: this.gender,
+            gpp0: this.gpp0,
+            gpp1: this.gpp1,
+            gpp2: this.gpp2,
+            gpp3: this.gpp3,
+            gpp4: this.gpp4,
+            gpp5: this.gpp5,
+            gpp6: this.gpp6,
+            gpp7: this.gpp7,
+            gpp8: this.gpp8,
+            gpp9: this.gpp9,
+            iban: this.iban,
+            id: this.id,
+            lastname: this.lastname,
+            mobilenumber: this.mobilenumber,
+            modify_timestamp: this.modify_timestamp,
+            newsletter: this.newsletter,
+            phonenumber: this.phonenumber,
+            postcode: this.postcode,
+            reseller_id: this.reseller_id,
+            status: this.status,
+            street: this.street,
+            terminate_timestamp: this.terminate_timestamp,
+            timezone: this.timezone,
+            vatnum: this.vatnum,
+        }
+        return internal.Contact.create(t)
+    }
+
+    fromInternal(contact: internal.Contact) {
+        this.bankname = contact.bankname
+        this.bic = contact.bic
+        this.city = contact.city
+        this.company = contact.company
+        this.comregnum = contact.comregnum
+        this.country = contact.country
+        this.create_timestamp = contact.create_timestamp
+        this.email = contact.email
+        this.faxnumber = contact.faxnumber
+        this.firstname = contact.firstname
+        this.gender = contact.gender
+        this.gpp0 = contact.gpp0
+        this.gpp1 = contact.gpp1
+        this.gpp2 = contact.gpp2
+        this.gpp3 = contact.gpp3
+        this.gpp4 = contact.gpp4
+        this.gpp5 = contact.gpp5
+        this.gpp6 = contact.gpp6
+        this.gpp7 = contact.gpp7
+        this.gpp8 = contact.gpp8
+        this.gpp9 = contact.gpp9
+        this.iban = contact.iban
+        this.id = contact.id
+        this.lastname = contact.lastname
+        this.mobilenumber = contact.mobilenumber
+        this.modify_timestamp = contact.modify_timestamp
+        this.newsletter = contact.newsletter
+        this.phonenumber = contact.phonenumber
+        this.postcode = contact.postcode
+        this.reseller_id = contact.reseller_id
+        this.status = contact.status
+        this.street = contact.street
+        this.terminate_timestamp = contact.terminate_timestamp
+        this.timezone = contact.timezone
+        this.vatnum = contact.vatnum
+
+        return this
+    }
 }

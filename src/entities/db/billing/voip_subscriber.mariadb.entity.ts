@@ -1,5 +1,6 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
 import {Contract} from './contract.mariadb.entity'
+import {VoipSubscriberStatus} from '../../internal/voip-subscriber.internal.entity'
 
 @Entity({
     name: 'voip_subscribers',
@@ -33,12 +34,8 @@ export class VoipSubscriber extends BaseEntity {
 
     @Column({
         type: 'enum',
-        enum: [
-            'active',
-            'locked',
-            'terminated',
-        ],
-        default: 'active',
+        enum: VoipSubscriberStatus,
+        default: VoipSubscriberStatus.Active,
     })
         status: string
 

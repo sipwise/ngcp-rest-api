@@ -1,5 +1,5 @@
-import {ContactGender, ContactStatus} from '../../../entities/db/billing/contact.mariadb.entity'
 import {CustomercontactResponseDto} from './customercontact-response.dto'
+import {ContactGender, ContactStatus} from '../../../entities/internal/contact.internal.entity'
 
 export class CustomercontactSearchDto implements CustomercontactResponseDto {
     id: number = undefined
