@@ -31,7 +31,6 @@ export class SystemcontactSearchDto implements SystemcontactResponseDto {
     newsletter: boolean = undefined
     phonenumber?: string = undefined
     postcode?: string = undefined
-    reseller_id?: number = undefined
     status: ContactStatus = undefined
     street?: string = undefined
     terminate_timestamp?: Date = undefined
