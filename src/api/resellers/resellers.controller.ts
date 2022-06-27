@@ -50,10 +50,13 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     async create(entity: ResellerCreateDto, req: Request): Promise<ResellerResponseDto> {
         this.log.debug({message: 'create reseller', func: this.create.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
-        const response = await this.resellersService.create(entity, sr)
+        const reseller = await this.resellersService.create(entity, sr)
+        const response = new ResellerResponseDto(reseller)
         await this.journalsService.writeJournal(sr, response.id, response)
         return response
     }
+
+// TODO: could we use DELETE to terminate resellers? https://datatracker.ietf.org/doc/html/rfc7231#section-4.3.5
 
     @Get()
     @ApiQuery({type: SearchLogic})
@@ -61,8 +64,9 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     async readAll(@Req() req): Promise<[ResellerResponseDto[], number]> {
         this.log.debug({message: 'fetch all resellers', func: this.readAll.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
-        const [responseList, totalCount] =
+        const [resellers, totalCount] =
             await this.resellersService.readAll(sr)
+        const responseList = resellers.map(reseller => new ResellerResponseDto(reseller))
         if (req.query.expand) {
             const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
             await this.expander.expandObjects(responseList, resellerSearchDtoKeys, sr)
@@ -76,7 +80,8 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<ResellerResponseDto> {
         this.log.debug({message: 'fetch reseller by id', func: this.read.name, url: req.url, method: req.method})
-        const responseItem = await this.resellersService.read(id, this.newServiceRequest(req))
+        const reseller = await this.resellersService.read(id, this.newServiceRequest(req))
+        const responseItem = new ResellerResponseDto(reseller)
         if (req.query.expand && !req.isRedirected) {
             const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
             await this.expander.expandObjects(responseItem, resellerSearchDtoKeys, req)
@@ -91,7 +96,8 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     async update(@Param('id', ParseIntPipe) id: number, entity: ResellerCreateDto, req): Promise<ResellerResponseDto> {
         this.log.debug({message: 'update reseller by id', func: this.update.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
-        const response = await this.resellersService.update(id, entity, sr)
+        const reseller = await this.resellersService.update(id, entity, sr)
+        const response = new ResellerResponseDto(reseller)
         await this.journalsService.writeJournal(sr, id, response)
         return response
     }
@@ -107,7 +113,8 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ResellerResponseDto> {
         this.log.debug({message: 'patch reseller by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
-        const response = await this.resellersService.adjust(id, patch, sr)
+        const reseller = await this.resellersService.adjust(id, patch, sr)
+        const response = new ResellerResponseDto(reseller)
         await this.journalsService.writeJournal(sr, id, response)
         return response
     }
@@ -117,7 +124,12 @@ export class ResellersController extends CrudController<ResellerCreateDto, Resel
         type: [JournalResponseDto],
     })
     async journal(@Param('id') id: number | string, @Req() req) {
-        this.log.debug({message: 'fetch reseller journal by id', func: this.journal.name, url: req.url, method: req.method})
+        this.log.debug({
+            message: 'fetch reseller journal by id',
+            func: this.journal.name,
+            url: req.url,
+            method: req.method,
+        })
         return super.journal(id, req)
     }
 }

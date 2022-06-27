@@ -1,7 +1,6 @@
-import {ResellerStatus} from './reseller-base.dto'
-import {ResellerResponseDto} from './reseller-response.dto'
+import {ResellerStatus} from '../../../entities/internal/reseller.internal.entity'
 
-export class ResellerSearchDto implements ResellerResponseDto {
+export class ResellerSearchDto {
     id: number = undefined
     contract_id: number = undefined
     name?: string = undefined

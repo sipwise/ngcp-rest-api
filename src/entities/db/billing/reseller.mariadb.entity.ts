@@ -6,9 +6,10 @@
 import {Contact} from './contact.mariadb.entity'
 import {Contract} from './contract.mariadb.entity'
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
-import {ResellerStatus} from '../../../api/resellers/dto/reseller-base.dto'
 import {Domain} from './domain.mariadb.entity'
 import {Journal} from './journal.mariadb.entity'
+import {ResellerStatus} from '../../internal/reseller.internal.entity'
+import {internal} from '../../../entities'
 // import {VoipNumber} from './voip-number.entity'
 // import {NcosLevel} from './ncos-level.entity'
 // import {Order} from './order.entity'
@@ -103,4 +104,21 @@ export class Reseller extends BaseEntity {
     //     sourceKey: 'id',
     // })
     // Orders?: Order[]
+
+    toInternal(): internal.Reseller {
+        return internal.Reseller.create({
+            id: this.id,
+            contract_id: this.contract_id,
+            name: this.name,
+            status: this.status,
+        })
+    }
+
+    fromInternal(reseller: internal.Reseller): Reseller {
+        this.id = reseller.id
+        this.contract_id = reseller.contract_id
+        this.name = reseller.name
+        this.status = reseller.status
+        return this
+    }
 }
