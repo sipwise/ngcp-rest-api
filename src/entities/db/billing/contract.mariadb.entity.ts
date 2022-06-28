@@ -2,13 +2,8 @@ import {Contact} from './contact.mariadb.entity'
 import {Reseller} from './reseller.mariadb.entity'
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
 import {Product} from './product.mariadb.entity'
-
-enum ContractStatus {
-    Pending = 'pending',
-    Active = 'active',
-    Locked = 'locked',
-    Terminated = 'terminated'
-}
+import {ContractStatus, ContractType} from '../../internal/contract.internal.entity'
+import {internal} from '../../../entities'
 
 @Entity({
     name: 'contracts',
@@ -174,4 +169,55 @@ export class Contract extends BaseEntity {
     // @BelongsTo(() => ProfilePackage)
     // ProfilePackage?: ProfilePackage
 
+    toInternal(): internal.Contract {
+        const contract = internal.Contract.create({
+            activate_timestamp: this.activate_timestamp,
+            add_vat: this.add_vat,
+            contact_id: this.contact_id,
+            create_timestamp: this.create_timestamp,
+            customer_id: this.customer_id,
+            external_id: this.external_id,
+            id: this.id,
+            invoice_email_template_id: this.invoice_email_template_id,
+            invoice_template_id: this.invoice_template_id,
+            max_subscribers: this.max_subscribers,
+            modify_timestamp: this.modify_timestamp,
+            order_id: this.order_id,
+            passreset_email_template_id: this.passreset_email_template_id,
+            product_id: this.product_id,
+            profile_package_id: this.profile_package_id,
+            send_invoice: this.send_invoice,
+            status: this.status,
+            subscriber_email_template_id: this.subscriber_email_template_id,
+            terminate_timestamp: this.terminate_timestamp,
+            vat_rate: this.vat_rate,
+        })
+        contract.type = this.product != undefined ? this.product.class as unknown as ContractType : undefined
+        return contract
+    }
+
+    fromInternal(contract: internal.Contract): Contract {
+        this.activate_timestamp = contract.activate_timestamp
+        this.add_vat = contract.add_vat
+        this.contact_id = contract.contact_id
+        this.create_timestamp = contract.create_timestamp
+        this.customer_id = contract.customer_id
+        this.external_id = contract.external_id
+        this.id = contract.id
+        this.invoice_email_template_id = contract.invoice_email_template_id
+        this.invoice_template_id = contract.invoice_template_id
+        this.max_subscribers = contract.max_subscribers
+        this.modify_timestamp = contract.modify_timestamp
+        this.order_id = contract.order_id
+        this.passreset_email_template_id = contract.passreset_email_template_id
+        this.product_id = contract.product_id
+        this.profile_package_id = contract.profile_package_id
+        this.send_invoice = contract.send_invoice
+        this.status = contract.status
+        this.subscriber_email_template_id = contract.subscriber_email_template_id
+        this.terminate_timestamp = contract.terminate_timestamp
+        this.vat_rate = contract.vat_rate
+
+        return this
+    }
 }

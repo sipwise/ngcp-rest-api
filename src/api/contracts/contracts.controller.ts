@@ -51,7 +51,8 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     async create(entity: ContractCreateDto, req: Request): Promise<ContractResponseDto> {
         this.log.debug({message: 'create contract', func: this.create.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
-        const response = await this.contractsService.create(entity, sr)
+        const contract = await this.contractsService.create(entity.toInternal(), sr)
+        const response = new ContractResponseDto(contract)
         await this.journalsService.writeJournal(sr, response.id, response)
         return response
     }
@@ -62,8 +63,9 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     async readAll(req): Promise<[ContractResponseDto[], number]> {
         this.log.debug({message: 'fetch all contracts', func: this.readAll.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
-        const [responseList, totalCount] =
+        const [contracts, totalCount] =
             await this.contractsService.readAll(sr)
+        const responseList = contracts.map(contract => new ContractResponseDto(contract))
         if (req.query.expand) {
             const contractSearchDtoKeys = Object.keys(new ContractSearchDto())
             await this.expander.expandObjects(responseList, contractSearchDtoKeys, sr)
@@ -77,22 +79,24 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<ContractResponseDto> {
         this.log.debug({message: 'fetch contract by id', func: this.read.name, url: req.url, method: req.method})
-        const responseItem = await this.contractsService.read(id, this.newServiceRequest(req))
+        const contract = await this.contractsService.read(id, this.newServiceRequest(req))
+        const response = new ContractResponseDto(contract)
         if (req.query.expand && !req.isRedirected) {
             const contractSearchDtoKeys = Object.keys(new ContractSearchDto())
-            await this.expander.expandObjects(responseItem, contractSearchDtoKeys, req)
+            await this.expander.expandObjects(response, contractSearchDtoKeys, req)
         }
-        return responseItem
+        return response
     }
 
     @Put(':id')
     @ApiOkResponse({
         type: ContractResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, dto: ContractCreateDto, req): Promise<ContractResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, update: ContractCreateDto, req): Promise<ContractResponseDto> {
         this.log.debug({message: 'update contract by id', func: this.update.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
-        const response = await this.contractsService.update(id, dto, sr)
+        const contract = await this.contractsService.update(id, update.toInternal(), sr)
+        const response = new ContractResponseDto(contract)
         await this.journalsService.writeJournal(sr, id, response)
         return response
     }
@@ -108,7 +112,8 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ContractResponseDto> {
         this.log.debug({message: 'patch contract by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
-        const response = await this.contractsService.adjust(id, patch, sr)
+        const contract = await this.contractsService.adjust(id, patch, sr)
+        const response = new ContractResponseDto(contract)
         await this.journalsService.writeJournal(sr, id, response)
         return response
     }
@@ -124,7 +129,12 @@ export class ContractsController extends CrudController<ContractCreateDto, Contr
         type: [JournalResponseDto],
     })
     async journal(@Param('id') id: number | string, req) {
-        this.log.debug({message: 'fetch contract journal by id', func: this.journal.name, url: req.url, method: req.method})
+        this.log.debug({
+            message: 'fetch contract journal by id',
+            func: this.journal.name,
+            url: req.url,
+            method: req.method,
+        })
         return super.journal(id, req)
     }
 }

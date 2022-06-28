@@ -3,6 +3,7 @@ import {ContractsService} from './contracts.service'
 import {ContractsController} from './contracts.controller'
 import {JournalsModule} from '../journals/journals.module'
 import {ExpandModule} from '../../helpers/expand.module'
+import {ContractsMariadbRepository} from './repositories/contracts.mariadb.repository'
 
 @Module({
     imports: [
@@ -12,6 +13,7 @@ import {ExpandModule} from '../../helpers/expand.module'
     providers: [
         ContractsController,
         ContractsService,
+        ContractsMariadbRepository,
     ],
     controllers: [ContractsController],
     exports: [

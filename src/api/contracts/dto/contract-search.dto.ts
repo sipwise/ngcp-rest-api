@@ -1,6 +1,9 @@
-import {ContractStatus, ContractType} from '../contracts.constants'
 import {ContractResponseDto} from './contract-response.dto'
-import {ContractBillingProfileDefinition} from './contract-base.dto'
+import {
+    ContractBillingProfileDefinition,
+    ContractStatus,
+    ContractType,
+} from '../../../entities/internal/contract.internal.entity'
 
 export class ContractSearchDto implements ContractResponseDto {
     id: number = undefined

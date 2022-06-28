@@ -1,6 +1,7 @@
 export {Admin} from './admin.internal.entity'
 export {AclRole} from './acl-role.internal.entity'
 export {Contact} from './contact.internal.entity'
+export {Contract} from './contract.internal.entity'
 export {Domain} from './domain.internal.entity'
 export {Journal} from './journal.internal.entity'
 export {PbxGroup, PbxGroupMemberItem} from './pbx-group.internal.entity'

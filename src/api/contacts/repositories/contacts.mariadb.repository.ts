@@ -3,13 +3,13 @@ import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {Logger} from '@nestjs/common'
 import {Not, SelectQueryBuilder} from 'typeorm'
-import {ContractStatus} from '../../contracts/contracts.constants'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {db, internal} from '../../../entities'
 import {ContactStatus} from '../../../entities/internal/contact.internal.entity'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {ContactSearchDto} from '../dto/contact-search.dto'
 import {VoipSubscriberStatus} from '../../../entities/internal/voip-subscriber.internal.entity'
+import {ContractStatus} from '../../../entities/internal/contract.internal.entity'
 
 export class ContactsMariadbRepository implements ContactsRepository {
 
