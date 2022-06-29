@@ -1,3 +1,11 @@
+ngcp-rest-api (10.5.2.0+0~mr10.5.2.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [6173340] TT#181250 /api/journals return role name instead of role_id
+  * [e812fec] TT#181251 refactor journaling.interceptor to service
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 29 Jun 2022 17:27:58 +0200
+
 ngcp-rest-api (10.5.1.0+0~mr10.5.1.0) unstable; urgency=medium
 
   [ Michael Berger ]
