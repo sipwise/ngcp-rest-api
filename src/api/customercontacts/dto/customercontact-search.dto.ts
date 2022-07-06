@@ -1,4 +1,5 @@
 import {ContactGender, ContactStatus} from '../../../entities/internal/contact.internal.entity'
+import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
 
 export class CustomercontactSearchDto {
     id: number = undefined
@@ -31,6 +32,7 @@ export class CustomercontactSearchDto {
     phonenumber?: string = undefined
     postcode?: string = undefined
     reseller_id?: number = undefined
+    reseller_id_expand?: ResellerResponseDto = undefined
     status: ContactStatus = undefined
     street?: string = undefined
     terminate_timestamp?: Date = undefined

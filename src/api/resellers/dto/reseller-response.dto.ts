@@ -1,7 +1,8 @@
-import {ApiProperty} from '@nestjs/swagger'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsEnum, IsNotEmpty} from 'class-validator'
 import {ResellerStatus} from '../../../entities/internal/reseller.internal.entity'
 import {internal} from '../../../entities'
+import {ContractResponseDto} from '../../contracts/dto/contract-response.dto'
 
 export class ResellerResponseDto {
     @ApiProperty()
@@ -10,6 +11,9 @@ export class ResellerResponseDto {
     @ApiProperty()
     @IsNotEmpty()
         contract_id: number
+    
+    @ApiPropertyOptional()
+        contract_id_expand: ContractResponseDto
 
     @ApiProperty()
         name: string

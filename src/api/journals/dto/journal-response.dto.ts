@@ -1,4 +1,5 @@
 import {internal} from './../../../entities'
+import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
 
 export class JournalResponseDto {
     id: number
@@ -6,6 +7,7 @@ export class JournalResponseDto {
     content_format: string
     operation: string
     reseller_id: number
+    reseller_id_expand: ResellerResponseDto
     resource_id: number
     resource_name: string
     role: string | null
