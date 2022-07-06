@@ -1,12 +1,4 @@
-import {
-    ApiBody,
-    ApiConsumes,
-    ApiCreatedResponse,
-    ApiExtraModels,
-    ApiOkResponse,
-    ApiQuery,
-    ApiTags,
-} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {
     BadRequestException,
@@ -18,7 +10,6 @@ import {
     Param,
     ParseIntPipe,
     Patch,
-    Post,
     Put,
     Req,
 } from '@nestjs/common'
@@ -28,7 +19,7 @@ import {number} from 'yargs'
 import {Operation as PatchOperation, validate} from '../../helpers/patch.helper'
 import {PatchDto} from '../patch.dto'
 import {RbacRole} from '../../config/constants.config'
-import {VoicemailBaseDto} from './dto/voicemail-base.dto'
+import {VoicemailUpdateDto} from './dto/voicemail-update.dto'
 import {VoicemailResponseDto} from './dto/voicemail-response.dto'
 import {VoicemailsService} from './voicemails.service'
 import {ExpandHelper} from '../../helpers/expand.helper'
@@ -39,12 +30,11 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 
 const resourceName = 'voicemails'
 
-@Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.lintercept)
-// @UseInterceptors(LoggingInterceptor, new JournalingInterceptor(new JournalsService()))
+@Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller)
 @ApiTags('Voicemails')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
-export class VoicemailsController extends CrudController<VoicemailBaseDto, VoicemailResponseDto> {
+export class VoicemailsController extends CrudController<VoicemailUpdateDto, VoicemailResponseDto> {
     private readonly log: Logger = new Logger(VoicemailsController.name)
 
     constructor(
@@ -55,25 +45,14 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
         super(resourceName, voicemailsService, journalService)
     }
 
-    @Post()
-    @ApiCreatedResponse({
-        type: VoicemailResponseDto,
-    })
-    async create(@Body() voicemail: VoicemailBaseDto, @Req() req): Promise<VoicemailResponseDto> {
-        this.log.debug({message: 'create voicemail', func: this.create.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
-        const response =  await this.voicemailsService.create(voicemail, sr)
-        await this.journalService.writeJournal(sr, response.id, response)
-        return response
-    }
-
     @Get()
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(VoicemailResponseDto)
     async readAll(@Req() req): Promise<[VoicemailResponseDto[], number]> {
         this.log.debug({message: 'fetch all voicemails', func: this.readAll.name, url: req.url, method: req.method})
-        const [responseList, totalCount] =
+        const [result, totalCount] =
             await this.voicemailsService.readAll(req)
+        const responseList = result.map(voicemail => new VoicemailResponseDto(voicemail))
         if (req.query.expand) {
             const voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
             await this.expander.expandObjects(responseList, voicemailSearchDtoKeys, req)
@@ -87,7 +66,8 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     })
     async read(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<VoicemailResponseDto> {
         this.log.debug({message: 'fetch voicemail by id', func: this.read.name, url: req.url, method: req.method})
-        const responseItem = await this.voicemailsService.read(id, req)
+        const voicemail = await this.voicemailsService.read(id, req)
+        const responseItem = new VoicemailResponseDto(voicemail)
         if (req.query.expand && !req.isRedirected) {
             const voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
             await this.expander.expandObjects(responseItem, voicemailSearchDtoKeys, req)
@@ -123,7 +103,8 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
             const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
             throw new BadRequestException(message)
         }
-        const response = await this.voicemailsService.adjust(id, patch, sr)
+        const voicemail = await this.voicemailsService.adjust(id, patch, sr)
+        const response = new VoicemailResponseDto(voicemail)
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
@@ -132,10 +113,11 @@ export class VoicemailsController extends CrudController<VoicemailBaseDto, Voice
     @ApiOkResponse({
         type: VoicemailResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, @Body() voicemail: VoicemailBaseDto, @Req() req): Promise<VoicemailResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, @Body() update: VoicemailUpdateDto, @Req() req): Promise<VoicemailResponseDto> {
         this.log.debug({message: 'update voicemail by id', func: this.update.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
-        const response = await this.voicemailsService.update(id, voicemail, sr)
+        const voicemail = await this.voicemailsService.update(id, update, sr)
+        const response = new VoicemailResponseDto(voicemail)
         await this.journalService.writeJournal(sr, id, response)
         return response
     }

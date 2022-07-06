@@ -1,5 +1,6 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
 import {VoipSubscriber} from '../billing'
+import {internal} from '../../../entities'
 
 @Entity({
     name: 'voicemail_spool',
@@ -78,5 +79,43 @@ export class VoicemailSpool extends BaseEntity {
 
     @ManyToOne(() => VoipSubscriber, subscriber => subscriber.id)
     @JoinColumn({name: 'mailboxuser', referencedColumnName: 'uuid'})
-        provSubscriber: VoipSubscriber
+        billingSubscriber: VoipSubscriber
+
+    toInternal(): internal.Voicemail {
+        return internal.Voicemail.create({
+            call_id: this.call_id,
+            callerid: this.callerid,
+            context: this.context,
+            dir: this.dir,
+            duration: this.duration,
+            flag: this.flag,
+            id: this.id,
+            macrocontext: this.macrocontext,
+            mailboxcontext: this.mailboxcontext,
+            mailboxuser: this.mailboxuser,
+            msg_id: this.msg_id,
+            msgnum: this.msgnum,
+            origtime: this.origtime,
+            recording: this.recording,
+            subscriber_id: this.billingSubscriber.id
+        })
+    }
+
+    fromInternal(data: internal.Voicemail): VoicemailSpool {
+        this.call_id = data.call_id
+        this.callerid = data.callerid
+        this.context = data.context
+        this.dir = data.dir
+        this.duration = data.duration
+        this.flag = data.flag
+        this.id = data.id
+        this.macrocontext = data.macrocontext
+        this.mailboxcontext = data.mailboxcontext
+        this.mailboxuser = data.mailboxuser
+        this.msg_id = data.msg_id
+        this.msgnum = data.msgnum
+        this.origtime = data.origtime
+        this.recording = data.recording
+        return this
+    }
 }
