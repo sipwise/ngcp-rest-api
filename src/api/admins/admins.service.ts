@@ -89,7 +89,7 @@ export class AdminsService { //} implements CrudService<AdminCreateDto, AdminRes
         this.log.debug({message: 'delete admin by id', func: this.delete.name, user: req.user.username, id: id})
 
         if (id == req.user.id)
-            throw new UnprocessableEntityException(Messages.invoke(Messages.DELETE_OWN_USER, req)) // TODO: should we use forbidden?
+            throw new ForbiddenException(Messages.invoke(Messages.DELETE_OWN_USER, req))
 
         return await this.adminRepo.delete(id, req)
     }

@@ -10,12 +10,14 @@ import {JournalsModule} from '../api/journals/journals.module'
 import {JournalsService} from '../api/journals/journals.service'
 import {AdminsModule} from '../api/admins/admins.module'
 import {AdminsController} from '../api/admins/admins.controller'
+import {ContactsModule} from '../api/contacts/contacts.module'
+import {ContactsController} from '../api/contacts/contacts.controller'
 
 @Module({
     imports: [
         // TODO: Check why we need to use forwardRef only for the AdminsModule
         forwardRef(() => AdminsModule),
-        CustomercontactsModule,
+        ContactsModule,
         ResellersModule,
         ContractsModule,
         JournalsModule,
@@ -23,7 +25,7 @@ import {AdminsController} from '../api/admins/admins.controller'
     providers: [
         ExpandHelper,
         AdminsController,
-        CustomercontactsController,
+        ContactsController,
         ResellersController,
         ContractsController,
         JournalsService,

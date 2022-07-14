@@ -1,12 +1,8 @@
 import {ContactGender, ContactStatus} from '../../../entities/internal/contact.internal.entity'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
-import {RbacRole} from '../../../config/constants.config'
 import {internal} from '../../../entities'
 
-export class ContactResponseDto {
-    @ApiProperty()
-        id: number
+export class ContactCreateDto {
     @ApiPropertyOptional()
         bankname?: string
     @ApiPropertyOptional()
@@ -54,15 +50,13 @@ export class ContactResponseDto {
     @ApiPropertyOptional()
         mobilenumber?: string
     @ApiPropertyOptional()
-        newsletter: boolean
+        newsletter?: boolean
     @ApiPropertyOptional()
         phonenumber?: string
     @ApiPropertyOptional()
         postcode?: string
     @ApiPropertyOptional()
         reseller_id?: number
-    @ApiPropertyOptional()
-        reseller_id_expand?: ResellerResponseDto
     @ApiProperty()
         status: ContactStatus
     @ApiPropertyOptional()
@@ -72,15 +66,7 @@ export class ContactResponseDto {
     @ApiPropertyOptional()
         vatnum?: string
 
-    constructor(contact: internal.Contact, role: RbacRole) {
-        Object.keys(contact).map(key => {
-            this[key] = contact[key]
-        })
-
-        if ([RbacRole.admin, RbacRole.system, RbacRole.ccareadmin].includes(role)) {
-            this.reseller_id = contact.reseller_id
-        } else {
-            delete(this.reseller_id)
-        }
+    toInternal() {
+        return internal.Contact.create(this)
     }
 }

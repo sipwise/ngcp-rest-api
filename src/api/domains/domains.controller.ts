@@ -1,6 +1,6 @@
 import {ApiCreatedResponse, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {Controller, Delete, Get, Logger, Param, ParseIntPipe, Post, Req} from '@nestjs/common'
+import {Controller, Delete, forwardRef, Get, Inject, Logger, Param, ParseIntPipe, Post, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {DomainCreateDto} from './dto/domain-create.dto'
 import {DomainResponseDto} from './dto/domain-response.dto'
@@ -31,6 +31,7 @@ export class DomainsController extends CrudController<DomainCreateDto, DomainRes
     constructor(
         private readonly domainsService: DomainsService,
         private readonly journalsService: JournalsService,
+        @Inject(forwardRef(() => ExpandHelper))
         private readonly expander: ExpandHelper,
     ) {
         super(resourceName, domainsService, journalsService)
