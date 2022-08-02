@@ -44,13 +44,10 @@ export class PbxgroupsMariadbRepository implements PbxgroupsRepository {
     }
 
     private generateBaseQuery(req: ServiceRequest, searchLogic?: SearchLogic): SelectQueryBuilder<db.provisioning.VoipSubscriber> {
-        const distinctGroupQuery = db.provisioning.VoipPbxGroup.createQueryBuilder('pg')
-            .select('group_id')
-            .distinct(true)
 
         const memberSubQuery = db.provisioning.VoipSubscriber.createQueryBuilder('sm')
             .select('concat("[", group_concat(json_object("subscriberId", bm.id, "extension", sm.pbx_extension)), "]")')
-            .innerJoin('voip_pbx_groups', 'pm', 'pm.subscriber_id = sm.id and pm.group_id = pg.group_id')
+            .innerJoin('voip_pbx_groups', 'pm', 'pm.subscriber_id = sm.id and pm.group_id = sg.id')
             .innerJoin('sm.billing_voip_subscriber', 'bm')
 
         const query = db.provisioning.VoipSubscriber.createQueryBuilder('sg')
@@ -59,11 +56,11 @@ export class PbxgroupsMariadbRepository implements PbxgroupsRepository {
             .addSelect('sg.pbx_hunt_timeout')
             .addSelect('sg.pbx_extension')
             .addSelect('bg.id', 'group_bsub_id')
-            .addSelect('pg.group_id', 'group_psub_id')
+            .addSelect('sg.id', 'group_psub_id')
             .addSelect('bg.contract_id', 'customer_id')
             .addSelect('(' + memberSubQuery.getQuery() + ')', 'members')
-            .innerJoin('(' + distinctGroupQuery.getQuery() + ')', 'pg', 'pg.group_id = sg.id')
             .innerJoin('sg.billing_voip_subscriber', 'bg')
+            .where('sg.is_pbx_group = 1')
 
         this.addPermissionFilterToQueryBuilder(query, req)
 
