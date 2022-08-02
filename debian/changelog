@@ -1,3 +1,10 @@
+ngcp-rest-api (10.5.1.2+0~mr10.5.1.2) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [faf7d92] TT#187200 adjust /api/pbxgroups repo and response
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 02 Aug 2022 19:02:42 +0200
+
 ngcp-rest-api (10.5.1.1+0~mr10.5.1.1) unstable; urgency=medium
 
   [ Kirill Solomko ]
