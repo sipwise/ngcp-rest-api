@@ -24,10 +24,12 @@ export class PbxgroupsResponseDto {
         this.hunt_policy = pbxGroup.huntPolicy
         this.hunt_timeout = pbxGroup.huntTimeout
         this.id = pbxGroup.id
-        this.members = pbxGroup.members.map(member => ({
-            extension: member.extension,
-            subscriber_id: member.subscriberId,
-        }))
+        this.members = pbxGroup.members
+                        ? pbxGroup.members.map(member => ({
+                            extension: member.extension,
+                            subscriber_id: member.subscriberId,
+                          }))
+                        : []
         this.name = pbxGroup.name
     }
 }
