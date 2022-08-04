@@ -80,6 +80,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
     }
 
     @Get()
+    @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.ccareadmin, RbacRole.ccare)
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(AdminResponseDto)
     async readAll(@Req() req: Request): Promise<[AdminResponseDto[], number]> {
@@ -102,6 +103,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
     }
 
     @Get(':id')
+    @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.ccareadmin, RbacRole.ccare)
     @ApiOkResponse({
         type: AdminResponseDto,
     })
