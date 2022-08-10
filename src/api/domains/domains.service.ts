@@ -12,9 +12,10 @@ import {RbacRole} from '../../config/constants.config'
 import {Messages} from '../../config/messages.config'
 import {DomainsMariadbRepository} from './repositories/domains.mariadb.repository'
 import {DomainCreateDto} from './dto/domain-create.dto'
+import {CrudService} from '../../interfaces/crud-service.interface'
 
 @Injectable()
-export class DomainsService { // implements CrudService<DomainCreateDto, DomainResponseDto> {
+export class DomainsService implements CrudService<internal.Domain> {
     private readonly log = new Logger(DomainsService.name)
 
     constructor(

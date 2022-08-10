@@ -116,7 +116,7 @@ export class VoicemailsController extends CrudController<VoicemailUpdateDto, Voi
     async update(@Param('id', ParseIntPipe) id: number, @Body() update: VoicemailUpdateDto, @Req() req): Promise<VoicemailResponseDto> {
         this.log.debug({message: 'update voicemail by id', func: this.update.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
-        const voicemail = await this.voicemailsService.update(id, update, sr)
+        const voicemail = await this.voicemailsService.update(id, update.toInternal(), sr)
         const response = new VoicemailResponseDto(voicemail)
         await this.journalService.writeJournal(sr, id, response)
         return response

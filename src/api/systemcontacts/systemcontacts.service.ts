@@ -4,9 +4,10 @@ import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Messages} from '../../config/messages.config'
 import {ContactsMariadbRepository} from '../contacts/repositories/contacts.mariadb.repository'
+import {CrudService} from '../../interfaces/crud-service.interface'
 
 @Injectable()
-export class SystemcontactsService { // implements CrudService<SystemcontactCreateDto, SystemcontactResponseDto> {
+export class SystemcontactsService implements CrudService<internal.Contact> {
     private readonly log = new Logger(SystemcontactsService.name)
 
     constructor(

@@ -7,9 +7,10 @@ import {Messages} from '../../config/messages.config'
 import {ResellersMariadbRepository} from './repositories/resellers.mariadb.repository'
 import {ResellerStatus} from '../../entities/internal/reseller.internal.entity'
 import {deepCopy} from '../../repositories/acl-role.mock.repository'
+import {CrudService} from '../../interfaces/crud-service.interface'
 
 @Injectable()
-export class ResellersService {  // implements CrudService<ResellerCreateDto, ResellerResponseDto> {
+export class ResellersService implements CrudService<internal.Reseller> {
     private readonly log = new Logger(ResellersService.name)
 
     constructor(

@@ -5,9 +5,10 @@ import {AppService} from '../../app.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Messages} from '../../config/messages.config'
 import {ContactsMariadbRepository} from '../contacts/repositories/contacts.mariadb.repository'
+import {CrudService} from '../../interfaces/crud-service.interface'
 
 @Injectable()
-export class CustomercontactsService { // implements CrudService<CustomercontactCreateDto, CustomercontactResponseDto> {
+export class CustomercontactsService implements CrudService<internal.Contact> {
     private readonly log = new Logger(CustomercontactsService.name)
 
     constructor(

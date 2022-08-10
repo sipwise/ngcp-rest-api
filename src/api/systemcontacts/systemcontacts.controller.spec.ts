@@ -7,14 +7,13 @@ import {HttpStatus, INestApplication, NotFoundException} from '@nestjs/common'
 import {SystemcontactsModule} from './systemcontacts.module'
 
 import request from 'supertest'
-import {CrudService} from '../../interfaces/crud-service.interface'
 import {SystemcontactCreateDto} from './dto/systemcontact-create.dto'
 import {SystemcontactResponseDto} from './dto/systemcontact-response.dto'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Operation} from '../../helpers/patch.helper'
 import {ContactStatus} from '../../entities/internal/contact.internal.entity'
 
-class MockSystemcontactsService implements CrudService<SystemcontactCreateDto, SystemcontactResponseDto> {
+class MockSystemcontactsService { //implements CrudService<SystemcontactCreateDto, SystemcontactResponseDto> {
     adjust(id: number, patch: Operation[], req?: ServiceRequest): Promise<SystemcontactResponseDto> {
         return Promise.resolve(undefined)
     }

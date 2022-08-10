@@ -2,11 +2,11 @@ import {BadRequestException, Injectable, Logger} from '@nestjs/common'
 import {internal} from '../../entities'
 import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {VoicemailUpdateDto} from './dto/voicemail-update.dto'
 import {VoicemailsMariadbRepository} from './repositories/voicemails.mariadb.repository'
+import {CrudService} from '../../interfaces/crud-service.interface'
 
 @Injectable()
-export class VoicemailsService { // implements CrudService<VoicemailUpdateDto, VoicemailResponseDto> {
+export class VoicemailsService implements CrudService<internal.Voicemail> {
     readonly voicemailDir = '/var/spool/asterisk/voicemail/default/'
     authorized = ['Old', 'INBOX', 'Work', 'Friends', 'Family', 'Cust1', 'Cust2', 'Cust3', 'Cust4', 'Cust5', 'Cust6']
     private readonly log = new Logger(VoicemailsService.name)
@@ -47,9 +47,9 @@ export class VoicemailsService { // implements CrudService<VoicemailUpdateDto, V
         return await this.voicemailsRepo.update(id, voicemail, sr)
     }
 
-    async update(id: number, update: VoicemailUpdateDto, sr: ServiceRequest): Promise<internal.Voicemail> {
+    async update(id: number, update: internal.Voicemail, sr: ServiceRequest): Promise<internal.Voicemail> {
         const voicemail = await this.voicemailsRepo.read(id, sr)
-        voicemail.dir = update.folder
+        voicemail.dir = update.dir
         if (this.authorized.indexOf(voicemail.dir) == -1) {
             throw new BadRequestException('not a valid entry (value)')
         }

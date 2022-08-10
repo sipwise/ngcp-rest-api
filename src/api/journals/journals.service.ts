@@ -103,7 +103,7 @@ export class JournalsService {
             username: req['user'] !== undefined ? req.user.username : '',
         })
 
-        this.log.debug("write journal entry")
+        this.log.debug('write journal entry')
 
         // write Journal entry to database
         await this.create(entry)

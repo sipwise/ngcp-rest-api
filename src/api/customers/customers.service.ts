@@ -1,5 +1,4 @@
 import {Injectable, MethodNotAllowedException} from '@nestjs/common'
-import {CrudService} from '../../interfaces/crud-service.interface'
 import {CustomerCreateDto} from './dto/customer-create.dto'
 import {CustomerResponseDto} from './dto/customer-response.dto'
 import {Operation} from '../../helpers/patch.helper'
@@ -10,7 +9,7 @@ import {db} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 @Injectable()
-export class CustomersService implements CrudService<CustomerCreateDto, CustomerResponseDto> {
+export class CustomersService { // implements CrudService<CustomerCreateDto, CustomerResponseDto> {
 
     constructor(
         private readonly app: AppService,

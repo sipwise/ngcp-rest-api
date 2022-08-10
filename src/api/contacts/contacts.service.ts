@@ -1,11 +1,13 @@
-import {BadRequestException, HttpException, Injectable, Logger, UnprocessableEntityException} from '@nestjs/common'
+import {HttpException, Injectable, Logger, UnprocessableEntityException} from '@nestjs/common'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {internal} from '../../entities'
 import {ContactsMariadbRepository} from './repositories/contacts.mariadb.repository'
 import {Messages} from '../../config/messages.config'
+import {CrudService} from '../../interfaces/crud-service.interface'
+import {Operation as PatchOperation} from '../../helpers/patch.helper'
 
 @Injectable()
-export class ContactsService {
+export class ContactsService implements CrudService<internal.Contact>{
     private readonly log: Logger = new Logger(ContactsService.name)
 
     constructor(
@@ -105,5 +107,9 @@ export class ContactsService {
             return false
         }
         return true
+    }
+
+    adjust(id: number, patch: PatchOperation | PatchOperation[], req: ServiceRequest): Promise<internal.Contact> {
+        return Promise.resolve(undefined)
     }
 }

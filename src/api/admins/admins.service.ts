@@ -1,15 +1,16 @@
 import {AppService} from '../../app.service'
 import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
-import {ForbiddenException, Injectable, Logger, UnprocessableEntityException} from '@nestjs/common'
+import {ForbiddenException, Injectable, Logger} from '@nestjs/common'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AdminsMariadbRepository} from './repositories/admins.mariadb.repository'
 import {Messages} from '../../config/messages.config'
 import {internal} from '../../entities'
 import {AclRoleRepository} from '../../repositories/acl-role.repository'
 import {deepCopy} from '../../repositories/acl-role.mock.repository'
+import {CrudService} from '../../interfaces/crud-service.interface'
 
 @Injectable()
-export class AdminsService { //} implements CrudService<AdminCreateDto, AdminResponseDto> {
+export class AdminsService implements CrudService<internal.Admin> {
     private readonly log = new Logger(AdminsService.name)
 
     constructor(

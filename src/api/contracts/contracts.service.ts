@@ -6,9 +6,10 @@ import {Messages} from '../../config/messages.config'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ContractsMariadbRepository} from './repositories/contracts.mariadb.repository'
 import {deepCopy} from '../../repositories/acl-role.mock.repository'
+import {CrudService} from '../../interfaces/crud-service.interface'
 
 @Injectable()
-export class ContractsService {  // implements CrudService<ContractCreateDto, ContractResponseDto> {
+export class ContractsService implements CrudService<internal.Contract> {
     private readonly log: Logger = new Logger(ContractsService.name)
 
     constructor(
@@ -89,29 +90,5 @@ export class ContractsService {  // implements CrudService<ContractCreateDto, Co
         }
         await this.setProductId(contract, sr)
         return await this.contractsRepo.update(id, contract, sr)
-    }
-
-    private async save(id: number, newContract: internal.Contract): Promise<internal.Contract> {
-        // let oldContract = await db.billing.Contract.findOneOrFail(id)
-        // const billingMapping = Utils::BillingMappings::get_actual_billing_mapping(c => $c, now => $now, contract => $contract, );
-        // const billingProfile = billingMapping.billingProfile
-
-        // const setPackage: boolean = newContract.billing_profile_definition == 'package' // TODO: check because v1 definition does not contain "package" in enum "billing_profile_definition
-
-        // Utils::BillingMappings::prepare_billing_mappings
-        //     if (
-        //         NGCP::Panel::Utils::Contract::is_peering_reseller_contract( c => $c, contract => $contract )
-        //         &&
-        //         ( my $prepaid_billing_profile_exist = NGCP::Panel::Utils::BillingMappings::check_prepaid_profiles_exist(
-        //             c => $c,
-        //             mappings_to_create => $mappings_to_create) )
-        //     ) {
-        // if (newContract.status == 'terminated') {
-
-        // }
-        // oldContract = await db.billing.Contract.merge(oldContract, new db.billing.Contract().toInternal())
-        // await oldContract.save()
-        // return oldContract.toInternal()
-        return
     }
 }

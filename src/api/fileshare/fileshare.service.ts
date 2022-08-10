@@ -1,6 +1,5 @@
 import {AppService} from '../../app.service'
 import {Injectable, NotImplementedException, StreamableFile, UnprocessableEntityException} from '@nestjs/common'
-import {CrudService} from '../../interfaces/crud-service.interface'
 import {FileshareCreateDto} from './dto/fileshare-create.dto'
 import {FileshareResponseDto} from './dto/fileshare-response.dto'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
@@ -13,7 +12,7 @@ import {Messages} from '../../config/messages.config'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 
 @Injectable()
-export class FileshareService implements CrudService<FileshareCreateDto, FileshareResponseDto> {
+export class FileshareService { // implements CrudService<FileshareCreateDto, FileshareResponseDto> {
     constructor(
         private readonly app: AppService,
     ) {
