@@ -1,3 +1,26 @@
+ngcp-rest-api (11.1.0.0+0~mr11.1.0.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [213af35] TT#181250 /api/journals return role name instead of role_id
+  * [45525fe] TT#181251 refactor journaling.interceptor to service
+  * [1f23d6c] TT#187200 adjust /api/pbxgroups repo and response
+  * [3850297] TT#180554 /api/admins allow ccare roles GET
+
+  [ Michael Berger ]
+  * [29bd838] TT#182150 add contacts repository
+  * [f7b30a1] TT#182150 rework customercontacts to use repository
+  * [1737dc6] TT#182150 rework systemcontacts to use repository
+  * [7bc785a] TT#182500 rework resellers to use repository
+  * [8d2b9bd] TT#182750 rework products to use repository
+  * [9db642b] TT#182751 rework contracts to use repository
+  * [ff4878d] TT#184252 rework voicemails to use repository
+  * [9e74d7a] TT#150303 add expand support for endpoints
+  * [6ca61b1] TT#139062 implement new endpoint /api/contacts
+  * [b42a3cb] TT#187900 remove expand fields from search DTOs
+  * [bf75efd] TT#184352 rework CrudService interface
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 22 Aug 2022 20:02:24 +0200
+
 ngcp-rest-api (11.0.0.0+0~mr11.0.0.0) unstable; urgency=medium
 
   [ Michael Berger ]
