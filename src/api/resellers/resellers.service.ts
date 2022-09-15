@@ -2,7 +2,7 @@ import {ForbiddenException, Injectable, Logger, UnprocessableEntityException} fr
 import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AppService} from '../../app.service'
-import {db, internal} from '../../entities'
+import {internal} from '../../entities'
 import {Messages} from '../../config/messages.config'
 import {ResellersMariadbRepository} from './repositories/resellers.mariadb.repository'
 import {ResellerStatus} from '../../entities/internal/reseller.internal.entity'
@@ -56,7 +56,7 @@ export class ResellersService implements CrudService<internal.Reseller> {
 
     async update(id: number, reseller: internal.Reseller, sr: ServiceRequest): Promise<internal.Reseller> {
         this.log.debug({message: 'update reseller by id', func: this.update.name, user: sr.user.username, id: id})
-        const oldReseller = await db.billing.Reseller.findOneOrFail(id)
+        const oldReseller = await this.resellerRepo.read(id, sr)
         await this.validateUpdate(oldReseller, reseller, sr)
         return await this.resellerRepo.update(id, reseller, sr)
     }
@@ -64,7 +64,7 @@ export class ResellersService implements CrudService<internal.Reseller> {
     async adjust(id: number, patch: Operation | Operation[], sr: ServiceRequest): Promise<internal.Reseller> {
         this.log.debug({message: 'adjust reseller by id', func: this.adjust.name, user: sr.user.username, id: id})
 
-        let reseller = await db.billing.Reseller.findOneOrFail(id)
+        let reseller = await this.resellerRepo.read(id, sr)
         const oldReseller = deepCopy(reseller)
 
         reseller = applyPatch(reseller, patch).newDocument

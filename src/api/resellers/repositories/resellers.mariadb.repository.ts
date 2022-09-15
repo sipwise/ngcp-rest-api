@@ -8,9 +8,10 @@ import {db, internal} from '../../../entities'
 import {ResellerStatus} from '../../../entities/internal/reseller.internal.entity'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
+import {ResellersRepository} from '../interfaces/resellers.repository'
 
 @Injectable()
-export class ResellersMariadbRepository {
+export class ResellersMariadbRepository implements ResellersRepository {
     private readonly log = new Logger(ResellersMariadbRepository.name)
 
     constructor(
@@ -34,7 +35,7 @@ export class ResellersMariadbRepository {
     }
 
     @HandleDbErrors
-    private async findDefaultEmailTemplates(): Promise<db.billing.EmailTemplate[]> {
+    async findDefaultEmailTemplates(): Promise<db.billing.EmailTemplate[]> {
         return await db.billing.EmailTemplate.find(
             {
                 where: {
