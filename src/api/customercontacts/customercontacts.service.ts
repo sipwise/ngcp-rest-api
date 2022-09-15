@@ -41,7 +41,7 @@ export class CustomercontactsService implements CrudService<internal.Contact> {
             user: sr.user.username,
         })
         const contact = await this.contactRepo.readCustomerContactById(id, sr)
-        if (!contact.reseller_id) {
+        if (!contact.reseller_id) { // TODO: imo this check is redundant as the repository only returns customer contacts
             throw new BadRequestException(Messages.invoke(Messages.DELETE_SYSTEMCONTACT)) // TODO: find better description
         }
 
@@ -85,6 +85,9 @@ export class CustomercontactsService implements CrudService<internal.Contact> {
             contactId: id,
             user: sr.user.username,
         })
+        if (sr.user.reseller_id_required) {
+            contact.reseller_id = sr.user.reseller_id
+        }
         const oldContact = await this.contactRepo.readCustomerContactById(id, sr)
         if (oldContact.reseller_id != contact.reseller_id) {
             const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
@@ -106,6 +109,10 @@ export class CustomercontactsService implements CrudService<internal.Contact> {
 
         contact = applyPatch(contact, patch).newDocument
         contact.id = id
+
+        if (sr.user.reseller_id_required) {
+            contact.reseller_id = sr.user.reseller_id
+        }
 
         const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
         if (!reseller) {
