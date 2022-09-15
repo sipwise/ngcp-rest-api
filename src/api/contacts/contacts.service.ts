@@ -40,8 +40,9 @@ export class ContactsService implements CrudService<internal.Contact>{
             contactId: id,
             user: sr.user.username,
         })
-        const contact = await this.contactsRepo.readCustomerContactById(id, sr)
+        const contact = await this.contactsRepo.readContactById(id, sr)
 
+        // TODO: should exceptions be HttpException? I think this should be determined by the controller
         if (contact.reseller_id !== undefined) {  // check for active contracts and subscribers when deleting customercontact
             if (await this.contactsRepo.hasContactActiveContract(contact.id, sr)) {
                 throw new HttpException(Messages.invoke(Messages.CONTACT_STILL_IN_USE), 423) // 423 HTTP LOCKED
@@ -52,7 +53,7 @@ export class ContactsService implements CrudService<internal.Contact>{
             }
 
             if (await this.contactsRepo.hasContactTerminatedContract(contact.id, sr) || await this.contactsRepo.hasContactTerminatedSubscriber(contact.id, sr)) {
-                return await this.contactsRepo.terminate(contact.id, sr)
+                return await this.contactsRepo.terminate(contact.id, sr) // TODO: currently there is no way of knowing whether contact was deleted or terminated
             }
         }
         return await this.contactsRepo.delete(id, sr)
