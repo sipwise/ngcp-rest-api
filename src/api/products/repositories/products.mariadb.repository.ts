@@ -5,11 +5,13 @@ import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {ProductSearchDto} from '../dto/product-search.dto'
 import {Injectable, Logger} from '@nestjs/common'
+import {ProductsRepository} from '../interfaces/products.repository'
 
 @Injectable()
-export class ProductsMariadbRepository {
+export class ProductsMariadbRepository implements ProductsRepository {
 
     private readonly log: Logger = new Logger(ProductsMariadbRepository.name)
+
     @HandleDbErrors
     async readAll(sr: ServiceRequest): Promise<[internal.Product[], number]> {
         this.log.debug({message: 'read all products', func: this.readAll.name, user: sr.user.username})
