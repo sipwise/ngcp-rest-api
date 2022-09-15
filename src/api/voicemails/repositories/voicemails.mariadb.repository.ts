@@ -6,8 +6,9 @@ import {SelectQueryBuilder} from 'typeorm'
 import {db, internal} from '../../../entities'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {VoicemailSearchDto} from '../dto/voicemail-search.dto'
+import {VoicemailsRepository} from '../interfaces/voicemails.repository'
 
-export class VoicemailsMariadbRepository {
+export class VoicemailsMariadbRepository implements VoicemailsRepository {
     private readonly log = new Logger(VoicemailsMariadbRepository.name)
 
     @HandleDbErrors
