@@ -6,9 +6,10 @@ import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {JournalSearchDto} from '../dto/journal-search.dto'
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
+import {JournalsRepository} from '../interfaces/journals.repository'
 
 @Injectable()
-export class JournalsMariadbRepository {
+export class JournalsMariadbRepository implements JournalsRepository {
     private readonly log: Logger = new Logger(JournalsMariadbRepository.name)
 
     @HandleDbErrors
