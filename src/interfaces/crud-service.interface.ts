@@ -13,6 +13,6 @@ export interface CrudService<InternalEntity> {
 
     adjust(id: number | string, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<InternalEntity>
 
-    delete(id: number | string, sr: ServiceRequest): Promise<number | string>
+    delete?(id: number | string, sr: ServiceRequest): Promise<number | string>
 }
 

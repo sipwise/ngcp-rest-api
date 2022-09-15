@@ -2,8 +2,8 @@ import {
     BadRequestException,
     Body,
     Controller,
-    Delete,
-    Get,
+    Delete, forwardRef,
+    Get, Inject,
     Logger,
     Param,
     ParseIntPipe,
@@ -54,7 +54,7 @@ export class AdminsController extends CrudController<AdminCreateDto, AdminRespon
         private readonly app: AppService,
         private readonly adminsService: AdminsService,
         private readonly journalsService: JournalsService,
-        // @Inject(forwardRef(() => ExpandHelper))
+        @Inject(forwardRef(() => ExpandHelper))
         private readonly expander: ExpandHelper,
     ) {
         super(resourceName, adminsService, journalsService)

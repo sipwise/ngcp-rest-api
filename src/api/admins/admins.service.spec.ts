@@ -10,7 +10,7 @@ import {internal} from '../../entities'
 import {AclRoleMockRepository, deepCopy} from '../../repositories/acl-role.mock.repository'
 import {AclRoleRepository} from '../../repositories/acl-role.repository'
 import {RepositoriesModule} from '../../repositories/repositories.module'
-import {ForbiddenException, UnprocessableEntityException} from '@nestjs/common'
+import {ForbiddenException} from '@nestjs/common'
 import {AdminsMockRepository} from './repositories/admins.mock.repository'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {RbacRole} from '../../config/constants.config'
@@ -286,7 +286,7 @@ describe('AdminsService', () => {
     describe('delete', () => {
         it('should not allow deleting self', async () => {
             const id = 1
-            await expect(service.delete(id, sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.delete(id, sr)).rejects.toThrow(ForbiddenException)
         })
 
         it('should return number of deleted items', async () => {

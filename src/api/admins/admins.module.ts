@@ -1,4 +1,4 @@
-import {Module} from '@nestjs/common'
+import {forwardRef, Module} from '@nestjs/common'
 import {AdminsController} from './admins.controller'
 import {AdminsService} from './admins.service'
 import {AdminsMariadbRepository} from './repositories/admins.mariadb.repository'
@@ -10,7 +10,7 @@ import {AclRoleRepository} from '../../repositories/acl-role.repository'
 
 @Module({
     imports: [
-        ExpandModule,
+        forwardRef(() => ExpandModule),
         JournalsModule,
         RepositoriesModule,
     ],
