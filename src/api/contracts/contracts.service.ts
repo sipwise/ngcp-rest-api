@@ -1,5 +1,5 @@
 import {AppService} from '../../app.service'
-import {Injectable, Logger, MethodNotAllowedException, UnprocessableEntityException} from '@nestjs/common'
+import {Injectable, Logger, UnprocessableEntityException} from '@nestjs/common'
 import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {internal} from '../../entities'
 import {Messages} from '../../config/messages.config'
@@ -61,10 +61,6 @@ export class ContractsService implements CrudService<internal.Contract> {
         if (systemContact == undefined) {
             throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_CONTACT_ID))
         }
-    }
-
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
-        throw new MethodNotAllowedException()
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Contract> {

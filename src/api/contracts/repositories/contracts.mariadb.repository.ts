@@ -7,9 +7,10 @@ import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {db, internal} from '../../../entities'
 import {ContractStatus} from '../../../entities/internal/contract.internal.entity'
+import {ContractsRepository} from '../interfaces/contracts.respository'
 
 @Injectable()
-export class ContractsMariadbRepository {
+export class ContractsMariadbRepository implements ContractsRepository {
 
     private readonly log: Logger = new Logger(ContractsMariadbRepository.name)
 
@@ -109,7 +110,7 @@ export class ContractsMariadbRepository {
     }
 
     @HandleDbErrors
-    private async save(id: number, newContract: internal.Contract): Promise<internal.Contract> {
+    async save(id: number, newContract: internal.Contract): Promise<internal.Contract> {
         // let oldContract = await db.billing.Contract.findOneOrFail(id)
         // const billingMapping = Utils::BillingMappings::get_actual_billing_mapping(c => $c, now => $now, contract => $contract, );
         // const billingProfile = billingMapping.billingProfile
