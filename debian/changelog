@@ -1,3 +1,11 @@
+ngcp-rest-api (10.5.3.0+0~mr10.5.3.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [e30dafe] TT#187200 adjust /api/pbxgroups repo and response
+  * [b7ffaae] TT#180554 /api/admins allow ccare roles GET
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 19 Sep 2022 14:37:04 +0200
+
 ngcp-rest-api (10.5.2.0+0~mr10.5.2.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
