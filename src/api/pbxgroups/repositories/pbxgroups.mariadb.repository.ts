@@ -34,7 +34,7 @@ export class PbxgroupsMariadbRepository implements PbxgroupsRepository {
     async readById(id: number, req: ServiceRequest): Promise<internal.PbxGroup> {
 
         // TODO: remove this once actual entity mappings are implemented; cannot call getOneOrFail for raw data
-        await db.billing.VoipSubscriber.findOneOrFail(id)
+        await db.billing.VoipSubscriber.findOneByOrFail({ id: id })
 
         const result = await this.generateBaseQuery(req)
             .where('bg.id = :id', {id: id})

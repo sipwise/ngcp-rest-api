@@ -35,7 +35,7 @@ export class DomainsService implements CrudService<internal.Domain> {
 
         // check if reseller exists
         // TODO: replace with reseller repository
-        await db.billing.Reseller.findOneOrFail(domain.reseller_id)
+        await db.billing.Reseller.findOneByOrFail({ id: domain.reseller_id })
 
         const result = await this.domainRepo.readByDomain(domain.domain, req)
         if (!result == undefined) {

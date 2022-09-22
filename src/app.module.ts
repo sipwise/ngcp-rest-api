@@ -1,4 +1,4 @@
-import {Global, Logger, MiddlewareConsumer, Module, NestModule, RequestMethod} from '@nestjs/common'
+import {DynamicModule, ForwardReference, Global, Logger, MiddlewareConsumer, Module, NestModule, RequestMethod, Type} from '@nestjs/common'
 import {ScheduleModule} from '@nestjs/schedule'
 import {AdminsModule} from './api/admins/admins.module'
 import {AppController} from './app.controller'
@@ -25,7 +25,7 @@ import {ExpandModule} from './helpers/expand.module'
 import {PbxgroupsModule} from './api/pbxgroups/pbxgroups.module'
 import {ContactsModule} from './api/contacts/contacts.module'
 
-const modulesImport: any[] = [
+let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
     ConfigModule.forRoot({
         isGlobal: true,
         ignoreEnvFile: true,
@@ -35,24 +35,28 @@ const modulesImport: any[] = [
             },
         ],
     }),
-    DatabaseModule,
     AdminsModule,
     AuthModule,
+    ContactsModule,
     ContractsModule,
     CustomercontactsModule,
+    DatabaseModule,
     DomainsModule,
+    ExpandModule,
     FileshareModule,
-    FileshareSchedule,
+    PbxgroupsModule,
+    ProductsModule,
     ResellersModule,
     SystemcontactsModule,
+    VoicemailsModule,
+    ScheduleModule.forRoot(),
 ]
 if (process.env.NODE_ENV != 'test') {
-    modulesImport.push([
-        DbStateSchedule,
+    modulesImport = [
+        ...modulesImport,
         InterceptorModule,
         JournalsModule,
-        ScheduleModule.forRoot(),
-    ])
+    ]
 }
 
 @Global()
@@ -61,34 +65,7 @@ if (process.env.NODE_ENV != 'test') {
         AppController,
     ],
     imports: [
-        ConfigModule.forRoot({
-            isGlobal: true,
-            ignoreEnvFile: true,
-            load: [
-                function () {
-                    return AppService.config
-                },
-            ],
-        }),
-        AdminsModule,
-        AuthModule,
-        ContactsModule,
-        ContractsModule,
-        CustomercontactsModule,
-        DatabaseModule,
-        DbStateSchedule,
-        DomainsModule,
-        ExpandModule,
-        FileshareModule,
-        FileshareSchedule,
-        InterceptorModule,
-        JournalsModule,
-        PbxgroupsModule,
-        ProductsModule,
-        ResellersModule,
-        ScheduleModule.forRoot(),
-        SystemcontactsModule,
-        VoicemailsModule,
+        ...modulesImport,
     ],
     exports: [
         AppService,

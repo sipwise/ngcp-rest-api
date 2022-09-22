@@ -77,7 +77,7 @@ export class ContactsMariadbRepository implements ContactsRepository {
 
     @HandleDbErrors
     async readResellerById(id: number, sr: ServiceRequest): Promise<db.billing.Reseller> { // TODO: change type to internal.Reseller
-        return await db.billing.Reseller.findOne(id)
+        return await db.billing.Reseller.findOneBy({ id: id })
     }
 
     @HandleDbErrors
@@ -90,7 +90,7 @@ export class ContactsMariadbRepository implements ContactsRepository {
         })
         const contracts = await db.billing.Contract.find({
             where: {
-                status: Not(ContractStatus.Terminated),
+                status: Not<ContractStatus.Terminated>(ContractStatus.Terminated),
                 contact_id: contactId,
             },
         })

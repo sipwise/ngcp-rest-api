@@ -48,16 +48,17 @@ export class ResellersMariadbRepository implements ResellersRepository {
     @HandleDbErrors
     async create(reseller: internal.Reseller, sr: ServiceRequest): Promise<internal.Reseller> {
         this.log.debug({message: 'create reseller', func: this.create.name, user: sr.user.username})
-        const r = db.billing.Reseller.create(reseller)
+        const dbReseller = db.billing.Reseller.create()
+        dbReseller.fromInternal(reseller)
         // TODO: Transaction guard
-        const result = await r.save()
+        const result = await dbReseller.save()
         return result.toInternal()
     }
 
     @HandleDbErrors
     async terminate(id: number, sr: ServiceRequest): Promise<number> {
         this.log.debug({message: 'delete reseller by id', func: this.terminate.name, id: id})
-        let reseller = await db.billing.Reseller.findOneOrFail(id)
+        let reseller = await db.billing.Reseller.findOneByOrFail({ id: id })
         reseller = await db.billing.Reseller.merge(reseller, {status: ResellerStatus.Terminated})
         await db.billing.Reseller.update(reseller.id, reseller)
         return 1
@@ -66,7 +67,7 @@ export class ResellersMariadbRepository implements ResellersRepository {
     @HandleDbErrors
     async read(id: number, sr: ServiceRequest): Promise<internal.Reseller> {
         this.log.debug({message: 'read reseller by id', func: this.read.name, user: sr.user.username, id: id})
-        return (await db.billing.Reseller.findOneOrFail(id)).toInternal()
+        return (await db.billing.Reseller.findOneByOrFail({ id: id })).toInternal()
     }
 
     @HandleDbErrors
@@ -108,13 +109,18 @@ export class ResellersMariadbRepository implements ResellersRepository {
 
     @HandleDbErrors
     async contractExists(contractId: number): Promise<boolean> {
-        const contract = await db.billing.Contract.findOne(contractId)
+        const contract = await db.billing.Contract.findOneBy({ id: contractId })
         return contract != undefined
     }
 
     @HandleDbErrors
     async contractHasSystemContact(contractId: number): Promise<boolean> {
-        const contract = await db.billing.Contract.findOne(contractId, {relations: ['contact']})
+        const contract = await db.billing.Contract.findOne({
+            where: {
+                id: contractId,
+            },
+            relations: ['contact'],
+        })
         return contract.contact.reseller_id == undefined
     }
 

@@ -8,6 +8,8 @@ import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {db, internal} from '../../../entities'
 import {ContractStatus} from '../../../entities/internal/contract.internal.entity'
 import {ContractsRepository} from '../interfaces/contracts.respository'
+import {ContactStatus} from 'entities/internal/contact.internal.entity'
+import {ProductClass} from 'entities/internal/product.internal.entity'
 
 @Injectable()
 export class ContractsMariadbRepository implements ContractsRepository {
@@ -43,7 +45,7 @@ export class ContractsMariadbRepository implements ContractsRepository {
             user: sr.user.username,
             id: id,
         })
-        return (await db.billing.Contract.findOneOrFail(id)).toInternal()
+        return (await db.billing.Contract.findOneByOrFail({ id: id })).toInternal()
     }
 
     @HandleDbErrors
@@ -54,11 +56,10 @@ export class ContractsMariadbRepository implements ContractsRepository {
             user: sr.user.username,
             id: id,
         })
-        const contact = await db.billing.Contact.findOne(id, {
-            where: {
-                status: Not(Equal(ContractStatus.Terminated)),
-                reseller_id: IsNull(),
-            },
+        const contact = await db.billing.Contact.findOneBy({
+            id: id,
+            status: Not<ContactStatus.Terminated>(ContactStatus.Terminated),
+            reseller_id: IsNull(),
         })
         return contact != undefined ? contact.toInternal() : undefined
     }
@@ -71,7 +72,7 @@ export class ContractsMariadbRepository implements ContractsRepository {
             user: sr.user.username,
             type: type,
         })
-        const product = await db.billing.Product.findOne({where: {class: type}})
+        const product = await db.billing.Product.findOneBy({ class: <ProductClass>type })
         return product != undefined ? product.toInternal() : undefined
     }
 

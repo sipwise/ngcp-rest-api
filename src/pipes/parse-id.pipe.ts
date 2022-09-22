@@ -1,6 +1,6 @@
 import {ArgumentMetadata, HttpStatus, Injectable, Optional, PipeTransform} from '@nestjs/common'
 import {ErrorHttpStatusCode, HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
-import {isUUID} from '@nestjs/common/utils/is-uuid'
+import {ParseUUIDPipe} from '@nestjs/common/pipes/parse-uuid.pipe'
 import {Messages} from '../config/messages.config'
 
 export interface ParseIdPipeOptions {
@@ -26,7 +26,8 @@ export class ParseIdPipe implements PipeTransform {
     }
 
     async transform(value: any, metadata: ArgumentMetadata): Promise<string | number> {
-        if (isUUID(value, this.uuidVersion))
+        let parseUUID = new ParseUUIDPipe({ exceptionFactory: this.exceptionFactory })
+        if (!await parseUUID.transform(value, {} as ArgumentMetadata))
             return value
 
         if (['string', 'number'].includes(typeof value) &&

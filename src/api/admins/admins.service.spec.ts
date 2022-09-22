@@ -9,7 +9,6 @@ import {AuthResponseDto} from '../../auth/dto/auth-response.dto'
 import {internal} from '../../entities'
 import {AclRoleMockRepository, deepCopy} from '../../repositories/acl-role.mock.repository'
 import {AclRoleRepository} from '../../repositories/acl-role.repository'
-import {RepositoriesModule} from '../../repositories/repositories.module'
 import {ForbiddenException} from '@nestjs/common'
 import {AdminsMockRepository} from './repositories/admins.mock.repository'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
@@ -37,7 +36,7 @@ describe('AdminsService', () => {
     beforeEach(async () => {
         adminsMockRepo = new AdminsMockRepository()
         const module: TestingModule = await Test.createTestingModule({
-            imports: [AdminsModule, ExpandModule, AppModule, RepositoriesModule],
+            imports: [AdminsModule, ExpandModule, AppModule],
         })
             .overrideProvider(AclRoleRepository).useValue(aclRoleMockRepo)
             .overrideProvider(AdminsMariadbRepository).useValue(adminsMockRepo)

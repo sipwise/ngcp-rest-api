@@ -1,6 +1,6 @@
 import {db} from '../entities'
 
-import Telnet from 'telnet-client'
+import {Telnet} from 'telnet-client'
 import {Logger} from '@nestjs/common'
 
 interface TelnetError {

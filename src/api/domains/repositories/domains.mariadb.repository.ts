@@ -15,8 +15,10 @@ export class DomainsMariadbRepository implements DomainsRepository {
 
     @HandleDbErrors
     async create(domain: internal.Domain, req: ServiceRequest): Promise<internal.Domain> {
-        const dbDomain = db.billing.Domain.create(domain)
-        const dbVoipDomain = db.provisioning.VoipDomain.create(domain)
+        const dbDomain = db.billing.Domain.create()
+        dbDomain.fromInternal(domain)
+
+        const dbVoipDomain = db.provisioning.VoipDomain.create(dbDomain)
 
         await db.billing.Domain.insert(dbDomain)
         await db.provisioning.VoipDomain.insert(dbVoipDomain)
@@ -58,7 +60,7 @@ export class DomainsMariadbRepository implements DomainsRepository {
             func: this.readById.name,
             user: req.user.username,
         })
-        return (await db.billing.Domain.findOneOrFail(id)).toInternal()
+        return (await db.billing.Domain.findOneByOrFail({ id: id })).toInternal()
     }
 
     @HandleDbErrors
@@ -73,7 +75,7 @@ export class DomainsMariadbRepository implements DomainsRepository {
 
     @HandleDbErrors
     async delete(id: number, req: ServiceRequest): Promise<number> {
-        const domain = await db.billing.Domain.findOneOrFail(id)
+        const domain = await db.billing.Domain.findOneByOrFail({ id: id })
         await db.billing.Domain.delete(id)
 
         const provDomain = await db.provisioning.VoipDomain.findOneOrFail({where: {domain: domain.domain}})

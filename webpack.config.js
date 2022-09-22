@@ -92,6 +92,7 @@ module.exports =
       {
         const lazyImports =
         [
+              '@google-cloud/spanner',
               '@nestjs/microservices',
               '@nestjs/microservices/microservices-module',
               '@nestjs/websockets/socket-module',

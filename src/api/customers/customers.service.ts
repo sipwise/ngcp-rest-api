@@ -70,7 +70,7 @@ export class CustomersService { // implements CrudService<CustomerCreateDto, Cus
     }
 
     private async save(oldId: number, reseller: CustomerBaseDto): Promise<db.billing.Customer> {
-        let entry = await db.billing.Contract.findOne(oldId)
+        let entry = await db.billing.Contract.findOneBy({ id: oldId })
 
         entry = db.billing.Contract.merge(entry, this.inflate(reseller))
         await entry.save()

@@ -122,7 +122,7 @@ export class FileshareService { // implements CrudService<FileshareCreateDto, Fi
 
     @HandleDbErrors
     async read(id: string): Promise<StreamableFile> {
-        const upload = await db.fileshare.Upload.findOneOrFail(id)
+        const upload = await db.fileshare.Upload.findOneByOrFail({ id: id })
         const stream = new StreamableFile(upload.data, {
             type: upload.mime_type,
             disposition: `attachment; filename="${upload.original_name}"; size=${upload.size}`,
@@ -144,7 +144,7 @@ export class FileshareService { // implements CrudService<FileshareCreateDto, Fi
     @HandleDbErrors
     async delete(id: string, req: ServiceRequest): Promise<string> {
         const filter = this.filterOptions(req)
-        const upload = await db.fileshare.Upload.findOneOrFail(id, filter)
+        const upload = await db.fileshare.Upload.findOneByOrFail({ id: id, ...filter })
         await db.fileshare.Upload.delete(upload.id)
 
         return id
