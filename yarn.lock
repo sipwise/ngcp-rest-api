@@ -901,6 +901,112 @@
   resolved "https://npm-registry.sipwise.com/@sqltools/formatter/-/formatter-1.2.3.tgz#1185726610acc37317ddab11c3c7f9066966bd20"
   integrity sha512-O3uyB/JbkAEMZaP3YqyHH7TMnex7tWyCbCI4EfJdOCoN6HIhqdJBWTM6aCCiWQ/5f5wxjgU735QAIpJbjDvmzg==
 
+"@swc/core-android-arm-eabi@1.3.3":
+  version "1.3.3"
+  resolved "https://npm-registry.sipwise.com/@swc/core-android-arm-eabi/-/core-android-arm-eabi-1.3.3.tgz#b22231f0d89d21b8d7ab8f29c04c68d9d6138da9"
+  integrity sha512-R6MpKXvNx/T/8a0wUTiX1THxfRbURSCmYlSi/JnUaqLYUclQK1N8aCMWz7EYSz6FE0VZBREJYDJcdnfP88E/1Q==
+  dependencies:
+    "@swc/wasm" "1.2.122"
+
+"@swc/core-android-arm64@1.3.3":
+  version "1.3.3"
+  resolved "https://npm-registry.sipwise.com/@swc/core-android-arm64/-/core-android-arm64-1.3.3.tgz#e1beb4c6acb06e001d0f76af86eae51e027905c5"
+  integrity sha512-yZlku4ypVKykwHTS8CETxw2PH23UBeM6VhNB8efF4A4gVWtRZjv1PfjsSqh/X0vjgVTrs2zSaQ+eF6GLVbWrgA==
+  dependencies:
+    "@swc/wasm" "1.2.130"
+
+"@swc/core-darwin-arm64@1.3.3":
+  version "1.3.3"
+  resolved "https://npm-registry.sipwise.com/@swc/core-darwin-arm64/-/core-darwin-arm64-1.3.3.tgz#e93d047dd018135a83787225d24efc8a001987a3"
+  integrity sha512-/T8vyikY7t/be6bHd1D9J/bmXYMDMkBo9NA3auDT/hmouzawhJ6E7OqRE4HLuLTflnRw8WmEWgpeRIzMHvNjBQ==
+
+"@swc/core-darwin-x64@1.3.3":
+  version "1.3.3"
+  resolved "https://npm-registry.sipwise.com/@swc/core-darwin-x64/-/core-darwin-x64-1.3.3.tgz#634f87f8d809e57e3b1070b9217d9938b99b53fc"
+  integrity sha512-hw4o1If986In5m3y3/OimgiBKJh49kbTG9MRWo8msqTic2aBlrtfHjSecMn1g+oP7pdaUUCTkovmT7OpvvQ/Tw==
+
+"@swc/core-freebsd-x64@1.3.3":
+  version "1.3.3"
+  resolved "https://npm-registry.sipwise.com/@swc/core-freebsd-x64/-/core-freebsd-x64-1.3.3.tgz#cd8348c0705a3ed09df1a0ef373b8f2eb341a8f9"
+  integrity sha512-JFDu3uLa0WMw77o+QNR5D1uErQ5s18HmEwJr5ndOQoDlS+XO2qUG6AxU5LdwLEl5qMf2C99t7gkfzcCZG1PRsw==
+  dependencies:
+    "@swc/wasm" "1.2.130"
+
+"@swc/core-linux-arm-gnueabihf@1.3.3":
+  version "1.3.3"
+  resolved "https://npm-registry.sipwise.com/@swc/core-linux-arm-gnueabihf/-/core-linux-arm-gnueabihf-1.3.3.tgz#994ad0ecee513f7fe9c60b6eb666f9082efba66a"
+  integrity sha512-kJoyNP/ury9KmZnjhpj0QApY6VxC9S4hkgsycm8yTJ23O8WrUbgeDOlgAgFJNyHszhR5CnlssDv7ErCwMZtkgw==
+  dependencies:
+    "@swc/wasm" "1.2.130"
+
+"@swc/core-linux-arm64-gnu@1.3.3":
+  version "1.3.3"
+  resolved "https://npm-registry.sipwise.com/@swc/core-linux-arm64-gnu/-/core-linux-arm64-gnu-1.3.3.tgz#f74fbdc04809ec493189c2d6315e50bc97af86f2"
+  integrity sha512-Y+10o78O2snKnrNTbasT9S3Out0wlOyAkLZvq5zqzW1cz2K2Yzm04zQdKQOCRHlfTF0XSmZ++qRWVNol49WsNA==
+
+"@swc/core-linux-arm64-musl@1.3.3":
+  version "1.3.3"
+  resolved "https://npm-registry.sipwise.com/@swc/core-linux-arm64-musl/-/core-linux-arm64-musl-1.3.3.tgz#640aee4102bca2584e7d1b9321ae62992ba47750"
+  integrity sha512-y6ErPP6Sk0f8exoanUxXeFALvPraTjyoVr8pitpfTqoUd9YcxwOTpPbR5WXI3FWnQ7GS86iH0LvaFDCgHQ1fjg==
+
+"@swc/core-linux-x64-gnu@1.3.3":
+  version "1.3.3"
+  resolved "https://npm-registry.sipwise.com/@swc/core-linux-x64-gnu/-/core-linux-x64-gnu-1.3.3.tgz#6bc264fb03a509046be445c5bfb896b97310d13d"
+  integrity sha512-sqyvNJkPHKHlK/XLIoMNLiux8YxsCJpAk3UreS0NO+sRNRru2AMyrRwX6wxmnJybhEek9SPKF0pXi+GfcaFKYA==
+
+"@swc/core-linux-x64-musl@1.3.3":
+  version "1.3.3"
+  resolved "https://npm-registry.sipwise.com/@swc/core-linux-x64-musl/-/core-linux-x64-musl-1.3.3.tgz#568bc5efba162767f097efddefb298041e28b1ea"
+  integrity sha512-5fjwHdMv+DOgEp7sdNVmvS4Hr2rDaewa0BpDW8RefcjHoJnDpFVButLDMkwv/Yd+v4YN+99kyX/lOI+/OTD99w==
+
+"@swc/core-win32-arm64-msvc@1.3.3":
+  version "1.3.3"
+  resolved "https://npm-registry.sipwise.com/@swc/core-win32-arm64-msvc/-/core-win32-arm64-msvc-1.3.3.tgz#9aeca2fa1690e8a7276da58c7d3a6ddc6fb7e6f0"
+  integrity sha512-JxcfG89GieqCFXkRl/mtFds/ME6ncEtLRIQ0+RBIREIGisA9ZgJ8EryBzGZyPu5+7kE0vXGVB6A2cfrv4SNW4A==
+  dependencies:
+    "@swc/wasm" "1.2.130"
+
+"@swc/core-win32-ia32-msvc@1.3.3":
+  version "1.3.3"
+  resolved "https://npm-registry.sipwise.com/@swc/core-win32-ia32-msvc/-/core-win32-ia32-msvc-1.3.3.tgz#362a1b468ecb224ec15e33ca67affa3ec41654c9"
+  integrity sha512-yqZjTn5V7wYCxMCC5Rg8u87SmGeRSlqYAafHL3IgiFe8hSxOykc2dR1MYNc4WZumYiMlU15VSa6mW8A0pj37FA==
+  dependencies:
+    "@swc/wasm" "1.2.130"
+
+"@swc/core-win32-x64-msvc@1.3.3":
+  version "1.3.3"
+  resolved "https://npm-registry.sipwise.com/@swc/core-win32-x64-msvc/-/core-win32-x64-msvc-1.3.3.tgz#b156c4fa79a78a3d8d5341c9061e2699a2683ac8"
+  integrity sha512-CIuxz9wiHkgG7m3kjgptgO3iHOmrybvLf0rUNGbVTTHwTcrpjznAnS/MnMPiaIQPlxz70KSXAR2QJjw7fGtfbA==
+
+"@swc/core@1.3.3":
+  version "1.3.3"
+  resolved "https://npm-registry.sipwise.com/@swc/core/-/core-1.3.3.tgz#d24e964f87fd6d4a94baef2a456fdcca5ebaf48f"
+  integrity sha512-OGx3Qpw+czNSaea1ojP2X2wxrGtYicQxH1QnzX4F3rXGEcSUFIllmrae6iJHW91zS4SNcOocnQoRz1IYnrILYw==
+  optionalDependencies:
+    "@swc/core-android-arm-eabi" "1.3.3"
+    "@swc/core-android-arm64" "1.3.3"
+    "@swc/core-darwin-arm64" "1.3.3"
+    "@swc/core-darwin-x64" "1.3.3"
+    "@swc/core-freebsd-x64" "1.3.3"
+    "@swc/core-linux-arm-gnueabihf" "1.3.3"
+    "@swc/core-linux-arm64-gnu" "1.3.3"
+    "@swc/core-linux-arm64-musl" "1.3.3"
+    "@swc/core-linux-x64-gnu" "1.3.3"
+    "@swc/core-linux-x64-musl" "1.3.3"
+    "@swc/core-win32-arm64-msvc" "1.3.3"
+    "@swc/core-win32-ia32-msvc" "1.3.3"
+    "@swc/core-win32-x64-msvc" "1.3.3"
+
+"@swc/wasm@1.2.122":
+  version "1.2.122"
+  resolved "https://npm-registry.sipwise.com/@swc/wasm/-/wasm-1.2.122.tgz#87a5e654b26a71b2e84b801f41e45f823b856639"
+  integrity sha512-sM1VCWQxmNhFtdxME+8UXNyPNhxNu7zdb6ikWpz0YKAQQFRGT5ThZgJrubEpah335SUToNg8pkdDF7ibVCjxbQ==
+
+"@swc/wasm@1.2.130":
+  version "1.2.130"
+  resolved "https://npm-registry.sipwise.com/@swc/wasm/-/wasm-1.2.130.tgz#88ac26433335d1f957162a9a92f1450b73c176a0"
+  integrity sha512-rNcJsBxS70+pv8YUWwf5fRlWX6JoY/HJc25HD/F8m6Kv7XhJdqPPMhyX6TKkUBPAG7TWlZYoxa+rHAjPy4Cj3Q==
+
 "@tootallnate/once@2":
   version "2.0.0"
   resolved "https://npm-registry.sipwise.com/@tootallnate/once/-/once-2.0.0.tgz#f544a148d3ab35801c1f633a7441fd87c2e484bf"
@@ -1949,9 +2055,9 @@ camelcase@^6.2.0:
   integrity sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==
 
 caniuse-lite@^1.0.30001400:
-  version "1.0.30001409"
-  resolved "https://npm-registry.sipwise.com/caniuse-lite/-/caniuse-lite-1.0.30001409.tgz#6135da9dcab34cd9761d9cdb12a68e6740c5e96e"
-  integrity sha512-V0mnJ5dwarmhYv8/MzhJ//aW68UpvnQBXv8lJ2QUsvn2pHcmAuNtu8hQEDz37XnA1iE+lRR9CIfGWWpgJ5QedQ==
+  version "1.0.30001410"
+  resolved "https://npm-registry.sipwise.com/caniuse-lite/-/caniuse-lite-1.0.30001410.tgz#b5a86366fbbf439d75dd3db1d21137a73e829f44"
+  integrity sha512-QoblBnuE+rG0lc3Ur9ltP5q47lbguipa/ncNMyyGuqPk44FxbScWAeEO+k5fSQ8WekdAK4mWqNs1rADDAiN5xQ==
 
 chalk@3.0.0:
   version "3.0.0"
@@ -2484,9 +2590,9 @@ ee-first@1.1.1:
   integrity sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==
 
 electron-to-chromium@^1.4.251:
-  version "1.4.257"
-  resolved "https://npm-registry.sipwise.com/electron-to-chromium/-/electron-to-chromium-1.4.257.tgz#895dc73c6bb58d1235dc80879ecbca0bcba96e2c"
-  integrity sha512-C65sIwHqNnPC2ADMfse/jWTtmhZMII+x6ADI9gENzrOiI7BpxmfKFE84WkIEl5wEg+7+SfIkwChDlsd1Erju2A==
+  version "1.4.258"
+  resolved "https://npm-registry.sipwise.com/electron-to-chromium/-/electron-to-chromium-1.4.258.tgz#44c5456f487be082f038282fbcfd7b06ae99720d"
+  integrity sha512-vutF4q0dTUXoAFI7Vbtdwen/BJVwPgj8GRg/SElOodfH7VTX+svUe62A5BG41QRQGk5HsZPB0M++KH1lAlOt0A==
 
 emitter-component@^1.1.1:
   version "1.1.1"
@@ -5839,10 +5945,15 @@ supports-preserve-symlinks-flag@^1.0.0:
   resolved "https://npm-registry.sipwise.com/supports-preserve-symlinks-flag/-/supports-preserve-symlinks-flag-1.0.0.tgz#6eda4bd344a3c94aea376d4cc31bc77311039e09"
   integrity sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==
 
-swagger-ui-dist@4.14.0, swagger-ui-dist@>=4.11.0:
+swagger-ui-dist@4.14.0:
   version "4.14.0"
   resolved "https://npm-registry.sipwise.com/swagger-ui-dist/-/swagger-ui-dist-4.14.0.tgz#e34d807464eb84578c43902e393084a1a6fbda52"
   integrity sha512-TBzhheU15s+o54Cgk9qxuYcZMiqSm/SkvKnapoGHOF66kz0Y5aGjpzj5BT/vpBbn6rTPJ9tUYXQxuDWfsjiGMw==
+
+swagger-ui-dist@>=4.11.0:
+  version "4.14.1"
+  resolved "https://npm-registry.sipwise.com/swagger-ui-dist/-/swagger-ui-dist-4.14.1.tgz#a08209042f47918d95179cdbb2286d3cfa2aba02"
+  integrity sha512-GjK581G3ZMOw1vLiQyMV+XHXSE4F83/2E48Y8Cs+X+25QHegwPu/83+GDCls3htPZvEOr0IG+oVljhMyuRy1kA==
 
 swagger-ui-express@4.5.0:
   version "4.5.0"

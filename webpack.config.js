@@ -3,10 +3,11 @@ const webpack = require('webpack')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const { TsconfigPathsPlugin } = require('tsconfig-paths-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
+const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports =
 {
-  mode: 'none',
+  mode: 'production',
   target: 'node',
   entry:
   {
@@ -14,7 +15,14 @@ module.exports =
   },
   optimization:
   {
-    minimize: false
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        minify: TerserPlugin.swcMinify,
+        terserOptions: {
+        },
+      }),
+    ]
   },
   output:
   {
@@ -46,7 +54,7 @@ module.exports =
         },
       },
       {
-        test: /\.(cs|html)$/,
+        test: /\.(cs|html|css)$/,
         use: 'ignore-loader',
       },
       {
