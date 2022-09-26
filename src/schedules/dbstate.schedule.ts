@@ -15,14 +15,14 @@ export class DbStateSchedule {
     private async checkDbAvailable() {
         if (!this.app.isDbInitialised) {
             try {
-                await this.app.dbConnection().connect()
+                await this.app.db.initialize()
                 if (this.app.isDbInitialised)
                     this.log.debug('Database is initialised')
             } catch {
             }
         } else {
             try {
-                await this.app.dbConnection().manager.query('select 1')
+                await this.app.dbConnection().query('select 1')
                 if (!this.app.isDbAvailable)
                     this.log.debug('Reconnected to the database')
                 this.app.setDbAvailable = true

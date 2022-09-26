@@ -12,5 +12,7 @@ YARN_BIN := $(shell which yarnpkg || echo yarn)
 override_dh_auto_install:
 	$(YARN_BIN) cache clean
 	$(YARN_BIN) install
+	$(YARN_BIN) test
 	$(YARN_BIN) build:prod
+
 

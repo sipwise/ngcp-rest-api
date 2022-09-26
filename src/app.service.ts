@@ -1,5 +1,5 @@
 import {Inject, Injectable} from '@nestjs/common'
-import {ConnectionManager, EntityTarget} from 'typeorm'
+import {DataSource, EntityTarget} from 'typeorm'
 import {config as AppConfig} from './config/main.config'
 
 @Injectable()
@@ -11,12 +11,12 @@ export class AppService {
     private dbAvailable = true
 
     constructor(
-        @Inject('DB') private readonly defaultDatabase: ConnectionManager,
+        @Inject('DB') private readonly defaultDatabase: DataSource,
     ) {
     }
 
     get isDbInitialised() {
-        return this.dbConnection().isConnected
+        return this.db.isInitialized
     }
 
     get isDbAvailable() {
@@ -28,7 +28,7 @@ export class AppService {
     }
 
     public dbConnection() {
-        return this.defaultDatabase.get()
+        return this.db.manager
     }
 
     public dbRepo<Entity>(target: EntityTarget<Entity>) {

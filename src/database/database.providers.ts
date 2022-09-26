@@ -1,26 +1,22 @@
 import {Logger} from '@nestjs/common'
-import {getConnectionManager} from 'typeorm'
+import {DataSource} from 'typeorm'
 import {databaseConfig} from '../config/database.config'
 
-export const databaseProviders = process.env.NODE_ENV != 'test' ? [
+export const databaseProviders = [
     {
         provide: 'DB',
-
         useFactory: async () => {
+            if (process.env.NODE_ENV == 'test')
+                return;
             const log = new Logger('databaseProviders[DB]')
-            const manager = getConnectionManager()
-            manager.create(databaseConfig)
+            const ds  = new DataSource(databaseConfig)
             try {
-                await manager.get(databaseConfig.name).connect()
+                await ds.initialize()
                 log.debug('Connected to the database')
             } catch (err) {
                 log.error({message: 'Could not connect to the database', err: err})
             }
-            return manager
+            return ds
         },
     },
-] : [{
-    provide: 'DB', useFactory: async () => {
-        return getConnectionManager()
-    },
-}]
+]

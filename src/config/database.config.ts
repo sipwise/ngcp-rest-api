@@ -1,4 +1,4 @@
-import {ConnectionOptions} from 'typeorm'
+import {DataSourceOptions} from 'typeorm'
 import {db} from '../entities'
 import {AppService} from '../app.service'
 import {TypeormLoggerService} from '../logger/typeorm-logger.service'
@@ -19,7 +19,7 @@ const getDBEntries = () => {
 }
 const entities = process.env.NODE_ENV == 'test' ? ['src/entities/db/**/*.ts'] : [...getDBEntries()]
 
-export const databaseConfig: ConnectionOptions = {
+export const databaseConfig: DataSourceOptions = {
     name: 'default',
     username: db_user,
     password: db_pass,
