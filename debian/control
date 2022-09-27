@@ -6,15 +6,15 @@ Build-Depends:
  debhelper-compat (= 13),
  gyp,
  libsystemd-dev,
- yarnpkg | nodejs (>= 12.19.0~),
- yarnpkg | yarn,
+ nodejs (>= 18),
+ yarnpkg,
 Standards-Version: 4.5.1
 Homepage: https://www.sipwise.com/
 
 Package: ngcp-rest-api
 Architecture: all
 Depends:
- nodejs (>= 4.6.2~),
+ nodejs (>= 18),
  ${misc:Depends},
 Description: Javascript based REST API for NGCP
  Replacement of old Perl based NGCP REST API.
