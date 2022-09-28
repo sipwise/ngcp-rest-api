@@ -7,6 +7,7 @@ const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports =
 {
+  //stats: 'verbose',
   mode: 'production',
   target: 'node',
   entry:
@@ -15,11 +16,18 @@ module.exports =
   },
   optimization:
   {
+    nodeEnv: process.env.NODE_ENV == 'development' ? 'development' : 'production',
     minimize: true,
     minimizer: [
       new TerserPlugin({
-        minify: TerserPlugin.swcMinify,
+        parallel: true,
+        extractComments: true,
         terserOptions: {
+          ecma: 2022,
+          compress: false, // causes issues when compressed and the size difference is only 1-3%
+          mangle: false,
+          keep_classnames: true,
+          keep_fnames: true,
         },
       }),
     ]
@@ -54,7 +62,7 @@ module.exports =
         },
       },
       {
-        test: /\.(cs|html|css)$/,
+        test: /\.(cs|html|css)$/i,
         use: 'ignore-loader',
       },
       {
@@ -100,38 +108,30 @@ module.exports =
       {
         const lazyImports =
         [
-              '@google-cloud/spanner',
-              '@nestjs/microservices',
-              '@nestjs/microservices/microservices-module',
-              '@nestjs/websockets/socket-module',
-              '@nestjs/platform-express',
-              '@sap/hana-client',
-              'aws-sdk',
-              'better-sqlite3',
-              'bluebird',
-              'cache-manager',
-              'cardinal',
-              'class-validator',
-              'class-transformer',
-              'class-transformer/storage',
-              'ioredis',
-              'hdb-pool',
-              'pg-hstore',
-              'pg-query-stream',
-              'nock',
-              'npm',
-              'mock-aws-s3',
-              'mongodb',
-              'mssql',
-              'mysql',
-              'oracledb',
-              'pg',
-              'pg-native',
-              'react-native-sqlite-storage',
-              'redis',
-              'sqlite3',
-              'sql.js',
-              'typeorm-aurora-data-api-driver',
+          '@google-cloud/spanner',
+          '@nestjs/microservices/microservices-module',
+          '@nestjs/microservices',
+          '@nestjs/microservices',
+          '@nestjs/websockets/socket-module',
+          '@sap/hana-client',
+          'better-sqlite3',
+          'cache-manager',
+          'cardinal',
+          'class-transformer/storage',
+          'hdb-pool',
+          'ioredis',
+          'mongodb',
+          'mssql',
+          'mysql',
+          'oracledb',
+          'pg',
+          'pg-query-stream',
+          'pg-native',
+          'react-native-sqlite-storage',
+          'redis',
+          'sql.js',
+          'sqlite3',
+          'typeorm-aurora-data-api-driver',
         ]
 
         const ignoreImports = [
@@ -183,13 +183,12 @@ module.exports =
           to: './package.json',
         },
       ],
-    })
+    }),
   ],
   ignoreWarnings:
   [
     /the request of a dependency is an expression/,
   ],
-  //stats: 'verbose',
 /*
   performance:
   {
