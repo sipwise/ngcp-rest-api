@@ -22,6 +22,8 @@ import {VoicemailsModule} from './api/voicemails/voicemails.module'
 import {ExpandModule} from './helpers/expand.module'
 import {PbxgroupsModule} from './api/pbxgroups/pbxgroups.module'
 import {ContactsModule} from './api/contacts/contacts.module'
+import {DbStateSchedule} from './schedules/dbstate.schedule'
+import {FileshareSchedule} from './schedules/fileshare.schedule'
 
 let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
     ConfigModule.forRoot({
@@ -71,6 +73,8 @@ if (process.env.NODE_ENV != 'test') {
     ],
     providers: [
         AppService,
+        DbStateSchedule,
+        FileshareSchedule,
         Logger,
     ],
 })

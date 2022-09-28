@@ -184,6 +184,9 @@ module.exports =
         },
       ],
     }),
+    new webpack.DefinePlugin({
+      'process.env.NODE_WP_BUNDLE': true,
+    }),
   ],
   ignoreWarnings:
   [

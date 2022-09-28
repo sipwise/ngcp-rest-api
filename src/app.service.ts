@@ -4,15 +4,16 @@ import {config as AppConfig} from './config/main.config'
 
 @Injectable()
 export class AppService {
-    static config = AppConfig
-    public config = AppConfig
-    public db = this.defaultDatabase
+    static readonly config = AppConfig
+    public readonly config = AppConfig
+    public readonly db: DataSource
 
     private dbAvailable = true
 
     constructor(
         @Inject('DB') private readonly defaultDatabase: DataSource,
     ) {
+        this.db = defaultDatabase
     }
 
     get isDbInitialised() {

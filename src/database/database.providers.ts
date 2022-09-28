@@ -14,7 +14,7 @@ export const databaseProviders = [
                 await ds.initialize()
                 log.debug('Connected to the database')
             } catch (err) {
-                log.error({message: 'Could not connect to the database', err: err})
+                log.error(`Could not connect to the database: ${err}`)
             }
             return ds
         },
