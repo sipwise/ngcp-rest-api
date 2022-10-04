@@ -20,11 +20,14 @@
     "start:debug": "NODE_ENV=development nest start --debug --watch",
     "start:prod": "node prod/server",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test": "jest --config jest-unit.config.ts",
+    "test:watch": "jest --config jest-unit.config.ts --watch",
+    "test:cov": "jest --config jest-unit.config.ts --coverage",
+    "test:debug": "node --config jest-unit.config.ts --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config jest-e2e.config.ts",
+    "test:e2e:watch": "jest --config jest-e2e.config.ts --watch",
+    "test:e2e:cov": "jest --config jest-e2e.config.ts --coverage",
+    "test:e2e:debug": "node --config jest-e2e.config.ts --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
   },
   "dependencies": {
     "@nestjs/common": "9.1.2",
@@ -103,26 +106,5 @@
   "optionalDependencies": {},
   "resolutions": {
     "**/ua-parser-js": "1.0.2"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node",
-    "moduleDirectories": [
-      "node_modules",
-      "src"
-    ]
   }
 }

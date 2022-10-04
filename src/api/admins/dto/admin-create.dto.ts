@@ -4,6 +4,7 @@ import {internal} from '../../../entities'
 import {RbacRole} from '../../../config/constants.config'
 import {IsValidPassword} from '../../../decorators/is-valid-password.decorator'
 import {generate as passwordGenerator} from 'generate-password'
+import {AdminInterface} from '../../../entities/internal/admin.internal.entity'
 
 export class AdminCreateDto {
     @IsEmail()
@@ -55,6 +56,19 @@ export class AdminCreateDto {
     @IsEnum(RbacRole)
     @ApiProperty({description: 'Access level of the user', enum: RbacRole})
         role: RbacRole
+
+    static create(data: AdminInterface): AdminCreateDto {
+        const admin = new AdminCreateDto()
+
+        Object.keys(admin).map(key => {
+            if(data[key] != undefined) {
+                admin[key] = data[key]
+            } else {
+                delete(admin[key])
+            }
+        })
+        return admin
+    }
 
     async toInternal(setDefaults = true): Promise<internal.Admin> {
         if (setDefaults)

@@ -1,4 +1,5 @@
 import {Admin} from './admin.internal.entity'
+import {RbacRole} from '../../config/constants.config'
 
 export interface AclRoleInterface {
     id?: number,
@@ -29,9 +30,11 @@ export class AclRole implements AclRoleInterface {
     }
 
     // journals: Journal[]
-    async hasPermission(roleId: number): Promise<boolean> {
+    async hasPermission(roleId: number, isMaster: boolean): Promise<boolean> {
         for (const role of this.has_access_to) {
             if (role.id == roleId) {
+                if(this.role == RbacRole.admin || this.role == RbacRole.reseller)
+                   return isMaster
                 return true
             }
         }
