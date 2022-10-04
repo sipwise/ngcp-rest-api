@@ -103,7 +103,7 @@ export class AdminsService implements CrudService<internal.Admin> {
         admin.role_data = role
 
         const requestRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
-        if (!await requestRole.hasPermission(role.id)) {
+        if (!await requestRole.hasPermission(role.id, sr.user.is_master)) {
             this.log.debug({
                 message: 'check user permission level',
                 success: false,
