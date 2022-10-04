@@ -1,3 +1,28 @@
+ngcp-rest-api (11.2.0.0+0~mr11.2.0.0) unstable; urgency=medium
+
+  [ Michael Berger ]
+  * [fbbd62e] MT#55325 remove empty controller tests
+  * [e0bfa7f] MT#55325 add service tests for pbxgroups
+  * [cfb9695] MT#55325 add service tests for contacts
+  * [ec774c7] MT#55325 add service tests for system contacts
+  * [0beccdd] MT#55325 add service tests for customer contacts
+  * [89bbe8b] MT#55325 add service tests for contracts
+  * [79be7ef] MT#55325 add service tests for journals
+  * [49724dd] MT#55325 add service tests for products
+  * [73ef103] MT#55325 add service tests for voicemails
+  * [8bbc8d8] MT#55325 add service tests for resellers
+
+  [ Kirill Solomko ]
+  * [71e0ac4] MT#55373 node modules upgrade and code adaptation
+  * [b79d4be] MT#55373 fix production build
+  * [1f96add] MT#55373 rework database connection, skip systemcontacts test
+  * [4def8bd] MT#55437 skip optional/foreign platform dependencies
+  * [00132bb] MT#55391 update package to be build with node 18
+  * [0f7a574] MT#55462 improve bundling
+  * [1effa69] MT#55465 upgrade modules to node 18, schedulers
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 04 Oct 2022 13:51:41 +0200
+
 ngcp-rest-api (11.1.0.0+0~mr11.1.0.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
