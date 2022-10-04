@@ -1,7 +1,7 @@
 import {db} from '../entities'
 
 import {Telnet} from 'telnet-client'
-import {Logger} from '@nestjs/common'
+import {LoggerService} from '../logger/logger.service'
 
 interface TelnetError {
     message: string
@@ -10,7 +10,7 @@ interface TelnetError {
 }
 
 export class TelnetDispatcher {
-    private readonly log = new Logger(TelnetDispatcher.name)
+    private readonly log = new LoggerService(TelnetDispatcher.name)
 
     async activateDomain(domain: string): Promise<TelnetError[]> {
         return await this.dispatchCommand('xmpp', domain, 'activate')

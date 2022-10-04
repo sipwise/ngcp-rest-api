@@ -1,5 +1,5 @@
 import {AppService} from '../../app.service'
-import {Injectable, Logger, UnprocessableEntityException} from '@nestjs/common'
+import {Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {internal} from '../../entities'
 import {Messages} from '../../config/messages.config'
@@ -7,10 +7,11 @@ import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ContractsMariadbRepository} from './repositories/contracts.mariadb.repository'
 import {deepCopy} from '../../repositories/acl-role.mock.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
+import {LoggerService} from '../../logger/logger.service'
 
 @Injectable()
 export class ContractsService implements CrudService<internal.Contract> {
-    private readonly log: Logger = new Logger(ContractsService.name)
+    private readonly log = new LoggerService(ContractsService.name)
 
     constructor(
         private readonly app: AppService,

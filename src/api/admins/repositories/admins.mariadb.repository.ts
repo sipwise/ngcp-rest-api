@@ -1,5 +1,5 @@
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
-import {ForbiddenException, Injectable, Logger} from '@nestjs/common'
+import {ForbiddenException, Injectable} from '@nestjs/common'
 import {db, internal} from '../../../entities'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {RbacFlag, RbacRole} from '../../../config/constants.config'
@@ -9,12 +9,13 @@ import {SelectQueryBuilder} from 'typeorm'
 import {Messages} from '../../../config/messages.config'
 import {AdminsRepository} from '../interfaces/admins.repository'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
+import {LoggerService} from '../../../logger/logger.service'
 
 const SPECIAL_USER_LOGIN = 'sipwise'
 
 @Injectable()
 export class AdminsMariadbRepository implements AdminsRepository {
-    private readonly log = new Logger(AdminsMariadbRepository.name)
+    private readonly log = new LoggerService(AdminsMariadbRepository.name)
 
     @HandleDbErrors
     async create(admin: internal.Admin): Promise<internal.Admin> {

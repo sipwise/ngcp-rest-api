@@ -28,6 +28,7 @@ import {ContactCreateDto} from './dto/contact-create.dto'
 import {ContactResponseDto} from './dto/contact-response.dto'
 import {ContactSearchDto} from './dto/contact-search.dto'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
+import {LoggerService} from '../../logger/logger.service'
 
 const resourceName = 'contacts'
 
@@ -35,7 +36,7 @@ const resourceName = 'contacts'
 @ApiTags('Contacts')
 @Controller(resourceName)
 export class ContactsController extends CrudController<ContactCreateDto, ContactResponseDto> {
-    private readonly log = new Logger(ContactsController.name)
+    private readonly log = new LoggerService(ContactsController.name)
 
     constructor(
         private readonly contactsService: ContactsService,

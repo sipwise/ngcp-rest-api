@@ -1,8 +1,8 @@
 import {Injectable} from '@nestjs/common'
+import {LoggerService} from './logger/logger.service'
 import cluster from 'cluster'
 import fs from 'fs'
 import sdNotify from 'sd-notify'
-import {LoggerService} from './logger/logger.service'
 import {AppService} from './app.service'
 
 const workersAmount = AppService.config.common.workers
@@ -18,17 +18,17 @@ let workersOnline = 0
 export class AppClusterService {
     // eslint-disable-next-line @typescript-eslint/ban-types
     static clusterize(callback: Function): void {
-        const logger = new LoggerService()
+        const logger = new LoggerService(AppClusterService.name)
         if (cluster.isWorker) {
-            logger.log(`Cluster worker PID: ${process.pid}`, AppClusterService.name)
+            logger.log(`Cluster worker PID: ${process.pid}`)
             callback()
         } else {
-            logger.log(`Master server started with PID: ${process.pid} Workers: ${workersAmount}`, AppClusterService.name)
+            logger.log(`Master server started with PID: ${process.pid} Workers: ${workersAmount}`)
             for (let i = 0; i < workersAmount; i++) {
                 cluster.fork()
             }
             cluster.on('exit', (worker, code, signal) => {
-                logger.log(`Worker ${worker.process.pid} died (${code} ${signal})`, AppClusterService.name)
+                logger.log(`Worker ${worker.process.pid} died (${code} ${signal})`)
                 if (workersOnline > 0) {
                     workersOnline -= 1
                 }
@@ -37,7 +37,7 @@ export class AppClusterService {
                     if (fs.existsSync(`${pidDir}/${pidFile}`)) {
                         fs.unlinkSync(`${pidDir}/${pidFile}`)
                     }
-                    logger.log('Server is stopped', AppClusterService.name)
+                    logger.log('Server is stopped')
                     started = 0
                 }
             })
@@ -47,19 +47,19 @@ export class AppClusterService {
                     if (fs.existsSync(`${pidDir}/${pidFile}`)) {
                         fs.unlinkSync(`${pidDir}/${pidFile}`)
                     }
-                    logger.log('Server is stopped', AppClusterService.name)
+                    logger.log('Server is stopped')
                     started = 0
                 }
             })
             cluster.on('listening', (worker) => {
-                logger.log(`Worker ${worker.process.pid} is ready`, AppClusterService.name)
+                logger.log(`Worker ${worker.process.pid} is ready`)
                 workersOnline += 1
                 if (!started && workersOnline == workersAmount) {
                     if (!fs.existsSync(pidDir)) {
                         fs.mkdirSync(pidDir, {recursive: true})
                     }
                     fs.writeFileSync(`${pidDir}/${pidFile}`, `${process.pid}\n`)
-                    logger.log('Server is started', AppClusterService.name)
+                    logger.log('Server is started')
                     sdNotify.sendStatus('READY=1')
                     sdNotify.ready()
                     started = 1

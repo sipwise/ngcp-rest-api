@@ -1,11 +1,12 @@
-import {Injectable, Logger} from '@nestjs/common'
+import {Injectable} from '@nestjs/common'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {internal} from '../../entities'
 import {PbxgroupsMariadbRepository} from './repositories/pbxgroups.mariadb.repository'
+import {LoggerService} from '../../logger/logger.service'
 
 @Injectable()
 export class PbxgroupsService {
-    private readonly log: Logger = new Logger(PbxgroupsService.name)
+    private readonly log = new LoggerService(PbxgroupsService.name)
 
     constructor(
         private readonly pbxgroupsRepo: PbxgroupsMariadbRepository,

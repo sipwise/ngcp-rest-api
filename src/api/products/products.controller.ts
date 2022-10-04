@@ -1,4 +1,4 @@
-import {Controller, Get, Logger, Param, ParseIntPipe, Req} from '@nestjs/common'
+import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
 import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {JournalsService} from '../journals/journals.service'
@@ -11,6 +11,7 @@ import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {CrudController} from '../../controllers/crud.controller'
+import {LoggerService} from '../../logger/logger.service'
 
 const resourceName = 'products'
 
@@ -19,7 +20,7 @@ const resourceName = 'products'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class ProductsController extends CrudController<never, ProductResponseDto>{
-    private readonly log: Logger = new Logger(ProductsController.name)
+    private readonly log = new LoggerService(ProductsController.name)
 
     constructor(
         private readonly productsService: ProductsService,

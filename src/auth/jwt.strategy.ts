@@ -1,4 +1,4 @@
-import {Injectable, Logger} from '@nestjs/common'
+import {Injectable} from '@nestjs/common'
 import {PassportStrategy} from '@nestjs/passport'
 import {Strategy} from 'passport-jwt'
 import {jwtConstants} from '../config/constants.config'
@@ -6,13 +6,14 @@ import {db} from '../entities'
 import {AuthService} from './auth.service'
 import {AppService} from '../app.service'
 import {ServiceRequest} from 'interfaces/service-request.interface'
+import {LoggerService} from '../logger/logger.service'
 
 /**
  * Implementation of the JWT authentication strategy
  */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-    private readonly log = new Logger(JwtStrategy.name)
+    private readonly log = new LoggerService(JwtStrategy.name)
 
     /**
      * Extracts the JWT from the passed bearer token
@@ -97,7 +98,7 @@ function parseAuthHeader(hdrValue) {
 function fromAuthHeaderAsBearerToken() {
     return function (request) {
         let token = null
-        const l = new Logger(fromAuthHeaderAsBearerToken.name)
+        const l = new LoggerService(fromAuthHeaderAsBearerToken.name)
         l.debug('get bearer token from auth header')
         if (request.headers[AUTH_HEADER]) {
             const auth_params = parseAuthHeader(request.headers[AUTH_HEADER])

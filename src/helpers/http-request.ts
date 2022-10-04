@@ -1,9 +1,9 @@
 import {ClientRequest} from 'http'
-import {Logger} from '@nestjs/common'
 import http = require('http')
+import {LoggerService} from '../logger/logger.service'
 
 export class HttpRequest {
-    private readonly log = new Logger(HttpRequest.name)
+    private readonly log = new LoggerService(HttpRequest.name)
 
     public async send(options: http.RequestOptions, data?: any): Promise<any> {
 

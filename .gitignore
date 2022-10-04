@@ -7,3 +7,4 @@ coverage
 .idea
 prod
 etc/ssl
+.dev-env

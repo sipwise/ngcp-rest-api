@@ -1,10 +1,11 @@
-import {Injectable, Logger} from '@nestjs/common'
+import {Injectable} from '@nestjs/common'
 import {Interval} from '@nestjs/schedule'
 import {AppService} from '../app.service'
+import {LoggerService} from '../logger/logger.service'
 
 @Injectable()
 export class DbStateSchedule {
-    private readonly log = new Logger(DbStateSchedule.name)
+    private readonly log = new LoggerService(DbStateSchedule.name)
 
     constructor(
         private readonly app: AppService,

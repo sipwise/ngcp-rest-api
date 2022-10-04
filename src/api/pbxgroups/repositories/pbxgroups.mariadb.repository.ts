@@ -1,15 +1,15 @@
 import {PbxgroupsRepository} from '../interfaces/pbxgroups.repository'
 import {db, internal} from '../../../entities'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {Logger} from '@nestjs/common'
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {SelectQueryBuilder} from 'typeorm'
 import {RbacRole} from '../../../config/constants.config'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {PbxgroupsSearchDto} from '../dto/pbxgroups-search.dto'
+import {LoggerService} from '../../../logger/logger.service'
 
 export class PbxgroupsMariadbRepository implements PbxgroupsRepository {
-    private readonly log: Logger = new Logger(PbxgroupsMariadbRepository.name)
+    private readonly log = new LoggerService(PbxgroupsMariadbRepository.name)
 
     @HandleDbErrors
     async readAll(req: ServiceRequest): Promise<[internal.PbxGroup[], number]> {

@@ -2,7 +2,6 @@ import {
     ArgumentMetadata,
     HttpStatus,
     Injectable,
-    Logger,
     Optional,
     PipeTransform,
     Type,
@@ -16,6 +15,7 @@ import {validate} from 'class-validator'
 import {isUndefined} from 'util'
 import {formatValidationErrors} from '../helpers/errors.helper'
 import {obfuscatePasswordValidationErrors} from '../helpers/password-obfuscator.helper'
+import {LoggerService} from '../logger/logger.service'
 
 export interface ValidationPipeOptions extends ValidatorOptions {
     transform?: boolean;
@@ -40,7 +40,7 @@ export class ValidateInputPipe implements PipeTransform<any> {
     protected expectedType: Type<any>
     //protected exceptionFactory: (errors: ValidationError[]) => any
     protected validateCustomDecorators: boolean
-    private readonly log = new Logger(ValidateInputPipe.name)
+    private readonly log = new LoggerService(ValidateInputPipe.name)
 
     constructor(@Optional() options?: ValidationPipeOptions) {
         options = options || {}

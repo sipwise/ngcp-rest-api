@@ -2,9 +2,10 @@ import {Logger} from '@nestjs/common'
 import {db} from '../entities'
 import {HttpRequest} from './http-request'
 import {RequestOptions} from 'http'
+import {LoggerService} from '../logger/logger.service'
 
 export class XmlDispatcher {
-    private readonly log = new Logger(XmlDispatcher.name)
+    private readonly log = new LoggerService(XmlDispatcher.name)
 
     async dispatch(target: string, all: boolean, sync: boolean, body: string) {
         const group = await db.provisioning.XmlGroup.findOne({where: {name: target}, relations: ['hosts']})

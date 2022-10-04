@@ -1,4 +1,3 @@
-import {Logger} from '@nestjs/common'
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
@@ -7,9 +6,10 @@ import {db, internal} from '../../../entities'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {VoicemailSearchDto} from '../dto/voicemail-search.dto'
 import {VoicemailsRepository} from '../interfaces/voicemails.repository'
+import {LoggerService} from '../../../logger/logger.service'
 
 export class VoicemailsMariadbRepository implements VoicemailsRepository {
-    private readonly log = new Logger(VoicemailsMariadbRepository.name)
+    private readonly log = new LoggerService(VoicemailsMariadbRepository.name)
 
     @HandleDbErrors
     async readAll(sr: ServiceRequest): Promise<[internal.Voicemail[], number]> {

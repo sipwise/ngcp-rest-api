@@ -1,4 +1,4 @@
-import {Controller, Delete, Get, Logger, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
+import {Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {CustomerCreateDto} from './dto/customer-create.dto'
 import {CustomerResponseDto} from './dto/customer-response.dto'
@@ -25,6 +25,7 @@ import {CustomerSearchDto} from './dto/customer-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {LoggerService} from '../../logger/logger.service'
 
 const resourceName = 'customers'
 
@@ -39,7 +40,7 @@ const resourceName = 'customers'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class CustomersController extends CrudController<CustomerCreateDto, CustomerResponseDto> {
-    private readonly log: Logger = new Logger(CustomersController.name)
+    private readonly log = new LoggerService(CustomersController.name)
     constructor(
         private readonly customerService: CustomersService,
         private readonly journalService: JournalsService,

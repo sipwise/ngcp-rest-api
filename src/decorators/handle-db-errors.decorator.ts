@@ -1,12 +1,12 @@
-import {Logger} from '@nestjs/common'
 import {handleTypeORMError} from '../helpers/errors.helper'
+import {LoggerService} from '../logger/logger.service'
 
 export function HandleDbErrors(
     target: any,
     propertyKey: string,
     descriptor: PropertyDescriptor,
 ) {
-    const log = new Logger()
+    const log = new LoggerService(HandleDbErrors.name)
     const fn = descriptor.value
     descriptor.value = async function DescriptorValue(...args: any[]) {
         try {

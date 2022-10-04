@@ -1,4 +1,4 @@
-import {Controller, Get, Logger, Param, ParseIntPipe, Req} from '@nestjs/common'
+import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
 import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {AdminResponseDto} from '../admins/dto/admin-response.dto'
 import {PbxgroupsResponseDto} from './dto/pbxgroups-response.dto'
@@ -9,6 +9,7 @@ import {RbacRole} from '../../config/constants.config'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {LoggerService} from '../../logger/logger.service'
 
 const resourceName = 'pbxgroups'
 
@@ -17,7 +18,7 @@ const resourceName = 'pbxgroups'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class PbxgroupsController extends CrudController<never, PbxgroupsResponseDto> {
-    private readonly log: Logger = new Logger(PbxgroupsController.name)
+    private readonly log = new LoggerService(PbxgroupsController.name)
 
     constructor(
         private readonly pbxgroupsService: PbxgroupsService,

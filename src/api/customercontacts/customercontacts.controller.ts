@@ -4,7 +4,6 @@ import {
     forwardRef,
     Get,
     Inject,
-    Logger,
     Param,
     ParseIntPipe,
     Patch,
@@ -38,6 +37,7 @@ import {CustomercontactSearchDto} from './dto/customercontact-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {LoggerService} from '../../logger/logger.service'
 
 const resourceName = 'customercontacts'
 
@@ -46,7 +46,7 @@ const resourceName = 'customercontacts'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class CustomercontactsController extends CrudController<CustomercontactCreateDto, CustomercontactResponseDto> {
-    private readonly log = new Logger(CustomercontactsController.name)
+    private readonly log = new LoggerService(CustomercontactsController.name)
 
     constructor(
         private readonly contactsService: CustomercontactsService,

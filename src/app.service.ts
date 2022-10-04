@@ -1,4 +1,4 @@
-import {Inject, Injectable} from '@nestjs/common'
+import {Inject, Injectable, Logger} from '@nestjs/common'
 import {DataSource, EntityTarget} from 'typeorm'
 import {config as AppConfig} from './config/main.config'
 
@@ -11,6 +11,7 @@ export class AppService {
     private dbAvailable = true
 
     constructor(
+        @Inject(Logger) private readonly defaultLogger: Logger,
         @Inject('DB') private readonly defaultDatabase: DataSource,
     ) {
         this.db = defaultDatabase
@@ -34,5 +35,9 @@ export class AppService {
 
     public dbRepo<Entity>(target: EntityTarget<Entity>) {
         return this.dbConnection().getRepository(target)
+    }
+
+    public logger() {
+        return this.defaultLogger
     }
 }

@@ -1,7 +1,6 @@
 import {ContactsRepository} from '../interfaces/contacts.repository'
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {Logger} from '@nestjs/common'
 import {Not, SelectQueryBuilder} from 'typeorm'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {db, internal} from '../../../entities'
@@ -10,10 +9,10 @@ import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {ContactSearchDto} from '../dto/contact-search.dto'
 import {VoipSubscriberStatus} from '../../../entities/internal/voip-subscriber.internal.entity'
 import {ContractStatus} from '../../../entities/internal/contract.internal.entity'
+import {LoggerService} from '../../../logger/logger.service'
 
 export class ContactsMariadbRepository implements ContactsRepository {
-
-    private readonly log: Logger = new Logger(ContactsMariadbRepository.name)
+    private readonly log = new LoggerService(ContactsMariadbRepository.name)
 
     @HandleDbErrors
     async create(entity: internal.Contact, sr: ServiceRequest): Promise<internal.Contact> {

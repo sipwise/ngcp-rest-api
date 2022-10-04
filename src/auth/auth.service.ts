@@ -1,17 +1,18 @@
-import {ForbiddenException, Injectable, Logger} from '@nestjs/common'
+import {ForbiddenException, Injectable} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
 import {AppService} from '../app.service'
 import {AuthResponseDto} from './dto/auth-response.dto'
 import {compare} from 'bcrypt'
 import {db} from '../entities'
 import {RbacRole} from '../config/constants.config'
+import {LoggerService} from '../logger/logger.service'
 
 /**
  * `AuthService` provides functionality to authenticate Admins and to sign JWTs for authenticated users
  */
 @Injectable()
 export class AuthService {
-    private readonly log = new Logger(AuthService.name)
+    private readonly log = new LoggerService(AuthService.name)
 
     /**
      * Creates a new `AuthService`

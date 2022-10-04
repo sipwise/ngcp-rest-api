@@ -1,4 +1,4 @@
-import {ForbiddenException, Injectable, Logger, UnprocessableEntityException} from '@nestjs/common'
+import {ForbiddenException, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AppService} from '../../app.service'
@@ -8,10 +8,11 @@ import {ResellersMariadbRepository} from './repositories/resellers.mariadb.repos
 import {ResellerStatus} from '../../entities/internal/reseller.internal.entity'
 import {deepCopy} from '../../repositories/acl-role.mock.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
+import {LoggerService} from '../../logger/logger.service'
 
 @Injectable()
 export class ResellersService implements CrudService<internal.Reseller> {
-    private readonly log = new Logger(ResellersService.name)
+    private readonly log = new LoggerService(ResellersService.name)
 
     constructor(
         private readonly app: AppService,

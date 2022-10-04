@@ -1,10 +1,11 @@
-import {Injectable, Logger} from '@nestjs/common'
+import {Injectable} from '@nestjs/common'
 import {db, internal} from '../entities'
 import {ServiceRequest} from '../interfaces/service-request.interface'
+import {LoggerService} from '../logger/logger.service'
 
 @Injectable()
 export class AclRoleRepository {
-    private readonly log = new Logger(AclRoleRepository.name)
+    private readonly log = new LoggerService(AclRoleRepository.name)
 
     async readOneByRole(role: string, req: ServiceRequest): Promise<internal.AclRole> {
         const dbRole = await db.billing.AclRole.findOneOrFail({
