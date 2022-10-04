@@ -1,11 +1,12 @@
 import {internal} from '../../entities'
-import {Injectable, Logger} from '@nestjs/common'
+import {Injectable} from '@nestjs/common'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ProductsMariadbRepository} from './repositories/products.mariadb.repository'
+import {LoggerService} from '../../logger/logger.service'
 
 @Injectable()
 export class ProductsService {
-    private readonly log: Logger = new Logger(ProductsService.name)
+    private readonly log = new LoggerService(ProductsService.name)
     constructor(
         private readonly productsRepo: ProductsMariadbRepository,
     ) {

@@ -7,7 +7,6 @@ Build-Depends:
  gyp,
  libsystemd-dev,
  nodejs (>= 18),
- yarnpkg,
 Standards-Version: 4.5.1
 Homepage: https://www.sipwise.com/
 

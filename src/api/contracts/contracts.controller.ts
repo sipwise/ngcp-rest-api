@@ -24,6 +24,7 @@ import {ContractSearchDto} from './dto/contract-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {LoggerService} from '../../logger/logger.service'
 
 const resourceName = 'contracts'
 
@@ -32,8 +33,7 @@ const resourceName = 'contracts'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class ContractsController extends CrudController<ContractCreateDto, ContractResponseDto> {
-
-    private readonly log: Logger = new Logger(ContractsController.name)
+    private readonly log = new LoggerService(ContractsController.name)
 
     constructor(
         private readonly contractsService: ContractsService,

@@ -6,7 +6,6 @@ import {
     Controller,
     Delete,
     Get,
-    Logger,
     Param,
     ParseIntPipe,
     Patch,
@@ -27,6 +26,7 @@ import {VoicemailSearchDto} from './dto/voicemail-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {LoggerService} from '../../logger/logger.service'
 
 const resourceName = 'voicemails'
 
@@ -35,7 +35,7 @@ const resourceName = 'voicemails'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class VoicemailsController extends CrudController<VoicemailUpdateDto, VoicemailResponseDto> {
-    private readonly log: Logger = new Logger(VoicemailsController.name)
+    private readonly log = new LoggerService(VoicemailsController.name)
 
     constructor(
         private readonly voicemailsService: VoicemailsService,

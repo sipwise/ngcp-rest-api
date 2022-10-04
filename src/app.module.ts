@@ -24,6 +24,7 @@ import {PbxgroupsModule} from './api/pbxgroups/pbxgroups.module'
 import {ContactsModule} from './api/contacts/contacts.module'
 import {DbStateSchedule} from './schedules/dbstate.schedule'
 import {FileshareSchedule} from './schedules/fileshare.schedule'
+import {LoggerService} from './logger/logger.service'
 
 let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
     ConfigModule.forRoot({
@@ -70,12 +71,14 @@ if (process.env.NODE_ENV != 'test') {
     exports: [
         AppService,
         Logger,
+        LoggerService,
     ],
     providers: [
         AppService,
         DbStateSchedule,
         FileshareSchedule,
         Logger,
+        LoggerService,
     ],
 })
 export class AppModule implements NestModule {

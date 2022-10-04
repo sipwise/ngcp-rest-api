@@ -1,6 +1,6 @@
 import {ApiCreatedResponse, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {Controller, Delete, forwardRef, Get, Inject, Logger, Param, ParseIntPipe, Post, Req} from '@nestjs/common'
+import {Controller, Delete, forwardRef, Get, Inject, Param, ParseIntPipe, Post, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {DomainCreateDto} from './dto/domain-create.dto'
 import {DomainResponseDto} from './dto/domain-response.dto'
@@ -14,6 +14,7 @@ import {DomainSearchDto} from './dto/domain-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {LoggerService} from '../../logger/logger.service'
 
 const resourceName = 'domains'
 
@@ -26,7 +27,7 @@ const resourceName = 'domains'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class DomainsController extends CrudController<DomainCreateDto, DomainResponseDto> {
-    private readonly log = new Logger(DomainsController.name)
+    private readonly log = new LoggerService(DomainsController.name)
 
     constructor(
         private readonly domainsService: DomainsService,

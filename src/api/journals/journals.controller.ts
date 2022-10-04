@@ -2,7 +2,7 @@ import {RbacRole} from '../../config/constants.config'
 import {JournalResponseDto} from './dto/journal-response.dto'
 import {Auth} from '../../decorators/auth.decorator'
 import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
-import {Controller, Get, Logger, Param, ParseIntPipe, Req} from '@nestjs/common'
+import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
 import {AppService} from '../../app.service'
 import {JournalsService} from './journals.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -12,13 +12,14 @@ import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {Request} from 'express'
+import {LoggerService} from '../../logger/logger.service'
 
 @Auth(RbacRole.system, RbacRole.admin, RbacRole.reseller)
 @ApiTags('Journals')
 @ApiExtraModels(PaginatedDto)
 @Controller('journals')
 export class JournalsController {
-    private readonly log: Logger = new Logger(JournalsController.name)
+    private readonly log = new LoggerService(JournalsController.name)
 
     constructor(
         private readonly app: AppService,

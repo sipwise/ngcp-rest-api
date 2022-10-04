@@ -1,11 +1,12 @@
-import {Injectable, Logger, NestMiddleware} from '@nestjs/common'
+import {Injectable, NestMiddleware} from '@nestjs/common'
 import {NextFunction, Request, Response} from 'express'
 import Context from '../helpers/context.helper'
 import {obfuscatePasswordJSON} from '../helpers/password-obfuscator.helper'
+import {LoggerService} from '../logger/logger.service'
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
-    private readonly log = new Logger(LoggerMiddleware.name)
+    private readonly log = new LoggerService(LoggerMiddleware.name)
 
     use(req: Request, res: Response, next: NextFunction): any {
         const ctx = Context.get(req)

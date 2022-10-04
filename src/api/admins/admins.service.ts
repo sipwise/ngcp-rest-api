@@ -8,10 +8,11 @@ import {internal} from '../../entities'
 import {AclRoleRepository} from '../../repositories/acl-role.repository'
 import {deepCopy} from '../../repositories/acl-role.mock.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
+import {LoggerService} from '../../logger/logger.service'
 
 @Injectable()
 export class AdminsService implements CrudService<internal.Admin> {
-    private readonly log = new Logger(AdminsService.name)
+    private readonly log = new LoggerService(AdminsService.name)
 
     constructor(
         private readonly app: AppService,

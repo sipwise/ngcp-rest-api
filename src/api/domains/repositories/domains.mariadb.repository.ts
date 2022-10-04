@@ -1,4 +1,4 @@
-import {Injectable, InternalServerErrorException, Logger} from '@nestjs/common'
+import {Injectable, InternalServerErrorException} from '@nestjs/common'
 import {db, internal} from '../../../entities'
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
@@ -8,10 +8,11 @@ import {DomainSearchDto} from '../dto/domain-search.dto'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {DomainsRepository} from '../interfaces/domains.repository'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
+import {LoggerService} from '../../../logger/logger.service'
 
 @Injectable()
 export class DomainsMariadbRepository implements DomainsRepository {
-    private readonly log = new Logger(DomainsMariadbRepository.name)
+    private readonly log = new LoggerService(DomainsMariadbRepository.name)
 
     @HandleDbErrors
     async create(domain: internal.Domain, req: ServiceRequest): Promise<internal.Domain> {

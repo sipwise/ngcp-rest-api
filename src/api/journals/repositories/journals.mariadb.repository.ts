@@ -1,16 +1,17 @@
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {AuthResponseDto} from '../../../auth/dto/auth-response.dto'
 import {db, internal} from '../../../entities'
-import {Injectable, Logger} from '@nestjs/common'
+import {Injectable} from '@nestjs/common'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {JournalSearchDto} from '../dto/journal-search.dto'
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {JournalsRepository} from '../interfaces/journals.repository'
+import {LoggerService} from '../../../logger/logger.service'
 
 @Injectable()
 export class JournalsMariadbRepository implements JournalsRepository {
-    private readonly log: Logger = new Logger(JournalsMariadbRepository.name)
+    private readonly log = new LoggerService(JournalsMariadbRepository.name)
 
     @HandleDbErrors
     async create(journal: internal.Journal): Promise<internal.Journal> {

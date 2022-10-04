@@ -1,15 +1,16 @@
-import {CallHandler, ExecutionContext, Logger, NestInterceptor} from '@nestjs/common'
+import {CallHandler, ExecutionContext, NestInterceptor} from '@nestjs/common'
 import {classToPlain} from 'class-transformer'
 import {isObject} from 'class-validator'
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
 import Context from '../helpers/context.helper'
+import {LoggerService} from '../logger/logger.service'
 
 /**
  * LoggingInterceptor intercepts requests and writes relevant information to log.
  */
 export class LoggingInterceptor implements NestInterceptor {
-    private readonly log = new Logger(LoggingInterceptor.name)
+    private readonly log = new LoggerService(LoggingInterceptor.name)
 
     /**
      * Intercept implements the response logging part for all HTTP requests

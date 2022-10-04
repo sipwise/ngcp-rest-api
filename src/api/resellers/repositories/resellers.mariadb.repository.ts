@@ -1,4 +1,4 @@
-import {Injectable, Logger} from '@nestjs/common'
+import {Injectable} from '@nestjs/common'
 import {AppService} from '../../../app.service'
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
@@ -9,10 +9,11 @@ import {ResellerStatus} from '../../../entities/internal/reseller.internal.entit
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {ResellersRepository} from '../interfaces/resellers.repository'
+import {LoggerService} from '../../../logger/logger.service'
 
 @Injectable()
 export class ResellersMariadbRepository implements ResellersRepository {
-    private readonly log = new Logger(ResellersMariadbRepository.name)
+    private readonly log = new LoggerService(ResellersMariadbRepository.name)
 
     constructor(
         private readonly app: AppService,

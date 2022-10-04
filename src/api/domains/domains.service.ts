@@ -1,7 +1,6 @@
 import {
     ForbiddenException,
     Injectable,
-    Logger,
     NotImplementedException,
     UnprocessableEntityException,
 } from '@nestjs/common'
@@ -13,10 +12,11 @@ import {Messages} from '../../config/messages.config'
 import {DomainsMariadbRepository} from './repositories/domains.mariadb.repository'
 import {DomainCreateDto} from './dto/domain-create.dto'
 import {CrudService} from '../../interfaces/crud-service.interface'
+import {LoggerService} from '../../logger/logger.service'
 
 @Injectable()
 export class DomainsService implements CrudService<internal.Domain> {
-    private readonly log = new Logger(DomainsService.name)
+    private readonly log = new LoggerService(DomainsService.name)
 
     constructor(
         private readonly domainRepo: DomainsMariadbRepository,

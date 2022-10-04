@@ -1,6 +1,6 @@
-import {Logger} from '@nestjs/common'
 import {DataSource} from 'typeorm'
 import {databaseConfig} from '../config/database.config'
+import {LoggerService} from '../logger/logger.service'
 
 export const databaseProviders = [
     {
@@ -8,7 +8,7 @@ export const databaseProviders = [
         useFactory: async () => {
             if (process.env.NODE_ENV == 'test')
                 return;
-            const log = new Logger('databaseProviders[DB]')
+            const log = new LoggerService('databaseProviders[DB]')
             const ds  = new DataSource(databaseConfig)
             try {
                 await ds.initialize()

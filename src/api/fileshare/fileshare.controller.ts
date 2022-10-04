@@ -3,7 +3,6 @@ import {
     Controller,
     Delete,
     Get,
-    Logger,
     Param,
     ParseUUIDPipe,
     Post,
@@ -25,6 +24,7 @@ import {FileshareSearchDto} from './dto/fileshare-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {LoggerService} from '../../logger/logger.service'
 
 const resourceName = 'fileshare'
 
@@ -32,7 +32,7 @@ const resourceName = 'fileshare'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class FileshareController extends CrudController<FileshareCreateDto, FileshareResponseDto> {
-    private readonly log: Logger = new Logger(FileshareController.name)
+    private readonly log = new LoggerService(FileshareController.name)
 
     constructor(
         private readonly fileshareService: FileshareService,

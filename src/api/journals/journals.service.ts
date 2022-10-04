@@ -1,4 +1,4 @@
-import {Injectable, Logger} from '@nestjs/common'
+import {Injectable} from '@nestjs/common'
 import {internal} from '../../entities'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -8,6 +8,7 @@ import {AppService} from '../../app.service'
 import Context from '../../helpers/context.helper'
 import {isObject} from 'class-validator'
 import {obfuscatePasswordJSON} from '../../helpers/password-obfuscator.helper'
+import {LoggerService} from '../../logger/logger.service'
 
 const operation = {
     'PATCH': 'update',
@@ -25,7 +26,7 @@ const contentFormat = {
 
 @Injectable()
 export class JournalsService {
-    private readonly log = new Logger(JournalsService.name)
+    private readonly log = new LoggerService(JournalsService.name)
 
     constructor(
         private readonly app: AppService,

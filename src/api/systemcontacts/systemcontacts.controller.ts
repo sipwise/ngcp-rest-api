@@ -1,4 +1,4 @@
-import {Controller, Delete, Get, Logger, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {
     ApiBody,
     ApiConsumes,
@@ -24,6 +24,7 @@ import {SystemcontactSearchDto} from './dto/systemcontact-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {LoggerService} from '../../logger/logger.service'
 
 const resourceName = 'systemcontacts'
 
@@ -32,7 +33,7 @@ const resourceName = 'systemcontacts'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class SystemcontactsController extends CrudController<SystemcontactCreateDto, SystemcontactResponseDto> {
-    private readonly log = new Logger(SystemcontactsController.name)
+    private readonly log = new LoggerService(SystemcontactsController.name)
 
     constructor(
         private readonly contactsService: SystemcontactsService,

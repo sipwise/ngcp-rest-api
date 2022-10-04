@@ -1,7 +1,7 @@
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {Equal, IsNull, Not} from 'typeorm'
-import {Injectable, Logger, MethodNotAllowedException} from '@nestjs/common'
+import {IsNull, Not} from 'typeorm'
+import {Injectable, MethodNotAllowedException} from '@nestjs/common'
 import {ContractSearchDto} from '../dto/contract-search.dto'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
@@ -10,11 +10,11 @@ import {ContractStatus} from '../../../entities/internal/contract.internal.entit
 import {ContractsRepository} from '../interfaces/contracts.respository'
 import {ContactStatus} from 'entities/internal/contact.internal.entity'
 import {ProductClass} from 'entities/internal/product.internal.entity'
+import {LoggerService} from '../../../logger/logger.service'
 
 @Injectable()
 export class ContractsMariadbRepository implements ContractsRepository {
-
-    private readonly log: Logger = new Logger(ContractsMariadbRepository.name)
+    private readonly log = new LoggerService(ContractsMariadbRepository.name)
 
     @HandleDbErrors
     async create(entity: internal.Contract, sr: ServiceRequest): Promise<internal.Contract> {

@@ -40,6 +40,7 @@ import {ExpandHelper} from '../../helpers/expand.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
+import {LoggerService} from '../../logger/logger.service'
 
 const resourceName = 'admins'
 
@@ -48,7 +49,7 @@ const resourceName = 'admins'
 @Controller(resourceName)
 @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller)
 export class AdminsController extends CrudController<AdminCreateDto, AdminResponseDto> {
-    private readonly log = new Logger(AdminsController.name)
+    private readonly log = new LoggerService(AdminsController.name)
 
     constructor(
         private readonly app: AppService,
