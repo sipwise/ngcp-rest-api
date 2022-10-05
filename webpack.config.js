@@ -88,6 +88,19 @@ module.exports =
           ]
         }
       },
+      {
+        test: /\.js$/,
+        loader: 'string-replace-loader',
+        options: {
+          multiple: [
+            {
+              search: "new Buffer(",
+              replace: "Buffer.from(",
+              strict: false,
+            },
+          ]
+        }
+      },
     ],
   },
   resolve:
