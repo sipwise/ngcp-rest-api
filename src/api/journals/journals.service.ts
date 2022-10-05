@@ -1,4 +1,4 @@
-import {Injectable} from '@nestjs/common'
+import {Inject, Injectable} from '@nestjs/common'
 import {internal} from '../../entities'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -30,7 +30,7 @@ export class JournalsService {
 
     constructor(
         private readonly app: AppService,
-        private readonly journalsRepo: JournalsMariadbRepository,
+        @Inject(JournalsMariadbRepository) private readonly journalsRepo: JournalsMariadbRepository,
     ) {
     }
 

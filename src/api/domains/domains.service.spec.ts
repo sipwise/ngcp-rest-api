@@ -26,7 +26,7 @@ describe('DomainsService', () => {
 
     let sr: ServiceRequest
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         domainsMockRepo = new DomainsMockRepository()
         const module: TestingModule = await Test.createTestingModule({
             imports: [DomainsModule, AppModule],

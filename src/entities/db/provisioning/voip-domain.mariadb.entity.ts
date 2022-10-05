@@ -9,6 +9,9 @@ export class VoipDomain extends BaseEntity {
     @PrimaryGeneratedColumn()
         id?: number
 
-    @Column({length: 127})
+    @Column({
+        type: 'varchar',
+        length: 127,
+    })
         domain!: string
 }

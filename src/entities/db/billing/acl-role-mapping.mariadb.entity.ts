@@ -10,7 +10,9 @@ export class AclRoleMapping extends BaseEntity {
     @PrimaryGeneratedColumn()
         accessor_id?: number
 
-    @Column()
+    @Column({
+        type: 'int',
+    })
         has_access_to_id?: number
 
     @ManyToOne(() => AclRole)

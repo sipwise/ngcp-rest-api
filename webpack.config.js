@@ -23,7 +23,7 @@ module.exports =
         parallel: true,
         extractComments: true,
         terserOptions: {
-          ecma: 2022,
+          ecma: 2020,
           compress: false, // causes issues when compressed and the size difference is only 1-3%
           mangle: false,
           keep_classnames: true,

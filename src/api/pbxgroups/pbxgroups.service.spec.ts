@@ -26,7 +26,7 @@ describe('PbxgroupsService', () => {
 
     let sr: ServiceRequest
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         pbxgroupsMockRepo = new PbxgroupsMockRepository()
         const module: TestingModule = await Test.createTestingModule({
             imports: [PbxgroupsModule, ExpandModule, AppModule],

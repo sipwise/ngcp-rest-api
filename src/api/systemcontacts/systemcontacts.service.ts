@@ -1,4 +1,4 @@
-import {BadRequestException, Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {BadRequestException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -12,7 +12,7 @@ export class SystemcontactsService implements CrudService<internal.Contact> {
     private readonly log = new LoggerService(SystemcontactsService.name)
 
     constructor(
-        private readonly contactRepo: ContactsMariadbRepository,
+        @Inject(ContactsMariadbRepository) private readonly contactRepo: ContactsMariadbRepository,
     ) {
     }
 

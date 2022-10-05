@@ -31,6 +31,7 @@ export class VoipSubscriber extends BaseEntity {
         username: string
 
     @Column({
+        type: 'int',
         unsigned: true,
     })
         domain_id: number
@@ -49,11 +50,13 @@ export class VoipSubscriber extends BaseEntity {
         password: string
 
     @Column({
+        type: 'boolean',
         default: 0,
     })
         admin: boolean
 
     @Column({
+        type: 'int',
         unsigned: true,
         nullable: true,
     })
@@ -74,11 +77,13 @@ export class VoipSubscriber extends BaseEntity {
         webpassword: string
 
     @Column({
+        type: 'boolean',
         default: 0,
     })
         is_pbx_pilot: boolean
 
     @Column({
+        type: 'boolean',
         default: 0,
     })
         is_pbx_group: boolean
@@ -96,6 +101,7 @@ export class VoipSubscriber extends BaseEntity {
         pbx_hunt_policy: string
 
     @Column({
+        type: 'int',
         unsigned: true,
         nullable: true,
     })
@@ -109,12 +115,14 @@ export class VoipSubscriber extends BaseEntity {
         pbx_extension: string
 
     @Column({
+        type: 'int',
         unsigned: true,
         nullable: true,
     })
         profile_set_id: number
 
     @Column({
+        type: 'int',
         unsigned: true,
         nullable: true,
     })

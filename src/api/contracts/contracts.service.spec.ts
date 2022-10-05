@@ -30,7 +30,7 @@ describe('ContractsService', () => {
 
     let sr: ServiceRequest
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         contractsMockRepo = new ContractsMockRepository()
         const module: TestingModule = await Test.createTestingModule({
             imports: [ContractsModule, ExpandModule, AppModule],

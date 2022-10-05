@@ -1,5 +1,5 @@
 import {internal} from '../../entities'
-import {Injectable} from '@nestjs/common'
+import {Inject, Injectable} from '@nestjs/common'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ProductsMariadbRepository} from './repositories/products.mariadb.repository'
 import {LoggerService} from '../../logger/logger.service'
@@ -8,7 +8,7 @@ import {LoggerService} from '../../logger/logger.service'
 export class ProductsService {
     private readonly log = new LoggerService(ProductsService.name)
     constructor(
-        private readonly productsRepo: ProductsMariadbRepository,
+        @Inject(ProductsMariadbRepository) private readonly productsRepo: ProductsMariadbRepository,
     ) {
     }
 

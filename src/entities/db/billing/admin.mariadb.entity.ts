@@ -12,6 +12,7 @@ export class Admin extends BaseEntity {
         id?: number
 
     @Column({
+        type: 'int',
         nullable: true,
         unsigned: true,
     })

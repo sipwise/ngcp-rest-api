@@ -1,5 +1,6 @@
 import {
     ForbiddenException,
+    Inject,
     Injectable,
     NotImplementedException,
     UnprocessableEntityException,
@@ -19,7 +20,7 @@ export class DomainsService implements CrudService<internal.Domain> {
     private readonly log = new LoggerService(DomainsService.name)
 
     constructor(
-        private readonly domainRepo: DomainsMariadbRepository,
+        @Inject(DomainsMariadbRepository) private readonly domainRepo: DomainsMariadbRepository,
     ) {
     }
 
