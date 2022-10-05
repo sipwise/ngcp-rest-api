@@ -28,7 +28,7 @@ describe('ContactsService', () => {
 
     let sr: ServiceRequest
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         contactsMockRepo = new ContactsMockRepository()
         const module: TestingModule = await Test.createTestingModule({
             imports: [ContactsModule, ExpandModule, AppModule],

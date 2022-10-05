@@ -1,4 +1,4 @@
-import {BadRequestException, Injectable} from '@nestjs/common'
+import {BadRequestException, Inject, Injectable} from '@nestjs/common'
 import {internal} from '../../entities'
 import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -13,7 +13,7 @@ export class VoicemailsService implements CrudService<internal.Voicemail> {
     private readonly log = new LoggerService(VoicemailsService.name)
 
     constructor(
-        private readonly voicemailsRepo: VoicemailsMariadbRepository,
+        @Inject(VoicemailsMariadbRepository) private readonly voicemailsRepo: VoicemailsMariadbRepository,
     ) {
     }
 

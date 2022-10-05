@@ -29,7 +29,7 @@ describe('ResellersService', () => {
 
     let sr: ServiceRequest
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         resellersMockRepo = new ResellersMockRepository()
         const module: TestingModule = await Test.createTestingModule({
             imports: [ResellersModule, ExpandModule, AppModule],

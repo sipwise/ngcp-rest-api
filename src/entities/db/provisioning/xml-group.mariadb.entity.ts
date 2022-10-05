@@ -10,7 +10,10 @@ export class XmlGroup extends BaseEntity {
     @PrimaryGeneratedColumn()
         id?: number
 
-    @Column({length: 32})
+    @Column({
+        type: 'varchar',
+        length: 32
+    })
         name!: string
 
     @ManyToMany(type => XmlHost, host => host.groups)

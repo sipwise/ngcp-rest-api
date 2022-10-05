@@ -11,6 +11,7 @@ export class VoipSubscriber extends BaseEntity {
         id?: number
 
     @Column({
+        type: 'int',
         unsigned: true,
     })
         contract_id: number
@@ -28,6 +29,7 @@ export class VoipSubscriber extends BaseEntity {
         username: string
 
     @Column({
+        type: 'int',
         unsigned: true,
     })
         domain_id: number
@@ -40,6 +42,7 @@ export class VoipSubscriber extends BaseEntity {
         status: string
 
     @Column({
+        type: 'int',
         unsigned: true,
     })
         primary_number_id?: boolean
@@ -51,6 +54,7 @@ export class VoipSubscriber extends BaseEntity {
         external_id?: string
 
     @Column({
+        type: 'int',
         unsigned: true,
         nullable: true,
     })

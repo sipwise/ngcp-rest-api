@@ -1,5 +1,5 @@
 import {AppService} from '../../app.service'
-import {Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {internal} from '../../entities'
 import {Messages} from '../../config/messages.config'
@@ -15,7 +15,7 @@ export class ContractsService implements CrudService<internal.Contract> {
 
     constructor(
         private readonly app: AppService,
-        private readonly contractsRepo: ContractsMariadbRepository,
+        @Inject(ContractsMariadbRepository) private readonly contractsRepo: ContractsMariadbRepository,
     ) {
     }
 

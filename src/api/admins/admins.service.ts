@@ -1,6 +1,6 @@
 import {AppService} from '../../app.service'
 import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
-import {ForbiddenException, Injectable, Logger} from '@nestjs/common'
+import {ForbiddenException, Inject, Injectable, Logger} from '@nestjs/common'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AdminsMariadbRepository} from './repositories/admins.mariadb.repository'
 import {Messages} from '../../config/messages.config'
@@ -16,8 +16,8 @@ export class AdminsService implements CrudService<internal.Admin> {
 
     constructor(
         private readonly app: AppService,
-        private readonly adminRepo: AdminsMariadbRepository,
-        private readonly aclRepo: AclRoleRepository,
+        @Inject(AdminsMariadbRepository) private readonly adminRepo: AdminsMariadbRepository,
+        @Inject(AclRoleRepository) private readonly aclRepo: AclRoleRepository,
     ) {
     }
 

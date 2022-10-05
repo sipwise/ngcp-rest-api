@@ -1,4 +1,4 @@
-import {HttpException, Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {HttpException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {internal} from '../../entities'
 import {ContactsMariadbRepository} from './repositories/contacts.mariadb.repository'
@@ -12,7 +12,7 @@ export class ContactsService implements CrudService<internal.Contact>{
     private readonly log = new LoggerService(ContactsService.name)
 
     constructor(
-        private readonly contactsRepo: ContactsMariadbRepository,
+        @Inject(ContactsMariadbRepository) private readonly contactsRepo: ContactsMariadbRepository,
     ) {
     }
 

@@ -26,7 +26,7 @@ describe('ProductsService', () => {
 
     let sr: ServiceRequest
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         productsMockRepo = new ProductsMockRepository()
         const module: TestingModule = await Test.createTestingModule({
             imports: [ProductsModule, ExpandModule, AppModule],

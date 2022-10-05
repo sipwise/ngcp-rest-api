@@ -1,4 +1,4 @@
-import {BadRequestException, HttpException, Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {BadRequestException, HttpException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {internal} from '../../entities'
 import {AppService} from '../../app.service'
@@ -14,7 +14,7 @@ export class CustomercontactsService implements CrudService<internal.Contact> {
 
     constructor(
         private readonly app: AppService,
-        private readonly contactRepo: ContactsMariadbRepository,
+        @Inject(ContactsMariadbRepository) private readonly contactRepo: ContactsMariadbRepository,
     ) {
     }
 

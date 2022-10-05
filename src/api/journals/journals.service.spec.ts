@@ -26,7 +26,7 @@ describe('JournalsService', () => {
 
     let sr: ServiceRequest
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         journalsMockRepo = new JournalsMockRepository()
         const module: TestingModule = await Test.createTestingModule({
             imports: [JournalsModule, ExpandModule, AppModule],

@@ -1,4 +1,4 @@
-import {ForbiddenException, Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {ForbiddenException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AppService} from '../../app.service'
@@ -16,7 +16,7 @@ export class ResellersService implements CrudService<internal.Reseller> {
 
     constructor(
         private readonly app: AppService,
-        private readonly resellerRepo: ResellersMariadbRepository,
+        @Inject(ResellersMariadbRepository) private readonly resellerRepo: ResellersMariadbRepository,
     ) {
     }
 

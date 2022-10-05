@@ -30,11 +30,13 @@ export class Upload extends BaseEntity {
         mime_type: string
 
     @Column({
+        type: 'int',
         nullable: true,
     })
         size: number
 
     @Column({
+        type: 'int',
         nullable: true,
     })
         ttl: number
@@ -72,11 +74,13 @@ export class Upload extends BaseEntity {
         expires_at: Date
 
     @Column({
+        type: 'int',
         nullable: true,
     })
         reseller_id?: number
 
     @Column({
+        type: 'int',
         nullable: true,
     })
         subscriber_id?: number

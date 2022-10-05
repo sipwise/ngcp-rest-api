@@ -20,14 +20,14 @@
     "start:debug": "NODE_ENV=development nest start --debug --watch",
     "start:prod": "node prod/server",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest --config jest-unit.config.ts",
-    "test:watch": "jest --config jest-unit.config.ts --watch",
-    "test:cov": "jest --config jest-unit.config.ts --coverage",
-    "test:debug": "node --config jest-unit.config.ts --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config jest-e2e.config.ts",
-    "test:e2e:watch": "jest --config jest-e2e.config.ts --watch",
-    "test:e2e:cov": "jest --config jest-e2e.config.ts --coverage",
-    "test:e2e:debug": "node --config jest-e2e.config.ts --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
+    "test": "jest --config jest-unit.config.js",
+    "test:watch": "jest --config jest-unit.config.js --watch",
+    "test:cov": "jest --config jest-unit.config.js --coverage",
+    "test:debug": "node --config jest-unit.config.js --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config jest-e2e.config.js",
+    "test:e2e:watch": "jest --config jest-e2e.config.js --watch",
+    "test:e2e:cov": "jest --config jest-e2e.config.js --coverage",
+    "test:e2e:debug": "node --config jest-e2e.config.js --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
   },
   "dependencies": {
     "@nestjs/common": "9.1.2",
@@ -83,6 +83,8 @@
     "@typescript-eslint/parser": "5.38.1",
     "clean-webpack-plugin": "4.0.0",
     "copy-webpack-plugin": "11.0.0",
+    "esbuild": "0.15.10",
+    "esbuild-jest": "0.5.0",
     "eslint": "8.24.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-prettier": "4.2.1",
@@ -105,6 +107,7 @@
   },
   "optionalDependencies": {},
   "resolutions": {
-    "**/ua-parser-js": "1.0.2"
+    "**/ua-parser-js": "1.0.2",
+    "**/superagent": "8.0.0"
   }
 }

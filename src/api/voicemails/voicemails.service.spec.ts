@@ -26,7 +26,7 @@ describe('VoicemailsService', () => {
 
     let sr: ServiceRequest
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         voicemailsMockRepo = new VoicemailsMockRepository()
         const module: TestingModule = await Test.createTestingModule({
             imports: [VoicemailsModule, ExpandModule, AppModule],
