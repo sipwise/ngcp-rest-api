@@ -6,7 +6,6 @@ import {config as AppConfig} from './config/main.config'
 export class AppService {
     static readonly config = AppConfig
     public readonly config = AppConfig
-    public readonly db: DataSource
 
     private dbAvailable = true
 
@@ -14,7 +13,6 @@ export class AppService {
         @Inject(Logger) private readonly defaultLogger: Logger,
         @Inject('DB') private readonly defaultDatabase: DataSource,
     ) {
-        this.db = defaultDatabase
     }
 
     get isDbInitialised() {
@@ -27,6 +25,10 @@ export class AppService {
 
     set setDbAvailable(dbAvailable: boolean) {
         this.dbAvailable = dbAvailable
+    }
+
+    get db() {
+        return this.defaultDatabase
     }
 
     public dbConnection() {

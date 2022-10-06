@@ -17,11 +17,12 @@ const getDBEntries = () => {
     })
     return entities
 }
-const entities = process.env.NODE_ENV == 'production' || process.env.NODE_WP_BUNDLE
-                    ? [...getDBEntries()]
-                    : process.env.NODE_ENV == 'test'
-                        ? ["src/entities/db/**/*.entity.ts"]
-                        : ["dist/entities/db/**/*.entity.js"]
+
+const entities = process.env.NODE_ENV == 'development' &&
+                 process.env.NODE_WP_BUNDLE !== 'true' &&
+                 process.env.NODE_JEST !== 'true'
+                    ? ["dist/entities/db/**/*.entity.js"]
+                    : [...getDBEntries()]
 
 export const databaseConfig: DataSourceOptions = {
     name: 'default',
