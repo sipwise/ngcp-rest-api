@@ -1,3 +1,5 @@
+process.env.NODE_JEST = true
+
 module.exports =
 {
   moduleFileExtensions: [
