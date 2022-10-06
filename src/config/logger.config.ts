@@ -9,20 +9,21 @@ export const winstonLoggerConfig: LoggerOptions = {
     levels: winston.config.syslog.levels,
     format: winston.format.simple(),
     transports: [
-        process.env.NODE_ENV == 'development'
-            ? new winston.transports.Console({
+        process.env.NODE_ENV == 'production' &&
+        process.env.NODE_CONSOLE !== 'true' &&
+        process.env.NODE_CONSOLE !== '1'
+            ? new Syslog({
+                path: '/dev/log',
+                protocol: 'unix',
+                localhost: '',
+                format: winston.format.simple(),
+            })
+            : new winston.transports.Console({
                 format: winston.format.combine(
                     winston.format.timestamp(),
                     winston.format.ms(),
                     utilities.format.nestLike('ngcp-rest-api', {prettyPrint: true}),
                 ),
-            },
-            )
-            : new Syslog({
-                path: '/dev/log',
-                protocol: 'unix',
-                localhost: '',
-                format: winston.format.simple(),
-            }),
+            })
     ],
 }
