@@ -21,7 +21,7 @@ module.exports =
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
   moduleDirectories: [
-  node_modules,
+    'node_modules',
     'src',
   ],
   slowTestThreshold: 15,
