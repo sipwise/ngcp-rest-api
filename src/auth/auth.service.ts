@@ -61,11 +61,8 @@ export class AuthService {
             },
             relations: ['has_access_to'],
         })
-        const [b64salt, b64hash] = admin.saltedpass.split('$')
-        const bcrypt_version = '2b'
-        const bcrypt_cost = 13
 
-        if (admin && await compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`) !== false) {
+        if (admin && await this.compareBcryptPassword(password, admin.saltedpass)  !== false) {
             return this.adminAuthToResponse(admin)
         }
         this.log.debug({message: 'user authentication', success: false, username: username})
@@ -170,11 +167,8 @@ export class AuthService {
         if (!this.isSubscriberValid(subscriber)) {
             return null
         }
-        const [b64salt, b64hash] = subscriber.webpassword.split('$')
-        const bcrypt_version = '2b'
-        const bcrypt_cost = 13
 
-        if (subscriber && await compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`) !== false) {
+        if (subscriber && await this.compareBcryptPassword(password, subscriber.webpassword) !== false) {
             return this.subscriberAuthToResponse(subscriber)
         }
         this.log.debug({message: 'subscriber user authentication', success: false, username: username})
@@ -218,5 +212,12 @@ export class AuthService {
         return {
             access_token: this.jwtService.sign(payload, {algorithm: 'HS256', noTimestamp: true}),
         }
+    }
+
+    async compareBcryptPassword(password: string, password2: string) {
+        const [b64salt, b64hash] = password2.split('$')
+        const bcrypt_version = '2b'
+        const bcrypt_cost = 13
+        return await compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`)
     }
 }
