@@ -27,4 +27,5 @@ module.exports =
     'src',
   ],
   slowTestThreshold: 15,
+  testTimeout: 60 * 1000,
 }

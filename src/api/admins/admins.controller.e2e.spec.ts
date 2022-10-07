@@ -1,17 +1,23 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import {AppModule} from '../../app.module'
-import {AdminsModule} from './admins.module'
 import request from 'supertest'
+import {AppModule} from '../../app.module'
+import {AppService} from '../../app.service'
+import {AuthService} from '../../auth/auth.service'
+import {AdminsModule} from './admins.module'
 import {AdminCreateDto} from './dto/admin-create.dto'
 import {RbacRole} from '../../config/constants.config'
-import {AdminsService} from './admins.service'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
+import {HttpExceptionFilter} from '../../helpers/http-exception.filter'
+import {ValidateInputPipe} from '../../pipes/validate.pipe'
 
 describe('AdminsController', () => {
     let app: INestApplication
-    let service: AdminsService
-    const createdAdminIds: number[] = []
+    let appService: AppService
+    let authService: AuthService
+    let authHeader: [string, string]
+    let createdAdminIds: number[] = []
+    let creds = {username: 'administrator', password: 'administrator'}
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -19,15 +25,51 @@ describe('AdminsController', () => {
         })
             .compile()
 
-        service = moduleRef.get<AdminsService>(AdminsService)
+        appService = moduleRef.get<AppService>(AppService)
+        authService = moduleRef.get<AuthService>(AuthService)
+
+        createdAdminIds = []
 
         app = moduleRef.createNestApplication()
+
+        // TODO import other app configuration from bootstrap()
+        // like interceptors, etc.
+        app.useGlobalPipes(new ValidateInputPipe())
+        app.useGlobalFilters(new HttpExceptionFilter())
+
         await app.init()
+
+        if (!(appService.isDbInitialised && appService.isDbAvailable)) {
+            appService.db.destroy()
+            app.close()
+            process.exit(1)
+        }
     })
+
+    afterAll(async () => {
+        await appService.db.destroy()
+        await app.close()
+    })
+
     it('should be defined', () => {
-        expect(service).toBeDefined()
+        expect(app).toBeDefined()
     })
-    describe('Create initial admins', function () {
+
+    it('mock authService.compareBcryptPassword', async () => {
+        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(async () => true)
+        expect(await authService.compareBcryptPassword('123', '456')).toBe(true)
+    })
+
+    it('obtain auth token', async () => {
+        const response = await request(app.getHttpServer())
+            .post('/login_jwt')
+            .send(creds)
+        expect(response.status).toEqual(201)
+        expect(response.body['access_token']).toBeDefined()
+        authHeader = ['Authorization', 'Bearer ' + response.body['access_token']]
+    })
+
+    describe('Create initial admins', () => {
         const admins: AdminCreateDto[] = [
             AdminCreateDto.create({
                 billing_data: true,
@@ -51,7 +93,7 @@ describe('AdminsController', () => {
                 is_master: false,
                 email: 'admin@example.com',
                 login: 'admin',
-                password: 'admin',
+                password: 'adminthere',
                 read_only: false,
                 reseller_id: 1,
                 role: RbacRole.admin,
@@ -121,7 +163,7 @@ describe('AdminsController', () => {
                 is_master: true,
                 email: 'ccare@example.com',
                 login: 'ccare',
-                password: 'ccare',
+                password: 'ccarethere',
                 read_only: false,
                 reseller_id: 1,
                 role: RbacRole.ccare,
@@ -144,33 +186,41 @@ describe('AdminsController', () => {
         ]
         for (const a of admins) {
             it('should create admin ' + a.login, async () => {
+                expect.assertions(1)
                 const response = await request(app.getHttpServer())
                     .post('/admins')
-                    .auth('administrator', 'administrator')
+                    .set(...authHeader)
                     .send(a)
                 expect(response.status).toEqual(201)
                 createdAdminIds.push(+response.body.id)
-                // console.log('created admin ids:', createdAdminIds)
             })
         }
     })
 
     describe('Admins GET', () => {
         const tt = [
-            {username: 'system', want: 200, canSeeResellerId: true},
-            {username: 'adminmaster', want: 200, canSeeResellerId: true},
-            {username: 'admin', want: 200, canSeeResellerId: true},
-            {username: 'resellermaster', want: 200, canSeeResellerId: false},
-            {username: 'reseller', want: 200, canSeeResellerId: false},
-            {username: 'ccareadmin', want: 200, canSeeResellerId: true},
-            {username: 'ccare', want: 200, canSeeResellerId: false},
-            {username: 'lintercept', want: 403, canSeeResellerId: false},
+            {username: 'system',
+             password: 'system', want: 200, canSeeResellerId: true},
+            {username: 'adminmaster',
+             password: 'adminmaster', want: 200, canSeeResellerId: true},
+            {username: 'admin',
+             password: 'adminthere', want: 200, canSeeResellerId: true},
+            {username: 'resellermaster',
+             password: 'resellermaster', want: 200, canSeeResellerId: false},
+            {username: 'reseller',
+             password: 'reseller', want: 200, canSeeResellerId: false},
+            {username: 'ccareadmin',
+             password: 'ccareadmin', want: 200, canSeeResellerId: true},
+            {username: 'ccare',
+             password: 'ccarethere', want: 200, canSeeResellerId: false},
+            {username: 'lintercept',
+             password: 'lintercept', want: 403, canSeeResellerId: false},
         ]
         for (const test of tt) {
             it('finds all admins as role: ' + test.username, async () => {
                 const response = await request(app.getHttpServer())
                     .get('/admins')
-                    .auth(test.username, test.username)
+                    .auth(test.username, test.password)
                 expect(response.status).toEqual(test.want)
                 if (response.body[0] !== undefined) {
                     if (test.canSeeResellerId)
@@ -186,7 +236,8 @@ describe('AdminsController', () => {
     describe('Admins POST', () => {
         const tt = [
             {
-                username: 'system', roles: [
+                username: 'system',
+                password: 'system', roles: [
                     {role: RbacRole.system, isMaster: false, want: 201},
                     {role: RbacRole.admin, isMaster: true, want: 201},
                     {role: RbacRole.admin, isMaster: false, want: 201},
@@ -198,7 +249,8 @@ describe('AdminsController', () => {
                 ], canSeeResellerId: true,
             },
             {
-                username: 'adminmaster', roles: [
+                username: 'adminmaster',
+                password: 'adminmaster', roles: [
                     {role: RbacRole.system, isMaster: false, want: 403},
                     {role: RbacRole.admin, isMaster: true, want: 201},
                     {role: RbacRole.admin, isMaster: false, want: 201},
@@ -210,7 +262,8 @@ describe('AdminsController', () => {
                 ], canSeeResellerId: true,
             },
             {
-                username: 'admin', roles: [
+                username: 'admin',
+                password: 'adminthere', roles: [
                     {role: RbacRole.system, isMaster: false, want: 403},
                     {role: RbacRole.admin, isMaster: true, want: 403},
                     {role: RbacRole.admin, isMaster: false, want: 403},
@@ -222,7 +275,8 @@ describe('AdminsController', () => {
                 ], canSeeResellerId: true,
             },
             {
-                username: 'resellermaster', roles: [
+                username: 'resellermaster',
+                password: 'resellermaster', roles: [
                     {role: RbacRole.system, isMaster: false, want: 403},
                     {role: RbacRole.admin, isMaster: true, want: 403},
                     {role: RbacRole.admin, isMaster: false, want: 403},
@@ -234,7 +288,8 @@ describe('AdminsController', () => {
                 ], canSeeResellerId: false,
             },
             {
-                username: 'reseller', roles: [
+                username: 'reseller',
+                password: 'reseller', roles: [
                     {role: RbacRole.system, isMaster: false, want: 403},
                     {role: RbacRole.admin, isMaster: true, want: 403},
                     {role: RbacRole.admin, isMaster: false, want: 403},
@@ -246,7 +301,8 @@ describe('AdminsController', () => {
                 ], canSeeResellerId: false,
             },
             {
-                username: 'ccareadmin', roles: [
+                username: 'ccareadmin',
+                password: 'ccareadmin', roles: [
                     {role: RbacRole.system, isMaster: false, want: 403},
                     {role: RbacRole.admin, isMaster: true, want: 403},
                     {role: RbacRole.admin, isMaster: false, want: 403},
@@ -258,7 +314,8 @@ describe('AdminsController', () => {
                 ], canSeeResellerId: true,
             },
             {
-                username: 'ccare', roles: [
+                username: 'ccare',
+                password: 'ccarethere', roles: [
                     {role: RbacRole.system, isMaster: false, want: 403},
                     {role: RbacRole.admin, isMaster: true, want: 403},
                     {role: RbacRole.admin, isMaster: false, want: 403},
@@ -270,7 +327,8 @@ describe('AdminsController', () => {
                 ], canSeeResellerId: false,
             },
             {
-                username: 'lintercept', roles: [
+                username: 'lintercept',
+                password: 'lintercept', roles: [
                     {role: RbacRole.system, isMaster: false, want: 403},
                     {role: RbacRole.admin, isMaster: true, want: 403},
                     {role: RbacRole.admin, isMaster: false, want: 403},
@@ -303,7 +361,7 @@ describe('AdminsController', () => {
                     })
                     const response = await request(app.getHttpServer())
                         .post('/admins')
-                        .auth(test.username, test.username)
+                        .auth(test.username, test.password)
                         .send(data)
                     expect(response.status).toEqual(roleTest.want)
                     if (response.status == 201) {
@@ -312,6 +370,7 @@ describe('AdminsController', () => {
                         else {
                             expect(response.body.reseller_id).not.toBeDefined()
                         }
+                        createdAdminIds.push(+response.body.id)
                     }
                 })
             }
@@ -331,16 +390,15 @@ describe('AdminsController', () => {
             const want = 422
             const response = await request(app.getHttpServer())
                 .post('/admins')
-                .auth('administrator', 'administrator')
+                .set(...authHeader)
                 .send(data)
-            // TODO: for some reason the app does not perform input validation on DTOs.
-            //  This problem is only related to tests and is handled properly by the API.
-            //  expect(response.status).toEqual(want)
+            expect(response.status).toEqual(want)
         })
     })
+
     describe('Admins PATCH', () => {
-        let createdId
-        it('should should create admin', async () => {
+        let createdId: number
+        it('should create admin', async () => {
             const data = AdminCreateDto.create({
                 billing_data: true,
                 call_data: false,
@@ -357,10 +415,11 @@ describe('AdminsController', () => {
             })
             const response = await request(app.getHttpServer())
                 .post('/admins')
-                .auth('administrator', 'administrator')
+                .set(...authHeader)
                 .send(data)
             expect(response.status).toEqual(201)
             createdId = response.body.id
+            createdAdminIds.push(createdId)
         })
         const protectedFields = {
             'login': 'trying_to_update', 'role': RbacRole.system, 'is_master': false, 'is_active': false,
@@ -368,7 +427,7 @@ describe('AdminsController', () => {
             'call_data': true, 'billing_data': false,
         }
         for (const key in protectedFields) {
-            it(`should should fail updating {key: ${key}} on self`, async () => {
+            it(`should fail updating {key: ${key}} on self`, async () => {
                 const patch: PatchOperation[] = [
                     {op: 'replace', path: `/${key}`, value: protectedFields[key]},
                 ]
@@ -380,23 +439,20 @@ describe('AdminsController', () => {
             })
         }
     })
-    afterAll(async () => {
-        const response = await request(app.getHttpServer())
-            .get('/admins')
-            .query({page: 1, rows: 100})
-            .auth('administrator', 'administrator')
-        console.log('body', response.body)
-        for (const admin of response.body[0]) {
-            if (admin.id != 1) {
-                // const result = await request(app.getHttpServer()).delete(`/admins/${admin.id}`).auth('administrator', 'administrator')
-                // console.log('deleting admin id:', admin.id, 'status:', result.status, 'body:', admin)
+
+    describe('Admins DELETE', () => {
+        it('cleanup created admins', async () => {
+            for (const id of createdAdminIds) {
+                const result = await request(app.getHttpServer())
+                    .delete(`/admins/${id}`)
+                    .set(...authHeader)
+                expect(result.status).toEqual(200)
             }
-        }
-        await app.close()
+        })
     })
 })
 
-function getRandomInt(min, max) {
+function getRandomInt(min: number, max: number) {
     min = Math.ceil(min)
     max = Math.floor(max)
     return Math.floor(Math.random() * (max - min) + min) // The maximum is exclusive and the minimum is inclusive

@@ -60,7 +60,7 @@ export class AdminCreateDto {
     static create(data: AdminInterface): AdminCreateDto {
         const admin = new AdminCreateDto()
 
-        Object.keys(admin).map(key => {
+        Object.keys(data).map(key => {
             if(data[key] != undefined) {
                 admin[key] = data[key]
             } else {
