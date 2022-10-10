@@ -2,7 +2,7 @@ import {Event,State} from 'jest-circus'
 import type {Circus} from '@jest/types'
 import NodeEnvironment from 'jest-environment-node'
 
-class JestEnvironmentFailFast extends NodeEnvironment  {
+class JestEnvironmentRuntime extends NodeEnvironment  {
     async handleTestEvent(event: Event, state: State) {
         if (event.name === 'hook_failure' || event.name === 'test_fn_failure') {
             if (!event.test)
@@ -21,4 +21,4 @@ class JestEnvironmentFailFast extends NodeEnvironment  {
     }
 }
 
-module.exports = JestEnvironmentFailFast
+module.exports = JestEnvironmentRuntime

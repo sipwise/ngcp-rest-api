@@ -29,5 +29,5 @@ module.exports =
   slowTestThreshold: 15,
   testTimeout: 60 * 1000,
   testRunner: 'jest-circus/runner',
-  testEnvironment: '../jest-e2e-env-failfast.ts',
+  testEnvironment: '../jest-e2e-env-runtime.ts',
 }
