@@ -1,6 +1,8 @@
-import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
+import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn} from 'typeorm'
 import {Contract} from './contract.mariadb.entity'
+import {VoipSubscriber as ProvisioningVoipSubscriber} from '../provisioning/voip-subscriber.mariadb.entity'
 import {VoipSubscriberStatus} from '../../internal/voip-subscriber.internal.entity'
+import {VoipNumber} from './voip-number.mariadb.entity'
 
 @Entity({
     name: 'voip_subscribers',
@@ -8,7 +10,7 @@ import {VoipSubscriberStatus} from '../../internal/voip-subscriber.internal.enti
 })
 export class VoipSubscriber extends BaseEntity {
     @PrimaryGeneratedColumn()
-        id?: number
+    id?: number
 
     @Column({
         type: 'int',
@@ -58,9 +60,16 @@ export class VoipSubscriber extends BaseEntity {
         unsigned: true,
         nullable: true,
     })
-        contact_id?: number
+    contact_id?: number
 
-    @ManyToOne(() => Contract)
+    @ManyToOne(() => Contract, contract => contract.id)
     @JoinColumn({name: 'contract_id'})
-        contract?: Contract
+    contract?: Contract
+
+    @OneToOne(() => ProvisioningVoipSubscriber)
+    @JoinColumn({name: 'uuid', referencedColumnName: 'uuid'})
+    provisioningVoipSubscriber: ProvisioningVoipSubscriber
+
+    @OneToMany(type => VoipNumber, number => number.subscriber)
+    voipNumbers?: VoipNumber[]
 }

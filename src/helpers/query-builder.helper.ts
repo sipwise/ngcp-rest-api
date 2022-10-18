@@ -23,6 +23,8 @@ async function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQuery
 }
 
 async function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: string[], searchLogic: SearchLogic) {
+    // TODO: does not work for advanced queries e.g. qb.alias only returns the alias of the top query builder and does not allow search
+    //       in joined fields
     for (const property of searchLogic.searchableFields) {
         //if a JOIN has happened based on this request parameter, skip it for the WHERE clause
         if (searchLogic.joins?.some(j => j.property === property)) {
@@ -43,13 +45,14 @@ async function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQue
     }
 }
 
-async function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: string[], searchLogic: SearchLogic) {
+export async function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: string[], searchLogic: SearchLogic) {
     if (searchLogic.orderBy != null) {
         qb.addOrderBy(searchLogic.orderBy, searchLogic.order)
     }
 }
 
-async function addPaginationToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, searchLogic: SearchLogic) {
+export async function addPaginationToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, searchLogic: SearchLogic) {
+    // TODO: does not work when working with joins, alternatives are limit->take and offset-> skip when working with entities
     qb.limit(searchLogic.rows)
     qb.offset(searchLogic.rows * (searchLogic.page - 1))
 }

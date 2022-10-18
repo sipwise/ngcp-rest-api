@@ -1,4 +1,14 @@
-import {DynamicModule, ForwardReference, Global, Logger, MiddlewareConsumer, Module, NestModule, RequestMethod, Type} from '@nestjs/common'
+import {
+    DynamicModule,
+    ForwardReference,
+    Global,
+    Logger,
+    MiddlewareConsumer,
+    Module,
+    NestModule,
+    RequestMethod,
+    Type,
+} from '@nestjs/common'
 import {ScheduleModule} from '@nestjs/schedule'
 import {AdminsModule} from './api/admins/admins.module'
 import {AppController} from './app.controller'
@@ -26,6 +36,7 @@ import {DbStateSchedule} from './schedules/dbstate.schedule'
 import {FileshareSchedule} from './schedules/fileshare.schedule'
 import {LoggerService} from './logger/logger.service'
 import {ClearCallCountersModule} from './api/clearcallcounters/clearcallcounters.module'
+import {CustomernumbersModule} from './api/customernumbers/customernumbers.module'
 
 let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
     ConfigModule.forRoot({
@@ -43,6 +54,7 @@ let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | Fo
     ContactsModule,
     ContractsModule,
     CustomercontactsModule,
+    CustomernumbersModule,
     DatabaseModule,
     DomainsModule,
     ExpandModule,

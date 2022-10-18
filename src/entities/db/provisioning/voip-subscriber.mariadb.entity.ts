@@ -6,14 +6,16 @@ import {
     JoinTable,
     ManyToMany,
     ManyToOne,
+    OneToMany,
     OneToOne,
     PrimaryGeneratedColumn,
 } from 'typeorm'
 import {Contract} from '../billing/contract.mariadb.entity'
-import {VoipSubscriber as BillingVoipSubscriber} from '../billing/voip_subscriber.mariadb.entity'
+import {VoipSubscriber as BillingVoipSubscriber} from '../billing/voip-subscriber.mariadb.entity'
 import {VoipDomain} from './voip-domain.mariadb.entity'
 import {VoipPbxGroup} from './voip-pbx-group.mariadb.entity'
 import {internal} from '../../../entities'
+import {VoipDBAlias} from './voip-dbalias.mariadb.entity'
 
 @Entity({
     name: 'voip_subscribers',
@@ -165,9 +167,12 @@ export class VoipSubscriber extends BaseEntity {
         joinColumn: {name: 'group_id', referencedColumnName: 'id'},
         inverseJoinColumn: {name: 'subscriber_id', referencedColumnName: 'id'},
     })
-        pbx_group_members?: VoipSubscriber[]
+    pbx_group_members?: VoipSubscriber[]
 
     members?: VoipSubscriber[]
+
+    @OneToMany(type => VoipDBAlias, alias => alias.subscriber)
+    dbAliases?: VoipDBAlias[]
 
     toInternalPbxGroup(): internal.PbxGroup {
         const group = new internal.PbxGroup()
