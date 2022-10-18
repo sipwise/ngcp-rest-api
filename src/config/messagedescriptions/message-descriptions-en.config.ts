@@ -32,4 +32,5 @@ export const MessageDescriptionsEN: { [id: string]: any } = {
     DOMAIN_ALREADY_EXISTS: (str: string) => `domain ${str} already exists`,
     UNKNOWN_ROLE: (str: string) => `Unknown role ${str}`,
     VALIDATION_FAILED_UNSUPPORTED_ID: 'Validation failed (unsupported :id format)',
+    REQUEST_PROCESSING_ERROR: 'Cannot process the request',
 }

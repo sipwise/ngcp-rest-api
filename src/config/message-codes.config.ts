@@ -32,4 +32,5 @@ export const MessageCodes: { [id: string]: number } = {
     'DOMAIN_ALREADY_EXISTS': 1030,
     'UNKNOWN_ROLE': 1031,
     'VALIDATION_FAILED_UNSUPPORTED_ID': 1032,
+    'REQUEST_PROCESSING_ERROR': 1033,
 }
