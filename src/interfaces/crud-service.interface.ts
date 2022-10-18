@@ -9,9 +9,9 @@ export interface CrudService<InternalEntity> {
 
     read(id: number | string, sr: ServiceRequest): Promise<InternalEntity> | Promise<StreamableFile>
 
-    update(id: number | string, dto: InternalEntity, sr: ServiceRequest): Promise<InternalEntity>
+    update?(id: number | string, dto: InternalEntity, sr: ServiceRequest): Promise<InternalEntity>
 
-    adjust(id: number | string, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<InternalEntity>
+    adjust?(id: number | string, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<InternalEntity>
 
     delete?(id: number | string, sr: ServiceRequest): Promise<number | string>
 }

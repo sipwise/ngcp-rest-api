@@ -4,6 +4,7 @@ import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGen
 import {Product} from './product.mariadb.entity'
 import {ContractStatus, ContractType} from '../../internal/contract.internal.entity'
 import {internal} from '../../../entities'
+import {VoipSubscriber} from './voip-subscriber.mariadb.entity'
 
 @Entity({
     name: 'contracts',
@@ -127,47 +128,15 @@ export class Contract extends BaseEntity {
     @JoinColumn({name: 'contact_id'})
         contact?: Contact
 
-    // @HasMany(() => ContractsBillingProfileNetwork, {
-    //     sourceKey: 'id',
-    // })
-    // ContractsBillingProfileNetworks?: ContractsBillingProfileNetwork[]
-
-    // @HasMany(() => Voucher, {
-    //     sourceKey: 'id',
-    // })
-    // Vouchers?: Voucher[]
-
-    // @HasMany(() => Invoice, {
-    //     sourceKey: 'id',
-    // })
-    // Invoices?: Invoice[]
-
-    // @HasMany(() => VoipSubscriber, {
-    //     sourceKey: 'id',
-    // })
-    // VoipSubscribers?: VoipSubscriber[]
+    @OneToMany(type => VoipSubscriber, subscriber => subscriber.contract)
+        voipSubscribers?: VoipSubscriber[]
 
     @OneToMany(type => Reseller, reseller => reseller.contract)
         resellers?: Reseller[]
 
-    // @HasMany(() => ContractBalance, {
-    //     sourceKey: 'id',
-    // })
-    // ContractBalances?: ContractBalance[]
-
-    // @ManyToOne(type => Customer, customer => customer.contracts)
-    // @JoinColumn({name: "customer_id"})
-    // customer?: Customer
-
-    // @BelongsTo(() => Order)
-    // Order?: Order
-
     @ManyToOne(type => Product, product => product.contracts)
     @JoinColumn({name: 'product_id'})
         product?: Product
-
-    // @BelongsTo(() => ProfilePackage)
-    // ProfilePackage?: ProfilePackage
 
     toInternal(): internal.Contract {
         const contract = internal.Contract.create({
@@ -194,6 +163,24 @@ export class Contract extends BaseEntity {
         })
         contract.type = this.product != undefined ? this.product.class as unknown as ContractType : undefined
         return contract
+    }
+
+    toInternalCustomerNumber(): internal.CustomerNumber {
+        const subscriberNumbers: internal.SubscriberNumber[] = []
+        this.voipSubscribers.map(sub => {
+            sub.voipNumbers.map(num => {
+                subscriberNumbers.push({
+                    id: sub.id,
+                    numberID: num.id,
+                    ac: num.ac,
+                    cc: num.cc,
+                    sn: num.sn,
+                    isDevID: sub.provisioningVoipSubscriber.dbAliases[0].is_devid,
+                    isPrimary: sub.provisioningVoipSubscriber.dbAliases[0].is_primary,
+                })
+            })
+        })
+        return internal.CustomerNumber.create({id: this.id, numbers: subscriberNumbers})
     }
 
     fromInternal(contract: internal.Contract): Contract {
