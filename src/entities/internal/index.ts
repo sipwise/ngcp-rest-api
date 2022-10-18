@@ -1,5 +1,6 @@
 export {Admin} from './admin.internal.entity'
 export {AclRole} from './acl-role.internal.entity'
+export {CallId} from './call-id.internal.entity'
 export {Contact} from './contact.internal.entity'
 export {Contract} from './contract.internal.entity'
 export {Domain} from './domain.internal.entity'

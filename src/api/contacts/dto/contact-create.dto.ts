@@ -66,7 +66,7 @@ export class ContactCreateDto {
     @ApiPropertyOptional()
         vatnum?: string
 
-    toInternal() {
+    toInternal(): internal.Contact {
         return internal.Contact.create(this)
     }
 }
