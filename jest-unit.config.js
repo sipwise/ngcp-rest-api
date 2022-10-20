@@ -14,6 +14,7 @@ module.exports =
       'esbuild-jest',
       {
         sourcemap: true,
+        tsconfig: './tsconfig.jest.json'
       },
     ],
   },

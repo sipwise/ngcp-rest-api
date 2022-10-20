@@ -14,7 +14,7 @@ module.exports =
     '^.+\\.(t|j)s$': [
       'ts-jest',
       {
-        sourcemap: true,
+        tsconfig: './tsconfig.jest.json'
       },
     ],
   },

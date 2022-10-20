@@ -11,5 +11,13 @@
     "incremental": false,
     "esModuleInterop": true
   },
-  "exclude": ["node_modules", "dist", "tools"]
+  "exclude": [
+    "dist",
+    "jest-e2e-env-runtime.ts",
+    "node_modules",
+    "prod",
+    "test",
+    "tools",
+    "**/*spec.ts"
+  ]
 }
