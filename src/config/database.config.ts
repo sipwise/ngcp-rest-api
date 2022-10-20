@@ -18,7 +18,7 @@ const getDBEntries = () => {
     return entities
 }
 
-const entities = process.env.NODE_ENV == 'development' &&
+let entities = process.env.NODE_ENV == 'development' &&
                  process.env.NODE_WP_BUNDLE !== 'true' &&
                  process.env.NODE_JEST !== 'true'
                     ? ["dist/entities/db/**/*.entity.js"]

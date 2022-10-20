@@ -1,20 +1,21 @@
-import {Controller, Get, Post, Req, UseGuards} from '@nestjs/common'
+import {Controller, Get, Post, Req} from '@nestjs/common'
+import {ApiTags} from '@nestjs/swagger'
+import {Auth} from './decorators/auth.decorator'
 import {AuthService} from './auth/auth.service'
-import {JwtGuard} from './guards/jwt.guard'
-import {PasswordGuard} from './guards/password.guard'
 
+@Auth()
 @Controller()
 export class AppController {
     constructor(private authService: AuthService) {
     }
 
-    @UseGuards(PasswordGuard)
-    @Post('login_jwt')
+    @ApiTags('Auth')
+    @Post('auth/jwt')
     async login(@Req() req) {
         return this.authService.signJwt(req.user)
     }
 
-    @UseGuards(JwtGuard)
+    @ApiTags('Userinfo')
     @Get('userinfo')
     async userinfo(@Req() req) {
         return req.user

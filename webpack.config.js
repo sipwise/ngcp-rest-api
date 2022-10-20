@@ -52,9 +52,9 @@ module.exports =
             [
               require('@nestjs/swagger/plugin').before(
               {
-                dtoFileNameSuffix: ['.dto.ts', '.entity.ts'],
+                dtoFileNameSuffix: ['.dto.ts'],
                 classValidatorShim: true,
-                introspectComments: true
+                introspectComments: true,
               },
               program)
             ]
@@ -115,7 +115,7 @@ module.exports =
   plugins:
   [
     new CleanWebpackPlugin(),
-    new webpack.ProvidePlugin({ 'openapi': '@nestjs/swagger', }),
+    //new webpack.ProvidePlugin({ 'openapi': '@nestjs/swagger', }),
     new webpack.IgnorePlugin({
       checkResource: function(resource)
       {
@@ -195,10 +195,17 @@ module.exports =
           from: './package.json',
           to: './package.json',
         },
+        'node_modules/swagger-ui-dist/swagger-ui.css',
+        'node_modules/swagger-ui-dist/swagger-ui-bundle.js',
+        'node_modules/swagger-ui-dist/swagger-ui-standalone-preset.js',
+        'node_modules/swagger-ui-dist/favicon-16x16.png',
+        'node_modules/swagger-ui-dist/favicon-32x32.png'
       ],
     }),
     new webpack.DefinePlugin({
-      'process.env.NODE_WP_BUNDLE': true,
+      'process.env': {
+        NODE_WP_BUNDLE: JSON.stringify(true),
+      }
     }),
   ],
   ignoreWarnings:

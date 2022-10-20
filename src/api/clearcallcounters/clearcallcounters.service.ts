@@ -1,4 +1,4 @@
-import {ConsoleLogger, Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {internal} from '../../entities'
 import {LoggerService} from '../../logger/logger.service'
