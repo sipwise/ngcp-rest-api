@@ -62,7 +62,7 @@ describe('AdminsController', () => {
 
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
-            .post('/login_jwt')
+            .post('/auth/jwt')
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()

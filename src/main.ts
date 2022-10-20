@@ -31,19 +31,37 @@ async function bootstrap() {
     app.setGlobalPrefix(config.common.api_prefix, {exclude: ['login_jwt']})
 
     const doc_config = new DocumentBuilder()
-        .setTitle('NGCP API')
-        .setDescription('This is the NGCP API description')
+        .setTitle('Sipwise NGCP API Documentation')
+        //.setDescription('NGCP API schema definition')
         .setVersion('2.0')
+        // TODO disabled until /api/v2 support as tryOut is now
+        // disabled down below
+        /*
         .addBasicAuth()
         .addBearerAuth()
         .addSecurity('cert', {
             type: 'http',
             scheme: 'cert',
         })
+        */
         .build()
 
     const document = SwaggerModule.createDocument(app, doc_config)
-    SwaggerModule.setup(config.common.api_prefix, app, document)
+    SwaggerModule.setup(config.common.api_prefix, app, document, {
+        customCss: ' \
+            .swagger-ui .topbar { display: none } \
+            .swagger-ui .info { margin-top: 0px; text-align: center; vertical-align: middle } \
+            .swagger-ui .info .main { background: #54893b; height: 100px; } \
+            .swagger-ui .info .main .title { color: #fff; padding: 30px } \
+            .swagger-ui .authorization__btn { display: none } \
+            .swagger-ui .authorization__btn.unlocked { display: none } \
+        ',
+        customSiteTitle: 'Sipwise NGCP API 2.0' ,
+        swaggerOptions: {
+            tryItOutEnabled: false,
+            supportedSubmitMethods: [''],
+        }
+    })
 
     app.useGlobalPipes(new ValidateInputPipe())
     app.useGlobalFilters(new HttpExceptionFilter())
@@ -59,6 +77,9 @@ async function bootstrap() {
     app.use(bodyParser.json({
         type: ['application/json-patch+json', 'application/json'],
     }))
+
+    // disable x-powered-by header
+    app.getHttpAdapter().getInstance().disable('x-powered-by')
 
     await app.listen(config.common.api_port, process.env.NODE_ENV == 'development'
         ? '0.0.0.0'

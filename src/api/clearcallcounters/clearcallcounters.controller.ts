@@ -11,7 +11,7 @@ import {internal} from '../../entities'
 const resourceName = 'clearcallcounters'
 
 @Auth(RbacRole.system)
-@ApiTags('Clear call counters')
+@ApiTags('Clear Call Counters')
 @Controller(resourceName)
 export class ClearCallCountersController extends CrudController<ClearCallCounterCreateDto, never> {
     private readonly log = new LoggerService(ClearCallCountersController.name)
