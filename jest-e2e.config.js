@@ -1,4 +1,5 @@
 process.env.NODE_JEST = true
+process.env.NODE_TEST_E2E = true
 
 module.exports =
 {
