@@ -1,3 +1,27 @@
+ngcp-rest-api (11.1.2.0+0~mr11.1.2.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [2b2561a] MT#55535 improve logging
+  * [dae7aad] MT#55553 switch tests transformer from ts-jest to esbuild-jest
+  * [d4f7fba] MT#55556 fix [DEP0005] DeprecationWarning: Buffer()
+  * [d848cd0] MT#55535 use WinstonLogger for app-cluster.service
+  * [2a0b734] MT#55560 improve startup logging handling in app-cluster.service
+  * [2704ccd] MT#55553 fix jest-e2e.config.js node_modules typo
+  * [75ff252] MT#55553 fix database entities for NODE_JEST env
+  * [8a977bc] MT#55393 improve admins.e2e tests
+  * [ef3ee98] MT#55393 e2e test improve error resolution
+  * [fdc3652] MT#55393 rename jest-e2e-env-failfast to jest-e2e-env-runtime
+  * [eeffbb2] MT#54646 add /api/clearcallcounters endpoint
+  * [88d77e7] MT#55553 tsconfig slight rework
+  * [3ebb4f0] MT#55727 improve swagger documentation and more
+
+  [ Michael Berger ]
+  * [3b69a6c] MT#55393 add e2e tests for admins
+  * [228beea] MT#55458 implement endpoint customernumbers
+  * [b5e1b35] MT#55458 handle db errors in customernumbers repository
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 21 Oct 2022 14:38:34 +0200
+
 ngcp-rest-api (11.1.1.0+0~mr11.1.1.0) unstable; urgency=medium
 
   [ Michael Berger ]
