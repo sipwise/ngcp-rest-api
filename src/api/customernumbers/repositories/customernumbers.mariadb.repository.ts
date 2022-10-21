@@ -5,10 +5,12 @@ import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {db, internal} from '../../../entities'
 import {LoggerService} from '../../../logger/logger.service'
 import {CustomernumberSearchDto} from '../dto/customernumber-search.dto'
+import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 
 export class CustomernumbersMariadbRepository {
     private readonly log = new LoggerService(CustomernumbersMariadbRepository.name)
 
+    @HandleDbErrors
     async readById(customerId: number, sr: ServiceRequest): Promise<internal.CustomerNumber> {
         const qb = await this.createBaseQueryBuilder(sr)
         qb.andWhere('contract.id = :id', {id: customerId})
@@ -16,6 +18,7 @@ export class CustomernumbersMariadbRepository {
         return result.toInternalCustomerNumber()
     }
 
+    @HandleDbErrors
     async readAll(sr: ServiceRequest): Promise<[internal.CustomerNumber[], number]> {
         const qb = await this.createReadAllQueryBuilder(sr)
         const [result, count] = await qb.getManyAndCount()
