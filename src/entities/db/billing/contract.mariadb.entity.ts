@@ -169,24 +169,6 @@ export class Contract extends BaseEntity {
         return contract
     }
 
-    toInternalCustomerNumber(): internal.CustomerNumber {
-        const subscriberNumbers: internal.SubscriberNumber[] = []
-        this.voipSubscribers.map(sub => {
-            sub.voipNumbers.map(num => {
-                subscriberNumbers.push({
-                    id: sub.id,
-                    numberID: num.id,
-                    ac: num.ac,
-                    cc: num.cc,
-                    sn: num.sn,
-                    isDevID: sub.provisioningVoipSubscriber.dbAliases[0].is_devid,
-                    isPrimary: sub.provisioningVoipSubscriber.dbAliases[0].is_primary,
-                })
-            })
-        })
-        return internal.CustomerNumber.create({id: this.id, numbers: subscriberNumbers})
-    }
-
     fromInternal(contract: internal.Contract): Contract {
         this.activate_timestamp = contract.activate_timestamp
         this.add_vat = contract.add_vat

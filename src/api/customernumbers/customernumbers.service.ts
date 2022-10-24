@@ -1,10 +1,11 @@
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {Inject} from '@nestjs/common'
+import {Inject, Injectable} from '@nestjs/common'
 import {LoggerService} from '../../logger/logger.service'
 import {CustomernumbersMariadbRepository} from './repositories/customernumbers.mariadb.repository'
 
+@Injectable()
 export class CustomernumbersService implements CrudService<internal.CustomerNumber> {
 
     private readonly log = new LoggerService(CustomernumbersService.name)

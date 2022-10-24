@@ -3,23 +3,24 @@ import {RbacRole} from '../../config/constants.config'
 import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Controller, forwardRef, Get, Inject, Param, ParseIntPipe, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
-import {ContactResponseDto} from '../contacts/dto/contact-response.dto'
 import {LoggerService} from '../../logger/logger.service'
 import {JournalsService} from '../journals/journals.service'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {CustomernumbersService} from './customernumbers.service'
 import {CustomernumberResponseDto} from './dto/customernumber-response.dto'
+import {AppService} from '../../app.service'
 
 const resourceName = 'customernumbers'
 
-@Auth(RbacRole.system, RbacRole.admin, RbacRole.reseller)
+@Auth(RbacRole.system, RbacRole.admin, RbacRole.reseller, RbacRole.subscriberadmin)
 @ApiTags('Customer Numbers')
 @Controller(resourceName)
-export class CustomernumbersController extends CrudController<never, ContactResponseDto> {
+export class CustomernumbersController extends CrudController<never, CustomernumberResponseDto> {
     private readonly log = new LoggerService(CustomernumbersController.name)
 
     constructor(
+        private readonly app: AppService,
         private readonly customerNumberService: CustomernumbersService,
         private readonly journalsService: JournalsService,
         @Inject(forwardRef(() => ExpandHelper))
@@ -30,7 +31,7 @@ export class CustomernumbersController extends CrudController<never, ContactResp
 
     @Get()
     @ApiOkResponse({
-        type: [ContactResponseDto],
+        type: [CustomernumberResponseDto],
     })
     async readAll(@Req() req): Promise<[CustomernumberResponseDto[], number]> {
         this.log.debug({
@@ -47,7 +48,7 @@ export class CustomernumbersController extends CrudController<never, ContactResp
 
     @Get(':id')
     @ApiOkResponse({
-        type: ContactResponseDto,
+        type: CustomernumberResponseDto,
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<CustomernumberResponseDto> {
         this.log.debug({
