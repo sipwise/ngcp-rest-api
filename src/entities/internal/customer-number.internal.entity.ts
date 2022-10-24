@@ -1,4 +1,4 @@
-export class SubscriberNumber {
+interface SubscriberNumberInternalEntity {
     id: number
     cc: number
     ac: string
@@ -6,6 +6,25 @@ export class SubscriberNumber {
     isPrimary: boolean
     isDevID: boolean
     numberID: number
+}
+
+export class SubscriberNumber implements SubscriberNumberInternalEntity {
+    id: number
+    cc: number
+    ac: string
+    sn: string
+    isPrimary: boolean
+    isDevID: boolean
+    numberID: number
+
+    static create(data: SubscriberNumberInternalEntity): SubscriberNumber {
+        const sub = new SubscriberNumber()
+
+        Object.keys(data).map(key => {
+            sub[key] = data[key]
+        })
+        return sub
+    }
 }
 
 export interface CustomerNumberInternalEntity {

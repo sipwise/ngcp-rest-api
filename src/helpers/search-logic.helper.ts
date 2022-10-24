@@ -40,7 +40,7 @@ export class SearchLogic {
                 throw new BadRequestException()
             this.order = sr.query['order_by_direction'] != null && sr.query['order_by_direction'].toUpperCase() === Order.DESC ? Order.DESC : Order.ASC
         }
-
+        // TODO: search_or parameter currently only allows 1/0 but not true/false
         this.searchOr = sr.query['search_or'] != null && sr.query['search_or'] === '1'
     }
 
