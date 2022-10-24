@@ -58,6 +58,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
         return await this.repo.delete(id, this.newServiceRequest(req))
     }
 
+    // TODO: classes which extend CrudController that have no journal capabilitiy still have swagger documentation
     @Get(':id/journal')
     async journal(
         @Param('id') id: number | string,
