@@ -25,6 +25,7 @@ export enum RbacRole {
     ccareadmin = 'ccareadmin',
     lintercept = 'lintercept',
     subscriber = 'subscriber',
+    subscriberadmin = 'subscriberadmin',
 }
 
 export interface RbacFlag {
