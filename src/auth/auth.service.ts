@@ -152,16 +152,17 @@ export class AuthService {
             method: this.validateAdmin.name,
             username: username,
         })
-        const subscriber = await this.app.dbRepo(db.provisioning.VoipSubscriber).findOne({
+        const subscriber = await db.provisioning.VoipSubscriber.findOne({
             where: {
-                username: username,
+                webusername: username,
                 domain: {domain: domain},
             },
             relations: [
-                'domain',
+                'billing_voip_subscriber',
                 'contract',
                 'contract.contact',
-                'billing_voip_subscriber',
+                'contract.product',
+                'domain',
             ],
         })
         if (!this.isSubscriberValid(subscriber)) {
@@ -176,12 +177,14 @@ export class AuthService {
     }
 
     subscriberAuthToResponse(subscriber: db.provisioning.VoipSubscriber): AuthResponseDto {
+        const role = subscriber.admin ? 'subscriberadmin'
+                                      : 'subscriber'
         const response: AuthResponseDto = {
             active: true,
             id: subscriber.billing_voip_subscriber.id,
             readOnly: false,
             reseller_id: subscriber.contract.contact.reseller_id,
-            role: 'subscriber',
+            role: role,
             reseller_id_required: true,
             showPasswords: false,
             username: subscriber.username,
