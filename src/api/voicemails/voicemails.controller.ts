@@ -27,6 +27,7 @@ import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
+import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 
 const resourceName = 'voicemails'
 
@@ -120,5 +121,19 @@ export class VoicemailsController extends CrudController<VoicemailUpdateDto, Voi
         const response = new VoicemailResponseDto(voicemail)
         await this.journalService.writeJournal(sr, id, response)
         return response
+    }
+
+    @Get(':id/journal')
+    @ApiOkResponse({
+        type: [JournalResponseDto],
+    })
+    async journal(@Param('id') id: number | string, @Req() req) {
+        this.log.debug({
+            message: 'fetch voicemail journal by id',
+            func: this.journal.name,
+            url: req.url,
+            method: req.method,
+        })
+        return super.journal(id, req)
     }
 }
