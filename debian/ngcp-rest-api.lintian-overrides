@@ -1,4 +1,4 @@
-ngcp-rest-api: arch-dependent-file-in-usr-share usr/share/ngcp-rest-api/build/*
-ngcp-rest-api: arch-independent-package-contains-binary-or-object usr/share/ngcp-rest-api/build/*
+ngcp-rest-api: arch-dependent-file-in-usr-share *usr/share/ngcp-rest-api/build/*
+ngcp-rest-api: arch-independent-package-contains-binary-or-object *usr/share/ngcp-rest-api/build/*
 ngcp-rest-api: missing-dependency-on-libc needed by usr/share/ngcp-rest-api/build/*
-ngcp-rest-api: unstripped-binary-or-object usr/share/ngcp-rest-api/build/*
+ngcp-rest-api: unstripped-binary-or-object *usr/share/ngcp-rest-api/build/*
