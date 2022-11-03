@@ -10,12 +10,12 @@ import {AppService} from '../../../app.service'
 import {Injectable} from '@nestjs/common'
 
 interface RawCustomerNumberRow {
-    id: number
-    subscriber_id: number
-    number_id: number
-    cc: number
-    ac: string
-    sn: string
+    contract_id: number
+    billingSubscriber_id: number
+    voipNumber_id: number
+    voipNumber_cc: number
+    voipNumber_ac: string
+    voipNumber_sn: string
     is_primary: number
     is_devid: number
 }
@@ -31,10 +31,9 @@ export class CustomernumbersMariadbRepository {
 
     @HandleDbErrors
     async readById(customerId: number, sr: ServiceRequest): Promise<internal.CustomerNumber> {
-        let rawQuery = this.getBaseRawQueryOne(customerId)
-        if (sr.user.reseller_id_required)
-            rawQuery = `${rawQuery} and contact.reseller_id = ${sr.user.reseller_id}`
-        const rawResult: RawCustomerNumberRow[] = await this.app.dbConnection().query(rawQuery)
+        const qb = await this.createBaseQueryBuilder(sr)
+        qb.andWhere('contract.id = :id', {id: customerId})
+        const rawResult: RawCustomerNumberRow[] = await qb.getRawMany()
         if (rawResult.length == 0)
             throw new EntityNotFoundError(db.billing.Contract, '')
         const transformed = this.transformRawCustomerNumberRows(rawResult)
@@ -44,46 +43,18 @@ export class CustomernumbersMariadbRepository {
     @HandleDbErrors
     async readAll(sr: ServiceRequest): Promise<[internal.CustomerNumber[], number]> {
         const qb = await this.createReadAllQueryBuilder(sr)
-        const [result, count] = await qb.getManyAndCount()
 
-        const rawQuery = this.getBaseRawQueryMany(result.map(contract => contract.id))
-        const rawQueryWithFilter = this.appendSearchFilterToRawQuery(rawQuery, sr.query, new SearchLogic(sr, Object.keys(new CustomernumberSearchDto())))
+        const resultRawEntity= await qb.getRawAndEntities()
+        const result: RawCustomerNumberRow[] = resultRawEntity.raw
+        const count = await qb.getCount()
 
-        const rawResult: RawCustomerNumberRow[] = await this.app.dbConnection().query(rawQueryWithFilter + ' order by c.id;')
-        const transformed = this.transformRawCustomerNumberRows(rawResult)
+        const transformed = this.transformRawCustomerNumberRows(result)
 
-        // we have to use forEach here because while .map allows for conditionals, if the condition is not met the item is set to undefined
         const customerNumbers: internal.CustomerNumber[] = []
-        result.forEach(num => {
-            if (transformed[num.id] != undefined)
-                customerNumbers.push(internal.CustomerNumber.create({id: num.id, numbers: transformed[num.id]}))
-        })
+        for (const id in transformed) {
+            customerNumbers.push(internal.CustomerNumber.create({id: +id, numbers: transformed[+id]}))
+        }
         return [customerNumbers, count]
-    }
-
-    /**
-     * Returns an SQL string which queries one `CustomerNumber` by ID.
-     *
-     * It also contains the reseller_id to allow for permission checks.
-     * The returned fields can be mapped 1:1 to `RawCustomerNumberRow`.
-     * @param index
-     * @private
-     */
-    private getBaseRawQueryOne(index: number): string {
-        const base = 'select c.id, sub.id as subscriber_id, num.id as number_id, num.cc, num.ac, num.sn, alias.is_primary, alias.is_devid, contact.reseller_id from billing.contracts c inner join billing.contacts contact on contact.id = c.contact_id inner join billing.voip_subscribers sub on sub.contract_id = c.id inner join billing.voip_numbers num on sub.id = num.subscriber_id inner join provisioning.voip_dbaliases alias on concat(num.cc,num.ac,num.sn) = alias.username'
-        return `${base} where c.id = ${index}`
-    }
-
-    /**
-     * Returns an SQL string which queries all `CustomerNumbers` for provided IDs.
-     *
-     * The returned fields can be mapped 1:1 to `RawCustomerNumberRow`.
-     * @param indices Indices of contracts
-     * @private
-     */
-    private getBaseRawQueryMany(indices: number[]): string {
-        const base = 'select c.id, sub.id as subscriber_id, num.id as number_id, num.cc, num.ac, num.sn, alias.is_primary, alias.is_devid from billing.contracts c inner join billing.voip_subscribers sub on sub.contract_id = c.id inner join billing.voip_numbers num on sub.id = num.subscriber_id inner join provisioning.voip_dbaliases alias on concat(num.cc,num.ac,num.sn) = alias.username'
-        return `${base} where c.id in (${indices.join(',')})`
     }
 
     /**
@@ -95,17 +66,17 @@ export class CustomernumbersMariadbRepository {
     private transformRawCustomerNumberRows(customerNumbers: RawCustomerNumberRow[]): { [id: number]: internal.SubscriberNumber[] } {
         const transformed = {}
         customerNumbers.forEach(obj => {
-            if (transformed[obj.id] == undefined) {
-                transformed[obj.id] = []
+            if (transformed[obj.contract_id] == undefined) {
+                transformed[obj.contract_id] = []
             }
-            transformed[obj.id].push(internal.SubscriberNumber.create({
-                id: obj.subscriber_id,
-                sn: obj.sn,
-                ac: obj.ac,
-                cc: obj.cc,
+            transformed[obj.contract_id].push(internal.SubscriberNumber.create({
+                id: obj.billingSubscriber_id,
+                sn: obj.voipNumber_sn,
+                ac: obj.voipNumber_ac,
+                cc: obj.voipNumber_cc,
                 isDevID: obj.is_devid == 1,
                 isPrimary: obj.is_primary == 1,
-                numberID: obj.number_id,
+                numberID: obj.voipNumber_id,
             }))
         })
         return transformed
@@ -114,9 +85,15 @@ export class CustomernumbersMariadbRepository {
     private async createBaseQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Contract>> {
         const qb = db.billing.Contract.createQueryBuilder('contract')
         qb.innerJoinAndSelect('contract.contact', 'contact')
-        qb.innerJoinAndSelect('contract.voipSubscribers', 'billingSubscribers')
-        qb.innerJoinAndSelect('billingSubscribers.voipNumbers', 'voipNumbers')
-
+        qb.innerJoinAndSelect('contract.voipSubscribers', 'billingSubscriber')
+        qb.innerJoinAndSelect('billingSubscriber.voipNumbers', 'voipNumber')
+        qb.innerJoinAndSelect(
+            sqb => sqb
+                .select(['is_primary', 'is_devid', 'username'])
+                .from(db.provisioning.VoipDBAlias, 'vdba'),
+            'dbAlias',
+            'dbAlias.username = CONCAT(voipNumber.cc, voipNumber.ac, voipNumber.sn)',
+        )
         await this.addPermissionFilterToQueryBuilder(qb, sr)
         return qb
     }
@@ -124,62 +101,36 @@ export class CustomernumbersMariadbRepository {
     private async createReadAllQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Contract>> {
         const searchLogic = new SearchLogic(sr, Object.keys(new CustomernumberSearchDto()))
         const qb = await this.createBaseQueryBuilder(sr)
+        await this.addSearchFilterToQueryBuilder(qb, sr.query, searchLogic)
         await addOrderByToQueryBuilder(qb, sr.query, searchLogic)
         await this.addPaginationToQueryBuilder(qb, searchLogic)
         return qb
     }
 
-    /**
-     * Returns a new query string with appended WHERE filters.
-     * If no filters are appended the `query` is returned un-modified.
-     * @param query
-     * @param params
-     * @param searchLogic
-     * @private
-     */
-    private appendSearchFilterToRawQuery(query: string, params: string[], searchLogic: SearchLogic): string {
-        const searchFields = [
-            {alias: 'alias', property: 'is_primary', searchParam: 'is_primary'},
-            {alias: 'alias', property: 'is_devid', searchParam: 'is_devid'},
-            {alias: 'sub', property: 'id', searchParam: 'subscriber_id'},
-            {alias: 'num', property: 'id', searchParam: 'number_id'},
-            {alias: 'num', property: 'cc', searchParam: 'cc'},
-            {alias: 'num', property: 'ac', searchParam: 'ac'},
-            {alias: 'num', property: 'sn', searchParam: 'sn'},
-        ]
-        const search: string[] = []
-        searchFields.map(field => {
-            if (params[field.searchParam] != null) {
-                let value: string = params[field.searchParam]
-
-                const whereComparator = value.includes('*') ? 'like' : '='
-                value = value.replace(/\*/g, '%')
-
-                search.push(`${field.alias}.${field.property} ${whereComparator} ${value}`)
-            }
-        })
-        if (search.length == 0)
-            return query
-        return `${query} and (${search.join(searchLogic.searchOr ? ' or ' : ' and ')})`
-    }
-
-    // TODO: use this for search filters once Entity mapping for dbAliases works correctly
     private async addSearchFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contract>, params: string[], searchLogic: SearchLogic) {
         const searchFields = [
-            {alias: 'dbAliases', property: 'is_primary', searchParam: 'is_primary'},
-            {alias: 'dbAliases', property: 'is_devid', searchParam: 'is_devid'},
-            {alias: 'billingSubscribers', property: 'id', searchParam: 'subscriber_id'},
-            {alias: 'voipNumbers', property: 'id', searchParam: 'number_id'},
-            {alias: 'voipNumbers', property: 'cc', searchParam: 'cc'},
-            {alias: 'voipNumbers', property: 'ac', searchParam: 'ac'},
-            {alias: 'voipNumbers', property: 'sn', searchParam: 'sn'},
+            {alias: 'dbAlias', property: 'is_primary', searchParam: 'is_primary'},
+            {alias: 'dbAlias', property: 'is_devid', searchParam: 'is_devid'},
+            {alias: 'billingSubscriber', property: 'id', searchParam: 'subscriber_id'},
+            {alias: 'voipNumber', property: 'id', searchParam: 'number_id'},
+            {alias: 'voipNumber', property: 'cc', searchParam: 'cc'},
+            {alias: 'voipNumber', property: 'ac', searchParam: 'ac'},
+            {alias: 'voipNumber', property: 'sn', searchParam: 'sn'},
         ]
         searchFields.map(field => {
             if (params[field.searchParam] != null) {
-                let value: string = params[field.searchParam]
+                const parameter: string = params[field.searchParam]
+                let whereComparator = '='
+                let value: string | number | boolean
 
-                const whereComparator = value.includes('*') ? 'like' : '='
-                value = value.replace(/\*/g, '%')
+                if (!isNaN(parseInt(parameter))) {
+                    value = parseInt(parameter)
+                } else if (parameter.toLowerCase() === 'true' || parameter.toLowerCase() === 'false') {
+                    value = parameter.toLowerCase() === 'true'
+                } else {
+                    whereComparator = parameter.includes('*') ? 'like' : '='
+                    value = parameter.replace(/\*/g, '%')
+                }
 
                 if (searchLogic.searchOr) {
                     qb.orWhere(`${field.alias}.${field.property} ${whereComparator} :${field.property}`, {[`${field.property}`]: value})
