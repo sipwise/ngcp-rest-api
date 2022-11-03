@@ -35,7 +35,7 @@ async function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQue
 
             const whereComparator = value.includes('*') ? 'like' : '='
             value = value.replace(/\*/g, '%')
-
+            // TODO: value should be number | string | boolean and add type casting
             if (searchLogic.searchOr) {
                 qb.orWhere(`${qb.alias}.${property} ${whereComparator} :${property}`, {[`${property}`]: value})
             } else {
