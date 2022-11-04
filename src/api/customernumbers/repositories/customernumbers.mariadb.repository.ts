@@ -32,6 +32,8 @@ export class CustomernumbersMariadbRepository {
     @HandleDbErrors
     async readById(customerId: number, sr: ServiceRequest): Promise<internal.CustomerNumber> {
         const qb = await this.createBaseQueryBuilder(sr)
+        const searchLogic = new SearchLogic(sr, Object.keys(new CustomernumberSearchDto()))
+        await this.addSearchFilterToQueryBuilder(qb, sr.query, searchLogic)
         qb.andWhere('contract.id = :id', {id: customerId})
         const rawResult: RawCustomerNumberRow[] = await qb.getRawMany()
         if (rawResult.length == 0)
