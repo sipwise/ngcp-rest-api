@@ -12,4 +12,5 @@ export class AuthResponseDto {
     username: string
     is_master: boolean
     uuid?: string
+    customer_id?: number
 }

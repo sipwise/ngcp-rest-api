@@ -190,6 +190,7 @@ export class AuthService {
             username: subscriber.username,
             is_master: false,
             uuid: subscriber.uuid,
+            customer_id: subscriber.account_id
         }
         this.log.debug({
             message: 'subscriber user authentication',

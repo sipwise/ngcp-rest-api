@@ -33,4 +33,5 @@ export const MessageCodes: { [id: string]: number } = {
     'UNKNOWN_ROLE': 1031,
     'VALIDATION_FAILED_UNSUPPORTED_ID': 1032,
     'REQUEST_PROCESSING_ERROR': 1033,
+    'SUBSCRIBER_NOT_FOUND': 1034,
 }
