@@ -33,4 +33,5 @@ export const MessageDescriptionsEN: { [id: string]: any } = {
     UNKNOWN_ROLE: (str: string) => `Unknown role ${str}`,
     VALIDATION_FAILED_UNSUPPORTED_ID: 'Validation failed (unsupported :id format)',
     REQUEST_PROCESSING_ERROR: 'Cannot process the request',
+    SUBSCRIBER_NOT_FOUND: 'Subscriber not found',
 }

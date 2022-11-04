@@ -37,6 +37,7 @@ import {FileshareSchedule} from './schedules/fileshare.schedule'
 import {LoggerService} from './logger/logger.service'
 import {ClearCallCountersModule} from './api/clearcallcounters/clearcallcounters.module'
 import {CustomernumbersModule} from './api/customernumbers/customernumbers.module'
+import {CustomerSpeedDialModule} from './api/customerspeeddials/customer-speed-dial.module'
 
 let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
     ConfigModule.forRoot({
@@ -55,6 +56,7 @@ let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | Fo
     ContractsModule,
     CustomercontactsModule,
     CustomernumbersModule,
+    CustomerSpeedDialModule,
     DatabaseModule,
     DomainsModule,
     ExpandModule,
