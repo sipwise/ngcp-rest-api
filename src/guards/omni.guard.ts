@@ -10,6 +10,9 @@ export class OmniGuard extends AuthGuard(['jwt', 'cert-header', 'basic', 'local'
     }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
+        const request = context.switchToHttp().getRequest()
+        if (request.user && request.user.role) // already authenticated
+            return true
         const publicGuard = new PublicGuard(this.reflector)
         if (await publicGuard.canActivate(context))
             return true
