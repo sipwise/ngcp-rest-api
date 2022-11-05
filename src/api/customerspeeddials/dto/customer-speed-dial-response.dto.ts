@@ -1,28 +1,22 @@
 import {internal} from '../../../entities'
 import {ApiProperty} from '@nestjs/swagger'
+import {CustomerSpeedDialEntryDto} from './customer-speed-dial-entry.dto'
+import {IsArray, IsNotEmpty, ValidateNested} from 'class-validator'
+import {Type} from 'class-transformer'
 
-interface CustomerSpeedDialResponseDtoAttributes {
-    id: number
-    customer_id: number
-    slot: string
-    destination: string
-}
-
-export class CustomerSpeedDialResponseDto implements CustomerSpeedDialResponseDtoAttributes {
+export class CustomerSpeedDialResponseDto {
+    @IsNotEmpty()
     @ApiProperty()
         id: number
+
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => CustomerSpeedDialEntryDto)
     @ApiProperty()
-        customer_id: number
-    @ApiProperty()
-        slot: string
-    @ApiProperty()
-        destination: string
+        speeddials: CustomerSpeedDialEntryDto[]
 
     constructor(csd: internal.CustomerSpeedDial) {
-        this.id = csd.id
-        this.customer_id = csd.contract_id
-        this.slot = csd.slot
-        this.destination = csd.destination
+        this.id = csd.contract_id
+        this.speeddials = csd.speeddials
     }
 }
-
