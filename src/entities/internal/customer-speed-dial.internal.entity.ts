@@ -1,13 +1,19 @@
-interface CustomerSpeedDialInterface {
+import {Type} from "class-transformer"
+import {IsArray, IsNotEmpty, IsNumber, ValidateNested} from "class-validator"
+
+export class CustomerSpeedDialEntry {
     id?: number
-    contract_id?: number
-    slot?: string
-    destination?: string
+    slot: string
+    destination: string
 }
 
-export class CustomerSpeedDial implements CustomerSpeedDialInterface {
-    id?: number
+export class CustomerSpeedDial {
+    @IsNotEmpty()
+    @IsNumber()
     contract_id?: number
-    slot?: string
-    destination?: string
+
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => CustomerSpeedDialEntry)
+    speeddials?: CustomerSpeedDialEntry[]
 }

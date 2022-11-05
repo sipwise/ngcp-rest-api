@@ -3,6 +3,7 @@ import {Auth} from '../../decorators/auth.decorator'
 import {Controller, Delete, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {CustomerSpeedDialCreateDto} from './dto/customer-speed-dial-create.dto'
+import {CustomerSpeedDialUpdateDto} from './dto/customer-speed-dial-update.dto'
 import {CustomerSpeedDialResponseDto} from './dto/customer-speed-dial-response.dto'
 import {CustomerSpeedDialService} from './customer-speed-dial.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
@@ -40,7 +41,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     @ApiCreatedResponse({
         type: CustomerSpeedDialResponseDto,
     })
-    async create(entity: CustomerSpeedDialCreateDto, req): Promise<CustomerSpeedDialResponseDto> {
+    async create(dto: CustomerSpeedDialCreateDto, req): Promise<CustomerSpeedDialResponseDto> {
         this.log.debug({
             message: 'create customer speed dial',
             func: this.readAll.name,
@@ -49,11 +50,11 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         })
         const sr = this.newServiceRequest(req)
         const csd = await this.customerSpeedDialService.create(
-            Object.assign(new CustomerSpeedDialCreateDto(), entity).toInternal(),
+            Object.assign(new CustomerSpeedDialCreateDto(), dto).toInternal(),
             sr
         )
         const response = new CustomerSpeedDialResponseDto(csd)
-        await this.journalsService.writeJournal(sr, response.id, response)
+        await this.journalsService.writeJournal(sr, csd.contract_id, response)
         return response
     }
 
@@ -70,7 +71,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         const sr = this.newServiceRequest(req)
         const [csd, totalCount] =
             await this.customerSpeedDialService.readAll(sr)
-        const responseList = csd.map(dom => new CustomerSpeedDialResponseDto(dom))
+        const responseList = csd.map(e => new CustomerSpeedDialResponseDto(e))
         return [responseList, totalCount]
     }
 
@@ -95,7 +96,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     @ApiOkResponse({
         type: CustomerSpeedDialResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, entity: CustomerSpeedDialCreateDto, req): Promise<CustomerSpeedDialResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, entity: CustomerSpeedDialUpdateDto, req): Promise<CustomerSpeedDialResponseDto> {
         this.log.debug({
             message: 'update customer speed dial by id',
             id: id,

@@ -5,6 +5,7 @@ import {Product} from './product.mariadb.entity'
 import {ContractStatus, ContractType} from '../../internal/contract.internal.entity'
 import {internal} from '../../../entities'
 import {VoipSubscriber} from './voip-subscriber.mariadb.entity'
+import {VoipContractSpeedDial} from '../provisioning/voip-contract-speed-dial.mariadb.entity'
 
 @Entity({
     name: 'contracts',
@@ -124,19 +125,22 @@ export class Contract extends BaseEntity {
     })
         product_id!: number
 
-    @ManyToOne(type => Contact, contact => contact.id)
+    @ManyToOne(() => Contact, contact => contact.id)
     @JoinColumn({name: 'contact_id'})
         contact?: Contact
 
-    @OneToMany(type => VoipSubscriber, subscriber => subscriber.contract)
+    @OneToMany(() => VoipSubscriber, subscriber => subscriber.contract)
         voipSubscribers?: VoipSubscriber[]
 
-    @OneToMany(type => Reseller, reseller => reseller.contract)
+    @OneToMany(() => Reseller, reseller => reseller.contract)
         resellers?: Reseller[]
 
-    @ManyToOne(type => Product, product => product.contracts)
+    @ManyToOne(() => Product, product => product.contracts)
     @JoinColumn({name: 'product_id'})
         product?: Product
+
+    @OneToMany(() => VoipContractSpeedDial, csd => csd.contract_id)
+    voipContractSpeedDials?: VoipContractSpeedDial[]
 
     toInternal(): internal.Contract {
         const contract = internal.Contract.create({
