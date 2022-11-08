@@ -4,6 +4,7 @@ import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Inject, Injectable} from '@nestjs/common'
 import {LoggerService} from '../../logger/logger.service'
 import {CustomernumbersMariadbRepository} from './repositories/customernumbers.mariadb.repository'
+import {RbacRole} from '../../config/constants.config'
 
 @Injectable()
 export class CustomernumbersService implements CrudService<internal.CustomerNumber> {
@@ -22,7 +23,13 @@ export class CustomernumbersService implements CrudService<internal.CustomerNumb
             func: this.readAll.name,
             user: sr.user.username,
         })
-        return await this.customerNumbersRepo.readById(id, sr)
+        if (sr.user.role == RbacRole.subscriberadmin) {
+            return await this.customerNumbersRepo.readById(id, sr, {customerId: sr.user.customer_id})
+        }
+        if (sr.user.role == RbacRole.ccare || sr.user.role == RbacRole.reseller) {
+            return await this.customerNumbersRepo.readById(id, sr, {resellerId: sr.user.reseller_id})
+        }
+        return await this.customerNumbersRepo.readById(id, sr )
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.CustomerNumber[], number]> {
@@ -31,6 +38,12 @@ export class CustomernumbersService implements CrudService<internal.CustomerNumb
             func: this.readAll.name,
             user: sr.user.username,
         })
+        if (sr.user.role == RbacRole.subscriberadmin) {
+            return await this.customerNumbersRepo.readAll(sr, {customerId: sr.user.customer_id})
+        }
+        if (sr.user.role == RbacRole.ccare || sr.user.role == RbacRole.reseller) {
+            return await this.customerNumbersRepo.readAll(sr, {resellerId: sr.user.reseller_id})
+        }
         return await this.customerNumbersRepo.readAll(sr)
     }
 
