@@ -20,6 +20,11 @@ interface RawCustomerNumberRow {
     is_devid: number
 }
 
+interface FilterBy {
+    customerId?: number
+    resellerId?: number
+}
+
 @Injectable()
 export class CustomernumbersMariadbRepository {
     private readonly log = new LoggerService(CustomernumbersMariadbRepository.name)
@@ -30,11 +35,11 @@ export class CustomernumbersMariadbRepository {
     }
 
     @HandleDbErrors
-    async readById(customerId: number, sr: ServiceRequest): Promise<internal.CustomerNumber> {
-        const qb = await this.createBaseQueryBuilder(sr)
+    async readById(customerId: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.CustomerNumber> {
+        const qb = this.createBaseQueryBuilder(sr, filterBy)
         const searchLogic = new SearchLogic(sr, Object.keys(new CustomernumberSearchDto()))
         await this.addSearchFilterToQueryBuilder(qb, sr.query, searchLogic)
-        qb.andWhere('contract.id = :id', {id: customerId})
+        qb.andWhere('contract.id = :contractId', {contractId: customerId})
         const rawResult: RawCustomerNumberRow[] = await qb.getRawMany()
         if (rawResult.length == 0)
             throw new EntityNotFoundError(db.billing.Contract, '')
@@ -43,10 +48,10 @@ export class CustomernumbersMariadbRepository {
     }
 
     @HandleDbErrors
-    async readAll(sr: ServiceRequest): Promise<[internal.CustomerNumber[], number]> {
-        const qb = await this.createReadAllQueryBuilder(sr)
+    async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.CustomerNumber[], number]> {
+        const qb = this.createReadAllQueryBuilder(sr, filterBy)
 
-        const resultRawEntity= await qb.getRawAndEntities()
+        const resultRawEntity = await qb.getRawAndEntities()
         const result: RawCustomerNumberRow[] = resultRawEntity.raw
         const count = await qb.getCount()
 
@@ -84,7 +89,7 @@ export class CustomernumbersMariadbRepository {
         return transformed
     }
 
-    private async createBaseQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Contract>> {
+    private createBaseQueryBuilder(sr: ServiceRequest, filterBy: FilterBy): SelectQueryBuilder<db.billing.Contract> {
         const qb = db.billing.Contract.createQueryBuilder('contract')
         qb.innerJoinAndSelect('contract.contact', 'contact')
         qb.innerJoinAndSelect('contract.voipSubscribers', 'billingSubscriber')
@@ -96,20 +101,20 @@ export class CustomernumbersMariadbRepository {
             'dbAlias',
             'dbAlias.username = CONCAT(voipNumber.cc, voipNumber.ac, voipNumber.sn)',
         )
-        await this.addPermissionFilterToQueryBuilder(qb, sr)
+        this.addPermissionFilterToQueryBuilder(qb, filterBy)
         return qb
     }
 
-    private async createReadAllQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Contract>> {
+    private createReadAllQueryBuilder(sr: ServiceRequest, filterBy: FilterBy): SelectQueryBuilder<db.billing.Contract> {
         const searchLogic = new SearchLogic(sr, Object.keys(new CustomernumberSearchDto()))
-        const qb = await this.createBaseQueryBuilder(sr)
-        await this.addSearchFilterToQueryBuilder(qb, sr.query, searchLogic)
-        await addOrderByToQueryBuilder(qb, sr.query, searchLogic)
-        await this.addPaginationToQueryBuilder(qb, searchLogic)
+        const qb = this.createBaseQueryBuilder(sr, filterBy)
+        this.addSearchFilterToQueryBuilder(qb, sr.query, searchLogic)
+        addOrderByToQueryBuilder(qb, sr.query, searchLogic)
+        this.addPaginationToQueryBuilder(qb, searchLogic)
         return qb
     }
 
-    private async addSearchFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contract>, params: string[], searchLogic: SearchLogic) {
+    private addSearchFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contract>, params: string[], searchLogic: SearchLogic): void {
         const searchFields = [
             {alias: 'dbAlias', property: 'is_primary', searchParam: 'is_primary'},
             {alias: 'dbAlias', property: 'is_devid', searchParam: 'is_devid'},
@@ -143,14 +148,19 @@ export class CustomernumbersMariadbRepository {
         })
     }
 
-    private async addPaginationToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, searchLogic: SearchLogic) {
+    private addPaginationToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, searchLogic: SearchLogic): void {
         qb.take(searchLogic.rows)
         qb.skip(searchLogic.rows * (searchLogic.page - 1))
     }
 
-    private async addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contract>, sr: ServiceRequest) {
-        if (sr.user.reseller_id_required) {
-            qb.andWhere('contact.reseller_id = :reseller_id', {reseller_id: sr.user.reseller_id})
+    private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contract>, filterBy: FilterBy): void {
+        if (filterBy) {
+            if (filterBy.resellerId) {
+                qb.andWhere('contact.reseller_id = :reseller_id', {reseller_id: filterBy.resellerId})
+            }
+            if (filterBy.customerId) {
+                qb.andWhere('contract.id = :customerId', {customerId: filterBy.customerId})
+            }
         }
     }
 }

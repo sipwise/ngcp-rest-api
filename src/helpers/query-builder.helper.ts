@@ -45,7 +45,7 @@ async function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQue
     }
 }
 
-export async function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: string[], searchLogic: SearchLogic) {
+export function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: string[], searchLogic: SearchLogic) {
     if (searchLogic.orderBy != null) {
         qb.addOrderBy(searchLogic.orderBy, searchLogic.order)
     }
