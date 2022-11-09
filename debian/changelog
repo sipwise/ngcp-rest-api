@@ -1,3 +1,13 @@
+ngcp-rest-api (11.1.1.3+0~mr11.1.1.3) unstable; urgency=medium
+
+  [ Michael Berger ]
+  * [eb73b80] MT#55458 implement raw query for customernumbers
+  * [c5ed55d] MT#55458 remove raw sql query in customernumbers repo
+  * [f9fb5fd] MT#55458 add search filter to search by id
+  * [dee00e7] MT#55458 restrict subscriber to customer id
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 09 Nov 2022 12:14:03 +0100
+
 ngcp-rest-api (11.1.1.2+0~mr11.1.1.2) unstable; urgency=medium
 
   [ Kirill Solomko ]
