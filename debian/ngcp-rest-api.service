@@ -107,7 +107,7 @@ IPAddressDeny=any
 LimitMEMLOCK=0
 
 # Restrict system calls that are allowed to be executed
-SystemCallFilter=@system-service
+SystemCallFilter=@system-service @pkey
 SystemCallFilter=~@chown @clock @cpu-emulation @debug @module @mount @obsolete @privileged @raw-io @reboot @resources @swap memfd_create mincore mlock mlockall personality
 
 [Install]
