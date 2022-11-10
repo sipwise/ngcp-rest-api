@@ -1,17 +1,4 @@
-import {
-    Controller,
-    Delete,
-    forwardRef,
-    Get,
-    Inject,
-    Logger,
-    Param,
-    ParseIntPipe,
-    Patch,
-    Post,
-    Put,
-    Req,
-} from '@nestjs/common'
+import {Controller, Delete, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
 import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
@@ -53,7 +40,7 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
     })
     async create(entity: ContactCreateDto, req: Request): Promise<ContactResponseDto> {
         this.log.debug({message: 'create contact', func: this.create.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const contact = await this.contactService.create(entity.toInternal(), sr)
         const response = new ContactResponseDto(contact, sr.user.role)
         await this.journalService.writeJournal(sr, response.id, response)
@@ -71,7 +58,7 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
             url: req.url,
             method: req.method,
         })
-        const sr: ServiceRequest = this.newServiceRequest(req)
+        const sr: ServiceRequest = new ServiceRequest(req)
         const [contacts, count] = await this.contactService.readAll(sr)
         const responseList = contacts.map(contact => new ContactResponseDto(contact, sr.user.role))
         if (req.query.expand) {
@@ -86,7 +73,7 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
         type: ContactResponseDto,
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<ContactResponseDto> {
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const contact = await this.contactService.read(id, sr)
         const responseItem = new ContactResponseDto(contact, sr.user.role)
         if (req.query.expand && !req.isRedirected) {
@@ -104,7 +91,7 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
         type: [PatchDto],
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ContactResponseDto> {
-        // return this.contactsService.adjust(id, patch, this.newServiceRequest(req))
+        // return this.contactsService.adjust(id, patch, new ServiceRequest(req))
         return
     }
 
@@ -113,7 +100,7 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
         type: ContactResponseDto,
     })
     async update(@Param('id', ParseIntPipe) id: number, entity: ContactCreateDto, req): Promise<ContactResponseDto> {
-        //return this.contactsService.update(id, entity, this.newServiceRequest(req))
+        //return this.contactsService.update(id, entity, new ServiceRequest(req))
         return
     }
 
@@ -122,7 +109,7 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
         type: number,
     })
     async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
-        return this.contactService.delete(id, this.newServiceRequest(req))
+        return this.contactService.delete(id, new ServiceRequest(req))
     }
 
     @Get(':id/journal')

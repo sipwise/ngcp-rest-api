@@ -1,4 +1,4 @@
-import {Controller, forwardRef, Get, Inject, Logger, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
+import {Controller, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
 import {Auth} from '../../decorators/auth.decorator'
 import {
     ApiBody,
@@ -25,6 +25,7 @@ import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 const resourceName = 'contracts'
 
@@ -50,7 +51,7 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
     })
     async create(entity: ContractCreateDto, req: Request): Promise<ContractResponseDto> {
         this.log.debug({message: 'create contract', func: this.create.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const contract = await this.contractService.create(entity.toInternal(), sr)
         const response = new ContractResponseDto(contract)
         await this.journalService.writeJournal(sr, response.id, response)
@@ -62,7 +63,7 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
     @ApiPaginatedResponse(ContractResponseDto)
     async readAll(req): Promise<[ContractResponseDto[], number]> {
         this.log.debug({message: 'fetch all contracts', func: this.readAll.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const [contracts, totalCount] =
             await this.contractService.readAll(sr)
         const responseList = contracts.map(contract => new ContractResponseDto(contract))
@@ -79,7 +80,7 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<ContractResponseDto> {
         this.log.debug({message: 'fetch contract by id', func: this.read.name, url: req.url, method: req.method})
-        const contract = await this.contractService.read(id, this.newServiceRequest(req))
+        const contract = await this.contractService.read(id, new ServiceRequest(req))
         const response = new ContractResponseDto(contract)
         if (req.query.expand && !req.isRedirected) {
             const contractSearchDtoKeys = Object.keys(new ContractSearchDto())
@@ -94,7 +95,7 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
     })
     async update(@Param('id', ParseIntPipe) id: number, update: ContractCreateDto, req): Promise<ContractResponseDto> {
         this.log.debug({message: 'update contract by id', func: this.update.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const contract = await this.contractService.update(id, update.toInternal(), sr)
         const response = new ContractResponseDto(contract)
         await this.journalService.writeJournal(sr, id, response)
@@ -111,18 +112,12 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ContractResponseDto> {
         this.log.debug({message: 'patch contract by id', func: this.adjust.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const contract = await this.contractService.adjust(id, patch, sr)
         const response = new ContractResponseDto(contract)
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
-
-    // DELETE is not allowed for Contracts
-    // @Delete(':id')
-    // async delete(id): Promise<number> {
-    //     return super.delete(id)
-    // }
 
     @Get(':id/journal')
     @ApiOkResponse({

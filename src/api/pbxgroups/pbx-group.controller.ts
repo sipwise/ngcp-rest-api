@@ -10,6 +10,7 @@ import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 const resourceName = 'pbxgroups'
 
@@ -38,14 +39,10 @@ export class PbxGroupController extends CrudController<never, PbxGroupResponseDt
             req.method,
         })
 
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const [pbxGroups, totalCount] =
             await this.pbxGroupService.readAll(sr)
         const responseList = pbxGroups.map((group) => new PbxGroupResponseDto(group))
-        // if (req.query.expand) {
-        //     const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
-        //     await this.expander.expandObjects(responseList, adminSearchDtoKeys, req)
-        // }
         return [responseList, totalCount]
     }
 
@@ -60,12 +57,8 @@ export class PbxGroupController extends CrudController<never, PbxGroupResponseDt
             url: req.url,
             method: req.method,
         })
-        const group = await this.pbxGroupService.read(id, this.newServiceRequest(req))
-        const responseItem = new PbxGroupResponseDto(group)
-        // if (req.query.expand && !req.isRedirected) {
-        //     const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
-        //     await this.expander.expandObjects(responseItem, adminSearchDtoKeys, req)
-        // }
-        return responseItem
+        const sr = new ServiceRequest(req)
+        const group = await this.pbxGroupService.read(id, sr)
+        return new PbxGroupResponseDto(group)
     }
 }

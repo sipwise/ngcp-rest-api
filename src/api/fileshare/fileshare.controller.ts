@@ -25,6 +25,7 @@ import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 const resourceName = 'fileshare'
 
@@ -53,7 +54,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     }))
     async create(createDto: FileshareCreateDto, req, file): Promise<FileshareResponseDto> {
         this.log.debug({message: 'create fileshare', func: this.create.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const response = await this.fileshareService.create(createDto, sr, file)
         await this.journalService.writeJournal(sr, 0, response)
         return response
@@ -64,7 +65,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     @ApiPaginatedResponse(FileshareResponseDto)
     async readAll(req): Promise<[FileshareResponseDto[], number]> {
         this.log.debug({message: 'fetch all fileshares', func: this.readAll.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const [responseList, totalCount] =
             await this.fileshareService.readAll(sr)
         if (req.query.expand) {
@@ -103,7 +104,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     @ApiOkResponse({})
     async delete(@Param('id', ParseUUIDPipe) id: string, req) {
         this.log.debug({message: 'delete fileshare by id', func: this.delete.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const response = await this.fileshareService.delete(id, sr)
         await this.journalService.writeJournal(sr, 0, response)
         return response

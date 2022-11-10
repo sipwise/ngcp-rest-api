@@ -1,4 +1,4 @@
-import {BadRequestException, Body, Get, Param, Req, UploadedFile} from '@nestjs/common'
+import {BadRequestException, Body, Param, Req, UploadedFile} from '@nestjs/common'
 import {Operation as PatchOperation, validate} from '../helpers/patch.helper'
 import {JournalService} from '../api/journals/journal.service'
 import {Request} from 'express'
@@ -16,20 +16,20 @@ export class CrudController<CreateDTO, ResponseDTO> {
     }
 
     async create(@Body() entity: CreateDTO, @Req() req: Request, @UploadedFile() file?: Express.Multer.File) {
-        return await this.repo.create(entity, this.newServiceRequest(req), file)
+        return await this.repo.create(entity, new ServiceRequest(req), file)
     }
 
     async readAll(
         @Req() req: Request,
     ) {
-        return await this.repo.readAll(this.newServiceRequest(req))
+        return await this.repo.readAll(new ServiceRequest(req))
     }
 
     async read(
         @Param('id') id: number | string,
         @Req() req: Request,
     ) {
-        return await this.repo.read(id, this.newServiceRequest(req))
+        return await this.repo.read(id, new ServiceRequest(req))
     }
 
     async update(
@@ -37,7 +37,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
         @Body() dto: CreateDTO,
         @Req() req: Request,
     ) {
-        return await this.repo.update(id, dto, this.newServiceRequest(req))
+        return await this.repo.update(id, dto, new ServiceRequest(req))
     }
 
     async adjust(
@@ -50,29 +50,19 @@ export class CrudController<CreateDTO, ResponseDTO> {
             const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
             throw new BadRequestException(message)
         }
-        return await this.repo.adjust(id, patch, this.newServiceRequest(req))
+        return await this.repo.adjust(id, patch, new ServiceRequest(req))
     }
 
     async delete(@Param('id') id: number | string, @Req() req: Request): Promise<number | string> {
-        return await this.repo.delete(id, this.newServiceRequest(req))
+        return await this.repo.delete(id, new ServiceRequest(req))
     }
 
     async journal(
         @Param('id') id: number | string,
         @Req() req,
     ) {
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const [result, count] = await this.journalCrudService.readAll(sr, this.resourceName, id)
         return [result.map(j => new JournalResponseDto(j)), count]
-    }
-
-    protected newServiceRequest(req: Request): ServiceRequest {
-        return {
-            headers: [req.rawHeaders],
-            params: [req.params],
-            user: req.user,
-            query: req.query,
-            init: req,
-        }
     }
 }

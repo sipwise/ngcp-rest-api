@@ -15,6 +15,7 @@ import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 const resourceName = 'domains'
 
@@ -44,7 +45,7 @@ export class DomainController extends CrudController<DomainCreateDto, DomainResp
     })
     async create(entity: DomainCreateDto, req): Promise<DomainResponseDto> {
         this.log.debug({message: 'create domain', func: this.readAll.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const domain = await this.domainService.create(entity.toInternal(), sr)
         const response = new DomainResponseDto(domain)
         await this.journalService.writeJournal(sr, response.id, response)
@@ -57,7 +58,7 @@ export class DomainController extends CrudController<DomainCreateDto, DomainResp
     @ApiPaginatedResponse(DomainResponseDto)
     async readAll(@Req() req): Promise<[DomainResponseDto[], number]> {
         this.log.debug({message: 'fetch all domains', func: this.readAll.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const [domains, totalCount] =
             await this.domainService.readAll(sr)
         const responseList = domains.map(dom => new DomainResponseDto(dom))
@@ -75,11 +76,12 @@ export class DomainController extends CrudController<DomainCreateDto, DomainResp
     @Roles(RbacRole.ccare, RbacRole.ccareadmin)
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<DomainResponseDto> {
         this.log.debug({message: 'fetch domain by id', func: this.read.name, url: req.url, method: req.method})
-        const domain = await this.domainService.read(id, this.newServiceRequest(req))
+        const sr = new ServiceRequest(req)
+        const domain = await this.domainService.read(id, sr)
         const responseItem = new DomainResponseDto(domain)
         if (req.query.expand && !req.isRedirected) {
             const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
-            await this.expander.expandObjects(responseItem, domainSearchDtoKeys, req)
+            await this.expander.expandObjects(responseItem, domainSearchDtoKeys, sr)
         }
         return responseItem
     }
@@ -88,7 +90,7 @@ export class DomainController extends CrudController<DomainCreateDto, DomainResp
     @ApiOkResponse({})
     async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
         this.log.debug({message: 'delete domain by id', func: this.delete.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const response = await this.domainService.delete(id, sr)
         await this.journalService.writeJournal(sr, id, {})
         return response

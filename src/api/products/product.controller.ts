@@ -12,6 +12,7 @@ import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {CrudController} from '../../controllers/crud.controller'
 import {LoggerService} from '../../logger/logger.service'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 const resourceName = 'products'
 
@@ -37,7 +38,7 @@ export class ProductController extends CrudController<never, ProductResponseDto>
         @Req() req,
     ): Promise<[ProductResponseDto[], number]> {
         this.log.debug({message: 'fetch all products', func: this.readAll.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const [products, totalCount] = await this.productService.readAll(sr)
         const responseList = products.map(product => new ProductResponseDto(product))
         if (req.query.expand) {
