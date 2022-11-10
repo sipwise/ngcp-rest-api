@@ -1,15 +1,16 @@
 import {BaseEntity, SelectQueryBuilder} from 'typeorm'
 import {SearchLogic} from './search-logic.helper'
+import {ParamsDictionary} from '../interfaces/service-request.interface'
 
-export async function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: string[], searchLogic: SearchLogic) {
-    await addJoinFilterToQueryBuilder(qb, params, searchLogic)
-    await addSearchFilterToQueryBuilder(qb, params, searchLogic)
-    await addOrderByToQueryBuilder(qb, params, searchLogic)
-    await addPaginationToQueryBuilder(qb, searchLogic)
+export function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
+    addJoinFilterToQueryBuilder(qb, params, searchLogic)
+    addSearchFilterToQueryBuilder(qb, params, searchLogic)
+    addOrderByToQueryBuilder(qb, params, searchLogic)
+    addPaginationToQueryBuilder(qb, searchLogic)
     qb.andWhere('1 = 1')
 }
 
-async function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: string[], searchLogic: SearchLogic) {
+function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
     for (const joinCondition in searchLogic.joins) {
         const joinTable = searchLogic.joins[joinCondition].alias
         const joinColumn = searchLogic.joins[joinCondition].property
@@ -22,14 +23,8 @@ async function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQuery
     }
 }
 
-async function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: string[], searchLogic: SearchLogic) {
-    // TODO: does not work for advanced queries e.g. qb.alias only returns the alias of the top query builder and does not allow search
-    //       in joined fields
+function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
     for (const property of searchLogic.searchableFields) {
-        //if a JOIN has happened based on this request parameter, skip it for the WHERE clause
-        if (searchLogic.joins?.some(j => j.property === property)) {
-            continue
-        }
         if (params[property] != null) {
             let value: string = params[property]
 
@@ -45,14 +40,13 @@ async function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQue
     }
 }
 
-export function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: string[], searchLogic: SearchLogic) {
+export function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
     if (searchLogic.orderBy != null) {
         qb.addOrderBy(searchLogic.orderBy, searchLogic.order)
     }
 }
 
-export async function addPaginationToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, searchLogic: SearchLogic) {
-    // TODO: does not work when working with joins, alternatives are limit->take and offset-> skip when working with entities
+export function addPaginationToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, searchLogic: SearchLogic) {
     qb.limit(searchLogic.rows)
     qb.offset(searchLogic.rows * (searchLogic.page - 1))
 }

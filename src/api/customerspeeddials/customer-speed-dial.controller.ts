@@ -1,6 +1,14 @@
-import {ApiBody, ApiConsumes, ApiCreatedResponse, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {
+    ApiBody,
+    ApiConsumes,
+    ApiCreatedResponse,
+    ApiExtraModels,
+    ApiOkResponse,
+    ApiQuery,
+    ApiTags,
+} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {Controller, Delete, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {CustomerSpeedDialCreateDto} from './dto/customer-speed-dial-create.dto'
 import {CustomerSpeedDialUpdateDto} from './dto/customer-speed-dial-update.dto'
@@ -15,6 +23,7 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 import {LoggerService} from '../../logger/logger.service'
 import {PatchDto} from '../patch.dto'
 import {Operation} from 'helpers/patch.helper'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 const resourceName = 'customerspeeddials'
 
@@ -48,10 +57,10 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             url: req.url,
             method: req.method
         })
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const csd = await this.customerSpeedDialService.create(
             Object.assign(new CustomerSpeedDialCreateDto(), dto).toInternal(),
-            sr
+            sr,
         )
         const response = new CustomerSpeedDialResponseDto(csd)
         await this.journalService.writeJournal(sr, csd.contract_id, response)
@@ -68,7 +77,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             url: req.url,
             method: req.method
         })
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const [csd, totalCount] =
             await this.customerSpeedDialService.readAll(sr)
         const responseList = csd.map(e => new CustomerSpeedDialResponseDto(e))
@@ -88,7 +97,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             method: req.method
         })
         return new CustomerSpeedDialResponseDto(
-            await this.customerSpeedDialService.read(id, this.newServiceRequest(req))
+            await this.customerSpeedDialService.read(id, new ServiceRequest(req)),
         )
     }
 
@@ -104,11 +113,11 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             url: req.url,
             method: req.method
         })
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const csd = await this.customerSpeedDialService.update(
             id,
             Object.assign(new CustomerSpeedDialCreateDto(), entity).toInternal(),
-            sr
+            sr,
         )
         const response = new CustomerSpeedDialResponseDto(csd)
         await this.journalService.writeJournal(sr, id, response)
@@ -128,7 +137,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             url: req.url,
             method: req.method
         })
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const csd = await this.customerSpeedDialService.adjust(id, patch, sr)
         const response = new CustomerSpeedDialResponseDto(csd)
         await this.journalService.writeJournal(sr, id, response)
@@ -145,7 +154,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             url: req.url,
             method: req.method
         })
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const response = await this.customerSpeedDialService.delete(id, sr)
         await this.journalService.writeJournal(sr, id, {})
         return response

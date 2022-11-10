@@ -1,12 +1,13 @@
-import {Body, Controller, Post, Req} from '@nestjs/common'
-import {ApiCreatedResponse, ApiExtraModels, ApiTags} from '@nestjs/swagger'
-import {ClearCallCounterCreateDto} from './dto/clear-call-counter-create.dto'
+import {Controller, Post} from '@nestjs/common'
+import {ApiTags} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
 import {LoggerService} from '../../logger/logger.service'
 import {ClearCallCounterService} from './clear-call-counter.service'
 import {internal} from '../../entities'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {ClearCallCounterCreateDto} from './dto/clear-call-counter-create.dto'
 
 const resourceName = 'clearcallcounters'
 
@@ -30,7 +31,7 @@ export class ClearCallCounterController extends CrudController<ClearCallCounterC
             url: req.url,
             method: req.method,
         })
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const callId = new internal.CallId(createDto.call_id)
         await this.clearCallCounterService.create(callId, sr)
     }

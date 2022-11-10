@@ -40,7 +40,7 @@ export class CustomerNumberController extends CrudController<never, CustomerNumb
             url: req.url,
             method: req.method,
         })
-        const sr: ServiceRequest = this.newServiceRequest(req)
+        const sr: ServiceRequest = new ServiceRequest(req)
         const [contacts, count] = await this.customerNumberService.readAll(sr)
         const responseList = contacts.map(num => new CustomerNumberResponseDto(num))
         return [responseList, count]
@@ -58,7 +58,7 @@ export class CustomerNumberController extends CrudController<never, CustomerNumb
             method: req.method,
             id: id
         })
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const customerNumber = await this.customerNumberService.read(id, sr)
         return new CustomerNumberResponseDto(customerNumber)
     }

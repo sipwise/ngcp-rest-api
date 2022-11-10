@@ -26,6 +26,7 @@ import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 const resourceName = 'customers'
 
@@ -55,7 +56,7 @@ export class CustomerController extends CrudController<CustomerCreateDto, Custom
     })
     async create(entity: CustomerCreateDto, req: Request): Promise<CustomerResponseDto> {
         this.log.debug({message: 'create customer', func: this.create.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const response = await this.customerService.create(entity, sr)
         await this.journalService.writeJournal(sr, response.id, response)
         return response
@@ -66,7 +67,7 @@ export class CustomerController extends CrudController<CustomerCreateDto, Custom
     @ApiPaginatedResponse(CustomerResponseDto)
     async readAll(req): Promise<[CustomerResponseDto[], number]> {
         this.log.debug({message: 'fetch all customers', func: this.readAll.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const [responseList, totalCount] =
             await this.customerService.readAll(sr)
         if (req.query.expand) {
@@ -82,8 +83,8 @@ export class CustomerController extends CrudController<CustomerCreateDto, Custom
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<CustomerResponseDto> {
         this.log.debug({message: 'fetch customer by id', func: this.read.name, url: req.url, method: req.method})
-        return this.customerService.read(id, this.newServiceRequest(req))
-        const responseItem = await this.customerService.read(id, this.newServiceRequest(req))
+        return this.customerService.read(id, new ServiceRequest(req))
+        const responseItem = await this.customerService.read(id, new ServiceRequest(req))
         if (req.query.expand && !req.isRedirected) {
             const customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
             await this.expander.expandObjects(responseItem, customerSearchDtoKeys, req)
@@ -97,7 +98,7 @@ export class CustomerController extends CrudController<CustomerCreateDto, Custom
     })
     async update(@Param('id', ParseIntPipe) id: number, dto: CustomerCreateDto, req): Promise<CustomerResponseDto> {
         this.log.debug({message: 'update customer by id', func: this.update.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const response = await this.customerService.update(id, dto, sr)
         await this.journalService.writeJournal(sr, id, response)
         return response
@@ -113,7 +114,7 @@ export class CustomerController extends CrudController<CustomerCreateDto, Custom
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<CustomerResponseDto> {
         this.log.debug({message: 'patch customer by id', func: this.adjust.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const response = await this.customerService.adjust(id, patch, sr)
         await this.journalService.writeJournal(sr, id, response)
         return response
@@ -125,7 +126,7 @@ export class CustomerController extends CrudController<CustomerCreateDto, Custom
     })
     async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
         this.log.debug({message: 'delete customer by id', func: this.delete.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const response = await this.customerService.delete(id, sr)
         await this.journalService.writeJournal(sr, id, {})
         return response

@@ -25,6 +25,7 @@ import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 const resourceName = 'systemcontacts'
 
@@ -49,7 +50,7 @@ export class SystemContactController extends CrudController<SystemContactCreateD
     })
     async create(entity: SystemContactCreateDto, req): Promise<SystemContactResponseDto> {
         this.log.debug({message: 'create system contact', func: this.create.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const contact = await this.contactService.create(entity.toInternal(), sr)
         const response = new SystemContactResponseDto(contact)
         await this.journalService.writeJournal(sr, response.id, response)
@@ -66,7 +67,7 @@ export class SystemContactController extends CrudController<SystemContactCreateD
             url: req.url,
             method: req.method,
         })
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const [contacts, totalCount] =
             await this.contactService.readAll(sr)
         const responseList = contacts.map(contact => new SystemContactResponseDto(contact))
@@ -83,11 +84,12 @@ export class SystemContactController extends CrudController<SystemContactCreateD
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<SystemContactResponseDto> {
         this.log.debug({message: 'fetch system contact by id', func: this.read.name, id: id, url: req.url, method: req.method})
-        const contact = await this.contactService.read(id, this.newServiceRequest(req))
+        const sr = new ServiceRequest(req)
+        const contact = await this.contactService.read(id, sr)
         const response = new SystemContactResponseDto(contact)
         if (req.query.expand && !req.isRedirected) {
             const contactSearchDtoKeys = Object.keys(new SystemContactSearchDto())
-            await this.expander.expandObjects(response, contactSearchDtoKeys, req)
+            await this.expander.expandObjects(response, contactSearchDtoKeys, sr)
         }
         return response
     }
@@ -98,7 +100,7 @@ export class SystemContactController extends CrudController<SystemContactCreateD
     })
     async update(@Param('id', ParseIntPipe) id: number, entity: SystemContactCreateDto, req): Promise<SystemContactResponseDto> {
         this.log.debug({message: 'update system contact by id', func: this.update.name, id: id, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const contact = await this.contactService.update(id, entity.toInternal(), sr)
         const response = new SystemContactResponseDto(contact)
         await this.journalService.writeJournal(sr, id, response)
@@ -112,7 +114,7 @@ export class SystemContactController extends CrudController<SystemContactCreateD
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<SystemContactResponseDto> {
         this.log.debug({message: 'patch system contact by id', func: this.adjust.name, id: id, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const contact = await this.contactService.adjust(id, patch, sr)
         const response = new SystemContactResponseDto(contact)
         await this.journalService.writeJournal(sr, id, response)
@@ -125,7 +127,7 @@ export class SystemContactController extends CrudController<SystemContactCreateD
     })
     async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
         this.log.debug({message: 'delete system contact by id', func: this.delete.name, id: id, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const response = await this.contactService.delete(id, sr)
         await this.journalService.writeJournal(sr, id, {})
         return response
