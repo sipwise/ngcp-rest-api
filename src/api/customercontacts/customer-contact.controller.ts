@@ -1,16 +1,4 @@
-import {
-    Controller,
-    Delete,
-    forwardRef,
-    Get,
-    Inject,
-    Param,
-    ParseIntPipe,
-    Patch,
-    Post,
-    Put,
-    Req,
-} from '@nestjs/common'
+import {Controller, Delete, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {
     ApiBody,
     ApiConsumes,
@@ -38,6 +26,7 @@ import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 const resourceName = 'customercontacts'
 
@@ -63,7 +52,7 @@ export class CustomerContactController extends CrudController<CustomerContactCre
     })
     async create(entity: CustomerContactCreateDto, req: Request): Promise<CustomerContactResponseDto> {
         this.log.debug({message: 'create customer contact', func: this.create.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const contact = await this.contactService.create(entity.toInternal(), sr)
         const response = new CustomerContactResponseDto(contact, sr.user.role)
         await this.journalService.writeJournal(sr, response.id, response)
@@ -80,7 +69,7 @@ export class CustomerContactController extends CrudController<CustomerContactCre
             url: req.url,
             method: req.method,
         })
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const [contacts, totalCount] =
             await this.contactService.readAll(sr)
 
@@ -98,7 +87,7 @@ export class CustomerContactController extends CrudController<CustomerContactCre
     })
     async read(@Param('id', ParseIntPipe) id: number, sr): Promise<CustomerContactResponseDto> {
         this.log.debug({message: 'fetch customer contact by id', func: this.read.name, url: sr.url, method: sr.method})
-        const contact = await this.contactService.read(id, this.newServiceRequest(sr))
+        const contact = await this.contactService.read(id, new ServiceRequest(sr))
         const responseItem = new CustomerContactResponseDto(contact, sr.user.role)
         if (sr.query.expand && !sr.isRedirected) {
             const contactSearchDtoKeys = Object.keys(new CustomerContactSearchDto())
@@ -117,7 +106,7 @@ export class CustomerContactController extends CrudController<CustomerContactCre
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<CustomerContactResponseDto> {
         this.log.debug({message: 'patch customer contact by id', func: this.adjust.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const contact = await this.contactService.adjust(id, patch, sr)
         const response = new CustomerContactResponseDto(contact, sr.user.role)
         await this.journalService.writeJournal(sr, id, response)
@@ -130,7 +119,7 @@ export class CustomerContactController extends CrudController<CustomerContactCre
     })
     async update(@Param('id', ParseIntPipe) id: number, entity: CustomerContactCreateDto, req): Promise<CustomerContactResponseDto> {
         this.log.debug({message: 'update customer contact by id', func: this.update.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const contact = await this.contactService.update(id, entity.toInternal(), sr)
         const response = new CustomerContactResponseDto(contact, sr.user.role)
         await this.journalService.writeJournal(sr, id, response)
@@ -143,7 +132,7 @@ export class CustomerContactController extends CrudController<CustomerContactCre
     })
     async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
         this.log.debug({message: 'delete customer contact by id', func: this.delete.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const response = await this.contactService.delete(id, sr)
         await this.journalService.writeJournal(sr, id, {})
         return response

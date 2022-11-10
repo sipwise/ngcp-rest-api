@@ -1,17 +1,6 @@
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {
-    BadRequestException,
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Param,
-    ParseIntPipe,
-    Patch,
-    Put,
-    Req,
-} from '@nestjs/common'
+import {BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Put, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {JournalService} from '../journals/journal.service'
 import {number} from 'yargs'
@@ -28,6 +17,7 @@ import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 const resourceName = 'voicemails'
 
@@ -82,7 +72,7 @@ export class VoicemailController extends CrudController<VoicemailUpdateDto, Voic
     })
     async delete(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<number> {
         this.log.debug({message: 'delete voicemail by id', func: this.delete.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const response = await this.voicemailService.delete(id, sr)
         await this.journalService.writeJournal(sr, id, {})
         return response
@@ -98,7 +88,7 @@ export class VoicemailController extends CrudController<VoicemailUpdateDto, Voic
     })
     async adjust(@Param('id', ParseIntPipe) id: number, @Body() patch: PatchOperation | PatchOperation[], @Req() req): Promise<VoicemailResponseDto> {
         this.log.debug({message: 'patch voicemail by id', func: this.adjust.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const err = validate(patch)
         if (err) {
             const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
@@ -116,7 +106,7 @@ export class VoicemailController extends CrudController<VoicemailUpdateDto, Voic
     })
     async update(@Param('id', ParseIntPipe) id: number, @Body() update: VoicemailUpdateDto, @Req() req): Promise<VoicemailResponseDto> {
         this.log.debug({message: 'update voicemail by id', func: this.update.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const voicemail = await this.voicemailService.update(id, update.toInternal(), sr)
         const response = new VoicemailResponseDto(voicemail)
         await this.journalService.writeJournal(sr, id, response)

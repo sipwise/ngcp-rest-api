@@ -25,6 +25,7 @@ import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 const resourceName = 'resellers'
 
@@ -50,7 +51,7 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
     })
     async create(entity: ResellerCreateDto, req: Request): Promise<ResellerResponseDto> {
         this.log.debug({message: 'create reseller', func: this.create.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const reseller = await this.resellerService.create(entity, sr)
         const response = new ResellerResponseDto(reseller)
         await this.journalService.writeJournal(sr, response.id, response)
@@ -64,7 +65,7 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
     @ApiPaginatedResponse(ResellerResponseDto)
     async readAll(@Req() req): Promise<[ResellerResponseDto[], number]> {
         this.log.debug({message: 'fetch all resellers', func: this.readAll.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const [resellers, totalCount] =
             await this.resellerService.readAll(sr)
         const responseList = resellers.map(reseller => new ResellerResponseDto(reseller))
@@ -81,11 +82,12 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<ResellerResponseDto> {
         this.log.debug({message: 'fetch reseller by id', func: this.read.name, url: req.url, method: req.method})
-        const reseller = await this.resellerService.read(id, this.newServiceRequest(req))
+        const sr = new ServiceRequest(req)
+        const reseller = await this.resellerService.read(id, sr)
         const responseItem = new ResellerResponseDto(reseller)
         if (req.query.expand && !req.isRedirected) {
             const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
-            await this.expander.expandObjects(responseItem, resellerSearchDtoKeys, req)
+            await this.expander.expandObjects(responseItem, resellerSearchDtoKeys, sr)
         }
         return responseItem
     }
@@ -96,7 +98,7 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
     })
     async update(@Param('id', ParseIntPipe) id: number, entity: ResellerCreateDto, req): Promise<ResellerResponseDto> {
         this.log.debug({message: 'update reseller by id', func: this.update.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const reseller = await this.resellerService.update(id, entity, sr)
         const response = new ResellerResponseDto(reseller)
         await this.journalService.writeJournal(sr, id, response)
@@ -113,7 +115,7 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ResellerResponseDto> {
         this.log.debug({message: 'patch reseller by id', func: this.adjust.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const reseller = await this.resellerService.adjust(id, patch, sr)
         const response = new ResellerResponseDto(reseller)
         await this.journalService.writeJournal(sr, id, response)

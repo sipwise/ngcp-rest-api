@@ -74,15 +74,16 @@ export class JournalService {
         }
 
         // skip journaling if request method is not POST, PUT or DELETE
-        const op = operation[req.init.method]
+        const op = operation[req.req.method]
         if (op === undefined) {
             return false
         }
 
         const resourceId = id
-        const resourceName = extractResourceName(req.init.path, this.app.config.common.api_prefix)
 
-        const ctx = Context.get(req.init)
+        const resourceName = extractResourceName(req.req.path, this.app.config.common.api_prefix)
+
+        const ctx = Context.get(req.req)
 
         // create new Journal entry
         const entry = internal.Journal.create({

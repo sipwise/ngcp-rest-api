@@ -1,10 +1,22 @@
 import {AuthResponseDto} from '../auth/dto/auth-response.dto'
 import {Request} from 'express'
 
-export interface ServiceRequest {
-    params: [any],
-    user: AuthResponseDto | any, // TODO: fix typing
-    headers: [any],
+export interface ParamsDictionary {
+    [key: string]: string
+}
+
+export class ServiceRequest {
+    params: ParamsDictionary
+    user: AuthResponseDto | any // TODO: fix typing
+    headers: any
     query?: any
-    init: Request,
+    req: Request
+
+    constructor(req: Request) {
+        this.params = req.params
+        this.query = req.query
+        this.headers = req.headers
+        this.user = req.user
+        this.req = req
+    }
 }

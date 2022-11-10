@@ -11,7 +11,6 @@ import {JournalSearchDto} from './dto/journal-search.dto'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
-import {Request} from 'express'
 import {LoggerService} from '../../logger/logger.service'
 
 @Auth(RbacRole.system, RbacRole.admin, RbacRole.reseller)
@@ -35,7 +34,7 @@ export class JournalController {
         @Req() req,
     ): Promise<[JournalResponseDto[], number]> {
         this.log.debug({message: 'fetch all journals', func: this.readAll.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const [journals, totalCount] =
             await this.journalService.readAll(sr)
         const responseList = journals.map(j => new JournalResponseDto(j))
@@ -55,7 +54,7 @@ export class JournalController {
         @Req() req,
     ): Promise<[JournalResponseDto[], number]> {
         this.log.debug({message: 'fetch journals by resource name', func: this.readByResource.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const [journals, totalCount] =
             await this.journalService.readAll(sr, resourceName)
         const responseList = journals.map(j => new JournalResponseDto(j))
@@ -76,7 +75,7 @@ export class JournalController {
         @Req() req,
     ): Promise<[JournalResponseDto[], number]> {
         this.log.debug({message: 'fetch journals by resource name and id', func: this.readByResourceAndId.name, url: req.url, method: req.method})
-        const sr = this.newServiceRequest(req)
+        const sr = new ServiceRequest(req)
         const [journals, totalCount] =
             await this.journalService.readAll(sr, resourceName, resourceId)
         const responseList = journals.map(j => new JournalResponseDto(j))
@@ -85,15 +84,5 @@ export class JournalController {
             await this.expander.expandObjects(responseList, journalSearchDtoKeys, sr)
         }
         return [responseList, totalCount]
-    }
-
-    protected newServiceRequest(req: Request): ServiceRequest {
-        return {
-            headers: [req.rawHeaders],
-            params: [req.params],
-            user: req.user,
-            query: req.query,
-            init: req,
-        }
     }
 }
