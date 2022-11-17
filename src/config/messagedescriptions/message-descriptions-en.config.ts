@@ -5,7 +5,7 @@ export const MessageDescriptionsEN: { [id: string]: any } = {
     CHANGE_OWN_PROPERTY: 'Cannot change own property',
     DUPLICATE_ENTRY: 'Duplicate entry',
     DELETE_CUSTOMERCONTACT: 'Cannot delete customercontact',
-    RESELLER_ID_SYSTEMCONTACTS: 'reseller_id not allowed on systemcontacts',
+    RESELLER_ID_SYSTEMCONTACT: 'reseller_id not allowed in system contact',
     INVALID_RESELLER_ID: 'Invalid reseller_id',
     CONTRACT_EXISTS: 'invalid \'contract_id\', reseller with Messages contract already exists',
     NAME_EXISTS: 'invalid \'name\', reseller with Messages name already exists',

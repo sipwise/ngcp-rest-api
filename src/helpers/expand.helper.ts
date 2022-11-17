@@ -1,17 +1,17 @@
 import {expandLogic} from '../config/expand.config'
-import {ResellersController} from '../api/resellers/resellers.controller'
-import {ContractsController} from '../api/contracts/contracts.controller'
 import {ServiceRequest} from '../interfaces/service-request.interface'
 import {Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {ProtectedReadCall} from './protected-controller-calls.helper'
-import {ContactsController} from '../api/contacts/contacts.controller'
+import {ContactController} from '../api/contacts/contact.controller'
+import {ResellerController} from '../api/resellers/reseller.controller'
+import {ContractController} from '../api/contracts/contract.controller'
 
 @Injectable()
 export class ExpandHelper {
     constructor(
-        private readonly resellersController?: ResellersController,
-        private readonly contactsController?: ContactsController,
-        private readonly contractsController?: ContractsController,
+        private readonly resellerController?: ResellerController,
+        private readonly contactController?: ContactController,
+        private readonly contractController?: ContractController,
     ) {
     }
 

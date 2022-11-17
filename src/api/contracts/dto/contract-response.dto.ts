@@ -23,7 +23,7 @@ export class ContractResponseDto {
 
     @ApiProperty({description: 'The contact id this contract belongs to'})
         contact_id?: number
-    
+
     @ApiPropertyOptional()
         contact_id_expand?: ContactResponseDto
 
