@@ -28,38 +28,34 @@ async function bootstrap() {
         },
     )
 
-    app.setGlobalPrefix(config.common.api_prefix, {exclude: ['login_jwt']})
+    const api_prefix = process.env.NODE_WP_BUNDLE
+                        ? config.common.api_prefix
+                        : 'api'
+
+    app.setGlobalPrefix(api_prefix, {exclude: ['login_jwt']})
 
     const doc_config = new DocumentBuilder()
         .setTitle('Sipwise NGCP API Documentation')
         //.setDescription('NGCP API schema definition')
         .setVersion('2.0')
-        // TODO disabled until /api/v2 support as tryOut is now
-        // disabled down below
-        /*
         .addBasicAuth()
         .addBearerAuth()
         .addSecurity('cert', {
             type: 'http',
             scheme: 'cert',
         })
-        */
         .build()
 
     const document = SwaggerModule.createDocument(app, doc_config)
-    SwaggerModule.setup(config.common.api_prefix, app, document, {
+    SwaggerModule.setup(api_prefix, app, document, {
         customCss: ' \
             .swagger-ui .topbar { display: none } \
             .swagger-ui .info { margin-top: 0px; text-align: center; vertical-align: middle } \
             .swagger-ui .info .main { background: #54893b; height: 100px; } \
             .swagger-ui .info .main .title { color: #fff; padding: 30px } \
-            .swagger-ui .authorization__btn { display: none } \
-            .swagger-ui .authorization__btn.unlocked { display: none } \
         ',
         customSiteTitle: 'Sipwise NGCP API 2.0' ,
         swaggerOptions: {
-            tryItOutEnabled: false,
-            supportedSubmitMethods: [''],
         }
     })
 

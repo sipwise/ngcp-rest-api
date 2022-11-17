@@ -16,9 +16,9 @@ export class SearchLogic {
     joins?: Join[]
     searchableFields: string[]
     @ApiPropertyOptional({default: 1})
-        rows: number
-    @ApiPropertyOptional({default: 10})
         page: number
+    @ApiPropertyOptional({default: 10})
+        rows: number
     @ApiPropertyOptional({description: 'field name to order by', name: 'order_by'})
         orderBy: string
     @ApiPropertyOptional({default: Order.ASC.toLowerCase()})

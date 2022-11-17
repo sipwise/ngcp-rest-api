@@ -101,9 +101,9 @@ export class TransformInterceptor implements NestInterceptor {
         const page: string = (req.query[this.pageName] as string) ?? `${AppService.config.common.api_default_query_page}`
         const rows: string = (req.query[this.perPageName] as string) ?? `${AppService.config.common.api_default_query_rows}`
 
-        const re = /^\/api\/(\S+?)(\/.*)?$/
+        const re = /^\/api\/(v2\/)?(\S+?)(\/.*)?$/
         const path: string = req.route.path
-        const resName = path.match(re)[1]
+        const resName = path.match(re)[2]
 
         let resource
 
