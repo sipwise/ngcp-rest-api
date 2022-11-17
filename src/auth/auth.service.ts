@@ -222,10 +222,10 @@ export class AuthService {
         const [b64salt, b64hash] = password2.split('$')
         const bcrypt_version = '2b'
         const bcrypt_cost = 13
-        if (process.env.NODE_WP_BUNDLE !== 'true' &&
-            process.env.NODE_ENV === 'development' &&
-            process.env.API_DEV_SKIP_PASS_AUTH === 'true') {
-            this.log.log({message: '"API_DEV_SKIP_PASS_AUTH" MODE!'})
+        if (!process.env.NODE_WP_BUNDLE &&
+             process.env.NODE_ENV === 'development' &&
+             process.env.API_DEV_SKIP_PASS_AUTH === 'true') {
+             this.log.log({message: '"API_DEV_SKIP_PASS_AUTH" MODE!'})
             return true
         }
         return await compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`)
