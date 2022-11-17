@@ -10,33 +10,33 @@ import {
     Type,
 } from '@nestjs/common'
 import {ScheduleModule} from '@nestjs/schedule'
-import {AdminsModule} from './api/admins/admins.module'
+import {AdminModule} from './api/admins/admin.module'
 import {AppController} from './app.controller'
 import {AppService} from './app.service'
 import {AuthModule} from './auth/auth.module'
 import {ConfigModule} from '@nestjs/config'
 import {ContextMiddleware} from './middleware/context.middleware'
-import {ContractsModule} from './api/contracts/contracts.module'
-import {CustomercontactsModule} from './api/customercontacts/customercontacts.module'
+import {ContractModule} from './api/contracts/contract.module'
+import {CustomerContactModule} from './api/customercontacts/customer-contact.module'
 import {DatabaseModule} from './database/database.module'
-import {DomainsModule} from './api/domains/domains.module'
+import {DomainModule} from './api/domains/domain.module'
 import {InterceptorModule} from './interceptors/interceptor.module'
-import {JournalsModule} from './api/journals/journals.module'
-import {ResellersModule} from './api/resellers/resellers.module'
-import {SystemcontactsModule} from './api/systemcontacts/systemcontacts.module'
+import {JournalModule} from './api/journals/journal.module'
+import {ResellerModule} from './api/resellers/reseller.module'
+import {SystemContactModule} from './api/systemcontacts/system-contact.module'
 import {LoggerMiddleware} from './middleware/logger.middleware'
 import {StateMiddleware} from './middleware/state.middleware'
 import {FileshareModule} from './api/fileshare/fileshare.module'
-import {ProductsModule} from './api/products/products.module'
-import {VoicemailsModule} from './api/voicemails/voicemails.module'
+import {ProductModule} from './api/products/product.module'
+import {VoicemailModule} from './api/voicemails/voicemail.module'
 import {ExpandModule} from './helpers/expand.module'
-import {PbxgroupsModule} from './api/pbxgroups/pbxgroups.module'
-import {ContactsModule} from './api/contacts/contacts.module'
+import {PbxGroupModule} from './api/pbxgroups/pbx-group.module'
+import {ContactModule} from './api/contacts/contact.module'
 import {DbStateSchedule} from './schedules/dbstate.schedule'
 import {FileshareSchedule} from './schedules/fileshare.schedule'
 import {LoggerService} from './logger/logger.service'
-import {ClearCallCountersModule} from './api/clearcallcounters/clearcallcounters.module'
-import {CustomernumbersModule} from './api/customernumbers/customernumbers.module'
+import {ClearCallCounterModule} from './api/clearcallcounters/clear-call-counter.module'
+import {CustomerNumberModule} from './api/customernumbers/customer-number.module'
 import {CustomerSpeedDialModule} from './api/customerspeeddials/customer-speed-dial.module'
 
 let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
@@ -49,30 +49,30 @@ let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | Fo
             },
         ],
     }),
-    AdminsModule,
+    AdminModule,
     AuthModule,
-    ClearCallCountersModule,
-    ContactsModule,
-    ContractsModule,
-    CustomercontactsModule,
-    CustomernumbersModule,
+    ClearCallCounterModule,
+    ContactModule,
+    ContractModule,
+    CustomerContactModule,
+    CustomerNumberModule,
     CustomerSpeedDialModule,
     DatabaseModule,
-    DomainsModule,
+    DomainModule,
     ExpandModule,
     FileshareModule,
-    PbxgroupsModule,
-    ProductsModule,
-    ResellersModule,
-    SystemcontactsModule,
-    VoicemailsModule,
+    PbxGroupModule,
+    ProductModule,
+    ResellerModule,
+    SystemContactModule,
+    VoicemailModule,
     ScheduleModule.forRoot(),
 ]
 if (process.env.NODE_ENV != 'test') {
     modulesImport = [
         ...modulesImport,
         InterceptorModule,
-        JournalsModule,
+        JournalModule,
     ]
 }
 

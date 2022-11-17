@@ -15,7 +15,7 @@ import {FileshareCreateDto} from './dto/fileshare-create.dto'
 import {FileshareResponseDto} from './dto/fileshare-response.dto'
 import {FileshareService} from './fileshare.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
-import {JournalsService} from '../journals/journals.service'
+import {JournalService} from '../journals/journal.service'
 import {Public} from '../../decorators/public.decorator'
 import {FileInterceptor} from '@nestjs/platform-express'
 import {AppService} from '../../app.service'
@@ -36,10 +36,10 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
 
     constructor(
         private readonly fileshareService: FileshareService,
-        private readonly journalsService: JournalsService,
+        private readonly journalService: JournalService,
         private readonly expander: ExpandHelper,
     ) {
-        super(resourceName, fileshareService, journalsService)
+        super(resourceName, fileshareService, journalService)
     }
 
     @Post()
@@ -55,7 +55,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
         this.log.debug({message: 'create fileshare', func: this.create.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
         const response = await this.fileshareService.create(createDto, sr, file)
-        await this.journalsService.writeJournal(sr, 0, response)
+        await this.journalService.writeJournal(sr, 0, response)
         return response
     }
 
@@ -105,7 +105,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
         this.log.debug({message: 'delete fileshare by id', func: this.delete.name, url: req.url, method: req.method})
         const sr = this.newServiceRequest(req)
         const response = await this.fileshareService.delete(id, sr)
-        await this.journalsService.writeJournal(sr, 0, response)
+        await this.journalService.writeJournal(sr, 0, response)
         return response
     }
 

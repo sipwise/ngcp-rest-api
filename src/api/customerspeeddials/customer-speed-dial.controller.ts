@@ -7,7 +7,7 @@ import {CustomerSpeedDialUpdateDto} from './dto/customer-speed-dial-update.dto'
 import {CustomerSpeedDialResponseDto} from './dto/customer-speed-dial-response.dto'
 import {CustomerSpeedDialService} from './customer-speed-dial.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
-import {JournalsService} from '../journals/journals.service'
+import {JournalService} from '../journals/journal.service'
 import {RbacRole} from '../../config/constants.config'
 import {PaginatedDto} from '../paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
@@ -32,9 +32,9 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
 
     constructor(
         private readonly customerSpeedDialService: CustomerSpeedDialService,
-        private readonly journalsService: JournalsService,
+        private readonly journalService: JournalService,
     ) {
-        super(resourceName, customerSpeedDialService, journalsService)
+        super(resourceName, customerSpeedDialService, journalService)
     }
 
     @Post()
@@ -54,7 +54,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             sr
         )
         const response = new CustomerSpeedDialResponseDto(csd)
-        await this.journalsService.writeJournal(sr, csd.contract_id, response)
+        await this.journalService.writeJournal(sr, csd.contract_id, response)
         return response
     }
 
@@ -111,7 +111,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             sr
         )
         const response = new CustomerSpeedDialResponseDto(csd)
-        await this.journalsService.writeJournal(sr, id, response)
+        await this.journalService.writeJournal(sr, id, response)
         return response
     }
 
@@ -131,7 +131,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         const sr = this.newServiceRequest(req)
         const csd = await this.customerSpeedDialService.adjust(id, patch, sr)
         const response = new CustomerSpeedDialResponseDto(csd)
-        await this.journalsService.writeJournal(sr, id, response)
+        await this.journalService.writeJournal(sr, id, response)
         return response
     }
 
@@ -147,7 +147,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         })
         const sr = this.newServiceRequest(req)
         const response = await this.customerSpeedDialService.delete(id, sr)
-        await this.journalsService.writeJournal(sr, id, {})
+        await this.journalService.writeJournal(sr, id, {})
         return response
     }
 
