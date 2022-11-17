@@ -1,19 +1,18 @@
 import {BadRequestException, Body, Get, Param, Req, UploadedFile} from '@nestjs/common'
 import {Operation as PatchOperation, validate} from '../helpers/patch.helper'
-import {JournalsService} from '../api/journals/journals.service'
+import {JournalService} from '../api/journals/journal.service'
 import {Request} from 'express'
 import {Auth} from '../decorators/auth.decorator'
 import {ServiceRequest} from '../interfaces/service-request.interface'
 import {JournalResponseDto} from '../api/journals/dto/journal-response.dto'
 
 @Auth()
-// @UseInterceptors(new JournalingInterceptor(new JournalsService()))
 export class CrudController<CreateDTO, ResponseDTO> {
 
     constructor(
         private readonly resourceName: string,
         private readonly repo: any, //CrudService<CreateDTO, ResponseDTO>,
-        private readonly journals?: JournalsService) {
+        private readonly journalCrudService?: JournalService) {
     }
 
     async create(@Body() entity: CreateDTO, @Req() req: Request, @UploadedFile() file?: Express.Multer.File) {
@@ -63,7 +62,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
         @Req() req,
     ) {
         const sr = this.newServiceRequest(req)
-        const [result, count] = await this.journals.readAll(sr, this.resourceName, id)
+        const [result, count] = await this.journalCrudService.readAll(sr, this.resourceName, id)
         return [result.map(j => new JournalResponseDto(j)), count]
     }
 

@@ -1,10 +1,10 @@
 import {IsString, registerDecorator, ValidationArguments, ValidationOptions} from 'class-validator'
 import {applyDecorators} from '@nestjs/common'
 import {config} from '../config/main.config'
-import {PasswordSettings} from '../entities/internal/password-settings.internal.entity'
+import {PasswordSetting} from '../entities/internal/password-setting.internal.entity'
 
 export function IsValidPassword(validationOptions?: ValidationOptions) {
-    const settings = PasswordSettings.fromConfig(config)
+    const settings = PasswordSetting.fromConfig(config)
     const decorators: PropertyDecorator[] = [
         IsString(),
         ContainsASCII(validationOptions),

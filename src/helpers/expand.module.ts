@@ -1,34 +1,34 @@
 import {forwardRef, Module} from '@nestjs/common'
 import {ExpandHelper} from './expand.helper'
-import {CustomercontactsController} from '../api/customercontacts/customercontacts.controller'
-import {CustomercontactsModule} from '../api/customercontacts/customercontacts.module'
-import {ResellersModule} from '../api/resellers/resellers.module'
-import {ResellersController} from '../api/resellers/resellers.controller'
-import {ContractsModule} from '../api/contracts/contracts.module'
-import {ContractsController} from '../api/contracts/contracts.controller'
-import {JournalsModule} from '../api/journals/journals.module'
-import {JournalsService} from '../api/journals/journals.service'
-import {AdminsModule} from '../api/admins/admins.module'
-import {AdminsController} from '../api/admins/admins.controller'
-import {ContactsModule} from '../api/contacts/contacts.module'
-import {ContactsController} from '../api/contacts/contacts.controller'
+import {CustomerContactController} from '../api/customercontacts/customer-contact.controller'
+import {CustomerContactModule} from '../api/customercontacts/customer-contact.module'
+import {ResellerModule} from '../api/resellers/reseller.module'
+import {ResellerController} from '../api/resellers/reseller.controller'
+import {ContractModule} from '../api/contracts/contract.module'
+import {ContractController} from '../api/contracts/contract.controller'
+import {JournalModule} from '../api/journals/journal.module'
+import {JournalService} from '../api/journals/journal.service'
+import {AdminModule} from '../api/admins/admin.module'
+import {AdminController} from '../api/admins/admin.controller'
+import {ContactModule} from '../api/contacts/contact.module'
+import {ContactController} from '../api/contacts/contact.controller'
 
 @Module({
     imports: [
         // TODO: Check why we need to use forwardRef only for the AdminsModule
-        forwardRef(() => AdminsModule),
-        ContactsModule,
-        ResellersModule,
-        ContractsModule,
-        JournalsModule,
+        forwardRef(() => AdminModule),
+        ContactModule,
+        ResellerModule,
+        ContractModule,
+        JournalModule,
     ],
     providers: [
         ExpandHelper,
-        AdminsController,
-        ContactsController,
-        ResellersController,
-        ContractsController,
-        JournalsService,
+        AdminController,
+        ContactController,
+        ResellerController,
+        ContractController,
+        JournalService,
     ],
     exports: [ExpandHelper],
 })

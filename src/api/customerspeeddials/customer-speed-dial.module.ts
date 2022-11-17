@@ -1,5 +1,5 @@
 import {forwardRef, Module} from '@nestjs/common'
-import {JournalsModule} from '../journals/journals.module'
+import {JournalModule} from '../journals/journal.module'
 import {CustomerSpeedDialController} from './customer-speed-dial.controller'
 import {CustomerSpeedDialService} from './customer-speed-dial.service'
 import {ExpandModule} from '../../helpers/expand.module'
@@ -7,7 +7,7 @@ import {CustomerSpeedDialMariadbRepository} from './repositories/customer-speed-
 
 @Module({
     imports: [
-        JournalsModule,
+        JournalModule,
         forwardRef(() => ExpandModule),
     ],
     controllers: [CustomerSpeedDialController],

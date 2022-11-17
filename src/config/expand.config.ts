@@ -1,11 +1,11 @@
 export const expandLogic = {
     'reseller_id': {
-        controller: 'resellersController',
+        controller: 'resellerController',
     },
     'contact_id': {
-        controller: 'customercontactsController',
+        controller: 'customerContactController',
     },
     'contract_id': {
-        controller: 'contractsController',
+        controller: 'contractController',
     },
 }
