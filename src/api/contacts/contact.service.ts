@@ -111,7 +111,7 @@ export class ContactService implements CrudService<internal.Contact>{
         return true
     }
 
-    adjust(id: number, patch: PatchOperation | PatchOperation[], req: ServiceRequest): Promise<internal.Contact> {
+    adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.Contact> {
         return Promise.resolve(undefined)
     }
 }

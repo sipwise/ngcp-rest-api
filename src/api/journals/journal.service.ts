@@ -48,13 +48,13 @@ export class JournalService {
      * @param resourceName Name of the resource
      * @param resourceId ID of the named resource
      */
-    async readAll(req: ServiceRequest, resourceName?: string, resourceId?: number | string): Promise<[internal.Journal[], number]> {
+    async readAll(sr: ServiceRequest, resourceName?: string, resourceId?: number | string): Promise<[internal.Journal[], number]> {
         this.log.debug({
             message: 'finding journal entries',
             resourceName: resourceName,
             resourceId: resourceId,
         })
-        return await this.journalRepo.readAll(req, resourceName, resourceId)
+        return await this.journalRepo.readAll(sr, resourceName, resourceId)
     }
 
     /**
@@ -66,31 +66,32 @@ export class JournalService {
         return
     }
 
-    public async writeJournal(req: ServiceRequest, id: number, data: any) {
+    public async writeJournal(sr: ServiceRequest, id: number, data: any) {
         // Set content format and default to json
-        let cf = contentFormat[req.headers['Content-Type']]
+        let cf = contentFormat[sr.headers['Content-Type']]
         if (cf === undefined) {
             cf = 'json'
         }
 
         // skip journaling if request method is not POST, PUT or DELETE
-        const op = operation[req.req.method]
+        const op = operation[sr.req.method]
+
         if (op === undefined) {
             return false
         }
 
         const resourceId = id
 
-        const resourceName = extractResourceName(req.req.path, this.app.config.common.api_prefix)
+        const resourceName = extractResourceName(sr.req.path, this.app.config.common.api_prefix)
 
-        const ctx = Context.get(req.req)
+        const ctx = Context.get(sr.req)
 
         // create new Journal entry
         const entry = internal.Journal.create({
-            reseller_id: req.user.reseller_id,
-            role_id: req.user.role_data ? req.user.role_data.id : null,
-            role: req.user.role,
-            user_id: req.user.id,
+            reseller_id: sr.user.reseller_id,
+            role_id: sr.user.role_data ? sr.user.role_data.id : null,
+            role: sr.user.role,
+            user_id: sr.user.id,
             tx_id: ctx.txid,
             content: Object.keys(data).length > 0
                 ? isObject(data) || Array.isArray(data)
@@ -102,7 +103,7 @@ export class JournalService {
             resource_id: resourceId,
             resource_name: resourceName,
             timestamp: ctx.startTime / 1000,
-            username: req['user'] !== undefined ? req.user.username : '',
+            username: sr['user'] !== undefined ? sr.user.username : '',
         })
 
         this.log.debug('write journal entry')

@@ -4,11 +4,11 @@ import {internal} from '../../../entities'
 export interface AdminRepository {
     create(admin: internal.Admin): Promise<internal.Admin>
 
-    readAll(req: ServiceRequest): Promise<[internal.Admin[], number]>
+    readAll(sr: ServiceRequest): Promise<[internal.Admin[], number]>
 
-    readById(id: number, req: ServiceRequest): Promise<internal.Admin>
+    readById(id: number, sr: ServiceRequest): Promise<internal.Admin>
 
-    update(id: number, admin: internal.Admin, req: ServiceRequest): Promise<internal.Admin>
+    update(id: number, admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin>
 
-    delete(id: number, req: ServiceRequest): Promise<number>
+    delete(id: number, sr: ServiceRequest): Promise<number>
 }
