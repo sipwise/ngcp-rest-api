@@ -1,7 +1,6 @@
 import {AppClusterService} from './app-cluster.service'
 import {AppModule} from './app.module'
 import {AppService} from './app.service'
-import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger'
 import {NestFactory} from '@nestjs/core'
 import {TransformInterceptor} from './interceptors/transform.interceptor'
 import {ValidateInputPipe} from './pipes/validate.pipe'
@@ -11,6 +10,7 @@ import {winstonLoggerConfig} from './config/logger.config'
 import bodyParser from 'body-parser'
 import {LoggingInterceptor} from './interceptors/logging.interceptor'
 import {HttpExceptionFilter} from './helpers/http-exception.filter'
+import {createSwaggerDocument} from './helpers/swagger.helper'
 
 async function bootstrap() {
     const config = AppService.config
@@ -32,32 +32,9 @@ async function bootstrap() {
                         ? config.common.api_prefix
                         : 'api'
 
-    app.setGlobalPrefix(api_prefix, {exclude: ['login_jwt']})
+    app.setGlobalPrefix(api_prefix, {exclude: []})
 
-    const doc_config = new DocumentBuilder()
-        .setTitle('Sipwise NGCP API Documentation')
-        //.setDescription('NGCP API schema definition')
-        .setVersion('2.0')
-        .addBasicAuth()
-        .addBearerAuth()
-        .addSecurity('cert', {
-            type: 'http',
-            scheme: 'cert',
-        })
-        .build()
-
-    const document = SwaggerModule.createDocument(app, doc_config)
-    SwaggerModule.setup(api_prefix, app, document, {
-        customCss: ' \
-            .swagger-ui .topbar { display: none } \
-            .swagger-ui .info { margin-top: 0px; text-align: center; vertical-align: middle } \
-            .swagger-ui .info .main { background: #54893b; height: 100px; } \
-            .swagger-ui .info .main .title { color: #fff; padding: 30px } \
-        ',
-        customSiteTitle: 'Sipwise NGCP API 2.0' ,
-        swaggerOptions: {
-        }
-    })
+    createSwaggerDocument(app, api_prefix)
 
     app.useGlobalPipes(new ValidateInputPipe())
     app.useGlobalFilters(new HttpExceptionFilter())

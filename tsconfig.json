@@ -9,7 +9,8 @@
     "outDir": "./dist",
     "baseUrl": "./src",
     "incremental": false,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "resolveJsonModule": true
   },
   "exclude": [
     "dist",

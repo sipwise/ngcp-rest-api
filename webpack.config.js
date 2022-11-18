@@ -121,6 +121,7 @@ module.exports =
       {
         const lazyImports =
         [
+          '@fastify/static',
           '@google-cloud/spanner',
           '@nestjs/microservices/microservices-module',
           '@nestjs/microservices',
@@ -194,6 +195,14 @@ module.exports =
         {
           from: './package.json',
           to: './package.json',
+        },
+        {
+          from: './public/css',
+          to: './css',
+        },
+        {
+          from: './public/fonts',
+          to: './fonts',
         },
         'node_modules/swagger-ui-dist/swagger-ui.css',
         'node_modules/swagger-ui-dist/swagger-ui-bundle.js',

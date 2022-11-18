@@ -10,6 +10,8 @@ import {
     Type,
 } from '@nestjs/common'
 import {ScheduleModule} from '@nestjs/schedule'
+import {ServeStaticModule} from '@nestjs/serve-static'
+import {join} from 'path'
 import {AdminModule} from './api/admins/admin.module'
 import {AppController} from './app.controller'
 import {AppService} from './app.service'
@@ -48,6 +50,14 @@ let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | Fo
                 return AppService.config
             },
         ],
+    }),
+    ServeStaticModule.forRoot({
+        rootPath: process.env.NODE_WP_BUNDLE
+                    ? undefined
+                    : join(__dirname, '..', 'public'),
+        serveStaticOptions: {
+            index: false
+        }
     }),
     AdminModule,
     AuthModule,

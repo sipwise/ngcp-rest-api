@@ -3,6 +3,7 @@
   "compilerOptions": {
     "declaration": false,
     "sourceMap": false,
-    "incremental": false
+    "incremental": false,
+    "resolveJsonModule": true
   }
 }
