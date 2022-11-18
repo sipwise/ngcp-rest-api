@@ -15,7 +15,7 @@ export class DomainMariadbRepository implements DomainRepository {
     private readonly log = new LoggerService(DomainMariadbRepository.name)
 
     @HandleDbErrors
-    async create(domain: internal.Domain, req: ServiceRequest): Promise<internal.Domain> {
+    async create(domain: internal.Domain, sr: ServiceRequest): Promise<internal.Domain> {
         const dbDomain = db.billing.Domain.create()
         dbDomain.fromInternal(domain)
 
@@ -41,41 +41,41 @@ export class DomainMariadbRepository implements DomainRepository {
     }
 
     @HandleDbErrors
-    async readAll(req: ServiceRequest): Promise<[internal.Domain[], number]> {
+    async readAll(sr: ServiceRequest): Promise<[internal.Domain[], number]> {
         this.log.debug({
             message: 'read all domains',
             func: this.readAll.name,
-            user: req.user.username,
+            user: sr.user.username,
         })
         const queryBuilder = db.billing.Domain.createQueryBuilder('domain')
         const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
-        await configureQueryBuilder(queryBuilder, req.query, new SearchLogic(req, domainSearchDtoKeys))
+        await configureQueryBuilder(queryBuilder, sr.query, new SearchLogic(sr, domainSearchDtoKeys))
         const [result, totalCount] = await queryBuilder.getManyAndCount()
         return [result.map(d => d.toInternal()), totalCount]
     }
 
     @HandleDbErrors
-    async readById(id: number, req: ServiceRequest): Promise<internal.Domain> {
+    async readById(id: number, sr: ServiceRequest): Promise<internal.Domain> {
         this.log.debug({
             message: 'read domain by ID',
             func: this.readById.name,
-            user: req.user.username,
+            user: sr.user.username,
         })
         return (await db.billing.Domain.findOneByOrFail({ id: id })).toInternal()
     }
 
     @HandleDbErrors
-    async readByDomain(domain: string, req: ServiceRequest): Promise<internal.Domain> {
+    async readByDomain(domain: string, sr: ServiceRequest): Promise<internal.Domain> {
         this.log.debug({
             message: 'read domain by domain name',
             func: this.readByDomain.name,
-            user: req.user.username,
+            user: sr.user.username,
         })
         return (await db.billing.Domain.findOne({where: {domain: domain}})).toInternal()
     }
 
     @HandleDbErrors
-    async delete(id: number, req: ServiceRequest): Promise<number> {
+    async delete(id: number, sr: ServiceRequest): Promise<number> {
         const domain = await db.billing.Domain.findOneByOrFail({ id: id })
         await db.billing.Domain.delete(id)
 

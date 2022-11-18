@@ -19,13 +19,13 @@ export class ExpandHelper {
      * Uses the response that is going to be returned and expands multiple fields at once specified by comma(,)
      * @param responseList - List of objects that we are going to expand based on the fields requested
      * @param parentObject - Contains the object keys. Used to check whether the field requested to be expanded belongs to them
-     * @param request
+     * @param sr
      */
-    async handleMultiFieldExpand(responseList: any, parentObject: any, request: ServiceRequest) {
-        const fieldsToExpand = request.query.expand.split(',')
+    async handleMultiFieldExpand(responseList: any, parentObject: any, sr: ServiceRequest) {
+        const fieldsToExpand = sr.query.expand.split(',')
         for (let i = 0; i < fieldsToExpand.length; i++) {
             if (!parentObject.includes(fieldsToExpand[i]) || !expandLogic[fieldsToExpand[i]]) {
-                if (await this.handleSoftExpand(request, `Expanding ${fieldsToExpand[i]} not allowed or impossible`))
+                if (await this.handleSoftExpand(sr, `Expanding ${fieldsToExpand[i]} not allowed or impossible`))
                     return
             }
             let j = 0
@@ -34,10 +34,10 @@ export class ExpandHelper {
                 let returnObject
                 try {
                     returnObject = (responseList.length == undefined) ?
-                        await ProtectedReadCall(this?.[controller], responseList[`${fieldsToExpand[i]}`], request) :
-                        await ProtectedReadCall(this?.[controller], responseList[j][`${fieldsToExpand[i]}`], request)
+                        await ProtectedReadCall(this?.[controller], responseList[`${fieldsToExpand[i]}`], sr) :
+                        await ProtectedReadCall(this?.[controller], responseList[j][`${fieldsToExpand[i]}`], sr)
                 } catch (err) {
-                    if (await this.handleSoftExpand(request, `Cannot expand field ${fieldsToExpand[i]}`))
+                    if (await this.handleSoftExpand(sr, `Cannot expand field ${fieldsToExpand[i]}`))
                         continue
                 }
                 const newProp = `${fieldsToExpand[i]}_expand`
@@ -55,17 +55,17 @@ export class ExpandHelper {
      * Uses the response that is going to be returned and expands the fields specified by dots(.) with the help of a recursive function
      * @param responseList - List of objects that we are going to expand based on the fields requested
      * @param parentObject - Contains the object keys. Used to check whether the field requested to be expanded belongs to them
-     * @param request
+     * @param sr
      */
-    async handleNestedExpand(responseList: any, parentObject: any, request: ServiceRequest) {
-        const firstFieldToExpand = request.query.expand.split('.')[0]
+    async handleNestedExpand(responseList: any, parentObject: any, sr: ServiceRequest) {
+        const firstFieldToExpand = sr.query.expand.split('.')[0]
         if (!parentObject.includes(firstFieldToExpand) || !expandLogic[firstFieldToExpand]) {
-            if (await this.handleSoftExpand(request, `Expanding ${firstFieldToExpand} not allowed or impossible`))
+            if (await this.handleSoftExpand(sr, `Expanding ${firstFieldToExpand} not allowed or impossible`))
                 return
         }
         let nextFieldsToExpand = null
-        if (request.query.expand.indexOf('.') !== -1) {
-            nextFieldsToExpand = request.query.expand.substring(request.query.expand.indexOf('.') + 1)
+        if (sr.query.expand.indexOf('.') !== -1) {
+            nextFieldsToExpand = sr.query.expand.substring(sr.query.expand.indexOf('.') + 1)
         }
         let i = 0
         do {
@@ -73,14 +73,14 @@ export class ExpandHelper {
             let returnObject
             try {
                 returnObject = (responseList.length == undefined) ?
-                    await ProtectedReadCall(this?.[controller], responseList[`${firstFieldToExpand}`], request) :
-                    await ProtectedReadCall(this?.[controller], responseList[i][`${firstFieldToExpand}`], request)
+                    await ProtectedReadCall(this?.[controller], responseList[`${firstFieldToExpand}`], sr) :
+                    await ProtectedReadCall(this?.[controller], responseList[i][`${firstFieldToExpand}`], sr)
             } catch (err) {
-                if (await this.handleSoftExpand(request, `Cannot expand field ${firstFieldToExpand}`))
+                if (await this.handleSoftExpand(sr, `Cannot expand field ${firstFieldToExpand}`))
                     continue
             }
             if (nextFieldsToExpand && returnObject != null)
-                await this.expandSingleObject(returnObject, nextFieldsToExpand, request)
+                await this.expandSingleObject(returnObject, nextFieldsToExpand, sr)
             const newProp = `${firstFieldToExpand}_expand`
             if (responseList.length == undefined) {
                 responseList[`${newProp}`] = returnObject
@@ -98,24 +98,24 @@ export class ExpandHelper {
      * expanded recursively. In case there are no dots or commas, this will be handled as a nested expand by default.
      * @param responseList - List of objects that we are going to expand based on the fields requested
      * @param parentObject - Contains the object keys. Used to check whether the field requested to be expanded belongs to them
-     * @param request
+     * @param sr
      */
-    async expandObjects(responseList: any, parentObject: any, request: ServiceRequest) {
-        const multiFieldExpand = request.query.expand.indexOf(',') != -1 &&
-            (request.query.expand.indexOf('.') == -1 || request.query.expand.indexOf(',') < request.query.expand.indexOf('.'))
+    async expandObjects(responseList: any, parentObject: any, sr: ServiceRequest) {
+        const multiFieldExpand = sr.query.expand.indexOf(',') != -1 &&
+            (sr.query.expand.indexOf('.') == -1 || sr.query.expand.indexOf(',') < sr.query.expand.indexOf('.'))
         if (multiFieldExpand)
-            await this.handleMultiFieldExpand(responseList, parentObject, request)
+            await this.handleMultiFieldExpand(responseList, parentObject, sr)
         else
-            await this.handleNestedExpand(responseList, parentObject, request)
+            await this.handleNestedExpand(responseList, parentObject, sr)
     }
 
     /**
      * Recursively expands fields and adds them to the parentObject
      * @param parentObject
      * @param expandFields - a string of fields to be expanded, split by dots
-     * @param request
+     * @param sr
      */
-    async expandSingleObject(parentObject: any, expandFields: string, request: ServiceRequest) {
+    async expandSingleObject(parentObject: any, expandFields: string, sr: ServiceRequest) {
         const firstFieldToExpand = expandFields.split('.')[0]
         let nextFieldsToExpand = null
         if (expandFields.indexOf('.') !== -1) {
@@ -125,17 +125,17 @@ export class ExpandHelper {
             const controller = expandLogic[firstFieldToExpand].controller
             let returnObject
             try {
-                returnObject = await ProtectedReadCall(this?.[controller], parentObject[`${firstFieldToExpand}`], request)
+                returnObject = await ProtectedReadCall(this?.[controller], parentObject[`${firstFieldToExpand}`], sr)
             } catch (err) {
-                if (await this.handleSoftExpand(request, `Cannot expand field ${firstFieldToExpand}`))
+                if (await this.handleSoftExpand(sr, `Cannot expand field ${firstFieldToExpand}`))
                     return
             }
             if (nextFieldsToExpand && returnObject != null)
-                await this.expandSingleObject(returnObject, nextFieldsToExpand, request)
+                await this.expandSingleObject(returnObject, nextFieldsToExpand, sr)
             const newProp = `${firstFieldToExpand}_expand`
             parentObject[`${newProp}`] = returnObject
         } else {
-            if (await this.handleSoftExpand(request, `Expanding ${firstFieldToExpand} not allowed or impossible`))
+            if (await this.handleSoftExpand(sr, `Expanding ${firstFieldToExpand} not allowed or impossible`))
                 return
         }
     }
@@ -144,11 +144,11 @@ export class ExpandHelper {
      * Handles the case of receiving an exception when trying to expand a field.
      * If the soft_expand parameter has been provided, the response will be unaffected.
      * If not, an exception will be thrown and the response will contain "Not Found"
-     * @param request
+     * @param sr
      * @param errorMessage
      */
-    async handleSoftExpand(request: ServiceRequest, errorMessage: string) {
-        if (request.query.soft_expand === '1')
+    async handleSoftExpand(sr: ServiceRequest, errorMessage: string) {
+        if (sr.query.soft_expand === '1')
             return true
         else
             throw new UnprocessableEntityException(errorMessage)

@@ -41,12 +41,13 @@ export class VoicemailController extends CrudController<VoicemailUpdateDto, Voic
     @ApiPaginatedResponse(VoicemailResponseDto)
     async readAll(@Req() req): Promise<[VoicemailResponseDto[], number]> {
         this.log.debug({message: 'fetch all voicemails', func: this.readAll.name, url: req.url, method: req.method})
+        const sr = new ServiceRequest(req)
         const [result, totalCount] =
-            await this.voicemailService.readAll(req)
+            await this.voicemailService.readAll(sr)
         const responseList = result.map(voicemail => new VoicemailResponseDto(voicemail))
-        if (req.query.expand) {
+        if (sr.query.expand) {
             const voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
-            await this.expander.expandObjects(responseList, voicemailSearchDtoKeys, req)
+            await this.expander.expandObjects(responseList, voicemailSearchDtoKeys, sr)
         }
         return [responseList, totalCount]
     }
@@ -57,11 +58,12 @@ export class VoicemailController extends CrudController<VoicemailUpdateDto, Voic
     })
     async read(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<VoicemailResponseDto> {
         this.log.debug({message: 'fetch voicemail by id', func: this.read.name, url: req.url, method: req.method})
-        const voicemail = await this.voicemailService.read(id, req)
+        const sr = new ServiceRequest(req)
+        const voicemail = await this.voicemailService.read(id, sr)
         const responseItem = new VoicemailResponseDto(voicemail)
         if (req.query.expand && !req.isRedirected) {
             const voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
-            await this.expander.expandObjects(responseItem, voicemailSearchDtoKeys, req)
+            await this.expander.expandObjects(responseItem, voicemailSearchDtoKeys, sr)
         }
         return responseItem
     }

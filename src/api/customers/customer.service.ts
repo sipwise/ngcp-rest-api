@@ -16,7 +16,7 @@ export class CustomerService { // implements CrudService<CustomerCreateDto, Cust
     ) {
     }
 
-    async create(dto: CustomerCreateDto, req: ServiceRequest): Promise<CustomerResponseDto> {
+    async create(dto: CustomerCreateDto, sr: ServiceRequest): Promise<CustomerResponseDto> {
         const now = new Date(Date.now())
         const c = db.billing.Contract.create()
         // TODO: Transaction guard
@@ -24,19 +24,19 @@ export class CustomerService { // implements CrudService<CustomerCreateDto, Cust
         return
     }
 
-    async delete(id: number, req: ServiceRequest): Promise<number> {
+    async delete(id: number, sr: ServiceRequest): Promise<number> {
         throw new MethodNotAllowedException()
         return Promise.resolve(0)
     }
 
     @HandleDbErrors
-    async read(id: number, req: ServiceRequest): Promise<CustomerResponseDto> {
+    async read(id: number, sr: ServiceRequest): Promise<CustomerResponseDto> {
         //    return this.toResponse(await db.billing.Contract.findOneOrFail(id))
         return
     }
 
     @HandleDbErrors
-    async readAll(req: ServiceRequest): Promise<[CustomerResponseDto[], number]> {
+    async readAll(sr: ServiceRequest): Promise<[CustomerResponseDto[], number]> {
         // const result = await db.billing.Contract.find({
         //     take: rows, skip: rows * (page - 1),
         // })
@@ -61,11 +61,11 @@ export class CustomerService { // implements CrudService<CustomerCreateDto, Cust
         // }
     }
 
-    async update(id: number, dto: CustomerCreateDto, req: ServiceRequest): Promise<CustomerResponseDto> {
+    async update(id: number, dto: CustomerCreateDto, sr: ServiceRequest): Promise<CustomerResponseDto> {
         return Promise.resolve(undefined)
     }
 
-    async adjust(id: number, patch: Operation | Operation[], req: ServiceRequest): Promise<CustomerResponseDto> {
+    async adjust(id: number, patch: Operation | Operation[], sr: ServiceRequest): Promise<CustomerResponseDto> {
         return Promise.resolve(undefined)
     }
 

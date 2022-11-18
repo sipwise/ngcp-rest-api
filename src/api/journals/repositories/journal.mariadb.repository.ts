@@ -23,8 +23,8 @@ export class JournalMariadbRepository implements JournalRepository {
     }
 
     @HandleDbErrors
-    async read(id: number, req: ServiceRequest): Promise<internal.Journal> {
-        const user: AuthResponseDto = req.user
+    async read(id: number, sr: ServiceRequest): Promise<internal.Journal> {
+        const user: AuthResponseDto = sr.user
         const qb = db.billing.Journal.createQueryBuilder('journal')
         qb.where('journal.id = :id', {id: id})
         qb.leftJoinAndSelect('journal.role', 'role')
@@ -39,11 +39,11 @@ export class JournalMariadbRepository implements JournalRepository {
     }
 
     @HandleDbErrors
-    async readAll(req: ServiceRequest, resourceName?: string, resourceId?: number | string): Promise<[internal.Journal[], number]> {
-        const user: AuthResponseDto = req.user
+    async readAll(sr: ServiceRequest, resourceName?: string, resourceId?: number | string): Promise<[internal.Journal[], number]> {
+        const user: AuthResponseDto = sr.user
         const qb = db.billing.Journal.createQueryBuilder('journal')
         qb.leftJoinAndSelect('journal.role', 'role')
-        await configureQueryBuilder(qb, req.query, new SearchLogic(req, Object.keys(new JournalSearchDto())))
+        await configureQueryBuilder(qb, sr.query, new SearchLogic(sr, Object.keys(new JournalSearchDto())))
 
         if (resourceName !== undefined) {
             qb.andWhere('journal.resource_name = :resourceName', {resourceName: resourceName})

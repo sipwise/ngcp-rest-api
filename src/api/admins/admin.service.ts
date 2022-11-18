@@ -21,38 +21,38 @@ export class AdminService implements CrudService<internal.Admin> {
     ) {
     }
 
-    async create(admin: internal.Admin, req: ServiceRequest): Promise<internal.Admin> {
-        this.log.debug({message: 'create admin', func: this.create.name, user: req.user.username})
+    async create(admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin> {
+        this.log.debug({message: 'create admin', func: this.create.name, user: sr.user.username})
 
-        await this.populateAdmin(admin, req)
+        await this.populateAdmin(admin, sr)
 
         return await this.adminRepo.create(admin)
     }
 
-    async readAll(req: ServiceRequest): Promise<[internal.Admin[], number]> {
+    async readAll(sr: ServiceRequest): Promise<[internal.Admin[], number]> {
         this.log.debug({
             message: 'read all admins',
             func: this.readAll.name,
-            user: req.user.username,
+            user: sr.user.username,
         })
 
-        return await this.adminRepo.readAll(req)
+        return await this.adminRepo.readAll(sr)
     }
 
-    async read(id: number, req: ServiceRequest): Promise<internal.Admin> {
-        this.log.debug({message: 'read admin by id', func: this.read.name, user: req.user.username, id: id})
-        return await this.adminRepo.readById(id, req)
+    async read(id: number, sr: ServiceRequest): Promise<internal.Admin> {
+        this.log.debug({message: 'read admin by id', func: this.read.name, user: sr.user.username, id: id})
+        return await this.adminRepo.readById(id, sr)
     }
 
-    async update(id: number, admin: internal.Admin, req: ServiceRequest): Promise<internal.Admin> {
-        this.log.debug({message: 'update admin by id', func: this.update.name, user: req.user.username, id: id})
+    async update(id: number, admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin> {
+        this.log.debug({message: 'update admin by id', func: this.update.name, user: sr.user.username, id: id})
         admin.id = id
-        await this.populateAdmin(admin, req)
+        await this.populateAdmin(admin, sr)
 
-        const oldAdmin = await this.adminRepo.readById(id, req)
-        await this.validateUpdate(req.user.id, oldAdmin, admin)
+        const oldAdmin = await this.adminRepo.readById(id, sr)
+        await this.validateUpdate(sr.user.id, oldAdmin, admin)
 
-        return await this.adminRepo.update(id, admin, req)
+        return await this.adminRepo.update(id, admin, sr)
     }
 
     async updateOrCreate(id: number, admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin> {
@@ -66,34 +66,34 @@ export class AdminService implements CrudService<internal.Admin> {
         }
     }
 
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], req: ServiceRequest): Promise<internal.Admin> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.Admin> {
         this.log.debug({
             message: 'patching admin',
             func: this.adjust.name,
-            user: req.user.username,
+            user: sr.user.username,
             id: id,
         })
-        let admin = await this.adminRepo.readById(id, req)
+        let admin = await this.adminRepo.readById(id, sr)
         const oldAdmin = deepCopy(admin)
 
         admin = applyPatch(admin, patch).newDocument
         admin.role ||= oldAdmin.role
         admin.id = id
 
-        await this.populateAdmin(admin, req)
+        await this.populateAdmin(admin, sr)
 
-        await this.validateUpdate(req.user.id, oldAdmin, admin)
+        await this.validateUpdate(sr.user.id, oldAdmin, admin)
 
-        return await this.adminRepo.update(id, admin, req)
+        return await this.adminRepo.update(id, admin, sr)
     }
 
-    async delete(id: number, req: ServiceRequest): Promise<number> {
-        this.log.debug({message: 'delete admin by id', func: this.delete.name, user: req.user.username, id: id})
+    async delete(id: number, sr: ServiceRequest): Promise<number> {
+        this.log.debug({message: 'delete admin by id', func: this.delete.name, user: sr.user.username, id: id})
 
-        if (id == req.user.id)
-            throw new ForbiddenException(Messages.invoke(Messages.DELETE_OWN_USER, req))
+        if (id == sr.user.id)
+            throw new ForbiddenException(Messages.invoke(Messages.DELETE_OWN_USER, sr))
 
-        return await this.adminRepo.delete(id, req)
+        return await this.adminRepo.delete(id, sr)
     }
 
     private async populateAdmin(admin: internal.Admin, sr: ServiceRequest) {
