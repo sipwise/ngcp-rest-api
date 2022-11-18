@@ -13,17 +13,17 @@ export class PbxGroupService {
     ) {
     }
 
-    async readAll(req: ServiceRequest): Promise<[internal.PbxGroup[], number]> {
+    async readAll(sr: ServiceRequest): Promise<[internal.PbxGroup[], number]> {
         this.log.debug({
             message: 'read all pbxgroups',
             func: this.readAll.name,
-            user: req.user.username,
+            user: sr.user.username,
         })
-        return (await this.pbxGroupRepo.readAll(req))
+        return (await this.pbxGroupRepo.readAll(sr))
     }
 
-    async read(id: number, req: ServiceRequest): Promise<internal.PbxGroup> {
-        this.log.debug({message: 'read pbxgroup by group id', func: this.read.name, user: req.user.username, id: id})
-        return await this.pbxGroupRepo.readById(id, req)
+    async read(id: number, sr: ServiceRequest): Promise<internal.PbxGroup> {
+        this.log.debug({message: 'read pbxgroup by group id', func: this.read.name, user: sr.user.username, id: id})
+        return await this.pbxGroupRepo.readById(id, sr)
     }
 }

@@ -22,32 +22,29 @@ export class DomainMockRepository implements DomainRepository {
         this.nextId = Object.keys(this.db).length + 1
     }
 
-    async create(domain: internal.Domain, req: ServiceRequest): Promise<internal.Domain> {
+    async create(domain: internal.Domain, sr: ServiceRequest): Promise<internal.Domain> {
         domain.id = this.nextId
         this.db[domain.id] = domain
         this.nextId++
         return Promise.resolve(domain)
     }
 
-    async delete(id: number, req: ServiceRequest): Promise<number> {
+    async delete(id: number, sr: ServiceRequest): Promise<number> {
         this.throwErrorIfIdNotExists(id)
-        // if (req.user.reseller_id != this.db[id].reseller_id) {
-        //     throw new ForbiddenException()
-        // }
         return Promise.resolve(1)
     }
 
-    async readAll(req: ServiceRequest): Promise<[internal.Domain[], number]> {
+    async readAll(sr: ServiceRequest): Promise<[internal.Domain[], number]> {
         const domains: [internal.Domain[], number] =
             [Object.keys(this.db).map(id => this.db[id]), Object.keys(this.db).length]
         return Promise.resolve(domains)
     }
 
-    async readByDomain(domain: string, req: ServiceRequest): Promise<internal.Domain> {
+    async readByDomain(domain: string, sr: ServiceRequest): Promise<internal.Domain> {
         return Promise.resolve(undefined)
     }
 
-    async readById(id: number, req: ServiceRequest): Promise<internal.Domain> {
+    async readById(id: number, sr: ServiceRequest): Promise<internal.Domain> {
         return Promise.resolve(undefined)
     }
 

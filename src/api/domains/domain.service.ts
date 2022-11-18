@@ -24,63 +24,63 @@ export class DomainService implements CrudService<internal.Domain> {
     ) {
     }
 
-    async create(domain: internal.Domain, req: ServiceRequest): Promise<internal.Domain> {
+    async create(domain: internal.Domain, sr: ServiceRequest): Promise<internal.Domain> {
         this.log.debug({
             message: 'create domain',
             func: this.create.name,
-            user: req.user.username,
+            user: sr.user.username,
         })
-        if (RbacRole.reseller == req.user.role) {
-            domain.reseller_id = req.user.reseller_id
+        if (RbacRole.reseller == sr.user.role) {
+            domain.reseller_id = sr.user.reseller_id
         }
 
         // check if reseller exists
         // TODO: replace with reseller repository
         await db.billing.Reseller.findOneByOrFail({ id: domain.reseller_id })
 
-        const result = await this.domainRepo.readByDomain(domain.domain, req)
+        const result = await this.domainRepo.readByDomain(domain.domain, sr)
         if (!result == undefined) {
-            throw new UnprocessableEntityException(Messages.invoke(Messages.DOMAIN_ALREADY_EXISTS, req, domain.domain))
+            throw new UnprocessableEntityException(Messages.invoke(Messages.DOMAIN_ALREADY_EXISTS, sr, domain.domain))
         }
-        return await this.domainRepo.create(domain, req)
+        return await this.domainRepo.create(domain, sr)
     }
 
-    async readAll(req: ServiceRequest): Promise<[internal.Domain[], number]> {
+    async readAll(sr: ServiceRequest): Promise<[internal.Domain[], number]> {
         this.log.debug({
             message: 'read all domains',
             func: this.readAll.name,
-            user: req.user.username,
+            user: sr.user.username,
         })
-        return (await this.domainRepo.readAll(req))
+        return (await this.domainRepo.readAll(sr))
     }
 
-    async read(id: number, req: ServiceRequest): Promise<internal.Domain> {
+    async read(id: number, sr: ServiceRequest): Promise<internal.Domain> {
         this.log.debug({
             message: 'read domain by id',
             func: this.read.name,
-            user: req.user.username,
+            user: sr.user.username,
         })
-        return await this.domainRepo.readById(id, req)
+        return await this.domainRepo.readById(id, sr)
     }
 
-    async update(id: number, domain: DomainCreateDto, req: ServiceRequest): Promise<internal.Domain> {
+    async update(id: number, domain: DomainCreateDto, sr: ServiceRequest): Promise<internal.Domain> {
         throw new NotImplementedException()
     }
 
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], req: ServiceRequest): Promise<internal.Domain> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.Domain> {
         throw new NotImplementedException()
     }
 
-    async delete(id: number, req: ServiceRequest): Promise<number> {
+    async delete(id: number, sr: ServiceRequest): Promise<number> {
         this.log.debug({
             message: 'delete domain by id',
             func: this.delete.name,
-            user: req.user.username,
+            user: sr.user.username,
         })
-        const domain = await this.domainRepo.readById(id, req)
-        if (RbacRole.reseller == req.user.role && domain.reseller_id != req.user.reseller_id) {
-            throw new ForbiddenException(Messages.invoke(Messages.DOMAIN_DOES_NOT_BELONG_TO_RESELLER, req))
+        const domain = await this.domainRepo.readById(id, sr)
+        if (RbacRole.reseller == sr.user.role && domain.reseller_id != sr.user.reseller_id) {
+            throw new ForbiddenException(Messages.invoke(Messages.DOMAIN_DOES_NOT_BELONG_TO_RESELLER, sr))
         }
-        return await this.domainRepo.delete(id, req)
+        return await this.domainRepo.delete(id, sr)
     }
 }

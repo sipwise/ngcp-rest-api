@@ -2,7 +2,7 @@ import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {internal} from '../../../entities'
 
 export interface PbxGroupRepository {
-    readAll(req: ServiceRequest): Promise<[internal.PbxGroup[], number]>
+    readAll(sr: ServiceRequest): Promise<[internal.PbxGroup[], number]>
 
-    readById(id: number, req: ServiceRequest): Promise<internal.PbxGroup>
+    readById(id: number, sr: ServiceRequest): Promise<internal.PbxGroup>
 }

@@ -18,17 +18,17 @@ export class FileshareService { // implements CrudService<FileshareCreateDto, Fi
     ) {
     }
 
-    filterOptions(req: ServiceRequest): FindManyOptions {
+    filterOptions(sr: ServiceRequest): FindManyOptions {
         const filter: FindManyOptions = {}
-        if (['reseller', 'ccare'].includes(req.user.role))
-            filter.where = {reseller_id: req.user.reseller_id}
-        if (req.user.role == 'subscriber')
-            filter.where = {subscriber_id: req.user.id}
+        if (['reseller', 'ccare'].includes(sr.user.role))
+            filter.where = {reseller_id: sr.user.reseller_id}
+        if (sr.user.role == 'subscriber')
+            filter.where = {subscriber_id: sr.user.id}
 
         return filter
     }
 
-    toResponse(db: db.fileshare.Upload, req: ServiceRequest): FileshareResponseDto {
+    toResponse(db: db.fileshare.Upload, sr: ServiceRequest): FileshareResponseDto {
         const response: FileshareResponseDto = {
             id: db.id,
             name: db.original_name,
@@ -39,17 +39,17 @@ export class FileshareService { // implements CrudService<FileshareCreateDto, Fi
             size: db.size,
         }
 
-        if (['system', 'admin', 'reseller'].includes(req.user.role))
+        if (['system', 'admin', 'reseller'].includes(sr.user.role))
             response.subscriber_id = db.subscriber_id
-        if (['system', 'admin'].includes(req.user.role))
+        if (['system', 'admin'].includes(sr.user.role))
             response.reseller_id = db.reseller_id
 
         return response
     }
 
     @HandleDbErrors
-    async create(createDto: FileshareCreateDto, req: ServiceRequest, file: Express.Multer.File): Promise<FileshareResponseDto> {
-        const filter = this.filterOptions(req)
+    async create(createDto: FileshareCreateDto, sr: ServiceRequest, file: Express.Multer.File): Promise<FileshareResponseDto> {
+        const filter = this.filterOptions(sr)
 
         const totalQuota = this.app.config.fileshare.limits.quota
         if (totalQuota > 0) {
@@ -63,14 +63,14 @@ export class FileshareService { // implements CrudService<FileshareCreateDto, Fi
                 })
                 .getRawOne()
             if (totalSize && totalSize['size'] + file.size > totalQuota)
-                throw new UnprocessableEntityException(Messages.invoke(Messages.QUOTA_EXCEEDED, req))
+                throw new UnprocessableEntityException(Messages.invoke(Messages.QUOTA_EXCEEDED, sr))
         }
 
         const userFilesLimit = this.app.config.fileshare.limits.user_files
         if (userFilesLimit > 0) {
             const count = await db.fileshare.Upload.count(filter)
             if (count >= userFilesLimit)
-                throw new UnprocessableEntityException(Messages.invoke(Messages.FILES_LIMIT_REACHED, req))
+                throw new UnprocessableEntityException(Messages.invoke(Messages.FILES_LIMIT_REACHED, sr))
         }
 
         const userQuota = this.app.config.fileshare.limits.user_quota
@@ -81,7 +81,7 @@ export class FileshareService { // implements CrudService<FileshareCreateDto, Fi
                 .where(filter.where)
                 .getRawOne()
             if (userSize['sum'] + file.size > userQuota)
-                throw new UnprocessableEntityException(Messages.invoke(Messages.QUOTA_EXCEEDED, req))
+                throw new UnprocessableEntityException(Messages.invoke(Messages.QUOTA_EXCEEDED, sr))
         }
 
         const now = new Date()
@@ -97,27 +97,27 @@ export class FileshareService { // implements CrudService<FileshareCreateDto, Fi
         upload.expires_at = expireDate
         upload.data = file.buffer
         upload.size = file.size
-        upload.reseller_id = req.user.reseller_id
+        upload.reseller_id = sr.user.reseller_id
 
-        if (req.user.role == 'subscriber')
-            upload.subscriber_id = req.user.id
+        if (sr.user.role == 'subscriber')
+            upload.subscriber_id = sr.user.id
 
         await upload.save()
 
-        return this.toResponse(upload, req)
+        return this.toResponse(upload, sr)
     }
 
     @HandleDbErrors
-    async readAll(req: ServiceRequest): Promise<[FileshareResponseDto[], number]> {
-        const filter = this.filterOptions(req)
+    async readAll(sr: ServiceRequest): Promise<[FileshareResponseDto[], number]> {
+        const filter = this.filterOptions(sr)
         const totalCount = await db.fileshare.Upload.count(
             {...filter},
         )
-        const [page, rows] = SearchLogic.getPaginationFromServiceRequest(req)
+        const [page, rows] = SearchLogic.getPaginationFromServiceRequest(sr)
         const result = await db.fileshare.Upload.find(
             {...filter, take: rows, skip: rows * (page - 1)},
         )
-        return [result.map(d => this.toResponse(d, req)), totalCount]
+        return [result.map(d => this.toResponse(d, sr)), totalCount]
     }
 
     @HandleDbErrors
@@ -142,8 +142,8 @@ export class FileshareService { // implements CrudService<FileshareCreateDto, Fi
     }
 
     @HandleDbErrors
-    async delete(id: string, req: ServiceRequest): Promise<string> {
-        const filter = this.filterOptions(req)
+    async delete(id: string, sr: ServiceRequest): Promise<string> {
+        const filter = this.filterOptions(sr)
         const upload = await db.fileshare.Upload.findOneByOrFail({ id: id, ...filter })
         await db.fileshare.Upload.delete(upload.id)
 

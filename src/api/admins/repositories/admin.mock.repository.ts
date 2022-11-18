@@ -48,23 +48,23 @@ export class AdminMockRepository implements AdminRepository {
         return Promise.resolve(entity)
     }
 
-    delete(id: number, req: ServiceRequest): Promise<number> {
+    delete(id: number, sr: ServiceRequest): Promise<number> {
         this.throwErrorIfIdNotExists(id)
         return Promise.resolve(1)
     }
 
-    readById(id: number, req: ServiceRequest): Promise<internal.Admin> {
+    readById(id: number, sr: ServiceRequest): Promise<internal.Admin> {
         this.throwErrorIfIdNotExists(id)
         return Promise.resolve(this.db[id])
     }
 
-    readAll(req: ServiceRequest): Promise<[internal.Admin[], number]> {
+    readAll(sr: ServiceRequest): Promise<[internal.Admin[], number]> {
         const admins: [internal.Admin[], number] =
             [Object.keys(this.db).map(id => this.db[id]), Object.keys(this.db).length]
         return Promise.resolve(admins)
     }
 
-    update(id: number, admin: internal.Admin, req: ServiceRequest): Promise<internal.Admin> {
+    update(id: number, admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin> {
         this.throwErrorIfIdNotExists(id)
         this.db[id] = admin
         return Promise.resolve(admin)
