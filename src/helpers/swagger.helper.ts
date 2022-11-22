@@ -1,9 +1,9 @@
-import {INestApplication} from '@nestjs/common'
+import {NestApplication} from '@nestjs/core'
 import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger'
 import swaggerTags from '../localisation/en/swagger-tags.json'
 
 // TODO: only en localisation for now as swagger cannot switch languages dynamically
-export function createSwaggerDocument(app: INestApplication, api_prefix: string) {
+export function createSwaggerDocument(app: NestApplication, api_prefix: string) {
     const docBuilder = new DocumentBuilder()
     docBuilder
     .setTitle('Sipwise NGCP API Documentation')
@@ -21,6 +21,11 @@ export function createSwaggerDocument(app: INestApplication, api_prefix: string)
     swaggerTags.forEach((tag: {name: string, description: string}) => {
         docBuilder.addTag(tag.name, tag.description)
     })
+
+    if (!process.env.NODE_WP_BUNDLE) {
+        app.useStaticAssets('./public/css',   { prefix: '/css' })
+        app.useStaticAssets('./public/fonts', { prefix: '/fonts' })
+    }
 
     const document = SwaggerModule.createDocument(app, docBuilder.build())
     SwaggerModule.setup(api_prefix, app, document, {

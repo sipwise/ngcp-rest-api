@@ -1,7 +1,7 @@
 import {AppClusterService} from './app-cluster.service'
 import {AppModule} from './app.module'
 import {AppService} from './app.service'
-import {NestFactory} from '@nestjs/core'
+import {NestApplication, NestFactory} from '@nestjs/core'
 import {TransformInterceptor} from './interceptors/transform.interceptor'
 import {ValidateInputPipe} from './pipes/validate.pipe'
 import {readFileSync} from 'fs'
@@ -14,7 +14,7 @@ import {createSwaggerDocument} from './helpers/swagger.helper'
 
 async function bootstrap() {
     const config = AppService.config
-    const app = await NestFactory.create(
+    const app = await NestFactory.create<NestApplication>(
         AppModule,
         {
             httpsOptions: {
