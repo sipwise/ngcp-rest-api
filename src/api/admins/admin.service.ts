@@ -3,12 +3,12 @@ import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helpe
 import {ForbiddenException, Inject, Injectable, Logger} from '@nestjs/common'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AdminMariadbRepository} from './repositories/admin.mariadb.repository'
-import {Messages} from '../../config/messages.config'
 import {internal} from '../../entities'
 import {AclRoleRepository} from '../../repositories/acl-role.repository'
-import {deepCopy} from '../../repositories/acl-role.mock.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
+import {I18nService} from 'nestjs-i18n'
+import {deepCopy} from '../../helpers/deep-copy.helper'
 
 @Injectable()
 export class AdminService implements CrudService<internal.Admin> {
@@ -16,6 +16,7 @@ export class AdminService implements CrudService<internal.Admin> {
 
     constructor(
         private readonly app: AppService,
+        @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(AdminMariadbRepository) private readonly adminRepo: AdminMariadbRepository,
         @Inject(AclRoleRepository) private readonly aclRepo: AclRoleRepository,
     ) {
@@ -35,7 +36,6 @@ export class AdminService implements CrudService<internal.Admin> {
             func: this.readAll.name,
             user: sr.user.username,
         })
-
         return await this.adminRepo.readAll(sr)
     }
 
@@ -91,7 +91,7 @@ export class AdminService implements CrudService<internal.Admin> {
         this.log.debug({message: 'delete admin by id', func: this.delete.name, user: sr.user.username, id: id})
 
         if (id == sr.user.id)
-            throw new ForbiddenException(Messages.invoke(Messages.DELETE_OWN_USER, sr))
+            throw new ForbiddenException(this.i18n.t('errors.ADMIN_DELETE_SELF'))
 
         return await this.adminRepo.delete(id, sr)
     }
@@ -112,8 +112,7 @@ export class AdminService implements CrudService<internal.Admin> {
                 is_master: sr.user.is_master,
             })
             throw new ForbiddenException(
-                Messages.invoke(Messages.PERMISSION_DENIED, sr),
-                Messages.invoke(Messages.INVALID_USER_ROLE, sr).description,
+                this.i18n.t('errors.PERMISSION_DENIED')
             )
         }
         if (admin.password)
@@ -142,10 +141,7 @@ export class AdminService implements CrudService<internal.Admin> {
                 'call_data', 'billing_data'].map(s => {
                 if (admin[s] != undefined && (oldAdmin[s] == undefined || oldAdmin[s] != admin[s])) {
                     this.log.debug({message: 'Cannot change own property', id: selfId, field: s})
-                    throw new ForbiddenException(
-                        Messages.invoke(Messages.PERMISSION_DENIED),
-                        Messages.invoke(Messages.CHANGE_OWN_PROPERTY).description,
-                    )
+                    throw new ForbiddenException(this.i18n.t('errors.ADMIN_CHANGE_PROPERTY_SELF'))
                 }
             })
         }

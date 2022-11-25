@@ -1,7 +1,7 @@
 import {ArgumentMetadata, HttpStatus, Injectable, Optional, PipeTransform} from '@nestjs/common'
 import {ErrorHttpStatusCode, HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
 import {ParseUUIDPipe} from '@nestjs/common/pipes/parse-uuid.pipe'
-import {Messages} from '../config/messages.config'
+import {I18nService} from 'nestjs-i18n'
 
 export interface ParseIdPipeOptions {
     errorHttpStatusCode?: ErrorHttpStatusCode;
@@ -13,7 +13,10 @@ export class ParseIdPipe implements PipeTransform {
     protected readonly uuidVersion: '3' | '4' | '5'
     protected exceptionFactory: (errors: string) => any
 
-    constructor(@Optional() options?: ParseIdPipeOptions) {
+    constructor(
+        private readonly i18n: I18nService,
+        @Optional() options?: ParseIdPipeOptions,
+    ) {
         options = options || {}
         const {
             exceptionFactory,
@@ -26,7 +29,7 @@ export class ParseIdPipe implements PipeTransform {
     }
 
     async transform(value: any, metadata: ArgumentMetadata): Promise<string | number> {
-        let parseUUID = new ParseUUIDPipe({ exceptionFactory: this.exceptionFactory })
+        const parseUUID = new ParseUUIDPipe({ exceptionFactory: this.exceptionFactory })
         if (!await parseUUID.transform(value, {} as ArgumentMetadata))
             return value
 
@@ -35,8 +38,6 @@ export class ParseIdPipe implements PipeTransform {
             isFinite(value as any))
             return parseInt(value, 10)
 
-        throw this.exceptionFactory(
-            Messages.invoke(Messages.VALIDATION_FAILED_UNSUPPORTED_ID).description,
-        )
+        throw this.exceptionFactory(this.i18n.t('errors.pipe.VALIDATION_FAILED_UNSUPPORTED_ID'))
     }
 }

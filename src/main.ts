@@ -29,8 +29,8 @@ async function bootstrap() {
     )
 
     const api_prefix = process.env.NODE_WP_BUNDLE
-                        ? config.common.api_prefix
-                        : 'api'
+        ? config.common.api_prefix
+        : 'api'
 
     app.setGlobalPrefix(api_prefix, {exclude: []})
 

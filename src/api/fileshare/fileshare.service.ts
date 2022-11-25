@@ -1,5 +1,5 @@
 import {AppService} from '../../app.service'
-import {Injectable, NotImplementedException, StreamableFile, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable, NotImplementedException, StreamableFile, UnprocessableEntityException} from '@nestjs/common'
 import {FileshareCreateDto} from './dto/fileshare-create.dto'
 import {FileshareResponseDto} from './dto/fileshare-response.dto'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
@@ -8,13 +8,14 @@ import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {fileshare} from '../../entities/db'
 import {v4 as uuidv4} from 'uuid'
 import {FindManyOptions} from 'typeorm'
-import {Messages} from '../../config/messages.config'
 import {SearchLogic} from '../../helpers/search-logic.helper'
+import {I18nService} from 'nestjs-i18n'
 
 @Injectable()
 export class FileshareService { // implements CrudService<FileshareCreateDto, FileshareResponseDto> {
     constructor(
         private readonly app: AppService,
+        @Inject(I18nService) private readonly i18n: I18nService,
     ) {
     }
 
@@ -63,14 +64,14 @@ export class FileshareService { // implements CrudService<FileshareCreateDto, Fi
                 })
                 .getRawOne()
             if (totalSize && totalSize['size'] + file.size > totalQuota)
-                throw new UnprocessableEntityException(Messages.invoke(Messages.QUOTA_EXCEEDED, sr))
+                throw new UnprocessableEntityException(this.i18n.t('errors.QUOTA_EXCEEDED'))
         }
 
         const userFilesLimit = this.app.config.fileshare.limits.user_files
         if (userFilesLimit > 0) {
             const count = await db.fileshare.Upload.count(filter)
             if (count >= userFilesLimit)
-                throw new UnprocessableEntityException(Messages.invoke(Messages.FILES_LIMIT_REACHED, sr))
+                throw new UnprocessableEntityException(this.i18n.t('errors.FILES_LIMIT_REACHED'))
         }
 
         const userQuota = this.app.config.fileshare.limits.user_quota
@@ -81,7 +82,7 @@ export class FileshareService { // implements CrudService<FileshareCreateDto, Fi
                 .where(filter.where)
                 .getRawOne()
             if (userSize['sum'] + file.size > userQuota)
-                throw new UnprocessableEntityException(Messages.invoke(Messages.QUOTA_EXCEEDED, sr))
+                throw new UnprocessableEntityException(this.i18n.t('errors.QUOTA_EXCEEDED'))
         }
 
         const now = new Date()

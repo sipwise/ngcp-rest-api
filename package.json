@@ -58,6 +58,7 @@
     "halson": "3.0.0",
     "mysql2": "2.3.3",
     "nest-winston": "1.7.0",
+    "nestjs-i18n": "9.2.2",
     "passport": "0.6.0",
     "passport-http": "0.3.0",
     "passport-http-header-strategy": "1.1.0",

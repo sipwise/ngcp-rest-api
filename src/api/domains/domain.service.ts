@@ -9,17 +9,18 @@ import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {db, internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {RbacRole} from '../../config/constants.config'
-import {Messages} from '../../config/messages.config'
 import {DomainMariadbRepository} from './repositories/domain.mariadb.repository'
 import {DomainCreateDto} from './dto/domain-create.dto'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
+import {I18nService} from 'nestjs-i18n'
 
 @Injectable()
 export class DomainService implements CrudService<internal.Domain> {
     private readonly log = new LoggerService(DomainService.name)
 
     constructor(
+        @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(DomainMariadbRepository) private readonly domainRepo: DomainMariadbRepository,
     ) {
     }
@@ -40,7 +41,7 @@ export class DomainService implements CrudService<internal.Domain> {
 
         const result = await this.domainRepo.readByDomain(domain.domain, sr)
         if (!result == undefined) {
-            throw new UnprocessableEntityException(Messages.invoke(Messages.DOMAIN_ALREADY_EXISTS, sr, domain.domain))
+            throw new UnprocessableEntityException(this.i18n.t('errors.DOMAIN_ALREADY_EXISTS', {args: {domain: domain.domain}}))
         }
         return await this.domainRepo.create(domain, sr)
     }
@@ -79,7 +80,7 @@ export class DomainService implements CrudService<internal.Domain> {
         })
         const domain = await this.domainRepo.readById(id, sr)
         if (RbacRole.reseller == sr.user.role && domain.reseller_id != sr.user.reseller_id) {
-            throw new ForbiddenException(Messages.invoke(Messages.DOMAIN_DOES_NOT_BELONG_TO_RESELLER, sr))
+            throw new ForbiddenException(this.i18n.t('errors.DOMAIN_DOES_NOT_BELONG_TO_RESELLER'))
         }
         return await this.domainRepo.delete(id, sr)
     }

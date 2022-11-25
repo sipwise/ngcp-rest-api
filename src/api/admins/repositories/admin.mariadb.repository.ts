@@ -1,21 +1,26 @@
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
-import {ForbiddenException, Injectable} from '@nestjs/common'
+import {ForbiddenException, Inject, Injectable} from '@nestjs/common'
 import {db, internal} from '../../../entities'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {RbacFlag, RbacRole} from '../../../config/constants.config'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {AdminSearchDto} from '../dto/admin-search.dto'
 import {SelectQueryBuilder} from 'typeorm'
-import {Messages} from '../../../config/messages.config'
 import {AdminRepository} from '../interfaces/admin.repository'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {LoggerService} from '../../../logger/logger.service'
+import {I18nService} from 'nestjs-i18n'
 
 const SPECIAL_USER_LOGIN = 'sipwise'
 
 @Injectable()
 export class AdminMariadbRepository implements AdminRepository {
     private readonly log = new LoggerService(AdminMariadbRepository.name)
+
+    constructor(
+        @Inject(I18nService) private readonly i18n: I18nService,
+    ) {
+    }
 
     @HandleDbErrors
     async create(admin: internal.Admin): Promise<internal.Admin> {
@@ -72,8 +77,9 @@ export class AdminMariadbRepository implements AdminRepository {
         const query = await this.applyAdminFilter(sr)
         const dbAdmin = await query.andWhere('admin.id = :id', {id: id})
             .getOneOrFail()
+        // TODO: move this check to service, but we do not have access to the dbAdmin.login field there
         if (dbAdmin.login == SPECIAL_USER_LOGIN) {
-            throw new ForbiddenException(Messages.invoke(Messages.DELETE_SPECIAL_USER, sr).description + SPECIAL_USER_LOGIN)
+            throw new ForbiddenException(this.i18n.t('errors.ADMIN_DELETE_SPECIAL_USER', {args: {username: SPECIAL_USER_LOGIN}}))
         }
 
         await db.billing.Admin.remove(dbAdmin)

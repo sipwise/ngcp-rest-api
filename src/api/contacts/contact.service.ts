@@ -2,16 +2,17 @@ import {HttpException, Inject, Injectable, UnprocessableEntityException} from '@
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {internal} from '../../entities'
 import {ContactMariadbRepository} from './repositories/contact.mariadb.repository'
-import {Messages} from '../../config/messages.config'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {LoggerService} from '../../logger/logger.service'
+import {I18nService} from 'nestjs-i18n'
 
 @Injectable()
 export class ContactService implements CrudService<internal.Contact>{
     private readonly log = new LoggerService(ContactService.name)
 
     constructor(
+        @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(ContactMariadbRepository) private readonly contactRepo: ContactMariadbRepository,
     ) {
     }
@@ -28,7 +29,7 @@ export class ContactService implements CrudService<internal.Contact>{
             }
             const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
             if (!reseller) {
-                throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID, sr))
+                throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
             }
         }
         return await this.contactRepo.create(contact, sr)
@@ -46,11 +47,11 @@ export class ContactService implements CrudService<internal.Contact>{
         // TODO: should exceptions be HttpException? I think this should be determined by the controller
         if (contact.reseller_id !== undefined) {  // check for active contracts and subscribers when deleting customercontact
             if (await this.contactRepo.hasContactActiveContract(contact.id, sr)) {
-                throw new HttpException(Messages.invoke(Messages.CONTACT_STILL_IN_USE), 423) // 423 HTTP LOCKED
+                throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_CONTRACT'), 423) // 423 HTTP LOCKED
             }
 
             if (await this.contactRepo.hasContactActiveSubscriber(contact.id, sr)) {
-                throw new HttpException(Messages.invoke(Messages.CONTACT_STILL_IN_USE), 423) // 423 HTTP LOCKED
+                throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_SUBSCRIBER'), 423) // 423 HTTP LOCKED
             }
 
             if (await this.contactRepo.hasContactTerminatedContract(contact.id, sr) || await this.contactRepo.hasContactTerminatedSubscriber(contact.id, sr)) {
@@ -86,7 +87,7 @@ export class ContactService implements CrudService<internal.Contact>{
             if (oldContact.reseller_id != contact.reseller_id) {
                 const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
                 if (!reseller) {
-                    throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID))
+                    throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
                 }
             }
         }

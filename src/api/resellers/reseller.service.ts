@@ -3,12 +3,12 @@ import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AppService} from '../../app.service'
 import {internal} from '../../entities'
-import {Messages} from '../../config/messages.config'
 import {ResellerMariadbRepository} from './repositories/reseller.mariadb.repository'
 import {ResellerStatus} from '../../entities/internal/reseller.internal.entity'
-import {deepCopy} from '../../repositories/acl-role.mock.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
+import {I18nService} from 'nestjs-i18n'
+import {deepCopy} from '../../helpers/deep-copy.helper'
 
 @Injectable()
 export class ResellerService implements CrudService<internal.Reseller> {
@@ -16,6 +16,7 @@ export class ResellerService implements CrudService<internal.Reseller> {
 
     constructor(
         private readonly app: AppService,
+        @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(ResellerMariadbRepository) private readonly resellerRepo: ResellerMariadbRepository,
     ) {
     }
@@ -27,7 +28,7 @@ export class ResellerService implements CrudService<internal.Reseller> {
         const existingReseller = await this.resellerRepo.readByName(reseller.name, sr)
         if (existingReseller != undefined) {
             if (existingReseller.status != ResellerStatus.Terminated) {
-                throw new UnprocessableEntityException(Messages.invoke(Messages.NAME_EXISTS, sr))
+                throw new UnprocessableEntityException(this.i18n.t('errors.reseller.NAME_EXISTS', {args: {name: existingReseller.name}}))
             }
             await this.resellerRepo.renameReseller(existingReseller.id, existingReseller.name)
         }
@@ -79,7 +80,7 @@ export class ResellerService implements CrudService<internal.Reseller> {
     private async validateUpdate(oldReseller: internal.Reseller, newReseller: internal.Reseller, sr: ServiceRequest): Promise<boolean> {
         if (sr.user.reseller_id_required) {
             if (sr.user.reseller_id != newReseller.id) {
-                throw new ForbiddenException(Messages.invoke(Messages.CHANGE_UNASSOCIATED_FORBIDDEN, sr))
+                throw new ForbiddenException(this.i18n.t('errors.RESELLER_CHANGE_UNASSOCIATED_FORBIDDEN'))
             }
         }
         if (oldReseller.contract_id != newReseller.contract_id) {
@@ -88,7 +89,7 @@ export class ResellerService implements CrudService<internal.Reseller> {
         if (oldReseller.name != newReseller.name) {
             const res = await this.resellerRepo.readByName(newReseller.name, sr)
             if (res != undefined) {
-                throw new UnprocessableEntityException(Messages.invoke(Messages.NAME_EXISTS, sr))
+                throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_NAME_EXISTS'))
             }
         }
         return true
@@ -96,13 +97,13 @@ export class ResellerService implements CrudService<internal.Reseller> {
 
     private async validateContract(reseller: internal.Reseller) {
         if (!await this.resellerRepo.contractExists(reseller.contract_id)) {
-            throw new UnprocessableEntityException(Messages.invoke(Messages.CONTRACT_NOT_FOUND))
+            throw new UnprocessableEntityException(this.i18n.t('errors.CONTRACT_NOT_FOUND'))
         }
         if (await this.resellerRepo.resellerWithContractExists(reseller.contract_id)) {
-            throw new UnprocessableEntityException(Messages.invoke(Messages.CONTRACT_EXISTS))
+            throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_CONTRACT_EXISTS'))
         }
         if (!await this.resellerRepo.contractHasSystemContact(reseller.contract_id)) {
-            throw new UnprocessableEntityException(Messages.invoke(Messages.CONTRACT_INVALID_LINK))
+            throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_CONTRACT_INVALID_LINK'))
         }
     }
 }

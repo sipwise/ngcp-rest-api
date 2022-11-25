@@ -10,6 +10,11 @@
                     "classValidatorShim": true
                 }
             }
-        ]
+        ],
+      "assets": [
+        {"include": "localisation/**/*",
+          "watchAssets": true
+        }
+      ]
     }
 }

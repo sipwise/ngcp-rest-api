@@ -132,6 +132,8 @@ module.exports =
           'cache-manager',
           'cardinal',
           'class-transformer/storage',
+          'fsevents',
+          'hbs',
           'hdb-pool',
           'ioredis',
           'mongodb',

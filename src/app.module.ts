@@ -38,6 +38,9 @@ import {LoggerService} from './logger/logger.service'
 import {ClearCallCounterModule} from './api/clearcallcounters/clear-call-counter.module'
 import {CustomerSpeedDialModule} from './api/customerspeeddials/customer-speed-dial.module'
 import {NumberModule} from './api/numbers/number.module'
+import {AcceptLanguageResolver, CookieResolver, HeaderResolver, I18nModule, QueryResolver} from 'nestjs-i18n'
+
+import * as path from 'path'
 
 let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
     ConfigModule.forRoot({
@@ -47,6 +50,19 @@ let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | Fo
             function () {
                 return AppService.config
             },
+        ],
+    }),
+    I18nModule.forRoot({
+        fallbackLanguage: 'en',
+        loaderOptions: {
+            path: path.join(__dirname, '/localisation/'),
+            watch: true,
+        },
+        resolvers: [
+            {use: QueryResolver, options: ['lang', 'locale', 'l']},
+            new HeaderResolver(['x-custom-lang']),
+            AcceptLanguageResolver,
+            new CookieResolver(['lang', 'locale', 'l']),
         ],
     }),
     AdminModule,

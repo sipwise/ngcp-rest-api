@@ -3,6 +3,7 @@ import {NextFunction, Request, Response} from 'express'
 import Context from '../helpers/context.helper'
 import {obfuscatePasswordJSON} from '../helpers/password-obfuscator.helper'
 import {LoggerService} from '../logger/logger.service'
+import {deepCopy} from '../helpers/deep-copy.helper'
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
@@ -27,7 +28,11 @@ export class LoggerMiddleware implements NestMiddleware {
         } else {
             body = JSON.parse(body)
         }
+        const headers = deepCopy(req.headers)
 
+        if (headers['authorization'])
+            delete headers['authorization']
+        
         this.log.log({
             message: 'REQUEST',
             tx: ctx.txid,
@@ -37,6 +42,7 @@ export class LoggerMiddleware implements NestMiddleware {
             content_type: req.header('content-type'),
             method: req.method,
             received_at: ctx.startTime,
+            headers: headers,
             body: body,
         })
         next()

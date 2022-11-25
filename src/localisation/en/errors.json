@@ -1,0 +1,146 @@
+{
+  "PERMISSION_DENIED": {
+    "message": "Permission denied",
+    "code": 10001
+  },
+  "INVALID_USER_ROLE": {
+    "message": "Invalid user role",
+    "code": 10002
+  },
+  "UNKNOWN_ROLE": {
+    "message": "Unknown role {role}",
+    "code": 10003
+  },
+  "ADMIN_DELETE_SPECIAL_USER": {
+    "message": "Cannot delete special user: {username}",
+    "code": 10004
+  },
+  "ADMIN_DELETE_SELF": {
+    "message": "Cannot delete self",
+    "code": 10005
+  },
+  "ADMIN_CHANGE_PROPERTY_SELF": {
+    "message": "Cannot change own property",
+    "code": 10006
+  },
+  "RESELLER_ID_INVALID": {
+    "message": "Invalid reseller_id",
+    "code": 10007
+  },
+  "CONTACT_HAS_ACTIVE_CONTRACT": {
+    "message": "Contact is still in use by an active contract",
+    "code": 10008
+  },
+  "CONTACT_HAS_ACTIVE_SUBSCRIBER": {
+    "message": "Contact is still in use by an active subscriber",
+    "code": 10009
+  },
+  "CONTACT_DELETE_SYSTEM_CONTACT": {
+    "message": "Cannot delete system contact",
+    "code": 10010
+  },
+  "CONTACT_IS_CUSTOMER_CONTACT": {
+    "message": "reseller_id not allowed on system contact",
+    "code": 10011
+  },
+  "CONTACT_DELETE_CUSTOMER_CONTACT": {
+    "message": "Cannot delete customer contact",
+    "code": 10012
+  },
+  "RESELLER_NAME_EXISTS": {
+    "message": "invalid 'name', reseller with name '{name}' already exists",
+    "code": 10013
+  },
+  "RESELLER_CHANGE_UNASSOCIATED_FORBIDDEN": {
+    "message": "Updating item not associated with a reseller is not allowed",
+    "code": 10014
+  },
+  "RESELLER_CONTRACT_EXISTS": {
+    "message": "invalid 'contract_id', reseller with contract already exists",
+    "code": 10015
+  },
+  "CONTRACT_NOT_FOUND": {
+    "message": "Invalid 'contract_id'",
+    "code": 10016
+  },
+  "CONTACT_CONTRACT_INVALID_LINK": {
+    "message": "Invalid 'contract_id', linking to a customer contact",
+    "code": 10017
+  },
+  "TYPE_INVALID": {
+    "message": "invalid \"type\"",
+    "code": 10018
+  },
+  "CONTACT_ID_INVALID": {
+    "message": "invalid contact_id",
+    "code": 10019
+  },
+  "DOMAIN_ALREADY_EXISTS": {
+    "message": "domain '{domain}' already exists",
+    "code": 10020
+  },
+  "DOMAIN_DOES_NOT_BELONG_TO_RESELLER": {
+    "message": "domain does not belong to reseller",
+    "code": 10021
+  },
+  "FILES_LIMIT_REACHED": {
+    "message": "Files limit reached",
+    "code": 10022
+  },
+  "QUOTA_EXCEEDED": {
+    "message": "Quota exceeded",
+    "code": 10023
+  },
+  "REQUEST_PROCESSING_ERROR": {
+    "message": "Cannot process the request",
+    "code": 10024
+  },
+  "SUBSCRIBER_NOT_FOUND": {
+    "message": "Subscriber not found",
+    "code": 10025
+  },
+  "DUPLICATE_ENTRY": {
+    "message": "Duplicate entry",
+    "code": 10026
+  },
+  "EXPAND_NOT_POSSIBLE": {
+    "message": "Expanding {field} not allowed or impossible",
+    "code": 10027
+  },
+  "EXPAND_FAILED": {
+    "message": "Cannot expand field {field}",
+    "code": 10028
+  },
+  "VALIDATION_FAILED_UNSUPPORTED_ID": {
+    "message": "Validation failed (unsupported :id format)",
+    "code": 10029
+  },
+  "CHANGE_ID_FORBIDDEN": {
+    "message": "Changing the reseller ID is not allowed",
+    "code": 10030
+  },
+  "RESELLER_SET_ID_FORBIDDEN": {
+    "message": "Cannot set the reseller Id if it was unset before",
+    "code": 10031
+  },
+  "RESELLER_INVALID_ID": {
+    "message": "Reseller ID other than the user\"s reseller ID is not allowed",
+    "code": 10032
+  },
+  "RESELLER_UNDEFINED_ID": {
+    "message": "Undefined reseller ID is not allowed",
+    "code": 10033
+  },
+  "RESELLER_CREATE_INVALID_ASSOCIATION": {
+    "message": "Creating items associated with a reseller is allowed for admin and reseller users only",
+    "code": 10034
+  },
+  "RESELLER_UPDATE_INVALID_ASSOCIATION": {
+    "message": "Updating items associated with a reseller is allowed for admin and reseller users only",
+    "code": 10035
+  },
+  "INVALID_SYSTEM_CONTACT": {
+    "message": "The contact_id is not a valid ngcp:systemcontacts item, but an ngcp:customercontacts item",
+    "code": 10036
+  }
+}

@@ -2,12 +2,12 @@ import {AppService} from '../../app.service'
 import {Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {internal} from '../../entities'
-import {Messages} from '../../config/messages.config'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ContractMariadbRepository} from './repositories/contract.mariadb.repository'
-import {deepCopy} from '../../repositories/acl-role.mock.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
+import {I18nService} from 'nestjs-i18n'
+import {deepCopy} from '../../helpers/deep-copy.helper'
 
 @Injectable()
 export class ContractService implements CrudService<internal.Contract> {
@@ -15,6 +15,7 @@ export class ContractService implements CrudService<internal.Contract> {
 
     constructor(
         private readonly app: AppService,
+        @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(ContractMariadbRepository) private readonly contractsRepo: ContractMariadbRepository,
     ) {
     }
@@ -52,7 +53,7 @@ export class ContractService implements CrudService<internal.Contract> {
     private async setProductId(contract: internal.Contract, sr: ServiceRequest) {
         const product = await this.contractsRepo.readProductByType(contract.type, sr)
         if (product == undefined) {
-            throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_TYPE))
+            throw new UnprocessableEntityException(this.i18n.t('errors.TYPE_INVALID'))
         }
         contract.product_id = product.id
     }
@@ -60,7 +61,7 @@ export class ContractService implements CrudService<internal.Contract> {
     private async validateSystemContact(contract: internal.Contract, sr: ServiceRequest) {
         const systemContact = await this.contractsRepo.readActiveSystemContact(contract.contact_id, sr)
         if (systemContact == undefined) {
-            throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_CONTACT_ID))
+            throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_ID_INVALID'))
         }
     }
 

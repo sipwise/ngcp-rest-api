@@ -2,16 +2,17 @@ import {BadRequestException, Inject, Injectable, UnprocessableEntityException} f
 import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {Messages} from '../../config/messages.config'
 import {ContactMariadbRepository} from '../contacts/repositories/contact.mariadb.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
+import {I18nService} from 'nestjs-i18n'
 
 @Injectable()
 export class SystemContactService implements CrudService<internal.Contact> {
     private readonly log = new LoggerService(SystemContactService.name)
 
     constructor(
+        @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(ContactMariadbRepository) private readonly contactRepo: ContactMariadbRepository,
     ) {
     }
@@ -23,7 +24,7 @@ export class SystemContactService implements CrudService<internal.Contact> {
             user: sr.user.username,
         })
         if (contact['reseller_id'] !== undefined) {
-            throw new BadRequestException(Messages.invoke(Messages.RESELLER_ID_SYSTEMCONTACT, sr)) // TODO: proper error message
+            throw new BadRequestException(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'))
         }
         return await this.contactRepo.create(contact, sr)
     }
@@ -37,7 +38,7 @@ export class SystemContactService implements CrudService<internal.Contact> {
         })
         const contact = await this.contactRepo.readSystemContactById(id, sr)
         if (contact.reseller_id != undefined) {
-            throw new BadRequestException(Messages.invoke(Messages.DELETE_CUSTOMERCONTACT)) // TODO: find better description
+            throw new BadRequestException(this.i18n.t('errors.CONTACT_DELETE_CUSTOMER_CONTACT'))
         }
         return await this.contactRepo.delete(contact.id, sr)
     }
@@ -70,7 +71,7 @@ export class SystemContactService implements CrudService<internal.Contact> {
         })
         const oldContact = await this.contactRepo.readSystemContactById(id, sr)
         if (contact.reseller_id || oldContact.reseller_id) {
-            throw new UnprocessableEntityException(Messages.invoke(Messages.RESELLER_ID_SYSTEMCONTACT))
+            throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'))
         }
         return await this.contactRepo.update(id, contact, sr)
     }
@@ -88,7 +89,7 @@ export class SystemContactService implements CrudService<internal.Contact> {
         contact.id = id
 
         if (contact.reseller_id != undefined) {
-            throw new UnprocessableEntityException(Messages.invoke(Messages.RESELLER_ID_SYSTEMCONTACT))
+            throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'))
         }
         return await this.contactRepo.update(id, contact, sr)
     }

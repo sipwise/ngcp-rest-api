@@ -7,12 +7,13 @@ import {AppModule} from '../../app.module'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AuthResponseDto} from '../../auth/dto/auth-response.dto'
 import {internal} from '../../entities'
-import {AclRoleMockRepository, deepCopy} from '../../repositories/acl-role.mock.repository'
+import {AclRoleMockRepository} from '../../repositories/acl-role.mock.repository'
 import {AclRoleRepository} from '../../repositories/acl-role.repository'
 import {ForbiddenException} from '@nestjs/common'
 import {AdminMockRepository} from './repositories/admin.mock.repository'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {RbacRole} from '../../config/constants.config'
+import {deepCopy} from '../../helpers/deep-copy.helper'
 
 const user: AuthResponseDto = {
     readOnly: false,

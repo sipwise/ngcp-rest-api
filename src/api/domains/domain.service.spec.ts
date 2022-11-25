@@ -6,7 +6,7 @@ import {DomainMockRepository} from './repositories/domain.mock.repository'
 import {DomainModule} from './domain.module'
 import {DomainMariadbRepository} from './repositories/domain.mariadb.repository'
 import {AuthResponseDto} from '../../auth/dto/auth-response.dto'
-import {deepCopy} from '../../repositories/acl-role.mock.repository'
+import {deepCopy} from '../../helpers/deep-copy.helper'
 
 const user: AuthResponseDto = {
     readOnly: false,

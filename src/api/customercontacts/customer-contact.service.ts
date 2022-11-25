@@ -3,10 +3,10 @@ import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helpe
 import {internal} from '../../entities'
 import {AppService} from '../../app.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {Messages} from '../../config/messages.config'
 import {ContactMariadbRepository} from '../contacts/repositories/contact.mariadb.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
+import {I18nService} from 'nestjs-i18n'
 
 @Injectable()
 export class CustomerContactService implements CrudService<internal.Contact> {
@@ -14,6 +14,7 @@ export class CustomerContactService implements CrudService<internal.Contact> {
 
     constructor(
         private readonly app: AppService,
+        @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(ContactMariadbRepository) private readonly contactRepo: ContactMariadbRepository,
     ) {
     }
@@ -29,7 +30,7 @@ export class CustomerContactService implements CrudService<internal.Contact> {
         }
         const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
         if (!reseller) {
-            throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID, sr))
+            throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
         }
         return await this.contactRepo.create(contact, sr)
     }
@@ -43,15 +44,15 @@ export class CustomerContactService implements CrudService<internal.Contact> {
         })
         const contact = await this.contactRepo.readCustomerContactById(id, sr)
         if (!contact.reseller_id) { // TODO: imo this check is redundant as the repository only returns customer contacts
-            throw new BadRequestException(Messages.invoke(Messages.DELETE_SYSTEMCONTACT)) // TODO: find better description
+            throw new BadRequestException(this.i18n.t('errors.CONTACT_DELETE_SYSTEM_CONTACT')) // TODO: find better description
         }
 
         if (await this.contactRepo.hasContactActiveContract(contact.id, sr)) {
-            throw new HttpException(Messages.invoke(Messages.CONTACT_STILL_IN_USE), 423) // 423 HTTP LOCKED
+            throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_CONTRACT'), 423) // 423 HTTP LOCKED
         }
 
         if (await this.contactRepo.hasContactActiveSubscriber(contact.id, sr)) {
-            throw new HttpException(Messages.invoke(Messages.CONTACT_STILL_IN_USE), 423) // 423 HTTP LOCKED
+            throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_SUBSCRIBER'), 423) // 423 HTTP LOCKED
         }
 
         if (await this.contactRepo.hasContactTerminatedContract(contact.id, sr) || await this.contactRepo.hasContactTerminatedSubscriber(contact.id, sr)) {
@@ -93,7 +94,7 @@ export class CustomerContactService implements CrudService<internal.Contact> {
         if (oldContact.reseller_id != contact.reseller_id) {
             const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
             if (!reseller) {
-                throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID))
+                throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
             }
         }
         return await this.contactRepo.update(id, contact, sr)
@@ -117,7 +118,7 @@ export class CustomerContactService implements CrudService<internal.Contact> {
 
         const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
         if (!reseller) {
-            throw new UnprocessableEntityException(Messages.invoke(Messages.INVALID_RESELLER_ID))
+            throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
         }
         return await this.contactRepo.update(id, contact, sr)
     }

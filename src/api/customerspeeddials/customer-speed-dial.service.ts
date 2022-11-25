@@ -1,24 +1,19 @@
-import {
-    ForbiddenException,
-    Inject,
-    Injectable,
-    NotFoundException,
-    UnprocessableEntityException,
-} from '@nestjs/common'
+import {ForbiddenException, Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {Messages} from '../../config/messages.config'
 import {CustomerSpeedDialMariadbRepository} from './repositories/customer-speed-dial.mariadb.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
 import {validateOrReject} from 'class-validator'
+import {I18nService} from 'nestjs-i18n'
 
 @Injectable()
 export class CustomerSpeedDialService implements CrudService<internal.CustomerSpeedDial> {
     private readonly log = new LoggerService(CustomerSpeedDialService.name)
 
     constructor(
+        @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(CustomerSpeedDialMariadbRepository) private readonly customerSpeedDialRepo: CustomerSpeedDialMariadbRepository,
     ) {
     }
@@ -89,9 +84,7 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
                 if (!domain)
                     domain = await this.customerSpeedDialRepo.readSubscriberDomain(entity.contract_id, { isPilot: false })
                 if (!domain) {
-                    throw new ForbiddenException(
-                        Messages.invoke(Messages.SUBSCRIBER_NOT_FOUND, sr),
-                    )
+                    throw new ForbiddenException(this.i18n.t('errors.SUBSCRIBER_NOT_FOUND'))
                 }
                 entry.destination = `sip:${entry.destination}@${domain}`
             }

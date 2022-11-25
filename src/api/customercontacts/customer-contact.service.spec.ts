@@ -8,11 +8,11 @@ import {ContactMariadbRepository} from '../contacts/repositories/contact.mariadb
 import {CustomerContactService} from './customer-contact.service'
 import {internal} from '../../entities'
 import {HttpException, UnprocessableEntityException} from '@nestjs/common'
-import {deepCopy} from '../../repositories/acl-role.mock.repository'
 import {CustomerContactModule} from './customer-contact.module'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {ContractStatus} from '../../entities/internal/contract.internal.entity'
 import {ContactStatus} from '../../entities/internal/contact.internal.entity'
+import {deepCopy} from '../../helpers/deep-copy.helper'
 
 const user: AuthResponseDto = {
     readOnly: false,
