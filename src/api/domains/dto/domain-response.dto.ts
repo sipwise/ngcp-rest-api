@@ -1,5 +1,5 @@
 import {internal} from '../../../entities'
-import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {ApiHideProperty, ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
 
 interface DomainResponseDtoAttributes {
@@ -15,7 +15,7 @@ export class DomainResponseDto implements DomainResponseDtoAttributes {
         id: number
     @ApiProperty()
         reseller_id: number
-    @ApiPropertyOptional()
+    @ApiHideProperty()
         reseller_id_expand?: ResellerResponseDto
 
     constructor(domain: internal.Domain) {

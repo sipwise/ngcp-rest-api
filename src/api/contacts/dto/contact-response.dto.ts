@@ -1,5 +1,5 @@
 import {ContactGender, ContactStatus} from '../../../entities/internal/contact.internal.entity'
-import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {ApiHideProperty, ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
 import {RbacRole} from '../../../config/constants.config'
 import {internal} from '../../../entities'
@@ -61,7 +61,7 @@ export class ContactResponseDto {
         postcode?: string
     @ApiPropertyOptional()
         reseller_id?: number
-    @ApiPropertyOptional()
+    @ApiHideProperty()
         reseller_id_expand?: ResellerResponseDto
     @ApiProperty()
         status: ContactStatus

@@ -1,6 +1,6 @@
 import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
 import {internal} from '../../../entities'
-import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {ApiHideProperty, ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {RbacRole} from '../../../config/constants.config'
 
 export class AdminResponseDto {
@@ -32,7 +32,7 @@ export class AdminResponseDto {
         read_only: boolean
     @ApiPropertyOptional()
         reseller_id?: number
-    @ApiPropertyOptional()
+    @ApiHideProperty()
         reseller_id_expand?: ResellerResponseDto
     @ApiProperty()
         role: RbacRole
