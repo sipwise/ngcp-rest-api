@@ -47,8 +47,8 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string) 
             tryItOutEnabled: true,
             supportedSubmitMethods: ['get', 'patch', 'put', 'post', 'delete', 'options', 'head'], // 'trace' is disabled
             onComplete: () => { // reset auth that might come with the browser
-                this.preauthorizeBasic('basicAuth', '', '')
-                this.preauthorizeApiKey('bearerAuth', '')
+                this.ui.preauthorizeBasic('basicAuth', '123', '123')
+                this.ui.preauthorizeApiKey('bearerAuth', '123')
             }
         },
     })
