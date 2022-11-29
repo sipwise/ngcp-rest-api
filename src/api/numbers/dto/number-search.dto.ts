@@ -1,4 +1,4 @@
-export class CustomerNumberSearchDto {
+export class NumberSearchDto {
     subscriber_id: number = undefined
     is_primary: boolean = undefined
     is_devid: boolean = undefined

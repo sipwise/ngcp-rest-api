@@ -4,18 +4,20 @@ import {addOrderByToQueryBuilder} from '../../../helpers/query-builder.helper'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {db, internal} from '../../../entities'
 import {LoggerService} from '../../../logger/logger.service'
-import {CustomerNumberSearchDto} from '../dto/customer-number-search.dto'
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {AppService} from '../../../app.service'
 import {Injectable} from '@nestjs/common'
+import {NumberSearchDto} from '../dto/number-search.dto'
 
-interface RawCustomerNumberRow {
+interface RawNumberRow {
+    id: number
     contract_id: number
     billingSubscriber_id: number
     voipNumber_id: number
     voipNumber_cc: number
     voipNumber_ac: string
     voipNumber_sn: string
+    voipNumber_reseller_id: number
     is_primary: number
     is_devid: number
 }
@@ -26,8 +28,8 @@ interface FilterBy {
 }
 
 @Injectable()
-export class CustomerNumberMariadbRepository {
-    private readonly log = new LoggerService(CustomerNumberMariadbRepository.name)
+export class NumberMariadbRepository {
+    private readonly log = new LoggerService(NumberMariadbRepository.name)
 
     constructor(
         private readonly app: AppService,
@@ -35,65 +37,64 @@ export class CustomerNumberMariadbRepository {
     }
 
     @HandleDbErrors
-    async readById(customerId: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.CustomerNumber> {
+    async readById(numberID: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.VoipNumber> {
         const qb = this.createBaseQueryBuilder(sr, filterBy)
-        const searchLogic = new SearchLogic(sr, Object.keys(new CustomerNumberSearchDto()))
+        const searchLogic = new SearchLogic(sr, Object.keys(new NumberSearchDto()))
         await this.addSearchFilterToQueryBuilder(qb, sr.query, searchLogic)
-        qb.andWhere('contract.id = :contractId', {contractId: customerId})
-        const rawResult: RawCustomerNumberRow[] = await qb.getRawMany()
-        if (rawResult.length == 0)
+        qb.andWhere('voipNumber.id = :voipNumberID', {voipNumberID: numberID})
+        const raw: RawNumberRow = await qb.getRawOne()
+        if (raw == undefined)
             throw new EntityNotFoundError(db.billing.Contract, '')
-        const transformed = this.transformRawCustomerNumberRows(rawResult)
-        return internal.CustomerNumber.create({id: customerId, numbers: transformed[customerId]})
+        return internal.VoipNumber.create({
+            subscriberID: raw.billingSubscriber_id,
+            resellerID: raw.voipNumber_reseller_id,
+            sn: raw.voipNumber_sn,
+            ac: raw.voipNumber_ac,
+            cc: raw.voipNumber_cc,
+            isDevID: raw.is_devid == 1,
+            isPrimary: raw.is_primary == 1,
+            id: raw.voipNumber_id,
+            contractID: raw.contract_id,
+        })
     }
 
     @HandleDbErrors
-    async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.CustomerNumber[], number]> {
+    async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.VoipNumber[], number]> {
         const qb = this.createReadAllQueryBuilder(sr, filterBy)
 
         const resultRawEntity = await qb.getRawAndEntities()
-        const result: RawCustomerNumberRow[] = resultRawEntity.raw
+        const result: RawNumberRow[] = resultRawEntity.raw
         const count = await qb.getCount()
 
-        const transformed = this.transformRawCustomerNumberRows(result)
+        const numbers = this.transformRawNumberRows(result)
 
-        const customerNumbers: internal.CustomerNumber[] = []
-        for (const id in transformed) {
-            customerNumbers.push(internal.CustomerNumber.create({id: +id, numbers: transformed[+id]}))
-        }
-        return [customerNumbers, count]
+        return [numbers, count]
     }
 
     /**
-     * Takes an array of `RawCustomerNumberRow` and returns a hash where the key is the contract ID and the value is an
+     * Takes an array of `RawNumberRow` and returns a hash where the key is the contract ID and the value is an
      * array of subscribers belonging to that ID.
-     * @param customerNumbers
+     * @param numbers
      * @private
      */
-    private transformRawCustomerNumberRows(customerNumbers: RawCustomerNumberRow[]): { [id: number]: internal.SubscriberNumber[] } {
-        const transformed = {}
-        customerNumbers.forEach(obj => {
-            if (transformed[obj.contract_id] == undefined) {
-                transformed[obj.contract_id] = []
-            }
-            transformed[obj.contract_id].push(internal.SubscriberNumber.create({
-                id: obj.billingSubscriber_id,
-                sn: obj.voipNumber_sn,
-                ac: obj.voipNumber_ac,
-                cc: obj.voipNumber_cc,
-                isDevID: obj.is_devid == 1,
-                isPrimary: obj.is_primary == 1,
-                numberID: obj.voipNumber_id,
-            }))
-        })
-        return transformed
+    private transformRawNumberRows(numbers: RawNumberRow[]): internal.VoipNumber[] {
+        return numbers.map(raw => internal.VoipNumber.create({
+            subscriberID: raw.billingSubscriber_id,
+            resellerID: raw.voipNumber_reseller_id,
+            sn: raw.voipNumber_sn,
+            ac: raw.voipNumber_ac,
+            cc: raw.voipNumber_cc,
+            isDevID: raw.is_devid == 1,
+            isPrimary: raw.is_primary == 1,
+            id: raw.voipNumber_id,
+            contractID: raw.contract_id,
+        }))
     }
 
-    private createBaseQueryBuilder(sr: ServiceRequest, filterBy: FilterBy): SelectQueryBuilder<db.billing.Contract> {
-        const qb = db.billing.Contract.createQueryBuilder('contract')
-        qb.innerJoinAndSelect('contract.contact', 'contact')
-        qb.innerJoinAndSelect('contract.voipSubscribers', 'billingSubscriber')
-        qb.innerJoinAndSelect('billingSubscriber.voipNumbers', 'voipNumber')
+    private createBaseQueryBuilder(sr: ServiceRequest, filterBy: FilterBy): SelectQueryBuilder<db.billing.VoipNumber> {
+        const qb = db.billing.VoipNumber.createQueryBuilder('voipNumber')
+        qb.innerJoinAndSelect('voipNumber.subscriber', 'billingSubscriber')
+        qb.innerJoinAndSelect('billingSubscriber.contract', 'contract')
         qb.innerJoinAndSelect(
             sqb => sqb
                 .select(['is_primary', 'is_devid', 'username'])
@@ -105,8 +106,8 @@ export class CustomerNumberMariadbRepository {
         return qb
     }
 
-    private createReadAllQueryBuilder(sr: ServiceRequest, filterBy: FilterBy): SelectQueryBuilder<db.billing.Contract> {
-        const searchLogic = new SearchLogic(sr, Object.keys(new CustomerNumberSearchDto()))
+    private createReadAllQueryBuilder(sr: ServiceRequest, filterBy: FilterBy): SelectQueryBuilder<db.billing.VoipNumber> {
+        const searchLogic = new SearchLogic(sr, Object.keys(new NumberSearchDto()))
         const qb = this.createBaseQueryBuilder(sr, filterBy)
         this.addSearchFilterToQueryBuilder(qb, sr.query, searchLogic)
         addOrderByToQueryBuilder(qb, sr.query, searchLogic)
@@ -114,12 +115,13 @@ export class CustomerNumberMariadbRepository {
         return qb
     }
 
-    private addSearchFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contract>, params: string[], searchLogic: SearchLogic): void {
+    private addSearchFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.VoipNumber>, params: string[], searchLogic: SearchLogic): void {
         const searchFields = [
+            {alias: 'billingSubscriber', property: 'subscriber_id', searchParam: 'subscriber_id'},
+            {alias: 'contract', property: 'id', searchParam: 'customer_id'},
             {alias: 'dbAlias', property: 'is_primary', searchParam: 'is_primary'},
             {alias: 'dbAlias', property: 'is_devid', searchParam: 'is_devid'},
-            {alias: 'billingSubscriber', property: 'id', searchParam: 'subscriber_id'},
-            {alias: 'voipNumber', property: 'id', searchParam: 'number_id'},
+            {alias: 'voipNumber', property: 'reseller_id', searchParam: 'reseller_id'},
             {alias: 'voipNumber', property: 'cc', searchParam: 'cc'},
             {alias: 'voipNumber', property: 'ac', searchParam: 'ac'},
             {alias: 'voipNumber', property: 'sn', searchParam: 'sn'},
@@ -153,10 +155,10 @@ export class CustomerNumberMariadbRepository {
         qb.skip(searchLogic.rows * (searchLogic.page - 1))
     }
 
-    private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contract>, filterBy: FilterBy): void {
+    private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.VoipNumber>, filterBy: FilterBy): void {
         if (filterBy) {
             if (filterBy.resellerId) {
-                qb.andWhere('contact.reseller_id = :reseller_id', {reseller_id: filterBy.resellerId})
+                qb.andWhere('voipNumber.reseller_id = :reseller_id', {reseller_id: filterBy.resellerId})
             }
             if (filterBy.customerId) {
                 qb.andWhere('contract.id = :customerId', {customerId: filterBy.customerId})
