@@ -1,2 +1,3 @@
 etc/api.conf                                            etc/ngcp-rest-api
 prod/*                                                  usr/share/ngcp-rest-api
+src/localisation/*					usr/share/ngcp-rest-api/localisation
