@@ -1,24 +1,25 @@
 import {internal} from '../../../entities'
-import {ApiProperty} from '@nestjs/swagger'
-import {IsArray, IsNotEmpty, ValidateNested} from 'class-validator'
-import {CustomerSpeedDialEntryDto} from './customer-speed-dial-entry.dto'
-import {Type} from 'class-transformer'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {IsNotEmpty} from 'class-validator'
 
 export class CustomerSpeedDialCreateDto {
     @IsNotEmpty()
-    @ApiProperty({description: 'Customer id', example: 1})
-        customer_id: number
+    @ApiPropertyOptional({description: 'Customer id', example: 1})
+        customer_id?: number
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CustomerSpeedDialEntryDto)
-    @ApiProperty({description: 'Speed dial entries', example: '[{"slot": "*0", "destination": "sip:4310001@exampledomain.org"}]'})
-        speeddials: CustomerSpeedDialEntryDto[]
+    @IsNotEmpty()
+    @ApiProperty({description: 'Speed dial slot', example: '*0'})
+        slot: string
+
+    @IsNotEmpty()
+    @ApiProperty({description: 'Speed dial destination', example: 'sip:4310001@exampledomain.org'})
+        destination: string
 
     toInternal(): internal.CustomerSpeedDial {
         const csd = new internal.CustomerSpeedDial()
-        csd.contract_id = this.customer_id
-        csd.speeddials = this.speeddials
+        csd.contractId = this.customer_id
+        csd.slot = this.slot
+        csd.destination = this.destination
         return csd
     }
 }

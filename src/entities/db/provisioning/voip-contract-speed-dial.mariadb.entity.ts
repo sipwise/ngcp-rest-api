@@ -38,35 +38,19 @@ export class VoipContractSpeedDial extends BaseEntity {
     @JoinColumn({name: 'contract_id'})
     contract?: Contract
 
-    // virtual JSON string
-    speeddials: string
-
-    static async fromInternal(csd: internal.CustomerSpeedDial): Promise<VoipContractSpeedDial[]> {
-        return await Promise.all(csd.speeddials.map(async (sd) =>
-            (VoipContractSpeedDial.create({
-                id: sd.id,
-                contract_id: csd.contract_id,
-                slot: sd.slot,
-                destination: sd.destination
-            }))
-        ))
+    fromInternal(csd: internal.CustomerSpeedDial) {
+        this.id = csd.id
+        this.contract_id = csd.contractId
+        this.slot = csd.slot
+        this.destination = csd.destination
     }
 
-    static async toInternal(entries: VoipContractSpeedDial[]): Promise<internal.CustomerSpeedDial> {
+    toInternal(): internal.CustomerSpeedDial {
         const csd = new internal.CustomerSpeedDial()
-        csd.contract_id = entries[0].contract_id
-        csd.speeddials = await Promise.all(entries.map(async (sd) => ({
-                slot: sd.slot,
-                destination: sd.destination
-            })
-        ))
-        return csd
-    }
-
-    static async rawToInternal(entry: VoipContractSpeedDial): Promise<internal.CustomerSpeedDial> {
-        const csd = new internal.CustomerSpeedDial()
-        csd.contract_id = entry.contract_id
-        csd.speeddials = await JSON.parse(entry.speeddials)
+        csd.id = this.id
+        csd.contractId = this.contract_id
+        csd.slot = this.slot
+        csd.destination = this.destination
         return csd
     }
 }

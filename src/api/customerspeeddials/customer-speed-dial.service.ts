@@ -19,7 +19,7 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
     }
 
     async create(entity: internal.CustomerSpeedDial, sr: ServiceRequest): Promise<internal.CustomerSpeedDial> {
-        await this.checkPermissions(entity.contract_id, sr)
+        await this.checkPermissions(entity.contractId, sr)
         await this.checkAndTransformDestination(entity, sr)
         return await this.customerSpeedDialRepo.create(entity, sr)
     }
@@ -41,17 +41,15 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
     }
 
     async update(id: number, entity: internal.CustomerSpeedDial, sr: ServiceRequest): Promise<internal.CustomerSpeedDial> {
-        entity.contract_id = id
-        await this.checkPermissions(entity.contract_id, sr)
+        await this.checkPermissions(entity.contractId, sr)
         await this.checkAndTransformDestination(entity, sr)
         return await this.customerSpeedDialRepo.update(id, entity, sr)
     }
 
     async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.CustomerSpeedDial> {
         const oldCsd = await this.customerSpeedDialRepo.readById(id, sr)
-        await this.checkPermissions(id, sr)
         const csd: internal.CustomerSpeedDial = applyPatch(oldCsd, patch).newDocument
-        csd.contract_id = id
+        await this.checkPermissions(csd.contractId, sr)
         try {
             await validateOrReject(csd)
         } catch(e) {
@@ -63,7 +61,7 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
 
     async delete(id: number, sr: ServiceRequest): Promise<number> {
         const csd = await this.customerSpeedDialRepo.readById(id, sr)
-        await this.checkPermissions(csd.contract_id, sr)
+        await this.checkPermissions(csd.contractId, sr)
         return await this.customerSpeedDialRepo.delete(id, sr)
     }
 
@@ -77,17 +75,15 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
     }
 
     private async checkAndTransformDestination(entity: internal.CustomerSpeedDial, sr: ServiceRequest): Promise<void> {
-        await Promise.all(entity.speeddials.map(async (entry) => {
-            if (!RegExp('^sip:').test(entry.destination)) {
-                let domain: string
-                domain = await this.customerSpeedDialRepo.readSubscriberDomain(entity.contract_id, { isPilot: true })
-                if (!domain)
-                    domain = await this.customerSpeedDialRepo.readSubscriberDomain(entity.contract_id, { isPilot: false })
-                if (!domain) {
-                    throw new ForbiddenException(this.i18n.t('errors.SUBSCRIBER_NOT_FOUND'))
-                }
-                entry.destination = `sip:${entry.destination}@${domain}`
+        if (!RegExp('^sip:').test(entity.destination)) {
+            let domain: string
+            domain = await this.customerSpeedDialRepo.readSubscriberDomain(entity.contractId, { isPilot: true })
+            if (!domain)
+                domain = await this.customerSpeedDialRepo.readSubscriberDomain(entity.contractId, { isPilot: false })
+            if (!domain) {
+                throw new ForbiddenException(this.i18n.t('errors.SUBSCRIBER_NOT_FOUND'))
             }
-        }))
+            entity.destination = `sip:${entity.destination}@${domain}`
+        }
     }
 }

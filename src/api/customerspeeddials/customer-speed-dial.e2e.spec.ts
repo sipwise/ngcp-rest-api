@@ -10,6 +10,7 @@ import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {HttpExceptionFilter} from '../../helpers/http-exception.filter'
 import {ValidateInputPipe} from '../../pipes/validate.pipe'
 import {validate} from 'class-validator'
+import console from 'console'
 
 describe('CustomerSpeedDial', () => {
     let app: INestApplication
@@ -18,6 +19,7 @@ describe('CustomerSpeedDial', () => {
     let authHeader: [string, string]
     let testCustomerId = 13
     let createdIds: number[] = []
+    let createdEntries = []
     let creds = {username: 'administrator', password: 'administrator'}
 
     beforeAll(async () => {
@@ -72,24 +74,29 @@ describe('CustomerSpeedDial', () => {
 
     describe('', () => { // main tests block
         describe('POST', () => {
-            let csd: any = {
+            let csd1: any = {
                 customer_id: testCustomerId,
-                speeddials: [
-                    {
-                        slot: '*1',
-                        destination: '4310001'
-                    },
-                    {
-                        slot: '*2',
-                        destination: '4310002'
-                    },
-                ]
+                slot: '*1',
+                destination: '4310001'
             }
-            it('create customer speed dial', async () => {
+            let csd2: any = {
+                customer_id: testCustomerId,
+                slot: '*2',
+                destination: '4310002'
+            }
+            it('create customer speed dial *1', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/customerspeeddials')
                     .set(...authHeader)
-                    .send(csd)
+                    .send(csd1)
+                expect(response.status).toEqual(201)
+                createdIds.push(+response.body.id)
+            })
+            it('create customer speed dial *2', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/customerspeeddials')
+                    .set(...authHeader)
+                    .send(csd2)
                 expect(response.status).toEqual(201)
                 createdIds.push(+response.body.id)
             })
@@ -97,7 +104,7 @@ describe('CustomerSpeedDial', () => {
                 const response = await request(app.getHttpServer())
                     .post('/customerspeeddials')
                     .set(...authHeader)
-                    .send(csd)
+                    .send(csd1)
                 expect(response.status).toEqual(422)
             })
             it('validation fail customer speed dial', async () => {
@@ -112,17 +119,23 @@ describe('CustomerSpeedDial', () => {
         describe('GET', () => {
             it('read created customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/customerspeeddials/${testCustomerId}`)
+                    .get(`/customerspeeddials/?customer_id=${testCustomerId}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
-                const csd: CustomerSpeedDialResponseDto = response.body
-                expect(await validate(csd)).toEqual([])
-                expect(csd.id).toEqual(testCustomerId)
-                expect(csd.speeddials).toHaveLength(2)
-                expect(csd.speeddials[0].slot).toEqual('*1')
-                expect(csd.speeddials[0].destination).toMatch(RegExp('^sip:4310001@'))
-                expect(csd.speeddials[1].slot).toEqual('*2')
-                expect(csd.speeddials[1].destination).toMatch(RegExp('^sip:4310002@'))
+                const csdCollection: CustomerSpeedDialResponseDto = response.body
+                expect(await validate(csdCollection)).toEqual([])
+                expect(csdCollection).toHaveLength(2)
+                expect(csdCollection[1]).toEqual(2)
+                const csdEntries = csdCollection[0]
+                expect(await validate(csdEntries)).toEqual([])
+                expect(csdEntries).toHaveLength(2)
+                expect(csdEntries[0].customer_id).toEqual(testCustomerId)
+                expect(csdEntries[0].slot).toEqual('*1')
+                expect(csdEntries[0].destination).toMatch(RegExp('^sip:4310001@'))
+                expect(csdEntries[0].customer_id).toEqual(testCustomerId)
+                expect(csdEntries[1].slot).toEqual('*2')
+                expect(csdEntries[1].destination).toMatch(RegExp('^sip:4310002@'))
+                createdEntries = csdEntries
             })
             it('read non-existing customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
@@ -133,87 +146,93 @@ describe('CustomerSpeedDial', () => {
         })
 
         describe('PUT', () => {
-            const csd = {
-                speeddials: [
-                    {
-                        slot: '*3',
-                        destination: '4310003'
-                    },
-                    {
-                        slot: '*4',
-                        destination: '4310004'
-                    },
-                ]
+            let csd1: any = {
+                customer_id: testCustomerId,
+                slot: '*3',
+                destination: '4310003'
             }
-            it('update customer speed dial', async () => {
+            let csd2: any = {
+                customer_id: testCustomerId,
+                slot: '*4',
+                destination: '4310004'
+            }
+            it('update customer speed dial *1 -> *3', async () => {
                 const response = await request(app.getHttpServer())
-                    .put(`/customerspeeddials/${testCustomerId}`)
+                    .put(`/customerspeeddials/${createdEntries[0]['id']}`)
                     .set(...authHeader)
-                    .send(csd)
+                    .send(csd1)
+                expect(response.status).toEqual(200)
+            })
+            it('update customer speed dial *2 -> *4', async () => {
+                const response = await request(app.getHttpServer())
+                    .put(`/customerspeeddials/${createdEntries[1]['id']}`)
+                    .set(...authHeader)
+                    .send(csd2)
                 expect(response.status).toEqual(200)
             })
             it('read adjusted customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/customerspeeddials/${testCustomerId}`)
+                    .get(`/customerspeeddials/?customer_id=${testCustomerId}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
-                const csd: CustomerSpeedDialResponseDto = response.body
-                expect(await validate(csd)).toEqual([])
-                expect(csd.id).toEqual(testCustomerId)
-                expect(csd.speeddials).toHaveLength(2)
-                expect(csd.speeddials[0].slot).toEqual('*3')
-                expect(csd.speeddials[0].destination).toMatch(RegExp('^sip:4310003@'))
-                expect(csd.speeddials[1].slot).toEqual('*4')
-                expect(csd.speeddials[1].destination).toMatch(RegExp('^sip:4310004@'))
+                const csdCollection: CustomerSpeedDialResponseDto = response.body
+                expect(await validate(csdCollection)).toEqual([])
+                expect(csdCollection).toHaveLength(2)
+                expect(csdCollection[1]).toEqual(2)
+                const csdEntries = csdCollection[0]
+                expect(await validate(csdEntries)).toEqual([])
+                expect(csdEntries).toHaveLength(2)
+                expect(csdEntries[0].customer_id).toEqual(testCustomerId)
+                expect(csdEntries[0].slot).toEqual('*3')
+                expect(csdEntries[0].destination).toMatch(RegExp('^sip:4310003@'))
+                expect(csdEntries[0].customer_id).toEqual(testCustomerId)
+                expect(csdEntries[1].slot).toEqual('*4')
+                expect(csdEntries[1].destination).toMatch(RegExp('^sip:4310004@'))
             })
             it('update non-existing customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
                     .put('/customerspeeddials/999911111122')
                     .set(...authHeader)
-                    .send(csd)
+                    .send(csd1)
                 expect(response.status).toEqual(404)
             })
         })
 
         describe('PATCH', () => {
-            const patch: PatchOperation = {
-                op: "add",
-                path: "/speeddials/-",
-                value: {
-                    slot: '*5',
-                    destination: '4310005',
+            const patch: PatchOperation[] = [
+                {
+                    op: "replace",
+                    path: "/slot",
+                    value: '*5',
+                },
+                {
+                    op: "replace",
+                    path: "/destination",
+                    value: '4310005',
                 }
-            }
-            const invalidPatch: PatchOperation = {
-                op: "add",
-                path: "/speeddials",
-                value: {
-                    slot: '*5',
-                    destination: '4310005',
-                }
-            }
-            it('adjust customer speed dial', async () => {
+            ]
+            it('adjust customer speed dial *3 -> *5', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch(`/customerspeeddials/${testCustomerId}`)
+                    .patch(`/customerspeeddials/${createdEntries[0]['id']}`)
                     .set(...authHeader)
                     .send(patch)
                 expect(response.status).toEqual(200)
             })
             it('read updated customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/customerspeeddials/${testCustomerId}`)
+                    .get(`/customerspeeddials/?customer_id=${testCustomerId}&slot=%2A5`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
-                const csd: CustomerSpeedDialResponseDto = response.body
-                expect(await validate(csd)).toEqual([])
-                expect(csd.id).toEqual(testCustomerId)
-                expect(csd.speeddials).toHaveLength(3)
-                expect(csd.speeddials[0].slot).toEqual('*3')
-                expect(csd.speeddials[0].destination).toMatch(RegExp('^sip:4310003@'))
-                expect(csd.speeddials[1].slot).toEqual('*4')
-                expect(csd.speeddials[1].destination).toMatch(RegExp('^sip:4310004@'))
-                expect(csd.speeddials[2].slot).toEqual('*5')
-                expect(csd.speeddials[2].destination).toMatch(RegExp('^sip:4310005@'))
+                const csdCollection: CustomerSpeedDialResponseDto = response.body
+                expect(await validate(csdCollection)).toEqual([])
+                expect(csdCollection).toHaveLength(2)
+                expect(csdCollection[1]).toEqual(1)
+                const csdEntries = csdCollection[0]
+                expect(await validate(csdEntries)).toEqual([])
+                expect(csdEntries).toHaveLength(1)
+                expect(csdEntries[0].customer_id).toEqual(testCustomerId)
+                expect(csdEntries[0].slot).toEqual('*5')
+                expect(csdEntries[0].destination).toMatch(RegExp('^sip:4310005@'))
             })
             it('adjust non-existing customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
@@ -221,13 +240,6 @@ describe('CustomerSpeedDial', () => {
                     .set(...authHeader)
                     .send(patch)
                 expect(response.status).toEqual(404)
-            })
-            it('adjust invalid patch customer speed dial', async () => {
-                const response = await request(app.getHttpServer())
-                    .patch(`/customerspeeddials/${testCustomerId}`)
-                    .set(...authHeader)
-                    .send(invalidPatch)
-                expect(response.status).toEqual(422)
             })
         })
     })
