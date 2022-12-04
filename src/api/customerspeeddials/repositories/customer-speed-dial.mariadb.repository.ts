@@ -8,6 +8,7 @@ import {CustomerSpeedDialRepository} from '../interfaces/customer-speed-dial.rep
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {LoggerService} from '../../../logger/logger.service'
 import {SelectQueryBuilder} from 'typeorm'
+import {VoipContractSpeedDial} from 'entities/db/provisioning'
 
 interface FilterBy {
     customerId?: number
@@ -24,54 +25,61 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
 
     @HandleDbErrors
     async create(entity: internal.CustomerSpeedDial, sr: ServiceRequest): Promise<internal.CustomerSpeedDial> {
-        const dbCSD = await db.provisioning.VoipContractSpeedDial.fromInternal(entity)
+        const dbCSD = db.provisioning.VoipContractSpeedDial.create()
+        dbCSD.fromInternal(entity)
 
         await db.provisioning.VoipContractSpeedDial.insert(dbCSD)
 
-        return db.provisioning.VoipContractSpeedDial.toInternal(dbCSD)
+        return dbCSD.toInternal()
     }
 
     @HandleDbErrors
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.CustomerSpeedDial[], number]> {
-        const qb = await this.createBaseQueryBuilder(sr)
-        await configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(new CustomerSpeedDialSearchDto()),
+        const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('voipContractSpeedDial')
+        const searchDto  = new CustomerSpeedDialSearchDto()
+        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
+            Object.keys(searchDto),
+            undefined,
+            searchDto._alias
         ))
         this.addFilterBy(qb, filterBy)
-        const result = await qb.getRawMany<db.provisioning.VoipContractSpeedDial>()
-        const totalCount = await qb.getCount()
+        const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(
                     result.map(async (d) =>
-                        db.provisioning.VoipContractSpeedDial.rawToInternal(d)
+                        d.toInternal()
                     )
                 ), totalCount]
     }
 
     @HandleDbErrors
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.CustomerSpeedDial> {
-        const qb = await this.createBaseQueryBuilder(sr)
-        qb.where({ contract_id: id })
+        const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('voipContractSpeedDial')
+        const searchDto  = new CustomerSpeedDialSearchDto()
+        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
+            Object.keys(searchDto),
+            undefined,
+            searchDto._alias
+        ))
+        qb.where({ id: id })
         this.addFilterBy(qb, filterBy)
-        const result = await qb.getRawOne<db.provisioning.VoipContractSpeedDial>()
+        const result = await qb.getOne()
         if (!result)
             throw new NotFoundException()
-        return await db.provisioning.VoipContractSpeedDial.rawToInternal(result)
+        return result.toInternal()
     }
 
     @HandleDbErrors
     async update(id: number, entity: internal.CustomerSpeedDial, sr: ServiceRequest): Promise<internal.CustomerSpeedDial> {
-        const update = await db.provisioning.VoipContractSpeedDial.fromInternal(entity)
-        await db.provisioning.VoipContractSpeedDial.delete({ contract_id: id })
-        await Promise.all(update.map(async (entry) => {
-            await db.provisioning.VoipContractSpeedDial.insert(entry)
-        }))
-        return await db.provisioning.VoipContractSpeedDial.toInternal(update)
+        const dbCSD = db.provisioning.VoipContractSpeedDial.create()
+        dbCSD.fromInternal(entity)
+        await db.provisioning.VoipContractSpeedDial.update(id, dbCSD)
+        return this.readById(id, sr)
     }
 
     @HandleDbErrors
     async delete(id: number, sr: ServiceRequest): Promise<number> {
-        await db.provisioning.VoipContractSpeedDial.findOneByOrFail({ contract_id: id })
-        await db.provisioning.VoipContractSpeedDial.delete({ contract_id: id })
+        await db.provisioning.VoipContractSpeedDial.findOneByOrFail({ id: id })
+        await db.provisioning.VoipContractSpeedDial.delete({ id: id })
 
         return 1
     }
@@ -116,23 +124,10 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
                 qb.andWhere({ contract_id: filterBy.customerId })
             }
             if (filterBy.resellerId) {
-                qb.innerJoin('csd.contract', 'contract')
+                qb.innerJoin('voipContractSpeedDial.contract', 'contract')
                 qb.innerJoin('contract.contact', 'contact')
                 qb.andWhere('contact.reseller_id = :id', { id: filterBy.resellerId })
             }
         }
-    }
-
-    private async createBaseQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.provisioning.VoipContractSpeedDial>> {
-        const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('csd')
-        qb.select('csd.contract_id', 'contract_id')
-        qb.addSelect('JSON_ARRAYAGG( \
-                        JSON_OBJECT( \
-                            "slot", csd.slot, "destination", csd.destination \
-                        ) \
-                     )',
-                     'speeddials')
-        qb.groupBy('contract_id')
-        return qb
     }
 }

@@ -25,16 +25,22 @@ function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilde
 
 function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
     for (const property of searchLogic.searchableFields) {
+        if (property == '_alias')
+            continue
         if (params[property] != null) {
+            const propertyAlias = searchLogic.aliases && searchLogic.aliases[property]
+                                                            ? searchLogic.aliases[property]
+                                                            : property
             let value: string = params[property]
 
             const whereComparator = value.includes('*') ? 'like' : '='
             value = value.replace(/\*/g, '%')
+
             // TODO: value should be number | string | boolean and add type casting
             if (searchLogic.searchOr) {
-                qb.orWhere(`${qb.alias}.${property} ${whereComparator} :${property}`, {[`${property}`]: value})
+                qb.orWhere(`${qb.alias}.${propertyAlias} ${whereComparator} :${propertyAlias}`, {[`${propertyAlias}`]: value})
             } else {
-                qb.andWhere(`${qb.alias}.${property} ${whereComparator} :${property}`, {[`${property}`]: value})
+                qb.andWhere(`${qb.alias}.${propertyAlias} ${whereComparator} :${propertyAlias}`, {[`${propertyAlias}`]: value})
             }
         }
     }

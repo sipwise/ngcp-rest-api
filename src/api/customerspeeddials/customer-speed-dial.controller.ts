@@ -63,7 +63,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             sr,
         )
         const response = new CustomerSpeedDialResponseDto(csd)
-        await this.journalService.writeJournal(sr, csd.contract_id, response)
+        await this.journalService.writeJournal(sr, csd.id, response)
         return response
     }
 
