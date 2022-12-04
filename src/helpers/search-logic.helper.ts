@@ -14,6 +14,7 @@ enum Order {
 
 export class SearchLogic {
     joins?: Join[]
+    aliases?: {[key: string]: string}
     searchableFields: string[]
     @ApiPropertyOptional({default: 1})
         rows: number
@@ -26,8 +27,9 @@ export class SearchLogic {
     @ApiPropertyOptional({default: false, name: 'search_or'})
         searchOr: boolean
 
-    constructor(sr: ServiceRequest, searchableFields: string[], joins?: Join[]) {
+    constructor(sr: ServiceRequest, searchableFields: string[], joins?: Join[], aliases?: {[key: string]: string}) {
         this.joins = joins
+        this.aliases = aliases
         this.searchableFields = searchableFields
 
         const [page, rows] = SearchLogic.getPaginationFromServiceRequest(sr)
