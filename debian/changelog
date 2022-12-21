@@ -1,3 +1,16 @@
+ngcp-rest-api (11.1.1.5+0~mr11.1.1.5) unstable; urgency=medium
+
+  [ Michael Berger ]
+  * [939e102] MT#55727 remove OpenAPI decorator for journals
+  * [157a1b6] MT#55895 change ServiceRequest from interface to class
+  * [94ec258] MT#55895 normalise ServiceRequest params to 'sr'
+
+  [ Kirill Solomko ]
+  * [910f3f5] MT#55974 refactor and standadise class and file names
+  * [7dfe34b] MT#55711 refactor /api/customerspeeddials
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 21 Dec 2022 14:05:08 +0100
+
 ngcp-rest-api (11.1.1.4+0~mr11.1.1.4) unstable; urgency=medium
 
   [ Kirill Solomko ]
