@@ -38,6 +38,8 @@ import {LoggerService} from './logger/logger.service'
 import {ClearCallCounterModule} from './api/clearcallcounters/clear-call-counter.module'
 import {CustomerSpeedDialModule} from './api/customerspeeddials/customer-speed-dial.module'
 import {NumberModule} from './api/numbers/number.module'
+import {NCOSModule} from './api/ncos/ncos.module'
+import {NCOSSetModule} from './api/ncos-sets/ncos-set.module'
 import {AcceptLanguageResolver, CookieResolver, HeaderResolver, I18nModule, QueryResolver} from 'nestjs-i18n'
 
 import * as path from 'path'
@@ -76,6 +78,8 @@ let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | Fo
     DomainModule,
     ExpandModule,
     FileshareModule,
+    NCOSModule,
+    NCOSSetModule,
     NumberModule,
     PbxGroupModule,
     ProductModule,

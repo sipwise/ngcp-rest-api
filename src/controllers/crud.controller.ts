@@ -11,7 +11,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
 
     constructor(
         private readonly resourceName: string,
-        private readonly repo: any, //CrudService<CreateDTO, ResponseDTO>,
+        private readonly repo?: any, //CrudService<CreateDTO, ResponseDTO>,
         private readonly journalCrudService?: JournalService) {
     }
 
