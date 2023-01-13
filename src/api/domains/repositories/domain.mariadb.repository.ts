@@ -41,6 +41,37 @@ export class DomainMariadbRepository implements DomainRepository {
     }
 
     @HandleDbErrors
+    async createMany(domains: internal.Domain[], sr: ServiceRequest): Promise<number[]> {
+        // billing
+        const qbBilling = db.billing.Domain.createQueryBuilder('domain')
+        const valuesBilling = domains.map(domain => new db.billing.Domain().fromInternal(domain))
+        const resultBilling = await qbBilling.insert().values(valuesBilling).execute()
+
+        // provisioning
+        const qbProvisioning = db.provisioning.VoipDomain.createQueryBuilder('domain')
+        const valuesProvisioning = domains.map(domain => new db.provisioning.VoipDomain().fromInternal(domain))
+        await qbProvisioning.insert().values(valuesProvisioning).execute()
+
+        const telnetDispatcher = new TelnetDispatcher()
+        const xmlDispatcher = new XmlDispatcher()
+
+        for (const domain of domains) {
+            const errors = await telnetDispatcher.activateDomain(domain.domain)
+
+            // roll back changes if errors occurred
+            if (errors.length > 0) {
+                await telnetDispatcher.deactivateDomain(domain.domain)
+                await db.billing.Domain.remove(new db.billing.Domain().fromInternal(domain))
+                await db.provisioning.VoipDomain.remove(new db.provisioning.VoipDomain().fromInternal(domain))
+                throw new InternalServerErrorException(errors) // TODO: error thrown here prevents following domains from being activated
+            }
+            await xmlDispatcher.sipDomainReload(domain.domain)
+        }
+
+        return resultBilling.identifiers.map(obj => obj.id)
+    }
+
+    @HandleDbErrors
     async readAll(sr: ServiceRequest): Promise<[internal.Domain[], number]> {
         this.log.debug({
             message: 'read all domains',
@@ -55,13 +86,20 @@ export class DomainMariadbRepository implements DomainRepository {
     }
 
     @HandleDbErrors
+    async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Domain[]> {
+        const qb = db.billing.Domain.createQueryBuilder('domain')
+        const created = await qb.andWhereInIds(ids).getMany()
+        return await Promise.all(created.map(async (domain) => domain.toInternal()))
+    }
+
+    @HandleDbErrors
     async readById(id: number, sr: ServiceRequest): Promise<internal.Domain> {
         this.log.debug({
             message: 'read domain by ID',
             func: this.readById.name,
             user: sr.user.username,
         })
-        return (await db.billing.Domain.findOneByOrFail({ id: id })).toInternal()
+        return (await db.billing.Domain.findOneByOrFail({id: id})).toInternal()
     }
 
     @HandleDbErrors
@@ -75,8 +113,16 @@ export class DomainMariadbRepository implements DomainRepository {
     }
 
     @HandleDbErrors
+    async readResellerById(id: number, sr: ServiceRequest): Promise<internal.Reseller> {
+        const reseller = await db.billing.Reseller.findOneBy({id: id})
+        if (reseller)
+            return reseller.toInternal()
+        return undefined
+    }
+
+    @HandleDbErrors
     async delete(id: number, sr: ServiceRequest): Promise<number> {
-        const domain = await db.billing.Domain.findOneByOrFail({ id: id })
+        const domain = await db.billing.Domain.findOneByOrFail({id: id})
         await db.billing.Domain.delete(id)
 
         const provDomain = await db.provisioning.VoipDomain.findOneOrFail({where: {domain: domain.domain}})

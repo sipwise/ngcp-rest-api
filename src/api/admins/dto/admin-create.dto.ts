@@ -70,7 +70,7 @@ export class AdminCreateDto {
         return admin
     }
 
-    async toInternal(setDefaults = true): Promise<internal.Admin> {
+    toInternal(setDefaults = true): internal.Admin {
         if (setDefaults)
             this.setDefaultsForUndefined()
 

@@ -4,12 +4,12 @@ import request from 'supertest'
 import {AppModule} from '../../app.module'
 import {AppService} from '../../app.service'
 import {AuthService} from '../../auth/auth.service'
-import {AdminModule} from './admins.module'
 import {AdminCreateDto} from './dto/admin-create.dto'
 import {RbacRole} from '../../config/constants.config'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {HttpExceptionFilter} from '../../helpers/http-exception.filter'
 import {ValidateInputPipe} from '../../pipes/validate.pipe'
+import {AdminModule} from './admin.module'
 
 describe('AdminController', () => {
     let app: INestApplication

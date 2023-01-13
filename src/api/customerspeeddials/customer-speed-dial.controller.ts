@@ -8,7 +8,7 @@ import {
     ApiTags,
 } from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseArrayPipe, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {CustomerSpeedDialCreateDto} from './dto/customer-speed-dial-create.dto'
 import {CustomerSpeedDialUpdateDto} from './dto/customer-speed-dial-update.dto'
@@ -24,6 +24,7 @@ import {LoggerService} from '../../logger/logger.service'
 import {PatchDto} from '../patch.dto'
 import {Operation} from 'helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {Request} from 'express'
 
 const resourceName = 'customerspeeddials'
 
@@ -67,6 +68,26 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         return response
     }
 
+    @Post('bulk')
+    @ApiCreatedResponse({
+        type: [CustomerSpeedDialResponseDto],
+    })
+    async createMany(
+        @Body(new ParseArrayPipe({items: CustomerSpeedDialCreateDto})) createDto: CustomerSpeedDialCreateDto[],
+        @Req() req: Request,
+    ): Promise<CustomerSpeedDialResponseDto[]> {
+        this.log.debug({
+            message: 'create customer speeddial bulk',
+            func: this.createMany.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const csd = createDto.map(dial => dial.toInternal())
+        const created = await this.customerSpeedDialService.createMany(csd, sr)
+        return created.map((dial) => new CustomerSpeedDialResponseDto(dial))
+    }
+
     @Get()
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(CustomerSpeedDialResponseDto)
@@ -75,7 +96,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             message: 'read all customer speed dial',
             func: this.readAll.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         const sr = new ServiceRequest(req)
         const [csd, totalCount] =

@@ -7,6 +7,7 @@ import {
     Get,
     Inject,
     Param,
+    ParseArrayPipe,
     ParseIntPipe,
     Patch,
     Post,
@@ -79,6 +80,26 @@ export class AdminController extends CrudController<AdminCreateDto, AdminRespons
         const response = new AdminResponseDto(newAdmin, sr.user.role)
         await this.journalService.writeJournal(sr, response.id, response)
         return response
+    }
+
+    @Post('bulk')
+    @ApiCreatedResponse({
+        type: [AdminResponseDto],
+    })
+    async createMany(
+        @Body(new ParseArrayPipe({items: AdminCreateDto})) createDto: AdminCreateDto[],
+        @Req() req: Request,
+    ): Promise<AdminResponseDto[]> {
+        this.log.debug({
+            message: 'create admin bulk',
+            func: this.createMany.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const admins = createDto.map(admin => admin.toInternal())
+        const created = await this.adminService.createMany(admins, sr)
+        return created.map((adm) => new AdminResponseDto(adm, sr.user.role))
     }
 
     @Get()

@@ -50,6 +50,19 @@ export class ContractService implements CrudService<internal.Contract> {
         return this.contractsRepo.create(contract, sr)
     }
 
+    async createMany(contracts: internal.Contract[], sr: ServiceRequest): Promise<internal.Contract[]> {
+        // TODO: how to do setProductId and validateSystemContact for bulk?
+        const now = new Date(Date.now())
+        for (const contract of contracts) {
+            await this.validateSystemContact(contract, sr)
+            await this.setProductId(contract, sr)
+            contract.create_timestamp = now
+            contract.modify_timestamp = now
+        }
+        const createdIds = await this.contractsRepo.createMany(contracts, sr)
+        return await this.contractsRepo.readWhereInIds(createdIds, sr)
+    }
+
     private async setProductId(contract: internal.Contract, sr: ServiceRequest) {
         const product = await this.contractsRepo.readProductByType(contract.type, sr)
         if (product == undefined) {
@@ -89,4 +102,5 @@ export class ContractService implements CrudService<internal.Contract> {
         await this.setProductId(contract, sr)
         return await this.contractsRepo.update(id, contract, sr)
     }
+
 }

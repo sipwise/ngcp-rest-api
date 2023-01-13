@@ -1,6 +1,6 @@
 import {AppService} from '../../app.service'
 import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
-import {ForbiddenException, Inject, Injectable, Logger} from '@nestjs/common'
+import {ForbiddenException, Inject, Injectable} from '@nestjs/common'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AdminMariadbRepository} from './repositories/admin.mariadb.repository'
 import {internal} from '../../entities'
@@ -25,9 +25,18 @@ export class AdminService implements CrudService<internal.Admin> {
     async create(admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin> {
         this.log.debug({message: 'create admin', func: this.create.name, user: sr.user.username})
 
-        await this.populateAdmin(admin, sr)
+        const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
+        await this.populateAdmin(admin, accessorRole, sr)
 
         return await this.adminRepo.create(admin)
+    }
+
+    async createMany(admins: internal.Admin[], sr: ServiceRequest): Promise<internal.Admin[]> {
+        const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
+        for (const admin of admins) {
+            await this.populateAdmin(admin, accessorRole, sr)
+        }
+        return await this.adminRepo.createMany(admins)
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Admin[], number]> {
@@ -47,7 +56,9 @@ export class AdminService implements CrudService<internal.Admin> {
     async update(id: number, admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin> {
         this.log.debug({message: 'update admin by id', func: this.update.name, user: sr.user.username, id: id})
         admin.id = id
-        await this.populateAdmin(admin, sr)
+
+        const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
+        await this.populateAdmin(admin, accessorRole, sr)
 
         const oldAdmin = await this.adminRepo.readById(id, sr)
         await this.validateUpdate(sr.user.id, oldAdmin, admin)
@@ -73,6 +84,7 @@ export class AdminService implements CrudService<internal.Admin> {
             user: sr.user.username,
             id: id,
         })
+        const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
         let admin = await this.adminRepo.readById(id, sr)
         const oldAdmin = deepCopy(admin)
 
@@ -80,7 +92,7 @@ export class AdminService implements CrudService<internal.Admin> {
         admin.role ||= oldAdmin.role
         admin.id = id
 
-        await this.populateAdmin(admin, sr)
+        await this.populateAdmin(admin, accessorRole, sr)
 
         await this.validateUpdate(sr.user.id, oldAdmin, admin)
 
@@ -96,14 +108,13 @@ export class AdminService implements CrudService<internal.Admin> {
         return await this.adminRepo.delete(id, sr)
     }
 
-    private async populateAdmin(admin: internal.Admin, sr: ServiceRequest) {
+    private async populateAdmin(admin: internal.Admin, accessorRole: internal.AclRole, sr: ServiceRequest) {
         const role = await this.aclRepo.readOneByRole(admin.role, sr)
         await admin.setPermissionFlags()
         admin.role_id = role.id
         admin.role_data = role
 
-        const requestRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
-        if (!await requestRole.hasPermission(role.id, sr.user.is_master)) {
+        if (!await accessorRole.hasPermission(role.id, sr.user.is_master)) {
             this.log.debug({
                 message: 'check user permission level',
                 success: false,
@@ -112,7 +123,7 @@ export class AdminService implements CrudService<internal.Admin> {
                 is_master: sr.user.is_master,
             })
             throw new ForbiddenException(
-                this.i18n.t('errors.PERMISSION_DENIED')
+                this.i18n.t('errors.PERMISSION_DENIED'),
             )
         }
         if (admin.password)
@@ -147,5 +158,4 @@ export class AdminService implements CrudService<internal.Admin> {
         }
         return true
     }
-
 }

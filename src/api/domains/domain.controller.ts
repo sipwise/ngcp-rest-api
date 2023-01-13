@@ -1,6 +1,18 @@
 import {ApiCreatedResponse, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {Controller, Delete, forwardRef, Get, Inject, Param, ParseIntPipe, Post, Req} from '@nestjs/common'
+import {
+    Body,
+    Controller,
+    Delete,
+    forwardRef,
+    Get,
+    Inject,
+    Param,
+    ParseArrayPipe,
+    ParseIntPipe,
+    Post,
+    Req,
+} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {DomainCreateDto} from './dto/domain-create.dto'
 import {DomainResponseDto} from './dto/domain-response.dto'
@@ -16,6 +28,7 @@ import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {Request} from 'express'
 
 const resourceName = 'domains'
 
@@ -50,6 +63,26 @@ export class DomainController extends CrudController<DomainCreateDto, DomainResp
         const response = new DomainResponseDto(domain)
         await this.journalService.writeJournal(sr, response.id, response)
         return response
+    }
+
+    @Post('bulk')
+    @ApiCreatedResponse({
+        type: [DomainResponseDto],
+    })
+    async createMany(
+        @Body(new ParseArrayPipe({items: DomainCreateDto})) createDto: DomainCreateDto[],
+        @Req() req: Request,
+    ): Promise<DomainResponseDto[]> {
+        this.log.debug({
+            message: 'create domains bulk',
+            func: this.createMany.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const domains = createDto.map(domain => domain.toInternal())
+        const created = await this.domainService.createMany(domains, sr)
+        return created.map((domain) => new DomainResponseDto(domain))
     }
 
     @Get()

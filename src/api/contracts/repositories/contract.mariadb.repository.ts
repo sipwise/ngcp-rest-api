@@ -6,7 +6,6 @@ import {ContractSearchDto} from '../dto/contract-search.dto'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {db, internal} from '../../../entities'
-import {ContractStatus} from '../../../entities/internal/contract.internal.entity'
 import {ContractRepository} from '../interfaces/contract.respository'
 import {ContactStatus} from 'entities/internal/contact.internal.entity'
 import {ProductClass} from 'entities/internal/product.internal.entity'
@@ -31,6 +30,14 @@ export class ContractMariadbRepository implements ContractRepository {
 
         await db.billing.Contract.insert(contract)
         return contract.toInternal()
+    }
+
+    @HandleDbErrors
+    async createMany(contracts: internal.Contract[], sr: ServiceRequest): Promise<number[]> {
+        const qb = db.billing.Contract.createQueryBuilder('contract')
+        const values = contracts.map(contract => new db.billing.Contract().fromInternal(contract))
+        const result = await qb.insert().values(values).execute()
+        return result.identifiers.map(obj => obj.id)
     }
 
     async delete(id: number, sr: ServiceRequest): Promise<number> {
@@ -92,6 +99,16 @@ export class ContractMariadbRepository implements ContractRepository {
     }
 
     @HandleDbErrors
+    async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Contract[]> {
+        const qb = db.billing.Contract.createQueryBuilder('contract')
+        const constractSearchDtoKeys = Object.keys(new ContractSearchDto())
+        await configureQueryBuilder(qb, sr.query, new SearchLogic(sr, constractSearchDtoKeys))
+        qb.leftJoinAndSelect('contract.product', 'product')
+        const created = await qb.andWhereInIds(ids).getMany()
+        return await Promise.all(created.map(async (contract) => contract.toInternal()))
+    }
+
+    @HandleDbErrors
     async update(id: number, contract: internal.Contract, sr: ServiceRequest): Promise<internal.Contract> {
         this.log.debug({
             message: 'update contract ty id',
@@ -140,4 +157,5 @@ export class ContractMariadbRepository implements ContractRepository {
         //return oldContract
         return
     }
+
 }

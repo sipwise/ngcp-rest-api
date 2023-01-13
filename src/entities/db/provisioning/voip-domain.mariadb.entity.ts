@@ -1,4 +1,5 @@
 import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
+import {internal} from '../../../entities'
 
 @Entity({
     name: 'voip_domains',
@@ -7,11 +8,17 @@ import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
 export class VoipDomain extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+    id?: number
 
     @Column({
         type: 'varchar',
         length: 127,
     })
-        domain!: string
+    domain!: string
+
+    fromInternal(domain: internal.Domain): VoipDomain {
+        this.id = domain.id
+        this.domain = domain.domain
+        return this
+    }
 }

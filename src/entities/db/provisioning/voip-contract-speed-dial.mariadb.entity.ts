@@ -38,11 +38,12 @@ export class VoipContractSpeedDial extends BaseEntity {
     @JoinColumn({name: 'contract_id'})
     contract?: Contract
 
-    fromInternal(csd: internal.CustomerSpeedDial) {
+    fromInternal(csd: internal.CustomerSpeedDial): VoipContractSpeedDial {
         this.id = csd.id
         this.contract_id = csd.contractId
         this.slot = csd.slot
         this.destination = csd.destination
+        return this
     }
 
     toInternal(): internal.CustomerSpeedDial {

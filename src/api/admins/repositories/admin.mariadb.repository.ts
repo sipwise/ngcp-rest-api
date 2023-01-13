@@ -2,7 +2,6 @@ import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ForbiddenException, Inject, Injectable} from '@nestjs/common'
 import {db, internal} from '../../../entities'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {RbacFlag, RbacRole} from '../../../config/constants.config'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {AdminSearchDto} from '../dto/admin-search.dto'
 import {SelectQueryBuilder} from 'typeorm'
@@ -24,7 +23,7 @@ export class AdminMariadbRepository implements AdminRepository {
 
     @HandleDbErrors
     async create(admin: internal.Admin): Promise<internal.Admin> {
-        const dbAdmin = await new db.billing.Admin().fromInternal(admin)
+        const dbAdmin = new db.billing.Admin().fromInternal(admin)
 
         await db.billing.Admin.insert(dbAdmin)
         this.log.debug({
@@ -34,6 +33,21 @@ export class AdminMariadbRepository implements AdminRepository {
         })
 
         return await dbAdmin.toInternal()
+    }
+
+    @HandleDbErrors
+    async createMany(admins: internal.Admin[]): Promise<internal.Admin[]> {
+        // const created: internal.Admin[] = []
+        let qb = db.billing.Admin.createQueryBuilder('admin')
+        const values = admins.map(admin => new db.billing.Admin().fromInternal(admin))
+        const result = await qb.insert().values(values).execute()
+
+        qb = db.billing.Admin.createQueryBuilder('admin')
+        qb.innerJoinAndSelect('admin.role', 'role')
+        const ids = result.identifiers.map(obj => obj.id)
+        const created = await qb.andWhereInIds(ids).getMany()
+
+        return await Promise.all(created.map(async (admin) => admin.toInternal()))
     }
 
     @HandleDbErrors

@@ -6,7 +6,7 @@ import {
     UnprocessableEntityException,
 } from '@nestjs/common'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
-import {db, internal} from '../../entities'
+import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {RbacRole} from '../../config/constants.config'
 import {DomainMariadbRepository} from './repositories/domain.mariadb.repository'
@@ -36,14 +36,41 @@ export class DomainService implements CrudService<internal.Domain> {
         }
 
         // check if reseller exists
-        // TODO: replace with reseller repository
-        await db.billing.Reseller.findOneByOrFail({ id: domain.reseller_id })
+        await this.resellerIdExists(domain.reseller_id, sr)
+        await this.domainExists(domain.domain, sr)
 
-        const result = await this.domainRepo.readByDomain(domain.domain, sr)
-        if (!result == undefined) {
-            throw new UnprocessableEntityException(this.i18n.t('errors.DOMAIN_ALREADY_EXISTS', {args: {domain: domain.domain}}))
-        }
         return await this.domainRepo.create(domain, sr)
+    }
+
+    async createMany(domains: internal.Domain[], sr: ServiceRequest): Promise<internal.Domain[]> {
+        if (RbacRole.reseller == sr.user.role) {
+            await this.resellerIdExists(sr.user.reseller_id, sr)
+            for (const domain of domains) {
+                domain.reseller_id = sr.user.reseller_id
+                await this.domainExists(domain.domain, sr)
+            }
+        } else {
+            for (const domain of domains) {
+                await this.resellerIdExists(domain.reseller_id, sr)
+                await this.domainExists(domain.domain, sr)
+            }
+        }
+        const createdIds = await this.domainRepo.createMany(domains, sr)
+        return await this.domainRepo.readWhereInIds(createdIds, sr)
+    }
+
+    private async resellerIdExists(id: number, sr: ServiceRequest) {
+        const reseller = await this.domainRepo.readResellerById(id, sr)
+        if (!reseller) {
+            throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
+        }
+    }
+
+    private async domainExists(domain: string, sr: ServiceRequest) {
+        const result = await this.domainRepo.readByDomain(domain, sr)
+        if (!result == undefined) {
+            throw new UnprocessableEntityException(this.i18n.t('errors.DOMAIN_ALREADY_EXISTS', {args: {domain: domain}}))
+        }
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Domain[], number]> {

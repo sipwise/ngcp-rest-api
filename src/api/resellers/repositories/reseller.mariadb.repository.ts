@@ -21,7 +21,7 @@ export class ResellerMariadbRepository implements ResellerRepository {
     }
 
     @HandleDbErrors
-    async createEmailTemplates(resellerId: number) {
+    async createEmailTemplates(resellerId: number | number[]) {
         this.log.debug({
             message: 'create email templates',
             func: this.createEmailTemplates.name,
@@ -30,8 +30,15 @@ export class ResellerMariadbRepository implements ResellerRepository {
         const defaultTemplates = await this.findDefaultEmailTemplates()
         defaultTemplates.forEach(template => {
             delete template.id
-            template.reseller_id = resellerId
-            db.billing.EmailTemplate.insert(template)
+            if (Array.isArray(resellerId)) {
+                for (const number of resellerId) {
+                    template.reseller_id = number
+                    db.billing.EmailTemplate.insert(template)
+                }
+            } else {
+                template.reseller_id = resellerId
+                db.billing.EmailTemplate.insert(template)
+            }
         })
     }
 
@@ -51,15 +58,22 @@ export class ResellerMariadbRepository implements ResellerRepository {
         this.log.debug({message: 'create reseller', func: this.create.name, user: sr.user.username})
         const dbReseller = db.billing.Reseller.create()
         dbReseller.fromInternal(reseller)
-        // TODO: Transaction guard
         const result = await dbReseller.save()
         return result.toInternal()
     }
 
     @HandleDbErrors
+    async createMany(resellers: internal.Reseller[], sr: ServiceRequest): Promise<number[]> {
+        const qb = db.billing.Reseller.createQueryBuilder('reseller')
+        const values = resellers.map(reseller => new db.billing.Reseller().fromInternal(reseller))
+        const result = await qb.insert().values(values).execute()
+        return result.identifiers.map(obj => obj.id)
+    }
+
+    @HandleDbErrors
     async terminate(id: number, sr: ServiceRequest): Promise<number> {
         this.log.debug({message: 'delete reseller by id', func: this.terminate.name, id: id})
-        let reseller = await db.billing.Reseller.findOneByOrFail({ id: id })
+        let reseller = await db.billing.Reseller.findOneByOrFail({id: id})
         reseller = await db.billing.Reseller.merge(reseller, {status: ResellerStatus.Terminated})
         await db.billing.Reseller.update(reseller.id, reseller)
         return 1
@@ -68,7 +82,14 @@ export class ResellerMariadbRepository implements ResellerRepository {
     @HandleDbErrors
     async read(id: number, sr: ServiceRequest): Promise<internal.Reseller> {
         this.log.debug({message: 'read reseller by id', func: this.read.name, user: sr.user.username, id: id})
-        return (await db.billing.Reseller.findOneByOrFail({ id: id })).toInternal()
+        return (await db.billing.Reseller.findOneByOrFail({id: id})).toInternal()
+    }
+
+    @HandleDbErrors
+    async readWhereInIds(ids: number[]): Promise<internal.Reseller[]> {
+        const qb = db.billing.Reseller.createQueryBuilder('reseller')
+        const created = await qb.andWhereInIds(ids).getMany()
+        return await Promise.all(created.map(async (reseller) => reseller.toInternal()))
     }
 
     @HandleDbErrors
@@ -110,7 +131,7 @@ export class ResellerMariadbRepository implements ResellerRepository {
 
     @HandleDbErrors
     async contractExists(contractId: number): Promise<boolean> {
-        const contract = await db.billing.Contract.findOneBy({ id: contractId })
+        const contract = await db.billing.Contract.findOneBy({id: contractId})
         return contract != undefined
     }
 

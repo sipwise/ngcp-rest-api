@@ -1,4 +1,18 @@
-import {Controller, Delete, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {
+    Body,
+    Controller,
+    Delete,
+    forwardRef,
+    Get,
+    Inject,
+    Param,
+    ParseArrayPipe,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Put,
+    Req,
+} from '@nestjs/common'
 import {
     ApiBody,
     ApiConsumes,
@@ -56,7 +70,27 @@ export class CustomerContactController extends CrudController<CustomerContactCre
         const contact = await this.contactService.create(entity.toInternal(), sr)
         const response = new CustomerContactResponseDto(contact, sr.user.role)
         await this.journalService.writeJournal(sr, response.id, response)
-        return  response
+        return response
+    }
+
+    @Post('bulk')
+    @ApiCreatedResponse({
+        type: [CustomerContactResponseDto],
+    })
+    async createMany(
+        @Body(new ParseArrayPipe({items: CustomerContactCreateDto})) createDto: CustomerContactCreateDto[],
+        @Req() req: Request,
+    ): Promise<CustomerContactResponseDto[]> {
+        this.log.debug({
+            message: 'create customer contact bulk',
+            func: this.createMany.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const customers = createDto.map(customer => customer.toInternal())
+        const created = await this.contactService.createMany(customers, sr)
+        return created.map((contact) => new CustomerContactResponseDto(contact, sr.user.role))
     }
 
     @Get()

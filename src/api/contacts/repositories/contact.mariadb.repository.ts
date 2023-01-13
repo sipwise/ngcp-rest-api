@@ -28,6 +28,14 @@ export class ContactMariadbRepository implements ContactRepository {
     }
 
     @HandleDbErrors
+    async createMany(contacts: internal.Contact[], sr: ServiceRequest): Promise<number[]> {
+        const qb = db.billing.Contact.createQueryBuilder('contact')
+        const values = contacts.map(contact => new db.billing.Contact().fromInternal(contact))
+        const result = await qb.insert().values(values).execute()
+        return result.identifiers.map(obj => obj.id)
+    }
+
+    @HandleDbErrors
     async delete(id: number, sr: ServiceRequest): Promise<number> {
         this.log.debug({
             message: 'delete contact by id',
@@ -49,6 +57,13 @@ export class ContactMariadbRepository implements ContactRepository {
         })
         await db.billing.Contact.update(id, {status: ContactStatus.Terminated})
         return 0
+    }
+
+    @HandleDbErrors
+    async readWhereInIds(ids: number[]): Promise<internal.Contact[]> {
+        const qb = db.billing.Contact.createQueryBuilder('contact')
+        const created = await qb.andWhereInIds(ids).getMany()
+        return await Promise.all(created.map(async (contact) => contact.toInternal()))
     }
 
     @HandleDbErrors
@@ -76,7 +91,7 @@ export class ContactMariadbRepository implements ContactRepository {
 
     @HandleDbErrors
     async readResellerById(id: number, sr: ServiceRequest): Promise<db.billing.Reseller> { // TODO: change type to internal.Reseller
-        return await db.billing.Reseller.findOneBy({ id: id })
+        return await db.billing.Reseller.findOneBy({id: id})
     }
 
     @HandleDbErrors
@@ -232,4 +247,5 @@ export class ContactMariadbRepository implements ContactRepository {
             qb.andWhere('contact.reseller_id = :reseller_id', {reseller_id: sr.user.reseller_id})
         }
     }
+
 }

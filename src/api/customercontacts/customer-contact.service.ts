@@ -28,11 +28,35 @@ export class CustomerContactService implements CrudService<internal.Contact> {
         if (sr.user.reseller_id_required) {
             contact.reseller_id = sr.user.reseller_id
         }
-        const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
+        await this.resellerIdExists(contact.reseller_id, sr)
+        return await this.contactRepo.create(contact, sr)
+    }
+
+    async createMany(contacts: internal.Contact[], sr: ServiceRequest): Promise<internal.Contact[]> {
+        const now = new Date(Date.now())
+        if (sr.user.reseller_id_required) {  // only fetch and validate reseller once if restricted to reseller_id
+            await this.resellerIdExists(sr.user.reseller_id, sr)
+            for (const contact of contacts) {
+                contact.reseller_id = sr.user.reseller_id
+                contact.create_timestamp = now
+                contact.modify_timestamp = now
+            }
+        } else {  // fetch and validate reseller for each item
+            for (const contact of contacts) {
+                await this.resellerIdExists(contact.reseller_id, sr)
+                contact.create_timestamp = now
+                contact.modify_timestamp = now
+            }
+        }
+        const createdIds = await this.contactRepo.createMany(contacts, sr)
+        return await this.contactRepo.readWhereInIds(createdIds)
+    }
+
+    private async resellerIdExists(id: number, sr: ServiceRequest) {
+        const reseller = await this.contactRepo.readResellerById(id, sr)
         if (!reseller) {
             throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
         }
-        return await this.contactRepo.create(contact, sr)
     }
 
     async delete(id: number, sr: ServiceRequest): Promise<number> {
@@ -122,5 +146,6 @@ export class CustomerContactService implements CrudService<internal.Contact> {
         }
         return await this.contactRepo.update(id, contact, sr)
     }
+
 }
 

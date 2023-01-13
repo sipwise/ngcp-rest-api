@@ -1,4 +1,17 @@
-import {Controller, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {
+    Body,
+    Controller,
+    forwardRef,
+    Get,
+    Inject,
+    Param,
+    ParseArrayPipe,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Put,
+    Req,
+} from '@nestjs/common'
 import {JournalService} from '../journals/journal.service'
 import {ResellerService} from './reseller.service'
 import {CrudController} from '../../controllers/crud.controller'
@@ -59,6 +72,26 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
     }
 
 // TODO: could we use DELETE to terminate resellers? https://datatracker.ietf.org/doc/html/rfc7231#section-4.3.5
+
+    @Post('bulk')
+    @ApiCreatedResponse({
+        type: [ResellerResponseDto],
+    })
+    async createMany(
+        @Body(new ParseArrayPipe({items: ResellerCreateDto})) createDto: ResellerCreateDto[],
+        @Req() req: Request,
+    ): Promise<ResellerResponseDto[]> {
+        this.log.debug({
+            message: 'create reseller bulk',
+            func: this.createMany.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const resellers = createDto.map(reseller => reseller.toInternal())
+        const created = await this.resellerService.createMany(resellers, sr)
+        return created.map((reseller) => new ResellerResponseDto(reseller))
+    }
 
     @Get()
     @ApiQuery({type: SearchLogic})

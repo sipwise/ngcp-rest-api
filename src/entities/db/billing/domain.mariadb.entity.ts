@@ -27,10 +27,11 @@ export class Domain extends BaseEntity {
     @JoinColumn({name: 'reseller_id'})
         reseller?: Reseller
 
-    fromInternal(domain: internal.Domain) {
+    fromInternal(domain: internal.Domain): Domain {
         this.id = domain.id
         this.domain = domain.domain
         this.reseller_id = domain.reseller_id
+        return this
     }
 
     toInternal(): internal.Domain {

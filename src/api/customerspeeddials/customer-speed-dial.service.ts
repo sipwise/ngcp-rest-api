@@ -24,19 +24,28 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
         return await this.customerSpeedDialRepo.create(entity, sr)
     }
 
+    async createMany(entities: internal.CustomerSpeedDial[], sr: ServiceRequest): Promise<internal.CustomerSpeedDial[]> {
+        for (const csd of entities) {
+            await this.checkPermissions(csd.contractId, sr)
+            await this.checkAndTransformDestination(csd, sr)
+        }
+        const createdIds = await this.customerSpeedDialRepo.createMany(entities, sr)
+        return await this.customerSpeedDialRepo.readWhereInIds(createdIds, sr)
+    }
+
     async readAll(sr: ServiceRequest): Promise<[internal.CustomerSpeedDial[], number]> {
         if (sr.user.role == 'subscriberadmin')
-            return await this.customerSpeedDialRepo.readAll(sr, { customerId: sr.user.customer_id })
+            return await this.customerSpeedDialRepo.readAll(sr, {customerId: sr.user.customer_id})
         if (sr.user.role == 'reseller' || sr.user.role == 'ccare')
-            return await this.customerSpeedDialRepo.readAll(sr, { resellerId: sr.user.reseller_id })
+            return await this.customerSpeedDialRepo.readAll(sr, {resellerId: sr.user.reseller_id})
         return await this.customerSpeedDialRepo.readAll(sr)
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.CustomerSpeedDial> {
         if (sr.user.role == 'subscriberadmin')
-            return await this.customerSpeedDialRepo.readById(id, sr, { customerId: sr.user.customer_id })
+            return await this.customerSpeedDialRepo.readById(id, sr, {customerId: sr.user.customer_id})
         if (sr.user.role == 'reseller' || sr.user.role == 'ccare')
-            return await this.customerSpeedDialRepo.readById(id, sr, { resellerId: sr.user.reseller_id })
+            return await this.customerSpeedDialRepo.readById(id, sr, {resellerId: sr.user.reseller_id})
         return await this.customerSpeedDialRepo.readById(id, sr)
     }
 
@@ -77,9 +86,9 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
     private async checkAndTransformDestination(entity: internal.CustomerSpeedDial, sr: ServiceRequest): Promise<void> {
         if (!RegExp('^sip:').test(entity.destination)) {
             let domain: string
-            domain = await this.customerSpeedDialRepo.readSubscriberDomain(entity.contractId, { isPilot: true })
+            domain = await this.customerSpeedDialRepo.readSubscriberDomain(entity.contractId, {isPilot: true})
             if (!domain)
-                domain = await this.customerSpeedDialRepo.readSubscriberDomain(entity.contractId, { isPilot: false })
+                domain = await this.customerSpeedDialRepo.readSubscriberDomain(entity.contractId, {isPilot: false})
             if (!domain) {
                 throw new ForbiddenException(this.i18n.t('errors.SUBSCRIBER_NOT_FOUND'))
             }

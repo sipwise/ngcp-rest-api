@@ -37,6 +37,23 @@ export class ResellerService implements CrudService<internal.Reseller> {
         return result
     }
 
+    async createMany(resellers: internal.Reseller[], sr: ServiceRequest): Promise<internal.Reseller[]> {
+        for (const reseller of resellers) {
+            await this.validateContract(reseller)
+            const existingReseller = await this.resellerRepo.readByName(reseller.name, sr)
+            if (existingReseller != undefined) {
+                if (existingReseller.status != ResellerStatus.Terminated) {
+                    throw new UnprocessableEntityException(this.i18n.t('errors.reseller.NAME_EXISTS', {args: {name: existingReseller.name}}))
+                }
+                await this.resellerRepo.renameReseller(existingReseller.id, existingReseller.name)
+            }
+        }
+        const createdIds = await this.resellerRepo.createMany(resellers, sr)
+        await this.resellerRepo.createEmailTemplates(createdIds)
+
+        return await this.resellerRepo.readWhereInIds(createdIds)
+    }
+
     async delete(id: number, sr: ServiceRequest): Promise<number> {
         this.log.debug({message: 'delete reseller by id', func: this.delete.name, id: id})
         return await this.resellerRepo.terminate(id, sr)

@@ -8,14 +8,13 @@ import {CustomerSpeedDialRepository} from '../interfaces/customer-speed-dial.rep
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {LoggerService} from '../../../logger/logger.service'
 import {SelectQueryBuilder} from 'typeorm'
-import {VoipContractSpeedDial} from 'entities/db/provisioning'
 
 interface FilterBy {
     customerId?: number
     resellerId?: number
 }
 
-interface IsPilot {
+interface SpeedDialOptions {
     isPilot: boolean
 }
 
@@ -34,33 +33,54 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
     }
 
     @HandleDbErrors
+    async createMany(entities: internal.CustomerSpeedDial[], sr: ServiceRequest): Promise<number[]> {
+        const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('csd')
+        const values = entities.map(csd => new db.provisioning.VoipContractSpeedDial().fromInternal(csd))
+        const result = await qb.insert().values(values).execute()
+        return result.identifiers.map(obj => obj.id)
+    }
+
+    @HandleDbErrors
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.CustomerSpeedDial[], number]> {
         const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('voipContractSpeedDial')
-        const searchDto  = new CustomerSpeedDialSearchDto()
+        const searchDto = new CustomerSpeedDialSearchDto()
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
-            searchDto._alias
+            searchDto._alias,
         ))
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(
-                    result.map(async (d) =>
-                        d.toInternal()
-                    )
-                ), totalCount]
+            result.map(async (d) =>
+                d.toInternal(),
+            ),
+        ), totalCount]
+    }
+
+    @HandleDbErrors
+    async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.CustomerSpeedDial[]> {
+        const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('voipContractSpeedDial')
+        const searchDto = new CustomerSpeedDialSearchDto()
+        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
+            Object.keys(searchDto),
+            undefined,
+            searchDto._alias,
+        ))
+        const created = await qb.andWhereInIds(ids).getMany()
+        return await Promise.all(created.map(async (csd) => csd.toInternal()))
     }
 
     @HandleDbErrors
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.CustomerSpeedDial> {
         const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('voipContractSpeedDial')
-        const searchDto  = new CustomerSpeedDialSearchDto()
+        const searchDto = new CustomerSpeedDialSearchDto()
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
-            searchDto._alias
+            searchDto._alias,
         ))
-        qb.where({ id: id })
+        qb.where({id: id})
         this.addFilterBy(qb, filterBy)
         const result = await qb.getOne()
         if (!result)
@@ -78,39 +98,39 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
 
     @HandleDbErrors
     async delete(id: number, sr: ServiceRequest): Promise<number> {
-        await db.provisioning.VoipContractSpeedDial.findOneByOrFail({ id: id })
-        await db.provisioning.VoipContractSpeedDial.delete({ id: id })
+        await db.provisioning.VoipContractSpeedDial.findOneByOrFail({id: id})
+        await db.provisioning.VoipContractSpeedDial.delete({id: id})
 
         return 1
     }
 
     @HandleDbErrors
-    async checkCustomerExistsAndCustomerReseller(customer_id: number, reseller_id: number, check_reseller: boolean): Promise<boolean> {
+    async checkCustomerExistsAndCustomerReseller(customerId: number, resellerId: number, checkReseller: boolean): Promise<boolean> {
         const contract = await db.billing.Contract.findOne({
             where: {
-                id: customer_id
+                id: customerId,
             },
             relations: [
-                'contact'
-            ]
+                'contact',
+            ],
         })
         if (!contract)
             return false
-        if (check_reseller && contract.contact.reseller_id != reseller_id)
+        if (checkReseller && contract.contact.reseller_id != resellerId)
             return false
         return true
     }
 
     @HandleDbErrors
-    async readSubscriberDomain(customer_id: number, isPilot: IsPilot): Promise<string> {
+    async readSubscriberDomain(customerId: number, options: SpeedDialOptions): Promise<string> {
         const subscriber = await db.provisioning.VoipSubscriber.findOne({
             where: {
-                account_id: customer_id,
-                is_pbx_pilot: isPilot.isPilot
+                account_id: customerId,
+                is_pbx_pilot: options.isPilot,
             },
             relations: [
-                'domain'
-            ]
+                'domain',
+            ],
         })
         if (subscriber)
             return subscriber.domain.domain
@@ -121,12 +141,12 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipContractSpeedDial>, filterBy: FilterBy): void {
         if (filterBy) {
             if (filterBy.customerId) {
-                qb.andWhere({ contract_id: filterBy.customerId })
+                qb.andWhere({contract_id: filterBy.customerId})
             }
             if (filterBy.resellerId) {
                 qb.innerJoin('voipContractSpeedDial.contract', 'contract')
                 qb.innerJoin('contract.contact', 'contact')
-                qb.andWhere('contact.reseller_id = :id', { id: filterBy.resellerId })
+                qb.andWhere('contact.reseller_id = :id', {id: filterBy.resellerId})
             }
         }
     }

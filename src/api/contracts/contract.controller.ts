@@ -1,4 +1,17 @@
-import {Controller, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
+import {
+    Body,
+    Controller,
+    forwardRef,
+    Get,
+    Inject,
+    Param,
+    ParseArrayPipe,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Put,
+    Req,
+} from '@nestjs/common'
 import {Auth} from '../../decorators/auth.decorator'
 import {
     ApiBody,
@@ -56,6 +69,26 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
         const response = new ContractResponseDto(contract)
         await this.journalService.writeJournal(sr, response.id, response)
         return response
+    }
+
+    @Post('bulk')
+    @ApiCreatedResponse({
+        type: [ContractResponseDto],
+    })
+    async createMany(
+        @Body(new ParseArrayPipe({items: ContractCreateDto})) createDto: ContractCreateDto[],
+        @Req() req: Request,
+    ): Promise<ContractResponseDto[]> {
+        this.log.debug({
+            message: 'create contract bulk',
+            func: this.createMany.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const contracts = createDto.map(contract => contract.toInternal())
+        const created = await this.contractService.createMany(contracts, sr)
+        return created.map((contract) => new ContractResponseDto(contract))
     }
 
     @Get()

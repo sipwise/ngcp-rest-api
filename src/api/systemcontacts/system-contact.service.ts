@@ -29,6 +29,11 @@ export class SystemContactService implements CrudService<internal.Contact> {
         return await this.contactRepo.create(contact, sr)
     }
 
+    async createMany(contacts: internal.Contact[], sr: ServiceRequest) {
+        const createdIds = await this.contactRepo.createMany(contacts, sr)
+        return await this.contactRepo.readWhereInIds(createdIds)
+    }
+
     async delete(id: number, sr: ServiceRequest): Promise<number> {
         this.log.debug({
             message: 'delete system contact by id',
