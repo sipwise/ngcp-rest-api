@@ -25,6 +25,15 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
         return await this.ncosSetRepo.create(entity, sr)
     }
 
+    async createMany(entities: internal.NCOSSet[], sr: ServiceRequest): Promise<internal.NCOSSet[]> {
+        await Promise.all(entities.map(async entity => {
+            if (!entity.resellerId)
+                entity.resellerId = sr.user.reseller_id
+            await this.checkPermissions(entity.resellerId, sr)
+        }))
+        return await this.ncosSetRepo.createMany(entities)
+    }
+
     async readAll(sr: ServiceRequest): Promise<[internal.NCOSSet[], number]> {
         if (sr.user.role == 'reseller')
             return await this.ncosSetRepo.readAll(sr, { resellerId: sr.user.reseller_id })
@@ -65,6 +74,15 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
         const ncosSet = await this.read(entity.ncosSetId, sr)
         await this.checkPermissions(ncosSet.resellerId, sr)
         return await this.ncosSetRepo.createLevel(entity, sr)
+    }
+
+    async createLevelMany(id: number, entities: internal.NCOSSetLevel[], sr: ServiceRequest): Promise<internal.NCOSSetLevel[]> {
+        const ncosSet = await this.read(id, sr)
+        await Promise.all(entities.map(async entity => {
+            entity.ncosSetId = id
+        }))
+        await this.checkPermissions(ncosSet.resellerId, sr)
+        return await this.ncosSetRepo.createLevelMany(entities, sr)
     }
 
     async readLevelAll(sr: ServiceRequest, id?: number): Promise<[internal.NCOSSetLevel[], number]> {

@@ -58,6 +58,13 @@ export class TransformInterceptor implements NestInterceptor {
              * else we return content
              */
             const prefer = req.headers.prefer || ''
+            const bulk = req.route.path.split('/').slice(-1) == 'bulk'
+
+            if (bulk && !prefer) {
+                res.status(204)
+                return
+            }
+
             switch (prefer) {
             case 'return=minimal':
                 res.status(204)

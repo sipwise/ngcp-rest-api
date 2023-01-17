@@ -1,3 +1,4 @@
+import {Body, Controller, Delete, Get, Param, ParseArrayPipe, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {
     ApiBody,
     ApiConsumes,
@@ -5,27 +6,27 @@ import {
     ApiExtraModels,
     ApiOkResponse,
     ApiQuery,
-    ApiTags,
+    ApiTags
 } from '@nestjs/swagger'
-import {Auth} from '../../decorators/auth.decorator'
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req} from '@nestjs/common'
+import {Request} from 'express'
+import {Operation} from 'helpers/patch.helper'
+import {RbacRole} from '../../config/constants.config'
 import {CrudController} from '../../controllers/crud.controller'
-import {NCOSSetCreateDto} from './dto/ncos-set-create.dto'
-import {NCOSSetUpdateDto} from './dto/ncos-set-update.dto'
-import {NCOSSetResponseDto} from './dto/ncos-set-response.dto'
-import {NCOSSetService} from './ncos-set.service'
+import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
+import {Auth} from '../../decorators/auth.decorator'
+import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {LoggerService} from '../../logger/logger.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalService} from '../journals/journal.service'
-import {RbacRole} from '../../config/constants.config'
 import {PaginatedDto} from '../paginated.dto'
-import {SearchLogic} from '../../helpers/search-logic.helper'
-import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
-import {LoggerService} from '../../logger/logger.service'
 import {PatchDto} from '../patch.dto'
-import {Operation} from 'helpers/patch.helper'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {NCOSSetLevelResponseDto} from './dto/ncos-set-level-response.dto'
+import {NCOSSetCreateDto} from './dto/ncos-set-create.dto'
 import {NCOSSetLevelCreateDto} from './dto/ncos-set-level-create.dto'
+import {NCOSSetLevelResponseDto} from './dto/ncos-set-level-response.dto'
+import {NCOSSetResponseDto} from './dto/ncos-set-response.dto'
+import {NCOSSetUpdateDto} from './dto/ncos-set-update.dto'
+import {NCOSSetService} from './ncos-set.service'
 
 const resourceName = 'ncos/sets'
 
@@ -58,7 +59,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     async createLevel(
             @Param('id') id: number,
             @Body() dto: NCOSSetLevelCreateDto,
-            @Req() req
+            @Req() req: Request
             ): Promise<NCOSSetLevelResponseDto> {
         this.log.debug({
             message: 'create ncos set level',
@@ -77,6 +78,27 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
         return response
     }
 
+    @Post(':id/levels/bulk')
+    @ApiCreatedResponse({
+        type: [NCOSSetLevelResponseDto],
+    })
+    async createLevelMany(
+        @Param('id') id: number,
+        @Body(new ParseArrayPipe({items: NCOSSetLevelCreateDto})) createDto: NCOSSetLevelCreateDto[],
+        @Req() req: Request,
+    ): Promise<NCOSSetLevelResponseDto[]> {
+        this.log.debug({
+            message: 'create ncos set level bulk',
+            func: this.createMany.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const setLevels = await Promise.all(createDto.map(async setLevel => setLevel.toInternal()))
+        const created = await this.ncosSetService.createLevelMany(id, setLevels, sr)
+        return await Promise.all(created.map(async setLevel => new NCOSSetLevelResponseDto(setLevel)))
+    }
+
     @Get(':id?/levels')
     @ApiOkResponse({
         type: NCOSSetLevelResponseDto,
@@ -85,7 +107,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @ApiPaginatedResponse(NCOSSetLevelResponseDto)
     async readLevelAll(
             @Param('id') id: number,
-            @Req() req
+            @Req() req: Request
             ): Promise<[NCOSSetLevelResponseDto[], number]> {
         this.log.debug({
             message: 'read all ncos set level',
@@ -105,7 +127,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
         type: NCOSSetLevelResponseDto,
     })
     async readLevel(
-            @Req() req,
+            @Req() req: Request,
             @Param('levelId', ParseIntPipe) levelId: number,
             @Param('id') id?: number
             ): Promise<NCOSSetLevelResponseDto> {
@@ -123,7 +145,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @Delete(':id?/levels/:levelId')
     @ApiOkResponse({})
     async deleteLevel(
-            @Req() req,
+            @Req() req: Request,
             @Param('levelId', ParseIntPipe) levelId: number,
             @Param('id') id: number
             ): Promise<number> {
@@ -144,7 +166,11 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journalLevel(@Req() req, @Param('id') id: number,  @Param('levelId') levelId: number) {
+    async journalLevel(
+        @Req() req: Request,
+        @Param('id') id: number,
+        @Param('levelId') levelId: number
+        ) {
         this.log.debug({
             message: 'read ncos set journal level by id',
             id: levelId,
@@ -163,7 +189,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @ApiCreatedResponse({
         type: NCOSSetResponseDto,
     })
-    async create(entity: NCOSSetCreateDto, req): Promise<NCOSSetResponseDto> {
+    async create(entity: NCOSSetCreateDto, req: Request): Promise<NCOSSetResponseDto> {
         this.log.debug({
             message: 'create ncos set',
             func: this.create.name,
@@ -180,10 +206,30 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
         return response
     }
 
+    @Post('bulk')
+    @ApiCreatedResponse({
+        type: [NCOSSetResponseDto],
+    })
+    async createMany(
+        @Body(new ParseArrayPipe({items: NCOSSetCreateDto})) createDto: NCOSSetCreateDto[],
+        @Req() req: Request,
+    ): Promise<NCOSSetResponseDto[]> {
+        this.log.debug({
+            message: 'create ncos set bulk',
+            func: this.createMany.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const sets = await Promise.all(createDto.map(async set => set.toInternal()))
+        const created = await this.ncosSetService.createMany(sets, sr)
+        return await Promise.all(created.map(async set => new NCOSSetResponseDto(req.url, set)))
+    }
+
     @Get()
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(NCOSSetResponseDto)
-    async readAll(@Req() req): Promise<[NCOSSetResponseDto[], number]> {
+    async readAll(@Req() req: Request): Promise<[NCOSSetResponseDto[], number]> {
         this.log.debug({
             message: 'read all ncos set',
             func: this.readAll.name,
@@ -201,7 +247,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @ApiOkResponse({
         type: NCOSSetResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, req): Promise<NCOSSetResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, req: Request): Promise<NCOSSetResponseDto> {
         this.log.debug({
             message: 'read ncos set by id',
             id: id,
@@ -219,7 +265,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @ApiOkResponse({
         type: NCOSSetResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, dto: NCOSSetUpdateDto, req): Promise<NCOSSetResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, dto: NCOSSetUpdateDto, req: Request): Promise<NCOSSetResponseDto> {
         this.log.debug({
             message: 'update ncos set by id',
             id: id,
@@ -243,7 +289,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<NCOSSetResponseDto> {
+    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req: Request): Promise<NCOSSetResponseDto> {
         this.log.debug({
             message: 'patch ncos set by id',
             id: id,
@@ -260,7 +306,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
 
     @Delete(':id')
     @ApiOkResponse({})
-    async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
+    async delete(@Param('id', ParseIntPipe) id: number, req: Request): Promise<number> {
         this.log.debug({
             message: 'delete ncos set by id',
             id: id,
@@ -278,7 +324,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, @Req() req) {
+    async journal(@Param('id') id: number | string, @Req() req: Request) {
         this.log.debug({
             message: 'read ncos set journal by id',
             id: id,
