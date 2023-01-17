@@ -1,3 +1,61 @@
+ngcp-rest-api (11.2.1.0+0~mr11.2.1.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [160d4b0] MT#55535 improve logging
+  * [3cc670f] MT#55535 use WinstonLogger for app-cluster.service
+  * [fde9f7a] MT#55553 switch tests transformer from ts-jest to esbuild-jest
+  * [ddaa3cd] MT#55556 fix [DEP0005] DeprecationWarning: Buffer()
+  * [81a9e6d] MT#55560 improve startup logging handling in app-cluster.service
+  * [dbdce4c] MT#55553 fix jest-e2e.config.js node_modules typo
+  * [7061bd2] MT#55553 fix database entities for NODE_JEST env
+  * [fae0d27] MT#55393 improve admins.e2e tests
+  * [84318ac] MT#55393 e2e test improve error resolution
+  * [85609db] MT#55393 rename jest-e2e-env-failfast to jest-e2e-env-runtime
+  * [f41cd13] MT#54646 add /api/clearcallcounters endpoint
+  * [c7f8a4a] MT#55553 fix db connection env for e2e tests
+  * [58bb26e] MT#55553 tsconfig slight rework
+  * [c3a3f95] MT#55727 improve swagger documentation and more
+  * [b7cbd25] MT#55769 add RbacRoles.subscriberadmin
+  * [2d6e351] MT#55711 add /api/customerspeeddial
+  * [00a93f3] MT#55849 do not invoke subsequent omni guards
+  * [99da5ea] MT#55711 rework and improve /api/customerspeeddials
+  * [5483572] MT#55974 refactor and standadise class and file names
+  * [b3d5c64] MT#55462 fix process.env.NODE_WP_BUNDLE check
+  * [ba2ceb8] MT#55976 api prefix and doc adjustments
+  * [39a52b7] MT#55727 improve swagger documentation rendering
+  * [fed3292] MT#55727 sandbox, test, tools directories
+  * [a092b1e] MT#55727 swagger static content fixes
+  * [5ebacbc] MT#56049 exclude expand properties from documentation
+  * [3769426] MT#55727 fix usage of swagger onComplete() callbacks
+  * [62c87d2] MT#55977 use webpack for localisation bundling
+  * [a216939] MT#55711 refactor /api/customerspeeddials
+  * [8cffe8c] MT#55688 add /ncos /ncos/sets /ncos/sets/levels endpoints
+  * [b280b5c] MT#55688 add bulk support ncos/sets, ncos/sets/levels
+
+  [ Michael Berger ]
+  * [8e8c0a5] MT#55393 add e2e tests for admins
+  * [1cbe3bd] MT#55458 implement endpoint customernumbers
+  * [b2fee56] MT#55458 handle db errors in customernumbers repository
+  * [8c1371d] MT#55458 implement raw query for customernumbers
+  * [fa4ec9e] MT#55727 remove OpenAPI decorator for journals
+  * [0a279dc] MT#55458 remove raw sql query in customernumbers repo
+  * [d520262] MT#55458 add search filter to search by id
+  * [9f74c5f] MT#55458 restrict subscriber to customer id
+  * [1ebc74a] MT#55895 change ServiceRequest from interface to class
+  * [dc85fdf] MT#55895 normalise ServiceRequest params to 'sr'
+  * [a1d59ae] MT#56071 migrate endpoint /api/numbers
+  * [c869820] MT#55977 add localisation support
+  * [875ae62] MT#55717 implement bulk operation for POST
+
+  [ Michael Prokop ]
+  * [5aad39c] MT#55524 Update lintian overrides for new lintian behavior
+  * [6031ea3] MT#55887 systemd hardening: allow pkey syscalls
+
+  [ Richard Fuchs ]
+  * [f00a3a8] MT#55977 add localisation/ to install files
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 17 Jan 2023 17:44:03 +0100
+
 ngcp-rest-api (11.2.0.0+0~mr11.2.0.0) unstable; urgency=medium
 
   [ Michael Berger ]
