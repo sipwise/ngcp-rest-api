@@ -20,7 +20,6 @@ import {AdminService} from './admin.service'
 import {
     ApiBody,
     ApiConsumes,
-    ApiCreatedResponse,
     ApiExtraModels,
     ApiOkResponse,
     ApiQuery,
@@ -33,13 +32,14 @@ import {JournalService} from '../journals/journal.service'
 import {Operation as PatchOperation, validate} from '../../helpers/patch.helper'
 import {RbacRole} from '../../config/constants.config'
 import {number} from 'yargs'
-import {PatchDto} from '../patch.dto'
+import {PatchDto} from '../../dto/patch.dto'
 import {Request} from 'express'
 import {CrudController} from '../../controllers/crud.controller'
 import {AdminSearchDto} from './dto/admin-search.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
+import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
-import {PaginatedDto} from '../paginated.dto'
+import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -64,9 +64,7 @@ export class AdminController extends CrudController<AdminCreateDto, AdminRespons
     }
 
     @Post()
-    @ApiCreatedResponse({
-        type: AdminResponseDto,
-    })
+    @ApiCreatedResponse(AdminResponseDto)
     async create(@Body() create: AdminCreateDto, @Req() req): Promise<AdminResponseDto> {
         this.log.debug({
             message: 'create admin',
@@ -83,9 +81,7 @@ export class AdminController extends CrudController<AdminCreateDto, AdminRespons
     }
 
     @Post('bulk')
-    @ApiCreatedResponse({
-        type: [AdminResponseDto],
-    })
+    @ApiCreatedResponse(AdminResponseDto)
     async createMany(
         @Body(new ParseArrayPipe({items: AdminCreateDto})) createDto: AdminCreateDto[],
         @Req() req: Request,

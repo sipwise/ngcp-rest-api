@@ -16,7 +16,6 @@ import {
 import {
     ApiBody,
     ApiConsumes,
-    ApiCreatedResponse,
     ApiExtraModels,
     ApiOkResponse,
     ApiQuery,
@@ -33,11 +32,12 @@ import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
 import {number} from 'yargs'
 import {Operation} from '../../helpers/patch.helper'
-import {PatchDto} from '../patch.dto'
+import {PatchDto} from '../../dto/patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {CustomerContactSearchDto} from './dto/customer-contact-search.dto'
-import {PaginatedDto} from '../paginated.dto'
+import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -61,9 +61,7 @@ export class CustomerContactController extends CrudController<CustomerContactCre
     }
 
     @Post()
-    @ApiCreatedResponse({
-        type: CustomerContactResponseDto,
-    })
+    @ApiCreatedResponse(CustomerContactResponseDto)
     async create(entity: CustomerContactCreateDto, req: Request): Promise<CustomerContactResponseDto> {
         this.log.debug({message: 'create customer contact', func: this.create.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -74,9 +72,7 @@ export class CustomerContactController extends CrudController<CustomerContactCre
     }
 
     @Post('bulk')
-    @ApiCreatedResponse({
-        type: [CustomerContactResponseDto],
-    })
+    @ApiCreatedResponse(CustomerContactResponseDto)
     async createMany(
         @Body(new ParseArrayPipe({items: CustomerContactCreateDto})) createDto: CustomerContactCreateDto[],
         @Req() req: Request,

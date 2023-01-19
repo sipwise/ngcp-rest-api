@@ -3,6 +3,8 @@ import {AppService} from '../app.service'
 import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestjs/common'
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
+import {CreatedDto} from '../dto/created.dto'
+import console from 'console'
 
 /**
  * Defines the names of query parameters for pagination
@@ -51,6 +53,11 @@ export class TransformInterceptor implements NestInterceptor {
         return next.handle().pipe(map(data => {
             const req = ctx.getRequest()
             const res = ctx.getResponse()
+            const config = AppService.config
+
+            if (res.passthrough) {
+                return data
+            }
 
             /**
              * if prefer header is empty we return 204 no content on all methods except POST and GET
@@ -58,12 +65,6 @@ export class TransformInterceptor implements NestInterceptor {
              * else we return content
              */
             const prefer = req.headers.prefer || ''
-            const bulk = req.route.path.split('/').slice(-1) == 'bulk'
-
-            if (bulk && !prefer) {
-                res.status(204)
-                return
-            }
 
             switch (prefer) {
             case 'return=minimal':
@@ -71,31 +72,56 @@ export class TransformInterceptor implements NestInterceptor {
                 return
             case 'return=representation':
                 break
+            case 'return=link':
+                return this.generateDataLinks(req, res, data)
+            case 'return=id':
+                return this.generateDataIds(req, res, data)
             default:
                 if (['PUT', 'PATCH', 'DELETE'].includes(req.method)) {
                     res.status(204)
                     return
                 }
+                if (req.method == 'POST' && data.length > 1) {
+                    if (config.post_return_max_link && data.length <= config.post_return_max_link) {
+                        return this.generateDataLinks(req, res, data)
+                    } else {
+                        res.status(204)
+                        return
+                    }
+                }
                 break
             }
 
-            const accept = (req.headers.accept || '').split(',')
-            if (res.passthrough) {
-                return data
-            }
-            if (accept.length == 1 && accept[0] === 'application/json') {
-                if (Array.isArray(data) && data.length == 2 && Number(data[data.length - 1]))
-                    return {data: data[0], total_count: data[1]}
-                return data
-            }
-            if (req.method === 'DELETE') {
-                return data
-            }
+            if (!this.expectedHAL(req))
+                return this.generateOpenAPIResource(req, res, data)
 
-            res.setHeader('content-type', 'application/hal+json')
+            if (req.method === 'DELETE')
+                return data
 
-            return this.generateHALResource(req, data)
+            return this.generateHALResource(req, res, data)
         }))
+    }
+
+    private expectedHAL(req: any): boolean {
+        const accept = (req.headers.accept || '').split(',')
+        return accept.length == 1 && accept[0] === 'application/json' ? false : true
+    }
+
+    private async generateOpenAPIResource(req: any, res: any, data: any): Promise<CreatedDto<any>> {
+        const response: CreatedDto<any> = new CreatedDto<any>()
+
+        if (Array.isArray(data) && data.length == 2 && Number.isInteger(data[data.length - 1])) {
+            response.data = data[0]
+            response.total_count = data[1]
+        } else if (Array.isArray(data)) {
+            response.data = data
+            response.total_count = data.length
+        } else if (typeof data === 'object')  {
+            response.data = [data]
+            response.total_count = 1
+        }
+
+        return response
     }
 
     /**
@@ -104,7 +130,7 @@ export class TransformInterceptor implements NestInterceptor {
      * @param data Date to be transformed
      * @private
      */
-    private generateHALResource(req: any, data: any) {
+    private async generateHALResource(req: any, res: any, data: any): Promise<any> {
         const page: string = (req.query[this.pageName] as string) ?? `${AppService.config.common.api_default_query_page}`
         const rows: string = (req.query[this.perPageName] as string) ?? `${AppService.config.common.api_default_query_rows}`
 
@@ -113,6 +139,8 @@ export class TransformInterceptor implements NestInterceptor {
         const resName = path.match(re)[2]
 
         let resource
+
+        res.setHeader('content-type', 'application/hal+json')
 
         if (Array.isArray(data)) {
             let totalCount: number = data.length
@@ -145,8 +173,56 @@ export class TransformInterceptor implements NestInterceptor {
             resource = halson(data)
                 .addLink('self', `/api/${resName}/${data.id}`)
                 .addLink('collection', `/api/${resName}`)
+        } else {
+            resource = halson(data)
+                .addLink('self', `/api/${resName}`)
+                .addLink('collection', `/api/${resName}`)
         }
         return resource
     }
 
+    private async generateDataLinks(req: any, res: any, data: any): Promise<CreatedDto<any>> {
+        const path = req.route.path
+        const resource: CreatedDto<any> = new CreatedDto<any>()
+
+        if (data && !Array.isArray(data))
+            data = [data]
+
+        const total_count = data.length
+        resource.total_count = total_count
+        resource.links = []
+
+        if (total_count > 0 && !('id' in data[0]))
+            return
+
+        await Promise.all(data.map(async e =>
+            resource.links.push(`${path}/${e.id}`)
+        ))
+
+        return this.expectedHAL(req)
+            ? await this.generateHALResource(req, res, resource)
+            : await this.generateOpenAPIResource(req, res, resource)
+    }
+
+    private async generateDataIds(req: any, res: any, data: any): Promise<CreatedDto<any>> {
+        const resource: CreatedDto<any> = new CreatedDto<any>()
+
+        if (data && !Array.isArray(data))
+            data = [data]
+
+        const total_count = data.length
+        resource.total_count = total_count
+        resource.ids = []
+
+        if (total_count > 0 && !('id' in data[0]))
+            return
+
+        await Promise.all(data.map(async e =>
+            resource.ids.push(e.id)
+        ))
+
+        return this.expectedHAL(req)
+            ? await this.generateHALResource(req, res, resource)
+            : await this.generateOpenAPIResource(req, res, resource)
+    }
 }

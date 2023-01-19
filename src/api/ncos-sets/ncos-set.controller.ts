@@ -2,7 +2,6 @@ import {Body, Controller, Delete, Get, Param, ParseArrayPipe, ParseIntPipe, Patc
 import {
     ApiBody,
     ApiConsumes,
-    ApiCreatedResponse,
     ApiExtraModels,
     ApiOkResponse,
     ApiQuery,
@@ -12,6 +11,7 @@ import {Request} from 'express'
 import {Operation} from 'helpers/patch.helper'
 import {RbacRole} from '../../config/constants.config'
 import {CrudController} from '../../controllers/crud.controller'
+import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {Auth} from '../../decorators/auth.decorator'
 import {SearchLogic} from '../../helpers/search-logic.helper'
@@ -19,8 +19,9 @@ import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {LoggerService} from '../../logger/logger.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalService} from '../journals/journal.service'
-import {PaginatedDto} from '../paginated.dto'
-import {PatchDto} from '../patch.dto'
+import {CreatedDto} from '../../dto/created.dto'
+import {PaginatedDto} from '../../dto/paginated.dto'
+import {PatchDto} from '../../dto/patch.dto'
 import {NCOSSetCreateDto} from './dto/ncos-set-create.dto'
 import {NCOSSetLevelCreateDto} from './dto/ncos-set-level-create.dto'
 import {NCOSSetLevelResponseDto} from './dto/ncos-set-level-response.dto'
@@ -36,7 +37,7 @@ const resourceName = 'ncos/sets'
     RbacRole.reseller,
 )
 @ApiTags('NCOS')
-@ApiExtraModels(PaginatedDto)
+@ApiExtraModels(CreatedDto, PaginatedDto)
 @Controller(resourceName)
 export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetResponseDto> {
     private readonly log = new LoggerService(NCOSSetController.name)
@@ -53,9 +54,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
 
 
     @Post(':id/levels')
-    @ApiCreatedResponse({
-        type: NCOSSetLevelResponseDto,
-    })
+    @ApiCreatedResponse(NCOSSetLevelCreateDto)
     async createLevel(
             @Param('id') id: number,
             @Body() dto: NCOSSetLevelCreateDto,
@@ -79,9 +78,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     }
 
     @Post(':id/levels/bulk')
-    @ApiCreatedResponse({
-        type: [NCOSSetLevelResponseDto],
-    })
+    @ApiCreatedResponse(NCOSSetLevelCreateDto)
     async createLevelMany(
         @Param('id') id: number,
         @Body(new ParseArrayPipe({items: NCOSSetLevelCreateDto})) createDto: NCOSSetLevelCreateDto[],
@@ -186,9 +183,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
 
 
     @Post()
-    @ApiCreatedResponse({
-        type: NCOSSetResponseDto,
-    })
+    @ApiCreatedResponse(NCOSSetCreateDto)
     async create(entity: NCOSSetCreateDto, req: Request): Promise<NCOSSetResponseDto> {
         this.log.debug({
             message: 'create ncos set',
@@ -207,9 +202,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     }
 
     @Post('bulk')
-    @ApiCreatedResponse({
-        type: [NCOSSetResponseDto],
-    })
+    @ApiCreatedResponse(NCOSSetResponseDto)
     async createMany(
         @Body(new ParseArrayPipe({items: NCOSSetCreateDto})) createDto: NCOSSetCreateDto[],
         @Req() req: Request,

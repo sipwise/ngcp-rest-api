@@ -22,7 +22,6 @@ import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {
     ApiBody,
     ApiConsumes,
-    ApiCreatedResponse,
     ApiExtraModels,
     ApiOkResponse,
     ApiQuery,
@@ -31,11 +30,12 @@ import {
 import {Operation} from '../../helpers/patch.helper'
 import {Request} from 'express'
 import {RbacRole} from '../../config/constants.config'
-import {PatchDto} from '../patch.dto'
+import {PatchDto} from '../../dto/patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ResellerSearchDto} from './dto/reseller-search.dto'
-import {PaginatedDto} from '../paginated.dto'
+import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -59,9 +59,7 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
     }
 
     @Post()
-    @ApiCreatedResponse({
-        type: ResellerResponseDto,
-    })
+    @ApiCreatedResponse(ResellerResponseDto)
     async create(entity: ResellerCreateDto, req: Request): Promise<ResellerResponseDto> {
         this.log.debug({message: 'create reseller', func: this.create.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -74,9 +72,7 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
 // TODO: could we use DELETE to terminate resellers? https://datatracker.ietf.org/doc/html/rfc7231#section-4.3.5
 
     @Post('bulk')
-    @ApiCreatedResponse({
-        type: [ResellerResponseDto],
-    })
+    @ApiCreatedResponse(ResellerResponseDto)
     async createMany(
         @Body(new ParseArrayPipe({items: ResellerCreateDto})) createDto: ResellerCreateDto[],
         @Req() req: Request,

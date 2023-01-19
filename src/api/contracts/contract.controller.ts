@@ -16,7 +16,6 @@ import {Auth} from '../../decorators/auth.decorator'
 import {
     ApiBody,
     ApiConsumes,
-    ApiCreatedResponse,
     ApiExtraModels,
     ApiOkResponse,
     ApiQuery,
@@ -31,11 +30,12 @@ import {Operation} from '../../helpers/patch.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {Request} from 'express'
 import {RbacRole} from '../../config/constants.config'
-import {PatchDto} from '../patch.dto'
+import {PatchDto} from '../../dto/patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ContractSearchDto} from './dto/contract-search.dto'
-import {PaginatedDto} from '../paginated.dto'
+import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -59,9 +59,7 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
     }
 
     @Post()
-    @ApiCreatedResponse({
-        type: ContractResponseDto,
-    })
+    @ApiCreatedResponse(ContractResponseDto)
     async create(entity: ContractCreateDto, req: Request): Promise<ContractResponseDto> {
         this.log.debug({message: 'create contract', func: this.create.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -72,9 +70,7 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
     }
 
     @Post('bulk')
-    @ApiCreatedResponse({
-        type: [ContractResponseDto],
-    })
+    @ApiCreatedResponse(ContractResponseDto)
     async createMany(
         @Body(new ParseArrayPipe({items: ContractCreateDto})) createDto: ContractCreateDto[],
         @Req() req: Request,
