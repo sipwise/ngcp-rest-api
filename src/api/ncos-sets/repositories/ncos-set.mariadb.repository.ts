@@ -120,6 +120,8 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
     async readLevelAll(sr: ServiceRequest, id?: number, filterBy?: FilterBy): Promise<[internal.NCOSSetLevel[], number]> {
         const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
         qb.innerJoinAndSelect('ncosSetLevel.level', 'level')
+        if (id)
+            qb.where({ ncos_set_id: id })
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(
                     result.map(async (d) =>
