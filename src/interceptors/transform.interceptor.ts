@@ -59,6 +59,9 @@ export class TransformInterceptor implements NestInterceptor {
                 return data
             }
 
+            if (req.method == 'POST')
+                this.addLocationHeader(req, res, data)
+
             /**
              * if prefer header is empty we return 204 no content on all methods except POST and GET
              * if return=minimal we return 204 on all http methods
@@ -100,6 +103,27 @@ export class TransformInterceptor implements NestInterceptor {
 
             return this.generateHALResource(req, res, data)
         }))
+    }
+
+    private addLocationHeader(req: any, res: any, data) {
+        const path = req.route.path
+        let id: number | string
+        let length: number
+        if (Array.isArray(data) && data.length == 2 && Number.isInteger(data[data.length - 1])) {
+            if (data[0].length > 0 && 'id' in data[0][0])
+                id = data[0][0]['id']
+            length = data[0].length
+        } else if (Array.isArray(data)) {
+            if ('id' in data[0])
+                id = data[0]['id']
+            length = data.length
+        } else if (typeof data === 'object')  {
+            if ('id' in data)
+                id = data['id']
+            length = 1
+        }
+
+        res.setHeader('Location', path + (id && length == 1 ? `/${id}` : ''))
     }
 
     private expectedHAL(req: any): boolean {
