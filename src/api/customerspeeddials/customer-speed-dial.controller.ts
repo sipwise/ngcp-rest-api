@@ -1,7 +1,6 @@
 import {
     ApiBody,
     ApiConsumes,
-    ApiCreatedResponse,
     ApiExtraModels,
     ApiOkResponse,
     ApiQuery,
@@ -17,11 +16,12 @@ import {CustomerSpeedDialService} from './customer-speed-dial.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalService} from '../journals/journal.service'
 import {RbacRole} from '../../config/constants.config'
-import {PaginatedDto} from '../paginated.dto'
+import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
-import {PatchDto} from '../patch.dto'
+import {PatchDto} from '../../dto/patch.dto'
 import {Operation} from 'helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Request} from 'express'
@@ -48,9 +48,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     }
 
     @Post()
-    @ApiCreatedResponse({
-        type: CustomerSpeedDialResponseDto,
-    })
+    @ApiCreatedResponse(CustomerSpeedDialResponseDto)
     async create(dto: CustomerSpeedDialCreateDto, req): Promise<CustomerSpeedDialResponseDto> {
         this.log.debug({
             message: 'create customer speed dial',
@@ -69,9 +67,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     }
 
     @Post('bulk')
-    @ApiCreatedResponse({
-        type: [CustomerSpeedDialResponseDto],
-    })
+    @ApiCreatedResponse(CustomerSpeedDialResponseDto)
     async createMany(
         @Body(new ParseArrayPipe({items: CustomerSpeedDialCreateDto})) createDto: CustomerSpeedDialCreateDto[],
         @Req() req: Request,

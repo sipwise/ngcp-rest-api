@@ -2,7 +2,6 @@ import {Body, Controller, Delete, Get, Param, ParseArrayPipe, ParseIntPipe, Patc
 import {
     ApiBody,
     ApiConsumes,
-    ApiCreatedResponse,
     ApiExtraModels,
     ApiOkResponse,
     ApiQuery,
@@ -17,12 +16,13 @@ import {SystemContactService} from './system-contact.service'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
 import {Operation} from '../../helpers/patch.helper'
-import {PatchDto} from '../patch.dto'
+import {PatchDto} from '../../dto/patch.dto'
 import {number} from 'yargs'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {SystemContactSearchDto} from './dto/system-contact-search.dto'
-import {PaginatedDto} from '../paginated.dto'
+import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -46,9 +46,7 @@ export class SystemContactController extends CrudController<SystemContactCreateD
     }
 
     @Post()
-    @ApiCreatedResponse({
-        type: SystemContactResponseDto,
-    })
+    @ApiCreatedResponse(SystemContactResponseDto)
     async create(entity: SystemContactCreateDto, req): Promise<SystemContactResponseDto> {
         this.log.debug({message: 'create system contact', func: this.create.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -59,9 +57,7 @@ export class SystemContactController extends CrudController<SystemContactCreateD
     }
 
     @Post('bulk')
-    @ApiCreatedResponse({
-        type: [SystemContactResponseDto],
-    })
+    @ApiCreatedResponse(SystemContactResponseDto)
     async createMany(
         @Body(new ParseArrayPipe({items: SystemContactCreateDto})) createDto: SystemContactCreateDto[],
         @Req() req: Request,

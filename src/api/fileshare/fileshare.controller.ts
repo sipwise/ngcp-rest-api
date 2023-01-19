@@ -1,4 +1,4 @@
-import {ApiCreatedResponse, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {
     Controller,
     Delete,
@@ -21,8 +21,9 @@ import {FileInterceptor} from '@nestjs/platform-express'
 import {AppService} from '../../app.service'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {FileshareSearchDto} from './dto/fileshare-search.dto'
-import {PaginatedDto} from '../paginated.dto'
+import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -44,9 +45,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     }
 
     @Post()
-    @ApiCreatedResponse({
-        type: FileshareResponseDto,
-    })
+    @ApiCreatedResponse(FileshareResponseDto)
     @UseInterceptors(FileInterceptor('file', {
         limits: {
             fileSize: AppService.config.fileshare.limits.upload_size || null,

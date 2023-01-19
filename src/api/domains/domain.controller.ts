@@ -1,4 +1,4 @@
-import {ApiCreatedResponse, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {
     Body,
@@ -23,8 +23,9 @@ import {RbacRole} from '../../config/constants.config'
 import {Roles} from '../../decorators/roles.decorator'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {DomainSearchDto} from './dto/domain-search.dto'
-import {PaginatedDto} from '../paginated.dto'
+import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -53,9 +54,7 @@ export class DomainController extends CrudController<DomainCreateDto, DomainResp
     }
 
     @Post()
-    @ApiCreatedResponse({
-        type: DomainResponseDto,
-    })
+    @ApiCreatedResponse(DomainResponseDto)
     async create(entity: DomainCreateDto, req): Promise<DomainResponseDto> {
         this.log.debug({message: 'create domain', func: this.readAll.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -66,9 +65,7 @@ export class DomainController extends CrudController<DomainCreateDto, DomainResp
     }
 
     @Post('bulk')
-    @ApiCreatedResponse({
-        type: [DomainResponseDto],
-    })
+    @ApiCreatedResponse(DomainResponseDto)
     async createMany(
         @Body(new ParseArrayPipe({items: DomainCreateDto})) createDto: DomainCreateDto[],
         @Req() req: Request,

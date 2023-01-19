@@ -1,14 +1,14 @@
 import {Controller, Delete, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
-import {ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'
 import {JournalService} from '../journals/journal.service'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {Request} from 'express'
 import {number} from 'yargs'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {PatchDto} from '../patch.dto'
+import {PatchDto} from '../../dto/patch.dto'
 import {Operation} from '../../helpers/patch.helper'
 import {ContactService} from './contact.service'
 import {ContactCreateDto} from './dto/contact-create.dto'
@@ -16,6 +16,7 @@ import {ContactResponseDto} from './dto/contact-response.dto'
 import {ContactSearchDto} from './dto/contact-search.dto'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {LoggerService} from '../../logger/logger.service'
+import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 
 const resourceName = 'contacts'
 
@@ -35,9 +36,7 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
     }
 
     @Post()
-    @ApiCreatedResponse({
-        type: ContactResponseDto,
-    })
+    @ApiCreatedResponse(ContactResponseDto)
     async create(entity: ContactCreateDto, req: Request): Promise<ContactResponseDto> {
         this.log.debug({message: 'create contact', func: this.create.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
