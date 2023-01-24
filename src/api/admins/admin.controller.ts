@@ -7,7 +7,6 @@ import {
     Get,
     Inject,
     Param,
-    ParseArrayPipe,
     ParseIntPipe,
     Patch,
     Post,
@@ -17,14 +16,7 @@ import {
 import {AdminCreateDto} from './dto/admin-create.dto'
 import {AdminResponseDto} from './dto/admin-response.dto'
 import {AdminService} from './admin.service'
-import {
-    ApiBody,
-    ApiConsumes,
-    ApiExtraModels,
-    ApiOkResponse,
-    ApiQuery,
-    ApiTags,
-} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {AppService} from '../../app.service'
 import {Auth} from '../../decorators/auth.decorator'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
@@ -34,7 +26,6 @@ import {RbacRole} from '../../config/constants.config'
 import {number} from 'yargs'
 import {PatchDto} from '../../dto/patch.dto'
 import {Request} from 'express'
-import {CrudController} from '../../controllers/crud.controller'
 import {AdminSearchDto} from './dto/admin-search.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
@@ -43,6 +34,8 @@ import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {ParseIntArrayPipe} from '../../pipes/parse-int-array.pipe'
+import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 
 const resourceName = 'admins'
 
@@ -50,7 +43,7 @@ const resourceName = 'admins'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller)
-export class AdminController extends CrudController<AdminCreateDto, AdminResponseDto> {
+export class AdminController  { // extends CrudController<AdminCreateDto, AdminResponseDto> {
     private readonly log = new LoggerService(AdminController.name)
 
     constructor(
@@ -60,42 +53,26 @@ export class AdminController extends CrudController<AdminCreateDto, AdminRespons
         @Inject(forwardRef(() => ExpandHelper))
         private readonly expander: ExpandHelper,
     ) {
-        super(resourceName, adminService, journalService)
+        //super(resourceName, adminService, journalService)
     }
 
     @Post()
     @ApiCreatedResponse(AdminResponseDto)
-    async create(@Body() create: AdminCreateDto, @Req() req): Promise<AdminResponseDto> {
-        this.log.debug({
-            message: 'create admin',
-            func: this.create.name,
-            url: req.url,
-            method: req.method,
-        })
-        const sr = new ServiceRequest(req)
-        const admin = Object.assign(new AdminCreateDto(), create)
-        const newAdmin = await this.adminService.create(await admin.toInternal(), sr)
-        const response = new AdminResponseDto(newAdmin, sr.user.role)
-        await this.journalService.writeJournal(sr, response.id, response)
-        return response
-    }
-
-    @Post('bulk')
-    @ApiCreatedResponse(AdminResponseDto)
-    async createMany(
-        @Body(new ParseArrayPipe({items: AdminCreateDto})) createDto: AdminCreateDto[],
+    async create(
+        @Body(new ParseOneOrManyPipe({items: AdminCreateDto})) createDto: AdminCreateDto[],
         @Req() req: Request,
     ): Promise<AdminResponseDto[]> {
         this.log.debug({
             message: 'create admin bulk',
-            func: this.createMany.name,
+            func: this.create.name,
             url: req.url,
             method: req.method,
         })
         const sr = new ServiceRequest(req)
         const admins = createDto.map(admin => admin.toInternal())
         const created = await this.adminService.createMany(admins, sr)
-        return created.map((adm) => new AdminResponseDto(adm, sr.user.role))
+        if (sr.returnContent)
+            return created.map((adm) => new AdminResponseDto(adm, sr.user.role))
     }
 
     @Get()
@@ -195,14 +172,33 @@ export class AdminController extends CrudController<AdminCreateDto, AdminRespons
 
     @Delete(':id')
     @ApiOkResponse({
-        type: number,
+        type: AdminResponseDto,
     })
-    async delete(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<number> {
+    async delete(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<AdminResponseDto> {
         const sr = new ServiceRequest(req)
         this.log.debug({message: 'delete admin by id', func: this.delete.name, url: req.url, method: req.method})
         const response = await this.adminService.delete(id, sr)
         await this.journalService.writeJournal(sr, id, {})
-        return response
+        if (sr.returnContent)
+            return new AdminResponseDto(response, sr.user.role)
+    }
+
+    @Delete()
+    @ApiOkResponse({
+        type: number,
+    })
+    async deleteMany(
+        @Body(new ParseIntArrayPipe()) ids: number[],
+        @Req() req: Request,
+    ): Promise<[AdminResponseDto[], number]> {
+        const sr = new ServiceRequest(req)
+        this.log.debug({message: 'delete admin by id', func: this.delete.name, url: req.url, method: req.method})
+        const [admins, count] = await this.adminService.deleteMany(ids, sr)
+        // await this.journalService.writeJournal(sr, ids, {})
+        if (sr.returnContent) {
+            const responseList = admins.map((adm) => new AdminResponseDto(adm, sr.user.role))
+            return [responseList, count]
+        }
     }
 
     @Get(':id/journal')

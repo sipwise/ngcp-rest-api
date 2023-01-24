@@ -27,6 +27,7 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Request} from 'express'
+import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 
 const resourceName = 'systemcontacts'
 
@@ -47,24 +48,13 @@ export class SystemContactController extends CrudController<SystemContactCreateD
 
     @Post()
     @ApiCreatedResponse(SystemContactResponseDto)
-    async create(entity: SystemContactCreateDto, req): Promise<SystemContactResponseDto> {
-        this.log.debug({message: 'create system contact', func: this.create.name, url: req.url, method: req.method})
-        const sr = new ServiceRequest(req)
-        const contact = await this.contactService.create(entity.toInternal(), sr)
-        const response = new SystemContactResponseDto(contact)
-        await this.journalService.writeJournal(sr, response.id, response)
-        return response
-    }
-
-    @Post('bulk')
-    @ApiCreatedResponse(SystemContactResponseDto)
-    async createMany(
-        @Body(new ParseArrayPipe({items: SystemContactCreateDto})) createDto: SystemContactCreateDto[],
+    async create(
+        @Body(new ParseOneOrManyPipe({items: SystemContactCreateDto})) createDto: SystemContactCreateDto[],
         @Req() req: Request,
     ): Promise<SystemContactResponseDto[]> {
         this.log.debug({
-            message: 'create system contact bulk',
-            func: this.createMany.name,
+            message: 'create system contacts',
+            func: this.create.name,
             url: req.url,
             method: req.method,
         })

@@ -158,7 +158,7 @@ export class Admin extends BaseEntity {
         return this
     }
 
-    async toInternal(): Promise<internal.Admin> {
+    toInternal(): internal.Admin {
         const admin = new internal.Admin()
 
         admin.billing_data = this.billing_data
@@ -178,7 +178,7 @@ export class Admin extends BaseEntity {
         admin.role_id = this.role_id
         if (this.role != undefined) {
             admin.role = RbacRole[this.role.role]
-            admin.role_data = await this.role.toInternal()
+            admin.role_data = this.role.toInternal()
             admin.role_id = this.role.id
         }
         admin.show_passwords = this.show_passwords

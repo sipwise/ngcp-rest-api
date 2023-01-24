@@ -1,4 +1,17 @@
-import {Controller, Delete, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {
+    Body,
+    Controller,
+    Delete,
+    forwardRef,
+    Get,
+    Inject,
+    Param,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Put,
+    Req,
+} from '@nestjs/common'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
 import {ApiBody, ApiOkResponse, ApiTags} from '@nestjs/swagger'
@@ -17,6 +30,7 @@ import {ContactSearchDto} from './dto/contact-search.dto'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {LoggerService} from '../../logger/logger.service'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
+import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 
 const resourceName = 'contacts'
 
@@ -37,10 +51,13 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
 
     @Post()
     @ApiCreatedResponse(ContactResponseDto)
-    async create(entity: ContactCreateDto, req: Request): Promise<ContactResponseDto> {
+    async create(
+        @Body(new ParseOneOrManyPipe({items: ContactCreateDto})) entity: ContactCreateDto[],
+        @Req() req: Request
+    ): Promise<ContactResponseDto> {
         this.log.debug({message: 'create contact', func: this.create.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const contact = await this.contactService.create(entity.toInternal(), sr)
+        const contact = await this.contactService.create(entity[0].toInternal(), sr)  // TODO: change to create multiple
         const response = new ContactResponseDto(contact, sr.user.role)
         await this.journalService.writeJournal(sr, response.id, response)
         return response

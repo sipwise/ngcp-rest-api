@@ -1,4 +1,4 @@
-import {Controller, Post} from '@nestjs/common'
+import {Body, Controller, Post} from '@nestjs/common'
 import {ApiTags} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'
 import {Auth} from '../../decorators/auth.decorator'
@@ -8,6 +8,7 @@ import {ClearCallCounterService} from './clear-call-counter.service'
 import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ClearCallCounterCreateDto} from './dto/clear-call-counter-create.dto'
+import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 
 const resourceName = 'clearcallcounters'
 
@@ -24,7 +25,7 @@ export class ClearCallCounterController extends CrudController<ClearCallCounterC
     }
 
     @Post()
-    async create(createDto: ClearCallCounterCreateDto, req) {
+    async create(@Body(new ParseOneOrManyPipe({items: ClearCallCounterCreateDto})) createDto: ClearCallCounterCreateDto[], req) {
         this.log.debug({
             message: 'clear call counters',
             func: this.create.name,
@@ -32,7 +33,7 @@ export class ClearCallCounterController extends CrudController<ClearCallCounterC
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const callId = new internal.CallId(createDto.call_id)
+        const callId = new internal.CallId(createDto[0].call_id)
         await this.clearCallCounterService.create(callId, sr)
     }
 }

@@ -39,6 +39,7 @@ import {ApiCreatedResponse} from '../../decorators/api-created-response.decorato
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 
 const resourceName = 'resellers'
 
@@ -58,28 +59,18 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
         super(resourceName, resellerService, journalService)
     }
 
-    @Post()
-    @ApiCreatedResponse(ResellerResponseDto)
-    async create(entity: ResellerCreateDto, req: Request): Promise<ResellerResponseDto> {
-        this.log.debug({message: 'create reseller', func: this.create.name, url: req.url, method: req.method})
-        const sr = new ServiceRequest(req)
-        const reseller = await this.resellerService.create(entity, sr)
-        const response = new ResellerResponseDto(reseller)
-        await this.journalService.writeJournal(sr, response.id, response)
-        return response
-    }
 
 // TODO: could we use DELETE to terminate resellers? https://datatracker.ietf.org/doc/html/rfc7231#section-4.3.5
 
-    @Post('bulk')
+    @Post()
     @ApiCreatedResponse(ResellerResponseDto)
-    async createMany(
-        @Body(new ParseArrayPipe({items: ResellerCreateDto})) createDto: ResellerCreateDto[],
+    async create(
+        @Body(new ParseOneOrManyPipe({items: ResellerCreateDto})) createDto: ResellerCreateDto[],
         @Req() req: Request,
     ): Promise<ResellerResponseDto[]> {
         this.log.debug({
             message: 'create reseller bulk',
-            func: this.createMany.name,
+            func: this.create.name,
             url: req.url,
             method: req.method,
         })

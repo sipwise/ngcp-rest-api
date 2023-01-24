@@ -52,10 +52,10 @@ export class CustomerController extends CrudController<CustomerCreateDto, Custom
 
     @Post()
     @ApiCreatedResponse(CustomerResponseDto)
-    async create(entity: CustomerCreateDto, req: Request): Promise<CustomerResponseDto> {
+    async create(entity: CustomerCreateDto[], req: Request): Promise<CustomerResponseDto> {
         this.log.debug({message: 'create customer', func: this.create.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const response = await this.customerService.create(entity, sr)
+        const response = await this.customerService.create(entity[0], sr)
         await this.journalService.writeJournal(sr, response.id, response)
         return response
     }

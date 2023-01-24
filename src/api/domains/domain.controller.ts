@@ -30,6 +30,7 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Request} from 'express'
+import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 
 const resourceName = 'domains'
 
@@ -53,26 +54,16 @@ export class DomainController extends CrudController<DomainCreateDto, DomainResp
         super(resourceName, domainService, journalService)
     }
 
+
     @Post()
     @ApiCreatedResponse(DomainResponseDto)
-    async create(entity: DomainCreateDto, req): Promise<DomainResponseDto> {
-        this.log.debug({message: 'create domain', func: this.readAll.name, url: req.url, method: req.method})
-        const sr = new ServiceRequest(req)
-        const domain = await this.domainService.create(entity.toInternal(), sr)
-        const response = new DomainResponseDto(domain)
-        await this.journalService.writeJournal(sr, response.id, response)
-        return response
-    }
-
-    @Post('bulk')
-    @ApiCreatedResponse(DomainResponseDto)
-    async createMany(
-        @Body(new ParseArrayPipe({items: DomainCreateDto})) createDto: DomainCreateDto[],
+    async create(
+        @Body(new ParseOneOrManyPipe({items: DomainCreateDto})) createDto: DomainCreateDto[],
         @Req() req: Request,
     ): Promise<DomainResponseDto[]> {
         this.log.debug({
-            message: 'create domains bulk',
-            func: this.createMany.name,
+            message: 'create domains',
+            func: this.create.name,
             url: req.url,
             method: req.method,
         })
