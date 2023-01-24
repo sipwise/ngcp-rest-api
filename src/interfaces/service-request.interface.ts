@@ -11,6 +11,7 @@ export class ServiceRequest {
     headers: any
     query?: any
     req: Request
+    returnContent: boolean
 
     constructor(req: Request) {
         this.params = req.params
@@ -18,5 +19,8 @@ export class ServiceRequest {
         this.headers = req.headers
         this.user = req.user
         this.req = req
+
+        const prefer = req.headers.prefer || ''
+        this.returnContent = prefer == 'return=representation'
     }
 }

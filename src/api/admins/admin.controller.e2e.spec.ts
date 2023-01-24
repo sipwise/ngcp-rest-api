@@ -16,8 +16,9 @@ describe('AdminController', () => {
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
+    const preferHeader: [string, string] = ['prefer', 'return=representation']
     let createdAdminIds: number[] = []
-    let creds = {username: 'administrator', password: 'administrator'}
+    const creds = {username: 'administrator', password: 'administrator'}
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -185,17 +186,30 @@ describe('AdminController', () => {
                     show_passwords: true,
                 }),
             ]
-            for (const a of admins) {
-                it('should create admin ' + a.login, async () => {
-                    expect.assertions(1)
-                    const response = await request(app.getHttpServer())
-                        .post('/admins')
-                        .set(...authHeader)
-                        .send(a)
-                    expect(response.status).toEqual(201)
-                    createdAdminIds.push(+response.body.id)
-                })
-            }
+            const single = admins.pop()
+            it('should create single admin ' + single.login, async () => {
+                expect.assertions(1)
+                const response = await request(app.getHttpServer())
+                    .post('/admins')
+                    .set(...authHeader)
+                    .set(...preferHeader)
+                    .send(single)
+                expect(response.status).toEqual(201)
+                // console.log(response)
+                createdAdminIds.push(+response.body[0].id)
+            })
+            it('should create admins bulk', async () => {
+                expect.assertions(1)
+                const response = await request(app.getHttpServer())
+                    .post('/admins')
+                    .set(...authHeader)
+                    .set(...preferHeader)
+                    .send(admins)
+                expect(response.status).toEqual(201)
+                for (const admin of response.body) {
+                    createdAdminIds.push(+admin.id)
+                }
+            })
         })
 
         describe('Admins GET', () => {
@@ -362,16 +376,17 @@ describe('AdminController', () => {
                         })
                         const response = await request(app.getHttpServer())
                             .post('/admins')
+                            .set(...preferHeader)
                             .auth(test.username, test.password)
                             .send(data)
                         expect(response.status).toEqual(roleTest.want)
                         if (response.status == 201) {
                             if (test.canSeeResellerId)
-                                expect(response.body.reseller_id).toBeDefined()
+                                expect(response.body[0].reseller_id).toBeDefined()
                             else {
-                                expect(response.body.reseller_id).not.toBeDefined()
+                                expect(response.body[0].reseller_id).not.toBeDefined()
                             }
-                            createdAdminIds.push(+response.body.id)
+                            createdAdminIds.push(+response.body[0].id)
                         }
                     })
                 }
@@ -388,10 +403,11 @@ describe('AdminController', () => {
                     role: RbacRole.admin,
                     show_passwords: true,
                 })
-                const want = 422
+                const want = 400
                 const response = await request(app.getHttpServer())
                     .post('/admins')
                     .set(...authHeader)
+                    .set(...preferHeader)
                     .send(data)
                 expect(response.status).toEqual(want)
             })
@@ -417,9 +433,10 @@ describe('AdminController', () => {
                 const response = await request(app.getHttpServer())
                     .post('/admins')
                     .set(...authHeader)
+                    .set(...preferHeader)
                     .send(data)
                 expect(response.status).toEqual(201)
-                createdId = response.body.id
+                createdId = response.body[0].id
                 createdAdminIds.push(createdId)
             })
             const protectedFields = {

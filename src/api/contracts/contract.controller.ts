@@ -39,6 +39,7 @@ import {ApiCreatedResponse} from '../../decorators/api-created-response.decorato
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 
 const resourceName = 'contracts'
 
@@ -60,24 +61,13 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
 
     @Post()
     @ApiCreatedResponse(ContractResponseDto)
-    async create(entity: ContractCreateDto, req: Request): Promise<ContractResponseDto> {
-        this.log.debug({message: 'create contract', func: this.create.name, url: req.url, method: req.method})
-        const sr = new ServiceRequest(req)
-        const contract = await this.contractService.create(entity.toInternal(), sr)
-        const response = new ContractResponseDto(contract)
-        await this.journalService.writeJournal(sr, response.id, response)
-        return response
-    }
-
-    @Post('bulk')
-    @ApiCreatedResponse(ContractResponseDto)
-    async createMany(
-        @Body(new ParseArrayPipe({items: ContractCreateDto})) createDto: ContractCreateDto[],
+    async create(
+        @Body(new ParseOneOrManyPipe({items: ContractCreateDto})) createDto: ContractCreateDto[],
         @Req() req: Request,
     ): Promise<ContractResponseDto[]> {
         this.log.debug({
-            message: 'create contract bulk',
-            func: this.createMany.name,
+            message: 'create contracts',
+            func: this.create.name,
             url: req.url,
             method: req.method,
         })

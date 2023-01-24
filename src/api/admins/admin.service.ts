@@ -11,7 +11,7 @@ import {I18nService} from 'nestjs-i18n'
 import {deepCopy} from '../../helpers/deep-copy.helper'
 
 @Injectable()
-export class AdminService implements CrudService<internal.Admin> {
+export class AdminService { //} implements CrudService<internal.Admin> {
     private readonly log = new LoggerService(AdminService.name)
 
     constructor(
@@ -36,7 +36,9 @@ export class AdminService implements CrudService<internal.Admin> {
         for (const admin of admins) {
             await this.populateAdmin(admin, accessorRole, sr)
         }
-        return await this.adminRepo.createMany(admins)
+        const createdIds = await this.adminRepo.createMany(admins)
+        if (sr.returnContent)
+            return await this.adminRepo.readWhereInIds(createdIds, sr)
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Admin[], number]> {
@@ -99,7 +101,7 @@ export class AdminService implements CrudService<internal.Admin> {
         return await this.adminRepo.update(id, admin, sr)
     }
 
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
+    async delete(id: number, sr: ServiceRequest): Promise<internal.Admin> {
         this.log.debug({message: 'delete admin by id', func: this.delete.name, user: sr.user.username, id: id})
 
         if (id == sr.user.id)
@@ -108,6 +110,15 @@ export class AdminService implements CrudService<internal.Admin> {
         return await this.adminRepo.delete(id, sr)
     }
 
+
+    async deleteMany(ids: number[], sr: ServiceRequest): Promise<[internal.Admin[], number]> {
+        this.log.debug({message: 'delete many admin by id', func: this.deleteMany.name, user: sr.user.username, ids: ids})
+
+        if (ids.includes(sr.user.id))
+            throw new ForbiddenException(this.i18n.t('errors.ADMIN_DELETE_SELF'))
+
+        return await this.adminRepo.deleteMany(ids, sr)
+    }
     private async populateAdmin(admin: internal.Admin, accessorRole: internal.AclRole, sr: ServiceRequest) {
         const role = await this.aclRepo.readOneByRole(admin.role, sr)
         await admin.setPermissionFlags()
@@ -158,4 +169,5 @@ export class AdminService implements CrudService<internal.Admin> {
         }
         return true
     }
+
 }

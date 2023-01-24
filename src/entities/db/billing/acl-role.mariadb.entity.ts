@@ -56,19 +56,19 @@ export class AclRole extends BaseEntity {
         return this
     }
 
-    async toInternal(): Promise<internal.AclRole> {
+    toInternal(): internal.AclRole {
         const admins: internal.Admin[] = []
 
         if (this.admins != undefined) {
             for (const adm of this.admins) {
-                admins.push(await adm.toInternal())
+                admins.push(adm.toInternal())
             }
         }
 
         const access_to: internal.AclRole[] = []
         if (this.has_access_to != undefined) {
             for (const r of this.has_access_to) {
-                access_to.push(await r.toInternal())
+                access_to.push(r.toInternal())
             }
         }
 

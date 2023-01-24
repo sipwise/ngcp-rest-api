@@ -48,9 +48,9 @@ export class AdminMockRepository implements AdminRepository {
         return Promise.resolve(entity)
     }
 
-    delete(id: number, sr: ServiceRequest): Promise<number> {
+    delete(id: number, sr: ServiceRequest): Promise<internal.Admin> {
         this.throwErrorIfIdNotExists(id)
-        return Promise.resolve(1)
+        return Promise.resolve(this.db[id])
     }
 
     readById(id: number, sr: ServiceRequest): Promise<internal.Admin> {

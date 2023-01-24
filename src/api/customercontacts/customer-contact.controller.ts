@@ -41,6 +41,7 @@ import {ApiCreatedResponse} from '../../decorators/api-created-response.decorato
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 
 const resourceName = 'customercontacts'
 
@@ -62,24 +63,13 @@ export class CustomerContactController extends CrudController<CustomerContactCre
 
     @Post()
     @ApiCreatedResponse(CustomerContactResponseDto)
-    async create(entity: CustomerContactCreateDto, req: Request): Promise<CustomerContactResponseDto> {
-        this.log.debug({message: 'create customer contact', func: this.create.name, url: req.url, method: req.method})
-        const sr = new ServiceRequest(req)
-        const contact = await this.contactService.create(entity.toInternal(), sr)
-        const response = new CustomerContactResponseDto(contact, sr.user.role)
-        await this.journalService.writeJournal(sr, response.id, response)
-        return response
-    }
-
-    @Post('bulk')
-    @ApiCreatedResponse(CustomerContactResponseDto)
-    async createMany(
-        @Body(new ParseArrayPipe({items: CustomerContactCreateDto})) createDto: CustomerContactCreateDto[],
+    async create(
+        @Body(new ParseOneOrManyPipe({items: CustomerContactCreateDto})) createDto: CustomerContactCreateDto[],
         @Req() req: Request,
     ): Promise<CustomerContactResponseDto[]> {
         this.log.debug({
-            message: 'create customer contact bulk',
-            func: this.createMany.name,
+            message: 'create customer contacts',
+            func: this.create.name,
             url: req.url,
             method: req.method,
         })

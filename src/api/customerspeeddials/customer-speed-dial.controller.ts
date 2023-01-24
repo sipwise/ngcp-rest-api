@@ -25,6 +25,7 @@ import {PatchDto} from '../../dto/patch.dto'
 import {Operation} from 'helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Request} from 'express'
+import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 
 const resourceName = 'customerspeeddials'
 
@@ -49,32 +50,13 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
 
     @Post()
     @ApiCreatedResponse(CustomerSpeedDialResponseDto)
-    async create(dto: CustomerSpeedDialCreateDto, req): Promise<CustomerSpeedDialResponseDto> {
-        this.log.debug({
-            message: 'create customer speed dial',
-            func: this.readAll.name,
-            url: req.url,
-            method: req.method
-        })
-        const sr = new ServiceRequest(req)
-        const csd = await this.customerSpeedDialService.create(
-            Object.assign(new CustomerSpeedDialCreateDto(), dto).toInternal(),
-            sr,
-        )
-        const response = new CustomerSpeedDialResponseDto(csd)
-        await this.journalService.writeJournal(sr, csd.id, response)
-        return response
-    }
-
-    @Post('bulk')
-    @ApiCreatedResponse(CustomerSpeedDialResponseDto)
-    async createMany(
-        @Body(new ParseArrayPipe({items: CustomerSpeedDialCreateDto})) createDto: CustomerSpeedDialCreateDto[],
+    async create(
+        @Body(new ParseOneOrManyPipe({items: CustomerSpeedDialCreateDto})) createDto: CustomerSpeedDialCreateDto[],
         @Req() req: Request,
     ): Promise<CustomerSpeedDialResponseDto[]> {
         this.log.debug({
-            message: 'create customer speeddial bulk',
-            func: this.createMany.name,
+            message: 'create customer speeddials',
+            func: this.create.name,
             url: req.url,
             method: req.method,
         })

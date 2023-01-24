@@ -32,48 +32,49 @@ export class AdminMariadbRepository implements AdminRepository {
             id: dbAdmin.id,
         })
 
-        return await dbAdmin.toInternal()
+        return dbAdmin.toInternal()
     }
 
     @HandleDbErrors
-    async createMany(admins: internal.Admin[]): Promise<internal.Admin[]> {
-        // const created: internal.Admin[] = []
-        let qb = db.billing.Admin.createQueryBuilder('admin')
+    async createMany(admins: internal.Admin[]): Promise<number[]> {
+        const qb = db.billing.Admin.createQueryBuilder('admin')
         const values = admins.map(admin => new db.billing.Admin().fromInternal(admin))
         const result = await qb.insert().values(values).execute()
 
-        qb = db.billing.Admin.createQueryBuilder('admin')
-        qb.innerJoinAndSelect('admin.role', 'role')
-        const ids = result.identifiers.map(obj => obj.id)
-        const created = await qb.andWhereInIds(ids).getMany()
+        return result.identifiers.map(obj => obj.id)
 
-        return await Promise.all(created.map(async (admin) => admin.toInternal()))
     }
 
     @HandleDbErrors
     async readAll(sr: ServiceRequest): Promise<[internal.Admin[], number]> {
-        const query = db.billing.Admin.createQueryBuilder('admin')
-        await configureQueryBuilder(query, sr.query, new SearchLogic(sr, Object.keys(new AdminSearchDto()), [{
-            alias: 'role',
-            property: 'role',
-        }]))
-        await this.applyAdminFilter(sr, query)
-        const [result, totalCount] = await query.getManyAndCount()
+        const qb = db.billing.Admin.createQueryBuilder('admin')
+        configureQueryBuilder(qb, sr.query, new SearchLogic(sr, Object.keys(new AdminSearchDto())))
+        await this.addPermissionCheckToQueryBuilder(qb, sr)
+        const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(result.map(async (adm) => adm.toInternal())), totalCount]
     }
 
     @HandleDbErrors
     async readById(id: number, sr: ServiceRequest): Promise<internal.Admin> {
-        const query = await this.applyAdminFilter(sr)
-        query.andWhere('admin.id = :id', {id: id})
-        const admin = await query.getOneOrFail()
+        const qb = db.billing.Admin.createQueryBuilder('admin')
+        this.addPermissionCheckToQueryBuilder(qb, sr)
+        qb.andWhere('admin.id = :id', {id: id})
+        const admin = await qb.getOneOrFail()
         return admin.toInternal()
+    }
+
+    async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Admin[]> {
+        const qb = db.billing.Admin.createQueryBuilder('admin')
+        this.addPermissionCheckToQueryBuilder(qb, sr)
+        const created = await qb.andWhereInIds(ids).getMany()
+        return created.map(admin => admin.toInternal())
     }
 
     @HandleDbErrors
     async update(id: number, admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin> {
-        const query = await this.applyAdminFilter(sr)
-        await query.andWhere('admin.id = :id', {id: id}).getOneOrFail()
+        const qb = db.billing.Admin.createQueryBuilder('admin')
+        this.addPermissionCheckToQueryBuilder(qb, sr)
+        await qb.andWhere('admin.id = :id', {id: id}).getOneOrFail()
 
         const update = new db.billing.Admin().fromInternal(admin)
         Object.keys(update).map(key => {
@@ -82,14 +83,15 @@ export class AdminMariadbRepository implements AdminRepository {
         })
         await db.billing.Admin.update(id, update)
 
-        const updated: db.billing.Admin = await query.andWhere('admin.id = :id', {id: id}).getOneOrFail()
+        const updated: db.billing.Admin = await qb.andWhere('admin.id = :id', {id: id}).getOneOrFail()
         return updated.toInternal()
     }
 
     @HandleDbErrors
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
-        const query = await this.applyAdminFilter(sr)
-        const dbAdmin = await query.andWhere('admin.id = :id', {id: id})
+    async delete(id: number, sr: ServiceRequest): Promise<internal.Admin> {
+        const qb = db.billing.Admin.createQueryBuilder('admin')
+        this.addPermissionCheckToQueryBuilder(qb, sr)
+        const dbAdmin = await qb.andWhere('admin.id = :id', {id: id})
             .getOneOrFail()
         // TODO: move this check to service, but we do not have access to the dbAdmin.login field there
         if (dbAdmin.login == SPECIAL_USER_LOGIN) {
@@ -97,31 +99,49 @@ export class AdminMariadbRepository implements AdminRepository {
         }
 
         await db.billing.Admin.remove(dbAdmin)
-        return 1
+        return dbAdmin.toInternal()
+    }
+
+    @HandleDbErrors
+    async deleteMany(ids: number[], sr: ServiceRequest): Promise<[internal.Admin[], number]> {
+        const qb = db.billing.Admin.createQueryBuilder('admin')
+        this.addPermissionCheckToQueryBuilder(qb, sr)
+        qb.andWhereInIds(ids)
+        const admins = await qb.getMany()  // get admins to delete
+
+        qb.andWhere('admin.login = :login', {login: SPECIAL_USER_LOGIN})
+        const count = await qb.getCount()
+        if (count > 0) {
+            throw new ForbiddenException(this.i18n.t('errors.ADMIN_DELETE_SPECIAL_USER', {args: {username: SPECIAL_USER_LOGIN}}))
+        }
+
+        const deleteQb = db.billing.Admin.createQueryBuilder('admin').delete()
+        deleteQb.andWhereInIds(admins.map(admin => admin.id))
+
+        const result = await deleteQb.execute()
+
+        if (sr.returnContent)
+            return [admins.map(adm => adm.toInternal()), result.affected]
     }
 
     @HandleDbErrors
     private async applySearchQuery(sr: ServiceRequest, query: SelectQueryBuilder<db.billing.Admin>): Promise<void> {
-        await configureQueryBuilder(query, sr.params, new SearchLogic(sr, Object.keys(new AdminSearchDto()), [{
-            alias: 'role',
-            property: 'role',
-        }]))
+        await configureQueryBuilder(query, sr.params, new SearchLogic(sr, Object.keys(new AdminSearchDto())))
     }
 
     @HandleDbErrors
-    private async applyAdminFilter(sr: ServiceRequest, query?: SelectQueryBuilder<db.billing.Admin>): Promise<SelectQueryBuilder<db.billing.Admin>> {
-        query ||= db.billing.Admin.createQueryBuilder('admin')
-            .leftJoinAndSelect('admin.role', 'role')
-        if (sr.user.is_master) {
+    private addPermissionCheckToQueryBuilder(qb: SelectQueryBuilder<db.billing.Admin>, sr: ServiceRequest): void {
+        // TODO: pass FilterBy to repo
+        qb.leftJoinAndSelect('admin.role', 'role')
+        if (sr.user.is_master) {  // restrict query to roles the user is allowed to access
             const hasAccessTo = sr.user.role_data.has_access_to
             const roleIds = hasAccessTo.map(role => role.id)
-            query.andWhere('admin.role_id IN (:...roleIds)', {roleIds: roleIds})
-            if (sr.user.reseller_id_required) {
-                query.andWhere('admin.reseller_id = :reseller_id', {reseller_id: sr.user.reseller_id})
+            qb.andWhere('admin.role_id IN (:...roleIds)', {roleIds: roleIds})
+            if (sr.user.reseller_id_required) {  // restrict query to reseller_id
+                qb.andWhere('admin.reseller_id = :reseller_id', {reseller_id: sr.user.reseller_id})
             }
-        } else {
-            query.andWhere('admin.id = :req_user_id', {req_user_id: sr.user.id})
+        } else {  // restrict user to self if user is not master
+            qb.andWhere('admin.id = :req_user_id', {req_user_id: sr.user.id})
         }
-        return query
     }
 }
