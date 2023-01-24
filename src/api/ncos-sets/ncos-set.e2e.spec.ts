@@ -12,7 +12,7 @@ import {HttpExceptionFilter} from '../../helpers/http-exception.filter'
 import {ValidateInputPipe} from '../../pipes/validate.pipe'
 import {validate} from 'class-validator'
 
-describe('CustomerSpeedDial', () => {
+describe('NCOS Set', () => {
     let app: INestApplication
     let appService: AppService
     let authService: AuthService
@@ -88,7 +88,7 @@ describe('CustomerSpeedDial', () => {
                     .set(...authHeader)
                     .send(ncosset1)
                 expect(response.status).toEqual(201)
-                createdIds.push(+response.body.id)
+                createdIds.push(+response.body[0].id)
             })
             it('create ncos set test_ncosset2', async () => {
                 const response = await request(app.getHttpServer())
@@ -96,7 +96,7 @@ describe('CustomerSpeedDial', () => {
                     .set(...authHeader)
                     .send(ncosset2)
                 expect(response.status).toEqual(201)
-                createdIds.push(+response.body.id)
+                createdIds.push(+response.body[0].id)
             })
             it('fail duplicate ncos set', async () => {
                 const response = await request(app.getHttpServer())

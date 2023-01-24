@@ -28,6 +28,7 @@ import {NCOSSetLevelResponseDto} from './dto/ncos-set-level-response.dto'
 import {NCOSSetResponseDto} from './dto/ncos-set-response.dto'
 import {NCOSSetUpdateDto} from './dto/ncos-set-update.dto'
 import {NCOSSetService} from './ncos-set.service'
+import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 
 const resourceName = 'ncos/sets'
 
@@ -56,37 +57,13 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @Post(':id/levels')
     @ApiCreatedResponse(NCOSSetLevelCreateDto)
     async createLevel(
-            @Param('id') id: number,
-            @Body() dto: NCOSSetLevelCreateDto,
-            @Req() req: Request
-            ): Promise<NCOSSetLevelResponseDto> {
-        this.log.debug({
-            message: 'create ncos set level',
-            func: this.createLevel.name,
-            url: req.url,
-            method: req.method
-        })
-        const sr = new ServiceRequest(req)
-        const setLevel = await this.ncosSetService.createLevel(
-            id,
-            Object.assign(new NCOSSetLevelCreateDto(), dto).toInternal(),
-            sr,
-        )
-        const response = new NCOSSetLevelResponseDto(setLevel)
-        await this.journalService.writeJournal(sr, setLevel.id, response)
-        return response
-    }
-
-    @Post(':id/levels/bulk')
-    @ApiCreatedResponse(NCOSSetLevelCreateDto)
-    async createLevelMany(
         @Param('id') id: number,
-        @Body(new ParseArrayPipe({items: NCOSSetLevelCreateDto})) createDto: NCOSSetLevelCreateDto[],
+        @Body(new ParseOneOrManyPipe({items: NCOSSetLevelCreateDto})) createDto: NCOSSetLevelCreateDto[],
         @Req() req: Request,
     ): Promise<NCOSSetLevelResponseDto[]> {
         this.log.debug({
             message: 'create ncos set level bulk',
-            func: this.createMany.name,
+            func: this.createLevel.name,
             url: req.url,
             method: req.method,
         })
@@ -183,33 +160,14 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
 
 
     @Post()
-    @ApiCreatedResponse(NCOSSetCreateDto)
-    async create(entity: NCOSSetCreateDto, req: Request): Promise<NCOSSetResponseDto> {
-        this.log.debug({
-            message: 'create ncos set',
-            func: this.create.name,
-            url: req.url,
-            method: req.method
-        })
-        const sr = new ServiceRequest(req)
-        const set = await this.ncosSetService.create(
-            Object.assign(new NCOSSetCreateDto(), entity).toInternal(),
-            sr,
-        )
-        const response = new NCOSSetResponseDto(req.url, set)
-        await this.journalService.writeJournal(sr, set.id, response)
-        return response
-    }
-
-    @Post('bulk')
     @ApiCreatedResponse(NCOSSetResponseDto)
-    async createMany(
-        @Body(new ParseArrayPipe({items: NCOSSetCreateDto})) createDto: NCOSSetCreateDto[],
+    async create(
+        @Body(new ParseOneOrManyPipe({items: NCOSSetCreateDto})) createDto: NCOSSetCreateDto[],
         @Req() req: Request,
     ): Promise<NCOSSetResponseDto[]> {
         this.log.debug({
             message: 'create ncos set bulk',
-            func: this.createMany.name,
+            func: this.create.name,
             url: req.url,
             method: req.method,
         })

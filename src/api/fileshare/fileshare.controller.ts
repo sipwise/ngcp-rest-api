@@ -51,7 +51,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
             fileSize: AppService.config.fileshare.limits.upload_size || null,
         },
     }))
-    async create(createDto: FileshareCreateDto, req, file): Promise<FileshareResponseDto> {
+    async createFile(createDto: FileshareCreateDto, req, file): Promise<FileshareResponseDto> {
         this.log.debug({message: 'create fileshare', func: this.create.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const response = await this.fileshareService.create(createDto, sr, file)

@@ -10,5 +10,5 @@ export interface AdminRepository {
 
     update(id: number, admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin>
 
-    delete(id: number, sr: ServiceRequest): Promise<number>
+    delete(id: number, sr: ServiceRequest): Promise<internal.Admin>
 }
