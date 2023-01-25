@@ -1,6 +1,7 @@
 import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -31,6 +32,9 @@ import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Request} from 'express'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
+import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
+import {number} from 'yargs'
+import {ParseIntIdPipe} from '../../pipes/parse-int-id.pipe'
 
 const resourceName = 'domains'
 
@@ -107,14 +111,22 @@ export class DomainController extends CrudController<DomainCreateDto, DomainResp
         return responseItem
     }
 
-    @Delete(':id')
-    @ApiOkResponse({})
-    async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
+    @Delete(':id?')
+    @ApiOkResponse({
+        type: [number]
+    })
+    async delete(
+        @Param('id', new ParseIntIdArrayPipe()) ids: number[],
+        @Req() req
+    ): Promise<number[]> {
         this.log.debug({message: 'delete domain by id', func: this.delete.name, url: req.url, method: req.method})
+
         const sr = new ServiceRequest(req)
-        const response = await this.domainService.delete(id, sr)
-        await this.journalService.writeJournal(sr, id, {})
-        return response
+        const deletedIds = await this.domainService.delete(ids, sr)
+        for (const deletedId of deletedIds) {
+            await this.journalService.writeJournal(sr, deletedId, {})
+        }
+        return deletedIds
     }
 
     @Get(':id/journal')

@@ -6,6 +6,8 @@ import {ContactMariadbRepository} from '../contacts/repositories/contact.mariadb
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
+import {ContactOptions} from '../contacts/interfaces/contact-options.interface'
+import {ContactType} from '../../entities/internal/contact.internal.entity'
 
 @Injectable()
 export class SystemContactService implements CrudService<internal.Contact> {
@@ -34,18 +36,18 @@ export class SystemContactService implements CrudService<internal.Contact> {
         return await this.contactRepo.readWhereInIds(createdIds)
     }
 
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
+    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         this.log.debug({
             message: 'delete system contact by id',
             func: this.delete.name,
-            contactId: id,
+            contactId: ids,
             user: sr.user.username,
         })
-        const contact = await this.contactRepo.readSystemContactById(id, sr)
-        if (contact.reseller_id != undefined) {
-            throw new BadRequestException(this.i18n.t('errors.CONTACT_DELETE_CUSTOMER_CONTACT'))
-        }
-        return await this.contactRepo.delete(contact.id, sr)
+        const options = this.getContactOptionsFromServiceRequest(sr)
+        const contacts = await this.contactRepo.readWhereInIds(ids, options)
+        if (ids.length != contacts.length)
+            throw new UnprocessableEntityException()
+        return await this.contactRepo.delete(ids, sr)
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Contact> {
@@ -55,7 +57,7 @@ export class SystemContactService implements CrudService<internal.Contact> {
             contactId: id,
             user: sr.user.username,
         })
-        return await this.contactRepo.readSystemContactById(id, sr)
+        return await this.contactRepo.readById(id, this.getContactOptionsFromServiceRequest(sr))
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Contact[], number]> {
@@ -64,7 +66,7 @@ export class SystemContactService implements CrudService<internal.Contact> {
             func: this.readAll.name,
             user: sr.user.username,
         })
-        return await this.contactRepo.readAllSystemContacts(sr)
+        return await this.contactRepo.readAll(sr, this.getContactOptionsFromServiceRequest(sr))
     }
 
     async update(id: number, contact: internal.Contact, sr: ServiceRequest): Promise<internal.Contact> {
@@ -74,11 +76,12 @@ export class SystemContactService implements CrudService<internal.Contact> {
             contactId: id,
             user: sr.user.username,
         })
-        const oldContact = await this.contactRepo.readSystemContactById(id, sr)
+        const options = this.getContactOptionsFromServiceRequest(sr)
+        const oldContact = await this.contactRepo.readById(id, options)
         if (contact.reseller_id || oldContact.reseller_id) {
             throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'))
         }
-        return await this.contactRepo.update(id, contact, sr)
+        return await this.contactRepo.update(id, contact, options)
     }
 
     async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.Contact> {
@@ -88,7 +91,8 @@ export class SystemContactService implements CrudService<internal.Contact> {
             contactId: id,
             user: sr.user.username,
         })
-        let contact = await this.contactRepo.readSystemContactById(id, sr)
+        const options = this.getContactOptionsFromServiceRequest(sr)
+        let contact = await this.contactRepo.readById(id, options)
 
         contact = applyPatch(contact, patch).newDocument
         contact.id = id
@@ -96,7 +100,16 @@ export class SystemContactService implements CrudService<internal.Contact> {
         if (contact.reseller_id != undefined) {
             throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'))
         }
-        return await this.contactRepo.update(id, contact, sr)
+        return await this.contactRepo.update(id, contact, options)
+    }
+
+    getContactOptionsFromServiceRequest(sr: ServiceRequest): ContactOptions {
+        const options: ContactOptions = {
+            type: ContactType.SystemContact,
+        }
+        if (sr.user.role === 'reseller' || sr.user.role === 'ccare')
+            options.filterBy.resellerId = sr.user.reseller_id
+        return options
     }
 }
 

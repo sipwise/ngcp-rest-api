@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -31,6 +32,9 @@ import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {LoggerService} from '../../logger/logger.service'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
+import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
+import {ParseIntIdPipe} from '../../pipes/parse-int-id.pipe'
+import {ParamOrBody} from '../../decorators/param-or-body.decorator'
 
 const resourceName = 'contacts'
 
@@ -120,12 +124,21 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
         return
     }
 
-    @Delete(':id')
+    @Delete(':id?')
     @ApiOkResponse({
-        type: number,
+        type: [number],
     })
-    async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
-        return this.contactService.delete(id, new ServiceRequest(req))
+    async delete(
+        @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
+        @Req() req
+    ): Promise<number[]> {
+        const sr = new ServiceRequest(req)
+        this.log.debug({message: 'delete contacts by id', func: this.delete.name, url: req.url, method: req.method})
+        const deletedIds = await this.contactService.delete(ids, sr)
+        for (const deletedId of deletedIds) {
+            await this.journalService.writeJournal(sr, deletedId, {})
+        }
+        return deletedIds
     }
 
     @Get(':id/journal')

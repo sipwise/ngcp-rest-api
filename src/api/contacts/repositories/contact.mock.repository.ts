@@ -1,10 +1,11 @@
 import {ContactRepository} from '../interfaces/contact.repository'
 import {internal} from '../../../entities'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {ContactStatus} from '../../../entities/internal/contact.internal.entity'
+import {ContactStatus, ContactType} from '../../../entities/internal/contact.internal.entity'
 import {ContractStatus} from '../../../entities/internal/contract.internal.entity'
 import {NotFoundException} from '@nestjs/common'
 import {ResellerStatus} from '../../../entities/internal/reseller.internal.entity'
+import {ContactOptions} from '../interfaces/contact-options.interface'
 
 interface ContactMockDB {
     [key: number]: internal.Contact
@@ -53,9 +54,11 @@ export class ContactMockRepository implements ContactRepository {
         return Promise.resolve(entity)
     }
 
-    delete(id: number, sr: ServiceRequest): Promise<number> {
-        this.throwErrorIfIdNotExists(this.contactDB, id)
-        return Promise.resolve(1)
+    delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+        for (const id of ids) {
+            this.throwErrorIfIdNotExists(this.contactDB, id)
+        }
+        return Promise.resolve(ids)
     }
 
     hasContactActiveContract(contactId: number, sr: ServiceRequest): Promise<boolean> {
@@ -99,44 +102,42 @@ export class ContactMockRepository implements ContactRepository {
         return Promise.resolve(false)
     }
 
-    readAllContacts(sr: ServiceRequest): Promise<[internal.Contact[], number]> {
+    readAll(sr: ServiceRequest, options?: ContactOptions): Promise<[internal.Contact[], number]> {
         const contacts: [internal.Contact[], number] =
             [Object.keys(this.contactDB).map(id => this.contactDB[id]), Object.keys(this.contactDB).length]
         return Promise.resolve(contacts)
     }
 
-    readAllCustomerContacts(sr: ServiceRequest): Promise<[internal.Contact[], number]> {
-        return Promise.resolve([[], 0])
-    }
-
-    readAllSystemContacts(sr: ServiceRequest): Promise<[internal.Contact[], number]> {
-        return Promise.resolve([[], 0])
-    }
-
-    readContactById(id: number, sr: ServiceRequest): Promise<internal.Contact> {
-        this.throwErrorIfIdNotExists(this.contactDB, id)
-        return Promise.resolve(this.contactDB[id])
-    }
-
-    readCustomerContactById(id: number, sr: ServiceRequest): Promise<internal.Contact> {
+    readById(id: number, options?: ContactOptions): Promise<internal.Contact> {
         this.throwErrorIfIdNotExists(this.contactDB, id)
         const contact = this.contactDB[id]
-        if (contact.reseller_id != undefined) {
-            return Promise.resolve(contact)
+        if (options) {
+            switch (options.type) {
+            case ContactType.SystemContact:
+                if (contact.reseller_id == undefined) {
+                    return Promise.resolve(contact)
+                }
+                throw new NotFoundException()
+            case ContactType.CustomerContact:
+                if (contact.reseller_id != undefined) {
+                    return Promise.resolve(contact)
+                }
+                throw new NotFoundException()
+            }
         }
-        throw new NotFoundException()
+        return Promise.resolve(contact)
     }
 
+
+    async readWhereInIds(ids: number[], options: ContactOptions): Promise<internal.Contact[]> {
+        const contacts: internal.Contact[] = []
+        for(const id of ids) {
+            contacts.push(await this.readById(id, options))
+        }
+        return Promise.resolve(contacts)
+    }
     readResellerById(id: number, sr: ServiceRequest): Promise<internal.Reseller> {
         return Promise.resolve(this.resellerDB[id])
-    }
-
-    readSystemContactById(id: number, sr: ServiceRequest): Promise<internal.Contact> {
-        this.throwErrorIfIdNotExists(this.contactDB, id)
-        const contact = this.contactDB[id]
-        if (contact.reseller_id == undefined)
-            return Promise.resolve(contact)
-        throw new NotFoundException()
     }
 
     terminate(id: number, sr: ServiceRequest): Promise<number> {
@@ -144,7 +145,7 @@ export class ContactMockRepository implements ContactRepository {
         return Promise.resolve(1)
     }
 
-    update(id: number, contact: internal.Contact, sr: ServiceRequest): Promise<internal.Contact> {
+    update(id: number, contact: internal.Contact, options: ContactOptions): Promise<internal.Contact> {
         this.throwErrorIfIdNotExists(this.contactDB, id)
         contact.id = id
         this.contactDB[id] = contact
@@ -160,4 +161,5 @@ export class ContactMockRepository implements ContactRepository {
         if (db[id] == undefined)
             throw new NotFoundException()
     }
+
 }

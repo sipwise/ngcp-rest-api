@@ -28,7 +28,7 @@ export class ResellerService implements CrudService<internal.Reseller> {
         const existingReseller = await this.resellerRepo.readByName(reseller.name, sr)
         if (existingReseller != undefined) {
             if (existingReseller.status != ResellerStatus.Terminated) {
-                throw new UnprocessableEntityException(this.i18n.t('errors.reseller.NAME_EXISTS', {args: {name: existingReseller.name}}))
+                throw new UnprocessableEntityException(this.i18n.t('errors.NAME_EXISTS', {args: {name: existingReseller.name}}))
             }
             await this.resellerRepo.renameReseller(existingReseller.id, existingReseller.name)
         }
@@ -43,7 +43,7 @@ export class ResellerService implements CrudService<internal.Reseller> {
             const existingReseller = await this.resellerRepo.readByName(reseller.name, sr)
             if (existingReseller != undefined) {
                 if (existingReseller.status != ResellerStatus.Terminated) {
-                    throw new UnprocessableEntityException(this.i18n.t('errors.reseller.NAME_EXISTS', {args: {name: existingReseller.name}}))
+                    throw new UnprocessableEntityException(this.i18n.t('errors.NAME_EXISTS', {args: {name: existingReseller.name}}))
                 }
                 await this.resellerRepo.renameReseller(existingReseller.id, existingReseller.name)
             }
@@ -52,11 +52,6 @@ export class ResellerService implements CrudService<internal.Reseller> {
         await this.resellerRepo.createEmailTemplates(createdIds)
 
         return await this.resellerRepo.readWhereInIds(createdIds)
-    }
-
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
-        this.log.debug({message: 'delete reseller by id', func: this.delete.name, id: id})
-        return await this.resellerRepo.terminate(id, sr)
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Reseller> {

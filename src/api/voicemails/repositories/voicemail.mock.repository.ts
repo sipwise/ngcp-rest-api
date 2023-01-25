@@ -10,8 +10,8 @@ export class VoicemailMockRepository implements VoicemailRepository {
 
     private readonly voicemailDB: VoicemailMockDB
 
-    delete(id: number, sr: ServiceRequest): Promise<number> {
-        return Promise.resolve(0)
+    delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+        return Promise.resolve([0])
     }
 
     read(id: number, sr: ServiceRequest): Promise<internal.Voicemail> {

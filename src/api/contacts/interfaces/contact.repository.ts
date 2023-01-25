@@ -1,16 +1,17 @@
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {internal} from '../../../entities'
+import {ContactOptions} from './contact-options.interface'
 
 export interface ContactRepository {
     create(entity: internal.Contact, sr: ServiceRequest): Promise<internal.Contact>
 
-    delete(id: number, sr: ServiceRequest): Promise<number>
+    delete(ids: number[], sr: ServiceRequest): Promise<number[]>
 
     terminate(id: number, sr: ServiceRequest): Promise<number>
 
-    readContactById(id: number, sr: ServiceRequest): Promise<internal.Contact>
+    readById(id: number, options: ContactOptions): Promise<internal.Contact>
 
-    readCustomerContactById(id: number, sr: ServiceRequest): Promise<internal.Contact>
+    readWhereInIds(ids: number[], options: ContactOptions): Promise<internal.Contact[]>
 
     readResellerById(id: number, sr: ServiceRequest): Promise<internal.Reseller>
 
@@ -22,13 +23,7 @@ export interface ContactRepository {
 
     hasContactTerminatedSubscriber(contactId: number, sr: ServiceRequest): Promise<boolean>
 
-    readSystemContactById(id: number, sr: ServiceRequest): Promise<internal.Contact>
+    readAll(sr: ServiceRequest, options?: ContactOptions): Promise<[internal.Contact[], number]>
 
-    readAllContacts(sr: ServiceRequest): Promise<[internal.Contact[], number]>
-
-    readAllCustomerContacts(sr: ServiceRequest): Promise<[internal.Contact[], number]>
-
-    readAllSystemContacts(sr: ServiceRequest): Promise<[internal.Contact[], number]>
-
-    update(id: number, contact: internal.Contact, sr: ServiceRequest): Promise<internal.Contact>
+    update(id: number, contact: internal.Contact, options: ContactOptions): Promise<internal.Contact>
 }

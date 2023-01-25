@@ -3,34 +3,38 @@ import {
     BadRequestException,
     HttpStatus,
     Injectable,
-    Optional, ParseIntPipe,
-    ParseIntPipeOptions,
+    Optional,
+    ParseIntPipe,
+    ParseIntPipeOptions, ParseUUIDPipe, ParseUUIDPipeOptions,
     PipeTransform,
 } from '@nestjs/common'
-import {I18nService} from 'nestjs-i18n'
 import {HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
-import {ParseIdPipe, ParseIdPipeOptions} from './parse-id.pipe'
-import {options} from 'yargs'
 
+interface ParseUuidArrayPipeOptions extends ParseUUIDPipeOptions {
+    allowUndefined?: boolean
+}
 @Injectable()
-export class ParseIntArrayPipe implements PipeTransform {
+export class ParseUUIDArrayPipe implements PipeTransform {
     protected exceptionFactory: (errors: string) => any
-    private options: ParseIntPipeOptions
+    private readonly options: ParseUuidArrayPipeOptions
     constructor(
-        @Optional() options?: ParseIntPipeOptions,
+        @Optional() options?: ParseUuidArrayPipeOptions,
     ) {
         options = options || {}
         const {
             exceptionFactory,
             errorHttpStatusCode = HttpStatus.BAD_REQUEST,
         } = options
-
+        this.options = options
         this.exceptionFactory =
             exceptionFactory ||
             (error => new HttpErrorByCode[errorHttpStatusCode](error))
     }
-    async transform(value: any, metadata: ArgumentMetadata): Promise<number[]> {
-        const parseId = new ParseIntPipe(this.options)
+    async transform(value: any, metadata: ArgumentMetadata): Promise<string[]> {
+        const parseId = new ParseUUIDPipe(this.options)
+        if (!Array.isArray(value) && this.options.allowUndefined) {
+            return undefined
+        }
         if (!Array.isArray(value))
             throw new BadRequestException('is no array')
         for (const val of value) {

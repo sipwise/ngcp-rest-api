@@ -1,4 +1,17 @@
-import {Body, Controller, Delete, Get, Param, ParseArrayPipe, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {
+    BadRequestException,
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    ParseArrayPipe,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Put,
+    Req,
+} from '@nestjs/common'
 import {
     ApiBody,
     ApiConsumes,
@@ -29,6 +42,9 @@ import {NCOSSetResponseDto} from './dto/ncos-set-response.dto'
 import {NCOSSetUpdateDto} from './dto/ncos-set-update.dto'
 import {NCOSSetService} from './ncos-set.service'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
+import {number} from 'yargs'
+import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
+import {ParamOrBody} from '../../decorators/param-or-body.decorator'
 
 const resourceName = 'ncos/sets'
 
@@ -255,20 +271,27 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
         return response
     }
 
-    @Delete(':id')
-    @ApiOkResponse({})
-    async delete(@Param('id', ParseIntPipe) id: number, req: Request): Promise<number> {
+    @Delete(':id?')
+    @ApiOkResponse({
+        type: [number],
+    })
+    async delete(
+        @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
+        @Req() req: Request
+    ): Promise<number[]> {
         this.log.debug({
             message: 'delete ncos set by id',
-            id: id,
+            id: ids,
             func: this.delete.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const response = await this.ncosSetService.delete(id, sr)
-        await this.journalService.writeJournal(sr, id, {})
-        return response
+        const deletedIds = await this.ncosSetService.delete(ids, sr)
+        for (const deletedId of deletedIds) {
+            await this.journalService.writeJournal(sr, deletedId, {})
+        }
+        return deletedIds
     }
 
     @Get(':id/journal')

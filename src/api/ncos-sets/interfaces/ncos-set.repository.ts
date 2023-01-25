@@ -10,7 +10,7 @@ export interface NCOSSetRepository {
 
     update(id: number, admin: internal.NCOSSet, req: ServiceRequest): Promise<internal.NCOSSet>
 
-    delete(id: number, req: ServiceRequest): Promise<number>
+    delete(ids: number[], req: ServiceRequest): Promise<number[]>
 
     createLevel(sd: internal.NCOSSetLevel, req: ServiceRequest): Promise<internal.NCOSSetLevel>
 

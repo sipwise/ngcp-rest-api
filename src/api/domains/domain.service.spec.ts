@@ -35,7 +35,7 @@ describe('DomainService', () => {
             .compile()
 
         service = module.get<DomainService>(DomainService)
-        sr = {headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
+        sr = {returnContent: true, headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
     })
 
     it('should be defined', () => {
@@ -59,19 +59,20 @@ describe('DomainService', () => {
 
     describe('delete', () => {
         it('should delete domain by id', async () => {
-            const got = await service.delete(1, sr)
-            expect(got).toStrictEqual(1)
+            const id = 1
+            const got = await service.delete([id], sr)
+            expect(got).toStrictEqual([id])
         })
 
         it('should throw ForbiddenException when accessing non-existing id', async () => {
-            await expect(service.delete(5, sr)).rejects.toThrow()
+            await expect(service.delete([5], sr)).rejects.toThrow()
         })
 
         it('should not allow deleting domain with different reseller_id as reseller', async () => {
             const localRequest = deepCopy(sr)
             localRequest.user.role = 'reseller'
             localRequest.user.reseller_id = 5
-            await expect(service.delete(1, localRequest)).rejects.toThrow()
+            await expect(service.delete([1], localRequest)).rejects.toThrow()
         })
     })
 

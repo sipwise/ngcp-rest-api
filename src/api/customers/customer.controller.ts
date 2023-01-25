@@ -1,4 +1,4 @@
-import {Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put} from '@nestjs/common'
+import {Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {CustomerCreateDto} from './dto/customer-create.dto'
 import {CustomerResponseDto} from './dto/customer-response.dto'
@@ -7,14 +7,7 @@ import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {CustomerService} from './customer.service'
 import {JournalService} from '../journals/journal.service'
 import {Request} from 'express'
-import {
-    ApiBody,
-    ApiConsumes,
-    ApiExtraModels,
-    ApiOkResponse,
-    ApiQuery,
-    ApiTags,
-} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
 import {number} from 'yargs'
@@ -27,6 +20,8 @@ import {ApiCreatedResponse} from '../../decorators/api-created-response.decorato
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
+import {ParamOrBody} from '../../decorators/param-or-body.decorator'
 
 const resourceName = 'customers'
 
@@ -118,16 +113,19 @@ export class CustomerController extends CrudController<CustomerCreateDto, Custom
         return response
     }
 
-    @Delete(':id')
+    @Delete(':id?')
     @ApiOkResponse({
         type: number,
     })
-    async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
+    async delete(
+        @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
+        @Req() req,
+    ): Promise<number[]> {
         this.log.debug({message: 'delete customer by id', func: this.delete.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const response = await this.customerService.delete(id, sr)
-        await this.journalService.writeJournal(sr, id, {})
-        return response
+        const response = await this.customerService.delete(ids[0], sr)
+        await this.journalService.writeJournal(sr, ids[0], {})
+        return [response]
     }
 
     @Get(':id/journal')

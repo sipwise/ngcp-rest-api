@@ -7,6 +7,12 @@ export enum ContactGender {
     Male = 'male',
     Female = 'female'
 }
+
+export enum ContactType {
+    CustomerContact,
+    SystemContact
+}
+
 export interface ContactInternalEntity {
     id?: number
     reseller_id?: number

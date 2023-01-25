@@ -34,8 +34,11 @@ import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {ParseIntArrayPipe} from '../../pipes/parse-int-array.pipe'
+import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
+import {ParseIntIdPipe} from '../../pipes/parse-int-id.pipe'
+import {ParamOrBody} from '../../decorators/param-or-body.decorator'
+import {CrudController} from '../../controllers/crud.controller'
 
 const resourceName = 'admins'
 
@@ -43,7 +46,7 @@ const resourceName = 'admins'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller)
-export class AdminController  { // extends CrudController<AdminCreateDto, AdminResponseDto> {
+export class AdminController extends CrudController<AdminCreateDto, AdminResponseDto> {
     private readonly log = new LoggerService(AdminController.name)
 
     constructor(
@@ -53,7 +56,7 @@ export class AdminController  { // extends CrudController<AdminCreateDto, AdminR
         @Inject(forwardRef(() => ExpandHelper))
         private readonly expander: ExpandHelper,
     ) {
-        //super(resourceName, adminService, journalService)
+        super(resourceName, adminService, journalService)
     }
 
     @Post()
@@ -70,9 +73,8 @@ export class AdminController  { // extends CrudController<AdminCreateDto, AdminR
         })
         const sr = new ServiceRequest(req)
         const admins = createDto.map(admin => admin.toInternal())
-        const created = await this.adminService.createMany(admins, sr)
-        if (sr.returnContent)
-            return created.map((adm) => new AdminResponseDto(adm, sr.user.role))
+        const created = await this.adminService.create(admins, sr)
+        return created.map((adm) => new AdminResponseDto(adm, sr.user.role))
     }
 
     @Get()
@@ -170,35 +172,22 @@ export class AdminController  { // extends CrudController<AdminCreateDto, AdminR
 
     }
 
-    @Delete(':id')
+    @Delete(':id?')
     @ApiOkResponse({
-        type: AdminResponseDto,
+        type: [number],
     })
-    async delete(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<AdminResponseDto> {
-        const sr = new ServiceRequest(req)
-        this.log.debug({message: 'delete admin by id', func: this.delete.name, url: req.url, method: req.method})
-        const response = await this.adminService.delete(id, sr)
-        await this.journalService.writeJournal(sr, id, {})
-        if (sr.returnContent)
-            return new AdminResponseDto(response, sr.user.role)
-    }
-
-    @Delete()
-    @ApiOkResponse({
-        type: number,
-    })
-    async deleteMany(
-        @Body(new ParseIntArrayPipe()) ids: number[],
+    async delete(
+        @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,
-    ): Promise<[AdminResponseDto[], number]> {
+    ): Promise<number[]> {
         const sr = new ServiceRequest(req)
+
         this.log.debug({message: 'delete admin by id', func: this.delete.name, url: req.url, method: req.method})
-        const [admins, count] = await this.adminService.deleteMany(ids, sr)
-        // await this.journalService.writeJournal(sr, ids, {})
-        if (sr.returnContent) {
-            const responseList = admins.map((adm) => new AdminResponseDto(adm, sr.user.role))
-            return [responseList, count]
+        const deletedIds = await this.adminService.delete(ids, sr)
+        for (const deletedId of deletedIds) {
+            await this.journalService.writeJournal(sr, deletedId, {})
         }
+        return deletedIds
     }
 
     @Get(':id/journal')

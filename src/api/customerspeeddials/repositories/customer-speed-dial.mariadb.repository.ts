@@ -8,11 +8,8 @@ import {CustomerSpeedDialRepository} from '../interfaces/customer-speed-dial.rep
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {LoggerService} from '../../../logger/logger.service'
 import {SelectQueryBuilder} from 'typeorm'
+import {FilterBy} from '../../../interfaces/filter-by.interface'
 
-interface FilterBy {
-    customerId?: number
-    resellerId?: number
-}
 
 interface SpeedDialOptions {
     isPilot: boolean
@@ -97,11 +94,11 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
     }
 
     @HandleDbErrors
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
-        await db.provisioning.VoipContractSpeedDial.findOneByOrFail({id: id})
-        await db.provisioning.VoipContractSpeedDial.delete({id: id})
-
-        return 1
+    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+        const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('csd').delete()
+        qb.andWhereInIds(ids)
+        await qb.execute()
+        return ids
     }
 
     @HandleDbErrors

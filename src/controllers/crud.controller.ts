@@ -5,6 +5,7 @@ import {Request} from 'express'
 import {Auth} from '../decorators/auth.decorator'
 import {ServiceRequest} from '../interfaces/service-request.interface'
 import {JournalResponseDto} from '../api/journals/dto/journal-response.dto'
+import {ParamOrBody} from '../decorators/param-or-body.decorator'
 
 @Auth()
 export class CrudController<CreateDTO, ResponseDTO> {
@@ -53,7 +54,10 @@ export class CrudController<CreateDTO, ResponseDTO> {
         return await this.repo.adjust(id, patch, new ServiceRequest(req))
     }
 
-    async delete(@Param('id') id: number | string, @Req() req: Request): Promise<number | string> {
+    async delete(
+        @ParamOrBody('id') id: number[] | string[],
+        @Req() req: Request,
+    ): Promise<number[] | string[]> {
         return await this.repo.delete(id, new ServiceRequest(req))
     }
 

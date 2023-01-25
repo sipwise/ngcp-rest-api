@@ -6,7 +6,7 @@ export interface VoicemailRepository {
 
     read(id: number, sr: ServiceRequest): Promise<internal.Voicemail>
 
-    delete(id: number, sr: ServiceRequest): Promise<number>
+    delete(ids: number[], sr: ServiceRequest): Promise<number[]>
 
     update(id: number, voicemail: internal.Voicemail, sr: ServiceRequest): Promise<internal.Voicemail>
 }

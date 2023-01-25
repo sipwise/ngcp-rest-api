@@ -10,7 +10,7 @@ import {AuthResponseDto} from '../../auth/dto/auth-response.dto'
 import {internal} from '../../entities'
 import {BadRequestException, UnprocessableEntityException} from '@nestjs/common'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
-import {ContactStatus} from '../../entities/internal/contact.internal.entity'
+import {ContactStatus, ContactType} from '../../entities/internal/contact.internal.entity'
 import {ContractStatus} from '../../entities/internal/contract.internal.entity'
 
 const user: AuthResponseDto = {
@@ -41,7 +41,7 @@ describe('SystemContactService', () => {
             .compile()
 
         service = module.get<SystemContactService>(SystemContactService)
-        sr = {headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
+        sr = {returnContent: true, headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
     })
 
     it('should be defined', () => {
@@ -52,7 +52,7 @@ describe('SystemContactService', () => {
     describe('read', () => {
         it('should return a system contact contact by id', async () => {
             const result = await service.read(1, sr)
-            expect(result).toStrictEqual(await contactMockRepo.readSystemContactById(1, sr))
+            expect(result).toStrictEqual(await contactMockRepo.readById(1, {type: ContactType.SystemContact}))
         })
         it('should throw an error if id does not exist', async () => {
             const id = 100
@@ -63,14 +63,14 @@ describe('SystemContactService', () => {
     describe('readAll', () => {
         it('should return an array of system contacts', async () => {
             const got = await service.readAll(sr)
-            expect(got).toStrictEqual(await contactMockRepo.readAllSystemContacts(sr))
+            expect(got).toStrictEqual(await contactMockRepo.readAll(sr, {type: ContactType.SystemContact}))
         })
     })
 
     describe('create', () => {
         it('should create a system contact', async () => {
             const result = await service.create(internal.Contact.create({}), sr)
-            expect(result).toStrictEqual(await contactMockRepo.readSystemContactById(result.id, sr))
+            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.SystemContact}))
         })
         it('should throw an error when trying to create a customer contact', async () => {
             await expect(service.create(internal.Contact.create({reseller_id: 1}), sr)).rejects.toThrow(BadRequestException)
@@ -81,7 +81,7 @@ describe('SystemContactService', () => {
         it('should update a system contact by id', async () => {
             const id = 1
             const result = await service.update(id, internal.Contact.create({firstname: 'updatedFirstName'}), sr)
-            expect(result).toStrictEqual(await contactMockRepo.readSystemContactById(result.id, sr))
+            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.SystemContact}))
         })
         it('should throw an error if id does not exist', async () => {
             const id = 100
@@ -100,7 +100,7 @@ describe('SystemContactService', () => {
                 {op: 'replace', path: '/status', value: ContactStatus.Terminated},
             ]
             const result = await service.adjust(id, patch, sr)
-            expect(result).toStrictEqual(await contactMockRepo.readSystemContactById(result.id, sr))
+            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.SystemContact}))
             expect(result.status).toStrictEqual(ContractStatus.Terminated)
         })
         it('should throw an error if id does not exist', async () => {
@@ -116,8 +116,8 @@ describe('SystemContactService', () => {
     describe('delete', () => {
         it('should delete a system contact by id', async () => {
             const id = 1
-            const result = await service.delete(id, sr)
-            expect(result).toStrictEqual(1)
+            const result = await service.delete([id], sr)
+            expect(result).toStrictEqual([id])
         })
         it('should throw an error if id does not exist', async () => {
             const id = 100
@@ -125,7 +125,7 @@ describe('SystemContactService', () => {
         })
         it('should throw an error if trying to delete a customer contact', async () => {
             const id = 2
-            await expect(service.delete(id, sr)).rejects.toThrow()
+            await expect(service.delete([id], sr)).rejects.toThrow()
         })
     })
 })

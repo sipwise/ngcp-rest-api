@@ -63,10 +63,14 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
         return await this.ncosSetRepo.update(id, entity, sr)
     }
 
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
-        const entity = await this.ncosSetRepo.readById(id, sr)
-        await this.checkPermissions(entity.resellerId, sr)
-        return await this.ncosSetRepo.delete(id, sr)
+    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+        const sets = await this.ncosSetRepo.readWhereInIds(ids, sr)
+        if (ids.length != sets.length)
+            throw new UnprocessableEntityException()
+        for (const set of sets) {
+            await this.checkPermissions(set.resellerId, sr)
+        }
+        return await this.ncosSetRepo.delete(ids, sr)
     }
 
     async createLevel(id: number, entity: internal.NCOSSetLevel, sr: ServiceRequest): Promise<internal.NCOSSetLevel> {

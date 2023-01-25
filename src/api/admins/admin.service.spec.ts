@@ -14,6 +14,13 @@ import {AdminMockRepository} from './repositories/admin.mock.repository'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {RbacRole} from '../../config/constants.config'
 import {deepCopy} from '../../helpers/deep-copy.helper'
+import {AdminOptions} from './interfaces/admin-options.interface'
+
+const role_data = internal.AclRole.create({
+    has_access_to: [
+        internal.AclRole.create({id: 2}),
+    ], id: 1,
+})
 
 const user: AuthResponseDto = {
     readOnly: false,
@@ -24,15 +31,16 @@ const user: AuthResponseDto = {
     reseller_id: 2,
     reseller_id_required: false,
     role: 'system',
+    role_data: role_data,
     username: 'administrator',
 }
-
 describe('AdminService', () => {
     let service: AdminService
     let adminMockRepo: AdminMockRepository
     const aclRoleMockRepo: AclRoleMockRepository = new AclRoleMockRepository()
 
     let sr: ServiceRequest
+    let options: AdminOptions
 
     beforeEach(async () => {
         adminMockRepo = new AdminMockRepository()
@@ -42,9 +50,8 @@ describe('AdminService', () => {
             .overrideProvider(AclRoleRepository).useValue(aclRoleMockRepo)
             .overrideProvider(AdminMariadbRepository).useValue(adminMockRepo)
             .compile()
-
         service = module.get<AdminService>(AdminService)
-        sr = {headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
+        sr = {returnContent: true, headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
     })
 
     it('should be defined', () => {
@@ -52,17 +59,30 @@ describe('AdminService', () => {
         expect(adminMockRepo).toBeDefined()
     })
 
+    it('mock service.getAdminOptionsFromServiceRequest', () => {
+        jest.spyOn(service, 'getAdminOptionsFromServiceRequest').mockImplementation(() => {
+            return {isMaster: true, hasAccessTo: [1],filterBy: {userId: 1}}
+        })
+        expect(service.getAdminOptionsFromServiceRequest({
+            headers: undefined,
+            params: undefined,
+            req: undefined,
+            returnContent: false,
+            user: undefined
+        })).toStrictEqual({isMaster: true, hasAccessTo: [1],filterBy: {userId: 1}})
+    })
+
     describe('readAll', () => {
         it('should return an array of admins', async () => {
             const got = await service.readAll(sr)
-            expect(got).toStrictEqual(await adminMockRepo.readAll(sr))
+            expect(got).toStrictEqual(await adminMockRepo.readAll(options, sr))
         })
     })
 
     describe('read', () => {
         it('should return an admin by id', async () => {
             const result = await service.read(2, sr)
-            expect(result).toStrictEqual(await adminMockRepo.readById(2, sr))
+            expect(result).toStrictEqual(await adminMockRepo.readById(2, options))
         })
 
         it('should throw an error if id does not exist', async () => {
@@ -73,22 +93,22 @@ describe('AdminService', () => {
 
     describe('create', () => {
         it('should return a valid admin', async () => {
-            const result = await service.create(internal.Admin.create({login: 'jest', role: 'admin'}), sr)
-            expect(result).toStrictEqual(await adminMockRepo.readById(result.id, sr))
+            const result = await service.create([internal.Admin.create({login: 'jest', role: 'admin'})], sr)
+            expect(result[0]).toStrictEqual(await adminMockRepo.readById(result[0].id, options))
         })
 
         it('should return access forbidden', async () => {
             const localRequest = deepCopy(sr)
             localRequest.user.role = 'reseller'
-            await expect(service.create(internal.Admin.create({
+            await expect(service.create([internal.Admin.create({
                 login: 'jest',
                 role: 'admin',
-            }), localRequest)).rejects.toThrow(ForbiddenException)
+            })], localRequest)).rejects.toThrow(ForbiddenException)
         })
 
         it('should set reseller_id if not set', async () => {
-            const got = await service.create(internal.Admin.create({login: 'jest', role: 'admin'}), sr)
-            const want = await adminMockRepo.readById(got.id, sr)
+            const got = (await service.create([internal.Admin.create({login: 'jest', role: 'admin'})], sr))[0]
+            const want = await adminMockRepo.readById(got.id, options)
             expect(got.id).toStrictEqual(want.id)
             expect(got.reseller_id).toStrictEqual(sr.user.reseller_id)
         })
@@ -97,12 +117,12 @@ describe('AdminService', () => {
             const localRequest = deepCopy(sr)
             localRequest.user.reseller_id_required = true
 
-            const got = await service.create(internal.Admin.create({
+            const got = (await service.create([internal.Admin.create({
                 login: 'jest',
                 role: 'admin',
                 reseller_id: 100,
-            }), localRequest)
-            const want = await adminMockRepo.readById(got.id, sr)
+            })], localRequest))[0]
+            const want = await adminMockRepo.readById(got.id, options)
             expect(want).toStrictEqual(got)
             expect(want.reseller_id).toStrictEqual(sr.user.reseller_id)
         })
@@ -111,22 +131,22 @@ describe('AdminService', () => {
             const localRequest = deepCopy(sr)
             localRequest.user.reseller_id_required = false
 
-            const got = await service.create(internal.Admin.create({
+            const got = (await service.create([internal.Admin.create({
                 login: 'jest',
                 role: 'admin',
                 reseller_id: 100,
-            }), localRequest)
-            const want = await adminMockRepo.readById(got.id, sr)
+            })], localRequest))[0]
+            const want = await adminMockRepo.readById(got.id, options)
             expect(want).toStrictEqual(got)
         })
 
         it('should generate hashed password if password is set', async () => {
-            const got = await service.create(internal.Admin.create({
+            const got = (await service.create([internal.Admin.create({
                 login: 'jest',
                 role: 'admin',
                 password: 'secret',
-            }), sr)
-            const want = await adminMockRepo.readById(got.id, sr)
+            })], sr))[0]
+            const want = await adminMockRepo.readById(got.id, options)
             expect(got).toStrictEqual(want)
             expect(got.saltedpass).toBeDefined()
         })
@@ -136,14 +156,14 @@ describe('AdminService', () => {
         it('should update admin by id', async () => {
             const id = 2
             const got = await service.update(id, internal.Admin.create({login: 'jest', role: 'admin'}), sr)
-            const want = await adminMockRepo.readById(id, sr)
+            const want = await adminMockRepo.readById(id, options)
             expect(got).toStrictEqual(want)
         })
 
         it('should set correct id', async () => {
             const id = 2
             const got = await service.update(id, internal.Admin.create({login: 'jest', role: 'admin', id: 3}), sr)
-            const want = await adminMockRepo.readById(id, sr)
+            const want = await adminMockRepo.readById(id, options)
             expect(got).toStrictEqual(want)
             expect(got.id).toStrictEqual(id)
         })
@@ -181,14 +201,14 @@ describe('AdminService', () => {
 
         it('should update password if password is set', async () => {
             const id = 2
-            const old = await adminMockRepo.readById(id, sr)
+            const old = await adminMockRepo.readById(id, options)
             const oldPass = old.saltedpass
             const got = await service.update(id, internal.Admin.create({
                 login: 'jest',
                 role: 'admin',
                 password: 'supersecret',
             }), sr)
-            const want = await adminMockRepo.readById(id, sr)
+            const want = await adminMockRepo.readById(id, options)
             expect(got).toStrictEqual(want)
             expect(got.saltedpass).not.toStrictEqual(oldPass)
         })
@@ -199,7 +219,7 @@ describe('AdminService', () => {
         })
 
         it('should replace the whole object', async () => {
-            const created = await service.create(internal.Admin.create({
+            const created = (await service.create([internal.Admin.create({
                 billing_data: true,
                 call_data: true,
                 can_reset_password: true,
@@ -212,7 +232,7 @@ describe('AdminService', () => {
                 reseller_id: 4,
                 role: 'reseller',
                 show_passwords: true,
-            }), sr)
+            })], sr))[0]
             const got = await service.update(created.id, internal.Admin.create({
                 billing_data: false,
                 call_data: false,
@@ -248,7 +268,7 @@ describe('AdminService', () => {
                 {op: 'replace', path: '/role', value: RbacRole.admin},
             ]
             const got = await service.adjust(id, patch, sr)
-            const want = await adminMockRepo.readById(id, sr)
+            const want = await adminMockRepo.readById(id, options)
             expect(got.role).toStrictEqual(RbacRole.admin)
         })
         it('throw ForbiddenException with wrong permissions', async () => {
@@ -286,18 +306,18 @@ describe('AdminService', () => {
     describe('delete', () => {
         it('should not allow deleting self', async () => {
             const id = 1
-            await expect(service.delete(id, sr)).rejects.toThrow(ForbiddenException)
+            await expect(service.delete([id], sr)).rejects.toThrow(ForbiddenException)
         })
 
         it('should return number of deleted items', async () => {
             const id = 2
-            const result = await service.delete(id, sr)
+            const result = await service.delete([id], sr)
             // expect(result).toStrictEqual(1)
         })
 
         it('should throw an error if id does not exist', async () => {
             const id = 100
-            await expect(service.delete(id, sr)).rejects.toThrow()
+            await expect(service.delete([id], sr)).rejects.toThrow()
         })
     })
 })

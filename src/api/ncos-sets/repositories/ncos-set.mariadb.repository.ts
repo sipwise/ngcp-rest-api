@@ -30,7 +30,7 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
 
     @HandleDbErrors
     async createMany(entities: internal.NCOSSet[]): Promise<internal.NCOSSet[]> {
-        let qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
+        const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
         const values = await Promise.all(entities.map(async entity => new db.billing.NCOSSet().fromInternal(entity)))
         const result = await qb.insert().values(values).execute()
 
@@ -50,10 +50,10 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(
-                    result.map(async (d) =>
-                        d.toInternal()
-                    )
-                ), totalCount]
+            result.map(async (d) =>
+                d.toInternal(),
+            ),
+        ), totalCount]
     }
 
     @HandleDbErrors
@@ -64,12 +64,24 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
             Object.keys(searchDto),
             undefined,
         ))
-        qb.where({ id: id })
+        qb.where({id: id})
         this.addFilterBy(qb, filterBy)
-        const result = await qb.getOne()
-        if (!result)
-            throw new NotFoundException()
+        const result = await qb.getOneOrFail()
         return result.toInternal()
+    }
+
+    @HandleDbErrors
+    async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.NCOSSet[]> {
+        const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
+        const searchDto  = new NCOSSetSearchDto()
+        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
+            Object.keys(searchDto),
+            undefined,
+        ))
+        qb.whereInIds(ids)
+        this.addFilterBy(qb, filterBy)
+        const result = await qb.getMany()
+        return await Promise.all(result.map(async (d) => d.toInternal()))
     }
 
     @HandleDbErrors
@@ -82,11 +94,11 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
     }
 
     @HandleDbErrors
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
-        await db.billing.NCOSSet.findOneByOrFail({ id: id })
-        await db.billing.NCOSSet.delete({ id: id })
-
-        return 1
+    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+        const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
+        qb.andWhereInIds(ids)
+        await qb.execute()
+        return ids
     }
 
     @HandleDbErrors
@@ -101,12 +113,12 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
 
     @HandleDbErrors
     async createLevelMany(entities: internal.NCOSSetLevel[], sr: ServiceRequest): Promise<internal.NCOSSetLevel[]> {
-        let qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
+        const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
         qb.innerJoinAndSelect('ncosSetLevel.level', 'level')
         const values = await Promise.all(
             entities.map(
-                async entity => new db.billing.NCOSSetLevel().fromInternal(entity)
-            )
+                async entity => new db.billing.NCOSSetLevel().fromInternal(entity),
+            ),
         )
         const result = await qb.insert().values(values).execute()
 
@@ -121,13 +133,13 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
         const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
         qb.innerJoinAndSelect('ncosSetLevel.level', 'level')
         if (id)
-            qb.where({ ncos_set_id: id })
+            qb.where({ncos_set_id: id})
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(
-                    result.map(async (d) =>
-                        d.toInternal()
-                    )
-                ), totalCount]
+            result.map(async (d) =>
+                d.toInternal(),
+            ),
+        ), totalCount]
     }
 
     @HandleDbErrors
@@ -139,9 +151,9 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
             Object.keys(searchDto),
             undefined,
         ))
-        qb.where({ id: levelId })
+        qb.where({id: levelId})
         if (id)
-            qb.andWhere({ ncos_set_id: id })
+            qb.andWhere({ncos_set_id: id})
         this.addLevelFilterBy(qb, filterBy)
         const result = await qb.getOne()
         if (!result)
@@ -151,7 +163,7 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
 
     @HandleDbErrors
     async deleteLevel(id: number, levelId: number, sr: ServiceRequest): Promise<number> {
-        await db.billing.NCOSSetLevel.delete({ id: levelId })
+        await db.billing.NCOSSetLevel.delete({id: levelId})
 
         return 1
     }
@@ -159,7 +171,7 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
     private addFilterBy(qb: SelectQueryBuilder<db.billing.NCOSSet>, filterBy: FilterBy): void {
         if (filterBy) {
             if (filterBy.resellerId) {
-                qb.andWhere('reseller_id = :id', { id: filterBy.resellerId })
+                qb.andWhere('reseller_id = :id', {id: filterBy.resellerId})
             }
         }
     }
@@ -168,7 +180,7 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
         if (filterBy) {
             if (filterBy.resellerId) {
                 qb.innerJoin('ncosSetLevel.set', 'ncosSet')
-                qb.andWhere('ncosSet.reseller_id = :id', { id: filterBy.resellerId })
+                qb.andWhere('ncosSet.reseller_id = :id', {id: filterBy.resellerId})
             }
         }
     }

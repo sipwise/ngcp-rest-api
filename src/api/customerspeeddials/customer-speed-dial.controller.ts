@@ -1,13 +1,6 @@
-import {
-    ApiBody,
-    ApiConsumes,
-    ApiExtraModels,
-    ApiOkResponse,
-    ApiQuery,
-    ApiTags,
-} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {Body, Controller, Delete, Get, Param, ParseArrayPipe, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {CustomerSpeedDialCreateDto} from './dto/customer-speed-dial-create.dto'
 import {CustomerSpeedDialUpdateDto} from './dto/customer-speed-dial-update.dto'
@@ -26,6 +19,9 @@ import {Operation} from 'helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Request} from 'express'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
+import {number} from 'yargs'
+import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
+import {ParamOrBody} from '../../decorators/param-or-body.decorator'
 
 const resourceName = 'customerspeeddials'
 
@@ -143,20 +139,27 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         return response
     }
 
-    @Delete(':id')
-    @ApiOkResponse({})
-    async delete(@Param('id', ParseIntPipe) id: number, req): Promise<number> {
+    @Delete(':id?')
+    @ApiOkResponse({
+        type: [number]
+    })
+    async delete(
+        @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
+        @Req() req
+    ): Promise<number[]> {
         this.log.debug({
             message: 'delete customer speed dial by id',
-            id: id,
+            id: ids,
             func: this.delete.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const response = await this.customerSpeedDialService.delete(id, sr)
-        await this.journalService.writeJournal(sr, id, {})
-        return response
+        const deletedIds = await this.customerSpeedDialService.delete(ids, sr)
+        for (const deletedId of deletedIds) {
+            await this.journalService.writeJournal(sr, deletedId, {})
+        }
+        return deletedIds
     }
 
     @Get(':id/journal')

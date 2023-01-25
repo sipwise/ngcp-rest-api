@@ -25,8 +25,8 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
         return this.voicemailRepo.read(id, sr)
     }
 
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
-        return await this.voicemailRepo.delete(id, sr)
+    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+        return await this.voicemailRepo.delete(ids, sr)
     }
 
     async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.Voicemail> {

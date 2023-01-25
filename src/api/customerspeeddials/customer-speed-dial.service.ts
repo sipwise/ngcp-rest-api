@@ -68,10 +68,14 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
         return await this.customerSpeedDialRepo.update(id, csd, sr)
     }
 
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
-        const csd = await this.customerSpeedDialRepo.readById(id, sr)
-        await this.checkPermissions(csd.contractId, sr)
-        return await this.customerSpeedDialRepo.delete(id, sr)
+    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+        const csds = await this.customerSpeedDialRepo.readWhereInIds(ids, sr)
+        if (ids.length != csds.length)
+            throw new UnprocessableEntityException()
+        for(const csd of csds) {
+            await this.checkPermissions(csd.contractId, sr)
+        }
+        return await this.customerSpeedDialRepo.delete(ids, sr)
     }
 
     private async checkPermissions(id: number, sr: ServiceRequest): Promise<void> {

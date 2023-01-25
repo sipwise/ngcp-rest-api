@@ -31,7 +31,7 @@ export class DomainMockRepository implements DomainRepository {
 
     async delete(id: number, sr: ServiceRequest): Promise<number> {
         this.throwErrorIfIdNotExists(id)
-        return Promise.resolve(1)
+        return Promise.resolve(id)
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Domain[], number]> {
@@ -45,11 +45,21 @@ export class DomainMockRepository implements DomainRepository {
     }
 
     async readById(id: number, sr: ServiceRequest): Promise<internal.Domain> {
-        return Promise.resolve(undefined)
+        this.throwErrorIfIdNotExists(id)
+        return Promise.resolve(this.db[id])
+    }
+
+    async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Domain[]> {
+        const domains: internal.Domain[] = []
+        for (const id of ids) {
+            domains.push(await this.readById(id, sr))
+        }
+        return Promise.resolve(domains)
     }
 
     private throwErrorIfIdNotExists(id: number) {
         if (this.db[id] == undefined)
             throw new NotFoundException()
     }
+
 }

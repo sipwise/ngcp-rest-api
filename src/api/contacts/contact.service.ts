@@ -35,34 +35,38 @@ export class ContactService implements CrudService<internal.Contact>{
         return await this.contactRepo.create(contact, sr)
     }
 
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
+    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         this.log.debug({
             message: 'delete contact by id',
             func: this.delete.name,
-            contactId: id,
+            contactId: ids,
             user: sr.user.username,
         })
-        const contact = await this.contactRepo.readContactById(id, sr)
+        const contacts = await this.contactRepo.readWhereInIds(ids, {})
+        if (ids.length != contacts.length)
+            throw new UnprocessableEntityException()
 
         // TODO: should exceptions be HttpException? I think this should be determined by the controller
-        if (contact.reseller_id !== undefined) {  // check for active contracts and subscribers when deleting customercontact
-            if (await this.contactRepo.hasContactActiveContract(contact.id, sr)) {
-                throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_CONTRACT'), 423) // 423 HTTP LOCKED
-            }
+        for (const contact of contacts) {
+            if (contact.reseller_id !== undefined) {  // check for active contracts and subscribers when deleting customercontact
+                if (await this.contactRepo.hasContactActiveContract(contact.id, sr)) {
+                    throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_CONTRACT'), 423) // 423 HTTP LOCKED
+                }
 
-            if (await this.contactRepo.hasContactActiveSubscriber(contact.id, sr)) {
-                throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_SUBSCRIBER'), 423) // 423 HTTP LOCKED
-            }
+                if (await this.contactRepo.hasContactActiveSubscriber(contact.id, sr)) {
+                    throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_SUBSCRIBER'), 423) // 423 HTTP LOCKED
+                }
 
-            if (await this.contactRepo.hasContactTerminatedContract(contact.id, sr) || await this.contactRepo.hasContactTerminatedSubscriber(contact.id, sr)) {
-                return await this.contactRepo.terminate(contact.id, sr) // TODO: currently there is no way of knowing whether contact was deleted or terminated
+                if (await this.contactRepo.hasContactTerminatedContract(contact.id, sr) || await this.contactRepo.hasContactTerminatedSubscriber(contact.id, sr)) {
+                    await this.contactRepo.terminate(contact.id, sr) // TODO: currently there is no way of knowing whether contact was deleted or terminated
+                }
             }
         }
-        return await this.contactRepo.delete(id, sr)
+        return await this.contactRepo.delete(ids, sr)
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Contact> {
-        return await this.contactRepo.readContactById(id, sr)
+        return await this.contactRepo.readById(id)
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Contact[], number]> {
@@ -71,7 +75,7 @@ export class ContactService implements CrudService<internal.Contact>{
             func: this.readAll.name,
             user: sr.user.username,
         })
-        const [result, count] = await this.contactRepo.readAllContacts(sr)
+        const [result, count] = await this.contactRepo.readAll(sr)
         return [result, count]
     }
 
@@ -82,7 +86,7 @@ export class ContactService implements CrudService<internal.Contact>{
             contactId: id,
             user: sr.user.username,
         })
-        const oldContact = await this.contactRepo.readContactById(id, sr)
+        const oldContact = await this.contactRepo.readById(id)
         if (oldContact.reseller_id !== undefined) {
             if (oldContact.reseller_id != contact.reseller_id) {
                 const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
@@ -91,7 +95,7 @@ export class ContactService implements CrudService<internal.Contact>{
                 }
             }
         }
-        return await this.contactRepo.update(id, contact, sr)
+        return await this.contactRepo.update(id, contact)
     }
 
     /**

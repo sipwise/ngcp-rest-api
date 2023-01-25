@@ -113,7 +113,7 @@ export class AuthService {
             readOnly: admin.read_only,
             reseller_id: admin.reseller_id,
             role: admin.role.role,
-            role_data: admin.role,
+            role_data: admin.role.toInternal(),
             showPasswords: admin.show_passwords,
             username: admin.login,
             is_master: admin.is_master,
@@ -178,7 +178,7 @@ export class AuthService {
 
     subscriberAuthToResponse(subscriber: db.provisioning.VoipSubscriber): AuthResponseDto {
         const role = subscriber.admin ? 'subscriberadmin'
-                                      : 'subscriber'
+            : 'subscriber'
         const response: AuthResponseDto = {
             active: true,
             id: subscriber.billing_voip_subscriber.id,
@@ -190,7 +190,7 @@ export class AuthService {
             username: subscriber.username,
             is_master: false,
             uuid: subscriber.uuid,
-            customer_id: subscriber.account_id
+            customer_id: subscriber.account_id,
         }
         this.log.debug({
             message: 'subscriber user authentication',
@@ -225,7 +225,7 @@ export class AuthService {
         if (!process.env.NODE_WP_BUNDLE &&
              process.env.NODE_ENV === 'development' &&
              process.env.API_DEV_SKIP_PASS_AUTH === 'true') {
-             this.log.log({message: '"API_DEV_SKIP_PASS_AUTH" MODE!'})
+            this.log.log({message: '"API_DEV_SKIP_PASS_AUTH" MODE!'})
             return true
         }
         return await compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`)

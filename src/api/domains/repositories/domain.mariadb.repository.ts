@@ -133,6 +133,6 @@ export class DomainMariadbRepository implements DomainRepository {
 
         await telnetDispatcher.deactivateDomain(domain.domain)
         await xmlDispatcher.sipDomainReload(domain.domain)
-        return 1
+        return domain.id
     }
 }

@@ -3,6 +3,7 @@ import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {NotFoundException} from '@nestjs/common'
 import {internal} from '../../../entities'
 import {AdminRepository} from '../interfaces/admin.repository'
+import {AdminOptions} from '../interfaces/admin-options.interface'
 
 interface AdminMockDB {
     [key: number]: internal.Admin
@@ -40,31 +41,42 @@ export class AdminMockRepository implements AdminRepository {
         }
     }
 
-    create(entity: internal.Admin): Promise<internal.Admin> {
+    create(admins: internal.Admin[]): Promise<number[]> {
         const nextId = this.getNextId()
-        entity.id = nextId
-        this.db[nextId] = entity
+        admins[0].id = nextId
+        this.db[nextId] = admins[0]
 
-        return Promise.resolve(entity)
+        return Promise.resolve([nextId])
     }
 
-    delete(id: number, sr: ServiceRequest): Promise<internal.Admin> {
+    delete(ids: number[]): Promise<number[]> {
+        for (const id of ids) {
+            this.throwErrorIfIdNotExists(id)
+        }
+        return Promise.resolve(ids)
+    }
+
+    readById(id: number, options: AdminOptions): Promise<internal.Admin> {
         this.throwErrorIfIdNotExists(id)
         return Promise.resolve(this.db[id])
     }
 
-    readById(id: number, sr: ServiceRequest): Promise<internal.Admin> {
-        this.throwErrorIfIdNotExists(id)
-        return Promise.resolve(this.db[id])
+    readWhereInIds(ids: number[], options: AdminOptions): Promise<internal.Admin[]> {
+        const admins: internal.Admin[] = []
+        for (const i of ids) {
+            this.throwErrorIfIdNotExists(i)
+            admins.push(this.db[i])
+        }
+        return Promise.resolve(admins)
     }
 
-    readAll(sr: ServiceRequest): Promise<[internal.Admin[], number]> {
+    readAll(options: AdminOptions, sr: ServiceRequest): Promise<[internal.Admin[], number]> {
         const admins: [internal.Admin[], number] =
             [Object.keys(this.db).map(id => this.db[id]), Object.keys(this.db).length]
         return Promise.resolve(admins)
     }
 
-    update(id: number, admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin> {
+    update(id: number, admin: internal.Admin, options: AdminOptions): Promise<internal.Admin> {
         this.throwErrorIfIdNotExists(id)
         this.db[id] = admin
         return Promise.resolve(admin)

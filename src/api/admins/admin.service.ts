@@ -1,14 +1,14 @@
 import {AppService} from '../../app.service'
 import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
-import {ForbiddenException, Inject, Injectable} from '@nestjs/common'
+import {ForbiddenException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AdminMariadbRepository} from './repositories/admin.mariadb.repository'
 import {internal} from '../../entities'
 import {AclRoleRepository} from '../../repositories/acl-role.repository'
-import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
 import {deepCopy} from '../../helpers/deep-copy.helper'
+import {AdminOptions} from './interfaces/admin-options.interface'
 
 @Injectable()
 export class AdminService { //} implements CrudService<internal.Admin> {
@@ -22,23 +22,13 @@ export class AdminService { //} implements CrudService<internal.Admin> {
     ) {
     }
 
-    async create(admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin> {
-        this.log.debug({message: 'create admin', func: this.create.name, user: sr.user.username})
-
-        const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
-        await this.populateAdmin(admin, accessorRole, sr)
-
-        return await this.adminRepo.create(admin)
-    }
-
-    async createMany(admins: internal.Admin[], sr: ServiceRequest): Promise<internal.Admin[]> {
+    async create(admins: internal.Admin[], sr: ServiceRequest): Promise<internal.Admin[]> {
         const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
         for (const admin of admins) {
             await this.populateAdmin(admin, accessorRole, sr)
         }
-        const createdIds = await this.adminRepo.createMany(admins)
-        if (sr.returnContent)
-            return await this.adminRepo.readWhereInIds(createdIds, sr)
+        const createdIds = await this.adminRepo.create(admins)
+        return await this.adminRepo.readWhereInIds(createdIds, this.getAdminOptionsFromServiceRequest(sr))
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Admin[], number]> {
@@ -47,35 +37,38 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             func: this.readAll.name,
             user: sr.user.username,
         })
-        return await this.adminRepo.readAll(sr)
+        return await this.adminRepo.readAll(this.getAdminOptionsFromServiceRequest(sr), sr)
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Admin> {
         this.log.debug({message: 'read admin by id', func: this.read.name, user: sr.user.username, id: id})
-        return await this.adminRepo.readById(id, sr)
+       return await this.adminRepo.readById(id, this.getAdminOptionsFromServiceRequest(sr))
     }
 
     async update(id: number, admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin> {
         this.log.debug({message: 'update admin by id', func: this.update.name, user: sr.user.username, id: id})
         admin.id = id
 
-        const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
+        const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr)
         await this.populateAdmin(admin, accessorRole, sr)
 
-        const oldAdmin = await this.adminRepo.readById(id, sr)
+        const options = this.getAdminOptionsFromServiceRequest(sr)
+        const oldAdmin = await this.adminRepo.readById(id, options)
+
         await this.validateUpdate(sr.user.id, oldAdmin, admin)
 
-        return await this.adminRepo.update(id, admin, sr)
+        return await this.adminRepo.update(id, admin, options)
     }
 
     async updateOrCreate(id: number, admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin> {
         this.log.debug({message: 'update admin by id or create', func: this.update.name, user: sr.user.username, id: id})
         admin.id = id
+        const options = this.getAdminOptionsFromServiceRequest(sr)
         try {
-            await this.adminRepo.readById(id, sr)
+            await this.adminRepo.readById(id, options)
             return await this.update(id, admin, sr)
         } catch (e) {
-            return await this.create(admin, sr)
+            return (await this.create([admin], sr))[0]
         }
     }
 
@@ -87,7 +80,8 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             id: id,
         })
         const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
-        let admin = await this.adminRepo.readById(id, sr)
+        const options =  this.getAdminOptionsFromServiceRequest(sr)
+        let admin = await this.adminRepo.readById(id, options)
         const oldAdmin = deepCopy(admin)
 
         admin = applyPatch(admin, patch).newDocument
@@ -98,26 +92,32 @@ export class AdminService { //} implements CrudService<internal.Admin> {
 
         await this.validateUpdate(sr.user.id, oldAdmin, admin)
 
-        return await this.adminRepo.update(id, admin, sr)
+        return await this.adminRepo.update(id, admin, options)
     }
 
-    async delete(id: number, sr: ServiceRequest): Promise<internal.Admin> {
-        this.log.debug({message: 'delete admin by id', func: this.delete.name, user: sr.user.username, id: id})
-
-        if (id == sr.user.id)
-            throw new ForbiddenException(this.i18n.t('errors.ADMIN_DELETE_SELF'))
-
-        return await this.adminRepo.delete(id, sr)
-    }
-
-
-    async deleteMany(ids: number[], sr: ServiceRequest): Promise<[internal.Admin[], number]> {
-        this.log.debug({message: 'delete many admin by id', func: this.deleteMany.name, user: sr.user.username, ids: ids})
+    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+        this.log.debug({message: 'delete many admin by id', func: this.delete.name, user: sr.user.username, ids: ids})
 
         if (ids.includes(sr.user.id))
             throw new ForbiddenException(this.i18n.t('errors.ADMIN_DELETE_SELF'))
 
-        return await this.adminRepo.deleteMany(ids, sr)
+        const options =  this.getAdminOptionsFromServiceRequest(sr)
+        const deleteIds = await this.adminRepo.readWhereInIds(ids, options)
+        if(ids.length != deleteIds.length)
+            throw new UnprocessableEntityException()
+        return await this.adminRepo.delete(ids)
+    }
+
+    getAdminOptionsFromServiceRequest(sr: ServiceRequest): AdminOptions {
+        const hasAccessTo = sr.user.role_data.has_access_to.map(role => role.id)
+        return {
+            filterBy: {
+                resellerId: sr.user.reseller_id,
+                userId: sr.user.id,
+            },
+            hasAccessTo:hasAccessTo,
+            isMaster: sr.user.is_master,
+        }
     }
     private async populateAdmin(admin: internal.Admin, accessorRole: internal.AclRole, sr: ServiceRequest) {
         const role = await this.aclRepo.readOneByRole(admin.role, sr)

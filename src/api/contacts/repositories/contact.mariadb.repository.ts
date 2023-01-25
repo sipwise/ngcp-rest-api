@@ -4,12 +4,13 @@ import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {Not, SelectQueryBuilder} from 'typeorm'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {db, internal} from '../../../entities'
-import {ContactStatus} from '../../../entities/internal/contact.internal.entity'
+import {ContactStatus, ContactType} from '../../../entities/internal/contact.internal.entity'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {ContactSearchDto} from '../dto/contact-search.dto'
 import {VoipSubscriberStatus} from '../../../entities/internal/voip-subscriber.internal.entity'
 import {ContractStatus} from '../../../entities/internal/contract.internal.entity'
 import {LoggerService} from '../../../logger/logger.service'
+import {ContactOptions} from '../interfaces/contact-options.interface'
 
 export class ContactMariadbRepository implements ContactRepository {
     private readonly log = new LoggerService(ContactMariadbRepository.name)
@@ -36,15 +37,17 @@ export class ContactMariadbRepository implements ContactRepository {
     }
 
     @HandleDbErrors
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
+    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         this.log.debug({
             message: 'delete contact by id',
             func: this.delete.name,
-            contactId: id,
+            contactId: ids,
             user: sr.user.username,
         })
-        await db.billing.Contact.delete(id)
-        return 1
+        const qb = db.billing.Contact.createQueryBuilder('contact').delete()
+        qb.andWhereInIds(ids)
+        await qb.execute()
+        return ids
     }
 
     @HandleDbErrors
@@ -60,31 +63,16 @@ export class ContactMariadbRepository implements ContactRepository {
     }
 
     @HandleDbErrors
-    async readWhereInIds(ids: number[]): Promise<internal.Contact[]> {
-        const qb = db.billing.Contact.createQueryBuilder('contact')
-        const created = await qb.andWhereInIds(ids).getMany()
-        return await Promise.all(created.map(async (contact) => contact.toInternal()))
+    async readWhereInIds(ids: number[], options?: ContactOptions): Promise<internal.Contact[]> {
+        const qb = await this.createBaseQueryBuilder(options)
+        const contacts = await qb.andWhereInIds(ids).getMany()
+        return await Promise.all(contacts.map(async (contact) => contact.toInternal()))
     }
 
     @HandleDbErrors
-    async readContactById(id: number, sr: ServiceRequest): Promise<internal.Contact> {
-        this.log.debug({message: 'read contact by id', func: this.readContactById.name, user: sr.user.username})
-        const qb = await this.createBaseQueryBuilder(sr)
+    async readById(id: number, options?: ContactOptions): Promise<internal.Contact> {
+        const qb = await this.createBaseQueryBuilder(options)
         qb.andWhere('contact.id = :id', {id: id})
-        const result = await qb.getOneOrFail()
-        return result.toInternal()
-    }
-
-    @HandleDbErrors
-    async readCustomerContactById(id: number, sr: ServiceRequest): Promise<internal.Contact> {
-        this.log.debug({
-            message: 'read customer contact by id',
-            func: this.readCustomerContactById.name,
-            user: sr.user.username,
-        })
-        const qb = await this.createBaseQueryBuilder(sr)
-        qb.andWhere('contact.id = :id', {id: id})
-        qb.andWhere('contact.reseller_id IS NOT NULL')
         const result = await qb.getOneOrFail()
         return result.toInternal()
     }
@@ -164,62 +152,20 @@ export class ContactMariadbRepository implements ContactRepository {
     }
 
     @HandleDbErrors
-    async readSystemContactById(id: number, sr: ServiceRequest): Promise<internal.Contact> {
-        this.log.debug({
-            message: 'read system contact by id',
-            func: this.readSystemContactById.name,
-            user: sr.user.username,
-        })
-        const qb = await this.createBaseQueryBuilder(sr)
-        qb.andWhere('contact.id = :id', {id: id})
-        qb.andWhere('contact.reseller_id IS NULL')
-        const result = await qb.getOneOrFail()
-        return result.toInternal()
-    }
-
-    @HandleDbErrors
-    async readAllContacts(sr: ServiceRequest): Promise<[internal.Contact[], number]> {
+    async readAll(sr: ServiceRequest, options?: ContactOptions): Promise<[internal.Contact[], number]> {
         this.log.debug({
             message: 'read all contacts',
-            func: this.readAllContacts.name,
+            func: this.readAll.name,
             user: sr.user.username,
         })
-
-        const queryBuilder = await this.createReadAllQueryBuilder(sr)
-        const [result, count] = await queryBuilder.getManyAndCount()
+        const qb = await this.createBaseQueryBuilder(options)
+        await configureQueryBuilder(qb, sr.query, new SearchLogic(sr, Object.keys(new ContactSearchDto())))
+        const [result, count] = await qb.getManyAndCount()
         return [result.map(r => r.toInternal()), count]
     }
 
     @HandleDbErrors
-    async readAllCustomerContacts(sr: ServiceRequest): Promise<[internal.Contact[], number]> {
-        this.log.debug({
-            message: 'read all customer contacts',
-            func: this.readAllCustomerContacts.name,
-            user: sr.user.username,
-        })
-
-        const queryBuilder = await this.createReadAllQueryBuilder(sr)
-        queryBuilder.andWhere('contact.reseller_id IS NOT NULL')
-        const [result, count] = await queryBuilder.getManyAndCount()
-        return [result.map(r => r.toInternal()), count]
-    }
-
-    @HandleDbErrors
-    async readAllSystemContacts(sr: ServiceRequest): Promise<[internal.Contact[], number]> {
-        this.log.debug({
-            message: 'read all system contacts',
-            func: this.readAllCustomerContacts.name,
-            user: sr.user.username,
-        })
-
-        const queryBuilder = await this.createReadAllQueryBuilder(sr)
-        queryBuilder.andWhere('contact.reseller_id IS NULL')
-        const [result, count] = await queryBuilder.getManyAndCount()
-        return [result.map(r => r.toInternal()), count]
-    }
-
-    @HandleDbErrors
-    async update(id: number, contact: internal.Contact, sr: ServiceRequest): Promise<internal.Contact> {
+    async update(id: number, contact: internal.Contact, options?: ContactOptions): Promise<internal.Contact> {
         const update = new db.billing.Contact().fromInternal(contact)
         Object.keys(update).map(key => {
             if (update[key] == undefined)
@@ -227,25 +173,32 @@ export class ContactMariadbRepository implements ContactRepository {
         })
         await db.billing.Contact.update(id, update)
 
-        return await this.readCustomerContactById(id, sr)
+        return await this.readById(id, options)
     }
 
-    private async createBaseQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Contact>> {
+    private async createBaseQueryBuilder(options: ContactOptions): Promise<SelectQueryBuilder<db.billing.Contact>> {
         const qb = db.billing.Contact.createQueryBuilder('contact')
-        await this.addPermissionFilterToQueryBuilder(qb, sr)
+        if (options) {
+            this.addPermissionFilterToQueryBuilder(qb, options)
+            this.addFilterByType(qb, options.type)
+        }
         return qb
     }
 
-    private async createReadAllQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Contact>> {
-        const qb = await this.createBaseQueryBuilder(sr)
-        await configureQueryBuilder(qb, sr.query, new SearchLogic(sr, Object.keys(new ContactSearchDto())))
-        return qb
-    }
-
-    private async addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contact>, sr: ServiceRequest) {
-        if (sr.user.reseller_id_required) {
-            qb.andWhere('contact.reseller_id = :reseller_id', {reseller_id: sr.user.reseller_id})
+    private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contact>, options: ContactOptions) {
+        if (options.filterBy.resellerId) {
+            qb.andWhere('contact.reseller_id = :reseller_id', {reseller_id: options.filterBy.resellerId})
         }
     }
 
+    private addFilterByType(qb: SelectQueryBuilder<db.billing.Contact>, type: ContactType): void {
+        switch (type) {
+        case ContactType.CustomerContact:
+            qb.andWhere('contact.reseller_id IS NOT NULL')
+            break
+        case ContactType.SystemContact:
+            qb.andWhere('contact.reseller_id IS NULL')
+            break
+        }
+    }
 }

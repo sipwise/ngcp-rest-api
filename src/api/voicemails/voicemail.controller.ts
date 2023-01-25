@@ -18,6 +18,8 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 import {LoggerService} from '../../logger/logger.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
+import {ParseIntIdPipe} from '../../pipes/parse-int-id.pipe'
 
 const resourceName = 'voicemails'
 
@@ -68,16 +70,21 @@ export class VoicemailController extends CrudController<VoicemailUpdateDto, Voic
         return responseItem
     }
 
-    @Delete(':id')
+    @Delete(':id?')
     @ApiOkResponse({
         type: number,
     })
-    async delete(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<number> {
+    async delete(
+        @Param('id', new ParseIntIdArrayPipe()) ids: number[],
+        @Req() req
+    ): Promise<number[]> {
         this.log.debug({message: 'delete voicemail by id', func: this.delete.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const response = await this.voicemailService.delete(id, sr)
-        await this.journalService.writeJournal(sr, id, {})
-        return response
+        const deletedIds = await this.voicemailService.delete(ids, sr)
+        for (const deletedId of deletedIds) {
+            await this.journalService.writeJournal(sr, deletedId, {})
+        }
+        return deletedIds
     }
 
     @Patch(':id')

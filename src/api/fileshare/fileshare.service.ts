@@ -143,11 +143,21 @@ export class FileshareService { // implements CrudService<FileshareCreateDto, Fi
     }
 
     @HandleDbErrors
-    async delete(id: string, sr: ServiceRequest): Promise<string> {
+    async delete(ids: string[], sr: ServiceRequest): Promise<string[]> {
         const filter = this.filterOptions(sr)
-        const upload = await db.fileshare.Upload.findOneByOrFail({ id: id, ...filter })
-        await db.fileshare.Upload.delete(upload.id)
+        const qb = db.fileshare.Upload.createQueryBuilder('fileshare')
+        qb.andWhere(filter)
+        qb.whereInIds(ids)
 
-        return id
+        const uploads = await qb.getMany()
+
+        if (ids.length != uploads.length)
+            throw new UnprocessableEntityException()
+
+        const deleteQb = qb.delete().whereInIds(ids)
+
+        await deleteQb.execute()
+
+        return ids
     }
 }

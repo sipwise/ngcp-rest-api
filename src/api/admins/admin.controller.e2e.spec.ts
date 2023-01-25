@@ -195,7 +195,6 @@ describe('AdminController', () => {
                     .set(...preferHeader)
                     .send(single)
                 expect(response.status).toEqual(201)
-                // console.log(response)
                 createdAdminIds.push(+response.body[0].id)
             })
             it('should create admins bulk', async () => {
@@ -215,21 +214,21 @@ describe('AdminController', () => {
         describe('Admins GET', () => {
             const tt = [
                 {username: 'system',
-                password: 'system', want: 200, canSeeResellerId: true},
+                    password: 'system', want: 200, canSeeResellerId: true},
                 {username: 'adminmaster',
-                password: 'adminmaster', want: 200, canSeeResellerId: true},
+                    password: 'adminmaster', want: 200, canSeeResellerId: true},
                 {username: 'admin',
-                password: 'adminthere', want: 200, canSeeResellerId: true},
+                    password: 'adminthere', want: 200, canSeeResellerId: true},
                 {username: 'resellermaster',
-                password: 'resellermaster', want: 200, canSeeResellerId: false},
+                    password: 'resellermaster', want: 200, canSeeResellerId: false},
                 {username: 'reseller',
-                password: 'reseller', want: 200, canSeeResellerId: false},
+                    password: 'reseller', want: 200, canSeeResellerId: false},
                 {username: 'ccareadmin',
-                password: 'ccareadmin', want: 200, canSeeResellerId: true},
+                    password: 'ccareadmin', want: 200, canSeeResellerId: true},
                 {username: 'ccare',
-                password: 'ccarethere', want: 200, canSeeResellerId: false},
+                    password: 'ccarethere', want: 200, canSeeResellerId: false},
                 {username: 'lintercept',
-                password: 'lintercept', want: 403, canSeeResellerId: false},
+                    password: 'lintercept', want: 403, canSeeResellerId: false},
             ]
             for (const test of tt) {
                 it('finds all admins as role: ' + test.username, async () => {
@@ -461,13 +460,48 @@ describe('AdminController', () => {
     })
 
     describe('Admins DELETE', () => {
-        it('delete created admins', async () => {
-            for (const id of createdAdminIds) {
+        it('delete single admin', async () => {
+            const single = createdAdminIds.pop()
+            if (single != undefined) {
                 const result = await request(app.getHttpServer())
-                    .delete(`/admins/${id}`)
+                    .delete(`/admins/${single}`)
                     .set(...authHeader)
                 expect(result.status).toEqual(200)
             }
+        })
+        it('delete created admins bulk', async () => {
+            const result = await request(app.getHttpServer())
+                .delete('/admins/')
+                .set(...authHeader)
+                .send(createdAdminIds)
+            expect(result.status).toEqual(200)
+        })
+        it('fail if double array', async () => {
+            const result = await request(app.getHttpServer())
+                .delete('/admins/')
+                .set(...authHeader)
+                .send([1.2, 3.4])
+            expect(result.status).toEqual(400)
+        })
+        it('fail if not array', async () => {
+            const result = await request(app.getHttpServer())
+                .delete('/admins/')
+                .set(...authHeader)
+                .send({id: 1})
+            expect(result.status).toEqual(400)
+        })
+        it('fails if body and params are defined', async  () => {
+            const result = await request(app.getHttpServer())
+                .delete('/admins/2')
+                .set(...authHeader)
+                .send([2])
+            expect(result.status).toEqual(400)
+        })
+        it('fails if no body and no params are defined', async  () => {
+            const result = await request(app.getHttpServer())
+                .delete('/admins')
+                .set(...authHeader)
+            expect(result.status).toEqual(400)
         })
     })
 })

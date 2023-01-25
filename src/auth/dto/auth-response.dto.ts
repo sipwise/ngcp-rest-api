@@ -1,4 +1,4 @@
-import {AclRole} from '../../entities/db/billing'
+import {internal} from '../../entities'
 
 export class AuthResponseDto {
     active: boolean
@@ -6,7 +6,7 @@ export class AuthResponseDto {
     readOnly: boolean
     reseller_id: number
     role: string
-    role_data?: AclRole
+    role_data?: internal.AclRole
     reseller_id_required: boolean
     showPasswords: boolean
     username: string

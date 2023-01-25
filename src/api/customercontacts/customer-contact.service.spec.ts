@@ -11,7 +11,7 @@ import {HttpException, UnprocessableEntityException} from '@nestjs/common'
 import {CustomerContactModule} from './customer-contact.module'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {ContractStatus} from '../../entities/internal/contract.internal.entity'
-import {ContactStatus} from '../../entities/internal/contact.internal.entity'
+import {ContactStatus, ContactType} from '../../entities/internal/contact.internal.entity'
 import {deepCopy} from '../../helpers/deep-copy.helper'
 
 const user: AuthResponseDto = {
@@ -41,7 +41,7 @@ describe('CustomerContactService', () => {
             .compile()
 
         service = module.get<CustomerContactService>(CustomerContactService)
-        sr = {headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
+        sr = {returnContent: true, headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
     })
 
     it('should be defined', () => {
@@ -52,7 +52,7 @@ describe('CustomerContactService', () => {
     describe('read', () => {
         it('should return a customer contact by id', async () => {
             const result = await service.read(2, sr)
-            expect(result).toStrictEqual(await contactMockRepo.readCustomerContactById(2, sr))
+            expect(result).toStrictEqual(await contactMockRepo.readById(2, {type: ContactType.CustomerContact}))
         })
         it('should throw an error if id belongs to system contact', async () => {
             const id = 1
@@ -67,14 +67,14 @@ describe('CustomerContactService', () => {
     describe('readAll', () => {
         it('should return an array of customer contacts', async () => {
             const got = await service.readAll(sr)
-            expect(got).toStrictEqual(await contactMockRepo.readAllCustomerContacts(sr))
+            expect(got).toStrictEqual(await contactMockRepo.readAll(sr, {type: ContactType.CustomerContact}))
         })
     })
 
     describe('create', () => {
         it('should create a customer contact', async () => {
             const result = await service.create(internal.Contact.create({reseller_id: 1}), sr)
-            expect(result).toStrictEqual(await contactMockRepo.readCustomerContactById(result.id, sr))
+            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
         })
         it('should set reseller_id to user.reseller_id if user.reseller_id_required', async () => {
             const localRequest = deepCopy(sr)
@@ -82,7 +82,7 @@ describe('CustomerContactService', () => {
             localRequest.user.reseller_id_required = true
             const expectedResellerId = localRequest.user.reseller_id
             const result = await service.create(internal.Contact.create({reseller_id: 1}), localRequest)
-            expect(result).toStrictEqual(await contactMockRepo.readCustomerContactById(result.id, localRequest))
+            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
             expect(result.reseller_id).toStrictEqual(expectedResellerId)
         })
         it('should throw an error if reseller_id is invalid', async () => {
@@ -93,13 +93,13 @@ describe('CustomerContactService', () => {
     describe('update', () => {
         it('should update a customer contact by id', async () => {
             const result = await service.update(2, internal.Contact.create({reseller_id: 1}), sr)
-            expect(result).toStrictEqual(await contactMockRepo.readCustomerContactById(result.id, sr))
+            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
         })
         it('should update a customer contact reseller_id if reseller_id changed', async () => {
             const id = 2
             const update = internal.Contact.create({reseller_id: 2})
             const result = await service.update(id, update, sr)
-            expect(result).toStrictEqual(await contactMockRepo.readCustomerContactById(result.id, sr))
+            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
             expect(result.reseller_id).toStrictEqual(update.reseller_id)
         })
         it('should set reseller_id to user.reseller_id if user.reseller_id_required', async () => {
@@ -111,7 +111,7 @@ describe('CustomerContactService', () => {
             const update = internal.Contact.create({reseller_id: 3})
             const result = await service.update(id, update, localRequest)
 
-            expect(result).toStrictEqual(await contactMockRepo.readCustomerContactById(result.id, sr))
+            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
             expect(result.reseller_id).toStrictEqual(expectedResellerId)
 
         })
@@ -149,7 +149,7 @@ describe('CustomerContactService', () => {
             ]
 
             const result = await service.adjust(id, patch, localRequest)
-            expect(result).toStrictEqual(await contactMockRepo.readCustomerContactById(result.id, localRequest))
+            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
             expect(result.reseller_id).toStrictEqual(expectedResellerId)
         })
         // TODO: ? it('should throw an error if reseller changes reseller_id', async () => { })
@@ -158,12 +158,12 @@ describe('CustomerContactService', () => {
     describe('delete', () => {
         it('should delete a contact by id', async () => {
             const id = 3
-            const result = await service.delete(id, sr)
-            expect(result).toStrictEqual(1)
+            const result = await service.delete([id], sr)
+            expect(result).toStrictEqual([id])
         })
         it('should throw an error if contact has an active contract', async () => {
             // TODO: Do we want to throw HttpException in service?
-            await expect(service.delete(2, sr)).rejects.toThrow(HttpException)
+            await expect(service.delete([2], sr)).rejects.toThrow(HttpException)
         })
         it('should throw an error if contact has an active subscriber', async () => {
             // TODO: implement when we have internal.VoipSubscriber
@@ -171,9 +171,9 @@ describe('CustomerContactService', () => {
         })
         it('should set status to terminated if contact has terminated contract or subscriber', async () => {
             const id = 3
-            const result = await service.delete(id, sr)
+            const result = await service.delete([id], sr)
             // TODO: we currently cannot check the new status as the return value is number
-            expect(result).toStrictEqual(1)
+            expect(result).toStrictEqual([id])
         })
     })
 })

@@ -99,16 +99,22 @@ export class DomainService implements CrudService<internal.Domain> {
         throw new NotImplementedException()
     }
 
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
+    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         this.log.debug({
             message: 'delete domain by id',
             func: this.delete.name,
             user: sr.user.username,
         })
-        const domain = await this.domainRepo.readById(id, sr)
-        if (RbacRole.reseller == sr.user.role && domain.reseller_id != sr.user.reseller_id) {
-            throw new ForbiddenException(this.i18n.t('errors.DOMAIN_DOES_NOT_BELONG_TO_RESELLER'))
+        const domains = await this.domainRepo.readWhereInIds(ids, sr)
+        if (domains.length != ids.length)
+            throw new UnprocessableEntityException()
+        const deletedIds: number[] = []
+        for(const domain of domains) {
+            if (RbacRole.reseller == sr.user.role && domain.reseller_id != sr.user.reseller_id) {
+                throw new ForbiddenException(this.i18n.t('errors.DOMAIN_DOES_NOT_BELONG_TO_RESELLER'))
+            }
+            deletedIds.push(await this.domainRepo.delete(domain.id, sr))
         }
-        return await this.domainRepo.delete(id, sr)
+        return deletedIds
     }
 }

@@ -1,11 +1,13 @@
 import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {
+    BadRequestException,
+    Body,
     Controller,
     Delete,
     Get,
     Param,
-    ParseUUIDPipe,
     Post,
+    Req,
     Response,
     StreamableFile,
     UseInterceptors,
@@ -27,6 +29,8 @@ import {ApiCreatedResponse} from '../../decorators/api-created-response.decorato
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {ParseUUIDPipe} from '../../pipes/parse-uuid.pipe'
+import {ParseUUIDArrayPipe} from '../../pipes/parse-uuid-array.pipe'
 
 const resourceName = 'fileshare'
 
@@ -79,7 +83,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
     @ApiOkResponse({
         type: StreamableFile,
     })
-    async readFile(@Param('id', ParseUUIDPipe) id: string, req, @Response({passthrough: true}) res): Promise<StreamableFile> {
+    async readFile(@Param('id', ) id: string, req, @Response({passthrough: true}) res): Promise<StreamableFile> {
         this.log.debug({message: 'fetch fileshare by id', func: this.readFile.name, url: req.url, method: req.method})
         const stream = await this.fileshareService.read(id)
         let size = 0
@@ -99,14 +103,20 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
         return stream
     }
 
-    @Delete(':id')
+    @Delete(':id?')
     @ApiOkResponse({})
-    async delete(@Param('id', ParseUUIDPipe) id: string, req) {
+    async delete(
+        @Param('id', new ParseUUIDArrayPipe()) ids: string[],
+        @Req() req
+    ): Promise<string[]>{
         this.log.debug({message: 'delete fileshare by id', func: this.delete.name, url: req.url, method: req.method})
+
         const sr = new ServiceRequest(req)
-        const response = await this.fileshareService.delete(id, sr)
-        await this.journalService.writeJournal(sr, 0, response)
-        return response
+        const deletedIds = await this.fileshareService.delete(ids, sr)
+        for (const deletedId of deletedIds) {
+            await this.journalService.writeJournal(sr, 0, deletedId)
+        }
+        return deletedIds
     }
 
     @Get(':id/journal')

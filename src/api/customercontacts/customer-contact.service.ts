@@ -7,6 +7,9 @@ import {ContactMariadbRepository} from '../contacts/repositories/contact.mariadb
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
+import {ContactType} from '../../entities/internal/contact.internal.entity'
+import {ContactOptions} from '../contacts/interfaces/contact-options.interface'
+import {RbacRole} from '../../config/constants.config'
 
 @Injectable()
 export class CustomerContactService implements CrudService<internal.Contact> {
@@ -59,30 +62,37 @@ export class CustomerContactService implements CrudService<internal.Contact> {
         }
     }
 
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
+    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         this.log.debug({
             message: 'delete customer contact by id',
             func: this.delete.name,
-            contactId: id,
+            contactIds: ids,
             user: sr.user.username,
         })
-        const contact = await this.contactRepo.readCustomerContactById(id, sr)
-        if (!contact.reseller_id) { // TODO: imo this check is redundant as the repository only returns customer contacts
-            throw new BadRequestException(this.i18n.t('errors.CONTACT_DELETE_SYSTEM_CONTACT')) // TODO: find better description
-        }
+        const options = this.getContactOptionsFromServiceRequest(sr)
 
-        if (await this.contactRepo.hasContactActiveContract(contact.id, sr)) {
-            throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_CONTRACT'), 423) // 423 HTTP LOCKED
-        }
+        const contacts = await this.contactRepo.readWhereInIds(ids, options)
+        if (ids.length != contacts.length)
+            throw new UnprocessableEntityException()
 
-        if (await this.contactRepo.hasContactActiveSubscriber(contact.id, sr)) {
-            throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_SUBSCRIBER'), 423) // 423 HTTP LOCKED
-        }
+        for (const contact of contacts) {
+            if (!contact.reseller_id) { // TODO: imo this check is redundant as the repository only returns customer contacts
+                throw new BadRequestException(this.i18n.t('errors.CONTACT_DELETE_SYSTEM_CONTACT')) // TODO: find better description
+            }
 
-        if (await this.contactRepo.hasContactTerminatedContract(contact.id, sr) || await this.contactRepo.hasContactTerminatedSubscriber(contact.id, sr)) {
-            return await this.contactRepo.terminate(contact.id, sr)
+            if (await this.contactRepo.hasContactActiveContract(contact.id, sr)) {
+                throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_CONTRACT'), 423) // 423 HTTP LOCKED
+            }
+
+            if (await this.contactRepo.hasContactActiveSubscriber(contact.id, sr)) {
+                throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_SUBSCRIBER'), 423) // 423 HTTP LOCKED
+            }
+
+            if (await this.contactRepo.hasContactTerminatedContract(contact.id, sr) || await this.contactRepo.hasContactTerminatedSubscriber(contact.id, sr)) {
+                await this.contactRepo.terminate(contact.id, sr)
+            }
         }
-        return await this.contactRepo.delete(id, sr)
+        return await this.contactRepo.delete(ids, sr)
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Contact> {
@@ -92,7 +102,8 @@ export class CustomerContactService implements CrudService<internal.Contact> {
             contactId: id,
             user: sr.user.username,
         })
-        return this.contactRepo.readCustomerContactById(id, sr)
+        const options = this.getContactOptionsFromServiceRequest(sr)
+        return this.contactRepo.readById(id, options)
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Contact[], number]> {
@@ -101,7 +112,7 @@ export class CustomerContactService implements CrudService<internal.Contact> {
             func: this.readAll.name,
             user: sr.user.username,
         })
-        return await this.contactRepo.readAllCustomerContacts(sr)
+        return await this.contactRepo.readAll(sr, this.getContactOptionsFromServiceRequest(sr))
     }
 
     async update(id: number, contact: internal.Contact, sr: ServiceRequest): Promise<internal.Contact> {
@@ -114,14 +125,15 @@ export class CustomerContactService implements CrudService<internal.Contact> {
         if (sr.user.reseller_id_required) {
             contact.reseller_id = sr.user.reseller_id
         }
-        const oldContact = await this.contactRepo.readCustomerContactById(id, sr)
+        const options = this.getContactOptionsFromServiceRequest(sr)
+        const oldContact = await this.contactRepo.readById(id, options)
         if (oldContact.reseller_id != contact.reseller_id) {
             const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
             if (!reseller) {
                 throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
             }
         }
-        return await this.contactRepo.update(id, contact, sr)
+        return await this.contactRepo.update(id, contact, options)
     }
 
     async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.Contact> {
@@ -131,7 +143,8 @@ export class CustomerContactService implements CrudService<internal.Contact> {
             contactId: id,
             user: sr.user.username,
         })
-        let contact = await this.contactRepo.readCustomerContactById(id, sr)
+        const options = this.getContactOptionsFromServiceRequest(sr)
+        let contact = await this.contactRepo.readById(id, options)
 
         contact = applyPatch(contact, patch).newDocument
         contact.id = id
@@ -144,8 +157,15 @@ export class CustomerContactService implements CrudService<internal.Contact> {
         if (!reseller) {
             throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
         }
-        return await this.contactRepo.update(id, contact, sr)
+        return await this.contactRepo.update(id, contact, options)
     }
-
+    getContactOptionsFromServiceRequest(sr: ServiceRequest): ContactOptions {
+        const options: ContactOptions = {
+            type: ContactType.CustomerContact,
+        }
+        if (sr.user.role === RbacRole.reseller || sr.user.role === RbacRole.ccare)
+            options.filterBy = {resellerId: sr.user.reseller_id}
+        return options
+    }
 }
 
