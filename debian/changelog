@@ -1,3 +1,12 @@
+ngcp-rest-api (11.2.2.0+0~mr11.2.2.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [c9eb001] MT#56415 add ApiCreatedResponse implementation
+  * [29ee61d] MT#55688 fix /ncos/sets/:id/levels filter by set id
+  * [09af1e2] MT#56338 add Location header support for POST ops
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 31 Jan 2023 19:46:18 +0100
+
 ngcp-rest-api (11.2.1.0+0~mr11.2.1.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
