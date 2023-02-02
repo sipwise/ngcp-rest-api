@@ -46,6 +46,10 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
 
     @Post()
     @ApiCreatedResponse(CustomerSpeedDialResponseDto)
+    @ApiBody({
+        type: CustomerSpeedDialCreateDto,
+        isArray: true,
+    })
     async create(
         @Body(new ParseOneOrManyPipe({items: CustomerSpeedDialCreateDto})) createDto: CustomerSpeedDialCreateDto[],
         @Req() req: Request,

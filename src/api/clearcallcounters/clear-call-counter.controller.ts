@@ -1,5 +1,5 @@
 import {Body, Controller, Post} from '@nestjs/common'
-import {ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiTags} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
@@ -25,6 +25,10 @@ export class ClearCallCounterController extends CrudController<ClearCallCounterC
     }
 
     @Post()
+    @ApiBody({
+        type: ClearCallCounterCreateDto,
+        isArray: true,
+    })
     async create(@Body(new ParseOneOrManyPipe({items: ClearCallCounterCreateDto})) createDto: ClearCallCounterCreateDto[], req) {
         this.log.debug({
             message: 'clear call counters',

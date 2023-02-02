@@ -36,12 +36,10 @@ import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
-import {ParseIntIdPipe} from '../../pipes/parse-int-id.pipe'
 import {ParamOrBody} from '../../decorators/param-or-body.decorator'
 import {CrudController} from '../../controllers/crud.controller'
 
 const resourceName = 'admins'
-
 @ApiTags('Admin')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
@@ -60,6 +58,11 @@ export class AdminController extends CrudController<AdminCreateDto, AdminRespons
     }
 
     @Post()
+    @ApiBody({
+        type: AdminCreateDto,
+        isArray: true,
+        required: true,
+    })
     @ApiCreatedResponse(AdminResponseDto)
     async create(
         @Body(new ParseOneOrManyPipe({items: AdminCreateDto})) createDto: AdminCreateDto[],

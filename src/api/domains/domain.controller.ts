@@ -1,4 +1,4 @@
-import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {
     BadRequestException,
@@ -61,6 +61,10 @@ export class DomainController extends CrudController<DomainCreateDto, DomainResp
 
     @Post()
     @ApiCreatedResponse(DomainResponseDto)
+    @ApiBody({
+        type: DomainCreateDto,
+        isArray: true,
+    })
     async create(
         @Body(new ParseOneOrManyPipe({items: DomainCreateDto})) createDto: DomainCreateDto[],
         @Req() req: Request,

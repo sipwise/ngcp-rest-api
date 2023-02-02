@@ -64,6 +64,10 @@ export class SystemContactController extends CrudController<SystemContactCreateD
 
     @Post()
     @ApiCreatedResponse(SystemContactResponseDto)
+    @ApiBody({
+        type: SystemContactCreateDto,
+        isArray: true,
+    })
     async create(
         @Body(new ParseOneOrManyPipe({items: SystemContactCreateDto})) createDto: SystemContactCreateDto[],
         @Req() req: Request,

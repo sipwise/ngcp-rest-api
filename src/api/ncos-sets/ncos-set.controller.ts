@@ -72,6 +72,10 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
 
     @Post(':id/levels')
     @ApiCreatedResponse(NCOSSetLevelCreateDto)
+    @ApiBody({
+        type: NCOSSetLevelCreateDto,
+        isArray: true,
+    })
     async createLevel(
         @Param('id') id: number,
         @Body(new ParseOneOrManyPipe({items: NCOSSetLevelCreateDto})) createDto: NCOSSetLevelCreateDto[],
@@ -177,6 +181,10 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
 
     @Post()
     @ApiCreatedResponse(NCOSSetResponseDto)
+    @ApiBody({
+        type: NCOSSetCreateDto,
+        isArray: true,
+    })
     async create(
         @Body(new ParseOneOrManyPipe({items: NCOSSetCreateDto})) createDto: NCOSSetCreateDto[],
         @Req() req: Request,

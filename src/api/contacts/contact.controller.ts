@@ -55,6 +55,10 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
 
     @Post()
     @ApiCreatedResponse(ContactResponseDto)
+    @ApiBody({
+        type: ContactCreateDto,
+        isArray: true,
+    })
     async create(
         @Body(new ParseOneOrManyPipe({items: ContactCreateDto})) entity: ContactCreateDto[],
         @Req() req: Request

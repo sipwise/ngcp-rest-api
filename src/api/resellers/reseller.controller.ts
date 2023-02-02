@@ -64,6 +64,10 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
 
     @Post()
     @ApiCreatedResponse(ResellerResponseDto)
+    @ApiBody({
+        type: ResellerCreateDto,
+        isArray: true,
+    })
     async create(
         @Body(new ParseOneOrManyPipe({items: ResellerCreateDto})) createDto: ResellerCreateDto[],
         @Req() req: Request,

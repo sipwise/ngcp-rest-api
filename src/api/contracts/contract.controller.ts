@@ -61,6 +61,10 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
 
     @Post()
     @ApiCreatedResponse(ContractResponseDto)
+    @ApiBody({
+        type: ContractCreateDto,
+        isArray: true,
+    })
     async create(
         @Body(new ParseOneOrManyPipe({items: ContractCreateDto})) createDto: ContractCreateDto[],
         @Req() req: Request,
