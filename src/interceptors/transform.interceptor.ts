@@ -4,7 +4,6 @@ import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestj
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
 import {CreatedDto} from '../dto/created.dto'
-import console from 'console'
 
 /**
  * Defines the names of query parameters for pagination
@@ -158,9 +157,12 @@ export class TransformInterceptor implements NestInterceptor {
         const page: string = (req.query[this.pageName] as string) ?? `${AppService.config.common.api_default_query_page}`
         const rows: string = (req.query[this.perPageName] as string) ?? `${AppService.config.common.api_default_query_rows}`
 
-        const re = /^\/api\/(v2\/)?(\S+?)(\/.*)?$/
-        const path: string = req.route.path
-        const resName = path.match(re)[2]
+        const path = req.route.path
+        const url = req.url.endsWith('/')
+                        ? req.url.slice(0, -1)
+                        : req.url
+
+        const resName = this.getResourceName(path)
 
         let resource
 
@@ -175,32 +177,34 @@ export class TransformInterceptor implements NestInterceptor {
             resource = halson()
                 .addLink('self', req.originalUrl)
             data.map(async (row) => {
+                const link = url + ( row.id ? '/' + row.id : '' )
                 if (data.length == 1) {
-                    await resource.addLink(`ngcp:${resName}`, [{href: `${path}/${row.id}`}])
+                    await resource.addLink(`ngcp:${resName}`, [{href: `${link}`}])
                 } else {
-                    await resource.addLink(`ngcp:${resName}`, `${path}/${row.id}`)
+                    await resource.addLink(`ngcp:${resName}`, `${link}`)
                 }
                 await resource.addEmbed(`ngcp:${resName}`, [row])
             })
-            resource.addLink('collection', req.route.path)
+            resource.addLink('collection', url)
             resource['total_count'] = totalCount
 
             const pageCount = Math.ceil(totalCount / +rows)
             if (+page > 1) {
-                resource.addLink('prev', `${req.route.path}?page=${+page - 1}&rows=${rows}`)
+                resource.addLink('prev', `${url}?page=${+page - 1}&rows=${rows}`)
             }
             if (+page < pageCount) {
-                resource.addLink('next', `${req.route.path}?page=${+page + 1}&rows=${rows}`)
+                resource.addLink('next', `${url}?page=${+page + 1}&rows=${rows}`)
             }
             return resource
         } else if (data && 'id' in data) {
+            const collectionResName = this.removeResourceId(path, url)
             resource = halson(data)
-                .addLink('self', `/api/${resName}/${data.id}`)
-                .addLink('collection', `/api/${resName}`)
+                .addLink('self', url)
+                .addLink('collection', collectionResName)
         } else {
             resource = halson(data)
-                .addLink('self', `/api/${resName}`)
-                .addLink('collection', `/api/${resName}`)
+                .addLink('self', url)
+                .addLink('collection', url)
         }
         return resource
     }
@@ -249,4 +253,34 @@ export class TransformInterceptor implements NestInterceptor {
             ? await this.generateHALResource(req, res, resource)
             : await this.generateOpenAPIResource(req, res, resource)
     }
+
+    private removeResourceId(path: string, url: string): string {
+
+        const pathArray = path.split('/')
+        const urlArray = url.split('/')
+
+        if (pathArray[pathArray.length-1].startsWith(':'))
+            urlArray.splice(-1, 1)
+
+        return urlArray.join('/')
+    }
+
+    private getResourceName(path: string): string {
+
+        const re = /^\/api\/(v2\/)?(.+)?$/
+        const subPath: string = path.match(re)[2]
+
+        const pathArray = subPath.split('/')
+
+        let resNameArray = []
+
+        pathArray.forEach((e, i) => {
+            if (!(pathArray[i].startsWith(':')))
+                resNameArray.push(pathArray[i])
+        })
+
+        return resNameArray.join('/')
+    }
+
 }
+

@@ -34,7 +34,7 @@ export class NCOSSetResponseDto {
         this.description = entity.description
         this.levels = {
             type: 'array',
-            link: prefix + '/levels'
+            link: prefix + '/' + entity.id + '/levels'
         }
     }
 }

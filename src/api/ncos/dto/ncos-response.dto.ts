@@ -7,9 +7,10 @@ export class NCOSResponseDto {
         links: string[]
 
     constructor(prefix: string) {
+        const url = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix
         this.links = [
-            prefix + '/sets',
-            prefix + '/sets/levels'
+            url + '/sets',
+            url + '/sets/levels'
         ]
     }
 }
