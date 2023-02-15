@@ -32,7 +32,7 @@ import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {LoggerService} from '../../logger/logger.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalService} from '../journals/journal.service'
-import {CreatedDto} from '../../dto/created.dto'
+import {CreateResponseDto} from '../../dto/create-response.dto'
 import {PaginatedDto} from '../../dto/paginated.dto'
 import {PatchDto} from '../../dto/patch.dto'
 import {NCOSSetCreateDto} from './dto/ncos-set-create.dto'
@@ -54,7 +54,7 @@ const resourceName = 'ncos/sets'
     RbacRole.reseller,
 )
 @ApiTags('NCOS')
-@ApiExtraModels(CreatedDto, PaginatedDto)
+@ApiExtraModels(CreateResponseDto, PaginatedDto)
 @Controller(resourceName)
 export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetResponseDto> {
     private readonly log = new LoggerService(NCOSSetController.name)

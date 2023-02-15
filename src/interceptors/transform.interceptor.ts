@@ -3,7 +3,7 @@ import {AppService} from '../app.service'
 import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestjs/common'
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
-import {CreatedDto} from '../dto/created.dto'
+import {CreateResponseDto} from '../dto/create-response.dto'
 
 /**
  * Defines the names of query parameters for pagination
@@ -94,7 +94,7 @@ export class TransformInterceptor implements NestInterceptor {
                 break
             }
 
-            if (!this.expectedHAL(req))
+            if (req.method != 'GET' || !this.expectedHAL(req))
                 return this.generateOpenAPIResource(req, res, data)
 
             if (req.method === 'DELETE')
@@ -130,8 +130,8 @@ export class TransformInterceptor implements NestInterceptor {
         return accept.length == 1 && accept[0] === 'application/json' ? false : true
     }
 
-    private async generateOpenAPIResource(req: any, res: any, data: any): Promise<CreatedDto<any>> {
-        const response: CreatedDto<any> = new CreatedDto<any>()
+    private async generateOpenAPIResource(req: any, res: any, data: any): Promise<CreateResponseDto<any>> {
+        const response: CreateResponseDto<any> = new CreateResponseDto<any>()
 
         if (Array.isArray(data) && data.length == 2 && Number.isInteger(data[data.length - 1])) {
             response.data = data[0]
@@ -140,8 +140,7 @@ export class TransformInterceptor implements NestInterceptor {
             response.data = data
             response.total_count = data.length
         } else if (typeof data === 'object')  {
-            response.data = [data]
-            response.total_count = 1
+            Object.assign(response, data)
         }
 
         return response
@@ -209,9 +208,9 @@ export class TransformInterceptor implements NestInterceptor {
         return resource
     }
 
-    private async generateDataLinks(req: any, res: any, data: any): Promise<CreatedDto<any>> {
+    private async generateDataLinks(req: any, res: any, data: any): Promise<CreateResponseDto<any>> {
         const path = req.route.path
-        const resource: CreatedDto<any> = new CreatedDto<any>()
+        const resource: CreateResponseDto<any> = new CreateResponseDto<any>()
 
         if (data && !Array.isArray(data))
             data = [data]
@@ -227,13 +226,13 @@ export class TransformInterceptor implements NestInterceptor {
             resource.links.push(`${path}/${e.id}`)
         ))
 
-        return this.expectedHAL(req)
+        return req.method == 'GET' && this.expectedHAL(req)
             ? await this.generateHALResource(req, res, resource)
             : await this.generateOpenAPIResource(req, res, resource)
     }
 
-    private async generateDataIds(req: any, res: any, data: any): Promise<CreatedDto<any>> {
-        const resource: CreatedDto<any> = new CreatedDto<any>()
+    private async generateDataIds(req: any, res: any, data: any): Promise<CreateResponseDto<any>> {
+        const resource: CreateResponseDto<any> = new CreateResponseDto<any>()
 
         if (data && !Array.isArray(data))
             data = [data]
@@ -249,7 +248,7 @@ export class TransformInterceptor implements NestInterceptor {
             resource.ids.push(e.id)
         ))
 
-        return this.expectedHAL(req)
+        return req.method == 'GET' && this.expectedHAL(req)
             ? await this.generateHALResource(req, res, resource)
             : await this.generateOpenAPIResource(req, res, resource)
     }

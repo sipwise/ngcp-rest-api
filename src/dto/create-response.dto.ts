@@ -1,6 +1,6 @@
 import {ApiProperty} from '@nestjs/swagger'
 
-export class CreatedDto<TData> {
+export class CreateResponseDto<TData> {
     @ApiProperty()
         total_count: number
 

@@ -1,5 +1,5 @@
 import {applyDecorators, Type, Controller} from '@nestjs/common'
-import {CreatedDto} from '../dto/created.dto'
+import {CreateResponseDto} from '../dto/create-response.dto'
 import {ApiCreatedResponse as ApiSwaggerCreatedResponse, getSchemaPath} from '@nestjs/swagger'
 
 export const ApiCreatedResponse = <TModel extends Type<any>>(
@@ -10,7 +10,7 @@ export const ApiCreatedResponse = <TModel extends Type<any>>(
             schema: {
                 title: `CreatedResponseOf${model.name}`,
                 allOf: [
-                    {$ref: getSchemaPath(CreatedDto)},
+                    {$ref: getSchemaPath(CreateResponseDto)},
                     {
                         properties: {
                             data: {
