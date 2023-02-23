@@ -1,5 +1,4 @@
 import {
-    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -7,21 +6,13 @@ import {
     Get,
     Inject,
     Param,
-    ParseArrayPipe,
     ParseIntPipe,
     Patch,
     Post,
     Put,
     Req,
 } from '@nestjs/common'
-import {
-    ApiBody,
-    ApiConsumes,
-    ApiExtraModels,
-    ApiOkResponse,
-    ApiQuery,
-    ApiTags,
-} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {CustomerContactService} from './customer-contact.service'
 import {CustomerContactCreateDto} from './dto/customer-contact-create.dto'
 import {CrudController} from '../../controllers/crud.controller'
@@ -43,9 +34,12 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
-import {ParseIntIdPipe} from '../../pipes/parse-int-id.pipe'
 import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
 import {ParamOrBody} from '../../decorators/param-or-body.decorator'
+import {internal} from '../../entities'
+import {ApiPutBody} from '../../decorators/api-put-body.decorator'
+import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 const resourceName = 'customercontacts'
 
@@ -133,9 +127,15 @@ export class CustomerContactController extends CrudController<CustomerContactCre
         type: [PatchDto],
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<CustomerContactResponseDto> {
-        this.log.debug({message: 'patch customer contact by id', func: this.adjust.name, url: req.url, method: req.method})
+        this.log.debug({
+            message: 'patch customer contact by id',
+            func: this.adjust.name,
+            url: req.url,
+            method: req.method,
+        })
         const sr = new ServiceRequest(req)
-        const contact = await this.contactService.adjust(id, patch, sr)
+        const ids = await this.contactService.adjust(id, patch, sr)
+        const contact = await this.contactService.read(ids[0], sr)
         const response = new CustomerContactResponseDto(contact, sr.user.role)
         await this.journalService.writeJournal(sr, id, response)
         return response
@@ -146,12 +146,41 @@ export class CustomerContactController extends CrudController<CustomerContactCre
         type: CustomerContactResponseDto,
     })
     async update(@Param('id', ParseIntPipe) id: number, entity: CustomerContactCreateDto, req): Promise<CustomerContactResponseDto> {
-        this.log.debug({message: 'update customer contact by id', func: this.update.name, url: req.url, method: req.method})
+        this.log.debug({
+            message: 'update customer contact by id',
+            func: this.update.name,
+            url: req.url,
+            method: req.method,
+        })
         const sr = new ServiceRequest(req)
-        const contact = await this.contactService.update(id, entity.toInternal(), sr)
+        const updates = new Dictionary<internal.Contact>()
+        updates[id] = entity.toInternal(id)
+        const ids = await this.contactService.update(updates, sr)
+        const contact = await this.contactService.read(ids[0], sr)
         const response = new CustomerContactResponseDto(contact, sr.user.role)
         await this.journalService.writeJournal(sr, id, response)
         return response
+    }
+
+    @Put()
+    @ApiPutBody(CustomerContactCreateDto)
+    async updateMany(
+        @Body(new ParseIdDictionary({items: CustomerContactCreateDto})) updates: Dictionary<CustomerContactCreateDto>,
+        @Req() req,
+    ) {
+        this.log.debug({
+            message: 'update customer contacts bulk',
+            func: this.updateMany.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const contacts = new Dictionary<internal.Contact>()
+        for (const id of Object.keys(updates)) {
+            const dto: CustomerContactCreateDto = updates[id]
+            contacts[id] = dto.toInternal(parseInt(id))
+        }
+        return await this.contactService.update(contacts, sr)
     }
 
     @Delete(':id?')
@@ -160,9 +189,14 @@ export class CustomerContactController extends CrudController<CustomerContactCre
     })
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
-        @Req() req
+        @Req() req,
     ): Promise<number[]> {
-        this.log.debug({message: 'delete customer contact by ids', func: this.delete.name, url: req.url, method: req.method})
+        this.log.debug({
+            message: 'delete customer contact by ids',
+            func: this.delete.name,
+            url: req.url,
+            method: req.method,
+        })
 
         const sr = new ServiceRequest(req)
         const deletedIds = await this.contactService.delete(ids, sr)

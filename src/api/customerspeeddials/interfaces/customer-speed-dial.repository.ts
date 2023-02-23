@@ -1,5 +1,6 @@
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {internal} from '../../../entities'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 export interface CustomerSpeedDialRepository {
     create(sd: internal.CustomerSpeedDial, sr: ServiceRequest): Promise<internal.CustomerSpeedDial>
@@ -8,7 +9,7 @@ export interface CustomerSpeedDialRepository {
 
     readById(id: number, sr: ServiceRequest): Promise<internal.CustomerSpeedDial>
 
-    update(id: number, admin: internal.CustomerSpeedDial, sr: ServiceRequest): Promise<internal.CustomerSpeedDial>
+    update(updates: Dictionary<internal.CustomerSpeedDial>, sr: ServiceRequest): Promise<number[]>
 
     delete(id: number[], sr: ServiceRequest): Promise<number[]>
 }

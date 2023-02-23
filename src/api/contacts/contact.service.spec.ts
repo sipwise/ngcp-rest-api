@@ -10,6 +10,7 @@ import {AuthResponseDto} from '../../auth/dto/auth-response.dto'
 import {internal} from '../../entities'
 import {HttpException, UnprocessableEntityException} from '@nestjs/common'
 import {ContactType} from '../../entities/internal/contact.internal.entity'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 const user: AuthResponseDto = {
     readOnly: false,
@@ -82,22 +83,34 @@ describe('ContactService', () => {
     describe('update', () => {
         it('should update a system contact by id', async () => {
             const id = 1
-            const result = await service.update(id, internal.Contact.create({firstname: 'updated'}), sr)
+            const updates = new Dictionary<internal.Contact>()
+            updates[id] = internal.Contact.create({firstname: 'updated'})
+            const ids = await service.update(updates, sr)
+            const result = await service.read(ids[0], sr)
             expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.SystemContact}))
         })
         it('should update a customerContact by id', async () => {
-            const result = await service.update(2, internal.Contact.create({reseller_id: 3}), sr)
+            const id = 2
+            const updates = new Dictionary<internal.Contact>()
+            updates[id] = internal.Contact.create({reseller_id: 3})
+            const ids = await service.update(updates, sr)
+            const result = await service.read(ids[0], sr)
             expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
         })
         it('should update a customer contact reseller_id if reseller_id changed', async () => {
             const id = 2
-            const update = internal.Contact.create({reseller_id: 2})
-            const result = await service.update(id, update, sr)
+            const updates = new Dictionary<internal.Contact>()
+            updates[id] = internal.Contact.create({reseller_id: 2})
+            const ids = await service.update(updates, sr)
+            const result = await service.read(ids[0], sr)
             expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
-            expect(result.reseller_id).toStrictEqual(update.reseller_id)
+            expect(result.reseller_id).toStrictEqual(updates[id].reseller_id)
         })
         it('should throw an error if changed reseller_id does not exist', async () => {
-            await expect(service.update(2, internal.Contact.create({reseller_id: 100}), sr)).rejects.toThrow(UnprocessableEntityException)
+            const id = 2
+            const updates = new Dictionary<internal.Contact>()
+            updates[id] = internal.Contact.create({reseller_id: 100})
+            await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
         })
     })
 

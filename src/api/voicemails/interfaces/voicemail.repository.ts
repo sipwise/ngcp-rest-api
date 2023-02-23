@@ -1,5 +1,6 @@
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {internal} from '../../../entities'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 export interface VoicemailRepository {
     readAll(sr: ServiceRequest): Promise<[internal.Voicemail[], number]>
@@ -8,5 +9,5 @@ export interface VoicemailRepository {
 
     delete(ids: number[], sr: ServiceRequest): Promise<number[]>
 
-    update(id: number, voicemail: internal.Voicemail, sr: ServiceRequest): Promise<internal.Voicemail>
+    update(updates: Dictionary<internal.Voicemail>, sr: ServiceRequest): Promise<number[]>
 }

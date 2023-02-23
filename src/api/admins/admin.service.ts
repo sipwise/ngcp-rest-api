@@ -9,6 +9,7 @@ import {LoggerService} from '../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
 import {deepCopy} from '../../helpers/deep-copy.helper'
 import {AdminOptions} from './interfaces/admin-options.interface'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 @Injectable()
 export class AdminService { //} implements CrudService<internal.Admin> {
@@ -42,31 +43,44 @@ export class AdminService { //} implements CrudService<internal.Admin> {
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Admin> {
         this.log.debug({message: 'read admin by id', func: this.read.name, user: sr.user.username, id: id})
-       return await this.adminRepo.readById(id, this.getAdminOptionsFromServiceRequest(sr))
+        return await this.adminRepo.readById(id, this.getAdminOptionsFromServiceRequest(sr))
     }
 
-    async update(id: number, admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin> {
-        this.log.debug({message: 'update admin by id', func: this.update.name, user: sr.user.username, id: id})
-        admin.id = id
+    async update(updates: Dictionary<internal.Admin>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        if (ids.length != await this.adminRepo.readCountOfIds(ids, this.getAdminOptionsFromServiceRequest(sr))) {
+            throw new UnprocessableEntityException()
+        }
 
         const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr)
-        await this.populateAdmin(admin, accessorRole, sr)
-
         const options = this.getAdminOptionsFromServiceRequest(sr)
-        const oldAdmin = await this.adminRepo.readById(id, options)
 
-        await this.validateUpdate(sr.user.id, oldAdmin, admin)
+        for (const id of ids) {
+            const admin = updates[id]
+            admin.id = id  // TODO: Do we want to set the id here? After validation in controller it should not be possible to receive updates where the id in the update does not equal the key id
+            await this.populateAdmin(admin, accessorRole, sr)
 
-        return await this.adminRepo.update(id, admin, options)
+            const oldAdmin = await this.adminRepo.readById(id, options)
+
+            await this.validateUpdate(sr.user.id, oldAdmin, admin)
+        }
+        return await this.adminRepo.update(updates, options)
     }
 
     async updateOrCreate(id: number, admin: internal.Admin, sr: ServiceRequest): Promise<internal.Admin> {
-        this.log.debug({message: 'update admin by id or create', func: this.update.name, user: sr.user.username, id: id})
-        admin.id = id
+        this.log.debug({
+            message: 'update admin by id or create',
+            func: this.update.name,
+            user: sr.user.username,
+            id: id,
+        })
         const options = this.getAdminOptionsFromServiceRequest(sr)
+        const data = new Dictionary<internal.Admin>()
+        data[id] = admin
         try {
             await this.adminRepo.readById(id, options)
-            return await this.update(id, admin, sr)
+            const ids = await this.update(data, sr)
+            return await this.adminRepo.readById(ids[0], options)
         } catch (e) {
             return (await this.create([admin], sr))[0]
         }
@@ -92,7 +106,10 @@ export class AdminService { //} implements CrudService<internal.Admin> {
 
         await this.validateUpdate(sr.user.id, oldAdmin, admin)
 
-        return await this.adminRepo.update(id, admin, options)
+        const updates = new Dictionary<internal.Admin>()
+        updates[id] = admin
+        const ids = await this.adminRepo.update(updates, options)
+        return await this.adminRepo.readById(ids[0], options)
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {

@@ -1,10 +1,11 @@
-import {BadRequestException, Inject, Injectable} from '@nestjs/common'
+import {BadRequestException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {internal} from '../../entities'
 import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {VoicemailMariadbRepository} from './repositories/voicemail.mariadb.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 @Injectable()
 export class VoicemailService implements CrudService<internal.Voicemail> {
@@ -29,7 +30,7 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
         return await this.voicemailRepo.delete(ids, sr)
     }
 
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.Voicemail> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<number[]> {
         let voicemail = await this.voicemailRepo.read(id, sr)
 
         // TODO: changing the path only works if /folder is at index 0
@@ -45,16 +46,24 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
             throw new BadRequestException('not a valid entry (value)')
         }
         voicemail.dir = this.voicemailDir + voicemail.mailboxuser + '/' + voicemail.dir
-        return await this.voicemailRepo.update(id, voicemail, sr)
+        const updates = new Dictionary<internal.Voicemail>()
+        updates[id] = voicemail
+        return await this.voicemailRepo.update(updates, sr)
     }
 
-    async update(id: number, update: internal.Voicemail, sr: ServiceRequest): Promise<internal.Voicemail> {
-        const voicemail = await this.voicemailRepo.read(id, sr)
-        voicemail.dir = update.dir
-        if (this.authorized.indexOf(voicemail.dir) == -1) {
-            throw new BadRequestException('not a valid entry (value)')
+    async update(updates: Dictionary<internal.Voicemail>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        if (await this.voicemailRepo.readCountOfIds(ids, sr) != ids.length)
+            throw new UnprocessableEntityException()
+        for (const id of ids) {
+            const update = updates[id]
+            const voicemail = await this.voicemailRepo.read(id, sr)
+            voicemail.dir = update.dir
+            if (this.authorized.indexOf(voicemail.dir) == -1) {
+                throw new BadRequestException('not a valid entry (value)')
+            }
+            voicemail.dir = this.voicemailDir + voicemail.mailboxuser + '/' + voicemail.dir
         }
-        voicemail.dir = this.voicemailDir + voicemail.mailboxuser + '/' + voicemail.dir
-        return await this.voicemailRepo.update(id, voicemail, sr)
+        return await this.voicemailRepo.update(updates, sr)
     }
 }

@@ -15,12 +15,15 @@ export class ResellerCreateDto {
     @IsEnum(ResellerStatus)
         status: ResellerStatus
 
-    toInternal(): internal.Reseller {
+    toInternal(id?: number): internal.Reseller {
         const reseller = new internal.Reseller()
 
         reseller.contract_id = this.contract_id
         reseller.name = this.name
         reseller.status = this.status
+
+        if (id)
+            reseller.id = id
 
         return reseller
     }

@@ -70,7 +70,7 @@ export class AdminCreateDto {
         return admin
     }
 
-    toInternal(setDefaults = true): internal.Admin {
+    toInternal(setDefaults = true, id?: number): internal.Admin {
         if (setDefaults)
             this.setDefaultsForUndefined()
 
@@ -88,6 +88,9 @@ export class AdminCreateDto {
         admin.role = this.role
         admin.show_passwords = this.show_passwords
         admin.password = this.password
+
+        if (id)
+            admin.id = id
 
         return admin
     }

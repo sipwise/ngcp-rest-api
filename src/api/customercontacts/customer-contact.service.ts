@@ -10,6 +10,7 @@ import {I18nService} from 'nestjs-i18n'
 import {ContactType} from '../../entities/internal/contact.internal.entity'
 import {ContactOptions} from '../contacts/interfaces/contact-options.interface'
 import {RbacRole} from '../../config/constants.config'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 @Injectable()
 export class CustomerContactService implements CrudService<internal.Contact> {
@@ -115,28 +116,35 @@ export class CustomerContactService implements CrudService<internal.Contact> {
         return await this.contactRepo.readAll(sr, this.getContactOptionsFromServiceRequest(sr))
     }
 
-    async update(id: number, contact: internal.Contact, sr: ServiceRequest): Promise<internal.Contact> {
+    async update(updates: Dictionary<internal.Contact>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+
         this.log.debug({
             message: 'update customer contact',
             func: this.update.name,
-            contactId: id,
+            ids: ids,
             user: sr.user.username,
         })
-        if (sr.user.reseller_id_required) {
-            contact.reseller_id = sr.user.reseller_id
-        }
+
         const options = this.getContactOptionsFromServiceRequest(sr)
-        const oldContact = await this.contactRepo.readById(id, options)
-        if (oldContact.reseller_id != contact.reseller_id) {
-            const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
-            if (!reseller) {
-                throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
+
+        for (const id of ids) {
+            const contact = updates[id]
+            if (sr.user.reseller_id_required) {
+                contact.reseller_id = sr.user.reseller_id
+            }
+            const oldContact = await this.contactRepo.readById(id, options)
+            if (oldContact.reseller_id != contact.reseller_id) {
+                const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
+                if (!reseller) {
+                    throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
+                }
             }
         }
-        return await this.contactRepo.update(id, contact, options)
+        return await this.contactRepo.update(updates, options)
     }
 
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.Contact> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<number[]> {
         this.log.debug({
             message: 'adjust customer contact',
             func: this.adjust.name,
@@ -157,7 +165,9 @@ export class CustomerContactService implements CrudService<internal.Contact> {
         if (!reseller) {
             throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
         }
-        return await this.contactRepo.update(id, contact, options)
+        const updates = new Dictionary<internal.Contact>()
+        updates[id] = contact
+        return await this.contactRepo.update(updates, options)
     }
     getContactOptionsFromServiceRequest(sr: ServiceRequest): ContactOptions {
         const options: ContactOptions = {

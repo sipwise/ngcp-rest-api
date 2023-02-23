@@ -7,6 +7,7 @@ import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
 import {validateOrReject} from 'class-validator'
 import {I18nService} from 'nestjs-i18n'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 @Injectable()
 export class CustomerSpeedDialService implements CrudService<internal.CustomerSpeedDial> {
@@ -49,23 +50,29 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
         return await this.customerSpeedDialRepo.readById(id, sr)
     }
 
-    async update(id: number, entity: internal.CustomerSpeedDial, sr: ServiceRequest): Promise<internal.CustomerSpeedDial> {
-        await this.checkPermissions(entity.contractId, sr)
-        await this.checkAndTransformDestination(entity, sr)
-        return await this.customerSpeedDialRepo.update(id, entity, sr)
+    async update(updates: Dictionary<internal.CustomerSpeedDial>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        for (const id of ids) {
+            const entity = updates[id]
+            await this.checkPermissions(entity.contractId, sr)
+            await this.checkAndTransformDestination(entity, sr)
+        }
+        return await this.customerSpeedDialRepo.update(updates, sr)
     }
 
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.CustomerSpeedDial> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<number[]> {
         const oldCsd = await this.customerSpeedDialRepo.readById(id, sr)
         const csd: internal.CustomerSpeedDial = applyPatch(oldCsd, patch).newDocument
         await this.checkPermissions(csd.contractId, sr)
         try {
             await validateOrReject(csd)
-        } catch(e) {
+        } catch (e) {
             throw new UnprocessableEntityException(e)
         }
         await this.checkAndTransformDestination(csd, sr)
-        return await this.customerSpeedDialRepo.update(id, csd, sr)
+        const updates = new Dictionary<internal.CustomerSpeedDial>()
+        updates[id] = csd
+        return await this.customerSpeedDialRepo.update(updates, sr)
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {

@@ -11,6 +11,7 @@ import {internal} from '../../entities'
 import {ContractStatus, ContractType} from '../../entities/internal/contract.internal.entity'
 import {UnprocessableEntityException} from '@nestjs/common'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 const user: AuthResponseDto = {
     readOnly: false,
@@ -39,7 +40,14 @@ describe('ContractsService', () => {
             .compile()
 
         service = module.get<ContractService>(ContractService)
-        sr = {headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
+        sr = {
+            returnContent: true,
+            headers: [undefined],
+            params: undefined,
+            query: undefined,
+            user: user,
+            req: undefined,
+        }
     })
 
     it('should be defined', () => {
@@ -89,19 +97,27 @@ describe('ContractsService', () => {
 
     describe('update', () => {
         it('should update a contract by id', async () => {
-            const result = await service.update(1, internal.Contract.create({
+            const id = 1
+            const updates = new Dictionary<internal.Contract>()
+            updates[id] = internal.Contract.create({
                 contact_id: 3,
                 status: ContractStatus.Active,
                 type: ContractType.Reseller,
-            }), sr)
+            })
+            const ids = await service.update(updates, sr)
+            const result = await service.read(ids[0], sr)
             expect(result).toStrictEqual(await contractMockRepo.read(result.id, sr))
         })
         it('should throw an error if updated contact_id is invalid', async () => {
-            await expect(service.update(1, internal.Contract.create({
-                contact_id: 100,
+            const id = 1
+            const contactId = 100
+            const updates = new Dictionary<internal.Contract>()
+            updates[id] = internal.Contract.create({
+                contact_id: contactId,
                 status: ContractStatus.Active,
                 type: ContractType.Reseller,
-            }), sr)).rejects.toThrow(UnprocessableEntityException)
+            })
+            await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
         })
         it('should throw an error if updated product type is invalid', async () => {
             // TODO: because of input validation in controller, this should not be possible
@@ -114,7 +130,8 @@ describe('ContractsService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/status', value: ContractStatus.Terminated},
             ]
-            const result = await service.adjust(id, patch, sr)
+            const ids = await service.adjust(id, patch, sr)
+            const result = await service.read(ids[0], sr)
             expect(result.status).toStrictEqual(ContractStatus.Terminated)
         })
         it('should throw an error if updated contact_id is invalid', async () => {

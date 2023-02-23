@@ -8,6 +8,7 @@ import {LoggerService} from '../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
 import {ContactOptions} from '../contacts/interfaces/contact-options.interface'
 import {ContactType} from '../../entities/internal/contact.internal.entity'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 @Injectable()
 export class SystemContactService implements CrudService<internal.Contact> {
@@ -69,22 +70,26 @@ export class SystemContactService implements CrudService<internal.Contact> {
         return await this.contactRepo.readAll(sr, this.getContactOptionsFromServiceRequest(sr))
     }
 
-    async update(id: number, contact: internal.Contact, sr: ServiceRequest): Promise<internal.Contact> {
+    async update(updates: Dictionary<internal.Contact>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
         this.log.debug({
-            message: 'update system contact by id',
+            message: 'update system contact bulk',
             func: this.update.name,
-            contactId: id,
+            ids: ids,
             user: sr.user.username,
         })
         const options = this.getContactOptionsFromServiceRequest(sr)
-        const oldContact = await this.contactRepo.readById(id, options)
-        if (contact.reseller_id || oldContact.reseller_id) {
-            throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'))
+        for (const id of ids) {
+            const contact = updates[id]
+            const oldContact = await this.contactRepo.readById(id, options)
+            if (contact.reseller_id || oldContact.reseller_id) {
+                throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'))
+            }
         }
-        return await this.contactRepo.update(id, contact, options)
+        return await this.contactRepo.update(updates, options)
     }
 
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.Contact> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<number[]> {
         this.log.debug({
             message: 'adjust system contact by id',
             func: this.adjust.name,
@@ -93,14 +98,15 @@ export class SystemContactService implements CrudService<internal.Contact> {
         })
         const options = this.getContactOptionsFromServiceRequest(sr)
         let contact = await this.contactRepo.readById(id, options)
-
         contact = applyPatch(contact, patch).newDocument
         contact.id = id
 
         if (contact.reseller_id != undefined) {
             throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'))
         }
-        return await this.contactRepo.update(id, contact, options)
+        const updates = new Dictionary<internal.Contact>()
+        updates[id] = contact
+        return await this.contactRepo.update(updates, options)
     }
 
     getContactOptionsFromServiceRequest(sr: ServiceRequest): ContactOptions {

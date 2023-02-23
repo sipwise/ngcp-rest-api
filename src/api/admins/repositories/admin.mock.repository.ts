@@ -4,6 +4,7 @@ import {NotFoundException} from '@nestjs/common'
 import {internal} from '../../../entities'
 import {AdminRepository} from '../interfaces/admin.repository'
 import {AdminOptions} from '../interfaces/admin-options.interface'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 interface AdminMockDB {
     [key: number]: internal.Admin
@@ -76,10 +77,17 @@ export class AdminMockRepository implements AdminRepository {
         return Promise.resolve(admins)
     }
 
-    update(id: number, admin: internal.Admin, options: AdminOptions): Promise<internal.Admin> {
-        this.throwErrorIfIdNotExists(id)
-        this.db[id] = admin
-        return Promise.resolve(admin)
+    readCountOfIds(ids: number[], options?: AdminOptions): Promise<number> {
+        return Promise.resolve(ids.length)
+    }
+
+    update(updates: Dictionary<internal.Admin>, options: AdminOptions): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        for (const id of ids) {
+            this.throwErrorIfIdNotExists(id)
+            this.db[id] = updates[id]
+        }
+        return Promise.resolve(ids)
     }
 
     private getNextId(): number {

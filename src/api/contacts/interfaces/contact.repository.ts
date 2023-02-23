@@ -1,6 +1,7 @@
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {internal} from '../../../entities'
 import {ContactOptions} from './contact-options.interface'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 export interface ContactRepository {
     create(entity: internal.Contact, sr: ServiceRequest): Promise<internal.Contact>
@@ -25,5 +26,5 @@ export interface ContactRepository {
 
     readAll(sr: ServiceRequest, options?: ContactOptions): Promise<[internal.Contact[], number]>
 
-    update(id: number, contact: internal.Contact, options: ContactOptions): Promise<internal.Contact>
+    update(updates: Dictionary<internal.Contact>, options: ContactOptions): Promise<number[]>
 }

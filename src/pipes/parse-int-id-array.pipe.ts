@@ -36,10 +36,10 @@ export class ParseIntIdArrayPipe implements PipeTransform {
             return undefined
         }
         if (!Array.isArray(value))
-            throw new BadRequestException('is no array')
+            throw new BadRequestException('Validation failed (parsable array expected)')
         for (const val of value) {
             if(!await parseId.transform(val, metadata))
-                throw new BadRequestException('element is no int')
+                throw new BadRequestException(`Validation failed (parsable element of type int expected; got: '${typeof val}'`)
         }
         return value
     }

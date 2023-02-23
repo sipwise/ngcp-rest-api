@@ -1,4 +1,4 @@
-import {ForbiddenException, Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -7,6 +7,7 @@ import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
 import {validateOrReject} from 'class-validator'
 import {I18nService} from 'nestjs-i18n'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 @Injectable()
 export class NCOSSetService implements CrudService<internal.NCOSSet> {
@@ -36,31 +37,37 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
 
     async readAll(sr: ServiceRequest): Promise<[internal.NCOSSet[], number]> {
         if (sr.user.role == 'reseller')
-            return await this.ncosSetRepo.readAll(sr, { resellerId: sr.user.reseller_id })
+            return await this.ncosSetRepo.readAll(sr, {resellerId: sr.user.reseller_id})
         return await this.ncosSetRepo.readAll(sr)
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.NCOSSet> {
         if (sr.user.role == 'reseller')
-            return await this.ncosSetRepo.readById(id, sr, { resellerId: sr.user.reseller_id })
+            return await this.ncosSetRepo.readById(id, sr, {resellerId: sr.user.reseller_id})
         return await this.ncosSetRepo.readById(id, sr)
     }
 
-    async update(id: number, entity: internal.NCOSSet, sr: ServiceRequest): Promise<internal.NCOSSet> {
-        await this.checkPermissions(entity.resellerId, sr)
-        return await this.ncosSetRepo.update(id, entity, sr)
+    async update(updates: Dictionary<internal.NCOSSet>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        for (const id of ids) {
+            const entity = updates[id]
+            await this.checkPermissions(entity.resellerId, sr)
+        }
+        return await this.ncosSetRepo.update(updates, sr)
     }
 
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.NCOSSet> {
+    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<number[]> {
         const oldEntity = await this.ncosSetRepo.readById(id, sr)
         const entity: internal.NCOSSet = applyPatch(oldEntity, patch).newDocument
         await this.checkPermissions(entity.resellerId, sr)
         try {
             await validateOrReject(entity)
-        } catch(e) {
+        } catch (e) {
             throw new UnprocessableEntityException(e)
         }
-        return await this.ncosSetRepo.update(id, entity, sr)
+        const updates = new Dictionary<internal.NCOSSet>()
+        updates[id] = entity
+        return await this.ncosSetRepo.update(updates, sr)
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {

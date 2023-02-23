@@ -10,6 +10,7 @@ import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {ResellerRepository} from '../interfaces/reseller.repository'
 import {LoggerService} from '../../../logger/logger.service'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 @Injectable()
 export class ResellerMariadbRepository implements ResellerRepository {
@@ -93,6 +94,12 @@ export class ResellerMariadbRepository implements ResellerRepository {
     }
 
     @HandleDbErrors
+    async readCountOfIds(ids: number[]): Promise<number> {
+        const qb = db.billing.Reseller.createQueryBuilder('reseller')
+        return await qb.andWhereInIds(ids).getCount()
+    }
+
+    @HandleDbErrors
     async readByName(name: string, sr: ServiceRequest): Promise<internal.Reseller> {
         this.log.debug({message: 'read reseller by id', func: this.readByName.name, user: sr.user.username, name: name})
         return await db.billing.Reseller.findOne({where: {name: name}})
@@ -112,15 +119,19 @@ export class ResellerMariadbRepository implements ResellerRepository {
     }
 
     @HandleDbErrors
-    async update(id: number, reseller: internal.Reseller, sr: ServiceRequest): Promise<internal.Reseller> {
-        this.log.debug({message: 'update reseller by id', func: this.update.name, user: sr.user.username, id: id})
-        const update = new db.billing.Reseller().fromInternal(reseller)
-        Object.keys(update).map(key => {
-            if (update[key] == undefined)
-                delete update[key]
-        })
-        await db.billing.Reseller.update(id, update)
-        return await this.read(id, sr)
+    async update(updates: Dictionary<internal.Reseller>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        this.log.debug({message: 'update reseller by id', func: this.update.name, user: sr.user.username, ids: ids})
+        for (const id of ids) {
+            const reseller = updates[id]
+            const update = new db.billing.Reseller().fromInternal(reseller)
+            Object.keys(update).map(key => {
+                if (update[key] == undefined)
+                    delete update[key]
+            })
+            await db.billing.Reseller.update(id, update)
+        }
+        return ids
     }
 
     @HandleDbErrors

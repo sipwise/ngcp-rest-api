@@ -56,17 +56,20 @@ export class ContactCreateDto {
     @ApiPropertyOptional()
         postcode?: string
     @ApiPropertyOptional()
-        reseller_id?: number
+    reseller_id?: number
     @ApiProperty()
-        status: ContactStatus
+    status: ContactStatus
     @ApiPropertyOptional()
-        street?: string
+    street?: string
     @ApiPropertyOptional()
-        timezone?: string
+    timezone?: string
     @ApiPropertyOptional()
-        vatnum?: string
+    vatnum?: string
 
-    toInternal(): internal.Contact {
-        return internal.Contact.create(this)
+    toInternal(id?: number): internal.Contact {
+        const contact = internal.Contact.create(this)
+        if (id)
+            contact.id = id
+        return contact
     }
 }

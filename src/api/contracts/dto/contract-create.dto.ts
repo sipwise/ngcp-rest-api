@@ -22,16 +22,16 @@ export class ContractCreateDto {
 
     @ApiProperty({description: 'A non-unique external ID e.g., provided by a 3rd party provisioning'})
     @IsNotEmpty()
-        external_id: string
+    external_id: string
 
     @ApiProperty({description: 'The status of the contract'})
-        status?: ContractStatus
+    status?: ContractStatus
 
     @ApiProperty({description: 'The type of contract'})
-        type?: ContractType
+    type?: ContractType
 
-    toInternal(): internal.Contract {
-        return internal.Contract.create({
+    toInternal(id?: number): internal.Contract {
+        const contract = internal.Contract.create({
             billing_profile_definition: this.billing_profile_definition,
             billing_profile_id: this.billing_profile_id,
             contact_id: this.contact_id,
@@ -39,6 +39,9 @@ export class ContractCreateDto {
             status: this.status,
             type: this.type,
         })
+        if (id)
+            contract.id = id
+        return contract
     }
 }
 

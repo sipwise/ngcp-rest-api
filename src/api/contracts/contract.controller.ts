@@ -1,26 +1,6 @@
-import {
-    Body,
-    Controller,
-    forwardRef,
-    Get,
-    Inject,
-    Param,
-    ParseArrayPipe,
-    ParseIntPipe,
-    Patch,
-    Post,
-    Put,
-    Req,
-} from '@nestjs/common'
+import {Body, Controller, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {Auth} from '../../decorators/auth.decorator'
-import {
-    ApiBody,
-    ApiConsumes,
-    ApiExtraModels,
-    ApiOkResponse,
-    ApiQuery,
-    ApiTags,
-} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'
 import {ContractCreateDto} from './dto/contract-create.dto'
 import {ContractResponseDto} from './dto/contract-response.dto'
@@ -40,6 +20,10 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
+import {ApiPutBody} from '../../decorators/api-put-body.decorator'
+import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
+import {internal} from '../../entities'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 const resourceName = 'contracts'
 
@@ -119,10 +103,30 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
     async update(@Param('id', ParseIntPipe) id: number, update: ContractCreateDto, req): Promise<ContractResponseDto> {
         this.log.debug({message: 'update contract by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const contract = await this.contractService.update(id, update.toInternal(), sr)
-        const response = new ContractResponseDto(contract)
+        const updates = new Dictionary<internal.Contract>()
+        updates[id] = update.toInternal(id)
+
+        await this.contractService.update(updates, sr)
+
+        const response = new ContractResponseDto(await this.contractService.read(id, sr))
         await this.journalService.writeJournal(sr, id, response)
         return response
+    }
+
+    @Put()
+    @ApiPutBody(ContractCreateDto)
+    async updateMany(
+        @Body(new ParseIdDictionary({items: ContractCreateDto})) updates: Dictionary<ContractCreateDto>,
+        @Req() req,
+    ) {
+        this.log.debug({message: 'update contracts bulk', func: this.updateMany.name, url: req.url, method: req.method})
+        const sr = new ServiceRequest(req)
+        const contracts = new Dictionary<internal.Contract>()
+        for (const id of Object.keys(updates)) {
+            const dto: ContractCreateDto = updates[id]
+            contracts[id] = dto.toInternal(parseInt(id))
+        }
+        return await this.contractService.update(contracts, sr)
     }
 
     @Patch(':id')
@@ -136,8 +140,8 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ContractResponseDto> {
         this.log.debug({message: 'patch contract by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const contract = await this.contractService.adjust(id, patch, sr)
-        const response = new ContractResponseDto(contract)
+        const ids = await this.contractService.adjust(id, patch, sr)
+        const response = new ContractResponseDto(await this.contractService.read(ids[0], sr))
         await this.journalService.writeJournal(sr, id, response)
         return response
     }

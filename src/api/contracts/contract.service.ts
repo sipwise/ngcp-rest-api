@@ -8,6 +8,7 @@ import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
 import {deepCopy} from '../../helpers/deep-copy.helper'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 @Injectable()
 export class ContractService implements CrudService<internal.Contract> {
@@ -20,7 +21,7 @@ export class ContractService implements CrudService<internal.Contract> {
     ) {
     }
 
-    async adjust(id: number, patch: Operation | Operation[], sr: ServiceRequest): Promise<internal.Contract> {
+    async adjust(id: number, patch: Operation | Operation[], sr: ServiceRequest): Promise<number[]> {
         this.log.debug({message: 'adjust contract by id', func: this.adjust.name, user: sr.user.username, id: id})
         let contract = await this.contractsRepo.read(id, sr)
         const oldContract = deepCopy(contract)
@@ -35,7 +36,9 @@ export class ContractService implements CrudService<internal.Contract> {
             await this.validateSystemContact(contract, sr)
         }
         await this.setProductId(contract, sr)
-        return await this.contractsRepo.update(id, contract, sr)
+        const updates = new Dictionary<internal.Contract>()
+        updates[id] = contract
+        return await this.contractsRepo.update(updates, sr)
     }
 
     async create(contract: internal.Contract, sr: ServiceRequest): Promise<internal.Contract> {
@@ -88,19 +91,23 @@ export class ContractService implements CrudService<internal.Contract> {
         return await this.contractsRepo.readAll(sr)
     }
 
-    async update(id: number, contract: internal.Contract, sr: ServiceRequest): Promise<internal.Contract> {
-        this.log.debug({message: 'update contract by id', func: this.read.name, user: sr.user.username, id: id})
-        const oldContract = await this.contractsRepo.read(id, sr)
-        // TODO: Utils::BillingMappings::get_actual_billing_mapping
-        //  $old_resource->{billing_profile_id} = $billing_mapping->billing_profile->id;
-        //  $old_resource->{billing_profile_definition} = undef;
-        //  delete $old_resource->{profile_package_id};
+    async update(updates: Dictionary<internal.Contract>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        this.log.debug({message: 'update contract by ids', func: this.read.name, user: sr.user.username, ids: ids})
+        for (const id of ids) {
+            const contract = updates[id]
+            const oldContract = await this.contractsRepo.read(id, sr)
+            // TODO: Utils::BillingMappings::get_actual_billing_mapping
+            //  $old_resource->{billing_profile_id} = $billing_mapping->billing_profile->id;
+            //  $old_resource->{billing_profile_definition} = undef;
+            //  delete $old_resource->{profile_package_id};
 
-        if (oldContract.contact_id != contract.contact_id) {
-            await this.validateSystemContact(contract, sr)
+            if (oldContract.contact_id != contract.contact_id) {
+                await this.validateSystemContact(contract, sr)
+            }
+            await this.setProductId(contract, sr)
         }
-        await this.setProductId(contract, sr)
-        return await this.contractsRepo.update(id, contract, sr)
+        return await this.contractsRepo.update(updates, sr)
     }
 
 }

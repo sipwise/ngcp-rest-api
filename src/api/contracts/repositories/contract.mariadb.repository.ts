@@ -10,6 +10,7 @@ import {ContractRepository} from '../interfaces/contract.respository'
 import {ContactStatus} from 'entities/internal/contact.internal.entity'
 import {ProductClass} from 'entities/internal/product.internal.entity'
 import {LoggerService} from '../../../logger/logger.service'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 @Injectable()
 export class ContractMariadbRepository implements ContractRepository {
@@ -109,53 +110,17 @@ export class ContractMariadbRepository implements ContractRepository {
     }
 
     @HandleDbErrors
-    async update(id: number, contract: internal.Contract, sr: ServiceRequest): Promise<internal.Contract> {
-        this.log.debug({
-            message: 'update contract ty id',
-            func: this.readAll.name,
-            user: sr.user.username,
-            id: id,
-        })
-        const update = new db.billing.Contract().fromInternal(contract)
-        Object.keys(update).map(key => {
-            if (update[key] == undefined)
-                delete update[key]
-        })
-        update.modify_timestamp = new Date(Date.now())
-        await db.billing.Contract.update(id, update)
-
-        return await this.read(id, sr)
+    async update(updates: Dictionary<internal.Contract>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        for (const id of ids) {
+            const update = new db.billing.Contract().fromInternal(updates[id])
+            Object.keys(update).map(key => {
+                if (update[key] == undefined)
+                    delete update[key]
+            })
+            update.modify_timestamp = new Date(Date.now())
+            await db.billing.Contract.update(id, update)
+        }
+        return ids
     }
-
-    @HandleDbErrors
-    async save(id: number, newContract: internal.Contract): Promise<internal.Contract> {
-        // let oldContract = await db.billing.Contract.findOneOrFail(id)
-        // const billingMapping = Utils::BillingMappings::get_actual_billing_mapping(c => $c, now => $now, contract => $contract, );
-        // const billingProfile = billingMapping.billingProfile
-
-        // $resource->{contact_id} //= undef;
-        // $resource->{type} //= $contract->product->class;
-        // I think above two steps are redundant
-
-        const setPackage: boolean = newContract.billing_profile_definition == 'package' // TODO: check because v1 definition does not contain "package" in enum "billing_profile_definition
-
-        // Utils::BillingMappings::prepare_billing_mappings
-
-        //     if (
-        //         NGCP::Panel::Utils::Contract::is_peering_reseller_contract( c => $c, contract => $contract )
-        //         &&
-        //         ( my $prepaid_billing_profile_exist = NGCP::Panel::Utils::BillingMappings::check_prepaid_profiles_exist(
-        //             c => $c,
-        //             mappings_to_create => $mappings_to_create) )
-        //     ) {
-
-        // if (newContract.status == 'terminated') {
-
-        // }
-        //oldContract = await db.billing.Contract.merge(oldContract, this.inflate(newContract))
-        //await oldContract.save()
-        //return oldContract
-        return
-    }
-
 }

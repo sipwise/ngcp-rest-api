@@ -15,11 +15,13 @@ export class CustomerSpeedDialCreateDto {
     @ApiProperty({description: 'Speed dial destination', example: 'sip:4310001@exampledomain.org'})
         destination: string
 
-    toInternal(): internal.CustomerSpeedDial {
+    toInternal(id?: number): internal.CustomerSpeedDial {
         const csd = new internal.CustomerSpeedDial()
         csd.contractId = this.customer_id
         csd.slot = this.slot
         csd.destination = this.destination
+        if (id)
+            csd.id = id
         return csd
     }
 }

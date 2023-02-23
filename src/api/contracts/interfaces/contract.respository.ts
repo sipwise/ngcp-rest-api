@@ -1,5 +1,6 @@
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {internal} from '../../../entities'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 export interface ContractRepository {
     create(entity: internal.Contract, sr: ServiceRequest): Promise<internal.Contract>
@@ -14,7 +15,6 @@ export interface ContractRepository {
 
     readAll(sr: ServiceRequest): Promise<[internal.Contract[], number]>
 
-    update(id: number, contract: internal.Contract, sr: ServiceRequest): Promise<internal.Contract>
+    update(updates: Dictionary<internal.Contract>, sr: ServiceRequest): Promise<number[]>
 
-    save(id: number, newContract: internal.Contract): Promise<internal.Contract>
 }

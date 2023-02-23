@@ -19,7 +19,10 @@ import {LoggerService} from '../../logger/logger.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
-import {ParseIntIdPipe} from '../../pipes/parse-int-id.pipe'
+import {internal} from '../../entities'
+import {ApiPutBody} from '../../decorators/api-put-body.decorator'
+import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 const resourceName = 'voicemails'
 
@@ -103,7 +106,8 @@ export class VoicemailController extends CrudController<VoicemailUpdateDto, Voic
             const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
             throw new BadRequestException(message)
         }
-        const voicemail = await this.voicemailService.adjust(id, patch, sr)
+        const ids = await this.voicemailService.adjust(id, patch, sr)
+        const voicemail = await this.voicemailService.read(ids[0], sr)
         const response = new VoicemailResponseDto(voicemail)
         await this.journalService.writeJournal(sr, id, response)
         return response
@@ -116,10 +120,34 @@ export class VoicemailController extends CrudController<VoicemailUpdateDto, Voic
     async update(@Param('id', ParseIntPipe) id: number, @Body() update: VoicemailUpdateDto, @Req() req): Promise<VoicemailResponseDto> {
         this.log.debug({message: 'update voicemail by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const voicemail = await this.voicemailService.update(id, update.toInternal(), sr)
+        const updates = new Dictionary<internal.Voicemail>()
+        updates[id] = update.toInternal(id)
+        const ids = await this.voicemailService.update(updates, sr)
+        const voicemail = await this.voicemailService.read(ids[0], sr)
         const response = new VoicemailResponseDto(voicemail)
         await this.journalService.writeJournal(sr, id, response)
         return response
+    }
+
+    @Put()
+    @ApiPutBody(VoicemailUpdateDto)
+    async updateMany(
+        @Body(new ParseIdDictionary({items: VoicemailUpdateDto})) updates: Dictionary<VoicemailUpdateDto>,
+        @Req() req,
+    ) {
+        this.log.debug({
+            message: 'update voicemails bulk',
+            func: this.updateMany.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const voicemails = new Dictionary<internal.Voicemail>()
+        for (const id of Object.keys(updates)) {
+            const dto: VoicemailUpdateDto = updates[id]
+            voicemails[id] = dto.toInternal(parseInt(id))
+        }
+        return await this.voicemailService.update(voicemails, sr)
     }
 
     @Get(':id/journal')

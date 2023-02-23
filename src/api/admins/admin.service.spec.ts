@@ -15,6 +15,7 @@ import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {RbacRole} from '../../config/constants.config'
 import {deepCopy} from '../../helpers/deep-copy.helper'
 import {AdminOptions} from './interfaces/admin-options.interface'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 const role_data = internal.AclRole.create({
     has_access_to: [
@@ -155,14 +156,20 @@ describe('AdminService', () => {
     describe('update', () => {
         it('should update admin by id', async () => {
             const id = 2
-            const got = await service.update(id, internal.Admin.create({login: 'jest', role: 'admin'}), sr)
+            const updates = new Dictionary<internal.Admin>()
+            updates[id] = internal.Admin.create({login: 'jest', role: 'admin'})
+            const ids = await service.update(updates, sr)
+            const got = await service.read(ids[0], sr)
             const want = await adminMockRepo.readById(id, options)
             expect(got).toStrictEqual(want)
         })
 
         it('should set correct id', async () => {
             const id = 2
-            const got = await service.update(id, internal.Admin.create({login: 'jest', role: 'admin', id: 3}), sr)
+            const updates = new Dictionary<internal.Admin>()
+            updates[id] = internal.Admin.create({login: 'jest', role: 'admin', id: 3})
+            const ids = await service.update(updates, sr)
+            const got = await service.read(ids[0], sr)
             const want = await adminMockRepo.readById(id, options)
             expect(got).toStrictEqual(want)
             expect(got.id).toStrictEqual(id)
@@ -170,12 +177,11 @@ describe('AdminService', () => {
 
         it('should throw ForbiddenException with wrong permissions', async () => {
             const id = 2
+            const updates = new Dictionary<internal.Admin>()
+            updates[id] = internal.Admin.create({login: 'jest', role: 'admin'})
             const localRequest = deepCopy(sr)
             localRequest.user.role = 'reseller'
-            await expect(service.update(id, internal.Admin.create({
-                login: 'jest',
-                role: 'admin',
-            }), localRequest)).rejects.toThrow(ForbiddenException)
+            await expect(service.update(updates, localRequest)).rejects.toThrow(ForbiddenException)
         })
 
         const protectedFields = internal.Admin.create({
@@ -193,9 +199,11 @@ describe('AdminService', () => {
         Object.keys(protectedFields).map(s => {
             it(`should throw ForbiddenException when updating ${s} on self`, async () => {
                 const id = 1
+                const updates = new Dictionary<internal.Admin>()
                 const admin = internal.Admin.create({id: 1, role: 'admin'})
                 admin[s] = protectedFields[s]
-                await expect(service.update(id, admin, sr)).rejects.toThrow(ForbiddenException)
+                updates[id] = admin
+                await expect(service.update(updates, sr)).rejects.toThrow(ForbiddenException)
             })
         })
 
@@ -203,11 +211,14 @@ describe('AdminService', () => {
             const id = 2
             const old = await adminMockRepo.readById(id, options)
             const oldPass = old.saltedpass
-            const got = await service.update(id, internal.Admin.create({
+            const updates = new Dictionary<internal.Admin>()
+            updates[id] = internal.Admin.create({
                 login: 'jest',
                 role: 'admin',
                 password: 'supersecret',
-            }), sr)
+            })
+            const ids = await service.update(updates, sr)
+            const got = await service.read(ids[0], sr)
             const want = await adminMockRepo.readById(id, options)
             expect(got).toStrictEqual(want)
             expect(got.saltedpass).not.toStrictEqual(oldPass)
@@ -215,7 +226,9 @@ describe('AdminService', () => {
 
         it('should throw an error if ID does not exist', async () => {
             const id = 100
-            await expect(service.update(id, internal.Admin.create({}), sr)).rejects.toThrow()
+            const updates = new Dictionary<internal.Admin>()
+            updates[id] = internal.Admin.create({})
+            await expect(service.update(updates, sr)).rejects.toThrow()
         })
 
         it('should replace the whole object', async () => {
@@ -233,7 +246,10 @@ describe('AdminService', () => {
                 role: 'reseller',
                 show_passwords: true,
             })], sr))[0]
-            const got = await service.update(created.id, internal.Admin.create({
+
+            const updates = new Dictionary<internal.Admin>()
+
+            updates[created.id] = internal.Admin.create({
                 billing_data: false,
                 call_data: false,
                 can_reset_password: false,
@@ -245,7 +261,11 @@ describe('AdminService', () => {
                 reseller_id: 2,
                 role: 'reseller',
                 show_passwords: false,
-            }), sr)
+            })
+
+            const ids = await service.update(updates, sr)
+            const got = await service.read(ids[0], sr)
+
             expect(got.id).toStrictEqual(created.id)
             expect(got.billing_data).not.toStrictEqual(created.billing_data)
             expect(got.call_data).not.toStrictEqual(created.call_data)

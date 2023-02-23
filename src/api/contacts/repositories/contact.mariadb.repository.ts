@@ -11,6 +11,7 @@ import {VoipSubscriberStatus} from '../../../entities/internal/voip-subscriber.i
 import {ContractStatus} from '../../../entities/internal/contract.internal.entity'
 import {LoggerService} from '../../../logger/logger.service'
 import {ContactOptions} from '../interfaces/contact-options.interface'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 export class ContactMariadbRepository implements ContactRepository {
     private readonly log = new LoggerService(ContactMariadbRepository.name)
@@ -165,15 +166,17 @@ export class ContactMariadbRepository implements ContactRepository {
     }
 
     @HandleDbErrors
-    async update(id: number, contact: internal.Contact, options?: ContactOptions): Promise<internal.Contact> {
-        const update = new db.billing.Contact().fromInternal(contact)
-        Object.keys(update).map(key => {
-            if (update[key] == undefined)
-                delete update[key]
-        })
-        await db.billing.Contact.update(id, update)
-
-        return await this.readById(id, options)
+    async update(updates: Dictionary<internal.Contact>, options?: ContactOptions): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        for (const id of ids) {
+            const update = new db.billing.Contact().fromInternal(updates[id])
+            Object.keys(update).map(key => {
+                if (update[key] == undefined)
+                    delete update[key]
+            })
+            await db.billing.Contact.update(id, update)
+        }
+        return ids
     }
 
     private async createBaseQueryBuilder(options: ContactOptions): Promise<SelectQueryBuilder<db.billing.Contact>> {

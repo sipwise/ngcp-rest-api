@@ -22,6 +22,8 @@ import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 import {number} from 'yargs'
 import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
 import {ParamOrBody} from '../../decorators/param-or-body.decorator'
+import {internal} from '../../entities'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 const resourceName = 'customerspeeddials'
 
@@ -110,14 +112,13 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             id: id,
             func: this.update.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const csd = await this.customerSpeedDialService.update(
-            id,
-            Object.assign(new CustomerSpeedDialCreateDto(), entity).toInternal(),
-            sr,
-        )
+        const updates = new Dictionary<internal.CustomerSpeedDial>()
+        updates[id] = Object.assign(new CustomerSpeedDialCreateDto(), entity).toInternal(id)
+        const ids = await this.customerSpeedDialService.update(updates, sr)
+        const csd = await this.customerSpeedDialService.read(ids[0], sr)
         const response = new CustomerSpeedDialResponseDto(csd)
         await this.journalService.writeJournal(sr, id, response)
         return response
@@ -134,10 +135,11 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             id: id,
             func: this.adjust.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const csd = await this.customerSpeedDialService.adjust(id, patch, sr)
+        const ids = await this.customerSpeedDialService.adjust(id, patch, sr)
+        const csd = await this.customerSpeedDialService.read(ids[0], sr)
         const response = new CustomerSpeedDialResponseDto(csd)
         await this.journalService.writeJournal(sr, id, response)
         return response

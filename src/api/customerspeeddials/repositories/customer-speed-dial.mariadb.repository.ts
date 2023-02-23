@@ -9,7 +9,7 @@ import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {LoggerService} from '../../../logger/logger.service'
 import {SelectQueryBuilder} from 'typeorm'
 import {FilterBy} from '../../../interfaces/filter-by.interface'
-
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 interface SpeedDialOptions {
     isPilot: boolean
@@ -86,11 +86,14 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
     }
 
     @HandleDbErrors
-    async update(id: number, entity: internal.CustomerSpeedDial, sr: ServiceRequest): Promise<internal.CustomerSpeedDial> {
-        const dbCSD = db.provisioning.VoipContractSpeedDial.create()
-        dbCSD.fromInternal(entity)
-        await db.provisioning.VoipContractSpeedDial.update(id, dbCSD)
-        return this.readById(id, sr)
+    async update(updates: Dictionary<internal.CustomerSpeedDial>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        for (const id of ids) {
+            const dbCSD = db.provisioning.VoipContractSpeedDial.create()
+            dbCSD.fromInternal(updates[id])
+            await db.provisioning.VoipContractSpeedDial.update(id, dbCSD)
+        }
+        return ids
     }
 
     @HandleDbErrors

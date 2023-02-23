@@ -1,7 +1,6 @@
 import {internal} from '../../../entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsArray, IsNotEmpty, IsOptional, ValidateNested} from 'class-validator'
-import {Type} from 'class-transformer'
+import {IsNotEmpty, IsOptional} from 'class-validator'
 
 export class NCOSSetUpdateDto {
     @IsOptional()
@@ -16,11 +15,13 @@ export class NCOSSetUpdateDto {
     @ApiProperty({description: 'NCOS set description', example: 'For all subscribers'})
         description: string
 
-    toInternal(): internal.NCOSSet {
+    toInternal(id?: number): internal.NCOSSet {
         const entity = new internal.NCOSSet()
         entity.resellerId = this.reseller_id
         entity.name = this.name
         entity.description = this.description
+        if (id)
+            entity.id = id
         return entity
     }
 }

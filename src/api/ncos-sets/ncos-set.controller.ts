@@ -1,25 +1,5 @@
-import {
-    BadRequestException,
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Param,
-    ParseArrayPipe,
-    ParseIntPipe,
-    Patch,
-    Post,
-    Put,
-    Req,
-} from '@nestjs/common'
-import {
-    ApiBody,
-    ApiConsumes,
-    ApiExtraModels,
-    ApiOkResponse,
-    ApiQuery,
-    ApiTags
-} from '@nestjs/swagger'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'helpers/patch.helper'
 import {RbacRole} from '../../config/constants.config'
@@ -45,6 +25,10 @@ import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 import {number} from 'yargs'
 import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
 import {ParamOrBody} from '../../decorators/param-or-body.decorator'
+import {internal} from '../../entities'
+import {ApiPutBody} from '../../decorators/api-put-body.decorator'
+import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 const resourceName = 'ncos/sets'
 
@@ -246,17 +230,32 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
             id: id,
             func: this.update.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const entity = await this.ncosSetService.update(
-            id,
-            Object.assign(new NCOSSetUpdateDto(), dto).toInternal(),
-            sr,
-        )
+        const updates = new Dictionary<internal.NCOSSet>()
+        updates[id] = Object.assign(new NCOSSetUpdateDto(), dto).toInternal(id)
+        const ids = await this.ncosSetService.update(updates, sr)
+        const entity = await this.ncosSetService.read(ids[0], sr)
         const response = new NCOSSetResponseDto(req.url, entity)
         await this.journalService.writeJournal(sr, id, response)
         return response
+    }
+
+    @Put()
+    @ApiPutBody(NCOSSetUpdateDto)
+    async updateMany(
+        @Body(new ParseIdDictionary({items: NCOSSetUpdateDto})) updates: Dictionary<NCOSSetUpdateDto>,
+        @Req() req,
+    ) {
+        this.log.debug({message: 'update NCOS Sets bulk', func: this.updateMany.name, url: req.url, method: req.method})
+        const sr = new ServiceRequest(req)
+        const sets = new Dictionary<internal.NCOSSet>()
+        for (const id of Object.keys(updates)) {
+            const dto: NCOSSetUpdateDto = updates[id]
+            sets[id] = dto.toInternal(parseInt(id))
+        }
+        return await this.ncosSetService.update(sets, sr)
     }
 
     @Patch(':id')
@@ -270,10 +269,11 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
             id: id,
             func: this.adjust.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const entity = await this.ncosSetService.adjust(id, patch, sr)
+        const ids = await this.ncosSetService.adjust(id, patch, sr)
+        const entity = await this.ncosSetService.read(ids[0], sr)
         const response = new NCOSSetResponseDto(req.url, entity)
         await this.journalService.writeJournal(sr, id, response)
         return response

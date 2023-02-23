@@ -7,6 +7,7 @@ import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {VoicemailSearchDto} from '../dto/voicemail-search.dto'
 import {VoicemailRepository} from '../interfaces/voicemail.repository'
 import {LoggerService} from '../../../logger/logger.service'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 export class VoicemailMariadbRepository implements VoicemailRepository {
     private readonly log = new LoggerService(VoicemailMariadbRepository.name)
@@ -36,6 +37,12 @@ export class VoicemailMariadbRepository implements VoicemailRepository {
     }
 
     @HandleDbErrors
+    async readCountOfIds(ids: number[], sr: ServiceRequest): Promise<number> {
+        const qb = await this.createBaseQueryBuilder(sr)
+        return await qb.whereInIds(ids).getCount()
+    }
+
+    @HandleDbErrors
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         const qb = db.kamailio.VoicemailSpool.createQueryBuilder('vms').delete()
         qb.andWhereInIds(ids)
@@ -44,15 +51,18 @@ export class VoicemailMariadbRepository implements VoicemailRepository {
     }
 
     @HandleDbErrors
-    async update(id: number, voicemail: internal.Voicemail, sr: ServiceRequest): Promise<internal.Voicemail> {
-        this.log.debug({message: 'update voicemail by id', func: this.update.name, user: sr.user.username, id: id})
-        const update = new db.kamailio.VoicemailSpool().fromInternal(voicemail)
-        Object.keys(update).map(key => {
-            if (update[key] == undefined)
-                delete update[key]
-        })
-        await db.kamailio.VoicemailSpool.update(id, update)
-        return await this.read(id, sr)
+    async update(updates: Dictionary<internal.Voicemail>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        this.log.debug({message: 'update voicemail by id', func: this.update.name, user: sr.user.username, ids: ids})
+        for (const id of ids) {
+            const update = new db.kamailio.VoicemailSpool().fromInternal(updates[id])
+            Object.keys(update).map(key => {
+                if (update[key] == undefined)
+                    delete update[key]
+            })
+            await db.kamailio.VoicemailSpool.update(id, update)
+        }
+        return ids
     }
 
     private async createBaseQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.kamailio.VoicemailSpool>> {

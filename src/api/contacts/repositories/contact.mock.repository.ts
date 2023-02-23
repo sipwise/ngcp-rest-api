@@ -6,6 +6,7 @@ import {ContractStatus} from '../../../entities/internal/contract.internal.entit
 import {NotFoundException} from '@nestjs/common'
 import {ResellerStatus} from '../../../entities/internal/reseller.internal.entity'
 import {ContactOptions} from '../interfaces/contact-options.interface'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 interface ContactMockDB {
     [key: number]: internal.Contact
@@ -136,6 +137,7 @@ export class ContactMockRepository implements ContactRepository {
         }
         return Promise.resolve(contacts)
     }
+
     readResellerById(id: number, sr: ServiceRequest): Promise<internal.Reseller> {
         return Promise.resolve(this.resellerDB[id])
     }
@@ -145,11 +147,15 @@ export class ContactMockRepository implements ContactRepository {
         return Promise.resolve(1)
     }
 
-    update(id: number, contact: internal.Contact, options: ContactOptions): Promise<internal.Contact> {
-        this.throwErrorIfIdNotExists(this.contactDB, id)
-        contact.id = id
-        this.contactDB[id] = contact
-        return Promise.resolve(contact)
+    update(updates: Dictionary<internal.Contact>, options: ContactOptions): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        for (const id of ids) {
+            const contact = updates[id]
+            this.throwErrorIfIdNotExists(this.contactDB, id)
+            contact.id = id
+            this.contactDB[id] = contact
+        }
+        return Promise.resolve(ids)
     }
 
     private getNextId(db: any): number {

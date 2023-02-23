@@ -4,6 +4,7 @@ import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {ResellerStatus} from '../../../entities/internal/reseller.internal.entity'
 import {ContractStatus} from '../../../entities/internal/contract.internal.entity'
 import {ResellerRepository} from '../interfaces/reseller.repository'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 interface ResellerMockDB {
     [key: number]: internal.Reseller
@@ -95,7 +96,7 @@ export class ResellerMockRepository implements ResellerRepository {
         return Promise.resolve(0)
     }
 
-    update(id: number, reseller: internal.Reseller, sr: ServiceRequest): Promise<internal.Reseller> {
+    update(updates: Dictionary<internal.Reseller>, sr: ServiceRequest): Promise<number[]> {
         return Promise.resolve(undefined)
     }
 

@@ -1,17 +1,4 @@
-import {
-    Body,
-    Controller,
-    forwardRef,
-    Get,
-    Inject,
-    Param,
-    ParseArrayPipe,
-    ParseIntPipe,
-    Patch,
-    Post,
-    Put,
-    Req,
-} from '@nestjs/common'
+import {Body, Controller, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {JournalService} from '../journals/journal.service'
 import {ResellerService} from './reseller.service'
 import {CrudController} from '../../controllers/crud.controller'
@@ -19,14 +6,7 @@ import {ResellerCreateDto} from './dto/reseller-create.dto'
 import {ResellerResponseDto} from './dto/reseller-response.dto'
 import {Auth} from '../../decorators/auth.decorator'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
-import {
-    ApiBody,
-    ApiConsumes,
-    ApiExtraModels,
-    ApiOkResponse,
-    ApiQuery,
-    ApiTags,
-} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Operation} from '../../helpers/patch.helper'
 import {Request} from 'express'
 import {RbacRole} from '../../config/constants.config'
@@ -40,6 +20,10 @@ import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.deco
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
+import {internal} from '../../entities'
+import {ApiPutBody} from '../../decorators/api-put-body.decorator'
+import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 const resourceName = 'resellers'
 
@@ -123,10 +107,29 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
     async update(@Param('id', ParseIntPipe) id: number, entity: ResellerCreateDto, req): Promise<ResellerResponseDto> {
         this.log.debug({message: 'update reseller by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const reseller = await this.resellerService.update(id, entity, sr)
+        const updates = new Dictionary<internal.Reseller>()
+        updates[id] = entity.toInternal(id)
+        const ids = await this.resellerService.update(updates, sr)
+        const reseller = await this.resellerService.read(ids[0], sr)
         const response = new ResellerResponseDto(reseller)
         await this.journalService.writeJournal(sr, id, response)
         return response
+    }
+
+    @Put()
+    @ApiPutBody(ResellerCreateDto)
+    async updateMany(
+        @Body(new ParseIdDictionary({items: ResellerCreateDto})) updates: Dictionary<ResellerCreateDto>,
+        @Req() req,
+    ) {
+        this.log.debug({message: 'update resellers bulk', func: this.updateMany.name, url: req.url, method: req.method})
+        const sr = new ServiceRequest(req)
+        const resellers = new Dictionary<internal.Reseller>()
+        for (const id of Object.keys(updates)) {
+            const dto: ResellerCreateDto = updates[id]
+            resellers[id] = dto.toInternal(parseInt(id))
+        }
+        return await this.resellerService.update(resellers, sr)
     }
 
     @Patch(':id')
@@ -140,7 +143,8 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ResellerResponseDto> {
         this.log.debug({message: 'patch reseller by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const reseller = await this.resellerService.adjust(id, patch, sr)
+        const ids = await this.resellerService.adjust(id, patch, sr)
+        const reseller = await this.resellerService.read(ids[0], sr)
         const response = new ResellerResponseDto(reseller)
         await this.journalService.writeJournal(sr, id, response)
         return response

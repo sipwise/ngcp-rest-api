@@ -38,8 +38,13 @@ import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 import {ParamOrBody} from '../../decorators/param-or-body.decorator'
 import {CrudController} from '../../controllers/crud.controller'
+import {ApiPutBody} from '../../decorators/api-put-body.decorator'
+import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
+import {internal} from '../../entities'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 const resourceName = 'admins'
+
 @ApiTags('Admin')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
@@ -140,13 +145,32 @@ export class AdminController extends CrudController<AdminCreateDto, AdminRespons
         this.log.debug({message: 'put mode legacy', enabled: this.app.config.legacy.put})
         let response: AdminResponseDto
         if (this.app.config.legacy.put) {
-            const updateAdmin = await this.adminService.update(id, await admin.toInternal(false), sr)
+            const update = new Dictionary<internal.Admin>()
+            update[id] = admin.toInternal(false, id)
+            const ids = await this.adminService.update(update, sr)
+            const updateAdmin = await this.adminService.read(ids[0], sr)
             response = new AdminResponseDto(updateAdmin, sr.user.role)
         }
-        const updateAdmin = await this.adminService.updateOrCreate(id, await admin.toInternal(), sr)
+        const updateAdmin = await this.adminService.updateOrCreate(id, await admin.toInternal(true, id), sr)
         response = new AdminResponseDto(updateAdmin, sr.user.role)
         await this.journalService.writeJournal(sr, id, response)
         return response
+    }
+
+    @Put()
+    @ApiPutBody(AdminCreateDto)
+    async updateMany(
+        @Body(new ParseIdDictionary({items: AdminCreateDto})) updates: Dictionary<AdminCreateDto>,
+        @Req() req,
+    ) {
+        this.log.debug({message: 'update admin bulk', func: this.updateMany.name, url: req.url, method: req.method})
+        const sr = new ServiceRequest(req)
+        const admins = new Dictionary<internal.Admin>()
+        for (const id of Object.keys(updates)) {
+            const dto: AdminCreateDto = updates[id]
+            admins[id] = dto.toInternal(true, parseInt(id))
+        }
+        return await this.adminService.update(admins, sr)
     }
 
     @Patch(':id')
@@ -172,7 +196,6 @@ export class AdminController extends CrudController<AdminCreateDto, AdminRespons
         const response = new AdminResponseDto(await this.adminService.adjust(id, patch, sr), sr.user.role)
         await this.journalService.writeJournal(sr, id, response)
         return response
-
     }
 
     @Delete(':id?')

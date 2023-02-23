@@ -1,23 +1,24 @@
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {internal} from '../../../entities'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 export interface NCOSSetRepository {
-    create(sd: internal.NCOSSet, req: ServiceRequest): Promise<internal.NCOSSet>
+    create(sd: internal.NCOSSet, sr: ServiceRequest): Promise<internal.NCOSSet>
 
-    readAll(req: ServiceRequest): Promise<[internal.NCOSSet[], number]>
+    readAll(sr: ServiceRequest): Promise<[internal.NCOSSet[], number]>
 
-    readById(id: number, req: ServiceRequest): Promise<internal.NCOSSet>
+    readById(id: number, sr: ServiceRequest): Promise<internal.NCOSSet>
 
-    update(id: number, admin: internal.NCOSSet, req: ServiceRequest): Promise<internal.NCOSSet>
+    update(updates: Dictionary<internal.NCOSSet>, sr: ServiceRequest): Promise<number[]>
 
-    delete(ids: number[], req: ServiceRequest): Promise<number[]>
+    delete(ids: number[], sr: ServiceRequest): Promise<number[]>
 
-    createLevel(sd: internal.NCOSSetLevel, req: ServiceRequest): Promise<internal.NCOSSetLevel>
+    createLevel(sd: internal.NCOSSetLevel, sr: ServiceRequest): Promise<internal.NCOSSetLevel>
 
-    readLevelAll(req: ServiceRequest, id?: number): Promise<[internal.NCOSSetLevel[], number]>
+    readLevelAll(sr: ServiceRequest, id?: number): Promise<[internal.NCOSSetLevel[], number]>
 
-    readLevelById(id: number, levelId: number, req: ServiceRequest): Promise<internal.NCOSSetLevel>
+    readLevelById(id: number, levelId: number, sr: ServiceRequest): Promise<internal.NCOSSetLevel>
 
-    deleteLevel(id: number, levelId: number, req: ServiceRequest): Promise<number>
+    deleteLevel(id: number, levelId: number, sr: ServiceRequest): Promise<number>
 
 }

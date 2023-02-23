@@ -1,5 +1,4 @@
 import {
-    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -33,8 +32,11 @@ import {LoggerService} from '../../logger/logger.service'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
-import {ParseIntIdPipe} from '../../pipes/parse-int-id.pipe'
 import {ParamOrBody} from '../../decorators/param-or-body.decorator'
+import {ApiPutBody} from '../../decorators/api-put-body.decorator'
+import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
+import {internal} from '../../entities'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 const resourceName = 'contacts'
 
@@ -115,8 +117,13 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
         type: [PatchDto],
     })
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ContactResponseDto> {
-        // return this.contactsService.adjust(id, patch, new ServiceRequest(req))
-        return
+        this.log.debug({message: 'patch contact by id', func: this.adjust.name, url: req.url, method: req.method})
+        const sr = new ServiceRequest(req)
+        const ids = await this.contactService.adjust(id, patch, sr)
+        const contact = await this.contactService.read(ids[0], sr)
+        const response = new ContactResponseDto(contact, sr.user.role)
+        await this.journalService.writeJournal(sr, id, response)
+        return response
     }
 
     @Put(':id')
@@ -124,8 +131,31 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
         type: ContactResponseDto,
     })
     async update(@Param('id', ParseIntPipe) id: number, entity: ContactCreateDto, req): Promise<ContactResponseDto> {
-        //return this.contactsService.update(id, entity, new ServiceRequest(req))
-        return
+        this.log.debug({message: 'update contact by id', func: this.update.name, url: req.url, method: req.method})
+        const sr = new ServiceRequest(req)
+        const updates = new Dictionary<internal.Contact>()
+        updates[id] = entity.toInternal(id)
+        const ids = await this.contactService.update(updates, sr)
+        const contact = await this.contactService.read(ids[0], sr)
+        const response = new ContactResponseDto(contact, sr.user.role)
+        await this.journalService.writeJournal(sr, id, response)
+        return response
+    }
+
+    @Put()
+    @ApiPutBody(ContactCreateDto)
+    async updateMany(
+        @Body(new ParseIdDictionary({items: ContactCreateDto})) updates: Dictionary<ContactCreateDto>,
+        @Req() req,
+    ) {
+        this.log.debug({message: 'update contacts bulk', func: this.updateMany.name, url: req.url, method: req.method})
+        const sr = new ServiceRequest(req)
+        const contacts = new Dictionary<internal.Contact>()
+        for (const id of Object.keys(updates)) {
+            const dto: ContactCreateDto = updates[id]
+            contacts[id] = dto.toInternal(parseInt(id))
+        }
+        return await this.contactService.update(contacts, sr)
     }
 
     @Delete(':id?')
@@ -134,7 +164,7 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
     })
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
-        @Req() req
+        @Req() req,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
         this.log.debug({message: 'delete contacts by id', func: this.delete.name, url: req.url, method: req.method})

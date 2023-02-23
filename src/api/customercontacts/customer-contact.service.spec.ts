@@ -13,6 +13,7 @@ import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {ContractStatus} from '../../entities/internal/contract.internal.entity'
 import {ContactStatus, ContactType} from '../../entities/internal/contact.internal.entity'
 import {deepCopy} from '../../helpers/deep-copy.helper'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 const user: AuthResponseDto = {
     readOnly: false,
@@ -92,15 +93,23 @@ describe('CustomerContactService', () => {
 
     describe('update', () => {
         it('should update a customer contact by id', async () => {
-            const result = await service.update(2, internal.Contact.create({reseller_id: 1}), sr)
+            const id = 2
+            const resellerId = 1
+            const updates = new Dictionary<internal.Contact>()
+            updates[id] = internal.Contact.create({reseller_id: resellerId})
+            const ids = await service.update(updates, sr)
+            const result = await service.read(ids[0], sr)
             expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
         })
         it('should update a customer contact reseller_id if reseller_id changed', async () => {
             const id = 2
-            const update = internal.Contact.create({reseller_id: 2})
-            const result = await service.update(id, update, sr)
+            const resellerId = 2
+            const updates = new Dictionary<internal.Contact>()
+            updates[id] = internal.Contact.create({reseller_id: resellerId})
+            const ids = await service.update(updates, sr)
+            const result = await service.read(ids[0], sr)
             expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
-            expect(result.reseller_id).toStrictEqual(update.reseller_id)
+            expect(result.reseller_id).toStrictEqual(updates[id].reseller_id)
         })
         it('should set reseller_id to user.reseller_id if user.reseller_id_required', async () => {
             const id = 2
@@ -108,15 +117,22 @@ describe('CustomerContactService', () => {
             localRequest.user.role = 'reseller'
             localRequest.user.reseller_id_required = true
             const expectedResellerId = localRequest.user.reseller_id
-            const update = internal.Contact.create({reseller_id: 3})
-            const result = await service.update(id, update, localRequest)
+            const updates = new Dictionary<internal.Contact>()
 
+            const resellerId = 3
+            updates[id] = internal.Contact.create({reseller_id: resellerId})
+            const ids = await service.update(updates, localRequest)
+            const result = await service.read(ids[0], localRequest)
             expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
             expect(result.reseller_id).toStrictEqual(expectedResellerId)
 
         })
         it('should throw an error if update reseller_id is invalid', async () => {
-            await expect(service.update(2, internal.Contact.create({reseller_id: 100}), sr)).rejects.toThrow(UnprocessableEntityException)
+            const id = 2
+            const resellerId = 100
+            const updates = new Dictionary<internal.Contact>()
+            updates[id] = internal.Contact.create({reseller_id: resellerId})
+            await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
         })
         // TODO: ? it('should throw an error if reseller changes reseller_id', async () => { })
     })
@@ -127,7 +143,8 @@ describe('CustomerContactService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/status', value: ContactStatus.Terminated},
             ]
-            const result = await service.adjust(id, patch, sr)
+            const ids = await service.adjust(id, patch, sr)
+            const result = await service.read(ids[0], sr)
             expect(result.status).toStrictEqual(ContractStatus.Terminated)
         })
         it('should throw an error if update reseller_id is invalid', async () => {
@@ -148,7 +165,8 @@ describe('CustomerContactService', () => {
                 {op: 'replace', path: '/reseller_id', value: 3},
             ]
 
-            const result = await service.adjust(id, patch, localRequest)
+            const ids = await service.adjust(id, patch, localRequest)
+            const result = await service.read(ids[0], localRequest)
             expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
             expect(result.reseller_id).toStrictEqual(expectedResellerId)
         })

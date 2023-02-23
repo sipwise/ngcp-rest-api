@@ -9,6 +9,7 @@ import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
 import {deepCopy} from '../../helpers/deep-copy.helper'
+import {Dictionary} from '../../helpers/dictionary.helper'
 
 @Injectable()
 export class ResellerService implements CrudService<internal.Reseller> {
@@ -68,14 +69,19 @@ export class ResellerService implements CrudService<internal.Reseller> {
         return await this.resellerRepo.readAll(sr)
     }
 
-    async update(id: number, reseller: internal.Reseller, sr: ServiceRequest): Promise<internal.Reseller> {
-        this.log.debug({message: 'update reseller by id', func: this.update.name, user: sr.user.username, id: id})
-        const oldReseller = await this.resellerRepo.read(id, sr)
-        await this.validateUpdate(oldReseller, reseller, sr)
-        return await this.resellerRepo.update(id, reseller, sr)
+    async update(updates: Dictionary<internal.Reseller>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        if (await this.resellerRepo.readCountOfIds(ids) != ids.length)
+            throw new UnprocessableEntityException()
+        this.log.debug({message: 'update reseller by ids', func: this.update.name, user: sr.user.username, ids: ids})
+        for (const id of ids) {
+            const oldReseller = await this.resellerRepo.read(id, sr)
+            await this.validateUpdate(oldReseller, updates[id], sr)
+        }
+        return await this.resellerRepo.update(updates, sr)
     }
 
-    async adjust(id: number, patch: Operation | Operation[], sr: ServiceRequest): Promise<internal.Reseller> {
+    async adjust(id: number, patch: Operation | Operation[], sr: ServiceRequest): Promise<number[]> {
         this.log.debug({message: 'adjust reseller by id', func: this.adjust.name, user: sr.user.username, id: id})
 
         let reseller = await this.resellerRepo.read(id, sr)
@@ -86,7 +92,9 @@ export class ResellerService implements CrudService<internal.Reseller> {
 
         await this.validateUpdate(oldReseller, reseller, sr)
 
-        return await this.resellerRepo.update(id, reseller, sr)
+        const updates = new Dictionary<internal.Reseller>()
+        updates[id] = reseller
+        return await this.resellerRepo.update(updates, sr)
     }
 
     private async validateUpdate(oldReseller: internal.Reseller, newReseller: internal.Reseller, sr: ServiceRequest): Promise<boolean> {

@@ -1,5 +1,6 @@
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {db, internal} from '../../../entities'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 export interface ResellerRepository {
     createEmailTemplates(resellerId: number): Promise<void>
@@ -16,7 +17,7 @@ export interface ResellerRepository {
 
     readAll(sr: ServiceRequest): Promise<[internal.Reseller[], number]>
 
-    update(id: number, reseller: internal.Reseller, sr: ServiceRequest): Promise<internal.Reseller>
+    update(updates: Dictionary<internal.Reseller>, sr: ServiceRequest): Promise<number[]>
 
     resellerWithContractExists(contractId: number): Promise<boolean>
 

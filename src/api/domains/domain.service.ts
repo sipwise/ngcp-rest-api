@@ -1,16 +1,8 @@
-import {
-    ForbiddenException,
-    Inject,
-    Injectable,
-    NotImplementedException,
-    UnprocessableEntityException,
-} from '@nestjs/common'
-import {Operation as PatchOperation} from '../../helpers/patch.helper'
+import {ForbiddenException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {RbacRole} from '../../config/constants.config'
 import {DomainMariadbRepository} from './repositories/domain.mariadb.repository'
-import {DomainCreateDto} from './dto/domain-create.dto'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
@@ -89,14 +81,6 @@ export class DomainService implements CrudService<internal.Domain> {
             user: sr.user.username,
         })
         return await this.domainRepo.readById(id, sr)
-    }
-
-    async update(id: number, domain: DomainCreateDto, sr: ServiceRequest): Promise<internal.Domain> {
-        throw new NotImplementedException()
-    }
-
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.Domain> {
-        throw new NotImplementedException()
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {

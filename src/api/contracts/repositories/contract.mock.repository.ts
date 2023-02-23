@@ -5,6 +5,7 @@ import {ContractStatus, ContractType} from '../../../entities/internal/contract.
 import {ContactStatus} from '../../../entities/internal/contact.internal.entity'
 import {NotFoundException} from '@nestjs/common'
 import {ProductClass} from '../../../entities/internal/product.internal.entity'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 interface ContractMockDB {
     [key: number]: internal.Contract
@@ -139,11 +140,15 @@ export class ContractMockRepository implements ContractRepository {
         return Promise.resolve(undefined)
     }
 
-    update(id: number, contract: internal.Contract, sr: ServiceRequest): Promise<internal.Contract> {
-        this.throwErrorIfIdNotExists(this.contractDB, id)
-        contract.id = id
-        this.contractDB[id] = contract
-        return Promise.resolve(contract)
+    update(updates: Dictionary<internal.Contract>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        for (const id of ids) {
+            const contract = updates[id]
+            this.throwErrorIfIdNotExists(this.contractDB, id)
+            contract.id = id
+            this.contractDB[id] = contract
+        }
+        return Promise.resolve(ids)
     }
 
     private getNextId(db: any): number {

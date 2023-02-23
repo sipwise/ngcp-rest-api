@@ -9,6 +9,7 @@ import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {LoggerService} from '../../../logger/logger.service'
 import {SelectQueryBuilder} from 'typeorm'
 import {NCOSSetLevelSearchDto} from '../dto/ncos-set-level-search.dto'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 interface FilterBy {
     resellerId?: number
@@ -85,12 +86,27 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
     }
 
     @HandleDbErrors
-    async update(id: number, entity: internal.NCOSSet, sr: ServiceRequest): Promise<internal.NCOSSet> {
-        const dbEntity = db.billing.NCOSSet.create()
-        dbEntity.fromInternal(entity)
-        console.error(entity, dbEntity)
-        await db.billing.NCOSSet.update(id, dbEntity)
-        return this.readById(id, sr)
+    async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
+        const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
+        const searchDto = new NCOSSetSearchDto()
+        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
+            Object.keys(searchDto),
+            undefined,
+        ))
+        qb.whereInIds(ids)
+        this.addFilterBy(qb, filterBy)
+        return await qb.getCount()
+    }
+
+    @HandleDbErrors
+    async update(updates: Dictionary<internal.NCOSSet>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        for (const id of ids) {
+            const dbEntity = db.billing.NCOSSet.create()
+            dbEntity.fromInternal(updates[id])
+            await db.billing.NCOSSet.update(id, dbEntity)
+        }
+        return ids
     }
 
     @HandleDbErrors

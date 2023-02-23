@@ -1,6 +1,7 @@
 import {StreamableFile} from '@nestjs/common'
 import {Operation as PatchOperation} from '../helpers/patch.helper'
 import {ServiceRequest} from './service-request.interface'
+import {Dictionary} from '../helpers/dictionary.helper'
 
 export interface CrudService<InternalEntity> {
     create?(dto: InternalEntity, sr: ServiceRequest, file?: Express.Multer.File): Promise<InternalEntity>
@@ -9,9 +10,9 @@ export interface CrudService<InternalEntity> {
 
     read(id: number | string, sr: ServiceRequest): Promise<InternalEntity> | Promise<StreamableFile>
 
-    update?(id: number | string, dto: InternalEntity, sr: ServiceRequest): Promise<InternalEntity>
+    update?(updates: Dictionary<InternalEntity>, sr: ServiceRequest): Promise<number[]>
 
-    adjust?(id: number | string, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<InternalEntity>
+    adjust?(id: number | string, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<number[]>
 
     delete?(ids: number[] | string[], sr: ServiceRequest): Promise<number[] | string[]>
 }

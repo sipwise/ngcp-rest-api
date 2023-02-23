@@ -1,5 +1,5 @@
 import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
-import {Inject, Injectable, NotFoundException} from '@nestjs/common'
+import {Inject, Injectable} from '@nestjs/common'
 import {db, internal} from '../../../entities'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
@@ -10,6 +10,7 @@ import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {LoggerService} from '../../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
 import {AdminOptions} from '../interfaces/admin-options.interface'
+import {Dictionary} from '../../../helpers/dictionary.helper'
 
 @Injectable()
 export class AdminMariadbRepository implements AdminRepository {
@@ -56,20 +57,28 @@ export class AdminMariadbRepository implements AdminRepository {
     }
 
     @HandleDbErrors
-    async update(id: number, admin: internal.Admin, options: AdminOptions): Promise<internal.Admin> {
+    async readCountOfIds(ids: number[], options: AdminOptions): Promise<number> {
         const qb = db.billing.Admin.createQueryBuilder('admin')
         this.addPermissionCheckToQueryBuilder(qb, options)
-        await qb.andWhere('admin.id = :id', {id: id}).getOneOrFail()
+        return await qb.andWhereInIds(ids).getCount()
+    }
 
-        const update = new db.billing.Admin().fromInternal(admin)
-        Object.keys(update).map(key => {
-            if (update[key] == undefined)
-                delete update[key]
-        })
-        await db.billing.Admin.update(id, update)
+    @HandleDbErrors
+    async update(updates: Dictionary<internal.Admin>, options: AdminOptions): Promise<number[]> {
+        const ids: number[] = []
+        for (const key of Object.keys(updates)) {
+            const id = parseInt(key)
+            const admin = updates[id]
 
-        const updated: db.billing.Admin = await qb.andWhere('admin.id = :id', {id: id}).getOneOrFail()
-        return updated.toInternal()
+            const update = new db.billing.Admin().fromInternal(admin)
+            Object.keys(update).map(key => {
+                if (update[key] == undefined)
+                    delete update[key]
+            })
+            await db.billing.Admin.update(id, update)
+            ids.push(id)
+        }
+        return ids
     }
 
     @HandleDbErrors
