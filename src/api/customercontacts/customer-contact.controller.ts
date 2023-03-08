@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -23,7 +24,7 @@ import {Request} from 'express'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
 import {number} from 'yargs'
-import {Operation} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, Operation, validate} from '../../helpers/patch.helper'
 import {PatchDto} from '../../dto/patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {CustomerContactSearchDto} from './dto/customer-contact-search.dto'
@@ -133,12 +134,36 @@ export class CustomerContactController extends CrudController<CustomerContactCre
             url: req.url,
             method: req.method,
         })
+
         const sr = new ServiceRequest(req)
-        const ids = await this.contactService.adjust(id, patch, sr)
+        const updates = new Dictionary<Operation[]>()
+
+        updates[id] = Array.isArray(patch) ? patch : [patch]
+
+        const ids = await this.contactService.adjust(updates, sr)
         const contact = await this.contactService.read(ids[0], sr)
         const response = new CustomerContactResponseDto(contact, sr.user.role)
         await this.journalService.writeJournal(sr, id, response)
         return response
+    }
+
+    @Patch()
+    @ApiConsumes('application/json-patch+json')
+    @ApiPutBody(PatchDto)
+    async adjustMany(
+        @Body(new ParseIdDictionary({items: PatchDto, isValueArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Req() req,
+    ) {
+        for (const id of Object.keys(updates)) {
+            const patch = updates[id]
+            const err = validate(patch)
+            if (err) {
+                const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
+                throw new BadRequestException(message)
+            }
+        }
+        const sr = new ServiceRequest(req)
+        return await this.contactService.adjust(updates, sr)
     }
 
     @Put(':id')

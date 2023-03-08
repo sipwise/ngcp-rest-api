@@ -60,18 +60,22 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
         return await this.customerSpeedDialRepo.update(updates, sr)
     }
 
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<number[]> {
-        const oldCsd = await this.customerSpeedDialRepo.readById(id, sr)
-        const csd: internal.CustomerSpeedDial = applyPatch(oldCsd, patch).newDocument
-        await this.checkPermissions(csd.contractId, sr)
-        try {
-            await validateOrReject(csd)
-        } catch (e) {
-            throw new UnprocessableEntityException(e)
-        }
-        await this.checkAndTransformDestination(csd, sr)
+    async adjust(patches: Dictionary<PatchOperation[]>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(patches).map(id => parseInt(id))
         const updates = new Dictionary<internal.CustomerSpeedDial>()
-        updates[id] = csd
+
+        for (const id of ids) {
+            const oldCsd = await this.customerSpeedDialRepo.readById(id, sr)
+            const csd: internal.CustomerSpeedDial = applyPatch(oldCsd, patches[id]).newDocument
+            await this.checkPermissions(csd.contractId, sr)
+            try {
+                await validateOrReject(csd)
+            } catch (e) {
+                throw new UnprocessableEntityException(e)
+            }
+            await this.checkAndTransformDestination(csd, sr)
+            updates[id] = csd
+        }
         return await this.customerSpeedDialRepo.update(updates, sr)
     }
 
@@ -79,7 +83,7 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
         const csds = await this.customerSpeedDialRepo.readWhereInIds(ids, sr)
         if (ids.length != csds.length)
             throw new UnprocessableEntityException()
-        for(const csd of csds) {
+        for (const csd of csds) {
             await this.checkPermissions(csd.contractId, sr)
         }
         return await this.customerSpeedDialRepo.delete(ids, sr)

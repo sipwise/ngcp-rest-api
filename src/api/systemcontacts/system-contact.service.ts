@@ -89,23 +89,27 @@ export class SystemContactService implements CrudService<internal.Contact> {
         return await this.contactRepo.update(updates, options)
     }
 
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<number[]> {
+    async adjust(patches: Dictionary<PatchOperation[]>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(patches).map(id => parseInt(id))
         this.log.debug({
             message: 'adjust system contact by id',
             func: this.adjust.name,
-            contactId: id,
+            ids: ids,
             user: sr.user.username,
         })
         const options = this.getContactOptionsFromServiceRequest(sr)
-        let contact = await this.contactRepo.readById(id, options)
-        contact = applyPatch(contact, patch).newDocument
-        contact.id = id
 
-        if (contact.reseller_id != undefined) {
-            throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'))
-        }
         const updates = new Dictionary<internal.Contact>()
-        updates[id] = contact
+        for (const id of ids) {
+            let contact = await this.contactRepo.readById(id, options)
+            contact = applyPatch(contact, patches[id]).newDocument
+            contact.id = id
+
+            if (contact.reseller_id != undefined) {
+                throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'))
+            }
+            updates[id] = contact
+        }
         return await this.contactRepo.update(updates, options)
     }
 

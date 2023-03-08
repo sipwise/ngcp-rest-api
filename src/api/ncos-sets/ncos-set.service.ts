@@ -56,17 +56,22 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
         return await this.ncosSetRepo.update(updates, sr)
     }
 
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<number[]> {
-        const oldEntity = await this.ncosSetRepo.readById(id, sr)
-        const entity: internal.NCOSSet = applyPatch(oldEntity, patch).newDocument
-        await this.checkPermissions(entity.resellerId, sr)
-        try {
-            await validateOrReject(entity)
-        } catch (e) {
-            throw new UnprocessableEntityException(e)
-        }
+    async adjust(patches: Dictionary<PatchOperation[]>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(patches).map(id => parseInt(id))
+
         const updates = new Dictionary<internal.NCOSSet>()
-        updates[id] = entity
+
+        for (const id of ids) {
+            const oldEntity = await this.ncosSetRepo.readById(id, sr)
+            const entity: internal.NCOSSet = applyPatch(oldEntity, patches[id]).newDocument
+            await this.checkPermissions(entity.resellerId, sr)
+            try {
+                await validateOrReject(entity)
+            } catch (e) {
+                throw new UnprocessableEntityException(e)
+            }
+            updates[id] = entity
+        }
         return await this.ncosSetRepo.update(updates, sr)
     }
 

@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -14,7 +15,7 @@ import {
 } from '@nestjs/common'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
-import {ApiBody, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'
 import {JournalService} from '../journals/journal.service'
 import {ExpandHelper} from '../../helpers/expand.helper'
@@ -22,7 +23,7 @@ import {Request} from 'express'
 import {number} from 'yargs'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {PatchDto} from '../../dto/patch.dto'
-import {Operation} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, Operation, validate} from '../../helpers/patch.helper'
 import {ContactService} from './contact.service'
 import {ContactCreateDto} from './dto/contact-create.dto'
 import {ContactResponseDto} from './dto/contact-response.dto'
@@ -119,11 +120,35 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ContactResponseDto> {
         this.log.debug({message: 'patch contact by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const ids = await this.contactService.adjust(id, patch, sr)
+
+        const updates = new Dictionary<Operation[]>()
+
+        updates[id] = Array.isArray(patch) ? patch : [patch]
+
+        const ids = await this.contactService.adjust(updates, sr)
         const contact = await this.contactService.read(ids[0], sr)
         const response = new ContactResponseDto(contact, sr.user.role)
         await this.journalService.writeJournal(sr, id, response)
         return response
+    }
+
+    @Patch()
+    @ApiConsumes('application/json-patch+json')
+    @ApiPutBody(PatchDto)
+    async adjustMany(
+        @Body(new ParseIdDictionary({items: PatchDto, isValueArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Req() req,
+    ) {
+        for (const id of Object.keys(updates)) {
+            const patch = updates[id]
+            const err = validate(patch)
+            if (err) {
+                const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
+                throw new BadRequestException(message)
+            }
+        }
+        const sr = new ServiceRequest(req)
+        return await this.contactService.adjust(updates, sr)
     }
 
     @Put(':id')

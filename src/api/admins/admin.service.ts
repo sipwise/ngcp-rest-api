@@ -86,30 +86,39 @@ export class AdminService { //} implements CrudService<internal.Admin> {
         }
     }
 
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<internal.Admin> {
+    async adjust(updates: Dictionary<PatchOperation[]>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
         this.log.debug({
             message: 'patching admin',
             func: this.adjust.name,
             user: sr.user.username,
-            id: id,
+            ids: ids,
         })
+        if (ids.length != await this.adminRepo.readCountOfIds(ids, this.getAdminOptionsFromServiceRequest(sr))) {
+            throw new UnprocessableEntityException()
+        }
+
         const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
-        const options =  this.getAdminOptionsFromServiceRequest(sr)
-        let admin = await this.adminRepo.readById(id, options)
-        const oldAdmin = deepCopy(admin)
+        const options = this.getAdminOptionsFromServiceRequest(sr)
 
-        admin = applyPatch(admin, patch).newDocument
-        admin.role ||= oldAdmin.role
-        admin.id = id
+        const adminUpdates = new Dictionary<internal.Admin>()
 
-        await this.populateAdmin(admin, accessorRole, sr)
+        for (const id of ids) {
+            let admin = await this.adminRepo.readById(id, options)
+            const oldAdmin = deepCopy(admin)
 
-        await this.validateUpdate(sr.user.id, oldAdmin, admin)
+            const patch = updates[id]
 
-        const updates = new Dictionary<internal.Admin>()
-        updates[id] = admin
-        const ids = await this.adminRepo.update(updates, options)
-        return await this.adminRepo.readById(ids[0], options)
+            admin = applyPatch(admin, patch).newDocument
+            admin.role ||= oldAdmin.role
+            admin.id = id
+
+            await this.populateAdmin(admin, accessorRole, sr)
+
+            await this.validateUpdate(sr.user.id, oldAdmin, admin)
+            adminUpdates[id] = admin
+        }
+        return await this.adminRepo.update(adminUpdates, options)
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {

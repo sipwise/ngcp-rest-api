@@ -4,7 +4,7 @@ import {BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe,
 import {CrudController} from '../../controllers/crud.controller'
 import {JournalService} from '../journals/journal.service'
 import {number} from 'yargs'
-import {Operation as PatchOperation, validate} from '../../helpers/patch.helper'
+import {Operation, Operation as PatchOperation, validate} from '../../helpers/patch.helper'
 import {PatchDto} from '../../dto/patch.dto'
 import {RbacRole} from '../../config/constants.config'
 import {VoicemailUpdateDto} from './dto/voicemail-update.dto'
@@ -101,12 +101,18 @@ export class VoicemailController extends CrudController<VoicemailUpdateDto, Voic
     async adjust(@Param('id', ParseIntPipe) id: number, @Body() patch: PatchOperation | PatchOperation[], @Req() req): Promise<VoicemailResponseDto> {
         this.log.debug({message: 'patch voicemail by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
+
         const err = validate(patch)
         if (err) {
             const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
             throw new BadRequestException(message)
         }
-        const ids = await this.voicemailService.adjust(id, patch, sr)
+
+        const updates = new Dictionary<Operation[]>()
+
+        updates[id] = Array.isArray(patch) ? patch : [patch]
+
+        const ids = await this.voicemailService.adjust(updates, sr)
         const voicemail = await this.voicemailService.read(ids[0], sr)
         const response = new VoicemailResponseDto(voicemail)
         await this.journalService.writeJournal(sr, id, response)

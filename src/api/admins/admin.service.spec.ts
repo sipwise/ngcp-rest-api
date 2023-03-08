@@ -287,9 +287,12 @@ describe('AdminService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/role', value: RbacRole.admin},
             ]
-            const got = await service.adjust(id, patch, sr)
-            const want = await adminMockRepo.readById(id, options)
-            expect(got.role).toStrictEqual(RbacRole.admin)
+            const updates = new Dictionary<PatchOperation[]>()
+            updates[id] = patch
+            const got = await service.adjust(updates, sr)
+            expect(got[0] == id)
+            const admin = await service.read(id, sr)
+            expect(admin.role).toStrictEqual(RbacRole.admin)
         })
         it('throw ForbiddenException with wrong permissions', async () => {
             const id = 2
@@ -298,7 +301,9 @@ describe('AdminService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/role', value: 'system'},
             ]
-            await expect(service.adjust(id, patch, localRequest)).rejects.toThrow(ForbiddenException)
+            const updates = new Dictionary<PatchOperation[]>()
+            updates[id] = patch
+            await expect(service.adjust(updates, localRequest)).rejects.toThrow(ForbiddenException)
         })
         const protectedFields = internal.Admin.create({
             billing_data: true,
@@ -318,7 +323,9 @@ describe('AdminService', () => {
                 const patch: PatchOperation[] = [
                     {op: 'replace', path: `/${s}`, value: protectedFields[s]},
                 ]
-                await expect(service.adjust(id, patch, sr)).rejects.toThrow(ForbiddenException)
+                const updates = new Dictionary<PatchOperation[]>()
+                updates[id] = patch
+                await expect(service.adjust(updates, sr)).rejects.toThrow(ForbiddenException)
             })
         })
     })

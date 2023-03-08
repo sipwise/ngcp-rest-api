@@ -193,9 +193,33 @@ export class AdminController extends CrudController<AdminCreateDto, AdminRespons
             throw new BadRequestException(message)
         }
         const sr = new ServiceRequest(req)
-        const response = new AdminResponseDto(await this.adminService.adjust(id, patch, sr), sr.user.role)
+        const updates = new Dictionary<PatchOperation[]>()
+
+        updates[id] = Array.isArray(patch) ? patch : [patch]
+
+        const ids = await this.adminService.adjust(updates, sr)
+        const response = new AdminResponseDto(await this.adminService.read(ids[0], sr), sr.user.role)
         await this.journalService.writeJournal(sr, id, response)
         return response
+    }
+
+    @Patch()
+    @ApiConsumes('application/json-patch+json')
+    @ApiPutBody(PatchDto)
+    async adjustMany(
+        @Body(new ParseIdDictionary({items: PatchDto, isValueArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Req() req,
+    ) {
+        for (const id of Object.keys(updates)) {
+            const patch = updates[id]
+            const err = validate(patch)
+            if (err) {
+                const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
+                throw new BadRequestException(message)
+            }
+        }
+        const sr = new ServiceRequest(req)
+        return await this.adminService.adjust(updates, sr)
     }
 
     @Delete(':id?')

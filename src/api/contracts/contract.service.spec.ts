@@ -130,8 +130,14 @@ describe('ContractsService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/status', value: ContractStatus.Terminated},
             ]
-            const ids = await service.adjust(id, patch, sr)
-            const result = await service.read(ids[0], sr)
+            const updates = new Dictionary<PatchOperation[]>()
+            updates[id] = patch
+            console.log(await service.readAll(sr))
+            console.log(updates)
+            const got = await service.adjust(updates, sr)
+            console.log(got)
+            expect(got[0] == id)
+            const result = await service.read(got[0], sr)
             expect(result.status).toStrictEqual(ContractStatus.Terminated)
         })
         it('should throw an error if updated contact_id is invalid', async () => {
@@ -139,14 +145,18 @@ describe('ContractsService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/contact_id', value: 100},
             ]
-            await expect(service.adjust(id, patch, sr)).rejects.toThrow(UnprocessableEntityException)
+            const updates = new Dictionary<PatchOperation[]>()
+            updates[id] = patch
+            await expect(service.adjust(updates, sr)).rejects.toThrow(UnprocessableEntityException)
         })
         it('should throw an error if updated product type is invalid', async () => {
             const id = 1
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/type', value: 'invalid'},
             ]
-            await expect(service.adjust(id, patch, sr)).rejects.toThrow(UnprocessableEntityException)
+            const updates = new Dictionary<PatchOperation[]>()
+            updates[id] = patch
+            await expect(service.adjust(updates, sr)).rejects.toThrow(UnprocessableEntityException)
         })
     })
 })

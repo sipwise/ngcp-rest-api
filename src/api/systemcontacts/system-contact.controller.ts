@@ -1,4 +1,16 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {
+    BadRequestException,
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Put,
+    Req,
+} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'
 import {JournalService} from '../journals/journal.service'
@@ -8,7 +20,7 @@ import {SystemContactCreateDto} from './dto/system-contact-create.dto'
 import {SystemContactService} from './system-contact.service'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
-import {Operation} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, Operation, validate} from '../../helpers/patch.helper'
 import {PatchDto} from '../../dto/patch.dto'
 import {number} from 'yargs'
 import {ExpandHelper} from '../../helpers/expand.helper'
@@ -161,11 +173,34 @@ export class SystemContactController extends CrudController<SystemContactCreateD
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const ids = await this.contactService.adjust(id, patch, sr)
+        const updates = new Dictionary<Operation[]>()
+
+        updates[id] = Array.isArray(patch) ? patch : [patch]
+
+        const ids = await this.contactService.adjust(updates, sr)
         const contact = await this.contactService.read(ids[0], sr)
         const response = new SystemContactResponseDto(contact)
         await this.journalService.writeJournal(sr, id, response)
         return response
+    }
+
+    @Patch()
+    @ApiConsumes('application/json-patch+json')
+    @ApiPutBody(PatchDto)
+    async adjustMany(
+        @Body(new ParseIdDictionary({items: PatchDto, isValueArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Req() req,
+    ) {
+        for (const id of Object.keys(updates)) {
+            const patch = updates[id]
+            const err = validate(patch)
+            if (err) {
+                const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
+                throw new BadRequestException(message)
+            }
+        }
+        const sr = new ServiceRequest(req)
+        return await this.contactService.adjust(updates, sr)
     }
 
     @Delete(':id?')
@@ -176,7 +211,13 @@ export class SystemContactController extends CrudController<SystemContactCreateD
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req,
     ): Promise<number[]> {
-        this.log.debug({message: 'delete system contact by id', func: this.delete.name, ids: ids, url: req.url, method: req.method})
+        this.log.debug({
+            message: 'delete system contact by id',
+            func: this.delete.name,
+            ids: ids,
+            url: req.url,
+            method: req.method,
+        })
 
         const sr = new ServiceRequest(req)
         const deletedIds = await this.contactService.delete(ids, sr)

@@ -81,19 +81,22 @@ export class ResellerService implements CrudService<internal.Reseller> {
         return await this.resellerRepo.update(updates, sr)
     }
 
-    async adjust(id: number, patch: Operation | Operation[], sr: ServiceRequest): Promise<number[]> {
-        this.log.debug({message: 'adjust reseller by id', func: this.adjust.name, user: sr.user.username, id: id})
-
-        let reseller = await this.resellerRepo.read(id, sr)
-        const oldReseller = deepCopy(reseller)
-
-        reseller = applyPatch(reseller, patch).newDocument
-        reseller.id = id
-
-        await this.validateUpdate(oldReseller, reseller, sr)
+    async adjust(patches: Dictionary<Operation[]>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(patches).map(id => parseInt(id))
+        this.log.debug({message: 'adjust reseller by id', func: this.adjust.name, user: sr.user.username, ids: ids})
 
         const updates = new Dictionary<internal.Reseller>()
-        updates[id] = reseller
+        for (const id of ids) {
+            let reseller = await this.resellerRepo.read(id, sr)
+            const oldReseller = deepCopy(reseller)
+
+            reseller = applyPatch(reseller, patches[id]).newDocument
+            reseller.id = id
+
+            await this.validateUpdate(oldReseller, reseller, sr)
+
+            updates[id] = reseller
+        }
         return await this.resellerRepo.update(updates, sr)
     }
 

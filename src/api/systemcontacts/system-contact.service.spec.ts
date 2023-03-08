@@ -107,9 +107,14 @@ describe('SystemContactService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/status', value: ContactStatus.Terminated},
             ]
-            const ids = await service.adjust(id, patch, sr)
-            const result = await service.read(ids[0], sr)
-            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.SystemContact}))
+            const updates = new Dictionary<PatchOperation[]>()
+            updates[id] = patch
+
+            const got = await service.adjust(updates, sr)
+            expect(got.length).toStrictEqual(1)
+            expect(got[0]).toStrictEqual(id)
+
+            const result = await service.read(id, sr)
             expect(result.status).toStrictEqual(ContractStatus.Terminated)
         })
         it('should throw an error if id does not exist', async () => {
@@ -117,10 +122,13 @@ describe('SystemContactService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/status', value: ContactStatus.Terminated},
             ]
-            await expect(service.adjust(id, patch, sr)).rejects.toThrow()
+            const updates = new Dictionary<PatchOperation[]>()
+            updates[id] = patch
+
+            await expect(service.adjust(updates, sr)).rejects.toThrow()
         })
 
-        // TODO: when debugging reseller_id is not set, but and exception is thrown as expected
+        // TODO: when debugging reseller_id is not set, but an exception is thrown as expected
         //       but DELETE fails because somehow the reseller_id is set in the repository!?
         it.skip('should throw an error if reseller_id was updated', async () => {
             const id = 1
@@ -128,7 +136,10 @@ describe('SystemContactService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/reseller_id', value: resellerId},
             ]
-            await expect(service.adjust(id, patch, sr)).rejects.toThrow(UnprocessableEntityException)
+            const updates = new Dictionary<PatchOperation[]>()
+            updates[id] = patch
+
+            await expect(service.adjust(updates, sr)).rejects.toThrow(UnprocessableEntityException)
         })
     })
 

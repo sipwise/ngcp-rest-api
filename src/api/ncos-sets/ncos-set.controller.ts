@@ -1,7 +1,19 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {
+    BadRequestException,
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Put,
+    Req,
+} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
-import {Operation} from 'helpers/patch.helper'
+import {Operation, validate} from 'helpers/patch.helper'
 import {RbacRole} from '../../config/constants.config'
 import {CrudController} from '../../controllers/crud.controller'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
@@ -29,6 +41,7 @@ import {internal} from '../../entities'
 import {ApiPutBody} from '../../decorators/api-put-body.decorator'
 import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {Dictionary} from '../../helpers/dictionary.helper'
+import {Operation as PatchOperation} from '../../helpers/patch.helper'
 
 const resourceName = 'ncos/sets'
 
@@ -84,14 +97,14 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(NCOSSetLevelResponseDto)
     async readLevelAll(
-            @Param('id') id: number,
-            @Req() req: Request
-            ): Promise<[NCOSSetLevelResponseDto[], number]> {
+        @Param('id') id: number,
+        @Req() req: Request,
+    ): Promise<[NCOSSetLevelResponseDto[], number]> {
         this.log.debug({
             message: 'read all ncos set level',
             func: this.readLevelAll.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         const sr = new ServiceRequest(req)
         const [entity, totalCount] =
@@ -105,16 +118,16 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
         type: NCOSSetLevelResponseDto,
     })
     async readLevel(
-            @Req() req: Request,
-            @Param('levelId', ParseIntPipe) levelId: number,
-            @Param('id') id?: number
-            ): Promise<NCOSSetLevelResponseDto> {
+        @Req() req: Request,
+        @Param('levelId', ParseIntPipe) levelId: number,
+        @Param('id') id?: number,
+    ): Promise<NCOSSetLevelResponseDto> {
         this.log.debug({
             message: 'read ncos set level by id',
             id: levelId,
             func: this.readLevel.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         const response = await this.ncosSetService.readLevel(id, levelId, new ServiceRequest(req))
         return new NCOSSetLevelResponseDto(response)
@@ -123,16 +136,16 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @Delete(':id?/levels/:levelId')
     @ApiOkResponse({})
     async deleteLevel(
-            @Req() req: Request,
-            @Param('levelId', ParseIntPipe) levelId: number,
-            @Param('id') id: number
-            ): Promise<number> {
+        @Req() req: Request,
+        @Param('levelId', ParseIntPipe) levelId: number,
+        @Param('id') id: number,
+    ): Promise<number> {
         this.log.debug({
             message: 'delete ncos set level by id',
             id: levelId,
             func: this.deleteLevel.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         const sr = new ServiceRequest(req)
         const response = await this.ncosSetService.deleteLevel(id, levelId, sr)
@@ -147,14 +160,14 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     async journalLevel(
         @Req() req: Request,
         @Param('id') id: number,
-        @Param('levelId') levelId: number
-        ) {
+        @Param('levelId') levelId: number,
+    ) {
         this.log.debug({
             message: 'read ncos set journal level by id',
             id: levelId,
             func: this.journalLevel.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         return super.journal(levelId, req)
     }
@@ -193,7 +206,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
             message: 'read all ncos set',
             func: this.readAll.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         const sr = new ServiceRequest(req)
         const [entity, totalCount] =
@@ -212,7 +225,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
             id: id,
             func: this.read.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         return new NCOSSetResponseDto(
             req.url,
@@ -272,11 +285,32 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const ids = await this.ncosSetService.adjust(id, patch, sr)
+        const updates = new Dictionary<Operation[]>()
+        updates[id] = Array.isArray(patch) ? patch : [patch]
+        const ids = await this.ncosSetService.adjust(updates, sr)
         const entity = await this.ncosSetService.read(ids[0], sr)
         const response = new NCOSSetResponseDto(req.url, entity)
         await this.journalService.writeJournal(sr, id, response)
         return response
+    }
+
+    @Patch()
+    @ApiConsumes('application/json-patch+json')
+    @ApiPutBody(PatchDto)
+    async adjustMany(
+        @Body(new ParseIdDictionary({items: PatchDto, isValueArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Req() req,
+    ) {
+        for (const id of Object.keys(updates)) {
+            const patch = updates[id]
+            const err = validate(patch)
+            if (err) {
+                const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
+                throw new BadRequestException(message)
+            }
+        }
+        const sr = new ServiceRequest(req)
+        return await this.ncosSetService.adjust(updates, sr)
     }
 
     @Delete(':id?')
@@ -285,7 +319,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     })
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
-        @Req() req: Request
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({
             message: 'delete ncos set by id',
@@ -312,7 +346,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
             id: id,
             func: this.journal.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         return super.journal(id, req)
     }

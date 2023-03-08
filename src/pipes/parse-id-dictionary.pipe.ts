@@ -16,8 +16,9 @@ interface ParseIdDictionaryOptions extends Omit<
     ValidationPipeOptions,
     'transform' | 'validateCustomDecorators' | 'exceptionFactory'
 > {
-    items: Type<unknown>;
-    exceptionFactory?: (error: any) => any;
+    items: Type<unknown>
+    isValueArray?: boolean
+    exceptionFactory?: (error: any) => any
 }
 
 @Injectable()
@@ -72,7 +73,16 @@ export class ParseIdDictionary implements PipeTransform {
             if (!await parseId.transform(val, metadata))
                 throw this.exceptionFactory(`Validation failed (parsable key of type int expected; got: '${typeof val}'`)
             try {
-                dict[parseInt(val)] = await toClassInstance(value[val])
+                const id = parseInt(val)
+                if (this.options.isValueArray && Array.isArray(value[id])) {
+                    const items = []
+                    for (const item of value[id]) {
+                        items.push(await toClassInstance((item)))
+                    }
+                    dict[id] = items
+                } else {
+                    dict[id] = await toClassInstance(value[val])
+                }
             } catch (err) {
                 let message: string[] | unknown
                 if ((err as any).getResponse) {

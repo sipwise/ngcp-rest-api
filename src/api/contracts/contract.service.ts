@@ -21,23 +21,28 @@ export class ContractService implements CrudService<internal.Contract> {
     ) {
     }
 
-    async adjust(id: number, patch: Operation | Operation[], sr: ServiceRequest): Promise<number[]> {
-        this.log.debug({message: 'adjust contract by id', func: this.adjust.name, user: sr.user.username, id: id})
-        let contract = await this.contractsRepo.read(id, sr)
-        const oldContract = deepCopy(contract)
-        // TODO: Utils::BillingMappings::get_actual_billing_mapping
-        //  $old_resource->{billing_profile_id} = $billing_mapping->billing_profile->id;
-        //  $old_resource->{billing_profile_definition} = undef;
-        //  delete $old_resource->{profile_package_id};
+    async adjust(patches: Dictionary<Operation[]>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(patches).map(id => parseInt(id))
+        this.log.debug({message: 'adjust contract by id', func: this.adjust.name, user: sr.user.username, ids: ids})
 
-        contract = applyPatch(contract, patch).newDocument
-
-        if (oldContract.contact_id != contract.contact_id) {
-            await this.validateSystemContact(contract, sr)
-        }
-        await this.setProductId(contract, sr)
         const updates = new Dictionary<internal.Contract>()
-        updates[id] = contract
+        for (const id of ids) {
+            let contract = await this.contractsRepo.read(id, sr)
+            const patch = patches[id]
+            const oldContract = deepCopy(contract)
+            // TODO: Utils::BillingMappings::get_actual_billing_mapping
+            //  $old_resource->{billing_profile_id} = $billing_mapping->billing_profile->id;
+            //  $old_resource->{billing_profile_definition} = undef;
+            //  delete $old_resource->{profile_package_id};
+
+            contract = applyPatch(contract, patch).newDocument
+
+            if (oldContract.contact_id != contract.contact_id) {
+                await this.validateSystemContact(contract, sr)
+            }
+            await this.setProductId(contract, sr)
+            updates[id] = contract
+        }
         return await this.contractsRepo.update(updates, sr)
     }
 

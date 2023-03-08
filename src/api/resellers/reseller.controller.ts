@@ -1,4 +1,17 @@
-import {Body, Controller, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {
+    BadRequestException,
+    Body,
+    Controller,
+    forwardRef,
+    Get,
+    Inject,
+    Param,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Put,
+    Req,
+} from '@nestjs/common'
 import {JournalService} from '../journals/journal.service'
 import {ResellerService} from './reseller.service'
 import {CrudController} from '../../controllers/crud.controller'
@@ -7,7 +20,7 @@ import {ResellerResponseDto} from './dto/reseller-response.dto'
 import {Auth} from '../../decorators/auth.decorator'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
-import {Operation} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, Operation, validate} from '../../helpers/patch.helper'
 import {Request} from 'express'
 import {RbacRole} from '../../config/constants.config'
 import {PatchDto} from '../../dto/patch.dto'
@@ -143,11 +156,34 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
     async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ResellerResponseDto> {
         this.log.debug({message: 'patch reseller by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const ids = await this.resellerService.adjust(id, patch, sr)
+        const updates = new Dictionary<Operation[]>()
+
+        updates[id] = Array.isArray(patch) ? patch : [patch]
+
+        const ids = await this.resellerService.adjust(updates, sr)
         const reseller = await this.resellerService.read(ids[0], sr)
         const response = new ResellerResponseDto(reseller)
         await this.journalService.writeJournal(sr, id, response)
         return response
+    }
+
+    @Patch()
+    @ApiConsumes('application/json-patch+json')
+    @ApiPutBody(PatchDto)
+    async adjustMany(
+        @Body(new ParseIdDictionary({items: PatchDto, isValueArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Req() req,
+    ) {
+        for (const id of Object.keys(updates)) {
+            const patch = updates[id]
+            const err = validate(patch)
+            if (err) {
+                const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
+                throw new BadRequestException(message)
+            }
+        }
+        const sr = new ServiceRequest(req)
+        return await this.resellerService.adjust(updates, sr)
     }
 
     @Get(':id/journal')

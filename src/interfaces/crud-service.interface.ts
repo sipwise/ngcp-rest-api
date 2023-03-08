@@ -12,7 +12,7 @@ export interface CrudService<InternalEntity> {
 
     update?(updates: Dictionary<InternalEntity>, sr: ServiceRequest): Promise<number[]>
 
-    adjust?(id: number | string, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<number[]>
+    adjust?(updates: Dictionary<PatchOperation[]>, sr: ServiceRequest): Promise<number[]>
 
     delete?(ids: number[] | string[], sr: ServiceRequest): Promise<number[] | string[]>
 }

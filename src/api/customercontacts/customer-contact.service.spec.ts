@@ -143,8 +143,14 @@ describe('CustomerContactService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/status', value: ContactStatus.Terminated},
             ]
-            const ids = await service.adjust(id, patch, sr)
-            const result = await service.read(ids[0], sr)
+            const updates = new Dictionary<PatchOperation[]>()
+            updates[id] = patch
+
+            const got = await service.adjust(updates, sr)
+            expect(got.length).toStrictEqual(1)
+            expect(got[0]).toStrictEqual(id)
+
+            const result = await service.read(id, sr)
             expect(result.status).toStrictEqual(ContractStatus.Terminated)
         })
         it('should throw an error if update reseller_id is invalid', async () => {
@@ -152,7 +158,9 @@ describe('CustomerContactService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/reseller_id', value: 100},
             ]
-            await expect(service.adjust(id, patch, sr)).rejects.toThrow(UnprocessableEntityException)
+            const updates = new Dictionary<PatchOperation[]>()
+            updates[id] = patch
+            await expect(service.adjust(updates, sr)).rejects.toThrow(UnprocessableEntityException)
         })
         it('should set reseller_id to user.reseller_id if user.reseller_id_required', async () => {
             const id = 2
@@ -164,13 +172,16 @@ describe('CustomerContactService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/reseller_id', value: 3},
             ]
+            const updates = new Dictionary<PatchOperation[]>()
+            updates[id] = patch
 
-            const ids = await service.adjust(id, patch, localRequest)
-            const result = await service.read(ids[0], localRequest)
-            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
+            const got = await service.adjust(updates, localRequest)
+            expect(got.length).toStrictEqual(1)
+            expect(got[0]).toStrictEqual(id)
+
+            const result = await service.read(id, localRequest)
             expect(result.reseller_id).toStrictEqual(expectedResellerId)
         })
-        // TODO: ? it('should throw an error if reseller changes reseller_id', async () => { })
     })
 
     describe('delete', () => {

@@ -1,6 +1,18 @@
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {
+    BadRequestException,
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Put,
+    Req,
+} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {CustomerSpeedDialCreateDto} from './dto/customer-speed-dial-create.dto'
 import {CustomerSpeedDialUpdateDto} from './dto/customer-speed-dial-update.dto'
@@ -15,7 +27,7 @@ import {ApiCreatedResponse} from '../../decorators/api-created-response.decorato
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {PatchDto} from '../../dto/patch.dto'
-import {Operation} from 'helpers/patch.helper'
+import {Operation, validate} from 'helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Request} from 'express'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
@@ -24,6 +36,9 @@ import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
 import {ParamOrBody} from '../../decorators/param-or-body.decorator'
 import {internal} from '../../entities'
 import {Dictionary} from '../../helpers/dictionary.helper'
+import {ApiPutBody} from '../../decorators/api-put-body.decorator'
+import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
+import {Operation as PatchOperation} from '../../helpers/patch.helper'
 
 const resourceName = 'customerspeeddials'
 
@@ -138,20 +153,43 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const ids = await this.customerSpeedDialService.adjust(id, patch, sr)
+        const updates = new Dictionary<Operation[]>()
+
+        updates[id] = Array.isArray(patch) ? patch : [patch]
+
+        const ids = await this.customerSpeedDialService.adjust(updates, sr)
         const csd = await this.customerSpeedDialService.read(ids[0], sr)
         const response = new CustomerSpeedDialResponseDto(csd)
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
 
+    @Patch()
+    @ApiConsumes('application/json-patch+json')
+    @ApiPutBody(PatchDto)
+    async adjustMany(
+        @Body(new ParseIdDictionary({items: PatchDto, isValueArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Req() req,
+    ) {
+        for (const id of Object.keys(updates)) {
+            const patch = updates[id]
+            const err = validate(patch)
+            if (err) {
+                const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
+                throw new BadRequestException(message)
+            }
+        }
+        const sr = new ServiceRequest(req)
+        return await this.customerSpeedDialService.adjust(updates, sr)
+    }
+
     @Delete(':id?')
     @ApiOkResponse({
-        type: [number]
+        type: [number],
     })
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
-        @Req() req
+        @Req() req,
     ): Promise<number[]> {
         this.log.debug({
             message: 'delete customer speed dial by id',

@@ -30,24 +30,22 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
         return await this.voicemailRepo.delete(ids, sr)
     }
 
-    async adjust(id: number, patch: PatchOperation | PatchOperation[], sr: ServiceRequest): Promise<number[]> {
-        let voicemail = await this.voicemailRepo.read(id, sr)
-
-        // TODO: changing the path only works if /folder is at index 0
-        if (Array.isArray(patch)) {
-            if (patch[0].path === '/folder')
-                patch[0].path = '/dir'
-        } else {
-            if (patch.path === '/folder')
-                patch.path = '/dir'
-        }
-        voicemail = applyPatch(voicemail, patch).newDocument
-        if (this.authorized.indexOf(voicemail.dir) == -1) {
-            throw new BadRequestException('not a valid entry (value)')
-        }
-        voicemail.dir = this.voicemailDir + voicemail.mailboxuser + '/' + voicemail.dir
+    async adjust(patches: Dictionary<PatchOperation[]>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(patches).map(id => parseInt(id))
         const updates = new Dictionary<internal.Voicemail>()
-        updates[id] = voicemail
+        for (const id of ids) {
+            let voicemail = await this.voicemailRepo.read(id, sr)
+
+            // TODO: changing the path only works if /folder is at index 0
+            if (patches[id][0].path === '/folder')
+                patches[id][0].path = '/dir'
+            voicemail = applyPatch(voicemail, patches[id]).newDocument
+            if (this.authorized.indexOf(voicemail.dir) == -1) {
+                throw new BadRequestException('not a valid entry (value)')
+            }
+            voicemail.dir = this.voicemailDir + voicemail.mailboxuser + '/' + voicemail.dir
+            updates[id] = voicemail
+        }
         return await this.voicemailRepo.update(updates, sr)
     }
 
