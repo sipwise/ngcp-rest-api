@@ -43,7 +43,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
 
     async adjust(
         @Param('id') id: number | string,
-        @Body() patch: PatchOperation | PatchOperation[],
+        @Body() patch: PatchOperation[],
         @Req() req: Request,
     ) {
         const err = validate(patch)

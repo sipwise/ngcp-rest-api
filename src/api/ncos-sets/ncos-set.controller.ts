@@ -1,19 +1,7 @@
-import {
-    BadRequestException,
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Param,
-    ParseIntPipe,
-    Patch,
-    Post,
-    Put,
-    Req,
-} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
-import {Operation, validate} from 'helpers/patch.helper'
+import {Operation} from 'helpers/patch.helper'
 import {RbacRole} from '../../config/constants.config'
 import {CrudController} from '../../controllers/crud.controller'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
@@ -42,6 +30,7 @@ import {ApiPutBody} from '../../decorators/api-put-body.decorator'
 import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {Dictionary} from '../../helpers/dictionary.helper'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
+import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
 
 const resourceName = 'ncos/sets'
 
@@ -276,7 +265,11 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req: Request): Promise<NCOSSetResponseDto> {
+    async adjust(
+        @Param('id', ParseIntPipe) id: number,
+        @Body(new ParsePatchPipe()) patch: Operation[],
+        req: Request,
+    ): Promise<NCOSSetResponseDto> {
         this.log.debug({
             message: 'patch ncos set by id',
             id: id,
@@ -286,7 +279,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
         })
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<Operation[]>()
-        updates[id] = Array.isArray(patch) ? patch : [patch]
+        updates[id] = patch
         const ids = await this.ncosSetService.adjust(updates, sr)
         const entity = await this.ncosSetService.read(ids[0], sr)
         const response = new NCOSSetResponseDto(req.url, entity)

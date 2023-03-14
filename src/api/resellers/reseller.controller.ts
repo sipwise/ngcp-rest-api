@@ -1,17 +1,4 @@
-import {
-    BadRequestException,
-    Body,
-    Controller,
-    forwardRef,
-    Get,
-    Inject,
-    Param,
-    ParseIntPipe,
-    Patch,
-    Post,
-    Put,
-    Req,
-} from '@nestjs/common'
+import {Body, Controller, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {JournalService} from '../journals/journal.service'
 import {ResellerService} from './reseller.service'
 import {CrudController} from '../../controllers/crud.controller'
@@ -20,7 +7,7 @@ import {ResellerResponseDto} from './dto/reseller-response.dto'
 import {Auth} from '../../decorators/auth.decorator'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
-import {Operation as PatchOperation, Operation, validate} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, Operation} from '../../helpers/patch.helper'
 import {Request} from 'express'
 import {RbacRole} from '../../config/constants.config'
 import {PatchDto} from '../../dto/patch.dto'
@@ -37,6 +24,7 @@ import {internal} from '../../entities'
 import {ApiPutBody} from '../../decorators/api-put-body.decorator'
 import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {Dictionary} from '../../helpers/dictionary.helper'
+import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
 
 const resourceName = 'resellers'
 
@@ -153,12 +141,16 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ResellerResponseDto> {
+    async adjust(
+        @Param('id', ParseIntPipe) id: number,
+        @Body(new ParsePatchPipe()) patch: Operation[],
+        req,
+    ): Promise<ResellerResponseDto> {
         this.log.debug({message: 'patch reseller by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<Operation[]>()
 
-        updates[id] = Array.isArray(patch) ? patch : [patch]
+        updates[id] = patch
 
         const ids = await this.resellerService.adjust(updates, sr)
         const reseller = await this.resellerService.read(ids[0], sr)

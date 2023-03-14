@@ -37,6 +37,7 @@ import {ApiPutBody} from '../../decorators/api-put-body.decorator'
 import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {internal} from '../../entities'
 import {Dictionary} from '../../helpers/dictionary.helper'
+import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
 
 const resourceName = 'contracts'
 
@@ -150,12 +151,16 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ContractResponseDto> {
+    async adjust(
+        @Param('id', ParseIntPipe) id: number,
+        @Body(new ParsePatchPipe()) patch: Operation[],
+        req,
+    ): Promise<ContractResponseDto> {
         this.log.debug({message: 'patch contract by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<Operation[]>()
 
-        updates[id] = Array.isArray(patch) ? patch : [patch]
+        updates[id] = patch
 
         const ids = await this.contractService.adjust(updates, sr)
         const response = new ContractResponseDto(await this.contractService.read(ids[0], sr))

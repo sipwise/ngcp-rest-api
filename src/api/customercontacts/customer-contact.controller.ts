@@ -1,5 +1,4 @@
 import {
-    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -24,7 +23,7 @@ import {Request} from 'express'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
 import {number} from 'yargs'
-import {Operation as PatchOperation, Operation, validate} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, Operation} from '../../helpers/patch.helper'
 import {PatchDto} from '../../dto/patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {CustomerContactSearchDto} from './dto/customer-contact-search.dto'
@@ -41,6 +40,7 @@ import {internal} from '../../entities'
 import {ApiPutBody} from '../../decorators/api-put-body.decorator'
 import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {Dictionary} from '../../helpers/dictionary.helper'
+import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
 
 const resourceName = 'customercontacts'
 
@@ -127,7 +127,11 @@ export class CustomerContactController extends CrudController<CustomerContactCre
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<CustomerContactResponseDto> {
+    async adjust(
+        @Param('id', ParseIntPipe) id: number,
+        @Body(new ParsePatchPipe()) patch: Operation[],
+        req,
+    ): Promise<CustomerContactResponseDto> {
         this.log.debug({
             message: 'patch customer contact by id',
             func: this.adjust.name,
@@ -138,7 +142,7 @@ export class CustomerContactController extends CrudController<CustomerContactCre
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<Operation[]>()
 
-        updates[id] = Array.isArray(patch) ? patch : [patch]
+        updates[id] = patch
 
         const ids = await this.contactService.adjust(updates, sr)
         const contact = await this.contactService.read(ids[0], sr)

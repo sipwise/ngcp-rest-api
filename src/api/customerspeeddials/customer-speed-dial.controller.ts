@@ -1,18 +1,6 @@
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {
-    BadRequestException,
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Param,
-    ParseIntPipe,
-    Patch,
-    Post,
-    Put,
-    Req,
-} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {CustomerSpeedDialCreateDto} from './dto/customer-speed-dial-create.dto'
 import {CustomerSpeedDialUpdateDto} from './dto/customer-speed-dial-update.dto'
@@ -27,7 +15,7 @@ import {ApiCreatedResponse} from '../../decorators/api-created-response.decorato
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {PatchDto} from '../../dto/patch.dto'
-import {Operation, validate} from 'helpers/patch.helper'
+import {Operation} from 'helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Request} from 'express'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
@@ -39,6 +27,7 @@ import {Dictionary} from '../../helpers/dictionary.helper'
 import {ApiPutBody} from '../../decorators/api-put-body.decorator'
 import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
+import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
 
 const resourceName = 'customerspeeddials'
 
@@ -144,7 +133,11 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<CustomerSpeedDialResponseDto> {
+    async adjust(
+        @Param('id', ParseIntPipe) id: number,
+        @Body(new ParsePatchPipe()) patch: Operation[],
+        req,
+    ): Promise<CustomerSpeedDialResponseDto> {
         this.log.debug({
             message: 'patch customer speed dial by id',
             id: id,
@@ -155,7 +148,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<Operation[]>()
 
-        updates[id] = Array.isArray(patch) ? patch : [patch]
+        updates[id] = patch
 
         const ids = await this.customerSpeedDialService.adjust(updates, sr)
         const csd = await this.customerSpeedDialService.read(ids[0], sr)

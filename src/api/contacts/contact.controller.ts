@@ -1,5 +1,4 @@
 import {
-    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -23,7 +22,7 @@ import {Request} from 'express'
 import {number} from 'yargs'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {PatchDto} from '../../dto/patch.dto'
-import {Operation as PatchOperation, Operation, validate} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, Operation} from '../../helpers/patch.helper'
 import {ContactService} from './contact.service'
 import {ContactCreateDto} from './dto/contact-create.dto'
 import {ContactResponseDto} from './dto/contact-response.dto'
@@ -38,6 +37,7 @@ import {ApiPutBody} from '../../decorators/api-put-body.decorator'
 import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {internal} from '../../entities'
 import {Dictionary} from '../../helpers/dictionary.helper'
+import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
 
 const resourceName = 'contacts'
 
@@ -117,13 +117,17 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<ContactResponseDto> {
+    async adjust(
+        @Param('id', ParseIntPipe) id: number,
+        @Body(new ParsePatchPipe()) patch: Operation[],
+        req,
+    ): Promise<ContactResponseDto> {
         this.log.debug({message: 'patch contact by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
 
         const updates = new Dictionary<Operation[]>()
 
-        updates[id] = Array.isArray(patch) ? patch : [patch]
+        updates[id] = patch
 
         const ids = await this.contactService.adjust(updates, sr)
         const contact = await this.contactService.read(ids[0], sr)

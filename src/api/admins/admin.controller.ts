@@ -42,6 +42,7 @@ import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {internal} from '../../entities'
 import {number} from 'yargs'
+import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
 
 const resourceName = 'admins'
 
@@ -183,19 +184,14 @@ export class AdminController extends CrudController<AdminCreateDto, AdminRespons
     })
     async adjust(
         @Param('id', ParseIntPipe) id: number,
-        @Body() patch: PatchOperation | PatchOperation[],
+        @Body(new ParsePatchPipe()) patch: PatchOperation[],
         @Req() req: Request,
     ): Promise<AdminResponseDto> {
         this.log.debug({message: 'patch admin by id', func: this.adjust.name, url: req.url, method: req.method})
-        const err = validate(patch)
-        if (err) {
-            const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
-            throw new BadRequestException(message)
-        }
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<PatchOperation[]>()
 
-        updates[id] = Array.isArray(patch) ? patch : [patch]
+        updates[id] = patch
 
         const ids = await this.adminService.adjust(updates, sr)
         const response = new AdminResponseDto(await this.adminService.read(ids[0], sr), sr.user.role)
