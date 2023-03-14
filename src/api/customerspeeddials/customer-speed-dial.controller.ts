@@ -168,17 +168,9 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     async adjustMany(
-        @Body(new ParseIdDictionary({items: PatchDto, isValueArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) updates: Dictionary<PatchOperation[]>,
         @Req() req,
     ) {
-        for (const id of Object.keys(updates)) {
-            const patch = updates[id]
-            const err = validate(patch)
-            if (err) {
-                const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
-                throw new BadRequestException(message)
-            }
-        }
         const sr = new ServiceRequest(req)
         return await this.customerSpeedDialService.adjust(updates, sr)
     }

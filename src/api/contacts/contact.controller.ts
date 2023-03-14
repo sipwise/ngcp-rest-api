@@ -64,7 +64,7 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
     })
     async create(
         @Body(new ParseOneOrManyPipe({items: ContactCreateDto})) entity: ContactCreateDto[],
-        @Req() req: Request
+        @Req() req: Request,
     ): Promise<ContactResponseDto> {
         this.log.debug({message: 'create contact', func: this.create.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -136,17 +136,9 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     async adjustMany(
-        @Body(new ParseIdDictionary({items: PatchDto, isValueArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) updates: Dictionary<PatchOperation[]>,
         @Req() req,
     ) {
-        for (const id of Object.keys(updates)) {
-            const patch = updates[id]
-            const err = validate(patch)
-            if (err) {
-                const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
-                throw new BadRequestException(message)
-            }
-        }
         const sr = new ServiceRequest(req)
         return await this.contactService.adjust(updates, sr)
     }

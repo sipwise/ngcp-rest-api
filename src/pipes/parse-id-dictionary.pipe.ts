@@ -1,5 +1,6 @@
 import {
     ArgumentMetadata,
+    BadRequestException,
     HttpStatus,
     Injectable,
     ParseIntPipe,
@@ -11,13 +12,15 @@ import {
 import {HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
 import {isString, isUndefined} from '@nestjs/common/utils/shared.utils'
 import {Dictionary} from '../helpers/dictionary.helper'
+import {PatchDto} from '../dto/patch.dto'
+import {validate} from '../helpers/patch.helper'
 
 interface ParseIdDictionaryOptions extends Omit<
     ValidationPipeOptions,
     'transform' | 'validateCustomDecorators' | 'exceptionFactory'
 > {
     items: Type<unknown>
-    isValueArray?: boolean
+    valueIsArray?: boolean
     exceptionFactory?: (error: any) => any
 }
 
@@ -50,60 +53,95 @@ export class ParseIdDictionary implements PipeTransform {
         if (typeof value != 'object')
             throw this.exceptionFactory('Validation failed (parsable dictionary expected)')
 
-        const validationMetadata: ArgumentMetadata = {
-            metatype: this.options.items,
-            type: 'body',
-        }
-        const isExpectedTypePrimitive = this.isExpectedTypePrimitive()
-        const toClassInstance = (item: any, index?: number) => {
-            try {
-                item = JSON.parse(item)
-            } catch {
-            }
-
-            if (isExpectedTypePrimitive) {
-                return this.validatePrimitive(item, index)
-            }
-            return this.validationPipe.transform(item, validationMetadata)
-        }
-
         let errors = []
         const dict = new Dictionary<unknown>()
+
         for (const val in value) {
             if (!await parseId.transform(val, metadata))
                 throw this.exceptionFactory(`Validation failed (parsable key of type int expected; got: '${typeof val}'`)
+
+            const id = parseInt(val)
+
+            if (this.options.valueIsArray) {
+                const [instances, err] = await this.transformArray(id, value[id])
+                if (err.length > 0)
+                    errors = errors.concat(err)
+                dict[id] = instances
+                continue
+            }
+
             try {
-                const id = parseInt(val)
-                if (this.options.isValueArray && Array.isArray(value[id])) {
-                    const items = []
-                    for (const item of value[id]) {
-                        items.push(await toClassInstance((item)))
-                    }
-                    dict[id] = items
-                } else {
-                    dict[id] = await toClassInstance(value[val])
-                }
+                dict[id] = await this.toClassInstance(value[val])
             } catch (err) {
-                let message: string[] | unknown
-                if ((err as any).getResponse) {
-                    const response = (err as any).getResponse()
-                    if (Array.isArray(response.message)) {
-                        message = response.message.map(
-                            (item: string) => `[${val}] ${item}`,
-                        )
-                    } else {
-                        message = `[${val}] ${response.message}`
-                    }
-                } else {
-                    message = err
-                }
-                errors = errors.concat(message)
+                errors = errors.concat(await this.generateErrorMessage(err, id))
             }
         }
+
         if (errors.length > 0) {
             throw this.exceptionFactory(errors as any)
         }
         return dict
+    }
+
+    private async transformArray<T>(id: number, items: any): Promise<[T[], string[]]> {
+        let errors: string[] = []
+
+        if (!Array.isArray(items)) {
+            errors = errors.concat('Validation failed (parsable array expected)')
+            return [undefined, errors]
+        }
+
+        const instances = []
+
+        for (const item of items) {
+            try {
+                instances.push(await this.toClassInstance((item)))
+            } catch (err) {
+                errors = errors.concat(await this.generateErrorMessage(err, id))
+            }
+        }
+        return [instances, errors]
+    }
+
+    private async generateErrorMessage(err: any, id: number): Promise<string> {
+        if ((err as any).getResponse) {
+            const response = (err as any).getResponse()
+            if (Array.isArray(response.message)) {
+                return response.message.map(
+                    (item: string) => `[${id}] ${item}`,
+                )
+            }
+            return `[${id}] ${response.message}`
+        }
+        return err
+    }
+
+    private async toClassInstance(item: any, index?: number) {
+        const validationMetadata: ArgumentMetadata = {
+            metatype: this.options.items,
+            type: 'body',
+        }
+
+        try {
+            item = JSON.parse(item)
+        } catch (err) {
+            //throw new BadRequestException(err)
+        }
+
+        if (this.isExpectedTypePrimitive()) {
+            return this.validatePrimitive(item, index)
+        }
+        if (this.isExpectedTypePatchOperation()) {
+            const err = validate(item)
+            if (err) {
+                throw new BadRequestException(err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\''))
+            }
+        }
+        return this.validationPipe.transform(item, validationMetadata)
+    }
+
+    private isExpectedTypePatchOperation(): boolean {
+        return this.options.items == PatchDto
     }
 
     protected isExpectedTypePrimitive(): boolean {

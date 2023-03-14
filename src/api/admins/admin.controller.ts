@@ -15,33 +15,33 @@ import {
 } from '@nestjs/common'
 import {AdminCreateDto} from './dto/admin-create.dto'
 import {AdminResponseDto} from './dto/admin-response.dto'
+import {AdminSearchDto} from './dto/admin-search.dto'
 import {AdminService} from './admin.service'
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
-import {AppService} from '../../app.service'
-import {Auth} from '../../decorators/auth.decorator'
-import {JournalResponseDto} from '../journals/dto/journal-response.dto'
-import {JournalService} from '../journals/journal.service'
-import {Operation as PatchOperation, validate} from '../../helpers/patch.helper'
-import {RbacRole} from '../../config/constants.config'
-import {number} from 'yargs'
-import {PatchDto} from '../../dto/patch.dto'
-import {Request} from 'express'
-import {AdminSearchDto} from './dto/admin-search.dto'
-import {ExpandHelper} from '../../helpers/expand.helper'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
-import {PaginatedDto} from '../../dto/paginated.dto'
-import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ApiPutBody} from '../../decorators/api-put-body.decorator'
+import {AppService} from '../../app.service'
+import {Auth} from '../../decorators/auth.decorator'
+import {CrudController} from '../../controllers/crud.controller'
+import {Dictionary} from '../../helpers/dictionary.helper'
+import {ExpandHelper} from '../../helpers/expand.helper'
+import {JournalResponseDto} from '../journals/dto/journal-response.dto'
+import {JournalService} from '../journals/journal.service'
 import {LoggerService} from '../../logger/logger.service'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {Operation as PatchOperation, validate} from '../../helpers/patch.helper'
+import {PaginatedDto} from '../../dto/paginated.dto'
+import {ParamOrBody} from '../../decorators/param-or-body.decorator'
+import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
-import {ParamOrBody} from '../../decorators/param-or-body.decorator'
-import {CrudController} from '../../controllers/crud.controller'
-import {ApiPutBody} from '../../decorators/api-put-body.decorator'
-import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
+import {PatchDto} from '../../dto/patch.dto'
+import {RbacRole} from '../../config/constants.config'
+import {Request} from 'express'
+import {SearchLogic} from '../../helpers/search-logic.helper'
+import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {internal} from '../../entities'
-import {Dictionary} from '../../helpers/dictionary.helper'
+import {number} from 'yargs'
 
 const resourceName = 'admins'
 
@@ -207,17 +207,9 @@ export class AdminController extends CrudController<AdminCreateDto, AdminRespons
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     async adjustMany(
-        @Body(new ParseIdDictionary({items: PatchDto, isValueArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) updates: Dictionary<PatchOperation[]>,
         @Req() req,
     ) {
-        for (const id of Object.keys(updates)) {
-            const patch = updates[id]
-            const err = validate(patch)
-            if (err) {
-                const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
-                throw new BadRequestException(message)
-            }
-        }
         const sr = new ServiceRequest(req)
         return await this.adminService.adjust(updates, sr)
     }
