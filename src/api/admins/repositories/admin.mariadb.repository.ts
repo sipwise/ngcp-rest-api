@@ -83,9 +83,7 @@ export class AdminMariadbRepository implements AdminRepository {
 
     @HandleDbErrors
     async delete(ids: number[]): Promise<number[]> {
-        const qb = db.billing.Admin.createQueryBuilder('admin').delete()
-        qb.andWhereInIds(ids)
-        await qb.execute()
+        await db.billing.Admin.delete(ids)
         return ids
     }
 

@@ -111,9 +111,7 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
 
     @HandleDbErrors
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
-        const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
-        qb.andWhereInIds(ids)
-        await qb.execute()
+        await db.billing.NCOSSet.delete(ids)
         return ids
     }
 

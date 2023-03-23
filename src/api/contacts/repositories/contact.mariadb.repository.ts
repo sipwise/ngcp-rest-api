@@ -39,15 +39,7 @@ export class ContactMariadbRepository implements ContactRepository {
 
     @HandleDbErrors
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
-        this.log.debug({
-            message: 'delete contact by id',
-            func: this.delete.name,
-            contactId: ids,
-            user: sr.user.username,
-        })
-        const qb = db.billing.Contact.createQueryBuilder('contact').delete()
-        qb.andWhereInIds(ids)
-        await qb.execute()
+        await db.billing.Contact.delete(ids)
         return ids
     }
 

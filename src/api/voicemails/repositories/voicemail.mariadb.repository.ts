@@ -44,9 +44,7 @@ export class VoicemailMariadbRepository implements VoicemailRepository {
 
     @HandleDbErrors
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
-        const qb = db.kamailio.VoicemailSpool.createQueryBuilder('vms').delete()
-        qb.andWhereInIds(ids)
-        await qb.execute()
+        await db.kamailio.VoicemailSpool.delete(ids)
         return ids
     }
 

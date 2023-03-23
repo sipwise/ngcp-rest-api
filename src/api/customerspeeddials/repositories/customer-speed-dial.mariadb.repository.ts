@@ -98,9 +98,7 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
 
     @HandleDbErrors
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
-        const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('csd').delete()
-        qb.andWhereInIds(ids)
-        await qb.execute()
+        await db.provisioning.VoipContractSpeedDial.delete(ids)
         return ids
     }
 
