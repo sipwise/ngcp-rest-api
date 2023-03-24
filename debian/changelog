@@ -1,3 +1,27 @@
+ngcp-rest-api (11.3.1.0+0~mr11.3.1.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [a85af3b] MT#56415 add ApiCreatedResponse implementation
+  * [2e933ff] MT#55688 fix /ncos/sets/:id/levels filter by set id
+  * [485d64d] MT#56338 add Location header support for POST ops
+  * [a0a5f68] MT#56614 improve JSON-HAL response
+  * [48d74ef] MT#56415 change return HAL/data/links/ids behaviour
+  * [1eee4f8] MT#56722 modules upgrade to latest versions
+  * [f6c8e3b] MT#56722 downgrade class-validator 0.14.0 -> 0.13.2
+  * [8a332d0] MT#56485 fix the DELETE methods
+  * [20b15c6] MT#56722 update class-validator to 0.14.0
+
+  [ Michael Berger ]
+  * [97ca35e] MT#55717 adapt POST to only work with collections
+  * [77fc4b1] MT#56485 implement bulk DELETE
+  * [1c20d5a] MT#55717 add ApiBody definition for POST
+  * [706e81d] MT#56616 implement bulk PUT
+  * [a015a21] MT#56862 implement bulk PATCH operation
+  * [3465737] MT#56928 improve bulk patch validation
+  * [5a07dc0] MT#56928 implement single patch validation
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 24 Mar 2023 13:04:40 +0100
+
 ngcp-rest-api (11.3.0.0+0~mr11.3.0.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
