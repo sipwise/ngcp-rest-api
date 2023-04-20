@@ -20,35 +20,86 @@ Clone the repository
 git clone ngcp-rest-api && cd ngcp-rest-api
 ```
 
+Node Version
+> Note that `node 18` is required.
+
+Install `systemd` development files required for `sd-notify` to work properly
+
+```bash
+apt install libsystemd-dev
+```
+
 Fetch the required nodejs modules
 
 ```bash
 yarnpkg install
 ```
 
+## Configuration
+
+To change the configuration the local file `etc/api.conf` can be edited.
+
+### SSL keys
+
+For local development generate self-signed SSL keys in `./etc/ssl`
+
+```bash
+node tools/generate-self-signed-keys.js --destdir ./etc/ssl
+```
+
+### Env
+
+The following Env variables can be set to configure the API.
+
+- `API_DB_USER`
+- `API_DB_PASS`
+- `API_DB_HOST`
+- `API_DB_PORT`
+
+### Database connection for local development
+
+Allow `root` access to `API_DB_HOST`
+
+Run the following command on the `API_DB_HOST`:
+```bash
+mysql -e "grant all privileges on *.* to root@'%';; flush privileges;"
+```
+
 ## Usage
 
-Server runs at http://localhost:1441
+Server runs at `https://localhost:2443` by default
 
 ### Production mode
 
 ```bash
-yarnpkg start
+yarnpkg start:prod
 ```
 
 ### Development mode
 
 ```bash
-yarnpkg dev
+yarnpkg start:dev
 ```
 
-### Test mode
+## Testing
+
+### Unit tests
+
+These tests require no database connection and test the internal service logic with mocked repositories.
 
 ```bash
 yarnpkg test
 ```
 
-### Lint check
+### e2e Tests
+
+These tests require a working database connection and test the controller part of the API
+
+```bash
+yarnpkg test:e2e
+```
+
+## Lint check
 
 ```bash
 yarnpkg lint
@@ -107,8 +158,3 @@ curl -i -X GET  -H 'Content-Type: application/json' -k -uadministrator:administr
 ## License
 
 [GPL-3+](https://spdx.org/licenses/GPL-3.0-or-later.html)
-## Generating NestJS entities from database
-### Example
-```bash
- yarnpkg stg -h localhost -D mysql -u root -d accounting -t api_journal_objects -o src/modules/journalV2/generated
-```
