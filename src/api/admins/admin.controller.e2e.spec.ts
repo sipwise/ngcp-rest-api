@@ -1,4 +1,4 @@
-import {INestApplication} from '@nestjs/common'
+import {HttpStatus, INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
 import {AppModule} from '../../app.module'
@@ -402,7 +402,28 @@ describe('AdminController', () => {
                     role: RbacRole.admin,
                     show_passwords: true,
                 })
-                const want = 400
+                const want = HttpStatus.UNPROCESSABLE_ENTITY
+                const response = await request(app.getHttpServer())
+                    .post('/admins')
+                    .set(...authHeader)
+                    .set(...preferHeader)
+                    .send(data)
+                expect(response.status).toEqual(want)
+            })
+            it('should fail if invalid fields are provided', async () => {
+                const data = AdminCreateDto.create({
+                    billing_data: true,
+                    call_data: false,
+                    can_reset_password: true,
+                    is_active: true,
+                    is_master: true,
+                    read_only: false,
+                    reseller_id: 1,
+                    role: RbacRole.admin,
+                    show_passwords: true,
+                })
+                data['nonWhitelistedField'] = 'invalid'
+                const want = HttpStatus.UNPROCESSABLE_ENTITY
                 const response = await request(app.getHttpServer())
                     .post('/admins')
                     .set(...authHeader)

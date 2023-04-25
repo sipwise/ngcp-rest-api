@@ -26,7 +26,7 @@ export class ParsePatchPipe implements PipeTransform {
     protected readonly validationPipe: ValidationPipe
 
     constructor(@Optional() options?: ParsePatchOptions) {
-        const errorHttpStatusCode = HttpStatus.BAD_REQUEST
+        const errorHttpStatusCode = HttpStatus.UNPROCESSABLE_ENTITY
         this.exceptionFactory =
             (error => new HttpErrorByCode[errorHttpStatusCode](error))
         this.options = options || {exceptionFactory: this.exceptionFactory}

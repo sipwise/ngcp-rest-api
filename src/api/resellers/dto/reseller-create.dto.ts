@@ -4,15 +4,17 @@ import {ApiProperty} from '@nestjs/swagger'
 import {internal} from '../../../entities'
 
 export class ResellerCreateDto {
-    @ApiProperty()
     @IsNotEmpty()
+    @ApiProperty()
         contract_id: number
 
+    @IsNotEmpty()
     @ApiProperty()
         name: string
 
-    @ApiProperty()
+    @IsNotEmpty()
     @IsEnum(ResellerStatus)
+    @ApiProperty()
         status: ResellerStatus
 
     toInternal(id?: number): internal.Reseller {

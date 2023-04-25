@@ -22,6 +22,7 @@ export class AdminCreateDto {
     @ApiProperty({example: 'jsmith', description: 'Username used for authentication'})
         login: string
 
+    @IsOptional()
     @ApiPropertyOptional({
         description: 'Can manage other admin users within the same or level permission levels ' +
             '(only applies to "System", "Admin" and "Reseller") roles',
@@ -29,21 +30,27 @@ export class AdminCreateDto {
     })
         is_master?: boolean
 
+    @IsOptional()
     @ApiPropertyOptional({description: 'Can use the UI/API', default: true})
         is_active?: boolean
 
+    @IsOptional()
     @ApiPropertyOptional({description: 'Set access to read-only, cannot change any data', default: false})
         read_only?: boolean
 
+    @IsOptional()
     @ApiPropertyOptional({description: 'Can see passwords', default: true})
         show_passwords?: boolean
 
+    @IsOptional()
     @ApiPropertyOptional({description: 'Call data', default: true})
         call_data?: boolean
 
+    @IsOptional()
     @ApiPropertyOptional({description: 'Can manage "topup vouchers"', default: true})
         billing_data?: boolean
 
+    @IsOptional()
     @ApiPropertyOptional({description: 'Can reset password', default: true})
         can_reset_password?: boolean
 

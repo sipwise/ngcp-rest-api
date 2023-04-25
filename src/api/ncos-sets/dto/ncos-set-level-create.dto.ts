@@ -1,9 +1,10 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsNotEmpty} from 'class-validator'
+import {IsNotEmpty, IsNumber} from 'class-validator'
 import {internal} from '../../../entities'
 
 export class NCOSSetLevelCreateDto {
     @IsNotEmpty()
+    @IsNumber()
     @ApiProperty({description: 'NCOS Level Id', example: 2})
         level_id: number
 

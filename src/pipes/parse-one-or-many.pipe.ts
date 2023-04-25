@@ -6,12 +6,15 @@ export class ParseOneOrManyPipe implements PipeTransform {
 
     constructor(protected readonly options: ParseArrayOptions) {
         this.options = options
+        this.options.whitelist = true
+        this.options.forbidNonWhitelisted = true
 
-        const {exceptionFactory, errorHttpStatusCode = HttpStatus.BAD_REQUEST} =
+        const {exceptionFactory, errorHttpStatusCode = HttpStatus.UNPROCESSABLE_ENTITY} =
             options
         this.exceptionFactory =
             exceptionFactory ||
             (error => new HttpErrorByCode[errorHttpStatusCode](error))
+        this.options.exceptionFactory = this.exceptionFactory
     }
 
     async transform(value: any, metadata: ArgumentMetadata): Promise<any> {

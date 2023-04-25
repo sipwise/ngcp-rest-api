@@ -1,9 +1,10 @@
 import {internal} from '../../../entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsNotEmpty} from 'class-validator'
+import {IsNotEmpty, IsNumber} from 'class-validator'
 
 export class CustomerSpeedDialCreateDto {
     @IsNotEmpty()
+    @IsNumber()
     @ApiPropertyOptional({description: 'Customer id', example: 1})
         customer_id?: number
 
