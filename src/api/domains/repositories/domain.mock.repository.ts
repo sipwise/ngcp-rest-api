@@ -22,11 +22,15 @@ export class DomainMockRepository implements DomainRepository {
         this.nextId = Object.keys(this.db).length + 1
     }
 
-    async create(domain: internal.Domain, sr: ServiceRequest): Promise<internal.Domain> {
-        domain.id = this.nextId
-        this.db[domain.id] = domain
-        this.nextId++
-        return Promise.resolve(domain)
+    async create(domains: internal.Domain[], sr: ServiceRequest): Promise<number[]> {
+        const ids: number[] = []
+        for (const domain of domains) {
+            domain.id = this.nextId
+            ids.push(domain.id)
+            this.db[domain.id] = domain
+            this.nextId++
+        }
+        return Promise.resolve(ids)
     }
 
     async delete(id: number, sr: ServiceRequest): Promise<number> {

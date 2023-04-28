@@ -38,7 +38,7 @@ describe('ResellerService', () => {
             .compile()
 
         service = module.get<ResellerService>(ResellerService)
-        sr = {headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
+        sr = {returnContent: true, headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
     })
 
     it('should be defined', () => {
@@ -67,41 +67,42 @@ describe('ResellerService', () => {
 
     describe('create', () => {
         it('should return a valid reseller', async () => {
-            const result = await service.create(internal.Reseller.create({
+            const result = await service.create([internal.Reseller.create({
                 contract_id: 3,
                 name: 'jest1',
                 status: ResellerStatus.Active,
-            }), sr)
-            expect(result).toStrictEqual(await resellerMockRepo.read(result.id, sr))
+            })], sr)
+            const reseller = result[0]
+            expect(reseller).toStrictEqual(await resellerMockRepo.read(reseller.id, sr))
         })
 
         it('should throw an error if contract does not exist', async () => {
-            await expect(service.create(internal.Reseller.create({
+            await expect(service.create([internal.Reseller.create({
                 contract_id: 100,
                 name: 'jest2',
                 status: ResellerStatus.Active,
-            }), sr)).rejects.toThrow(UnprocessableEntityException)
+            })], sr)).rejects.toThrow(UnprocessableEntityException)
         })
         it('should throw an error if contract does not have systemcontact', async () => {
-            await expect(service.create(internal.Reseller.create({
+            await expect(service.create([internal.Reseller.create({
                 contract_id: 4,
                 name: 'jest3',
                 status: ResellerStatus.Active,
-            }), sr)).rejects.toThrow(UnprocessableEntityException)
+            })], sr)).rejects.toThrow(UnprocessableEntityException)
         })
         it('should throw an error if reseller with contract id exists', async () => {
-            await expect(service.create(internal.Reseller.create({
+            await expect(service.create([internal.Reseller.create({
                 contract_id: 2,
                 name: 'jest4',
                 status: ResellerStatus.Active,
-            }), sr)).rejects.toThrow(UnprocessableEntityException)
+            })], sr)).rejects.toThrow(UnprocessableEntityException)
         })
         it('should throw an error if non-terminated reseller with name exists', async () => {
-            await expect(service.create(internal.Reseller.create({
+            await expect(service.create([internal.Reseller.create({
                 contract_id: 5,
                 name: 'reseller1',
                 status: ResellerStatus.Active,
-            }), sr)).rejects.toThrow(UnprocessableEntityException)
+            })], sr)).rejects.toThrow(UnprocessableEntityException)
         })
     })
 })

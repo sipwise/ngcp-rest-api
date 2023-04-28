@@ -3,7 +3,7 @@ import {internal} from '../../../entities'
 import {Dictionary} from '../../../helpers/dictionary.helper'
 
 export interface ContractRepository {
-    create(entity: internal.Contract, sr: ServiceRequest): Promise<internal.Contract>
+    create(entity: internal.Contract[], sr: ServiceRequest): Promise<number[]>
 
     delete(id: number, sr: ServiceRequest): Promise<number>
 

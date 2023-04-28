@@ -17,21 +17,8 @@ export class ContactMariadbRepository implements ContactRepository {
     private readonly log = new LoggerService(ContactMariadbRepository.name)
 
     @HandleDbErrors
-    async create(entity: internal.Contact, sr: ServiceRequest): Promise<internal.Contact> {
-        const contact = db.billing.Contact.create()
-        contact.fromInternal(entity)
-
-        const now = new Date(Date.now())
-        contact.create_timestamp = now
-        contact.modify_timestamp = now
-
-        await db.billing.Contact.insert(contact)
-        return contact.toInternal()
-    }
-
-    @HandleDbErrors
-    async createMany(contacts: internal.Contact[], sr: ServiceRequest): Promise<number[]> {
-        const qb = db.billing.Contact.createQueryBuilder('contact')
+    async create(contacts: internal.Contact[], sr: ServiceRequest): Promise<number[]> {
+        const qb = db.billing.Admin.createQueryBuilder('contact')
         const values = contacts.map(contact => new db.billing.Contact().fromInternal(contact))
         const result = await qb.insert().values(values).execute()
         return result.identifiers.map(obj => obj.id)

@@ -74,20 +74,22 @@ describe('CustomerContactService', () => {
 
     describe('create', () => {
         it('should create a customer contact', async () => {
-            const result = await service.create(internal.Contact.create({reseller_id: 1}), sr)
-            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
+            const result = await service.create([internal.Contact.create({reseller_id: 1})], sr)
+            const contact = result[0]
+            expect(contact).toStrictEqual(await contactMockRepo.readById(contact.id, {type: ContactType.CustomerContact}))
         })
         it('should set reseller_id to user.reseller_id if user.reseller_id_required', async () => {
             const localRequest = deepCopy(sr)
             localRequest.user.role = 'reseller'
             localRequest.user.reseller_id_required = true
             const expectedResellerId = localRequest.user.reseller_id
-            const result = await service.create(internal.Contact.create({reseller_id: 1}), localRequest)
-            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
-            expect(result.reseller_id).toStrictEqual(expectedResellerId)
+            const result = await service.create([internal.Contact.create({reseller_id: 1})], localRequest)
+            const contact = result[0]
+            expect(contact).toStrictEqual(await contactMockRepo.readById(contact.id, {type: ContactType.CustomerContact}))
+            expect(contact.reseller_id).toStrictEqual(expectedResellerId)
         })
         it('should throw an error if reseller_id is invalid', async () => {
-            await expect(service.create(internal.Contact.create({reseller_id: 100}), sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.create([internal.Contact.create({reseller_id: 100})], sr)).rejects.toThrow(UnprocessableEntityException)
         })
     })
 

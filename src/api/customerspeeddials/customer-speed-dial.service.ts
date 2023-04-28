@@ -19,18 +19,12 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
     ) {
     }
 
-    async create(entity: internal.CustomerSpeedDial, sr: ServiceRequest): Promise<internal.CustomerSpeedDial> {
-        await this.checkPermissions(entity.contractId, sr)
-        await this.checkAndTransformDestination(entity, sr)
-        return await this.customerSpeedDialRepo.create(entity, sr)
-    }
-
-    async createMany(entities: internal.CustomerSpeedDial[], sr: ServiceRequest): Promise<internal.CustomerSpeedDial[]> {
+    async create(entities: internal.CustomerSpeedDial[], sr: ServiceRequest): Promise<internal.CustomerSpeedDial[]> {
         for (const csd of entities) {
             await this.checkPermissions(csd.contractId, sr)
             await this.checkAndTransformDestination(csd, sr)
         }
-        const createdIds = await this.customerSpeedDialRepo.createMany(entities, sr)
+        const createdIds = await this.customerSpeedDialRepo.create(entities, sr)
         return await this.customerSpeedDialRepo.readWhereInIds(createdIds, sr)
     }
 

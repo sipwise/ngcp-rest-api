@@ -17,24 +17,7 @@ export class DomainService implements CrudService<internal.Domain> {
     ) {
     }
 
-    async create(domain: internal.Domain, sr: ServiceRequest): Promise<internal.Domain> {
-        this.log.debug({
-            message: 'create domain',
-            func: this.create.name,
-            user: sr.user.username,
-        })
-        if (RbacRole.reseller == sr.user.role) {
-            domain.reseller_id = sr.user.reseller_id
-        }
-
-        // check if reseller exists
-        await this.resellerIdExists(domain.reseller_id, sr)
-        await this.domainExists(domain.domain, sr)
-
-        return await this.domainRepo.create(domain, sr)
-    }
-
-    async createMany(domains: internal.Domain[], sr: ServiceRequest): Promise<internal.Domain[]> {
+    async create(domains: internal.Domain[], sr: ServiceRequest): Promise<internal.Domain[]> {
         if (RbacRole.reseller == sr.user.role) {
             await this.resellerIdExists(sr.user.reseller_id, sr)
             for (const domain of domains) {
@@ -47,7 +30,7 @@ export class DomainService implements CrudService<internal.Domain> {
                 await this.domainExists(domain.domain, sr)
             }
         }
-        const createdIds = await this.domainRepo.createMany(domains, sr)
+        const createdIds = await this.domainRepo.create(domains, sr)
         return await this.domainRepo.readWhereInIds(createdIds, sr)
     }
 

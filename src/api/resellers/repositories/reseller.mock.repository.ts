@@ -40,12 +40,16 @@ export class ResellerMockRepository implements ResellerRepository {
         return Promise.resolve(this.contractDB[contractId].contact_id != undefined)
     }
 
-    create(reseller: internal.Reseller, sr: ServiceRequest): Promise<internal.Reseller> {
-        const nextId = this.getNextId(this.resellerDB)
-        reseller.id = nextId
-        this.resellerDB[nextId] = reseller
+    create(resellers: internal.Reseller[], sr: ServiceRequest): Promise<number[]> {
+        const ids: number[] = []
+        for (const reseller of resellers) {
+            const nextId = this.getNextId(this.resellerDB)
+            reseller.id = nextId
+            ids.push(nextId)
+            this.resellerDB[nextId] = reseller
+        }
 
-        return Promise.resolve(reseller)
+        return Promise.resolve(ids)
     }
 
     createEmailTemplates(resellerId: number): Promise<void> {
@@ -64,6 +68,15 @@ export class ResellerMockRepository implements ResellerRepository {
     readAll(sr: ServiceRequest): Promise<[internal.Reseller[], number]> {
         const resellers: [internal.Reseller[], number] =
             [Object.keys(this.resellerDB).map(id => this.resellerDB[id]), Object.keys(this.resellerDB).length]
+        return Promise.resolve(resellers)
+    }
+
+    readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Reseller[]> {
+        const resellers: internal.Reseller[] = []
+        for (const id of ids) {
+            this.throwErrorIfIdNotExists(this.resellerDB, id)
+            resellers.push(this.resellerDB[id])
+        }
         return Promise.resolve(resellers)
     }
 

@@ -68,15 +68,17 @@ describe('ContactService', () => {
 
     describe('create', () => {
         it('should create a valid system contact', async () => {
-            const result = await service.create(internal.Contact.create({}), sr)
-            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.SystemContact}))
+            const result = await service.create([internal.Contact.create({})], sr)
+            const contact = result[0]
+            expect(contact).toStrictEqual(await contactMockRepo.readById(contact.id, {type: ContactType.SystemContact}))
         })
         it('should create a customer contact', async () => {
-            const result = await service.create(internal.Contact.create({reseller_id: 1}), sr)
-            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.CustomerContact}))
+            const result = await service.create([internal.Contact.create({reseller_id: 1})], sr)
+            const contact = result[0]
+            expect(contact).toStrictEqual(await contactMockRepo.readById(contact.id, {type: ContactType.CustomerContact}))
         })
         it('should throw an error if reseller_id in customer contact does not exist', async () => {
-            await expect(service.create(internal.Contact.create({reseller_id: 100}), sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.create([internal.Contact.create({reseller_id: 100})], sr)).rejects.toThrow(UnprocessableEntityException)
         })
     })
 

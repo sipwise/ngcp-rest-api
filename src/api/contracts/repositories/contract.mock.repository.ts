@@ -6,6 +6,8 @@ import {ContactStatus} from '../../../entities/internal/contact.internal.entity'
 import {NotFoundException} from '@nestjs/common'
 import {ProductClass} from '../../../entities/internal/product.internal.entity'
 import {Dictionary} from '../../../helpers/dictionary.helper'
+import {ContactOptions} from '../../contacts/interfaces/contact-options.interface'
+import {AdminOptions} from '../../admins/interfaces/admin-options.interface'
 
 interface ContractMockDB {
     [key: number]: internal.Contract
@@ -92,12 +94,16 @@ export class ContractMockRepository implements ContractRepository {
         }
     }
 
-    create(entity: internal.Contract, sr: ServiceRequest): Promise<internal.Contract> {
-        const nextId = this.getNextId(this.contractDB)
-        entity.id = nextId
-        this.contractDB[nextId] = entity
+    create(contracts: internal.Contract[], sr: ServiceRequest): Promise<number[]> {
+        const ids: number[] = []
+        for (const contract of contracts) {
+            const nextId = this.getNextId(this.contractDB)
+            contract.id = nextId
+            ids.push(nextId)
+            this.contractDB[nextId] = contract
+        }
 
-        return Promise.resolve(entity)
+        return Promise.resolve(ids)
     }
 
     delete(id: number, sr: ServiceRequest): Promise<number> {
@@ -122,6 +128,15 @@ export class ContractMockRepository implements ContractRepository {
     readAll(sr: ServiceRequest): Promise<[internal.Contract[], number]> {
         const contracts: [internal.Contract[], number] =
             [Object.keys(this.contractDB).map(id => this.contractDB[id]), Object.keys(this.contractDB).length]
+        return Promise.resolve(contracts)
+    }
+
+    readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Contract[]> {
+        const contracts: internal.Contract[] = []
+        for (const id of ids) {
+            this.throwErrorIfIdNotExists(this.contractDB, id)
+            contracts.push(this.contractDB[id])
+        }
         return Promise.resolve(contracts)
     }
 

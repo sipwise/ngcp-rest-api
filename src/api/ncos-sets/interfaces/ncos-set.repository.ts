@@ -3,7 +3,7 @@ import {internal} from '../../../entities'
 import {Dictionary} from '../../../helpers/dictionary.helper'
 
 export interface NCOSSetRepository {
-    create(sd: internal.NCOSSet, sr: ServiceRequest): Promise<internal.NCOSSet>
+    create(sd: internal.NCOSSet[], sr: ServiceRequest): Promise<internal.NCOSSet[]>
 
     readAll(sr: ServiceRequest): Promise<[internal.NCOSSet[], number]>
 
@@ -13,7 +13,7 @@ export interface NCOSSetRepository {
 
     delete(ids: number[], sr: ServiceRequest): Promise<number[]>
 
-    createLevel(sd: internal.NCOSSetLevel, sr: ServiceRequest): Promise<internal.NCOSSetLevel>
+    createLevel(sd: internal.NCOSSetLevel[], sr: ServiceRequest): Promise<internal.NCOSSetLevel[]>
 
     readLevelAll(sr: ServiceRequest, id?: number): Promise<[internal.NCOSSetLevel[], number]>
 

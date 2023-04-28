@@ -18,22 +18,25 @@ export class ContactService implements CrudService<internal.Contact>{
     ) {
     }
 
-    async create(contact: internal.Contact, sr: ServiceRequest): Promise<internal.Contact> {
+    async create(contacts: internal.Contact[], sr: ServiceRequest): Promise<internal.Contact[]> {
         this.log.debug({
             message: 'create contact',
             func: this.create.name,
             user: sr.user.username,
         })
-        if (contact.reseller_id !== undefined) {
-            if (sr.user.reseller_id_required) {
-                contact.reseller_id = sr.user.reseller_id
-            }
-            const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
-            if (!reseller) {
-                throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
+        for (const contact of contacts) {
+            if (contact.reseller_id !== undefined) {
+                if (sr.user.reseller_id_required) {
+                    contact.reseller_id = sr.user.reseller_id
+                }
+                const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
+                if (!reseller) {
+                    throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
+                }
             }
         }
-        return await this.contactRepo.create(contact, sr)
+        const createdIds = await this.contactRepo.create(contacts, sr)
+        return await this.contactRepo.readWhereInIds(createdIds)
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {

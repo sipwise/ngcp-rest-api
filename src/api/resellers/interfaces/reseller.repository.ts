@@ -7,7 +7,7 @@ export interface ResellerRepository {
 
     findDefaultEmailTemplates(): Promise<db.billing.EmailTemplate[]>
 
-    create(reseller: internal.Reseller, sr: ServiceRequest): Promise<internal.Reseller>
+    create(resellers: internal.Reseller[], sr: ServiceRequest): Promise<number[]>
 
     terminate(id: number, sr: ServiceRequest): Promise<number>
 

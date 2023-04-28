@@ -54,17 +54,9 @@ export class ResellerMariadbRepository implements ResellerRepository {
         )
     }
 
-    @HandleDbErrors
-    async create(reseller: internal.Reseller, sr: ServiceRequest): Promise<internal.Reseller> {
-        this.log.debug({message: 'create reseller', func: this.create.name, user: sr.user.username})
-        const dbReseller = db.billing.Reseller.create()
-        dbReseller.fromInternal(reseller)
-        const result = await dbReseller.save()
-        return result.toInternal()
-    }
 
     @HandleDbErrors
-    async createMany(resellers: internal.Reseller[], sr: ServiceRequest): Promise<number[]> {
+    async create(resellers: internal.Reseller[], sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.Reseller.createQueryBuilder('reseller')
         const values = resellers.map(reseller => new db.billing.Reseller().fromInternal(reseller))
         const result = await qb.insert().values(values).execute()

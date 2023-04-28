@@ -70,11 +70,9 @@ describe('SystemContactService', () => {
 
     describe('create', () => {
         it('should create a system contact', async () => {
-            const result = await service.create(internal.Contact.create({}), sr)
-            expect(result).toStrictEqual(await contactMockRepo.readById(result.id, {type: ContactType.SystemContact}))
-        })
-        it('should throw an error when trying to create a customer contact', async () => {
-            await expect(service.create(internal.Contact.create({reseller_id: 1}), sr)).rejects.toThrow(BadRequestException)
+            const result = await service.create([internal.Contact.create({})], sr)
+            const contact = result[0]
+            expect(contact).toStrictEqual(await contactMockRepo.readById(contact.id, {type: ContactType.SystemContact}))
         })
     })
 

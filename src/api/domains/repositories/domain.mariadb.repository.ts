@@ -15,33 +15,7 @@ export class DomainMariadbRepository implements DomainRepository {
     private readonly log = new LoggerService(DomainMariadbRepository.name)
 
     @HandleDbErrors
-    async create(domain: internal.Domain, sr: ServiceRequest): Promise<internal.Domain> {
-        const dbDomain = db.billing.Domain.create()
-        dbDomain.fromInternal(domain)
-
-        const dbVoipDomain = db.provisioning.VoipDomain.create(dbDomain)
-
-        await db.billing.Domain.insert(dbDomain)
-        await db.provisioning.VoipDomain.insert(dbVoipDomain)
-
-        const telnetDispatcher = new TelnetDispatcher()
-        const xmlDispatcher = new XmlDispatcher()
-
-        const errors = await telnetDispatcher.activateDomain(dbDomain.domain)
-
-        // roll back changes if errors occured TODO: replace with transaction when we support them
-        if (errors.length > 0) {
-            await telnetDispatcher.deactivateDomain(dbDomain.domain)
-            await db.billing.Domain.remove(dbDomain)
-            await db.provisioning.VoipDomain.remove(dbVoipDomain)
-            throw new InternalServerErrorException(errors)
-        }
-        await xmlDispatcher.sipDomainReload(dbDomain.domain)
-        return dbDomain.toInternal()
-    }
-
-    @HandleDbErrors
-    async createMany(domains: internal.Domain[], sr: ServiceRequest): Promise<number[]> {
+    async create(domains: internal.Domain[], sr: ServiceRequest): Promise<number[]> {
         // billing
         const qbBilling = db.billing.Domain.createQueryBuilder('domain')
         const valuesBilling = domains.map(domain => new db.billing.Domain().fromInternal(domain))

@@ -78,7 +78,7 @@ export class CustomerContactController extends CrudController<CustomerContactCre
         })
         const sr = new ServiceRequest(req)
         const customers = createDto.map(customer => customer.toInternal())
-        const created = await this.contactService.createMany(customers, sr)
+        const created = await this.contactService.create(customers, sr)
         return created.map((contact) => new CustomerContactResponseDto(contact, sr.user.role))
     }
 

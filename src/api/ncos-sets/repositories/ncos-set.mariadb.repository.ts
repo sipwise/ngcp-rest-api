@@ -20,17 +20,7 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
     private readonly log = new LoggerService(NCOSSetMariadbRepository.name)
 
     @HandleDbErrors
-    async create(entity: internal.NCOSSet, sr: ServiceRequest): Promise<internal.NCOSSet> {
-        const dbEntity = db.billing.NCOSSet.create()
-        dbEntity.fromInternal(entity)
-
-        await db.billing.NCOSSet.insert(dbEntity)
-
-        return dbEntity.toInternal()
-    }
-
-    @HandleDbErrors
-    async createMany(entities: internal.NCOSSet[]): Promise<internal.NCOSSet[]> {
+    async create(entities: internal.NCOSSet[]): Promise<internal.NCOSSet[]> {
         const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
         const values = await Promise.all(entities.map(async entity => new db.billing.NCOSSet().fromInternal(entity)))
         const result = await qb.insert().values(values).execute()
@@ -116,17 +106,7 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
     }
 
     @HandleDbErrors
-    async createLevel(entity: internal.NCOSSetLevel, sr: ServiceRequest): Promise<internal.NCOSSetLevel> {
-        const dbEntity = db.billing.NCOSSetLevel.create()
-        dbEntity.fromInternal(entity)
-
-        await db.billing.NCOSSetLevel.insert(dbEntity)
-
-        return this.readLevelById(dbEntity.ncos_set_id, dbEntity.id, sr)
-    }
-
-    @HandleDbErrors
-    async createLevelMany(entities: internal.NCOSSetLevel[], sr: ServiceRequest): Promise<internal.NCOSSetLevel[]> {
+    async createLevel(entities: internal.NCOSSetLevel[], sr: ServiceRequest): Promise<internal.NCOSSetLevel[]> {
         const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
         qb.innerJoinAndSelect('ncosSetLevel.level', 'level')
         const values = await Promise.all(

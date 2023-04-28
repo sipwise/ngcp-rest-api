@@ -38,6 +38,7 @@ import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {internal} from '../../entities'
 import {Dictionary} from '../../helpers/dictionary.helper'
 import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
+import {AdminResponseDto} from '../admins/dto/admin-response.dto'
 
 const resourceName = 'contacts'
 
@@ -65,12 +66,16 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
     async create(
         @Body(new ParseOneOrManyPipe({items: ContactCreateDto})) entity: ContactCreateDto[],
         @Req() req: Request,
-    ): Promise<ContactResponseDto> {
+    ): Promise<ContactResponseDto[]> {
         this.log.debug({message: 'create contact', func: this.create.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const contact = await this.contactService.create(entity[0].toInternal(), sr)  // TODO: change to create multiple
-        const response = new ContactResponseDto(contact, sr.user.role)
-        await this.journalService.writeJournal(sr, response.id, response)
+
+        const contacts = entity.map(contact => contact.toInternal())
+        const created = await this.contactService.create(contacts, sr)
+        const response = created.map(contact => new ContactResponseDto(contact, sr.user.role))
+        for(const entry of response) {
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        }
         return response
     }
 

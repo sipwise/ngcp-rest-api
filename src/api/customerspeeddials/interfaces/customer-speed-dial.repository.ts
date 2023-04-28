@@ -3,7 +3,7 @@ import {internal} from '../../../entities'
 import {Dictionary} from '../../../helpers/dictionary.helper'
 
 export interface CustomerSpeedDialRepository {
-    create(sd: internal.CustomerSpeedDial, sr: ServiceRequest): Promise<internal.CustomerSpeedDial>
+    create(sd: internal.CustomerSpeedDial[], sr: ServiceRequest): Promise<number[]>
 
     readAll(sr: ServiceRequest): Promise<[internal.CustomerSpeedDial[], number]>
 

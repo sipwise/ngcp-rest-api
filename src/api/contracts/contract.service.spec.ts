@@ -76,22 +76,20 @@ describe('ContractsService', () => {
 
     describe('create', () => {
         it('should return a valid contract', async () => {
-            const result = await service.create(internal.Contract.create({
+            const result = await service.create([internal.Contract.create({
                 contact_id: 3,
                 status: ContractStatus.Active,
                 type: ContractType.Reseller,
-            }), sr)
-            expect(result).toStrictEqual(await contractMockRepo.read(result.id, sr))
+            })], sr)
+            const contract = result[0]
+            expect(contract).toStrictEqual(await contractMockRepo.read(contract.id, sr))
         })
         it('should throw an error if contract has no valid active contact_id', async () => {
-            await expect(service.create(internal.Contract.create({
+            await expect(service.create([internal.Contract.create({
                 status: ContractStatus.Active,
                 contact_id: 100,
                 type: ContractType.Reseller,
-            }), sr)).rejects.toThrow(UnprocessableEntityException)
-        })
-        it('should throw an error if contract type is invalid', async () => {
-            // TODO: because of input validation in controller, this should not be possible
+            })], sr)).rejects.toThrow(UnprocessableEntityException)
         })
     })
 
@@ -132,10 +130,7 @@ describe('ContractsService', () => {
             ]
             const updates = new Dictionary<PatchOperation[]>()
             updates[id] = patch
-            console.log(await service.readAll(sr))
-            console.log(updates)
             const got = await service.adjust(updates, sr)
-            console.log(got)
             expect(got[0] == id)
             const result = await service.read(got[0], sr)
             expect(result.status).toStrictEqual(ContractStatus.Terminated)

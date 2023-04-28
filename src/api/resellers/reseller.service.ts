@@ -22,23 +22,7 @@ export class ResellerService implements CrudService<internal.Reseller> {
     ) {
     }
 
-    async create(reseller: internal.Reseller, sr: ServiceRequest): Promise<internal.Reseller> {
-        this.log.debug({message: 'create reseller', func: this.create.name, user: sr.user.username})
-        await this.validateContract(reseller)
-
-        const existingReseller = await this.resellerRepo.readByName(reseller.name, sr)
-        if (existingReseller != undefined) {
-            if (existingReseller.status != ResellerStatus.Terminated) {
-                throw new UnprocessableEntityException(this.i18n.t('errors.NAME_EXISTS', {args: {name: existingReseller.name}}))
-            }
-            await this.resellerRepo.renameReseller(existingReseller.id, existingReseller.name)
-        }
-        const result = await this.resellerRepo.create(reseller, sr)
-        await this.resellerRepo.createEmailTemplates(result.id)
-        return result
-    }
-
-    async createMany(resellers: internal.Reseller[], sr: ServiceRequest): Promise<internal.Reseller[]> {
+    async create(resellers: internal.Reseller[], sr: ServiceRequest): Promise<internal.Reseller[]> {
         for (const reseller of resellers) {
             await this.validateContract(reseller)
             const existingReseller = await this.resellerRepo.readByName(reseller.name, sr)
@@ -49,7 +33,7 @@ export class ResellerService implements CrudService<internal.Reseller> {
                 await this.resellerRepo.renameReseller(existingReseller.id, existingReseller.name)
             }
         }
-        const createdIds = await this.resellerRepo.createMany(resellers, sr)
+        const createdIds = await this.resellerRepo.create(resellers, sr)
         await this.resellerRepo.createEmailTemplates(createdIds)
 
         return await this.resellerRepo.readWhereInIds(createdIds)

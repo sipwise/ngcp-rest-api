@@ -23,20 +23,7 @@ export class CustomerContactService implements CrudService<internal.Contact> {
     ) {
     }
 
-    async create(contact: internal.Contact, sr: ServiceRequest): Promise<internal.Contact> {
-        this.log.debug({
-            message: 'create customer contact',
-            func: this.create.name,
-            user: sr.user.username,
-        })
-        if (sr.user.reseller_id_required) {
-            contact.reseller_id = sr.user.reseller_id
-        }
-        await this.resellerIdExists(contact.reseller_id, sr)
-        return await this.contactRepo.create(contact, sr)
-    }
-
-    async createMany(contacts: internal.Contact[], sr: ServiceRequest): Promise<internal.Contact[]> {
+    async create(contacts: internal.Contact[], sr: ServiceRequest): Promise<internal.Contact[]> {
         const now = new Date(Date.now())
         if (sr.user.reseller_id_required) {  // only fetch and validate reseller once if restricted to reseller_id
             await this.resellerIdExists(sr.user.reseller_id, sr)
@@ -52,7 +39,7 @@ export class CustomerContactService implements CrudService<internal.Contact> {
                 contact.modify_timestamp = now
             }
         }
-        const createdIds = await this.contactRepo.createMany(contacts, sr)
+        const createdIds = await this.contactRepo.create(contacts, sr)
         return await this.contactRepo.readWhereInIds(createdIds)
     }
 

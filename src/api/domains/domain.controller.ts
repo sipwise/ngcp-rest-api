@@ -77,7 +77,7 @@ export class DomainController extends CrudController<DomainCreateDto, DomainResp
         })
         const sr = new ServiceRequest(req)
         const domains = createDto.map(domain => domain.toInternal())
-        const created = await this.domainService.createMany(domains, sr)
+        const created = await this.domainService.create(domains, sr)
         return created.map((domain) => new DomainResponseDto(domain))
     }
 

@@ -20,17 +20,7 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
     private readonly log = new LoggerService(CustomerSpeedDialMariadbRepository.name)
 
     @HandleDbErrors
-    async create(entity: internal.CustomerSpeedDial, sr: ServiceRequest): Promise<internal.CustomerSpeedDial> {
-        const dbCSD = db.provisioning.VoipContractSpeedDial.create()
-        dbCSD.fromInternal(entity)
-
-        await db.provisioning.VoipContractSpeedDial.insert(dbCSD)
-
-        return dbCSD.toInternal()
-    }
-
-    @HandleDbErrors
-    async createMany(entities: internal.CustomerSpeedDial[], sr: ServiceRequest): Promise<number[]> {
+    async create(entities: internal.CustomerSpeedDial[], sr: ServiceRequest): Promise<number[]> {
         const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('csd')
         const values = entities.map(csd => new db.provisioning.VoipContractSpeedDial().fromInternal(csd))
         const result = await qb.insert().values(values).execute()

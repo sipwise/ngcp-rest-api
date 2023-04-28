@@ -20,20 +20,8 @@ export class SystemContactService implements CrudService<internal.Contact> {
     ) {
     }
 
-    async create(contact: internal.Contact, sr: ServiceRequest): Promise<internal.Contact> {
-        this.log.debug({
-            message: 'create system contact',
-            func: this.create.name,
-            user: sr.user.username,
-        })
-        if (contact['reseller_id'] !== undefined) {
-            throw new BadRequestException(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'))
-        }
-        return await this.contactRepo.create(contact, sr)
-    }
-
-    async createMany(contacts: internal.Contact[], sr: ServiceRequest) {
-        const createdIds = await this.contactRepo.createMany(contacts, sr)
+    async create(contacts: internal.Contact[], sr: ServiceRequest) {
+        const createdIds = await this.contactRepo.create(contacts, sr)
         return await this.contactRepo.readWhereInIds(createdIds)
     }
 

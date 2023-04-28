@@ -10,6 +10,7 @@ import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {HttpExceptionFilter} from '../../helpers/http-exception.filter'
 import {ValidateInputPipe} from '../../pipes/validate.pipe'
 import {AdminModule} from './admin.module'
+import {db} from '../../entities'
 
 describe('AdminController', () => {
     let app: INestApplication
@@ -35,7 +36,7 @@ describe('AdminController', () => {
 
         // TODO import other app configuration from bootstrap()
         // like interceptors, etc.
-        app.useGlobalPipes(new ValidateInputPipe())
+        app.useGlobalPipes(new ValidateInputPipe({whitelist: true, forbidNonWhitelisted: true}))
         app.useGlobalFilters(new HttpExceptionFilter())
 
         await app.init()
@@ -54,6 +55,16 @@ describe('AdminController', () => {
     it('db connection', () => {
         expect(appService.isDbInitialised).toBe(true)
         expect(appService.isDbAvailable).toBe(true)
+    })
+
+    it('should load db entities', async () => {
+        const admin = db.billing.Admin.create()
+        admin.is_active = true
+        admin.email = 'staticadmin@example.com'
+        admin.role_id = 1
+        admin.is_master = true
+
+        await db.billing.Admin.insert(admin)
     })
 
     it('mock authService.compareBcryptPassword', async () => {
@@ -213,22 +224,38 @@ describe('AdminController', () => {
 
         describe('Admins GET', () => {
             const tt = [
-                {username: 'system',
-                    password: 'system', want: 200, canSeeResellerId: true},
-                {username: 'adminmaster',
-                    password: 'adminmaster', want: 200, canSeeResellerId: true},
-                {username: 'admin',
-                    password: 'adminthere', want: 200, canSeeResellerId: true},
-                {username: 'resellermaster',
-                    password: 'resellermaster', want: 200, canSeeResellerId: false},
-                {username: 'reseller',
-                    password: 'reseller', want: 200, canSeeResellerId: false},
-                {username: 'ccareadmin',
-                    password: 'ccareadmin', want: 200, canSeeResellerId: true},
-                {username: 'ccare',
-                    password: 'ccarethere', want: 200, canSeeResellerId: false},
-                {username: 'lintercept',
-                    password: 'lintercept', want: 403, canSeeResellerId: false},
+                {
+                    username: 'system',
+                    password: 'system', want: 200, canSeeResellerId: true,
+                },
+                {
+                    username: 'adminmaster',
+                    password: 'adminmaster', want: 200, canSeeResellerId: true,
+                },
+                {
+                    username: 'admin',
+                    password: 'adminthere', want: 200, canSeeResellerId: true,
+                },
+                {
+                    username: 'resellermaster',
+                    password: 'resellermaster', want: 200, canSeeResellerId: false,
+                },
+                {
+                    username: 'reseller',
+                    password: 'reseller', want: 200, canSeeResellerId: false,
+                },
+                {
+                    username: 'ccareadmin',
+                    password: 'ccareadmin', want: 200, canSeeResellerId: true,
+                },
+                {
+                    username: 'ccare',
+                    password: 'ccarethere', want: 200, canSeeResellerId: false,
+                },
+                {
+                    username: 'lintercept',
+                    password: 'lintercept', want: 403, canSeeResellerId: false,
+                },
             ]
             for (const test of tt) {
                 it('finds all admins as role: ' + test.username, async () => {
@@ -511,14 +538,14 @@ describe('AdminController', () => {
                 .send({id: 1})
             expect(result.status).toEqual(400)
         })
-        it('fails if body and params are defined', async  () => {
+        it('fails if body and params are defined', async () => {
             const result = await request(app.getHttpServer())
                 .delete('/admins/2')
                 .set(...authHeader)
                 .send([2])
             expect(result.status).toEqual(400)
         })
-        it('fails if no body and no params are defined', async  () => {
+        it('fails if no body and no params are defined', async () => {
             const result = await request(app.getHttpServer())
                 .delete('/admins')
                 .set(...authHeader)

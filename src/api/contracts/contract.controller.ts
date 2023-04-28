@@ -75,7 +75,7 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
         })
         const sr = new ServiceRequest(req)
         const contracts = createDto.map(contract => contract.toInternal())
-        const created = await this.contractService.createMany(contracts, sr)
+        const created = await this.contractService.create(contracts, sr)
         return created.map((contract) => new ContractResponseDto(contract))
     }
 

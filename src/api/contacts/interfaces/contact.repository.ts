@@ -4,7 +4,7 @@ import {ContactOptions} from './contact-options.interface'
 import {Dictionary} from '../../../helpers/dictionary.helper'
 
 export interface ContactRepository {
-    create(entity: internal.Contact, sr: ServiceRequest): Promise<internal.Contact>
+    create(contacts: internal.Contact[], sr: ServiceRequest): Promise<number[]>
 
     delete(ids: number[], sr: ServiceRequest): Promise<number[]>
 

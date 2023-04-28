@@ -17,24 +17,7 @@ export class ContractMariadbRepository implements ContractRepository {
     private readonly log = new LoggerService(ContractMariadbRepository.name)
 
     @HandleDbErrors
-    async create(entity: internal.Contract, sr: ServiceRequest): Promise<internal.Contract> {
-        this.log.debug({
-            message: 'create contract',
-            func: this.create.name,
-            user: sr.user.username,
-        })
-        const contract = new db.billing.Contract().fromInternal(entity)
-
-        const now = new Date(Date.now())
-        contract.create_timestamp = now
-        contract.modify_timestamp = now
-
-        await db.billing.Contract.insert(contract)
-        return contract.toInternal()
-    }
-
-    @HandleDbErrors
-    async createMany(contracts: internal.Contract[], sr: ServiceRequest): Promise<number[]> {
+    async create(contracts: internal.Contract[], sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.Contract.createQueryBuilder('contract')
         const values = contracts.map(contract => new db.billing.Contract().fromInternal(contract))
         const result = await qb.insert().values(values).execute()

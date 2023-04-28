@@ -46,20 +46,7 @@ export class ContractService implements CrudService<internal.Contract> {
         return await this.contractsRepo.update(updates, sr)
     }
 
-    async create(contract: internal.Contract, sr: ServiceRequest): Promise<internal.Contract> {
-        this.log.debug({message: 'create contract', func: this.create.name, user: sr.user.username})
-        await this.validateSystemContact(contract, sr)
-        await this.setProductId(contract, sr)
-        // TODO: Utils::BillingMappings::prepare_billing_mappings
-        // TODO: Utils::Contract::is_peering_reseller_product && Utils::BillingMappings::check_prepaid_profiles_exist
-        // TODO: Utils::BillingMappings::append_billing_mappings
-        // TODO: Utils::ProfilePackages::create_initial_contract_balances
-
-        return this.contractsRepo.create(contract, sr)
-    }
-
-    async createMany(contracts: internal.Contract[], sr: ServiceRequest): Promise<internal.Contract[]> {
-        // TODO: how to do setProductId and validateSystemContact for bulk?
+    async create(contracts: internal.Contract[], sr: ServiceRequest): Promise<internal.Contract[]> {
         const now = new Date(Date.now())
         for (const contract of contracts) {
             await this.validateSystemContact(contract, sr)
@@ -67,7 +54,7 @@ export class ContractService implements CrudService<internal.Contract> {
             contract.create_timestamp = now
             contract.modify_timestamp = now
         }
-        const createdIds = await this.contractsRepo.createMany(contracts, sr)
+        const createdIds = await this.contractsRepo.create(contracts, sr)
         return await this.contractsRepo.readWhereInIds(createdIds, sr)
     }
 

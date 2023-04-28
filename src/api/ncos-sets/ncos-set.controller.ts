@@ -75,7 +75,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
         })
         const sr = new ServiceRequest(req)
         const setLevels = await Promise.all(createDto.map(async setLevel => setLevel.toInternal()))
-        const created = await this.ncosSetService.createLevelMany(id, setLevels, sr)
+        const created = await this.ncosSetService.createLevel(id, setLevels, sr)
         return await Promise.all(created.map(async setLevel => new NCOSSetLevelResponseDto(setLevel)))
     }
 
@@ -183,7 +183,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
         })
         const sr = new ServiceRequest(req)
         const sets = await Promise.all(createDto.map(async set => set.toInternal()))
-        const created = await this.ncosSetService.createMany(sets, sr)
+        const created = await this.ncosSetService.create(sets, sr)
         return await Promise.all(created.map(async set => new NCOSSetResponseDto(req.url, set)))
     }
 

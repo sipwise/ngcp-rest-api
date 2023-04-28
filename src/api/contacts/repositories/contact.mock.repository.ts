@@ -47,12 +47,15 @@ export class ContactMockRepository implements ContactRepository {
         }
     }
 
-    create(entity: internal.Contact, sr: ServiceRequest): Promise<internal.Contact> {
-        const nextId = this.getNextId(this.contactDB)
-        entity.id = nextId
-        this.contactDB[nextId] = entity
-
-        return Promise.resolve(entity)
+    create(contacts: internal.Contact[], sr: ServiceRequest): Promise<number[]> {
+        const ids: number[] = []
+        for (const contact of contacts) {
+            const nextId = this.getNextId(this.contactDB)
+            contact.id = nextId
+            ids.push(nextId)
+            this.contactDB[nextId] = contact
+        }
+        return Promise.resolve(ids)
     }
 
     delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
