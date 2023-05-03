@@ -41,7 +41,7 @@ export class ParseIdDictionary implements PipeTransform {
         })
         const {
             exceptionFactory,
-            errorHttpStatusCode = HttpStatus.BAD_REQUEST,
+            errorHttpStatusCode = HttpStatus.UNPROCESSABLE_ENTITY,
         } = options
         this.exceptionFactory =
             exceptionFactory ||
@@ -49,7 +49,9 @@ export class ParseIdDictionary implements PipeTransform {
     }
 
     async transform(value: any, metadata: ArgumentMetadata): Promise<Dictionary<unknown>> {
-        const parseId = new ParseIntPipe(this.options)
+        const parseIdOptions = this.options
+        parseIdOptions.exceptionFactory = (error => new HttpErrorByCode[HttpStatus.BAD_REQUEST](error))  // set exception factory to throw BAD_REQUEST when id cannot be parsed
+        const parseId = new ParseIntPipe(parseIdOptions)
         if (typeof value != 'object')
             throw this.exceptionFactory('Validation failed (parsable dictionary expected)')
 

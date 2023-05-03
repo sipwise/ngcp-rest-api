@@ -16,6 +16,7 @@ import {isUndefined} from 'util'
 import {formatValidationErrors} from '../helpers/errors.helper'
 import {obfuscatePasswordValidationErrors} from '../helpers/password-obfuscator.helper'
 import {LoggerService} from '../logger/logger.service'
+import {Dictionary} from '../helpers/dictionary.helper'
 
 export interface ValidationPipeOptions extends ValidatorOptions {
     transform?: boolean;
@@ -86,6 +87,16 @@ export class ValidateInputPipe implements PipeTransform<any> {
         )
 
         const originalEntity = entity
+
+        /**
+         *  Dictionary is an indexed class in which case the properties cannot be
+         *  annotated with class-validator decorators. This causes the value to
+         *  always be unknown and fail validation in validate(entity)
+         *
+         *  Dictionary validation is done in ParseIdDictionaryPipe and is skipped here
+         */
+        if (entity instanceof Dictionary)
+            return entity
 
         const errors = await validate(entity, this.validatorOptions)
         if (errors.length > 0) {
