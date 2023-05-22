@@ -4,7 +4,7 @@ import {ServiceRequest} from './service-request.interface'
 import {Dictionary} from '../helpers/dictionary.helper'
 
 export interface CrudService<InternalEntity> {
-    create?(dto: InternalEntity[], sr: ServiceRequest, file?: Express.Multer.File): Promise<InternalEntity[]>
+    create?(entities: InternalEntity[], sr: ServiceRequest, file?: Express.Multer.File): Promise<InternalEntity[]>
 
     readAll(sr: ServiceRequest): Promise<[InternalEntity[], number]>
 

@@ -168,7 +168,7 @@ export class ContactMariadbRepository implements ContactRepository {
     }
 
     private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contact>, options: ContactOptions) {
-        if (options.filterBy.resellerId) {
+        if (options.filterBy && options.filterBy.resellerId) {
             qb.andWhere('contact.reseller_id = :reseller_id', {reseller_id: options.filterBy.resellerId})
         }
     }

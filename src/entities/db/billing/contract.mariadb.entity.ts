@@ -5,7 +5,10 @@ import {Product} from './product.mariadb.entity'
 import {ContractStatus, ContractType} from '../../internal/contract.internal.entity'
 import {internal} from '../../../entities'
 import {VoipSubscriber} from './voip-subscriber.mariadb.entity'
-import {VoipContractSpeedDial} from '../provisioning/voip-contract-speed-dial.mariadb.entity'
+import {VoipContractSpeedDial} from '../provisioning'
+import {CustomerType} from '../../internal/customer.internal.entity'
+import {BillingMapping} from './billing-mapping.mariadb.entity'
+import {ContractBillingProfileNetwork} from './contract-billing-profile-network.mariadb.entity'
 
 @Entity({
     name: 'contracts',
@@ -111,9 +114,9 @@ export class Contract extends BaseEntity {
         invoice_template_id?: number
 
     @Column({
-        type: 'boolean',
+        type: 'decimal',
     })
-        vat_rate!: boolean
+        vat_rate!: number
 
     @Column({
         type: 'boolean',
@@ -140,7 +143,10 @@ export class Contract extends BaseEntity {
         product?: Product
 
     @OneToMany(() => VoipContractSpeedDial, csd => csd.contract_id)
-    voipContractSpeedDials?: VoipContractSpeedDial[]
+        voipContractSpeedDials?: VoipContractSpeedDial[]
+
+    @OneToMany(() => ContractBillingProfileNetwork, billingProfileNetwork => billingProfileNetwork.contract, {eager: true})
+        billingMappings?: ContractBillingProfileNetwork[]
 
     toInternal(): internal.Contract {
         const contract = internal.Contract.create({
@@ -166,6 +172,7 @@ export class Contract extends BaseEntity {
             vat_rate: this.vat_rate,
         })
         contract.type = this.product != undefined ? this.product.class as unknown as ContractType : undefined
+
         return contract
     }
 
@@ -190,6 +197,57 @@ export class Contract extends BaseEntity {
         this.subscriber_email_template_id = contract.subscriber_email_template_id
         this.terminate_timestamp = contract.terminate_timestamp
         this.vat_rate = contract.vat_rate
+
+        return this
+    }
+    toInternalCustomer(): internal.Customer {
+        const customer = internal.Customer.create({
+            activateTimestamp: this.activate_timestamp,
+            addVat: this.add_vat,
+            contactId: this.contact_id,
+            createTimestamp: this.create_timestamp,
+            customerId: this.customer_id,
+            externalId: this.external_id,
+            id: this.id,
+            invoiceEmailTemplateId: this.invoice_email_template_id,
+            invoiceTemplateId: this.invoice_template_id,
+            maxSubscribers: this.max_subscribers,
+            modifyTimestamp: this.modify_timestamp,
+            orderId: this.order_id,
+            passresetEmailTemplateId: this.passreset_email_template_id,
+            productId: this.product_id,
+            profilePackageId: this.profile_package_id,
+            sendInvoice: this.send_invoice,
+            status: this.status,
+            subscriberEmailTemplateId: this.subscriber_email_template_id,
+            terminateTimestamp: this.terminate_timestamp,
+            vatRate: this.vat_rate,
+        })
+        customer.type = this.product != undefined ? this.product.class as unknown as CustomerType : undefined
+        return customer
+    }
+
+    fromInternalCustomer(customer: internal.Customer): Contract {
+        this.activate_timestamp = customer.activateTimestamp
+        this.add_vat = customer.addVat
+        this.contact_id = customer.contactId
+        this.create_timestamp = customer.createTimestamp
+        this.customer_id = customer.customerId
+        this.external_id = customer.externalId
+        this.id = customer.id
+        this.invoice_email_template_id = customer.invoiceEmailTemplateId
+        this.invoice_template_id = customer.invoiceTemplateId
+        this.max_subscribers = customer.maxSubscribers
+        this.modify_timestamp = customer.modifyTimestamp
+        this.order_id = customer.orderId
+        this.passreset_email_template_id = customer.passresetEmailTemplateId
+        this.product_id = customer.productId
+        this.profile_package_id = customer.profilePackageId
+        this.send_invoice = customer.sendInvoice
+        this.status = customer.status
+        this.subscriber_email_template_id = customer.subscriberEmailTemplateId
+        this.terminate_timestamp = customer.terminateTimestamp
+        this.vat_rate = customer.vatRate
 
         return this
     }

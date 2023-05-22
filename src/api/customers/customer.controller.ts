@@ -1,27 +1,30 @@
-import {Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {Body, Controller, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
-import {CustomerCreateDto} from './dto/customer-create.dto'
-import {CustomerResponseDto} from './dto/customer-response.dto'
-import {Operation} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, Operation, patchToEntity} from '../../helpers/patch.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
-import {CustomerService} from './customer.service'
 import {JournalService} from '../journals/journal.service'
 import {Request} from 'express'
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
-import {number} from 'yargs'
 import {PatchDto} from '../../dto/patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
-import {CustomerSearchDto} from './dto/customer-search.dto'
 import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
-import {ParamOrBody} from '../../decorators/param-or-body.decorator'
+import {CustomerService} from './customer.service'
+import {CustomerResponseDto} from './dto/customer-response.dto'
+import {CustomerRequestDto} from './dto/customer-request.dto'
+import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
+import {CustomerSearchDto} from './dto/customer-search.dto'
+import {Dictionary} from '../../helpers/dictionary.helper'
+import {ApiPutBody} from '../../decorators/api-put-body.decorator'
+import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
+import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
+import {internal} from '../../entities'
 
 const resourceName = 'customers'
 
@@ -35,11 +38,13 @@ const resourceName = 'customers'
 @ApiTags('Customer')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
-export class CustomerController extends CrudController<CustomerCreateDto, CustomerResponseDto> {
+export class CustomerController extends CrudController<CustomerRequestDto, CustomerResponseDto> {
     private readonly log = new LoggerService(CustomerController.name)
+
     constructor(
         private readonly customerService: CustomerService,
         private readonly journalService: JournalService,
+        @Inject(forwardRef(() => ExpandHelper))
         private readonly expander: ExpandHelper,
     ) {
         super(resourceName, customerService, journalService)
@@ -47,12 +52,24 @@ export class CustomerController extends CrudController<CustomerCreateDto, Custom
 
     @Post()
     @ApiCreatedResponse(CustomerResponseDto)
-    async create(entity: CustomerCreateDto[], req: Request): Promise<CustomerResponseDto> {
-        this.log.debug({message: 'create customer', func: this.create.name, url: req.url, method: req.method})
+    @ApiBody({
+        type: CustomerRequestDto,
+        isArray: true,
+    })
+    async create(
+        @Body(new ParseOneOrManyPipe({items: CustomerRequestDto})) createDto: CustomerRequestDto[],
+        @Req() req: Request,
+    ): Promise<CustomerResponseDto[]> {
+        this.log.debug({
+            message: 'create customers',
+            func: this.create.name,
+            url: req.url,
+            method: req.method,
+        })
         const sr = new ServiceRequest(req)
-        const response = await this.customerService.create(entity[0], sr)
-        await this.journalService.writeJournal(sr, response.id, response)
-        return response
+        const customers = createDto.map(customer => customer.toInternal())
+        const created = await this.customerService.create(customers, sr)
+        return created.map((customer) => new CustomerResponseDto(customer))
     }
 
     @Get()
@@ -61,9 +78,10 @@ export class CustomerController extends CrudController<CustomerCreateDto, Custom
     async readAll(req): Promise<[CustomerResponseDto[], number]> {
         this.log.debug({message: 'fetch all customers', func: this.readAll.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const [responseList, totalCount] =
+        const [customers, totalCount] =
             await this.customerService.readAll(sr)
-        if (sr.query.expand) {
+        const responseList = customers.map(customer => new CustomerResponseDto(customer))
+        if (req.query.expand) {
             const customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
             await this.expander.expandObjects(responseList, customerSearchDtoKeys, sr)
         }
@@ -76,25 +94,50 @@ export class CustomerController extends CrudController<CustomerCreateDto, Custom
     })
     async read(@Param('id', ParseIntPipe) id: number, req): Promise<CustomerResponseDto> {
         this.log.debug({message: 'fetch customer by id', func: this.read.name, url: req.url, method: req.method})
-        const sr = new ServiceRequest(req)
-        const responseItem = await this.customerService.read(id, sr)
-        if (sr.query.expand && !req.isRedirected) {
+        const customer = await this.customerService.read(id, new ServiceRequest(req))
+        const response = new CustomerResponseDto(customer)
+        if (req.query.expand && !req.isRedirected) {
             const customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
-            await this.expander.expandObjects(responseItem, customerSearchDtoKeys, sr)
+            await this.expander.expandObjects(response, customerSearchDtoKeys, req)
         }
-        return responseItem
+        return response
     }
 
     @Put(':id')
     @ApiOkResponse({
         type: CustomerResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, dto: CustomerCreateDto, req): Promise<CustomerResponseDto> {
+    async update(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() update: CustomerRequestDto,
+        @Req() req,
+    ): Promise<CustomerResponseDto> {
         this.log.debug({message: 'update customer by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const response = await this.customerService.update(id, dto, sr)
+        const updates = new Dictionary<internal.Customer>()
+        updates[id] = update.toInternal({id: id})
+
+        await this.customerService.update(updates, sr)
+
+        const response = new CustomerResponseDto(await this.customerService.read(id, sr))
         await this.journalService.writeJournal(sr, id, response)
         return response
+    }
+
+    @Put()
+    @ApiPutBody(CustomerRequestDto)
+    async updateMany(
+        @Body(new ParseIdDictionary({items: CustomerRequestDto})) updates: Dictionary<CustomerRequestDto>,
+        @Req() req,
+    ) {
+        this.log.debug({message: 'update customers bulk', func: this.updateMany.name, url: req.url, method: req.method})
+        const sr = new ServiceRequest(req)
+        const customers = new Dictionary<internal.Customer>()
+        for (const id of Object.keys(updates)) {
+            const dto: CustomerRequestDto = updates[id]
+            customers[id] = dto.toInternal({id: parseInt(id)})
+        }
+        return await this.customerService.update(customers, sr)
     }
 
     @Patch(':id')
@@ -105,27 +148,39 @@ export class CustomerController extends CrudController<CustomerCreateDto, Custom
     @ApiBody({
         type: [PatchDto],
     })
-    async adjust(@Param('id', ParseIntPipe) id: number, patch: Operation | Operation[], req): Promise<CustomerResponseDto> {
+    async adjust(
+        @Param('id', ParseIntPipe) id: number,
+        @Body(new ParsePatchPipe()) patch: Operation[],
+        @Req() req,
+    ): Promise<CustomerResponseDto> {
         this.log.debug({message: 'patch customer by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const response = await this.customerService.adjust(id, patch, sr)
+
+        const oldEntity = await this.customerService.read(id, sr)
+        const entity = await patchToEntity(oldEntity, patch, CustomerRequestDto)
+        const update = new Dictionary<internal.Customer>(id.toString(), entity)
+
+        const ids = await this.customerService.update(update, sr)
+        const response = new CustomerResponseDto(await this.customerService.read(ids[0], sr))
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
 
-    @Delete(':id?')
-    @ApiOkResponse({
-        type: number,
-    })
-    async delete(
-        @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
+    @Patch()
+    @ApiConsumes('application/json-patch+json')
+    @ApiPutBody(PatchDto)
+    async adjustMany(
+        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
-    ): Promise<number[]> {
-        this.log.debug({message: 'delete customer by id', func: this.delete.name, url: req.url, method: req.method})
+    ) {
         const sr = new ServiceRequest(req)
-        const response = await this.customerService.delete(ids[0], sr)
-        await this.journalService.writeJournal(sr, ids[0], {})
-        return [response]
+        const updates = new Dictionary<internal.Customer>()
+
+        for (const id of Object.keys(patches)) {
+            const oldEntity = await this.customerService.read(+id, sr)
+            updates[id] = await patchToEntity(oldEntity, patches[id], CustomerRequestDto)
+        }
+        return await this.customerService.update(updates, sr)
     }
 
     @Get(':id/journal')
@@ -133,7 +188,12 @@ export class CustomerController extends CrudController<CustomerCreateDto, Custom
         type: [JournalResponseDto],
     })
     async journal(@Param('id') id: number | string, req) {
-        this.log.debug({message: 'fetch customer journal by id', func: this.journal.name, url: req.url, method: req.method})
+        this.log.debug({
+            message: 'fetch customer journal by id',
+            func: this.journal.name,
+            url: req.url,
+            method: req.method,
+        })
         return super.journal(id, req)
     }
 }

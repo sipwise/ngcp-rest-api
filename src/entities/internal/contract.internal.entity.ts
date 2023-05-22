@@ -1,6 +1,8 @@
 export enum ContractType {
     SipPeering = 'sippeering',
-    Reseller = 'reseller'
+    Reseller = 'reseller',
+    SipAccount = 'sipaccount',
+    PbxAccount = 'pbxaccount',
 }
 
 export enum ContractStatus {
@@ -39,7 +41,7 @@ interface ContractInternalEntity {
     subscriber_email_template_id?: number
     terminate_timestamp?: Date
     type?: ContractType
-    vat_rate?: boolean
+    vat_rate?: number
 }
 
 export class Contract implements ContractInternalEntity {
@@ -65,7 +67,7 @@ export class Contract implements ContractInternalEntity {
     subscriber_email_template_id?: number
     terminate_timestamp?: Date
     type: ContractType
-    vat_rate: boolean
+    vat_rate: number
 
     static create(data: ContractInternalEntity): Contract {
         const contract = new Contract()

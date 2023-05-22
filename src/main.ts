@@ -36,7 +36,7 @@ async function bootstrap() {
 
     createSwaggerDocument(app, api_prefix)
 
-    app.useGlobalPipes(new ValidateInputPipe({ forbidUnknownValues: false, whitelist: true, forbidNonWhitelisted: true }))
+    app.useGlobalPipes(new ValidateInputPipe({ forbidUnknownValues: false, whitelist: true, forbidNonWhitelisted: true, transform: true}))
     app.useGlobalFilters(new HttpExceptionFilter())
 
     app.useGlobalInterceptors(
