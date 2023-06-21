@@ -13,4 +13,6 @@ export class NCOSSet {
     name: string
 
     description?: string
+
+    exposeToCustomer: boolean
 }

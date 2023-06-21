@@ -13,6 +13,7 @@ import {Dictionary} from '../../../helpers/dictionary.helper'
 
 interface FilterBy {
     resellerId?: number
+    exposeToCustomer?: boolean
 }
 
 @Injectable()
@@ -166,6 +167,9 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
         if (filterBy) {
             if (filterBy.resellerId) {
                 qb.andWhere('reseller_id = :id', {id: filterBy.resellerId})
+            }
+            if (filterBy.exposeToCustomer) {
+                qb.andWhere('expose_to_customer = :etc', {etc: filterBy.exposeToCustomer})
             }
         }
     }

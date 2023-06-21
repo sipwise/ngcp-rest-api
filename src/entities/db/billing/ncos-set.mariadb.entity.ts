@@ -30,6 +30,11 @@ export class NCOSSet extends BaseEntity {
     })
         description: string
 
+    @Column({
+        type: 'boolean',
+    })
+        expose_to_customer: boolean
+
     @OneToMany(type => NCOSSetLevel, ncosSetLevel => ncosSetLevel.ncos_set_id)
     setLevels?: NCOSSetLevel[]
 
@@ -39,6 +44,7 @@ export class NCOSSet extends BaseEntity {
         entity.resellerId = this.reseller_id
         entity.name = this.name
         entity.description = this.description
+        entity.exposeToCustomer = this.expose_to_customer
         return entity
     }
 
@@ -47,6 +53,7 @@ export class NCOSSet extends BaseEntity {
         this.reseller_id = entity.resellerId
         this.name = entity.name
         this.description = entity.description
+        this.expose_to_customer = entity.exposeToCustomer
         return this
     }
 }

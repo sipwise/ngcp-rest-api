@@ -23,6 +23,10 @@ export class NCOSSetResponseDto {
     @ApiProperty()
         description: string
 
+    @IsOptional()
+    @ApiPropertyOptional()
+        expose_to_customer: boolean
+
     @IsNotEmpty()
     @ApiProperty()
         levels: NCOSSetLevelReference
@@ -32,6 +36,7 @@ export class NCOSSetResponseDto {
         this.reseller_id = entity.resellerId
         this.name = entity.name
         this.description = entity.description
+        this.expose_to_customer = entity.exposeToCustomer
         this.levels = {
             type: 'array',
             link: prefix + '/' + entity.id + '/levels'

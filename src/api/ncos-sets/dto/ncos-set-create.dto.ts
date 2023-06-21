@@ -15,11 +15,16 @@ export class NCOSSetCreateDto {
     @ApiProperty({description: 'NCOS set description', example: 'For all subscribers'})
         description: string
 
+    @IsOptional()
+    @ApiPropertyOptional({description: 'NCOS set expose to customer', example: 'true'})
+        expose_to_customer?: boolean
+
     toInternal(): internal.NCOSSet {
         const entity = new internal.NCOSSet()
         entity.resellerId = this.reseller_id
         entity.name = this.name
         entity.description = this.description
+        entity.exposeToCustomer = this.expose_to_customer
 
         return entity
     }

@@ -187,6 +187,12 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
         return await Promise.all(created.map(async set => new NCOSSetResponseDto(req.url, set)))
     }
 
+    @Auth(
+        RbacRole.system,
+        RbacRole.admin,
+        RbacRole.reseller,
+        RbacRole.subscriberadmin,
+    )
     @Get()
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(NCOSSetResponseDto)
@@ -204,6 +210,12 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
         return [responseList, totalCount]
     }
 
+    @Auth(
+        RbacRole.system,
+        RbacRole.admin,
+        RbacRole.reseller,
+        RbacRole.subscriberadmin,
+    )
     @Get(':id')
     @ApiOkResponse({
         type: NCOSSetResponseDto,
