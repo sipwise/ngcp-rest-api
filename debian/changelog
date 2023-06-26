@@ -1,3 +1,16 @@
+ngcp-rest-api (11.4.1.0+0~mr11.4.1.0) unstable; urgency=medium
+
+  [ Michael Berger ]
+  * [9a02b0c] MT#57222 improve README file
+  * [f3bc413] MT#57211 forbid unknown values in request body
+  * [cd32652] MT#57314 improve internal service structure
+  * [11d9a82] MT#57345 skip dictionary in global validation pipe
+
+  [ Kirill Solomko ]
+  * [655da43] MT#57580 ncos/sets subscriberadmin access and expose_to_customer
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 26 Jun 2023 14:11:21 +0200
+
 ngcp-rest-api (11.4.0.0+0~mr11.4.0.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
