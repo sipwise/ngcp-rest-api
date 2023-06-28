@@ -106,6 +106,49 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
         return ids
     }
 
+    async revokeNCOSSetPreferences(setIds: number[]): Promise<void> {
+        const preference = await db.provisioning.VoipPreference.createQueryBuilder()
+            .where('attribute = :attribute', { attribute: 'ncos_set_id' })
+            .getOneOrFail()
+        await db.provisioning.VoipContractPreference.createQueryBuilder()
+              .delete()
+              .where('attribute_id = :id', { id: preference.id })
+              .andWhere('value in (:...ids)', { ids: setIds })
+              .execute()
+        await db.provisioning.VoipUsrPreference.createQueryBuilder()
+              .delete()
+              .where('attribute_id = :id', { id: preference.id })
+              .andWhere('value in (:...ids)', { ids: setIds })
+              .execute()
+    }
+
+    async deleteNCOSSetPreferences(setIds: number[]): Promise<void> {
+        const preferences = await db.provisioning.VoipPreference.createQueryBuilder()
+            .where('attribute in (:...attributes)', { attributes: ['ncos_set_id', 'adm_ncos_set_id','adm_cf_ncos_set_id'] })
+            .getMany()
+        const attributeIds = preferences.map(p => p.id)
+        await db.provisioning.VoipContractPreference.createQueryBuilder()
+              .delete()
+              .where('attribute_id in (:...attributeIds)', { attributeIds: [attributeIds] })
+              .andWhere('value in (:...ids)', { ids: setIds })
+              .execute()
+        await db.provisioning.VoipDomPreference.createQueryBuilder()
+              .delete()
+              .where('attribute_id in (:...attributeIds)', { attributeIds: [attributeIds] })
+              .andWhere('value in (:...ids)', { ids: setIds })
+              .execute()
+        await db.provisioning.VoipProfPreference.createQueryBuilder()
+              .delete()
+              .where('attribute_id in (:...attributeIds)', { attributeIds: [attributeIds] })
+              .andWhere('value in (:...ids)', { ids: setIds })
+              .execute()
+        await db.provisioning.VoipUsrPreference.createQueryBuilder()
+              .delete()
+              .where('attribute_id in (:...attributeIds)', { attributeIds: [attributeIds] })
+              .andWhere('value in (:...ids)', { ids: setIds })
+              .execute()
+    }
+
     @HandleDbErrors
     async createLevel(entities: internal.NCOSSetLevel[], sr: ServiceRequest): Promise<internal.NCOSSetLevel[]> {
         const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')

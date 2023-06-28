@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req, UnprocessableEntityException} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'helpers/patch.helper'
@@ -29,8 +29,9 @@ import {internal} from '../../entities'
 import {ApiPutBody} from '../../decorators/api-put-body.decorator'
 import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {Dictionary} from '../../helpers/dictionary.helper'
-import {Operation as PatchOperation} from '../../helpers/patch.helper'
+import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
+import {validateOrReject} from 'class-validator'
 
 const resourceName = 'ncos/sets'
 
@@ -290,11 +291,22 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const updates = new Dictionary<Operation[]>()
-        updates[id] = patch
-        const ids = await this.ncosSetService.adjust(updates, sr)
-        const entity = await this.ncosSetService.read(ids[0], sr)
-        const response = new NCOSSetResponseDto(req.url, entity)
+
+        const update = new Dictionary<internal.NCOSSet>()
+
+        const oldEntity = await this.ncosSetService.read(id, sr)
+        const dto: NCOSSetUpdateDto = applyPatch(new NCOSSetUpdateDto(oldEntity), patch).newDocument
+        const entity: internal.NCOSSet = Object.assign(oldEntity, dto.toInternal(id))
+        try {
+            await validateOrReject(entity)
+        } catch (e) {
+            throw new UnprocessableEntityException(e)
+        }
+        update[id] = entity
+
+        const ids = await this.ncosSetService.update(update, sr)
+        const updatedEntity = await this.ncosSetService.read(ids[0], sr)
+        const response = new NCOSSetResponseDto(req.url, updatedEntity)
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
@@ -303,11 +315,26 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     async adjustMany(
-        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
     ) {
         const sr = new ServiceRequest(req)
-        return await this.ncosSetService.adjust(updates, sr)
+
+        const updates = new Dictionary<internal.NCOSSet>()
+
+        for (const id of Object.keys(patches)) {
+            const oldEntity = await this.ncosSetService.read(+id, sr)
+            const dto: NCOSSetUpdateDto = applyPatch(new NCOSSetUpdateDto(oldEntity), patches[id]).newDocument
+            const entity: internal.NCOSSet = Object.assign(oldEntity, dto.toInternal(+id))
+            try {
+                await validateOrReject(entity)
+            } catch (e) {
+                throw new UnprocessableEntityException(e)
+            }
+            updates[id] = entity
+        }
+
+        return await this.ncosSetService.update(updates, sr)
     }
 
     @Delete(':id?')

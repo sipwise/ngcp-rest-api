@@ -47,29 +47,16 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
 
     async update(updates: Dictionary<internal.NCOSSet>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
+        let revokes: number[] = []
         for (const id of ids) {
             const entity = updates[id]
             await this.checkPermissions(entity.resellerId, sr)
-        }
-        return await this.ncosSetRepo.update(updates, sr)
-    }
-
-    async adjust(patches: Dictionary<PatchOperation[]>, sr: ServiceRequest): Promise<number[]> {
-        const ids = Object.keys(patches).map(id => parseInt(id))
-
-        const updates = new Dictionary<internal.NCOSSet>()
-
-        for (const id of ids) {
             const oldEntity = await this.ncosSetRepo.readById(id, sr)
-            const entity: internal.NCOSSet = applyPatch(oldEntity, patches[id]).newDocument
-            await this.checkPermissions(entity.resellerId, sr)
-            try {
-                await validateOrReject(entity)
-            } catch (e) {
-                throw new UnprocessableEntityException(e)
-            }
-            updates[id] = entity
+            if (oldEntity.exposeToCustomer && !entity.exposeToCustomer)
+                revokes.push(id)
         }
+        if (revokes.length)
+            await this.ncosSetRepo.revokeNCOSSetPreferences(revokes)
         return await this.ncosSetRepo.update(updates, sr)
     }
 
@@ -80,6 +67,7 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
         for (const set of sets) {
             await this.checkPermissions(set.resellerId, sr)
         }
+        await this.ncosSetRepo.deleteNCOSSetPreferences(ids)
         return await this.ncosSetRepo.delete(ids, sr)
     }
 
@@ -112,9 +100,13 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
         return await this.ncosSetRepo.deleteLevel(id, levelId, sr)
     }
 
-    private async checkPermissions(reseller_id: number, sr: ServiceRequest): Promise<void> {
-        if (sr.user.reseller_id_required && sr.user.reseller_id != reseller_id) {
+    private async checkPermissions(resellerId: number, sr: ServiceRequest): Promise<void> {
+        if (sr.user.resellerId && sr.user.reseller_id != resellerId) {
             throw new NotFoundException()
         }
+    }
+
+    private async revokeNCOSSetPreferences(setIds: number[]): Promise<void> {
+        await this.ncosSetRepo.revokeNCOSSetPreferences(setIds)
     }
 }
