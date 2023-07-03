@@ -1,7 +1,8 @@
 import {ApiProperty} from '@nestjs/swagger'
+import {ResponseDto} from '../../../dto/response.dto'
 import {internal} from '../../../entities'
 
-export class PbxGroupMember {
+export class PbxGroupMember implements ResponseDto {
     extension: string
     subscriber_id: number
 }
@@ -25,11 +26,11 @@ export class PbxGroupResponseDto {
         this.hunt_timeout = pbxGroup.huntTimeout
         this.id = pbxGroup.id
         this.members = pbxGroup.members
-                        ? pbxGroup.members.map(member => ({
-                            extension: member.extension,
-                            subscriber_id: member.subscriberId,
-                          }))
-                        : []
+            ? pbxGroup.members.map(member => ({
+                extension: member.extension,
+                subscriber_id: member.subscriberId,
+            }))
+            : []
         this.name = pbxGroup.name
     }
 }

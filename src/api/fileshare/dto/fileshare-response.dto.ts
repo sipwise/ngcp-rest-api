@@ -1,4 +1,6 @@
-export class FileshareResponseDto {
+import {ResponseDto} from '../../../dto/response.dto'
+
+export class FileshareResponseDto implements ResponseDto {
     id: string
     name: string
     mime_type: string

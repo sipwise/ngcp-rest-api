@@ -7,7 +7,7 @@ import {LoggerService} from '../../logger/logger.service'
 import {ClearCallCounterService} from './clear-call-counter.service'
 import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {ClearCallCounterCreateDto} from './dto/clear-call-counter-create.dto'
+import {ClearCallCounterRequestDto} from './dto/clear-call-counter-request.dto'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 
 const resourceName = 'clearcallcounters'
@@ -15,7 +15,7 @@ const resourceName = 'clearcallcounters'
 @Auth(RbacRole.system)
 @ApiTags('ClearCallCounter')
 @Controller(resourceName)
-export class ClearCallCounterController extends CrudController<ClearCallCounterCreateDto, never> {
+export class ClearCallCounterController extends CrudController<ClearCallCounterRequestDto, never> {
     private readonly log = new LoggerService(ClearCallCounterController.name)
 
     constructor(
@@ -26,10 +26,10 @@ export class ClearCallCounterController extends CrudController<ClearCallCounterC
 
     @Post()
     @ApiBody({
-        type: ClearCallCounterCreateDto,
+        type: ClearCallCounterRequestDto,
         isArray: true,
     })
-    async create(@Body(new ParseOneOrManyPipe({items: ClearCallCounterCreateDto})) createDto: ClearCallCounterCreateDto[], req) {
+    async create(@Body(new ParseOneOrManyPipe({items: ClearCallCounterRequestDto})) createDto: ClearCallCounterRequestDto[], req) {
         this.log.debug({
             message: 'clear call counters',
             func: this.create.name,

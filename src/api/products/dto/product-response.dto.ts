@@ -1,8 +1,9 @@
 import {ProductClass} from '../../../entities/internal/product.internal.entity'
 import {internal} from '../../../entities'
 import {ApiProperty} from '@nestjs/swagger'
+import {ResponseDto} from '../../../dto/response.dto'
 
-export class ProductResponseDto {
+export class ProductResponseDto implements ResponseDto {
     @ApiProperty()
         id: number
     @ApiProperty()

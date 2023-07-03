@@ -3,8 +3,9 @@ import {RbacRole} from '../../../config/constants.config'
 import {ContactGender, ContactStatus} from '../../../entities/internal/contact.internal.entity'
 import {ApiHideProperty, ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
+import {ResponseDto} from '../../../dto/response.dto'
 
-export class CustomerContactResponseDto {
+export class CustomerContactResponseDto implements ResponseDto {
     @ApiProperty()
         id: number
     @ApiPropertyOptional()

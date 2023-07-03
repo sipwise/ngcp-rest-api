@@ -4,7 +4,7 @@ import {CrudController} from '../../controllers/crud.controller'
 import {JournalService} from '../journals/journal.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {SystemContactResponseDto} from './dto/system-contact-response.dto'
-import {SystemContactCreateDto} from './dto/system-contact-create.dto'
+import {SystemContactRequestDto} from './dto/system-contact-request.dto'
 import {SystemContactService} from './system-contact.service'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
@@ -35,7 +35,7 @@ const resourceName = 'systemcontacts'
 @ApiTags('SystemContact')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
-export class SystemContactController extends CrudController<SystemContactCreateDto, SystemContactResponseDto> {
+export class SystemContactController extends CrudController<SystemContactRequestDto, SystemContactResponseDto> {
     private readonly log = new LoggerService(SystemContactController.name)
 
     constructor(
@@ -49,11 +49,11 @@ export class SystemContactController extends CrudController<SystemContactCreateD
     @Post()
     @ApiCreatedResponse(SystemContactResponseDto)
     @ApiBody({
-        type: SystemContactCreateDto,
+        type: SystemContactRequestDto,
         isArray: true,
     })
     async create(
-        @Body(new ParseOneOrManyPipe({items: SystemContactCreateDto})) createDto: SystemContactCreateDto[],
+        @Body(new ParseOneOrManyPipe({items: SystemContactRequestDto})) createDto: SystemContactRequestDto[],
         @Req() req: Request,
     ): Promise<SystemContactResponseDto[]> {
         this.log.debug({
@@ -109,7 +109,7 @@ export class SystemContactController extends CrudController<SystemContactCreateD
     @ApiOkResponse({
         type: SystemContactResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, entity: SystemContactCreateDto, req): Promise<SystemContactResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, entity: SystemContactRequestDto, req): Promise<SystemContactResponseDto> {
         this.log.debug({
             message: 'update system contact by id',
             func: this.update.name,
@@ -128,9 +128,9 @@ export class SystemContactController extends CrudController<SystemContactCreateD
     }
 
     @Put()
-    @ApiPutBody(SystemContactCreateDto)
+    @ApiPutBody(SystemContactRequestDto)
     async updateMany(
-        @Body(new ParseIdDictionary({items: SystemContactCreateDto})) updates: Dictionary<SystemContactCreateDto>,
+        @Body(new ParseIdDictionary({items: SystemContactRequestDto})) updates: Dictionary<SystemContactRequestDto>,
         @Req() req,
     ) {
         this.log.debug({
@@ -142,7 +142,7 @@ export class SystemContactController extends CrudController<SystemContactCreateD
         const sr = new ServiceRequest(req)
         const contacts = new Dictionary<internal.Contact>()
         for (const id of Object.keys(updates)) {
-            const dto: SystemContactCreateDto = updates[id]
+            const dto: SystemContactRequestDto = updates[id]
             contacts[id] = dto.toInternal(parseInt(id))
         }
         return await this.contactService.update(contacts, sr)

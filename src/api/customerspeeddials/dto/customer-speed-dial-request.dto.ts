@@ -1,8 +1,9 @@
 import {internal} from '../../../entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsNotEmpty, IsNumber} from 'class-validator'
+import {RequestDto} from '../../../dto/request.dto'
 
-export class CustomerSpeedDialCreateDto {
+export class CustomerSpeedDialRequestDto implements RequestDto {
     @IsNotEmpty()
     @IsNumber()
     @ApiPropertyOptional({description: 'Customer id', example: 1})

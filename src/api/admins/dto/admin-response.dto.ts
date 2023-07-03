@@ -2,8 +2,9 @@ import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
 import {internal} from '../../../entities'
 import {ApiHideProperty, ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {RbacRole} from '../../../config/constants.config'
+import {ResponseDto} from '../../../dto/response.dto'
 
-export class AdminResponseDto {
+export class AdminResponseDto implements ResponseDto {
     @ApiProperty()
         billing_data: boolean
     @ApiProperty()

@@ -7,8 +7,9 @@ import {
 } from '../../../entities/internal/contract.internal.entity'
 import {internal} from '../../../entities'
 import {ContactResponseDto} from '../../contacts/dto/contact-response.dto'
+import {ResponseDto} from '../../../dto/response.dto'
 
-export class ContractResponseDto {
+export class ContractResponseDto implements ResponseDto {
     @ApiProperty({description: 'Unique identifier of the contract'})
         id: number
 

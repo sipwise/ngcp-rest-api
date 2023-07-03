@@ -1,8 +1,9 @@
 import {internal} from './../../../entities'
 import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
 import {ApiHideProperty, ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {ResponseDto} from '../../../dto/response.dto'
 
-export class JournalResponseDto {
+export class JournalResponseDto implements ResponseDto {
     @ApiProperty()
         id: number
     @ApiPropertyOptional()

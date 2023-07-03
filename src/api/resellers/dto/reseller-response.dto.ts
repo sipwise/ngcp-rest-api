@@ -3,8 +3,9 @@ import {IsEnum, IsNotEmpty} from 'class-validator'
 import {ResellerStatus} from '../../../entities/internal/reseller.internal.entity'
 import {internal} from '../../../entities'
 import {ContractResponseDto} from '../../contracts/dto/contract-response.dto'
+import {ResponseDto} from '../../../dto/response.dto'
 
-export class ResellerResponseDto {
+export class ResellerResponseDto implements ResponseDto {
     @ApiProperty()
         id: number
 

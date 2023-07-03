@@ -15,7 +15,7 @@ import {
 import {Auth} from '../../decorators/auth.decorator'
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'
-import {ContractCreateDto} from './dto/contract-create.dto'
+import {ContractRequestDto} from './dto/contract-request.dto'
 import {ContractResponseDto} from './dto/contract-response.dto'
 import {ContractService} from './contract.service'
 import {JournalService} from '../journals/journal.service'
@@ -45,7 +45,7 @@ const resourceName = 'contracts'
 @ApiTags('Contract')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
-export class ContractController extends CrudController<ContractCreateDto, ContractResponseDto> {
+export class ContractController extends CrudController<ContractRequestDto, ContractResponseDto> {
     private readonly log = new LoggerService(ContractController.name)
 
     constructor(
@@ -60,11 +60,11 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
     @Post()
     @ApiCreatedResponse(ContractResponseDto)
     @ApiBody({
-        type: ContractCreateDto,
+        type: ContractRequestDto,
         isArray: true,
     })
     async create(
-        @Body(new ParseOneOrManyPipe({items: ContractCreateDto})) createDto: ContractCreateDto[],
+        @Body(new ParseOneOrManyPipe({items: ContractRequestDto})) createDto: ContractRequestDto[],
         @Req() req: Request,
     ): Promise<ContractResponseDto[]> {
         this.log.debug({
@@ -114,7 +114,7 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
     @ApiOkResponse({
         type: ContractResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, update: ContractCreateDto, req): Promise<ContractResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, update: ContractRequestDto, req): Promise<ContractResponseDto> {
         this.log.debug({message: 'update contract by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Contract>()
@@ -128,16 +128,16 @@ export class ContractController extends CrudController<ContractCreateDto, Contra
     }
 
     @Put()
-    @ApiPutBody(ContractCreateDto)
+    @ApiPutBody(ContractRequestDto)
     async updateMany(
-        @Body(new ParseIdDictionary({items: ContractCreateDto})) updates: Dictionary<ContractCreateDto>,
+        @Body(new ParseIdDictionary({items: ContractRequestDto})) updates: Dictionary<ContractRequestDto>,
         @Req() req,
     ) {
         this.log.debug({message: 'update contracts bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const contracts = new Dictionary<internal.Contract>()
         for (const id of Object.keys(updates)) {
-            const dto: ContractCreateDto = updates[id]
+            const dto: ContractRequestDto = updates[id]
             contracts[id] = dto.toInternal(parseInt(id))
         }
         return await this.contractService.update(contracts, sr)

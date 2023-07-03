@@ -24,7 +24,7 @@ import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {PatchDto} from '../../dto/patch.dto'
 import {Operation as PatchOperation, Operation} from '../../helpers/patch.helper'
 import {ContactService} from './contact.service'
-import {ContactCreateDto} from './dto/contact-create.dto'
+import {ContactRequestDto} from './dto/contact-request.dto'
 import {ContactResponseDto} from './dto/contact-response.dto'
 import {ContactSearchDto} from './dto/contact-search.dto'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
@@ -38,14 +38,13 @@ import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {internal} from '../../entities'
 import {Dictionary} from '../../helpers/dictionary.helper'
 import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
-import {AdminResponseDto} from '../admins/dto/admin-response.dto'
 
 const resourceName = 'contacts'
 
 @Auth(RbacRole.system, RbacRole.admin, RbacRole.ccareadmin)
 @ApiTags('Contact')
 @Controller(resourceName)
-export class ContactController extends CrudController<ContactCreateDto, ContactResponseDto> {
+export class ContactController extends CrudController<ContactRequestDto, ContactResponseDto> {
     private readonly log = new LoggerService(ContactController.name)
 
     constructor(
@@ -60,11 +59,11 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
     @Post()
     @ApiCreatedResponse(ContactResponseDto)
     @ApiBody({
-        type: ContactCreateDto,
+        type: ContactRequestDto,
         isArray: true,
     })
     async create(
-        @Body(new ParseOneOrManyPipe({items: ContactCreateDto})) entity: ContactCreateDto[],
+        @Body(new ParseOneOrManyPipe({items: ContactRequestDto})) entity: ContactRequestDto[],
         @Req() req: Request,
     ): Promise<ContactResponseDto[]> {
         this.log.debug({message: 'create contact', func: this.create.name, url: req.url, method: req.method})
@@ -156,7 +155,7 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
     @ApiOkResponse({
         type: ContactResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, entity: ContactCreateDto, req): Promise<ContactResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, entity: ContactRequestDto, req): Promise<ContactResponseDto> {
         this.log.debug({message: 'update contact by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Contact>()
@@ -169,16 +168,16 @@ export class ContactController extends CrudController<ContactCreateDto, ContactR
     }
 
     @Put()
-    @ApiPutBody(ContactCreateDto)
+    @ApiPutBody(ContactRequestDto)
     async updateMany(
-        @Body(new ParseIdDictionary({items: ContactCreateDto})) updates: Dictionary<ContactCreateDto>,
+        @Body(new ParseIdDictionary({items: ContactRequestDto})) updates: Dictionary<ContactRequestDto>,
         @Req() req,
     ) {
         this.log.debug({message: 'update contacts bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const contacts = new Dictionary<internal.Contact>()
         for (const id of Object.keys(updates)) {
-            const dto: ContactCreateDto = updates[id]
+            const dto: ContactRequestDto = updates[id]
             contacts[id] = dto.toInternal(parseInt(id))
         }
         return await this.contactService.update(contacts, sr)

@@ -5,8 +5,9 @@ import {RbacRole} from '../../../config/constants.config'
 import {IsValidPassword} from '../../../decorators/is-valid-password.decorator'
 import {generate as passwordGenerator} from 'generate-password'
 import {AdminInterface} from '../../../entities/internal/admin.internal.entity'
+import {RequestDto} from '../../../dto/request.dto'
 
-export class AdminCreateDto {
+export class AdminRequestDto implements RequestDto {
     @IsEmail()
     @MaxLength(255)
     @ApiPropertyOptional({description: 'Email address', example: 'admin@example.com'})
@@ -64,8 +65,8 @@ export class AdminCreateDto {
     @ApiProperty({description: 'Access level of the user', enum: RbacRole})
         role: RbacRole
 
-    static create(data: AdminInterface): AdminCreateDto {
-        const admin = new AdminCreateDto()
+    static create(data: AdminInterface): AdminRequestDto {
+        const admin = new AdminRequestDto()
 
         Object.keys(data).map(key => {
             if(data[key] != undefined) {

@@ -1,4 +1,6 @@
-export class JournalCreateDto {
+import {RequestDto} from '../../../dto/request.dto'
+
+export class JournalRequestDto implements RequestDto {
     content?: Uint8Array
     content_format: string
     operation: string
@@ -10,4 +12,6 @@ export class JournalCreateDto {
     tx_id: string
     username: string
     user_id: number
+
+    toInternal?(): void;
 }

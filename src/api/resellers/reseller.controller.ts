@@ -2,7 +2,7 @@ import {Body, Controller, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, P
 import {JournalService} from '../journals/journal.service'
 import {ResellerService} from './reseller.service'
 import {CrudController} from '../../controllers/crud.controller'
-import {ResellerCreateDto} from './dto/reseller-create.dto'
+import {ResellerRequestDto} from './dto/reseller-request.dto'
 import {ResellerResponseDto} from './dto/reseller-response.dto'
 import {Auth} from '../../decorators/auth.decorator'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
@@ -32,7 +32,7 @@ const resourceName = 'resellers'
 @ApiTags('Reseller')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
-export class ResellerController extends CrudController<ResellerCreateDto, ResellerResponseDto> {
+export class ResellerController extends CrudController<ResellerRequestDto, ResellerResponseDto> {
     private readonly log = new LoggerService(ResellerController.name)
 
     constructor(
@@ -50,11 +50,11 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
     @Post()
     @ApiCreatedResponse(ResellerResponseDto)
     @ApiBody({
-        type: ResellerCreateDto,
+        type: ResellerRequestDto,
         isArray: true,
     })
     async create(
-        @Body(new ParseOneOrManyPipe({items: ResellerCreateDto})) createDto: ResellerCreateDto[],
+        @Body(new ParseOneOrManyPipe({items: ResellerRequestDto})) createDto: ResellerRequestDto[],
         @Req() req: Request,
     ): Promise<ResellerResponseDto[]> {
         this.log.debug({
@@ -105,7 +105,7 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
     @ApiOkResponse({
         type: ResellerResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, entity: ResellerCreateDto, req): Promise<ResellerResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, entity: ResellerRequestDto, req): Promise<ResellerResponseDto> {
         this.log.debug({message: 'update reseller by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Reseller>()
@@ -118,16 +118,16 @@ export class ResellerController extends CrudController<ResellerCreateDto, Resell
     }
 
     @Put()
-    @ApiPutBody(ResellerCreateDto)
+    @ApiPutBody(ResellerRequestDto)
     async updateMany(
-        @Body(new ParseIdDictionary({items: ResellerCreateDto})) updates: Dictionary<ResellerCreateDto>,
+        @Body(new ParseIdDictionary({items: ResellerRequestDto})) updates: Dictionary<ResellerRequestDto>,
         @Req() req,
     ) {
         this.log.debug({message: 'update resellers bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const resellers = new Dictionary<internal.Reseller>()
         for (const id of Object.keys(updates)) {
-            const dto: ResellerCreateDto = updates[id]
+            const dto: ResellerRequestDto = updates[id]
             resellers[id] = dto.toInternal(parseInt(id))
         }
         return await this.resellerService.update(resellers, sr)

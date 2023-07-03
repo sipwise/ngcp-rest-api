@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {CustomerContactService} from './customer-contact.service'
-import {CustomerContactCreateDto} from './dto/customer-contact-create.dto'
+import {CustomerContactRequestDto} from './dto/customer-contact-request.dto'
 import {CrudController} from '../../controllers/crud.controller'
 import {CustomerContactResponseDto} from './dto/customer-contact-response.dto'
 import {JournalService} from '../journals/journal.service'
@@ -48,7 +48,7 @@ const resourceName = 'customercontacts'
 @ApiTags('CustomerContact')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
-export class CustomerContactController extends CrudController<CustomerContactCreateDto, CustomerContactResponseDto> {
+export class CustomerContactController extends CrudController<CustomerContactRequestDto, CustomerContactResponseDto> {
     private readonly log = new LoggerService(CustomerContactController.name)
 
     constructor(
@@ -63,11 +63,11 @@ export class CustomerContactController extends CrudController<CustomerContactCre
     @Post()
     @ApiCreatedResponse(CustomerContactResponseDto)
     @ApiBody({
-        type: CustomerContactCreateDto,
+        type: CustomerContactRequestDto,
         isArray: true,
     })
     async create(
-        @Body(new ParseOneOrManyPipe({items: CustomerContactCreateDto})) createDto: CustomerContactCreateDto[],
+        @Body(new ParseOneOrManyPipe({items: CustomerContactRequestDto})) createDto: CustomerContactRequestDto[],
         @Req() req: Request,
     ): Promise<CustomerContactResponseDto[]> {
         this.log.debug({
@@ -166,7 +166,7 @@ export class CustomerContactController extends CrudController<CustomerContactCre
     @ApiOkResponse({
         type: CustomerContactResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, entity: CustomerContactCreateDto, req): Promise<CustomerContactResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, entity: CustomerContactRequestDto, req): Promise<CustomerContactResponseDto> {
         this.log.debug({
             message: 'update customer contact by id',
             func: this.update.name,
@@ -184,9 +184,9 @@ export class CustomerContactController extends CrudController<CustomerContactCre
     }
 
     @Put()
-    @ApiPutBody(CustomerContactCreateDto)
+    @ApiPutBody(CustomerContactRequestDto)
     async updateMany(
-        @Body(new ParseIdDictionary({items: CustomerContactCreateDto})) updates: Dictionary<CustomerContactCreateDto>,
+        @Body(new ParseIdDictionary({items: CustomerContactRequestDto})) updates: Dictionary<CustomerContactRequestDto>,
         @Req() req,
     ) {
         this.log.debug({
@@ -198,7 +198,7 @@ export class CustomerContactController extends CrudController<CustomerContactCre
         const sr = new ServiceRequest(req)
         const contacts = new Dictionary<internal.Contact>()
         for (const id of Object.keys(updates)) {
-            const dto: CustomerContactCreateDto = updates[id]
+            const dto: CustomerContactRequestDto = updates[id]
             contacts[id] = dto.toInternal(parseInt(id))
         }
         return await this.contactService.update(contacts, sr)

@@ -1,5 +1,4 @@
 import {
-    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -13,7 +12,7 @@ import {
     Put,
     Req,
 } from '@nestjs/common'
-import {AdminCreateDto} from './dto/admin-create.dto'
+import {AdminRequestDto} from './dto/admin-request.dto'
 import {AdminResponseDto} from './dto/admin-response.dto'
 import {AdminSearchDto} from './dto/admin-search.dto'
 import {AdminService} from './admin.service'
@@ -50,7 +49,7 @@ const resourceName = 'admins'
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller)
-export class AdminController extends CrudController<AdminCreateDto, AdminResponseDto> {
+export class AdminController extends CrudController<AdminRequestDto, AdminResponseDto> {
     private readonly log = new LoggerService(AdminController.name)
 
     constructor(
@@ -65,13 +64,13 @@ export class AdminController extends CrudController<AdminCreateDto, AdminRespons
 
     @Post()
     @ApiBody({
-        type: AdminCreateDto,
+        type: AdminRequestDto,
         isArray: true,
         required: true,
     })
     @ApiCreatedResponse(AdminResponseDto)
     async create(
-        @Body(new ParseOneOrManyPipe({items: AdminCreateDto})) createDto: AdminCreateDto[],
+        @Body(new ParseOneOrManyPipe({items: AdminRequestDto})) createDto: AdminRequestDto[],
         @Req() req: Request,
     ): Promise<AdminResponseDto[]> {
         this.log.debug({
@@ -137,11 +136,11 @@ export class AdminController extends CrudController<AdminCreateDto, AdminRespons
     })
     async update(
         @Param('id', ParseIntPipe) id: number,
-        @Body() update: AdminCreateDto,
+        @Body() update: AdminRequestDto,
         @Req() req: Request,
     ): Promise<AdminResponseDto> {
         this.log.debug({message: 'update admin by id', func: this.update.name, url: req.url, method: req.method})
-        const admin = Object.assign(new AdminCreateDto(), update)
+        const admin = Object.assign(new AdminRequestDto(), update)
         const sr = new ServiceRequest(req)
         this.log.debug({message: 'put mode legacy', enabled: this.app.config.legacy.put})
         let response: AdminResponseDto
@@ -159,16 +158,16 @@ export class AdminController extends CrudController<AdminCreateDto, AdminRespons
     }
 
     @Put()
-    @ApiPutBody(AdminCreateDto)
+    @ApiPutBody(AdminRequestDto)
     async updateMany(
-        @Body(new ParseIdDictionary({items: AdminCreateDto})) updates: Dictionary<AdminCreateDto>,
+        @Body(new ParseIdDictionary({items: AdminRequestDto})) updates: Dictionary<AdminRequestDto>,
         @Req() req,
     ) {
         this.log.debug({message: 'update admin bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const admins = new Dictionary<internal.Admin>()
         for (const id of Object.keys(updates)) {
-            const dto: AdminCreateDto = updates[id]
+            const dto: AdminRequestDto = updates[id]
             admins[id] = dto.toInternal(true, parseInt(id))
         }
         return await this.adminService.update(admins, sr)

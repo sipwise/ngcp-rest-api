@@ -1,7 +1,8 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {IsNotEmpty} from 'class-validator'
+import {ResponseDto} from '../../../dto/response.dto'
 
-export class NCOSResponseDto {
+export class NCOSResponseDto implements ResponseDto {
     @IsNotEmpty()
     @ApiProperty()
         links: string[]

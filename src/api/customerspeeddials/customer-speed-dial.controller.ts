@@ -2,7 +2,7 @@ import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} 
 import {Auth} from '../../decorators/auth.decorator'
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
-import {CustomerSpeedDialCreateDto} from './dto/customer-speed-dial-create.dto'
+import {CustomerSpeedDialRequestDto} from './dto/customer-speed-dial-request.dto'
 import {CustomerSpeedDialUpdateDto} from './dto/customer-speed-dial-update.dto'
 import {CustomerSpeedDialResponseDto} from './dto/customer-speed-dial-response.dto'
 import {CustomerSpeedDialService} from './customer-speed-dial.service'
@@ -40,7 +40,7 @@ const resourceName = 'customerspeeddials'
 @ApiTags('CustomerSpeedDial')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
-export class CustomerSpeedDialController extends CrudController<CustomerSpeedDialCreateDto, CustomerSpeedDialResponseDto> {
+export class CustomerSpeedDialController extends CrudController<CustomerSpeedDialRequestDto, CustomerSpeedDialResponseDto> {
     private readonly log = new LoggerService(CustomerSpeedDialController.name)
 
     constructor(
@@ -53,11 +53,11 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     @Post()
     @ApiCreatedResponse(CustomerSpeedDialResponseDto)
     @ApiBody({
-        type: CustomerSpeedDialCreateDto,
+        type: CustomerSpeedDialRequestDto,
         isArray: true,
     })
     async create(
-        @Body(new ParseOneOrManyPipe({items: CustomerSpeedDialCreateDto})) createDto: CustomerSpeedDialCreateDto[],
+        @Body(new ParseOneOrManyPipe({items: CustomerSpeedDialRequestDto})) createDto: CustomerSpeedDialRequestDto[],
         @Req() req: Request,
     ): Promise<CustomerSpeedDialResponseDto[]> {
         this.log.debug({
@@ -120,7 +120,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         })
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.CustomerSpeedDial>()
-        updates[id] = Object.assign(new CustomerSpeedDialCreateDto(), entity).toInternal(id)
+        updates[id] = Object.assign(new CustomerSpeedDialRequestDto(), entity).toInternal(id)
         const ids = await this.customerSpeedDialService.update(updates, sr)
         const csd = await this.customerSpeedDialService.read(ids[0], sr)
         const response = new CustomerSpeedDialResponseDto(csd)

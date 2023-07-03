@@ -2,8 +2,9 @@ import {ContactGender, ContactStatus} from '../../../entities/internal/contact.i
 import {internal} from '../../../entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsEnum, IsNotEmpty, IsOptional} from 'class-validator'
+import {RequestDto} from '../../../dto/request.dto'
 
-export class CustomerContactCreateDto {
+export class CustomerContactRequestDto implements RequestDto {
     @IsOptional()
     @ApiPropertyOptional()
         bankname?: string

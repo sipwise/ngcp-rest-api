@@ -1,13 +1,14 @@
 import {internal} from '../../../entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsNotEmpty, IsOptional} from 'class-validator'
+import {ResponseDto} from '../../../dto/response.dto'
 
 export interface NCOSSetLevelReference {
     type: string
     link: string
 }
 
-export class NCOSSetResponseDto {
+export class NCOSSetResponseDto implements ResponseDto {
     @IsNotEmpty()
     @ApiProperty()
         id: number

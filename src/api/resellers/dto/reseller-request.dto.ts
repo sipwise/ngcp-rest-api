@@ -1,9 +1,10 @@
 import {IsEnum, IsNotEmpty} from 'class-validator'
 import {ResellerStatus} from '../../../entities/internal/reseller.internal.entity'
 import {ApiProperty} from '@nestjs/swagger'
+import {RequestDto} from '../../../dto/request.dto'
 import {internal} from '../../../entities'
 
-export class ResellerCreateDto {
+export class ResellerRequestDto implements RequestDto {
     @IsNotEmpty()
     @ApiProperty()
         contract_id: number

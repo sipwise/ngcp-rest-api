@@ -15,11 +15,10 @@ import {JournalService} from '../journals/journal.service'
 import {CreateResponseDto} from '../../dto/create-response.dto'
 import {PaginatedDto} from '../../dto/paginated.dto'
 import {PatchDto} from '../../dto/patch.dto'
-import {NCOSSetCreateDto} from './dto/ncos-set-create.dto'
-import {NCOSSetLevelCreateDto} from './dto/ncos-set-level-create.dto'
+import {NCOSSetRequestDto} from './dto/ncos-set-request.dto'
+import {NCOSSetLevelRequestDto} from './dto/ncos-set-level-request.dto'
 import {NCOSSetLevelResponseDto} from './dto/ncos-set-level-response.dto'
 import {NCOSSetResponseDto} from './dto/ncos-set-response.dto'
-import {NCOSSetUpdateDto} from './dto/ncos-set-update.dto'
 import {NCOSSetService} from './ncos-set.service'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 import {number} from 'yargs'
@@ -43,7 +42,7 @@ const resourceName = 'ncos/sets'
 @ApiTags('NCOS')
 @ApiExtraModels(CreateResponseDto, PaginatedDto)
 @Controller(resourceName)
-export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetResponseDto> {
+export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSetResponseDto> {
     private readonly log = new LoggerService(NCOSSetController.name)
 
     constructor(
@@ -58,14 +57,14 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
 
 
     @Post(':id/levels')
-    @ApiCreatedResponse(NCOSSetLevelCreateDto)
+    @ApiCreatedResponse(NCOSSetLevelRequestDto)
     @ApiBody({
-        type: NCOSSetLevelCreateDto,
+        type: NCOSSetLevelRequestDto,
         isArray: true,
     })
     async createLevel(
         @Param('id') id: number,
-        @Body(new ParseOneOrManyPipe({items: NCOSSetLevelCreateDto})) createDto: NCOSSetLevelCreateDto[],
+        @Body(new ParseOneOrManyPipe({items: NCOSSetLevelRequestDto})) createDto: NCOSSetLevelRequestDto[],
         @Req() req: Request,
     ): Promise<NCOSSetLevelResponseDto[]> {
         this.log.debug({
@@ -169,11 +168,11 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @Post()
     @ApiCreatedResponse(NCOSSetResponseDto)
     @ApiBody({
-        type: NCOSSetCreateDto,
+        type: NCOSSetRequestDto,
         isArray: true,
     })
     async create(
-        @Body(new ParseOneOrManyPipe({items: NCOSSetCreateDto})) createDto: NCOSSetCreateDto[],
+        @Body(new ParseOneOrManyPipe({items: NCOSSetRequestDto})) createDto: NCOSSetRequestDto[],
         @Req() req: Request,
     ): Promise<NCOSSetResponseDto[]> {
         this.log.debug({
@@ -239,7 +238,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     @ApiOkResponse({
         type: NCOSSetResponseDto,
     })
-    async update(@Param('id', ParseIntPipe) id: number, dto: NCOSSetUpdateDto, req: Request): Promise<NCOSSetResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, dto: NCOSSetRequestDto, req: Request): Promise<NCOSSetResponseDto> {
         this.log.debug({
             message: 'update ncos set by id',
             id: id,
@@ -249,7 +248,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
         })
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.NCOSSet>()
-        updates[id] = Object.assign(new NCOSSetUpdateDto(), dto).toInternal(id)
+        updates[id] = Object.assign(new NCOSSetRequestDto(), dto).toInternal(id)
         const ids = await this.ncosSetService.update(updates, sr)
         const entity = await this.ncosSetService.read(ids[0], sr)
         const response = new NCOSSetResponseDto(req.url, entity)
@@ -258,16 +257,16 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
     }
 
     @Put()
-    @ApiPutBody(NCOSSetUpdateDto)
+    @ApiPutBody(NCOSSetRequestDto)
     async updateMany(
-        @Body(new ParseIdDictionary({items: NCOSSetUpdateDto})) updates: Dictionary<NCOSSetUpdateDto>,
+        @Body(new ParseIdDictionary({items: NCOSSetRequestDto})) updates: Dictionary<NCOSSetRequestDto>,
         @Req() req,
     ) {
         this.log.debug({message: 'update NCOS Sets bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const sets = new Dictionary<internal.NCOSSet>()
         for (const id of Object.keys(updates)) {
-            const dto: NCOSSetUpdateDto = updates[id]
+            const dto: NCOSSetRequestDto = updates[id]
             sets[id] = dto.toInternal(parseInt(id))
         }
         return await this.ncosSetService.update(sets, sr)
@@ -295,7 +294,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
         const update = new Dictionary<internal.NCOSSet>()
 
         const oldEntity = await this.ncosSetService.read(id, sr)
-        const dto: NCOSSetUpdateDto = applyPatch(new NCOSSetUpdateDto(oldEntity), patch).newDocument
+        const dto: NCOSSetRequestDto = applyPatch(new NCOSSetRequestDto(oldEntity), patch).newDocument
         const entity: internal.NCOSSet = Object.assign(oldEntity, dto.toInternal(id))
         try {
             await validateOrReject(entity)
@@ -324,7 +323,7 @@ export class NCOSSetController extends CrudController<NCOSSetCreateDto, NCOSSetR
 
         for (const id of Object.keys(patches)) {
             const oldEntity = await this.ncosSetService.read(+id, sr)
-            const dto: NCOSSetUpdateDto = applyPatch(new NCOSSetUpdateDto(oldEntity), patches[id]).newDocument
+            const dto: NCOSSetRequestDto = applyPatch(new NCOSSetRequestDto(oldEntity), patches[id]).newDocument
             const entity: internal.NCOSSet = Object.assign(oldEntity, dto.toInternal(+id))
             try {
                 await validateOrReject(entity)

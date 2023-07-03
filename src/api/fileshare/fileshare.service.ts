@@ -1,6 +1,6 @@
 import {AppService} from '../../app.service'
 import {Inject, Injectable, NotImplementedException, StreamableFile, UnprocessableEntityException} from '@nestjs/common'
-import {FileshareCreateDto} from './dto/fileshare-create.dto'
+import {FileshareRequestDto} from './dto/fileshare-request.dto'
 import {FileshareResponseDto} from './dto/fileshare-response.dto'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
 import {db} from '../../entities'
@@ -12,7 +12,7 @@ import {SearchLogic} from '../../helpers/search-logic.helper'
 import {I18nService} from 'nestjs-i18n'
 
 @Injectable()
-export class FileshareService { // implements CrudService<FileshareCreateDto, FileshareResponseDto> {
+export class FileshareService { // implements CrudService<FileshareRequestDto, FileshareResponseDto> {
     constructor(
         private readonly app: AppService,
         @Inject(I18nService) private readonly i18n: I18nService,
@@ -49,7 +49,7 @@ export class FileshareService { // implements CrudService<FileshareCreateDto, Fi
     }
 
     @HandleDbErrors
-    async create(createDto: FileshareCreateDto, sr: ServiceRequest, file: Express.Multer.File): Promise<FileshareResponseDto> {
+    async create(createDto: FileshareRequestDto, sr: ServiceRequest, file: Express.Multer.File): Promise<FileshareResponseDto> {
         const filter = this.filterOptions(sr)
 
         const totalQuota = this.app.config.fileshare.limits.quota

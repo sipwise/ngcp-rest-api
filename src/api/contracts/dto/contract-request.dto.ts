@@ -6,8 +6,9 @@ import {
     ContractType,
 } from '../../../entities/internal/contract.internal.entity'
 import {internal} from '../../../entities'
+import {RequestDto} from '../../../dto/request.dto'
 
-export class ContractCreateDto {
+export class ContractRequestDto implements RequestDto {
     @IsEnum(ContractBillingProfileDefinition)
     @IsNotEmpty()
     @ApiProperty({description: 'Explicitly declare the way how you want to set billing profiles for this API call.'})
@@ -26,17 +27,17 @@ export class ContractCreateDto {
 
     @IsNotEmpty()
     @ApiProperty({description: 'A non-unique external ID e.g., provided by a 3rd party provisioning'})
-    external_id: string
+        external_id: string
 
     @IsNotEmpty()
     @IsEnum(ContractStatus)
     @ApiProperty({description: 'The status of the contract'})
-    status?: ContractStatus
+        status?: ContractStatus
 
     @IsNotEmpty()
     @IsEnum(ContractType)
     @ApiProperty({description: 'The type of contract'})
-    type?: ContractType
+        type?: ContractType
 
     toInternal(id?: number): internal.Contract {
         const contract = internal.Contract.create({

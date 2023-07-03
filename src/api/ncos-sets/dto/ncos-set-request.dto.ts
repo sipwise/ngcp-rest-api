@@ -1,14 +1,15 @@
-import {internal} from '../../../entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsNotEmpty, IsOptional} from 'class-validator'
+import {RequestDto} from '../../../dto/request.dto'
+import {internal} from '../../../entities'
 
-export class NCOSSetUpdateDto {
+export class NCOSSetRequestDto implements RequestDto {
     @IsOptional()
     @ApiPropertyOptional({description: 'Reseller Id', example: 1})
         reseller_id?: number
 
     @IsNotEmpty()
-    @ApiPropertyOptional({description: 'NCOS set name', example: "Restricted destinations"})
+    @ApiProperty({description: 'NCOS set name', example: 'Restricted destinations'})
         name: string
 
     @IsNotEmpty()

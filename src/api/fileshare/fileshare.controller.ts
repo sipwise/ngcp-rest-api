@@ -13,7 +13,7 @@ import {
     UseInterceptors,
 } from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
-import {FileshareCreateDto} from './dto/fileshare-create.dto'
+import {FileshareRequestDto} from './dto/fileshare-request.dto'
 import {FileshareResponseDto} from './dto/fileshare-response.dto'
 import {FileshareService} from './fileshare.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
@@ -37,7 +37,7 @@ const resourceName = 'fileshare'
 @ApiTags('Fileshare')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
-export class FileshareController extends CrudController<FileshareCreateDto, FileshareResponseDto> {
+export class FileshareController extends CrudController<FileshareRequestDto, FileshareResponseDto> {
     private readonly log = new LoggerService(FileshareController.name)
 
     constructor(
@@ -55,7 +55,7 @@ export class FileshareController extends CrudController<FileshareCreateDto, File
             fileSize: AppService.config.fileshare.limits.upload_size || null,
         },
     }))
-    async createFile(createDto: FileshareCreateDto, req, file): Promise<FileshareResponseDto> {
+    async createFile(createDto: FileshareRequestDto, req, file): Promise<FileshareResponseDto> {
         this.log.debug({message: 'create fileshare', func: this.create.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const response = await this.fileshareService.create(createDto, sr, file)

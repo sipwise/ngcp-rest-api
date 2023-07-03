@@ -15,7 +15,7 @@ import {
     Req,
 } from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
-import {DomainCreateDto} from './dto/domain-create.dto'
+import {DomainRequestDto} from './dto/domain-request.dto'
 import {DomainResponseDto} from './dto/domain-response.dto'
 import {DomainService} from './domain.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
@@ -46,7 +46,7 @@ const resourceName = 'domains'
 @ApiTags('Domain')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
-export class DomainController extends CrudController<DomainCreateDto, DomainResponseDto> {
+export class DomainController extends CrudController<DomainRequestDto, DomainResponseDto> {
     private readonly log = new LoggerService(DomainController.name)
 
     constructor(
@@ -62,11 +62,11 @@ export class DomainController extends CrudController<DomainCreateDto, DomainResp
     @Post()
     @ApiCreatedResponse(DomainResponseDto)
     @ApiBody({
-        type: DomainCreateDto,
+        type: DomainRequestDto,
         isArray: true,
     })
     async create(
-        @Body(new ParseOneOrManyPipe({items: DomainCreateDto})) createDto: DomainCreateDto[],
+        @Body(new ParseOneOrManyPipe({items: DomainRequestDto})) createDto: DomainRequestDto[],
         @Req() req: Request,
     ): Promise<DomainResponseDto[]> {
         this.log.debug({
