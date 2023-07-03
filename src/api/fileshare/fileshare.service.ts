@@ -133,16 +133,6 @@ export class FileshareService { // implements CrudService<FileshareRequestDto, F
     }
 
     @HandleDbErrors
-    async update(): Promise<FileshareResponseDto> {
-        throw new NotImplementedException()
-    }
-
-    @HandleDbErrors
-    async adjust(): Promise<FileshareResponseDto> {
-        throw new NotImplementedException()
-    }
-
-    @HandleDbErrors
     async delete(ids: string[], sr: ServiceRequest): Promise<string[]> {
         const filter = this.filterOptions(sr)
         const qb = db.fileshare.Upload.createQueryBuilder('fileshare')

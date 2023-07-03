@@ -1,6 +1,5 @@
 import {BadRequestException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {internal} from '../../entities'
-import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {VoicemailMariadbRepository} from './repositories/voicemail.mariadb.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
@@ -28,25 +27,6 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         return await this.voicemailRepo.delete(ids, sr)
-    }
-
-    async adjust(patches: Dictionary<PatchOperation[]>, sr: ServiceRequest): Promise<number[]> {
-        const ids = Object.keys(patches).map(id => parseInt(id))
-        const updates = new Dictionary<internal.Voicemail>()
-        for (const id of ids) {
-            let voicemail = await this.voicemailRepo.read(id, sr)
-
-            // TODO: changing the path only works if /folder is at index 0
-            if (patches[id][0].path === '/folder')
-                patches[id][0].path = '/dir'
-            voicemail = applyPatch(voicemail, patches[id]).newDocument
-            if (this.authorized.indexOf(voicemail.dir) == -1) {
-                throw new BadRequestException('not a valid entry (value)')
-            }
-            voicemail.dir = this.voicemailDir + voicemail.mailboxuser + '/' + voicemail.dir
-            updates[id] = voicemail
-        }
-        return await this.voicemailRepo.update(updates, sr)
     }
 
     async update(updates: Dictionary<internal.Voicemail>, sr: ServiceRequest): Promise<number[]> {

@@ -15,7 +15,7 @@ import {ApiCreatedResponse} from '../../decorators/api-created-response.decorato
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {PatchDto} from '../../dto/patch.dto'
-import {Operation} from 'helpers/patch.helper'
+import {Operation, patchToEntity} from 'helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {Request} from 'express'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
@@ -120,7 +120,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         })
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.CustomerSpeedDial>()
-        updates[id] = Object.assign(new CustomerSpeedDialRequestDto(), entity).toInternal(id)
+        updates[id] = Object.assign(new CustomerSpeedDialRequestDto(), entity).toInternal({id: id})
         const ids = await this.customerSpeedDialService.update(updates, sr)
         const csd = await this.customerSpeedDialService.read(ids[0], sr)
         const response = new CustomerSpeedDialResponseDto(csd)
@@ -146,14 +146,16 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const updates = new Dictionary<Operation[]>()
 
-        updates[id] = patch
+        const oldEntity = await this.customerSpeedDialService.read(id, sr)
+        const entity = await patchToEntity<internal.CustomerSpeedDial, CustomerSpeedDialRequestDto>(oldEntity, patch, CustomerSpeedDialRequestDto)
+        const update = new Dictionary<internal.CustomerSpeedDial>(id.toString(), entity)
 
-        const ids = await this.customerSpeedDialService.adjust(updates, sr)
-        const csd = await this.customerSpeedDialService.read(ids[0], sr)
-        const response = new CustomerSpeedDialResponseDto(csd)
+        const ids = await this.customerSpeedDialService.update(update, sr)
+        const updatedEntity = await this.customerSpeedDialService.read(ids[0], sr)
+        const response = new CustomerSpeedDialResponseDto(updatedEntity)
         await this.journalService.writeJournal(sr, id, response)
+
         return response
     }
 
@@ -161,11 +163,19 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     async adjustMany(
-        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
     ) {
         const sr = new ServiceRequest(req)
-        return await this.customerSpeedDialService.adjust(updates, sr)
+
+        const updates = new Dictionary<internal.CustomerSpeedDial>()
+        for (const id of Object.keys(patches)) {
+            const oldEntity = await this.customerSpeedDialService.read(+id, sr)
+            const entity = await patchToEntity<internal.CustomerSpeedDial, CustomerSpeedDialRequestDto>(oldEntity, patches[id], CustomerSpeedDialRequestDto)
+            updates[id] = entity
+        }
+
+        return await this.customerSpeedDialService.update(updates, sr)
     }
 
     @Delete(':id?')

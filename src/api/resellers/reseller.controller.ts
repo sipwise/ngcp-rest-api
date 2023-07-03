@@ -7,7 +7,7 @@ import {ResellerResponseDto} from './dto/reseller-response.dto'
 import {Auth} from '../../decorators/auth.decorator'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
-import {Operation as PatchOperation, Operation} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, Operation, patchToEntity} from '../../helpers/patch.helper'
 import {Request} from 'express'
 import {RbacRole} from '../../config/constants.config'
 import {PatchDto} from '../../dto/patch.dto'
@@ -109,7 +109,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
         this.log.debug({message: 'update reseller by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Reseller>()
-        updates[id] = entity.toInternal(id)
+        updates[id] = entity.toInternal({id: id})
         const ids = await this.resellerService.update(updates, sr)
         const reseller = await this.resellerService.read(ids[0], sr)
         const response = new ResellerResponseDto(reseller)
@@ -128,7 +128,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
         const resellers = new Dictionary<internal.Reseller>()
         for (const id of Object.keys(updates)) {
             const dto: ResellerRequestDto = updates[id]
-            resellers[id] = dto.toInternal(parseInt(id))
+            resellers[id] = dto.toInternal({id: parseInt(id)})
         }
         return await this.resellerService.update(resellers, sr)
     }
@@ -148,14 +148,16 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     ): Promise<ResellerResponseDto> {
         this.log.debug({message: 'patch reseller by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const updates = new Dictionary<Operation[]>()
 
-        updates[id] = patch
+        const oldEntity = await this.resellerService.read(id, sr)
+        const entity = await patchToEntity<internal.Reseller, ResellerRequestDto>(oldEntity, patch, ResellerRequestDto)
+        const update = new Dictionary<internal.Reseller>(id.toString(), entity)
 
-        const ids = await this.resellerService.adjust(updates, sr)
-        const reseller = await this.resellerService.read(ids[0], sr)
-        const response = new ResellerResponseDto(reseller)
+        const ids = await this.resellerService.update(update, sr)
+        const updatedEntity = await this.resellerService.read(ids[0], sr)
+        const response = new ResellerResponseDto(updatedEntity)
         await this.journalService.writeJournal(sr, id, response)
+
         return response
     }
 
@@ -163,11 +165,19 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     async adjustMany(
-        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
     ) {
         const sr = new ServiceRequest(req)
-        return await this.resellerService.adjust(updates, sr)
+
+        const updates = new Dictionary<internal.Reseller>()
+        for (const id of Object.keys(patches)) {
+            const oldEntity = await this.resellerService.read(+id, sr)
+            const entity = await patchToEntity<internal.Reseller, ResellerRequestDto>(oldEntity, patches[id], ResellerRequestDto)
+            updates[id] = entity
+        }
+
+        return await this.resellerService.update(updates, sr)
     }
 
     @Get(':id/journal')

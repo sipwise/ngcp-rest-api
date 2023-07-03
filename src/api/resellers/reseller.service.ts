@@ -1,5 +1,4 @@
 import {ForbiddenException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
-import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AppService} from '../../app.service'
 import {internal} from '../../entities'
@@ -8,7 +7,6 @@ import {ResellerStatus} from '../../entities/internal/reseller.internal.entity'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
-import {deepCopy} from '../../helpers/deep-copy.helper'
 import {Dictionary} from '../../helpers/dictionary.helper'
 
 @Injectable()
@@ -61,25 +59,6 @@ export class ResellerService implements CrudService<internal.Reseller> {
         for (const id of ids) {
             const oldReseller = await this.resellerRepo.read(id, sr)
             await this.validateUpdate(oldReseller, updates[id], sr)
-        }
-        return await this.resellerRepo.update(updates, sr)
-    }
-
-    async adjust(patches: Dictionary<Operation[]>, sr: ServiceRequest): Promise<number[]> {
-        const ids = Object.keys(patches).map(id => parseInt(id))
-        this.log.debug({message: 'adjust reseller by id', func: this.adjust.name, user: sr.user.username, ids: ids})
-
-        const updates = new Dictionary<internal.Reseller>()
-        for (const id of ids) {
-            let reseller = await this.resellerRepo.read(id, sr)
-            const oldReseller = deepCopy(reseller)
-
-            reseller = applyPatch(reseller, patches[id]).newDocument
-            reseller.id = id
-
-            await this.validateUpdate(oldReseller, reseller, sr)
-
-            updates[id] = reseller
         }
         return await this.resellerRepo.update(updates, sr)
     }

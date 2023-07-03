@@ -11,11 +11,12 @@ import {AclRoleMockRepository} from '../../repositories/acl-role.mock.repository
 import {AclRoleRepository} from '../../repositories/acl-role.repository'
 import {ForbiddenException} from '@nestjs/common'
 import {AdminMockRepository} from './repositories/admin.mock.repository'
-import {Operation as PatchOperation} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, patchToEntity} from '../../helpers/patch.helper'
 import {RbacRole} from '../../config/constants.config'
 import {deepCopy} from '../../helpers/deep-copy.helper'
 import {AdminOptions} from './interfaces/admin-options.interface'
 import {Dictionary} from '../../helpers/dictionary.helper'
+import {AdminRequestDto} from './dto/admin-request.dto'
 
 const role_data = internal.AclRole.create({
     has_access_to: [
@@ -287,9 +288,12 @@ describe('AdminService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/role', value: RbacRole.admin},
             ]
-            const updates = new Dictionary<PatchOperation[]>()
-            updates[id] = patch
-            const got = await service.adjust(updates, sr)
+
+            const oldEntity = await service.read(id, sr)
+            const entity = await patchToEntity<internal.Admin, AdminRequestDto>(oldEntity, patch, AdminRequestDto)
+            const update = new Dictionary<internal.Admin>(id.toString(), entity)
+
+            const got = await service.update(update, sr)
             expect(got[0] == id)
             const admin = await service.read(id, sr)
             expect(admin.role).toStrictEqual(RbacRole.admin)
@@ -301,9 +305,10 @@ describe('AdminService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/role', value: 'system'},
             ]
-            const updates = new Dictionary<PatchOperation[]>()
-            updates[id] = patch
-            await expect(service.adjust(updates, localRequest)).rejects.toThrow(ForbiddenException)
+            const oldEntity = await service.read(id, sr)
+            const entity = await patchToEntity<internal.Admin, AdminRequestDto>(oldEntity, patch, AdminRequestDto)
+            const update = new Dictionary<internal.Admin>(id.toString(), entity)
+            await expect(service.update(update, localRequest)).rejects.toThrow(ForbiddenException)
         })
         const protectedFields = internal.Admin.create({
             billing_data: true,
@@ -323,9 +328,10 @@ describe('AdminService', () => {
                 const patch: PatchOperation[] = [
                     {op: 'replace', path: `/${s}`, value: protectedFields[s]},
                 ]
-                const updates = new Dictionary<PatchOperation[]>()
-                updates[id] = patch
-                await expect(service.adjust(updates, sr)).rejects.toThrow(ForbiddenException)
+                const oldEntity = await service.read(id, sr)
+                const entity = await patchToEntity<internal.Admin, AdminRequestDto>(oldEntity, patch, AdminRequestDto)
+                const update = new Dictionary<internal.Admin>(id.toString(), entity)
+                await expect(service.update(update, sr)).rejects.toThrow(ForbiddenException)
             })
         })
     })

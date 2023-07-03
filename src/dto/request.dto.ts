@@ -1,3 +1,7 @@
+export class RequestDtoOptions {
+    id?: number
+    setDefaults?: boolean
+}
 export abstract class RequestDto {
-    toInternal?(): void;
+    toInternal?(options?: RequestDtoOptions): void;
 }

@@ -1,7 +1,7 @@
 import {IsEnum, IsNotEmpty} from 'class-validator'
 import {ResellerStatus} from '../../../entities/internal/reseller.internal.entity'
 import {ApiProperty} from '@nestjs/swagger'
-import {RequestDto} from '../../../dto/request.dto'
+import {RequestDto, RequestDtoOptions} from '../../../dto/request.dto'
 import {internal} from '../../../entities'
 
 export class ResellerRequestDto implements RequestDto {
@@ -18,15 +18,25 @@ export class ResellerRequestDto implements RequestDto {
     @ApiProperty()
         status: ResellerStatus
 
-    toInternal(id?: number): internal.Reseller {
+    constructor(entity?: internal.Reseller) {
+        if (!entity)
+            return
+
+        // TODO rework as the Dto key names are not always equal to the Entity ones
+        Object.keys(entity).map(key => {
+            this[key] = entity[key]
+        })
+    }
+
+    toInternal(options: RequestDtoOptions = {}): internal.Reseller {
         const reseller = new internal.Reseller()
 
         reseller.contract_id = this.contract_id
         reseller.name = this.name
         reseller.status = this.status
 
-        if (id)
-            reseller.id = id
+        if (options.id)
+            reseller.id = options.id
 
         return reseller
     }

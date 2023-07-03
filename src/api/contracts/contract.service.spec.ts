@@ -10,8 +10,9 @@ import {ContractMariadbRepository} from './repositories/contract.mariadb.reposit
 import {internal} from '../../entities'
 import {ContractStatus, ContractType} from '../../entities/internal/contract.internal.entity'
 import {UnprocessableEntityException} from '@nestjs/common'
-import {Operation as PatchOperation} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, patchToEntity} from '../../helpers/patch.helper'
 import {Dictionary} from '../../helpers/dictionary.helper'
+import {ContractRequestDto} from './dto/contract-request.dto'
 
 const user: AuthResponseDto = {
     readOnly: false,
@@ -128,9 +129,11 @@ describe('ContractsService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/status', value: ContractStatus.Terminated},
             ]
-            const updates = new Dictionary<PatchOperation[]>()
-            updates[id] = patch
-            const got = await service.adjust(updates, sr)
+            const oldEntity = await service.read(id, sr)
+            const entity = await patchToEntity<internal.Contract, ContractRequestDto>(oldEntity, patch, ContractRequestDto)
+            const update = new Dictionary<internal.Contract>(id.toString(), entity)
+
+            const got = await service.update(update, sr)
             expect(got[0] == id)
             const result = await service.read(got[0], sr)
             expect(result.status).toStrictEqual(ContractStatus.Terminated)
@@ -140,18 +143,20 @@ describe('ContractsService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/contact_id', value: 100},
             ]
-            const updates = new Dictionary<PatchOperation[]>()
-            updates[id] = patch
-            await expect(service.adjust(updates, sr)).rejects.toThrow(UnprocessableEntityException)
+            const oldEntity = await service.read(id, sr)
+            const entity = await patchToEntity<internal.Contract, ContractRequestDto>(oldEntity, patch, ContractRequestDto)
+            const update = new Dictionary<internal.Contract>(id.toString(), entity)
+            await expect(service.update(update, sr)).rejects.toThrow(UnprocessableEntityException)
         })
         it('should throw an error if updated product type is invalid', async () => {
             const id = 1
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/type', value: 'invalid'},
             ]
-            const updates = new Dictionary<PatchOperation[]>()
-            updates[id] = patch
-            await expect(service.adjust(updates, sr)).rejects.toThrow(UnprocessableEntityException)
+            const oldEntity = await service.read(id, sr)
+            const entity = await patchToEntity<internal.Contract, ContractRequestDto>(oldEntity, patch, ContractRequestDto)
+            const update = new Dictionary<internal.Contract>(id.toString(), entity)
+            await expect(service.update(update, sr)).rejects.toThrow(UnprocessableEntityException)
         })
     })
 })

@@ -8,7 +8,7 @@ import {SystemContactRequestDto} from './dto/system-contact-request.dto'
 import {SystemContactService} from './system-contact.service'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
-import {Operation as PatchOperation, Operation} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, Operation, patchToEntity} from '../../helpers/patch.helper'
 import {PatchDto} from '../../dto/patch.dto'
 import {number} from 'yargs'
 import {ExpandHelper} from '../../helpers/expand.helper'
@@ -119,7 +119,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
         })
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Contact>()
-        updates[id] = entity.toInternal(id)
+        updates[id] = entity.toInternal({id: id})
         const ids = await this.contactService.update(updates, sr)
         const contact = await this.contactService.read(ids[0], sr)
         const response = new SystemContactResponseDto(contact)
@@ -143,7 +143,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
         const contacts = new Dictionary<internal.Contact>()
         for (const id of Object.keys(updates)) {
             const dto: SystemContactRequestDto = updates[id]
-            contacts[id] = dto.toInternal(parseInt(id))
+            contacts[id] = dto.toInternal({id: parseInt(id)})
         }
         return await this.contactService.update(contacts, sr)
     }
@@ -166,13 +166,14 @@ export class SystemContactController extends CrudController<SystemContactRequest
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const updates = new Dictionary<Operation[]>()
 
-        updates[id] = patch
+        const oldEntity = await this.contactService.read(id, sr)
+        const entity = await patchToEntity<internal.Contact, SystemContactRequestDto>(oldEntity, patch, SystemContactRequestDto)
+        const update = new Dictionary<internal.Contact>(id.toString(), entity)
 
-        const ids = await this.contactService.adjust(updates, sr)
-        const contact = await this.contactService.read(ids[0], sr)
-        const response = new SystemContactResponseDto(contact)
+        const ids = await this.contactService.update(update, sr)
+        const updatedEntity = await this.contactService.read(ids[0], sr)
+        const response = new SystemContactResponseDto(updatedEntity)
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
@@ -181,11 +182,19 @@ export class SystemContactController extends CrudController<SystemContactRequest
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     async adjustMany(
-        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
     ) {
         const sr = new ServiceRequest(req)
-        return await this.contactService.adjust(updates, sr)
+
+        const updates = new Dictionary<internal.Contact>()
+        for (const id of Object.keys(patches)) {
+            const oldEntity = await this.contactService.read(+id, sr)
+            const entity = await patchToEntity<internal.Contact, SystemContactRequestDto>(oldEntity, patches[id], SystemContactRequestDto)
+            updates[id] = entity
+        }
+
+        return await this.contactService.update(updates, sr)
     }
 
     @Delete(':id?')

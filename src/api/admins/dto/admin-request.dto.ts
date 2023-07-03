@@ -5,7 +5,7 @@ import {RbacRole} from '../../../config/constants.config'
 import {IsValidPassword} from '../../../decorators/is-valid-password.decorator'
 import {generate as passwordGenerator} from 'generate-password'
 import {AdminInterface} from '../../../entities/internal/admin.internal.entity'
-import {RequestDto} from '../../../dto/request.dto'
+import {RequestDto, RequestDtoOptions} from '../../../dto/request.dto'
 
 export class AdminRequestDto implements RequestDto {
     @IsEmail()
@@ -29,7 +29,7 @@ export class AdminRequestDto implements RequestDto {
             '(only applies to "System", "Admin" and "Reseller") roles',
         default: false,
     })
-        is_master?: boolean
+        is_master?: boolean = false
 
     @IsOptional()
     @ApiPropertyOptional({description: 'Can use the UI/API', default: true})
@@ -78,8 +78,18 @@ export class AdminRequestDto implements RequestDto {
         return admin
     }
 
-    toInternal(setDefaults = true, id?: number): internal.Admin {
-        if (setDefaults)
+    constructor(entity?: internal.Admin) {
+        if (!entity)
+            return
+
+        // TODO rework as the Dto key names are not always equal to the Entity ones
+        Object.keys(entity).map(key => {
+            this[key] = entity[key]
+        })
+    }
+
+    toInternal(options: RequestDtoOptions = {}): internal.Admin {
+        if (options.setDefaults)
             this.setDefaultsForUndefined()
 
         const admin = new internal.Admin()
@@ -97,8 +107,8 @@ export class AdminRequestDto implements RequestDto {
         admin.show_passwords = this.show_passwords
         admin.password = this.password
 
-        if (id)
-            admin.id = id
+        if (options.id)
+            admin.id = options.id
 
         return admin
     }

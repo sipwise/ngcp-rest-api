@@ -1,11 +1,9 @@
 import {ForbiddenException, Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
-import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {CustomerSpeedDialMariadbRepository} from './repositories/customer-speed-dial.mariadb.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
-import {validateOrReject} from 'class-validator'
 import {I18nService} from 'nestjs-i18n'
 import {Dictionary} from '../../helpers/dictionary.helper'
 
@@ -50,25 +48,6 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
             const entity = updates[id]
             await this.checkPermissions(entity.contractId, sr)
             await this.checkAndTransformDestination(entity, sr)
-        }
-        return await this.customerSpeedDialRepo.update(updates, sr)
-    }
-
-    async adjust(patches: Dictionary<PatchOperation[]>, sr: ServiceRequest): Promise<number[]> {
-        const ids = Object.keys(patches).map(id => parseInt(id))
-        const updates = new Dictionary<internal.CustomerSpeedDial>()
-
-        for (const id of ids) {
-            const oldCsd = await this.customerSpeedDialRepo.readById(id, sr)
-            const csd: internal.CustomerSpeedDial = applyPatch(oldCsd, patches[id]).newDocument
-            await this.checkPermissions(csd.contractId, sr)
-            try {
-                await validateOrReject(csd)
-            } catch (e) {
-                throw new UnprocessableEntityException(e)
-            }
-            await this.checkAndTransformDestination(csd, sr)
-            updates[id] = csd
         }
         return await this.customerSpeedDialRepo.update(updates, sr)
     }

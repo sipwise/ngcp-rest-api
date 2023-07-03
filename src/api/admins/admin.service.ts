@@ -1,5 +1,4 @@
 import {AppService} from '../../app.service'
-import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {ForbiddenException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {AdminMariadbRepository} from './repositories/admin.mariadb.repository'
@@ -7,7 +6,6 @@ import {internal} from '../../entities'
 import {AclRoleRepository} from '../../repositories/acl-role.repository'
 import {LoggerService} from '../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
-import {deepCopy} from '../../helpers/deep-copy.helper'
 import {AdminOptions} from './interfaces/admin-options.interface'
 import {Dictionary} from '../../helpers/dictionary.helper'
 
@@ -59,7 +57,6 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             const admin = updates[id]
             admin.id = id  // TODO: Do we want to set the id here? After validation in controller it should not be possible to receive updates where the id in the update does not equal the key id
             await this.populateAdmin(admin, accessorRole, sr)
-
             const oldAdmin = await this.adminRepo.readById(id, options)
 
             await this.validateUpdate(sr.user.id, oldAdmin, admin)
@@ -84,41 +81,6 @@ export class AdminService { //} implements CrudService<internal.Admin> {
         } catch (e) {
             return (await this.create([admin], sr))[0]
         }
-    }
-
-    async adjust(updates: Dictionary<PatchOperation[]>, sr: ServiceRequest): Promise<number[]> {
-        const ids = Object.keys(updates).map(id => parseInt(id))
-        this.log.debug({
-            message: 'patching admin',
-            func: this.adjust.name,
-            user: sr.user.username,
-            ids: ids,
-        })
-        if (ids.length != await this.adminRepo.readCountOfIds(ids, this.getAdminOptionsFromServiceRequest(sr))) {
-            throw new UnprocessableEntityException()
-        }
-
-        const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
-        const options = this.getAdminOptionsFromServiceRequest(sr)
-
-        const adminUpdates = new Dictionary<internal.Admin>()
-
-        for (const id of ids) {
-            let admin = await this.adminRepo.readById(id, options)
-            const oldAdmin = deepCopy(admin)
-
-            const patch = updates[id]
-
-            admin = applyPatch(admin, patch).newDocument
-            admin.role ||= oldAdmin.role
-            admin.id = id
-
-            await this.populateAdmin(admin, accessorRole, sr)
-
-            await this.validateUpdate(sr.user.id, oldAdmin, admin)
-            adminUpdates[id] = admin
-        }
-        return await this.adminRepo.update(adminUpdates, options)
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {

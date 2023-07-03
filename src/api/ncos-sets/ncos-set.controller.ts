@@ -28,9 +28,8 @@ import {internal} from '../../entities'
 import {ApiPutBody} from '../../decorators/api-put-body.decorator'
 import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {Dictionary} from '../../helpers/dictionary.helper'
-import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
+import {patchToEntity, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
-import {validateOrReject} from 'class-validator'
 
 const resourceName = 'ncos/sets'
 
@@ -248,7 +247,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         })
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.NCOSSet>()
-        updates[id] = Object.assign(new NCOSSetRequestDto(), dto).toInternal(id)
+        updates[id] = Object.assign(new NCOSSetRequestDto(), dto).toInternal({id: id})
         const ids = await this.ncosSetService.update(updates, sr)
         const entity = await this.ncosSetService.read(ids[0], sr)
         const response = new NCOSSetResponseDto(req.url, entity)
@@ -267,7 +266,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         const sets = new Dictionary<internal.NCOSSet>()
         for (const id of Object.keys(updates)) {
             const dto: NCOSSetRequestDto = updates[id]
-            sets[id] = dto.toInternal(parseInt(id))
+            sets[id] = dto.toInternal({id: parseInt(id)})
         }
         return await this.ncosSetService.update(sets, sr)
     }
@@ -280,7 +279,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-        req: Request,
+            req: Request,
     ): Promise<NCOSSetResponseDto> {
         this.log.debug({
             message: 'patch ncos set by id',
@@ -291,22 +290,15 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         })
         const sr = new ServiceRequest(req)
 
-        const update = new Dictionary<internal.NCOSSet>()
-
         const oldEntity = await this.ncosSetService.read(id, sr)
-        const dto: NCOSSetRequestDto = applyPatch(new NCOSSetRequestDto(oldEntity), patch).newDocument
-        const entity: internal.NCOSSet = Object.assign(oldEntity, dto.toInternal(id))
-        try {
-            await validateOrReject(entity)
-        } catch (e) {
-            throw new UnprocessableEntityException(e)
-        }
-        update[id] = entity
+        const entity = await patchToEntity<internal.NCOSSet, NCOSSetRequestDto>(oldEntity, patch, NCOSSetRequestDto)
+        const update = new Dictionary<internal.NCOSSet>(id.toString(), entity)
 
         const ids = await this.ncosSetService.update(update, sr)
         const updatedEntity = await this.ncosSetService.read(ids[0], sr)
         const response = new NCOSSetResponseDto(req.url, updatedEntity)
         await this.journalService.writeJournal(sr, id, response)
+
         return response
     }
 
@@ -320,16 +312,9 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         const sr = new ServiceRequest(req)
 
         const updates = new Dictionary<internal.NCOSSet>()
-
         for (const id of Object.keys(patches)) {
             const oldEntity = await this.ncosSetService.read(+id, sr)
-            const dto: NCOSSetRequestDto = applyPatch(new NCOSSetRequestDto(oldEntity), patches[id]).newDocument
-            const entity: internal.NCOSSet = Object.assign(oldEntity, dto.toInternal(+id))
-            try {
-                await validateOrReject(entity)
-            } catch (e) {
-                throw new UnprocessableEntityException(e)
-            }
+            const entity = await patchToEntity<internal.NCOSSet, NCOSSetRequestDto>(oldEntity, patches[id], NCOSSetRequestDto)
             updates[id] = entity
         }
 

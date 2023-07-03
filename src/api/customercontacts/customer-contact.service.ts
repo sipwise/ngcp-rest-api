@@ -1,5 +1,4 @@
 import {BadRequestException, HttpException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
-import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {internal} from '../../entities'
 import {AppService} from '../../app.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
@@ -131,34 +130,6 @@ export class CustomerContactService implements CrudService<internal.Contact> {
         return await this.contactRepo.update(updates, options)
     }
 
-    async adjust(patches: Dictionary<PatchOperation[]>, sr: ServiceRequest): Promise<number[]> {
-        const ids = Object.keys(patches).map(id => parseInt(id))
-        this.log.debug({
-            message: 'adjust customer contact',
-            func: this.adjust.name,
-            ids: ids,
-            user: sr.user.username,
-        })
-        const options = this.getContactOptionsFromServiceRequest(sr)
-        const updates = new Dictionary<internal.Contact>()
-        for (const id of ids) {
-            let contact = await this.contactRepo.readById(id, options)
-            const patch = patches[id]
-            contact = applyPatch(contact, patch).newDocument
-            contact.id = id
-
-            if (sr.user.reseller_id_required) {
-                contact.reseller_id = sr.user.reseller_id
-            }
-
-            const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
-            if (!reseller) {
-                throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
-            }
-            updates[id] = contact
-        }
-        return await this.contactRepo.update(updates, options)
-    }
     getContactOptionsFromServiceRequest(sr: ServiceRequest): ContactOptions {
         const options: ContactOptions = {
             type: ContactType.CustomerContact,

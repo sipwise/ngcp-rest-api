@@ -28,7 +28,7 @@ import {ExpandHelper} from '../../helpers/expand.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalService} from '../journals/journal.service'
 import {LoggerService} from '../../logger/logger.service'
-import {Operation as PatchOperation, validate} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, patchToEntity, validate} from '../../helpers/patch.helper'
 import {PaginatedDto} from '../../dto/paginated.dto'
 import {ParamOrBody} from '../../decorators/param-or-body.decorator'
 import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
@@ -146,12 +146,12 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         let response: AdminResponseDto
         if (this.app.config.legacy.put) {
             const update = new Dictionary<internal.Admin>()
-            update[id] = admin.toInternal(false, id)
+            update[id] = admin.toInternal({setDefaults: false, id: id})
             const ids = await this.adminService.update(update, sr)
             const updateAdmin = await this.adminService.read(ids[0], sr)
             response = new AdminResponseDto(updateAdmin, sr.user.role)
         }
-        const updateAdmin = await this.adminService.updateOrCreate(id, await admin.toInternal(true, id), sr)
+        const updateAdmin = await this.adminService.updateOrCreate(id, await admin.toInternal({setDefaults: true, id: id}), sr)
         response = new AdminResponseDto(updateAdmin, sr.user.role)
         await this.journalService.writeJournal(sr, id, response)
         return response
@@ -168,7 +168,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         const admins = new Dictionary<internal.Admin>()
         for (const id of Object.keys(updates)) {
             const dto: AdminRequestDto = updates[id]
-            admins[id] = dto.toInternal(true, parseInt(id))
+            admins[id] = dto.toInternal({setDefaults: true, id: parseInt(id)})
         }
         return await this.adminService.update(admins, sr)
     }
@@ -188,13 +188,16 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     ): Promise<AdminResponseDto> {
         this.log.debug({message: 'patch admin by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const updates = new Dictionary<PatchOperation[]>()
 
-        updates[id] = patch
+        const oldEntity = await this.adminService.read(id, sr)
+        const entity = await patchToEntity<internal.Admin, AdminRequestDto>(oldEntity, patch, AdminRequestDto)
+        const update = new Dictionary<internal.Admin>(id.toString(), entity)
 
-        const ids = await this.adminService.adjust(updates, sr)
-        const response = new AdminResponseDto(await this.adminService.read(ids[0], sr), sr.user.role)
+        const ids = await this.adminService.update(update, sr)
+        const updatedEntity = await this.adminService.read(ids[0], sr)
+        const response = new AdminResponseDto(updatedEntity, sr.user.role)
         await this.journalService.writeJournal(sr, id, response)
+
         return response
     }
 
@@ -202,11 +205,19 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     async adjustMany(
-        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
     ) {
         const sr = new ServiceRequest(req)
-        return await this.adminService.adjust(updates, sr)
+
+        const updates = new Dictionary<internal.Admin>()
+        for (const id of Object.keys(patches)) {
+            const oldEntity = await this.adminService.read(+id, sr)
+            const entity = await patchToEntity<internal.Admin, AdminRequestDto>(oldEntity, patches[id], AdminRequestDto)
+            updates[id] = entity
+        }
+
+        return await this.adminService.update(updates, sr)
     }
 
     @Delete(':id?')

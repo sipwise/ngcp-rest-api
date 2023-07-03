@@ -1,4 +1,8 @@
+import {RequestDto} from '../dto/request.dto'
 import * as core from 'fast-json-patch'
+import {validateOrReject} from 'class-validator'
+import {BadRequestException, UnprocessableEntityException} from '@nestjs/common'
+import {deepCopy} from './deep-copy.helper'
 
 export function normalisePatch(patch: core.Operation | core.Operation[]) {
     return Array.isArray(patch) ? patch : Array(patch)
@@ -12,6 +16,23 @@ export function applyPatch<T>(document: T, patch: core.Operation | core.Operatio
 export function validate<T>(sequence: core.Operation | core.Operation[], document?: T, externalValidator?: core.Validator<T>) {
     const patchArray = normalisePatch(sequence)
     return core.validate<T>(patchArray, document, externalValidator)
+}
+
+export async function patchToEntity<T extends {id?: number}, D extends RequestDto>(oldEntity: T, patch: core.Operation[], requestDto: new(oldEntity: T) => D): Promise<T> {
+    const err = validate(patch)
+    if (err) {
+        const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
+        throw new BadRequestException(message)
+    }
+    const patchEntity = Object.assign(Object.create(oldEntity), oldEntity)
+    const dto = applyPatch(new requestDto(patchEntity), patch).newDocument
+    const entity: T = Object.assign(patchEntity, dto.toInternal({id: +oldEntity.id}))
+    try {
+        await validateOrReject(entity)
+    } catch (e) {
+        throw new UnprocessableEntityException(e)
+    }
+    return entity
 }
 
 export * from 'fast-json-patch'

@@ -1,6 +1,6 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsNotEmpty, IsOptional} from 'class-validator'
-import {RequestDto} from '../../../dto/request.dto'
+import {RequestDto, RequestDtoOptions} from '../../../dto/request.dto'
 import {internal} from '../../../entities'
 
 export class NCOSSetRequestDto implements RequestDto {
@@ -29,14 +29,14 @@ export class NCOSSetRequestDto implements RequestDto {
         this.expose_to_customer = entity.exposeToCustomer
     }
 
-    toInternal(id?: number): internal.NCOSSet {
+    toInternal(options: RequestDtoOptions = {}): internal.NCOSSet {
         const entity = new internal.NCOSSet()
         entity.resellerId = this.reseller_id
         entity.name = this.name
         entity.description = this.description
         entity.exposeToCustomer = this.expose_to_customer
-        if (id)
-            entity.id = id
+        if (options.id)
+            entity.id = options.id
         return entity
     }
 }

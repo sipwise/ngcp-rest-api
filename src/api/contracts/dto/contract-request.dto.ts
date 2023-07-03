@@ -6,7 +6,7 @@ import {
     ContractType,
 } from '../../../entities/internal/contract.internal.entity'
 import {internal} from '../../../entities'
-import {RequestDto} from '../../../dto/request.dto'
+import {RequestDto, RequestDtoOptions} from '../../../dto/request.dto'
 
 export class ContractRequestDto implements RequestDto {
     @IsEnum(ContractBillingProfileDefinition)
@@ -39,7 +39,17 @@ export class ContractRequestDto implements RequestDto {
     @ApiProperty({description: 'The type of contract'})
         type?: ContractType
 
-    toInternal(id?: number): internal.Contract {
+    constructor(entity?: internal.Contract) {
+        if (!entity)
+            return
+
+        // TODO rework as the Dto key names are not always equal to the Entity ones
+        Object.keys(entity).map(key => {
+            this[key] = entity[key]
+        })
+    }
+
+    toInternal(options: RequestDtoOptions = {}): internal.Contract {
         const contract = internal.Contract.create({
             billing_profile_definition: this.billing_profile_definition,
             billing_profile_id: this.billing_profile_id,
@@ -48,8 +58,8 @@ export class ContractRequestDto implements RequestDto {
             status: this.status,
             type: this.type,
         })
-        if (id)
-            contract.id = id
+        if (options.id)
+            contract.id = options.id
         return contract
     }
 }

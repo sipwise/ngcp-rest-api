@@ -1,11 +1,9 @@
 import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
-import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {NCOSSetMariadbRepository} from './repositories/ncos-set.mariadb.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
-import {validateOrReject} from 'class-validator'
 import {I18nService} from 'nestjs-i18n'
 import {Dictionary} from '../../helpers/dictionary.helper'
 
@@ -18,7 +16,6 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
         @Inject(NCOSSetMariadbRepository) private readonly ncosSetRepo: NCOSSetMariadbRepository,
     ) {
     }
-
 
     async create(entities: internal.NCOSSet[], sr: ServiceRequest): Promise<internal.NCOSSet[]> {
         await Promise.all(entities.map(async entity => {
@@ -47,7 +44,7 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
 
     async update(updates: Dictionary<internal.NCOSSet>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
-        let revokes: number[] = []
+        const revokes: number[] = []
         for (const id of ids) {
             const entity = updates[id]
             await this.checkPermissions(entity.resellerId, sr)

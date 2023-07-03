@@ -201,13 +201,13 @@ describe('CustomerSpeedDial', () => {
         describe('PATCH', () => {
             const patch: PatchOperation[] = [
                 {
-                    op: "replace",
-                    path: "/slot",
+                    op: 'replace',
+                    path: '/slot',
                     value: '*5',
                 },
                 {
-                    op: "replace",
-                    path: "/destination",
+                    op: 'replace',
+                    path: '/destination',
                     value: '4310005',
                 }
             ]

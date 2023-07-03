@@ -22,7 +22,7 @@ import {Request} from 'express'
 import {number} from 'yargs'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {PatchDto} from '../../dto/patch.dto'
-import {Operation as PatchOperation, Operation} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, Operation, patchToEntity} from '../../helpers/patch.helper'
 import {ContactService} from './contact.service'
 import {ContactRequestDto} from './dto/contact-request.dto'
 import {ContactResponseDto} from './dto/contact-response.dto'
@@ -129,13 +129,13 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
         this.log.debug({message: 'patch contact by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
 
-        const updates = new Dictionary<Operation[]>()
+        const oldEntity = await this.contactService.read(id, sr)
+        const entity = await patchToEntity<internal.Contact, ContactRequestDto>(oldEntity, patch, ContactRequestDto)
+        const update = new Dictionary<internal.Contact>(id.toString(), entity)
 
-        updates[id] = patch
-
-        const ids = await this.contactService.adjust(updates, sr)
-        const contact = await this.contactService.read(ids[0], sr)
-        const response = new ContactResponseDto(contact, sr.user.role)
+        const ids = await this.contactService.update(update, sr)
+        const updatedEntity = await this.contactService.read(ids[0], sr)
+        const response = new ContactResponseDto(updatedEntity, sr.user.role)
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
@@ -144,11 +144,19 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     async adjustMany(
-        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
     ) {
         const sr = new ServiceRequest(req)
-        return await this.contactService.adjust(updates, sr)
+
+        const updates = new Dictionary<internal.Contact>()
+        for (const id of Object.keys(patches)) {
+            const oldEntity = await this.contactService.read(+id, sr)
+            const entity = await patchToEntity<internal.Contact, ContactRequestDto>(oldEntity, patches[id], ContactRequestDto)
+            updates[id] = entity
+        }
+
+        return await this.contactService.update(updates, sr)
     }
 
     @Put(':id')
@@ -159,7 +167,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
         this.log.debug({message: 'update contact by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Contact>()
-        updates[id] = entity.toInternal(id)
+        updates[id] = entity.toInternal({id: id})
         const ids = await this.contactService.update(updates, sr)
         const contact = await this.contactService.read(ids[0], sr)
         const response = new ContactResponseDto(contact, sr.user.role)
@@ -178,7 +186,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
         const contacts = new Dictionary<internal.Contact>()
         for (const id of Object.keys(updates)) {
             const dto: ContactRequestDto = updates[id]
-            contacts[id] = dto.toInternal(parseInt(id))
+            contacts[id] = dto.toInternal({id: parseInt(id)})
         }
         return await this.contactService.update(contacts, sr)
     }

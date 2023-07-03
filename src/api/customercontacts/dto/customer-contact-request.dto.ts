@@ -2,7 +2,7 @@ import {ContactGender, ContactStatus} from '../../../entities/internal/contact.i
 import {internal} from '../../../entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsEnum, IsNotEmpty, IsOptional} from 'class-validator'
-import {RequestDto} from '../../../dto/request.dto'
+import {RequestDto, RequestDtoOptions} from '../../../dto/request.dto'
 
 export class CustomerContactRequestDto implements RequestDto {
     @IsOptional()
@@ -130,10 +130,20 @@ export class CustomerContactRequestDto implements RequestDto {
     @ApiPropertyOptional()
         vatnum?: string
 
-    toInternal(id?: number) {
+    constructor(entity?: internal.Contact) {
+        if (!entity)
+            return
+
+        // TODO rework as the Dto key names are not always equal to the Entity ones
+        Object.keys(entity).map(key => {
+            this[key] = entity[key]
+        })
+    }
+
+    toInternal(options: RequestDtoOptions = {}) {
         const contact = internal.Contact.create(this)
-        if (id)
-            contact.id = id
+        if (options.id)
+            contact.id = options.id
         return contact
     }
 }

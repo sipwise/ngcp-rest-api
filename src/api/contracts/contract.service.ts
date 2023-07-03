@@ -1,13 +1,11 @@
 import {AppService} from '../../app.service'
 import {Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
-import {applyPatch, Operation} from '../../helpers/patch.helper'
 import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ContractMariadbRepository} from './repositories/contract.mariadb.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
 import {LoggerService} from '../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
-import {deepCopy} from '../../helpers/deep-copy.helper'
 import {Dictionary} from '../../helpers/dictionary.helper'
 
 @Injectable()
@@ -19,31 +17,6 @@ export class ContractService implements CrudService<internal.Contract> {
         @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(ContractMariadbRepository) private readonly contractsRepo: ContractMariadbRepository,
     ) {
-    }
-
-    async adjust(patches: Dictionary<Operation[]>, sr: ServiceRequest): Promise<number[]> {
-        const ids = Object.keys(patches).map(id => parseInt(id))
-        this.log.debug({message: 'adjust contract by id', func: this.adjust.name, user: sr.user.username, ids: ids})
-
-        const updates = new Dictionary<internal.Contract>()
-        for (const id of ids) {
-            let contract = await this.contractsRepo.read(id, sr)
-            const patch = patches[id]
-            const oldContract = deepCopy(contract)
-            // TODO: Utils::BillingMappings::get_actual_billing_mapping
-            //  $old_resource->{billing_profile_id} = $billing_mapping->billing_profile->id;
-            //  $old_resource->{billing_profile_definition} = undef;
-            //  delete $old_resource->{profile_package_id};
-
-            contract = applyPatch(contract, patch).newDocument
-
-            if (oldContract.contact_id != contract.contact_id) {
-                await this.validateSystemContact(contract, sr)
-            }
-            await this.setProductId(contract, sr)
-            updates[id] = contract
-        }
-        return await this.contractsRepo.update(updates, sr)
     }
 
     async create(contracts: internal.Contract[], sr: ServiceRequest): Promise<internal.Contract[]> {

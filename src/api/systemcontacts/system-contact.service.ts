@@ -1,5 +1,4 @@
 import {BadRequestException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
-import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ContactMariadbRepository} from '../contacts/repositories/contact.mariadb.repository'
@@ -73,30 +72,6 @@ export class SystemContactService implements CrudService<internal.Contact> {
             if (contact.reseller_id || oldContact.reseller_id) {
                 throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'))
             }
-        }
-        return await this.contactRepo.update(updates, options)
-    }
-
-    async adjust(patches: Dictionary<PatchOperation[]>, sr: ServiceRequest): Promise<number[]> {
-        const ids = Object.keys(patches).map(id => parseInt(id))
-        this.log.debug({
-            message: 'adjust system contact by id',
-            func: this.adjust.name,
-            ids: ids,
-            user: sr.user.username,
-        })
-        const options = this.getContactOptionsFromServiceRequest(sr)
-
-        const updates = new Dictionary<internal.Contact>()
-        for (const id of ids) {
-            let contact = await this.contactRepo.readById(id, options)
-            contact = applyPatch(contact, patches[id]).newDocument
-            contact.id = id
-
-            if (contact.reseller_id != undefined) {
-                throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'))
-            }
-            updates[id] = contact
         }
         return await this.contactRepo.update(updates, options)
     }

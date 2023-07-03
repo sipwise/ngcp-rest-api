@@ -18,10 +18,10 @@ const getDBEntries = () => {
     return entities
 }
 
-let entities = !process.env.NODE_WP_BUNDLE &&
+const entities = !process.env.NODE_WP_BUNDLE &&
                 process.env.NODE_ENV == 'development' &&
                 process.env.NODE_JEST !== 'true'
-                    ? ["dist/entities/db/**/*.entity.js"]
+                    ? ['dist/entities/db/**/*.entity.js']
                     : [...getDBEntries()]
 
 export const databaseConfig: DataSourceOptions = {

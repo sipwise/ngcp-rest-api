@@ -3,7 +3,6 @@ import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {internal} from '../../entities'
 import {ContactMariadbRepository} from './repositories/contact.mariadb.repository'
 import {CrudService} from '../../interfaces/crud-service.interface'
-import {applyPatch, Operation as PatchOperation} from '../../helpers/patch.helper'
 import {LoggerService} from '../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
 import {Dictionary} from '../../helpers/dictionary.helper'
@@ -122,29 +121,5 @@ export class ContactService implements CrudService<internal.Contact>{
             return false
         }
         return true
-    }
-
-    async adjust(patches: Dictionary<PatchOperation[]>, sr: ServiceRequest): Promise<number[]> {
-        const ids = Object.keys(patches).map(id => parseInt(id))
-        const updates = new Dictionary<internal.Contact>()
-
-        for (const id of ids) {
-            const patch = patches[id]
-            let contact = await this.contactRepo.readById(id)
-
-            contact = applyPatch(contact, patch).newDocument
-            contact.id = id
-
-            if (sr.user.reseller_id_required) {
-                contact.reseller_id = sr.user.reseller_id
-            }
-
-            const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
-            if (!reseller) {
-                throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
-            }
-            updates[id] = contact
-        }
-        return await this.contactRepo.update(updates)
     }
 }

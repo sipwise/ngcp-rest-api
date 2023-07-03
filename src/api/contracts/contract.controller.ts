@@ -19,7 +19,7 @@ import {ContractRequestDto} from './dto/contract-request.dto'
 import {ContractResponseDto} from './dto/contract-response.dto'
 import {ContractService} from './contract.service'
 import {JournalService} from '../journals/journal.service'
-import {Operation as PatchOperation, Operation, validate} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, Operation, validate, patchToEntity} from '../../helpers/patch.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {Request} from 'express'
 import {RbacRole} from '../../config/constants.config'
@@ -118,7 +118,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
         this.log.debug({message: 'update contract by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Contract>()
-        updates[id] = update.toInternal(id)
+        updates[id] = update.toInternal({id: id})
 
         await this.contractService.update(updates, sr)
 
@@ -138,7 +138,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
         const contracts = new Dictionary<internal.Contract>()
         for (const id of Object.keys(updates)) {
             const dto: ContractRequestDto = updates[id]
-            contracts[id] = dto.toInternal(parseInt(id))
+            contracts[id] = dto.toInternal({id: parseInt(id)})
         }
         return await this.contractService.update(contracts, sr)
     }
@@ -158,12 +158,14 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     ): Promise<ContractResponseDto> {
         this.log.debug({message: 'patch contract by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const updates = new Dictionary<Operation[]>()
 
-        updates[id] = patch
+        const oldEntity = await this.contractService.read(id, sr)
+        const entity = await patchToEntity<internal.Contract, ContractRequestDto>(oldEntity, patch, ContractRequestDto)
+        const update = new Dictionary<internal.Contract>(id.toString(), entity)
 
-        const ids = await this.contractService.adjust(updates, sr)
-        const response = new ContractResponseDto(await this.contractService.read(ids[0], sr))
+        const ids = await this.contractService.update(update, sr)
+        const updatedEntity = await this.contractService.read(ids[0], sr)
+        const response = new ContractResponseDto(updatedEntity)
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
@@ -172,11 +174,19 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     async adjustMany(
-        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) updates: Dictionary<PatchOperation[]>,
+        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
     ) {
         const sr = new ServiceRequest(req)
-        return await this.contractService.adjust(updates, sr)
+
+        const updates = new Dictionary<internal.Contract>()
+        for (const id of Object.keys(patches)) {
+            const oldEntity = await this.contractService.read(+id, sr)
+            const entity = await patchToEntity<internal.Contract, ContractRequestDto>(oldEntity, patches[id], ContractRequestDto)
+            updates[id] = entity
+        }
+
+        return await this.contractService.update(updates, sr)
     }
 
     @Get(':id/journal')

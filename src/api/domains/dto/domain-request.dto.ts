@@ -13,6 +13,16 @@ export class DomainRequestDto implements RequestDto {
     @ApiProperty({description: 'The reseller id to assign this domain to', type: 'integer'})
         reseller_id: number
 
+    constructor(entity?: internal.Domain) {
+        if (!entity)
+            return
+
+        // TODO rework as the Dto key names are not always equal to the Entity ones
+        Object.keys(entity).map(key => {
+            this[key] = entity[key]
+        })
+    }
+
     toInternal(): internal.Domain {
         const domain = new internal.Domain()
         domain.domain = this.domain

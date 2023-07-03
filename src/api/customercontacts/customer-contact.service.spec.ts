@@ -9,11 +9,12 @@ import {CustomerContactService} from './customer-contact.service'
 import {internal} from '../../entities'
 import {HttpException, UnprocessableEntityException} from '@nestjs/common'
 import {CustomerContactModule} from './customer-contact.module'
-import {Operation as PatchOperation} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, patchToEntity} from '../../helpers/patch.helper'
 import {ContractStatus} from '../../entities/internal/contract.internal.entity'
 import {ContactStatus, ContactType} from '../../entities/internal/contact.internal.entity'
 import {deepCopy} from '../../helpers/deep-copy.helper'
 import {Dictionary} from '../../helpers/dictionary.helper'
+import {CustomerContactRequestDto} from './dto/customer-contact-request.dto'
 
 const user: AuthResponseDto = {
     readOnly: false,
@@ -145,10 +146,11 @@ describe('CustomerContactService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/status', value: ContactStatus.Terminated},
             ]
-            const updates = new Dictionary<PatchOperation[]>()
-            updates[id] = patch
+            const oldEntity = await service.read(id, sr)
+            const entity = await patchToEntity<internal.Contact, CustomerContactRequestDto>(oldEntity, patch, CustomerContactRequestDto)
+            const update = new Dictionary<internal.Contact>(id.toString(), entity)
 
-            const got = await service.adjust(updates, sr)
+            const got = await service.update(update, sr)
             expect(got.length).toStrictEqual(1)
             expect(got[0]).toStrictEqual(id)
 
@@ -160,9 +162,10 @@ describe('CustomerContactService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/reseller_id', value: 100},
             ]
-            const updates = new Dictionary<PatchOperation[]>()
-            updates[id] = patch
-            await expect(service.adjust(updates, sr)).rejects.toThrow(UnprocessableEntityException)
+            const oldEntity = await service.read(id, sr)
+            const entity = await patchToEntity<internal.Contact, CustomerContactRequestDto>(oldEntity, patch, CustomerContactRequestDto)
+            const update = new Dictionary<internal.Contact>(id.toString(), entity)
+            await expect(service.update(update, sr)).rejects.toThrow(UnprocessableEntityException)
         })
         it('should set reseller_id to user.reseller_id if user.reseller_id_required', async () => {
             const id = 2
@@ -174,10 +177,10 @@ describe('CustomerContactService', () => {
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/reseller_id', value: 3},
             ]
-            const updates = new Dictionary<PatchOperation[]>()
-            updates[id] = patch
-
-            const got = await service.adjust(updates, localRequest)
+            const oldEntity = await service.read(id, sr)
+            const entity = await patchToEntity<internal.Contact, CustomerContactRequestDto>(oldEntity, patch, CustomerContactRequestDto)
+            const update = new Dictionary<internal.Contact>(id.toString(), entity)
+            const got = await service.update(update, localRequest)
             expect(got.length).toStrictEqual(1)
             expect(got[0]).toStrictEqual(id)
 
