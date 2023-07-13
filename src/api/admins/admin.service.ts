@@ -8,6 +8,7 @@ import {LoggerService} from '../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
 import {AdminOptions} from './interfaces/admin-options.interface'
 import {Dictionary} from '../../helpers/dictionary.helper'
+import {RbacRole} from '../../config/constants.config'
 
 @Injectable()
 export class AdminService { //} implements CrudService<internal.Admin> {
@@ -98,9 +99,12 @@ export class AdminService { //} implements CrudService<internal.Admin> {
 
     getAdminOptionsFromServiceRequest(sr: ServiceRequest): AdminOptions {
         const hasAccessTo = sr.user.role_data.has_access_to.map(role => role.id)
+        let resellerId: number
+        if (sr.user.role == RbacRole.reseller || sr.user.role == RbacRole.ccare)
+            resellerId = sr.user.reseller_id
         return {
             filterBy: {
-                resellerId: sr.user.reseller_id,
+                resellerId: resellerId,
                 userId: sr.user.id,
             },
             hasAccessTo:hasAccessTo,
