@@ -6,6 +6,7 @@ Build-Depends:
  debhelper-compat (= 13),
  gyp,
  libsystemd-dev,
+ node-gyp,
  yarnpkg | nodejs (>= 12.19.0~),
  yarnpkg | yarn,
 Standards-Version: 4.5.1
