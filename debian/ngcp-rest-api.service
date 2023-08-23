@@ -98,10 +98,8 @@ PrivateNetwork=false
 # Control access to specific device nodes by the executed processes
 DevicePolicy=closed
 
-# Block all IP address ranges
-# NOTE: allow access from localhost
-IPAddressAllow=localhost
-IPAddressDeny=any
+# Allow all IP address ranges
+IPAddressAllow=any
 
 # Maximum number of bytes of memory that may be locked into RAM
 LimitMEMLOCK=0
