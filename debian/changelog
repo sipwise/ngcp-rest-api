@@ -1,3 +1,17 @@
+ngcp-rest-api (11.5.1.0+0~mr11.5.1.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [680a057] MT#57580 ncos set improvements
+  * [b1df2cb] MT#57800 RequestDto,ResponseDto improvements
+  * [a55477d] MT#57806 Improve Patch structure for endpoints
+  * [5890597] MT#58101 change IPAddressAllow=localhost hardening
+
+  [ Michael Berger ]
+  * [3a08fe3] MT#57857 fix admins GET filter by reseller_id
+  * [967211d] MT#57360 implement /api/customers endpoint
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 30 Aug 2023 18:05:04 +0200
+
 ngcp-rest-api (11.5.0.0+0~mr11.5.0.0) unstable; urgency=medium
 
   [ Michael Berger ]
