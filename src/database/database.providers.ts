@@ -9,7 +9,7 @@ export const databaseProviders = [
             const log = new LoggerService('databaseProviders[DB]')
             const ds  = new DataSource(databaseConfig)
             if (process.env.NODE_ENV == 'test' && process.env.NODE_TEST_E2E !== 'true') {
-                log.debug("test environment detected, skip database connection")
+                log.debug('test environment detected, skip database connection')
                 return ds
             }
             try {

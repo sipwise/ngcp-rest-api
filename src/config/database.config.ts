@@ -1,4 +1,5 @@
 import {DataSourceOptions} from 'typeorm'
+import '@nestjs-modules/ioredis'
 import {db} from '../entities'
 import {AppService} from '../app.service'
 import {TypeormLoggerService} from '../logger/typeorm-logger.service'
