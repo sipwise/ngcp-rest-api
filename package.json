@@ -20,7 +20,7 @@
     "start:debug": "NODE_ENV=development nest start --debug --watch",
     "start:prod": "node prod/server",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest --config jest-unit.config.js",
+    "test": "jest --detectOpenHandles --forceExit --config jest-unit.config.js",
     "test:watch": "jest --config jest-unit.config.js --watch",
     "test:cov": "jest --config jest-unit.config.js --coverage",
     "test:debug": "node --config jest-unit.config.js --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
@@ -30,6 +30,7 @@
     "test:e2e:debug": "node --config jest-e2e.config.js --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
   },
   "dependencies": {
+    "@nestjs-modules/ioredis": "1.0.1",
     "@nestjs/common": "9.3.9",
     "@nestjs/config": "2.3.1",
     "@nestjs/core": "9.3.9",
@@ -56,6 +57,7 @@
     "fast-json-patch": "3.1.1",
     "generate-password": "1.7.0",
     "halson": "3.0.0",
+    "ioredis": "5.3.2",
     "mysql2": "3.1.2",
     "nest-winston": "1.8.0",
     "nestjs-i18n": "10.2.6",

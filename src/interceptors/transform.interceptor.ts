@@ -83,7 +83,7 @@ export class TransformInterceptor implements NestInterceptor {
                     res.status(204)
                     return
                 }
-                if (req.method == 'POST' && data.length > 1) {
+                if (req.method == 'POST' && data && data.length > 1) {
                     if (config.post_return_max_link && data.length <= config.post_return_max_link) {
                         return this.generateDataLinks(req, res, data)
                     } else {

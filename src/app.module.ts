@@ -33,6 +33,7 @@ import {ExpandModule} from './helpers/expand.module'
 import {PbxGroupModule} from './api/pbxgroups/pbx-group.module'
 import {ContactModule} from './api/contacts/contact.module'
 import {DbStateSchedule} from './schedules/dbstate.schedule'
+import {RedisStateSchedule} from './schedules/redisstate.schedule'
 import {FileshareSchedule} from './schedules/fileshare.schedule'
 import {LoggerService} from './logger/logger.service'
 import {ClearCallCounterModule} from './api/clearcallcounters/clear-call-counter.module'
@@ -41,6 +42,7 @@ import {NumberModule} from './api/numbers/number.module'
 import {NCOSModule} from './api/ncos/ncos.module'
 import {NCOSSetModule} from './api/ncos-sets/ncos-set.module'
 import {AcceptLanguageResolver, CookieResolver, HeaderResolver, I18nModule, QueryResolver} from 'nestjs-i18n'
+import {RedisModule} from './database/redis.module'
 
 import * as path from 'path'
 
@@ -83,6 +85,7 @@ let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | Fo
     NumberModule,
     PbxGroupModule,
     ProductModule,
+    RedisModule,
     ResellerModule,
     SystemContactModule,
     VoicemailModule,
@@ -113,6 +116,7 @@ if (process.env.NODE_ENV != 'test') {
         AppService,
         DbStateSchedule,
         FileshareSchedule,
+        RedisStateSchedule,
         Logger,
         LoggerService,
     ],
