@@ -1,3 +1,10 @@
+ngcp-rest-api (11.5.1.1+0~mr11.5.1.1) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [5dfdc63] MT#58178 add Redis support, rework /api/clearcallcounters
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 18 Sep 2023 13:51:55 +0200
+
 ngcp-rest-api (11.5.1.0+0~mr11.5.1.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
