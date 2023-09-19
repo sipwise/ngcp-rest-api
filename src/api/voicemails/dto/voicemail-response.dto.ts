@@ -6,6 +6,9 @@ export class VoicemailResponseDto implements ResponseDto {
     @ApiProperty({description: 'unique identifier of a voicemail'})
         id: number
 
+    @ApiProperty({description: 'call-id of the voicemail'})
+        call_id: string
+
     @ApiProperty({description: 'caller number'})
         caller: string
 
@@ -25,6 +28,7 @@ export class VoicemailResponseDto implements ResponseDto {
         const date = new Date(parseInt(voicemail.origtime) * 1000)
 
         this.id = voicemail.id
+        this.call_id = voicemail.call_id
         this.caller = voicemail.callerid
         this.duration = voicemail.duration
         this.folder = voicemail.dir.substring(voicemail.dir.lastIndexOf('/') + 1)
