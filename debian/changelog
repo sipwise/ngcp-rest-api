@@ -1,3 +1,10 @@
+ngcp-rest-api (9.5.8.2+0~mr9.5.8.2) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [899b455] MT#57927 use Debian node-gyp package for bindings
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 02 Oct 2023 15:12:10 +0200
+
 ngcp-rest-api (9.5.8.1+0~mr9.5.8.1) unstable; urgency=medium
 
   * New release.
