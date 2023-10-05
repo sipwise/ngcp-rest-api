@@ -8,6 +8,7 @@ import {v4 as uuidv4} from 'uuid'
 import {Request as TaskAgentRequest} from '../../entities/task-agent/request.task-agent.entity'
 import {Response as TaskAgentResponse} from '../../entities/task-agent/response.task-agent.entity'
 import {setInterval} from 'timers/promises'
+import * as os from 'os'
 
 @Injectable()
 export class ClearCallCounterService {
@@ -32,8 +33,8 @@ export class ClearCallCounterService {
         const request: TaskAgentRequest = {
             uuid: uuidv4(),
             task: 'clear_call_counters',
-            src: 'sp1',
-            dst: 'sp1',
+            src: os.hostname(),
+            dst: '*|state=active;role=proxy',
             options: {
                 'feedback_channel': feedbackChannel,
             },
@@ -90,8 +91,8 @@ export class ClearCallCounterService {
         const request: TaskAgentRequest = {
             uuid: uuidv4(),
             task: 'get_stuck_calls',
-            src: 'sp1',
-            dst: 'sp1',
+            src: os.hostname(),
+            dst: '*|state=active;role=proxy',
             options: {
                 'feedback_channel': feedbackChannel,
             },
