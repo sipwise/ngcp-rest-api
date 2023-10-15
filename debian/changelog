@@ -1,3 +1,17 @@
+ngcp-rest-api (12.0.2.0+0~mr12.0.2.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [6256843] MT#58178 add Redis support, rework /api/clearcallcounters
+  * [62bc199] MT#58178 /api/clearcallcounters use dst to all active proxies
+
+  [ Fabricio Santolin da Silva ]
+  * [05e1226] MT#57143 Add call_id field to the /voicemail REST API response
+
+  [ Guillem Jover ]
+  * [5119f28] MT#58356 Update packaging for bookworm
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Sun, 15 Oct 2023 08:24:34 +0200
+
 ngcp-rest-api (12.0.1.0+0~mr12.0.1.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
