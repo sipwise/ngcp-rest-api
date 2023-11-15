@@ -116,7 +116,7 @@ export class TransformInterceptor implements NestInterceptor {
             if ('id' in data[0])
                 id = data[0]['id']
             length = data.length
-        } else if (typeof data === 'object')  {
+        } else if (typeof data === 'object') {
             if ('id' in data)
                 id = data['id']
             length = 1
@@ -139,7 +139,7 @@ export class TransformInterceptor implements NestInterceptor {
         } else if (Array.isArray(data)) {
             response.data = data
             response.total_count = data.length
-        } else if (typeof data === 'object')  {
+        } else if (typeof data === 'object') {
             Object.assign(response, data)
         }
 
@@ -158,8 +158,8 @@ export class TransformInterceptor implements NestInterceptor {
 
         const path = req.route.path
         const url = req.url.endsWith('/')
-                        ? req.url.slice(0, -1)
-                        : req.url
+            ? req.url.slice(0, -1)
+            : req.url
 
         const resName = this.getResourceName(path)
 
@@ -173,10 +173,10 @@ export class TransformInterceptor implements NestInterceptor {
                 totalCount = data.pop()
                 data = data.pop()
             }
-            resource = halson()
+            resource = halson('')
                 .addLink('self', req.originalUrl)
             data.map(async (row) => {
-                const link = url + ( row.id ? '/' + row.id : '' )
+                const link = url + (row.id ? '/' + row.id : '')
                 if (data.length == 1) {
                     await resource.addLink(`ngcp:${resName}`, [{href: `${link}`}])
                 } else {
@@ -258,7 +258,7 @@ export class TransformInterceptor implements NestInterceptor {
         const pathArray = path.split('/')
         const urlArray = url.split('/')
 
-        if (pathArray[pathArray.length-1].startsWith(':'))
+        if (pathArray[pathArray.length - 1].startsWith(':'))
             urlArray.splice(-1, 1)
 
         return urlArray.join('/')
@@ -271,7 +271,7 @@ export class TransformInterceptor implements NestInterceptor {
 
         const pathArray = subPath.split('/')
 
-        let resNameArray = []
+        const resNameArray = []
 
         pathArray.forEach((e, i) => {
             if (!(pathArray[i].startsWith(':')))
