@@ -1,3 +1,10 @@
+ngcp-rest-api (12.2.0.0+0~mr12.2.0.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [9549c04] MT#58398 nodejs 20 support
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 29 Nov 2023 13:37:38 +0100
+
 ngcp-rest-api (12.1.0.0+0~mr12.1.0.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
