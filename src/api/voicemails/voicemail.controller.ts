@@ -25,7 +25,6 @@ import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {Dictionary} from '../../helpers/dictionary.helper'
 import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
 import {Request} from 'express'
-import {ParamOrBody} from '../../decorators/param-or-body.decorator'
 
 const resourceName = 'voicemails'
 
@@ -81,7 +80,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
         type: number,
     })
     async delete(
-        @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
+        @Param('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req
     ): Promise<number[]> {
         this.log.debug({message: 'delete voicemail by id', func: this.delete.name, url: req.url, method: req.method})
