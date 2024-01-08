@@ -24,8 +24,8 @@ import {ApiPutBody} from '../../decorators/api-put-body.decorator'
 import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {Dictionary} from '../../helpers/dictionary.helper'
 import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
-import {Request} from 'express'
 import {ParamOrBody} from '../../decorators/param-or-body.decorator'
+import {Request} from 'express'
 
 const resourceName = 'voicemails'
 
