@@ -14,6 +14,7 @@ export interface VoicemailInternalEntity {
     origtime: string
     recording: Buffer
     subscriber_id: number
+    username: string
 }
 
 export class Voicemail implements VoicemailInternalEntity {
@@ -32,6 +33,7 @@ export class Voicemail implements VoicemailInternalEntity {
     origtime: string
     recording: Buffer
     subscriber_id: number
+    username: string
 
     static create(data: VoicemailInternalEntity): Voicemail {
         const voicemail = new Voicemail()

@@ -1,5 +1,6 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
-import {VoipSubscriber} from '../billing'
+import {VoipSubscriber as BillingVoipSubscriber} from '../billing'
+import {VoipSubscriber as ProvisioningVoipSubscriber} from '../provisioning'
 import {internal} from '../../../entities'
 
 @Entity({
@@ -77,9 +78,13 @@ export class VoicemailSpool extends BaseEntity {
     })
         call_id: string
 
-    @ManyToOne(() => VoipSubscriber, subscriber => subscriber.id)
+    @ManyToOne(() => BillingVoipSubscriber, bSub => bSub.id)
     @JoinColumn({name: 'mailboxuser', referencedColumnName: 'uuid'})
-        billingSubscriber: VoipSubscriber
+        billingSubscriber: BillingVoipSubscriber
+
+    @ManyToOne(() => ProvisioningVoipSubscriber, pSub => pSub.id)
+    @JoinColumn({name: 'mailboxuser', referencedColumnName: 'uuid'})
+        provisioningSubscriber: ProvisioningVoipSubscriber
 
     toInternal(): internal.Voicemail {
         return internal.Voicemail.create({
@@ -97,7 +102,8 @@ export class VoicemailSpool extends BaseEntity {
             msgnum: this.msgnum,
             origtime: this.origtime,
             recording: this.recording,
-            subscriber_id: this.billingSubscriber.id
+            subscriber_id: this.billingSubscriber.id,
+            username: this.provisioningSubscriber.username,
         })
     }
 

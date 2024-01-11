@@ -9,6 +9,16 @@ import {VoicemailRepository} from '../interfaces/voicemail.repository'
 import {LoggerService} from '../../../logger/logger.service'
 import {Dictionary} from '../../../helpers/dictionary.helper'
 
+export class MessagesCount {
+    new_messages: number
+    old_messages: number
+
+    constructor(new_m: number = 0, old_m: number = 0) {
+        this.new_messages = new_m
+        this.old_messages = old_m
+    }
+}
+
 export class VoicemailMariadbRepository implements VoicemailRepository {
     private readonly log = new LoggerService(VoicemailMariadbRepository.name)
 
@@ -63,9 +73,31 @@ export class VoicemailMariadbRepository implements VoicemailRepository {
         return ids
     }
 
+    @HandleDbErrors
+    async readMessagesCountByUUID(uuid: string, sr: ServiceRequest): Promise<MessagesCount> {
+        const qb = db.kamailio.VoicemailSpool.createQueryBuilder('v')
+        qb.select(['v.dir as dir', 'COUNT(v.dir) as dir_count'])
+        qb.where('v.mailboxuser = :uuid', {uuid: uuid})
+        qb.groupBy('v.dir')
+        const result = await qb.getRawMany()
+        const mCount = new MessagesCount()
+        result.map(async (entry) => {
+            this.log.debug(entry)
+            const dir = entry['dir']
+            const dir_count = entry['dir_count']
+            this.log.debug(dir, dir_count)
+            if (dir.endsWith('INBOX'))
+                mCount.new_messages = dir_count
+            else if (dir.endsWith('Old'))
+                mCount.old_messages = dir_count
+        })
+        return mCount
+    }
+
     private async createBaseQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.kamailio.VoicemailSpool>> {
         const qb = db.kamailio.VoicemailSpool.createQueryBuilder('voicemail')
-        qb.leftJoinAndSelect('voicemail.billingSubscriber', 'subscriber')
+        qb.leftJoinAndSelect('voicemail.billingSubscriber', 'bSubscriber')
+        qb.leftJoinAndSelect('voicemail.provisioningSubscriber', 'pSubscriber')
         return qb
     }
 

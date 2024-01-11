@@ -133,10 +133,6 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
         const updates = new Dictionary<internal.Voicemail>()
         for (const id of Object.keys(patches)) {
             const patch = patches[id]
-            patch.forEach(op => {
-                if (op.path === '/folder')
-                    op.path = '/dir'
-            })
             const oldEntity = await this.voicemailService.read(+id, sr)
             const entity = await patchToEntity<internal.Voicemail, VoicemailRequestDto>(oldEntity, patch, VoicemailRequestDto)
             updates[id] = entity
@@ -150,7 +146,12 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
         type: VoicemailResponseDto,
     })
     async update(@Param('id', ParseIntPipe) id: number, @Body() update: VoicemailRequestDto, @Req() req): Promise<VoicemailResponseDto> {
-        this.log.debug({message: 'update voicemail by id', func: this.update.name, url: req.url, method: req.method})
+        this.log.debug({
+            message: 'update voicemail by id',
+            func: this.update.name,
+            url: req.url,
+            method: req.method,
+        })
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Voicemail>()
         updates[id] = update.toInternal({id: id})
