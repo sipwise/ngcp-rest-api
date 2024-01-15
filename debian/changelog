@@ -1,3 +1,19 @@
+ngcp-rest-api (12.2.1.0+0~mr12.2.1.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [2c515fe] MT#58590 fix /api/voicemails DELETE array validator
+  * [f055138] Revert "MT#58590 fix /api/voicemails DELETE array validator"
+  * [c940a19] MT#58980 fix /api/voicemails DELETE array validator
+  * [46a9b2b] MT#58980 voicemail controller import order to force package rebuild
+  * [123bf81] MT#59133 /api/voicemails add vmnotify support
+  * [67660de] MT#59133 improve voicemails batch ids selection
+  * [92c5c6f] MT#59133 fix ngcp-vmnotify invokation
+
+  [ Fabricio Santolin da Silva ]
+  * [cad7567] MT#58961 Add extra arguments to vmnotify call
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 15 Jan 2024 14:47:56 +0100
+
 ngcp-rest-api (12.2.0.0+0~mr12.2.0.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
