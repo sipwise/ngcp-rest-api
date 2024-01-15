@@ -28,19 +28,33 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
         const messagesCount = await this.voicemailRepo.readMessagesCountByUUID(voicemail.mailboxuser, sr)
         const new_messages = messagesCount.new_messages.toString()
         const old_messages = messagesCount.old_messages.toString()
+        const urgent_messages = '0'
         const cli = voicemail.username
+        const from = voicemail.callerid
         const uuid = voicemail.mailboxuser
         const msgnum = voicemail.msgnum.toString()
         const duration = voicemail.duration.toString()
         const callId = voicemail.call_id.toString()
-        const date = '00-00-00T00:00:00'
+        const date = new Date(parseInt(voicemail.origtime) * 1000).toISOString()
+        const actions: Array<string> = [actionType, msgnum, callId]
+
         this.log.debug({
-            message: `send vmnotify with args context=${context} cli=${cli} uuid=${uuid} new_messages=${new_messages} old_messages=${old_messages}`,
+            message:
+                'send vmnotify with args ' +
+                `context=${context} cli=${cli} uuid=${uuid} ` +
+                `new_messages=${new_messages} old_messages=${old_messages} ` +
+                `urgent_messages=${urgent_messages} ` +
+                `msgnum=${msgnum} from=${from} date=${date} ` +
+                `duration=${duration} actions=${actions}`,
             func: this.readAll.name,
             user: sr.user.username,
         })
-        const actions: string = [actionType, msgnum, callId].join(' ')
-        const args = [context, cli, uuid, new_messages, old_messages, msgnum, '-1', date, duration, '', actions]
+
+        const args = [
+            context, cli, uuid,
+            new_messages, old_messages, urgent_messages,
+            msgnum, from, date, duration, ...actions,
+        ]
 
         await execFileAsync('/usr/bin/ngcp-vmnotify', args, {cwd: '/usr/bin', shell: false, timeout: 5 * 1000},
         ).then(async (ret) => {
