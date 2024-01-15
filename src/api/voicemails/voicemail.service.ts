@@ -33,14 +33,14 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
         const msgnum = voicemail.msgnum.toString()
         const duration = voicemail.duration.toString()
         const callId = voicemail.call_id.toString()
-        const date = "00-00-00T00:00:00"
+        const date = '00-00-00T00:00:00'
         this.log.debug({
             message: `send vmnotify with args context=${context} cli=${cli} uuid=${uuid} new_messages=${new_messages} old_messages=${old_messages}`,
             func: this.readAll.name,
             user: sr.user.username,
         })
         const actions: string = [actionType, msgnum, callId].join(' ')
-        const args = [context, cli, uuid, new_messages, old_messages, msgnum, "-1", date, duration, "", actions]
+        const args = [context, cli, uuid, new_messages, old_messages, msgnum, '-1', date, duration, '', actions]
 
         await execFileAsync('/usr/bin/ngcp-vmnotify', args, {cwd: '/usr/bin', shell: false, timeout: 5 * 1000},
         ).then(async (ret) => {
@@ -60,15 +60,12 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
-        const voicemails: Array<internal.Voicemail> = []
-        for (const id of ids) {
-            const vm = await this.voicemailRepo.read(id, sr)
-            voicemails.push(vm)
-        }
+        const voicemails: Array<internal.Voicemail> = await this.voicemailRepo.readWhereInIds(ids, sr)
         const deletedIds: number[] = await this.voicemailRepo.delete(ids, sr)
-        for (const voicemail of voicemails) {
-            await this.sendNotification(voicemail, sr, 'd');
-        }
+
+        for (const voicemail of voicemails)
+            await this.sendNotification(voicemail, sr, 'd')
+
         return deletedIds
     }
 
@@ -77,14 +74,16 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
         if (await this.voicemailRepo.readCountOfIds(ids, sr) != ids.length)
             throw new UnprocessableEntityException()
         const notifies: Array<internal.Voicemail> = []
-        for (const id of ids) {
+        const voicemails: Array<internal.Voicemail> = await this.voicemailRepo.readWhereInIds(ids, sr)
+
+        for (const voicemail of voicemails) {
+            const id = voicemail.id
             const update = updates[id]
+            const dir = voicemail.dir.substring(voicemail.dir.lastIndexOf('/') + 1)
+            const sendVmnotify: boolean = update.dir && update.dir != dir
             if (this.authorized.indexOf(update.dir) == -1) {
                 throw new BadRequestException(`not a valid value dir=${update.dir}`)
             }
-            const voicemail = await this.voicemailRepo.read(id, sr)
-            const dir = voicemail.dir.substring(voicemail.dir.lastIndexOf('/') + 1)
-            const sendVmnotify: boolean = update.dir && update.dir != dir
             update.dir = `${this.voicemailDir}${voicemail.mailboxuser}/${update.dir}`
 
             if (sendVmnotify)
@@ -93,9 +92,8 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
 
         const result = await this.voicemailRepo.update(updates, sr)
 
-        for (const voicemail of notifies) {
-            await this.sendNotification(voicemail, sr, 'r');
-        }
+        for (const voicemail of notifies)
+            await this.sendNotification(voicemail, sr, 'r')
 
         return result
     }
