@@ -23,6 +23,34 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
     ) {
     }
 
+    async sendNotification(voicemail: internal.Voicemail, sr: ServiceRequest, actionType: string = 'r') {
+        const context: string = 'default'
+        const messagesCount = await this.voicemailRepo.readMessagesCountByUUID(voicemail.mailboxuser, sr)
+        const new_messages = messagesCount.new_messages.toString()
+        const old_messages = messagesCount.old_messages.toString()
+        const cli = voicemail.username
+        const uuid = voicemail.mailboxuser
+        const msgnum = voicemail.msgnum.toString()
+        const duration = voicemail.duration.toString()
+        const callId = voicemail.call_id.toString()
+        const date = "00-00-00T00:00:00"
+        this.log.debug({
+            message: `send vmnotify with args context=${context} cli=${cli} uuid=${uuid} new_messages=${new_messages} old_messages=${old_messages}`,
+            func: this.readAll.name,
+            user: sr.user.username,
+        })
+        const actions: string = [actionType, msgnum, callId].join(' ')
+        const args = [context, cli, uuid, new_messages, old_messages, msgnum, "-1", date, duration, "", actions]
+
+        await execFileAsync('/usr/bin/ngcp-vmnotify', args, {cwd: '/usr/bin', shell: false, timeout: 5 * 1000},
+        ).then(async (ret) => {
+            return true
+        }).catch(error => {
+            this.log.error(`execFileAsync ${error.cmd} error: ${error.stdout}, ${error.stderr}`)
+            throw new UnprocessableEntityException(this.i18n.t('errors.REQUEST_PROCESSING_ERROR'))
+        })
+    }
+
     async readAll(sr: ServiceRequest): Promise<[internal.Voicemail[], number]> {
         return this.voicemailRepo.readAll(sr)
     }
@@ -32,7 +60,16 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
-        return await this.voicemailRepo.delete(ids, sr)
+        const voicemails: Array<internal.Voicemail> = []
+        for (const id of ids) {
+            const vm = await this.voicemailRepo.read(id, sr)
+            voicemails.push(vm)
+        }
+        const deletedIds: number[] = await this.voicemailRepo.delete(ids, sr)
+        for (const voicemail of voicemails) {
+            await this.sendNotification(voicemail, sr, 'd');
+        }
+        return deletedIds
     }
 
     async update(updates: Dictionary<internal.Voicemail>, sr: ServiceRequest): Promise<number[]> {
@@ -57,25 +94,7 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
         const result = await this.voicemailRepo.update(updates, sr)
 
         for (const voicemail of notifies) {
-            const messagesCount = await this.voicemailRepo.readMessagesCountByUUID(voicemail.mailboxuser, sr)
-            const cli = voicemail.username
-            const uuid = voicemail.mailboxuser
-            const context = 'default'
-            const new_messages = messagesCount.new_messages.toString()
-            const old_messages = messagesCount.old_messages.toString()
-            this.log.debug({
-                message: `send vmnotify with args context=${context} cli=${cli} uuid=${uuid} new_messages=${new_messages} old_messages=${old_messages}`,
-                func: this.readAll.name,
-                user: sr.user.username,
-            })
-            const args = [context, cli, uuid, new_messages, old_messages]
-            await execFileAsync('/usr/bin/ngcp-vmnotify', args, {cwd: '/usr/bin', shell: false, timeout: 5 * 1000},
-            ).then(async (ret) => {
-                return true
-            }).catch(error => {
-                this.log.error(`execFileAsync ${error.cmd} error: ${error.stdout}, ${error.stderr}`)
-                throw new UnprocessableEntityException(this.i18n.t('errors.REQUEST_PROCESSING_ERROR'))
-            })
+            await this.sendNotification(voicemail, sr, 'r');
         }
 
         return result
