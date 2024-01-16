@@ -33,10 +33,11 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
         const from = voicemail.callerid
         const uuid = voicemail.mailboxuser
         const msgnum = voicemail.msgnum.toString()
+        const idStr = voicemail.id.toString()
         const duration = voicemail.duration.toString()
         const callId = voicemail.call_id.toString()
         const date = new Date(parseInt(voicemail.origtime) * 1000).toISOString()
-        const actions: Array<string> = [actionType, msgnum, callId]
+        const actions: Array<string> = [actionType, idStr, callId]
 
         this.log.debug({
             message:
