@@ -25,8 +25,9 @@ export class TypeormLoggerService implements TypeormLogger {
             this.options === true ||
             (Array.isArray(this.options) && this.options.indexOf('query') !== -1)))
             return
-        if (query == 'select 1' || query == 'SELECT DATABASE() AS `db_name`') {
-            // do not log ping queries
+        if (query == 'select 1' || query == 'SELECT DATABASE() AS `db_name`' ||
+            query == 'DELETE FROM `fileshare`.`uploads` WHERE `expires_at` <= ?') {
+            // do not log ping queries and fileshare schedule deletes
             return
         }
         this.logger.debug(query, {parameters: parameters, context: this.context})
