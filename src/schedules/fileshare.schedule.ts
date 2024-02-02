@@ -18,8 +18,13 @@ export class FileshareSchedule {
     private async cleanupExpiredUploads() {
         if (!this.app.isDbInitialised || !this.app.isDbAvailable)
             return
-        db.fileshare.Upload.delete({
-            expires_at: LessThanOrEqual(new Date()),
-        })
+        try {
+            await db.fileshare.Upload.delete({
+                expires_at: LessThanOrEqual(new Date()),
+            })
+        }
+        catch (err) {
+            this.log.error(`Could not cleanup expired fileshare uploads: ${err}`)
+        }
     }
 }
