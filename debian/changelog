@@ -1,3 +1,10 @@
+ngcp-rest-api (11.5.1.4+0~mr11.5.1.4) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [2a797b0] MT#59040 address database connection loss issues
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 02 Feb 2024 13:51:31 +0100
+
 ngcp-rest-api (11.5.1.3+0~mr11.5.1.3) unstable; urgency=medium
 
   [ Kirill Solomko ]
