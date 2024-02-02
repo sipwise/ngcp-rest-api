@@ -14,12 +14,16 @@ export class DbStateSchedule {
 
     @Interval(5000)
     private async checkDbAvailable() {
-        if (!this.app.isDbInitialised) {
+        if (!this.app.db.isInitialized) {
             try {
                 await this.app.db.initialize()
-                if (this.app.isDbInitialised)
+                if (this.app.db.isInitialized)
                     this.log.debug('Database is initialised')
+                this.app.setDbAvailable = true
             } catch {
+                if (this.app.isDbAvailable)
+                    this.log.debug('Could not initialise the database')
+                this.app.setDbAvailable = false
             }
         } else {
             try {
