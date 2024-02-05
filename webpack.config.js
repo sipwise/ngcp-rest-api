@@ -101,6 +101,24 @@ module.exports =
           ]
         }
       },
+      {
+        test: /mysql2\/lib\/parsers\/string\.js$/,
+        loader: 'string-replace-loader',
+        options: {
+          multiple: [
+            {
+              search: "exports.decode = function(buffer, encoding, start, end, options) {\n  if (Buffer.isEncoding(encoding)) {",
+              replace: "exports.decode = function(buffer, encoding, start, end, options) {\n  if (!encoding || encoding == 'undefined') encoding = 'utf8'\n  if (Buffer.isEncoding(encoding)) {",
+              strict: true,
+            },
+            {
+              search: "exports.encode = function(string, encoding, options) {\n  if (Buffer.isEncoding(encoding)) {",
+              replace: "exports.encode = function(string, encoding, options) {\n  if (!encoding || encoding == 'undefined') encoding = 'utf8'\n  if (Buffer.isEncoding(encoding)) {",
+              strict: true,
+            },
+          ]
+        }
+      },
     ],
   },
   resolve:
