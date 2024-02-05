@@ -1,3 +1,10 @@
+ngcp-rest-api (12.2.1.3+0~mr12.2.1.3) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [2fc646f] MT#59040 mysql2 driver fix undefined encoding encode()/decode()
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 05 Feb 2024 13:54:42 +0100
+
 ngcp-rest-api (12.2.1.2+0~mr12.2.1.2) unstable; urgency=medium
 
   [ Kirill Solomko ]
