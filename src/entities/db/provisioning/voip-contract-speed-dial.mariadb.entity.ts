@@ -20,7 +20,7 @@ export class VoipContractSpeedDial extends BaseEntity {
         contract_id: number
 
     @Column({
-        type: 'int',
+        type: 'varchar',
         unsigned: true,
         width: 64,
         nullable: false,
