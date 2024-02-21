@@ -18,7 +18,7 @@ export class VoicemailResponseDto implements ResponseDto {
     @ApiProperty({description: 'duration of the message in seconds'})
         duration: string
 
-    @ApiProperty({description: 'the folder the message is currently in', example: '/INBOX'})
+    @ApiProperty({description: 'message folder', example: ['Inbox', 'Old']})
         folder: string
 
     @ApiProperty({description: 'the subscriber id the message belongs to'})

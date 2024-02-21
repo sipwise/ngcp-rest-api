@@ -3,7 +3,7 @@ import {RequestDto, RequestDtoOptions} from '../../../dto/request.dto'
 import {internal} from '../../../entities'
 
 export class VoicemailRequestDto implements RequestDto {
-    @ApiProperty({description: 'the folder the message is currently in', example: '/INBOX'})
+    @ApiProperty({description: 'message folder', example: ['Old', 'Inbox']})
         folder: string
 
     constructor(entity?: internal.Voicemail) {
