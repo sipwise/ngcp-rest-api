@@ -1,3 +1,10 @@
+ngcp-rest-api (12.2.1.4+0~mr12.2.1.4) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [662fb55] MT#59464  /api/voicemails update fixes
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 21 Feb 2024 17:33:36 +0100
+
 ngcp-rest-api (12.2.1.3+0~mr12.2.1.3) unstable; urgency=medium
 
   [ Kirill Solomko ]
