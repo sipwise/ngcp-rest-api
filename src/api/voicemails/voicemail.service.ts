@@ -14,7 +14,7 @@ const execFileAsync = promisify(execFile)
 @Injectable()
 export class VoicemailService implements CrudService<internal.Voicemail> {
     readonly voicemailDir = '/var/spool/asterisk/voicemail/default/'
-    authorized = ['Old', 'INBOX', 'Work', 'Friends', 'Family', 'Cust1', 'Cust2', 'Cust3', 'Cust4', 'Cust5', 'Cust6']
+    readonly supported_dirs = ['Old', 'INBOX', 'Work', 'Friends', 'Family', 'Cust1', 'Cust2', 'Cust3', 'Cust4', 'Cust5', 'Cust6']
     private readonly log = new LoggerService(VoicemailService.name)
 
     constructor(
@@ -94,14 +94,20 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
             const id = voicemail.id
             const update = updates[id]
             const dir = voicemail.dir.substring(voicemail.dir.lastIndexOf('/') + 1)
-            const sendVmnotify: boolean = update.dir && update.dir != dir
-            if (this.authorized.indexOf(update.dir) == -1) {
-                throw new BadRequestException(`not a valid value dir=${update.dir}`)
-            }
-            update.dir = `${this.voicemailDir}${voicemail.mailboxuser}/${update.dir}`
-
-            if (sendVmnotify)
+            const dirDiff: boolean = update.dir && update.dir != dir
+            if (dirDiff) {
+                let validDir = undefined
+                this.supported_dirs.forEach((checkDir) => {
+                    if (checkDir.toLowerCase() == update.dir.toLowerCase()) {
+                        validDir = checkDir
+                        return
+                    }
+                })
+                if (!validDir)
+                    throw new BadRequestException(`not a valid value ${update.dir}`)
+                update.dir = `${this.voicemailDir}${voicemail.mailboxuser}/${validDir}`
                 notifies.push(voicemail)
+            }
         }
 
         const result = await this.voicemailRepo.update(updates, sr)
