@@ -9,9 +9,7 @@ export const ApiPutBody = <TModel extends Type<any>>(
             schema: {
                 title: `PutOf${model.name}`,
                 type: 'object',
-                additionalProperties: {
-                    $ref: getSchemaPath(model),
-                },
+                $ref: getSchemaPath(model),
             },
         }),
     )
