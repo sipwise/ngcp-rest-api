@@ -1,3 +1,10 @@
+ngcp-rest-api (12.2.1.6+0~mr12.2.1.6) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [6df0293] MT#59483 /api/voicemails add caller to callerid search alias
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 22 Feb 2024 19:15:53 +0100
+
 ngcp-rest-api (12.2.1.5+0~mr12.2.1.5) unstable; urgency=medium
 
   [ Kirill Solomko ]
