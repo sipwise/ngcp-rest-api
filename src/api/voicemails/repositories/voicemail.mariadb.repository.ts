@@ -24,7 +24,13 @@ export class VoicemailMariadbRepository implements VoicemailRepository {
 
     @HandleDbErrors
     async readAll(sr: ServiceRequest): Promise<[internal.Voicemail[], number]> {
-        const qb = await this.createReadAllQueryBuilder(sr)
+        const qb = await this.createBaseQueryBuilder(sr)
+        const searchDto = new VoicemailSearchDto()
+        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
+            Object.keys(searchDto),
+            undefined,
+            searchDto._alias,
+        ))
         const [result, count] = await qb.getManyAndCount()
         return [result.map(voicemail => voicemail.toInternal()), count]
     }
@@ -42,7 +48,6 @@ export class VoicemailMariadbRepository implements VoicemailRepository {
         const qb = await this.createBaseQueryBuilder(sr)
         qb.whereInIds(ids)
         const voicemails = await qb.getMany()
-
         return await Promise.all(voicemails.map(async (voicemail) => voicemail.toInternal()))
     }
 
@@ -82,10 +87,8 @@ export class VoicemailMariadbRepository implements VoicemailRepository {
         const result = await qb.getRawMany()
         const mCount = new MessagesCount()
         result.map(async (entry) => {
-            this.log.debug(entry)
             const dir = entry['dir']
             const dir_count = entry['dir_count']
-            this.log.debug(dir, dir_count)
             if (dir.endsWith('INBOX'))
                 mCount.new_messages = dir_count
             else if (dir.endsWith('Old'))
@@ -98,12 +101,6 @@ export class VoicemailMariadbRepository implements VoicemailRepository {
         const qb = db.kamailio.VoicemailSpool.createQueryBuilder('voicemail')
         qb.leftJoinAndSelect('voicemail.billingSubscriber', 'bSubscriber')
         qb.leftJoinAndSelect('voicemail.provisioningSubscriber', 'pSubscriber')
-        return qb
-    }
-
-    private async createReadAllQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.kamailio.VoicemailSpool>> {
-        const qb = await this.createBaseQueryBuilder(sr)
-        await configureQueryBuilder(qb, sr.query, new SearchLogic(sr, Object.keys(new VoicemailSearchDto())))
         return qb
     }
 }

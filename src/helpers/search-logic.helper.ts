@@ -28,9 +28,12 @@ export class SearchLogic {
         searchOr: boolean
 
     constructor(sr: ServiceRequest, searchableFields: string[], joins?: Join[], aliases?: {[key: string]: string}) {
+        this.searchableFields = searchableFields
+        delete this.searchableFields['_alias']
+        delete this.searchableFields['_joins']
+
         this.joins = joins
         this.aliases = aliases
-        this.searchableFields = searchableFields
 
         const [page, rows] = SearchLogic.getPaginationFromServiceRequest(sr)
         this.page = page
