@@ -1,6 +1,7 @@
 import {BaseEntity, SelectQueryBuilder} from 'typeorm'
 import {SearchLogic} from './search-logic.helper'
 import {ParamsDictionary} from '../interfaces/service-request.interface'
+import {BadRequestException} from '@nestjs/common'
 
 export function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
     addJoinFilterToQueryBuilder(qb, params, searchLogic)
@@ -24,26 +25,31 @@ function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilde
 }
 
 function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
-    for (const property of searchLogic.searchableFields) {
-        if (property == '_alias')
-            continue
-        if (params[property] != null) {
-            const propertyAlias = searchLogic.aliases && searchLogic.aliases[property]
-                                                            ? searchLogic.aliases[property]
-                                                            : property
-            let value: string = params[property]
+    Object.keys(params).forEach((searchField: string) => {
+        if (searchLogic.searchableFields.indexOf(searchField) == -1)
+            throw new BadRequestException(`unknown query parameter: ${searchField}`)
 
-            const whereComparator = value.includes('*') ? 'like' : '='
-            value = value.replace(/\*/g, '%')
+        const propertyAlias = searchLogic.aliases && searchLogic.aliases[searchField]
+            ? searchLogic.aliases[searchField]
+            : searchField
 
-            // TODO: value should be number | string | boolean and add type casting
-            if (searchLogic.searchOr) {
-                qb.orWhere(`${qb.alias}.${propertyAlias} ${whereComparator} :${propertyAlias}`, {[`${propertyAlias}`]: value})
-            } else {
-                qb.andWhere(`${qb.alias}.${propertyAlias} ${whereComparator} :${propertyAlias}`, {[`${propertyAlias}`]: value})
-            }
+        let qb_alias = qb.alias
+        let alias    = propertyAlias
+        if (propertyAlias.indexOf('.') != -1) {
+            [qb_alias, alias] = propertyAlias.split('.')
         }
-    }
+
+        const searchValue = params[searchField]
+        const whereComparator = searchValue.includes('*') ? 'like' : '='
+        const value = searchValue.replace(/\*/g, '%')
+
+        // TODO: value should be number | string | boolean and add type casting
+        if (searchLogic.searchOr) {
+            qb.orWhere(`${qb_alias}.${alias} ${whereComparator} :${propertyAlias}`, {[`${propertyAlias}`]: value})
+        } else {
+            qb.andWhere(`${qb_alias}.${alias} ${whereComparator} :${propertyAlias}`, {[`${propertyAlias}`]: value})
+        }
+    })
 }
 
 export function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
