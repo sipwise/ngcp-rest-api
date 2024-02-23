@@ -34,3 +34,9 @@ export interface RbacFlag {
     is_ccare: boolean
     lawful_intercept: boolean
 }
+
+export const reservedQueryParams = [
+    'page',
+    'rows',
+    'expand',
+]

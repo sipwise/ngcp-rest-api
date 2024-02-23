@@ -2,6 +2,7 @@ import {BaseEntity, SelectQueryBuilder} from 'typeorm'
 import {SearchLogic} from './search-logic.helper'
 import {ParamsDictionary} from '../interfaces/service-request.interface'
 import {BadRequestException} from '@nestjs/common'
+import {reservedQueryParams} from '../config/constants.config'
 
 export function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
     addJoinFilterToQueryBuilder(qb, params, searchLogic)
@@ -26,6 +27,8 @@ function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilde
 
 function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
     Object.keys(params).forEach((searchField: string) => {
+        if (reservedQueryParams.indexOf(searchField) >= 0)
+            return
         if (searchLogic.searchableFields.indexOf(searchField) == -1)
             throw new BadRequestException(`unknown query parameter: ${searchField}`)
 
