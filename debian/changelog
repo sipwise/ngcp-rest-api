@@ -1,3 +1,10 @@
+ngcp-rest-api (12.2.1.8+0~mr12.2.1.8) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [a4a919b] MT#59483 add allow_unknown_params and x_rbw_req_id query params
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 29 Feb 2024 16:45:12 +0100
+
 ngcp-rest-api (12.2.1.7+0~mr12.2.1.7) unstable; urgency=medium
 
   [ Kirill Solomko ]
