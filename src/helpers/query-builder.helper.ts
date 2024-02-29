@@ -26,11 +26,17 @@ function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilde
 }
 
 function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
+    const allow_unknown_params = 'allow_unknown_params' in params
+                                    && JSON.parse(params['allow_unknown_params'])
     Object.keys(params).forEach((searchField: string) => {
         if (reservedQueryParams.indexOf(searchField) >= 0)
             return
-        if (searchLogic.searchableFields.indexOf(searchField) == -1)
+
+        const param_exists = searchLogic.searchableFields.indexOf(searchField) >= 0
+        if (!allow_unknown_params && !param_exists)
             throw new BadRequestException(`unknown query parameter: ${searchField}`)
+        if (!param_exists)
+            return
 
         const propertyAlias = searchLogic.aliases && searchLogic.aliases[searchField]
             ? searchLogic.aliases[searchField]
