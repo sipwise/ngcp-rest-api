@@ -1,3 +1,10 @@
+ngcp-rest-api (12.2.1.9+0~mr12.2.1.9) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [ae73f8b] MT#59483 add x_rbw_correl_id into reservedQueryParams
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 01 Mar 2024 11:36:46 +0100
+
 ngcp-rest-api (12.2.1.8+0~mr12.2.1.8) unstable; urgency=medium
 
   [ Kirill Solomko ]
