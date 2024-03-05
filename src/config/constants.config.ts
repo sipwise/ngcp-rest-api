@@ -39,6 +39,7 @@ export const reservedQueryParams = [
     'page', // page number
     'rows', // row number
     'expand', // expand logic
+    'soft_expand', // expand logic
     'allow_unknown_params', // when provided, unknown params are ignored
     'x_rbw_req_id', // reserved for ALE as their unique request identifier to appear in the logs
     'x_rbw_correl_id', // reserved for ALE as their unique request identifier to appear in the logs
