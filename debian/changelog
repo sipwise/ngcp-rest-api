@@ -1,3 +1,21 @@
+ngcp-rest-api (12.3.1.0+0~mr12.3.1.0) unstable; urgency=medium
+
+  [ Fabricio Santolin da Silva ]
+  * [8132de3] MT#58961 Fix action argument from msgnum to id
+
+  [ Kirill Solomko ]
+  * [07e5901] MT#59040 address database connection loss issues
+  * [083be13] MT#59040 mysql2 driver fix undefined encoding encode()/decode()
+  * [67aee66] MT#59464  /api/voicemails update fixes
+  * [05a6dbd] MT#59483 improve search logic and aliases handling
+  * [f48a13b] MT#59483 /api/voicemails add caller to callerid search alias
+  * [b3831b7] MT#59483 add constants.config reservedQueryParams
+  * [53dd8ef] MT#59483 add allow_unknown_params and x_rbw_req_id query params
+  * [21d4cb6] MT#59483 add x_rbw_correl_id into reservedQueryParams
+  * [e5fa1e3] MT#59483 allow soft_expand query param
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 15 Mar 2024 08:49:02 +0100
+
 ngcp-rest-api (12.3.0.0+0~mr12.3.0.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
