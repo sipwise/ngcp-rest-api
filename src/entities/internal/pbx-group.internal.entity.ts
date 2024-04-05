@@ -1,10 +1,14 @@
 export class PbxGroupMemberItem {
     extension: string
     subscriberId: number
+    username: string
+    domain: string
 
-    constructor(extension: string, subscriberId: number) {
+    constructor(extension: string, subscriberId: number, username: string, domain: string) {
         this.extension = extension
         this.subscriberId = subscriberId
+        this.username = username
+        this.domain = domain
     }
 }
 
@@ -17,7 +21,8 @@ export interface PbxGroupInternalEntity {
     huntTimeout: number
     members: PbxGroupMemberItem[]
     id?: number
-    customer_id: number
+    customerId: number
+    domain: string
 }
 
 export class PbxGroup implements PbxGroupInternalEntity {
@@ -27,7 +32,8 @@ export class PbxGroup implements PbxGroupInternalEntity {
     members: PbxGroupMemberItem[]
     name: string
     id: number
-    customer_id: number
+    customerId: number
+    domain: string
 
     static create(data: PbxGroupInternalEntity): PbxGroup {
         const group = new PbxGroup()

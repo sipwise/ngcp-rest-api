@@ -15,13 +15,17 @@ export class PbxGroupMockRepository implements PbxGroupRepository {
     constructor() {
         this.pbxGroupDB = {
             1: internal.PbxGroup.create({
-                customer_id: 1,
+                customerId: 1,
                 extension: '100',
                 huntPolicy: '',
                 huntTimeout: 0,
                 id: 1,
-                members: [new PbxGroupMemberItem('102', 11), new PbxGroupMemberItem('102', 12)],
+                members: [
+                    new PbxGroupMemberItem('102', 11, 'test1', 'example.org'),
+                    new PbxGroupMemberItem('102', 12, 'test2', 'example.org')
+                ],
                 name: 'group1',
+                domain: 'example.org',
             }),
         }
     }
