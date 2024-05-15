@@ -6,9 +6,6 @@
   "author": "",
   "private": true,
   "license": "GPL-3+",
-  "os": [
-    "linux"
-  ],
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
