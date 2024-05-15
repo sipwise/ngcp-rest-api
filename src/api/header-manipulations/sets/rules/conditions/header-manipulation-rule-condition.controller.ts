@@ -2,7 +2,6 @@ import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Re
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from '../../../../../helpers/patch.helper'
-import {RbacRole} from '../../../../../config/constants.config'
 import {CrudController} from '../../../../../controllers/crud.controller'
 import {ApiCreatedResponse} from '../../../../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../../../../decorators/api-paginated-response.decorator'
@@ -30,6 +29,8 @@ import {JournalResponseDto} from '../../../../journals/dto/journal-response.dto'
 import {HeaderManipulationRuleConditionRequestParamDto} from './dto/header-manipulation-rule-condition-request-param.dto'
 import {number} from 'yargs'
 import {HeaderManipulationRuleConditionValueResponseDto} from './dto/header-manipulation-rule-condition-value-response.dto'
+import {License as LicenseType, RbacRole} from '../../../../../config/constants.config'
+import {License} from '../../../../../decorators/license.decorator'
 
 const resourceName = 'header-manipulations/sets'
 
@@ -41,6 +42,7 @@ const resourceName = 'header-manipulations/sets'
 @ApiTags('HeaderManipulation')
 @ApiExtraModels(CreateResponseDto, PaginatedDto)
 @Controller(resourceName)
+@License(LicenseType.headerManipulation)
 export class HeaderManipulationRuleConditionController extends CrudController<HeaderManipulationRuleConditionRequestDto, HeaderManipulationRuleConditionResponseDto> {
     private readonly log = new LoggerService(HeaderManipulationRuleConditionController.name)
 

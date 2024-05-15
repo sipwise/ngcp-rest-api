@@ -9,7 +9,6 @@ import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Operation as PatchOperation, Operation, patchToEntity} from '../../helpers/patch.helper'
 import {Request} from 'express'
-import {RbacRole} from '../../config/constants.config'
 import {PatchDto} from '../../dto/patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ResellerSearchDto} from './dto/reseller-search.dto'
@@ -25,6 +24,8 @@ import {ApiPutBody} from '../../decorators/api-put-body.decorator'
 import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {Dictionary} from '../../helpers/dictionary.helper'
 import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
+import {License as LicenseType, RbacRole} from '../../config/constants.config'
+import {License} from '../../decorators/license.decorator'
 
 const resourceName = 'resellers'
 
@@ -32,6 +33,7 @@ const resourceName = 'resellers'
 @ApiTags('Reseller')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
+@License(LicenseType.reseller)
 export class ResellerController extends CrudController<ResellerRequestDto, ResellerResponseDto> {
     private readonly log = new LoggerService(ResellerController.name)
 

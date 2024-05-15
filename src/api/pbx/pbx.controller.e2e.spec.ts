@@ -9,11 +9,15 @@ import {ValidateInputPipe} from '../../pipes/validate.pipe'
 import {validate} from 'class-validator'
 import {PbxModule} from './pbx.module'
 import {PbxResponseDto} from './dto/pbx-response.dto'
+import {LicenseMockRepository} from '../../repositories/license.mock.repository'
+import {LicenseRepository} from '../../repositories/license.repository'
+import {License as LicenseType} from '../../config/constants.config'
 
 describe('', () => {
     let app: INestApplication
     let appService: AppService
     let authService: AuthService
+    const licenseMockRepo = new LicenseMockRepository()
     let authHeader: [string, string]
     const creds = {username: 'administrator', password: 'administrator'}
 
@@ -21,6 +25,7 @@ describe('', () => {
         const moduleRef = await Test.createTestingModule({
             imports: [PbxModule, AppModule],
         })
+            .overrideProvider(LicenseRepository).useValue(licenseMockRepo)
             .compile()
 
         appService = moduleRef.get<AppService>(AppService)
@@ -34,6 +39,10 @@ describe('', () => {
         app.useGlobalFilters(new HttpExceptionFilter())
 
         await app.init()
+    })
+
+    afterEach(async () => {
+        licenseMockRepo.reset()
     })
 
     afterAll(async () => {
@@ -67,6 +76,19 @@ describe('', () => {
 
     describe('', () => { // main tests block
         describe('GET', () => {
+            it('read pbx if pbx license is active', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/pbx')
+                    .set(...authHeader)
+                expect(response.status).toEqual(200)
+            })
+            it('does not read pbx if pbx license is inactive', async () => {
+                licenseMockRepo.setLicense(LicenseType.pbx, 0)
+                const response = await request(app.getHttpServer())
+                    .get('/pbx')
+                    .set(...authHeader)
+                expect(response.status).toEqual(403)
+            })
             it('read pbx', async () => {
                 const response = await request(app.getHttpServer())
                     .get('/pbx')

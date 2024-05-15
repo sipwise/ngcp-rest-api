@@ -1,0 +1,9 @@
+import {applyDecorators, SetMetadata, UseGuards} from '@nestjs/common'
+import {LicenseGuard} from '../guards/license.guard'
+
+export const License = (...licenses: (string | false)[]) => {
+    return applyDecorators(
+        SetMetadata('licenses', licenses.includes(false) ? [] : licenses),
+        UseGuards(LicenseGuard),
+    )
+}

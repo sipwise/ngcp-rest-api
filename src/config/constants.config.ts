@@ -47,3 +47,42 @@ export const reservedQueryParams = [
     'x_rbw_req_id', // reserved for ALE as their unique request identifier to appear in the logs
     'x_rbw_correl_id', // reserved for ALE as their unique request identifier to appear in the logs
 ]
+
+export enum License {
+    aof = 'aof',
+    batchProvisioning = 'batch_provisioning',
+    billing = 'billing',
+    callRecording = 'call_recording',
+    csc = 'csc',
+    cscCalls = 'csc_calls',
+    csta = 'csta',
+    ct = 'ct',
+    deviceProvisioning = 'device_provisioning',
+    enforce = 'enforce',
+    externalLnp = 'external_lnp',
+    fax = 'fax',
+    gpuTranscoding = 'gpu-transcoding',
+    headerManipulation = 'header_manipulation',
+    invoice = 'invoice',
+    lcr = 'lcr',
+    lnpImporter = 'lnp_importer',
+    pbx = 'pbx',
+    phonebook = 'phonebook',
+    prepaidInewrate = 'prepaid-inewrate',
+    prepaidSwrate = 'prepaid-swrate',
+    pushd = 'pushd',
+    reseller = 'reseller',
+    sms = 'sms',
+    tpcc = 'tpcc',
+    transcoding = 'transcoding',
+    voisniffHomer = 'voisniff-homer',
+    voisniffMysqlDump = 'voisniff-mysql_dump',
+    voisniffX2x3 = 'voisniff-x2x3',
+    xmpp = 'xmpp',
+}
+
+export const procDirLocation = process.env.NODE_ENV == 'development' || process.env.NODE_ENV == 'test'
+    ? './etc/proc'
+    : '/proc'
+
+export const procLicensesLocation = procDirLocation + '/ngcp/flags'

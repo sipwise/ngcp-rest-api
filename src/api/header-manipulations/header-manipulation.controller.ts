@@ -9,7 +9,8 @@ import {HeaderManipulationResponseDto} from './dto/header-manipulation-response.
 import {PaginatedDto} from '../../dto/paginated.dto'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
-import {RbacRole} from '../../config/constants.config'
+import {License as LicenseType, RbacRole} from '../../config/constants.config'
+import {License} from '../../decorators/license.decorator'
 
 const resourceName = 'header-manipulations'
 
@@ -21,6 +22,7 @@ const resourceName = 'header-manipulations'
 @ApiTags('HeaderManipulation')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
+@License(LicenseType.headerManipulation)
 export class HeaderManipulationController extends CrudController<never, HeaderManipulationResponseDto> {
     private readonly log = new LoggerService(HeaderManipulationController.name)
 

@@ -3,7 +3,6 @@ import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {PbxGroupMemberService} from './pbx-group-member.service'
 import {CrudController} from '../../../../controllers/crud.controller'
 import {Auth} from '../../../../decorators/auth.decorator'
-import {RbacRole} from '../../../../config/constants.config'
 import {PaginatedDto} from '../../../../dto/paginated.dto'
 import {SearchLogic} from '../../../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../../../decorators/api-paginated-response.decorator'
@@ -12,6 +11,8 @@ import {ServiceRequest} from '../../../../interfaces/service-request.interface'
 import {PbxGroupMemberRequestParamDto} from './dto/pbx-group-member-request-param.dto'
 import {AdminResponseDto} from '../../../admins/dto/admin-response.dto'
 import {PbxGroupMemberResponseDto} from './dto/pbx-group-member-response.dto'
+import {License as LicenseType, RbacRole} from '../../../../config/constants.config'
+import {License} from '../../../../decorators/license.decorator'
 
 const resourceName = 'pbx/groups'
 
@@ -19,6 +20,7 @@ const resourceName = 'pbx/groups'
 @ApiTags('Pbx')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
+@License(LicenseType.pbx)
 export class PbxGroupMemberController extends CrudController<never, PbxGroupMemberResponseDto> {
     private readonly log = new LoggerService(PbxGroupMemberController.name)
 

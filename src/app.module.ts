@@ -50,6 +50,8 @@ import {HeaderManipulationRuleModule} from './api/header-manipulations/sets/rule
 import {HeaderManipulationSetModule} from './api/header-manipulations/sets/header-manipulation-set.module'
 import {AcceptLanguageResolver, CookieResolver, HeaderResolver, I18nModule, QueryResolver} from 'nestjs-i18n'
 import {RedisModule} from './database/redis.module'
+import {LicenseService} from './license/license.service'
+import {LicenseModule} from './license/license.module'
 
 import * as path from 'path'
 
@@ -103,6 +105,7 @@ let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | Fo
     ResellerModule,
     SystemContactModule,
     VoicemailModule,
+    LicenseModule,
     ScheduleModule.forRoot(),
 ]
 if (process.env.NODE_ENV != 'test') {
@@ -125,6 +128,7 @@ if (process.env.NODE_ENV != 'test') {
         AppService,
         Logger,
         LoggerService,
+        LicenseService,
     ],
     providers: [
         AppService,
@@ -133,6 +137,7 @@ if (process.env.NODE_ENV != 'test') {
         RedisStateSchedule,
         Logger,
         LoggerService,
+        LicenseService,
     ],
 })
 export class AppModule implements NestModule {
