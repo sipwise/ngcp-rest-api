@@ -1,4 +1,3 @@
-import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {IsNull, Not} from 'typeorm'
 import {Injectable, MethodNotAllowedException} from '@nestjs/common'
@@ -11,12 +10,12 @@ import {ContactStatus} from 'entities/internal/contact.internal.entity'
 import {ProductClass} from 'entities/internal/product.internal.entity'
 import {LoggerService} from '../../../logger/logger.service'
 import {Dictionary} from '../../../helpers/dictionary.helper'
+import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 
 @Injectable()
-export class ContractMariadbRepository implements ContractRepository {
+export class ContractMariadbRepository extends MariaDbRepository implements ContractRepository {
     private readonly log = new LoggerService(ContractMariadbRepository.name)
 
-    @HandleDbErrors
     async create(contracts: internal.Contract[], sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.Contract.createQueryBuilder('contract')
         const values = contracts.map(contract => new db.billing.Contract().fromInternal(contract))
@@ -28,7 +27,6 @@ export class ContractMariadbRepository implements ContractRepository {
         throw new MethodNotAllowedException()
     }
 
-    @HandleDbErrors
     async read(id: number, sr: ServiceRequest): Promise<internal.Contract> {
         this.log.debug({
             message: 'read contract by id',
@@ -39,7 +37,6 @@ export class ContractMariadbRepository implements ContractRepository {
         return (await db.billing.Contract.findOneByOrFail({ id: id })).toInternal()
     }
 
-    @HandleDbErrors
     async readActiveSystemContact(id: number, sr: ServiceRequest): Promise<internal.Contact> {
         this.log.debug({
             message: 'read active system contact by id',
@@ -55,7 +52,6 @@ export class ContractMariadbRepository implements ContractRepository {
         return contact != undefined ? contact.toInternal() : undefined
     }
 
-    @HandleDbErrors
     async readProductByType(type: string, sr: ServiceRequest): Promise<internal.Product> {
         this.log.debug({
             message: 'read product by type',
@@ -67,7 +63,6 @@ export class ContractMariadbRepository implements ContractRepository {
         return product != undefined ? product.toInternal() : undefined
     }
 
-    @HandleDbErrors
     async readAll(sr: ServiceRequest): Promise<[internal.Contract[], number]> {
         this.log.debug({
             message: 'read all contracts',
@@ -82,7 +77,6 @@ export class ContractMariadbRepository implements ContractRepository {
         return [result.map(r => r.toInternal()), totalCount]
     }
 
-    @HandleDbErrors
     async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Contract[]> {
         const qb = db.billing.Contract.createQueryBuilder('contract')
         const constractSearchDtoKeys = Object.keys(new ContractSearchDto())
@@ -92,7 +86,6 @@ export class ContractMariadbRepository implements ContractRepository {
         return await Promise.all(created.map(async (contract) => contract.toInternal()))
     }
 
-    @HandleDbErrors
     async update(updates: Dictionary<internal.Contract>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {

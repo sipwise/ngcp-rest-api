@@ -1,6 +1,5 @@
 import {Injectable, InternalServerErrorException} from '@nestjs/common'
 import {db, internal} from '../../../entities'
-import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {TelnetDispatcher} from '../../../helpers/telnet-dispatcher'
 import {XmlDispatcher} from '../../../helpers/xml-dispatcher'
@@ -9,12 +8,13 @@ import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {DomainRepository} from '../interfaces/domain.repository'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {LoggerService} from '../../../logger/logger.service'
+import {MariaDbRepository} from 'repositories/mariadb.repository'
+
 
 @Injectable()
-export class DomainMariadbRepository implements DomainRepository {
+export class DomainMariadbRepository extends MariaDbRepository implements DomainRepository {
     private readonly log = new LoggerService(DomainMariadbRepository.name)
 
-    @HandleDbErrors
     async create(domains: internal.Domain[], sr: ServiceRequest): Promise<number[]> {
         // billing
         const qbBilling = db.billing.Domain.createQueryBuilder('domain')
@@ -45,7 +45,6 @@ export class DomainMariadbRepository implements DomainRepository {
         return resultBilling.identifiers.map(obj => obj.id)
     }
 
-    @HandleDbErrors
     async readAll(sr: ServiceRequest): Promise<[internal.Domain[], number]> {
         this.log.debug({
             message: 'read all domains',
@@ -59,14 +58,12 @@ export class DomainMariadbRepository implements DomainRepository {
         return [result.map(d => d.toInternal()), totalCount]
     }
 
-    @HandleDbErrors
     async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Domain[]> {
         const qb = db.billing.Domain.createQueryBuilder('domain')
         const created = await qb.andWhereInIds(ids).getMany()
         return await Promise.all(created.map(async (domain) => domain.toInternal()))
     }
 
-    @HandleDbErrors
     async readById(id: number, sr: ServiceRequest): Promise<internal.Domain> {
         this.log.debug({
             message: 'read domain by ID',
@@ -76,7 +73,6 @@ export class DomainMariadbRepository implements DomainRepository {
         return (await db.billing.Domain.findOneByOrFail({id: id})).toInternal()
     }
 
-    @HandleDbErrors
     async readByDomain(domain: string, sr: ServiceRequest): Promise<internal.Domain> {
         this.log.debug({
             message: 'read domain by domain name',
@@ -86,7 +82,6 @@ export class DomainMariadbRepository implements DomainRepository {
         return (await db.billing.Domain.findOne({where: {domain: domain}})).toInternal()
     }
 
-    @HandleDbErrors
     async readResellerById(id: number, sr: ServiceRequest): Promise<internal.Reseller> {
         const reseller = await db.billing.Reseller.findOneBy({id: id})
         if (reseller)
@@ -94,7 +89,6 @@ export class DomainMariadbRepository implements DomainRepository {
         return undefined
     }
 
-    @HandleDbErrors
     async delete(id: number, sr: ServiceRequest): Promise<number> {
         const domain = await db.billing.Domain.findOneByOrFail({id: id})
         await db.billing.Domain.delete(id)

@@ -1,4 +1,3 @@
-import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {Inject, Injectable} from '@nestjs/common'
 import {db, internal} from '../../../entities'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
@@ -11,27 +10,25 @@ import {LoggerService} from '../../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
 import {AdminOptions} from '../interfaces/admin-options.interface'
 import {Dictionary} from '../../../helpers/dictionary.helper'
+import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 
 @Injectable()
-export class AdminMariadbRepository implements AdminRepository {
+export class AdminMariadbRepository extends MariaDbRepository implements AdminRepository {
     private readonly log = new LoggerService(AdminMariadbRepository.name)
 
     constructor(
         @Inject(I18nService) private readonly i18n: I18nService,
     ) {
+        super()
     }
 
-    @HandleDbErrors
     async create(admins: internal.Admin[]): Promise<number[]> {
         const qb = db.billing.Admin.createQueryBuilder('admin')
         const values = admins.map(admin => new db.billing.Admin().fromInternal(admin))
         const result = await qb.insert().values(values).execute()
-
         return result.identifiers.map(obj => obj.id)
-
     }
-
-    @HandleDbErrors
+    
     async readAll(options: AdminOptions, sr: ServiceRequest): Promise<[internal.Admin[], number]> {
         const qb = db.billing.Admin.createQueryBuilder('admin')
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr, Object.keys(new AdminSearchDto())))
@@ -40,7 +37,6 @@ export class AdminMariadbRepository implements AdminRepository {
         return [await Promise.all(result.map(async (adm) => adm.toInternal())), totalCount]
     }
 
-    @HandleDbErrors
     async readById(id: number, options: AdminOptions): Promise<internal.Admin> {
         const qb = db.billing.Admin.createQueryBuilder('admin')
         this.addPermissionCheckToQueryBuilder(qb, options)
@@ -48,7 +44,6 @@ export class AdminMariadbRepository implements AdminRepository {
         return admin.toInternal()
     }
 
-    @HandleDbErrors
     async readWhereInIds(ids: number[], options: AdminOptions): Promise<internal.Admin[]> {
         const qb = db.billing.Admin.createQueryBuilder('admin')
         this.addPermissionCheckToQueryBuilder(qb, options)
@@ -56,14 +51,12 @@ export class AdminMariadbRepository implements AdminRepository {
         return admins.map(admin => admin.toInternal())
     }
 
-    @HandleDbErrors
     async readCountOfIds(ids: number[], options: AdminOptions): Promise<number> {
         const qb = db.billing.Admin.createQueryBuilder('admin')
         this.addPermissionCheckToQueryBuilder(qb, options)
         return await qb.andWhereInIds(ids).getCount()
     }
 
-    @HandleDbErrors
     async update(updates: Dictionary<internal.Admin>, options: AdminOptions): Promise<number[]> {
         const ids: number[] = []
         for (const key of Object.keys(updates)) {
@@ -81,13 +74,11 @@ export class AdminMariadbRepository implements AdminRepository {
         return ids
     }
 
-    @HandleDbErrors
     async delete(ids: number[]): Promise<number[]> {
         await db.billing.Admin.delete(ids)
         return ids
     }
 
-    @HandleDbErrors
     private addPermissionCheckToQueryBuilder(qb: SelectQueryBuilder<db.billing.Admin>, options: AdminOptions): void {
         qb.leftJoinAndSelect('admin.role', 'role')
         if (options.isMaster) {  // restrict query to roles the user is allowed to access

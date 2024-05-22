@@ -1,6 +1,5 @@
 import {Injectable, NotFoundException} from '@nestjs/common'
 import {db, internal} from '../../../entities'
-import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {CustomerSpeedDialSearchDto} from '../dto/customer-speed-dial-search.dto'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
@@ -10,16 +9,16 @@ import {LoggerService} from '../../../logger/logger.service'
 import {SelectQueryBuilder} from 'typeorm'
 import {FilterBy} from '../../../interfaces/filter-by.interface'
 import {Dictionary} from '../../../helpers/dictionary.helper'
+import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 
 interface SpeedDialOptions {
     isPilot: boolean
 }
 
 @Injectable()
-export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepository {
+export class CustomerSpeedDialMariadbRepository extends MariaDbRepository implements CustomerSpeedDialRepository {
     private readonly log = new LoggerService(CustomerSpeedDialMariadbRepository.name)
 
-    @HandleDbErrors
     async create(entities: internal.CustomerSpeedDial[], sr: ServiceRequest): Promise<number[]> {
         const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('csd')
         const values = entities.map(csd => new db.provisioning.VoipContractSpeedDial().fromInternal(csd))
@@ -27,7 +26,6 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
         return result.identifiers.map(obj => obj.id)
     }
 
-    @HandleDbErrors
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.CustomerSpeedDial[], number]> {
         const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('voipContractSpeedDial')
         const searchDto = new CustomerSpeedDialSearchDto()
@@ -45,7 +43,6 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
         ), totalCount]
     }
 
-    @HandleDbErrors
     async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.CustomerSpeedDial[]> {
         const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('voipContractSpeedDial')
         const searchDto = new CustomerSpeedDialSearchDto()
@@ -58,7 +55,6 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
         return await Promise.all(created.map(async (csd) => csd.toInternal()))
     }
 
-    @HandleDbErrors
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.CustomerSpeedDial> {
         const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('voipContractSpeedDial')
         const searchDto = new CustomerSpeedDialSearchDto()
@@ -75,7 +71,6 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
         return result.toInternal()
     }
 
-    @HandleDbErrors
     async update(updates: Dictionary<internal.CustomerSpeedDial>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
@@ -86,13 +81,11 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
         return ids
     }
 
-    @HandleDbErrors
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         await db.provisioning.VoipContractSpeedDial.delete(ids)
         return ids
     }
 
-    @HandleDbErrors
     async checkCustomerExistsAndCustomerReseller(customerId: number, resellerId: number, checkReseller: boolean): Promise<boolean> {
         const contract = await db.billing.Contract.findOne({
             where: {
@@ -109,7 +102,6 @@ export class CustomerSpeedDialMariadbRepository implements CustomerSpeedDialRepo
         return true
     }
 
-    @HandleDbErrors
     async readSubscriberDomain(customerId: number, options: SpeedDialOptions): Promise<string> {
         const subscriber = await db.provisioning.VoipSubscriber.findOne({
             where: {

@@ -1,17 +1,16 @@
 import {PbxGroupRepository} from '../interfaces/pbx-group.repository'
 import {db, internal} from '../../../entities'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {SelectQueryBuilder} from 'typeorm'
 import {RbacRole} from '../../../config/constants.config'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {PbxGroupSearchDto} from '../dto/pbx-group-search.dto'
 import {LoggerService} from '../../../logger/logger.service'
+import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 
-export class PbxGroupMariadbRepository implements PbxGroupRepository {
+export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxGroupRepository {
     private readonly log = new LoggerService(PbxGroupMariadbRepository.name)
 
-    @HandleDbErrors
     async readAll(sr: ServiceRequest): Promise<[internal.PbxGroup[], number]> {
         const searchLogic = new SearchLogic(sr, Object.keys(new PbxGroupSearchDto()))
         const query = this.generateBaseQuery(sr, searchLogic)
@@ -30,7 +29,6 @@ export class PbxGroupMariadbRepository implements PbxGroupRepository {
         return [result.map(group => this.rawToInternalPbxGroup(group)), totalCount]
     }
 
-    @HandleDbErrors
     async readById(id: number, sr: ServiceRequest): Promise<internal.PbxGroup> {
 
         // TODO: remove this once actual entity mappings are implemented; cannot call getOneOrFail for raw data

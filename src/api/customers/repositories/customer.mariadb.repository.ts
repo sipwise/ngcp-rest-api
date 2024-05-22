@@ -1,6 +1,5 @@
 import {Injectable, MethodNotAllowedException, UnprocessableEntityException} from '@nestjs/common'
 import {LoggerService} from '../../../logger/logger.service'
-import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {IsNull, Not, SelectQueryBuilder} from 'typeorm'
 import {ContactStatus} from '../../../entities/internal/contact.internal.entity'
@@ -14,17 +13,18 @@ import {AppService} from '../../../app.service'
 import {Discriminator} from '../../../entities/internal/profile-package-set.internal.entity'
 import {ContactOptions} from '../../contacts/interfaces/contact-options.interface'
 import {CustomerFindOptions} from '../interfaces/customer-find-options.interface'
+import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 
 @Injectable()
-export class CustomerMariadbRepository {
+export class CustomerMariadbRepository extends MariaDbRepository {
     private readonly log = new LoggerService(CustomerMariadbRepository.name)
 
     constructor(
         private readonly app: AppService,
     ) {
+        super()
     }
 
-    @HandleDbErrors
     async create(customers: internal.Customer[], now: Date, sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.Contract.createQueryBuilder('contract')
         const ids: number[] = []
@@ -49,7 +49,6 @@ export class CustomerMariadbRepository {
         throw new MethodNotAllowedException()
     }
 
-    @HandleDbErrors
     async read(id: number, sr: ServiceRequest, options: CustomerFindOptions): Promise<internal.Customer> {
         this.log.debug({
             message: 'read customer by id',
@@ -63,7 +62,6 @@ export class CustomerMariadbRepository {
         return result.toInternalCustomer()
     }
 
-    @HandleDbErrors
     async readAll(sr: ServiceRequest, options: CustomerFindOptions): Promise<[internal.Customer[], number]> {
         this.log.debug({
             message: 'read all contracts',
@@ -77,20 +75,17 @@ export class CustomerMariadbRepository {
         return [result.map(r => r.toInternalCustomer()), totalCount]
     }
 
-    @HandleDbErrors
     async readWhereInIds(ids: number[], options: CustomerFindOptions): Promise<internal.Customer[]> {
         const qb = this.createBaseQueryBuilder(options)
         const customers = await qb.andWhereInIds(ids).getMany()
         return await Promise.all(customers.map(async (contract) => contract.toInternalCustomer()))
     }
 
-    @HandleDbErrors
     async readCountOfIds(ids: number[], options: CustomerFindOptions): Promise<number> {
         const qb = this.createBaseQueryBuilder(options)
         return await qb.andWhereInIds(ids).getCount()
     }
 
-    @HandleDbErrors
     async readProductByType(type: string, sr: ServiceRequest): Promise<internal.Product> {
         this.log.debug({
             message: 'read product by type',
@@ -102,7 +97,6 @@ export class CustomerMariadbRepository {
         return product != undefined ? product.toInternal() : undefined
     }
 
-    @HandleDbErrors
     async update(updates: Dictionary<internal.Customer>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
@@ -117,19 +111,16 @@ export class CustomerMariadbRepository {
         return ids
     }
 
-    @HandleDbErrors
     async readBillingNetworkById(id: number): Promise<internal.BillingNetwork> {
         const network = await db.billing.BillingNetwork.findOneByOrFail({id: id})
         return network.toInternal()
     }
 
-    @HandleDbErrors
     async readBillingProfileById(id: number): Promise<internal.BillingProfile> {
         const profile = await db.billing.BillingProfile.findOneByOrFail({id: id})
         return profile.toInternal()
     }
 
-    @HandleDbErrors
     async readProfilePackageById(id: number): Promise<internal.ProfilePackage> {
         const qb = db.billing.ProfilePackage.createQueryBuilder('profilePackage')
         qb.innerJoinAndSelect('profilePackage.packageProfileSets', 'packageProfileSets')
@@ -139,7 +130,6 @@ export class CustomerMariadbRepository {
         return profilePackage.toInternal()
     }
 
-    @HandleDbErrors
     async readEmailTemplateIdsByIds(ids: number[], resellerId: number) {
         const qb = db.billing.EmailTemplate.createQueryBuilder('emailTemplate')
         qb.andWhere('emailTemplate.reseller_id = :resellerId', {resellerId: resellerId})
@@ -150,7 +140,6 @@ export class CustomerMariadbRepository {
         return [readIds, count]
     }
 
-    @HandleDbErrors
     async readInvoiceTemplateById(id: number, resellerId: number) {
         const qb = db.billing.InvoiceTemplate.createQueryBuilder('invoiceTemplate')
         qb.andWhere('invoiceTemplate.reseller_id = :resellerId', {resellerId: resellerId})
@@ -158,7 +147,6 @@ export class CustomerMariadbRepository {
         await qb.getOneOrFail()
     }
 
-    @HandleDbErrors
     async readEffectiveStartDate(contractId: number): Promise<number> {
         const now = Date.now()
         const epochNow = now.valueOf()
@@ -175,7 +163,6 @@ export class CustomerMariadbRepository {
         return result['max']
     }
 
-    @HandleDbErrors
     async readCurrentBillingProfile(contractId: number): Promise<internal.BillingProfile> {
         const epoch = await this.readEffectiveStartDate(contractId)
         const qb = db.billing.ContractBillingProfileNetworkSchedule.createQueryBuilder('cbpns')
@@ -188,7 +175,6 @@ export class CustomerMariadbRepository {
         return cbpns.profileNetwork.billingProfile.toInternal()
     }
 
-    @HandleDbErrors
     async readFutureBillingMappings(contractId: number): Promise<internal.BillingMapping[]> {
         const now = Date.now().valueOf()/1000
         const qb = db.billing.ContractBillingProfileNetworkSchedule.createQueryBuilder('cbpns')
@@ -208,7 +194,6 @@ export class CustomerMariadbRepository {
         }))
     }
 
-    @HandleDbErrors
     async readAllBillingMappings(contractId: number): Promise<internal.BillingMapping[]> {
         const qb = db.billing.ContractBillingProfileNetworkSchedule.createQueryBuilder('cbpns')
         qb.innerJoinAndSelect('cbpns.profileNetwork', 'profile_network')

@@ -4,10 +4,10 @@ import {addOrderByToQueryBuilder} from '../../../helpers/query-builder.helper'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {db, internal} from '../../../entities'
 import {LoggerService} from '../../../logger/logger.service'
-import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {AppService} from '../../../app.service'
 import {Injectable} from '@nestjs/common'
 import {NumberSearchDto} from '../dto/number-search.dto'
+import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 
 interface RawNumberRow {
     id: number
@@ -28,15 +28,16 @@ interface FilterBy {
 }
 
 @Injectable()
-export class NumberMariadbRepository {
+export class NumberMariadbRepository extends MariaDbRepository {
     private readonly log = new LoggerService(NumberMariadbRepository.name)
 
     constructor(
         private readonly app: AppService,
     ) {
+        super()
     }
 
-    @HandleDbErrors
+
     async readById(numberID: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.VoipNumber> {
         const qb = this.createBaseQueryBuilder(sr, filterBy)
         const searchLogic = new SearchLogic(sr, Object.keys(new NumberSearchDto()))
@@ -58,7 +59,7 @@ export class NumberMariadbRepository {
         })
     }
 
-    @HandleDbErrors
+
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.VoipNumber[], number]> {
         const qb = this.createReadAllQueryBuilder(sr, filterBy)
 

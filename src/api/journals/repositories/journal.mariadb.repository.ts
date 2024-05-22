@@ -5,15 +5,14 @@ import {Injectable} from '@nestjs/common'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {JournalSearchDto} from '../dto/journal-search.dto'
-import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {JournalRepository} from '../interfaces/journal.repository'
 import {LoggerService} from '../../../logger/logger.service'
+import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 
 @Injectable()
-export class JournalMariadbRepository implements JournalRepository {
+export class JournalMariadbRepository extends MariaDbRepository implements JournalRepository {
     private readonly log = new LoggerService(JournalMariadbRepository.name)
 
-    @HandleDbErrors
     async create(journal: internal.Journal): Promise<internal.Journal> {
         const dbJournal = db.billing.Journal.create()
         dbJournal.fromInternal(journal)
@@ -22,7 +21,6 @@ export class JournalMariadbRepository implements JournalRepository {
         return dbJournal.toInternal()
     }
 
-    @HandleDbErrors
     async read(id: number, sr: ServiceRequest): Promise<internal.Journal> {
         const user: AuthResponseDto = sr.user
         const qb = db.billing.Journal.createQueryBuilder('journal')
@@ -38,7 +36,6 @@ export class JournalMariadbRepository implements JournalRepository {
         return result.toInternal()
     }
 
-    @HandleDbErrors
     async readAll(sr: ServiceRequest, resourceName?: string, resourceId?: number | string): Promise<[internal.Journal[], number]> {
         const user: AuthResponseDto = sr.user
         const qb = db.billing.Journal.createQueryBuilder('journal')

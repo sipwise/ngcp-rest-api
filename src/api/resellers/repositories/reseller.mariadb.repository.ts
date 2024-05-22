@@ -1,6 +1,5 @@
 import {Injectable} from '@nestjs/common'
 import {AppService} from '../../../app.service'
-import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {ResellerSearchDto} from '../dto/reseller-search.dto'
 import {IsNull, SelectQueryBuilder} from 'typeorm'
@@ -11,17 +10,18 @@ import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {ResellerRepository} from '../interfaces/reseller.repository'
 import {LoggerService} from '../../../logger/logger.service'
 import {Dictionary} from '../../../helpers/dictionary.helper'
+import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 
 @Injectable()
-export class ResellerMariadbRepository implements ResellerRepository {
+export class ResellerMariadbRepository extends MariaDbRepository implements ResellerRepository {
     private readonly log = new LoggerService(ResellerMariadbRepository.name)
 
     constructor(
         private readonly app: AppService,
     ) {
+        super()
     }
 
-    @HandleDbErrors
     async createEmailTemplates(resellerId: number | number[]) {
         this.log.debug({
             message: 'create email templates',
@@ -43,7 +43,6 @@ export class ResellerMariadbRepository implements ResellerRepository {
         })
     }
 
-    @HandleDbErrors
     async findDefaultEmailTemplates(): Promise<db.billing.EmailTemplate[]> {
         return await db.billing.EmailTemplate.find(
             {
@@ -54,8 +53,6 @@ export class ResellerMariadbRepository implements ResellerRepository {
         )
     }
 
-
-    @HandleDbErrors
     async create(resellers: internal.Reseller[], sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.Reseller.createQueryBuilder('reseller')
         const values = resellers.map(reseller => new db.billing.Reseller().fromInternal(reseller))
@@ -63,7 +60,6 @@ export class ResellerMariadbRepository implements ResellerRepository {
         return result.identifiers.map(obj => obj.id)
     }
 
-    @HandleDbErrors
     async terminate(id: number, sr: ServiceRequest): Promise<number> {
         this.log.debug({message: 'delete reseller by id', func: this.terminate.name, id: id})
         let reseller = await db.billing.Reseller.findOneByOrFail({id: id})
@@ -72,32 +68,27 @@ export class ResellerMariadbRepository implements ResellerRepository {
         return 1
     }
 
-    @HandleDbErrors
     async read(id: number, sr: ServiceRequest): Promise<internal.Reseller> {
         this.log.debug({message: 'read reseller by id', func: this.read.name, user: sr.user.username, id: id})
         return (await db.billing.Reseller.findOneByOrFail({id: id})).toInternal()
     }
 
-    @HandleDbErrors
     async readWhereInIds(ids: number[]): Promise<internal.Reseller[]> {
         const qb = db.billing.Reseller.createQueryBuilder('reseller')
         const created = await qb.andWhereInIds(ids).getMany()
         return await Promise.all(created.map(async (reseller) => reseller.toInternal()))
     }
 
-    @HandleDbErrors
     async readCountOfIds(ids: number[]): Promise<number> {
         const qb = db.billing.Reseller.createQueryBuilder('reseller')
         return await qb.andWhereInIds(ids).getCount()
     }
 
-    @HandleDbErrors
     async readByName(name: string, sr: ServiceRequest): Promise<internal.Reseller> {
         this.log.debug({message: 'read reseller by id', func: this.readByName.name, user: sr.user.username, name: name})
         return await db.billing.Reseller.findOne({where: {name: name}})
     }
 
-    @HandleDbErrors
     async readAll(sr: ServiceRequest): Promise<[internal.Reseller[], number]> {
         this.log.debug({
             message: 'read all resellers',
@@ -110,7 +101,6 @@ export class ResellerMariadbRepository implements ResellerRepository {
         return [result.map(r => r.toInternal()), count]
     }
 
-    @HandleDbErrors
     async update(updates: Dictionary<internal.Reseller>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         this.log.debug({message: 'update reseller by id', func: this.update.name, user: sr.user.username, ids: ids})
@@ -126,19 +116,16 @@ export class ResellerMariadbRepository implements ResellerRepository {
         return ids
     }
 
-    @HandleDbErrors
     async resellerWithContractExists(contractId: number): Promise<boolean> {
         const resellers = await db.billing.Reseller.find({where: {contract_id: contractId}})
         return resellers.length != 0
     }
 
-    @HandleDbErrors
     async contractExists(contractId: number): Promise<boolean> {
         const contract = await db.billing.Contract.findOneBy({id: contractId})
         return contract != undefined
     }
 
-    @HandleDbErrors
     async contractHasSystemContact(contractId: number): Promise<boolean> {
         const contract = await db.billing.Contract.findOne({
             where: {
@@ -149,7 +136,6 @@ export class ResellerMariadbRepository implements ResellerRepository {
         return contract.contact.reseller_id == undefined
     }
 
-    @HandleDbErrors
     async renameReseller(id: number, name: string) {
         await db.billing.Reseller.update(id, {name: `old_${id}_${name}`})
     }

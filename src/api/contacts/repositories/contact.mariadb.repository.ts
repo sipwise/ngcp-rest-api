@@ -1,5 +1,4 @@
 import {ContactRepository} from '../interfaces/contact.repository'
-import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {Not, SelectQueryBuilder} from 'typeorm'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
@@ -12,11 +11,11 @@ import {ContractStatus} from '../../../entities/internal/contract.internal.entit
 import {LoggerService} from '../../../logger/logger.service'
 import {ContactOptions} from '../interfaces/contact-options.interface'
 import {Dictionary} from '../../../helpers/dictionary.helper'
+import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 
-export class ContactMariadbRepository implements ContactRepository {
+export class ContactMariadbRepository extends MariaDbRepository implements ContactRepository {
     private readonly log = new LoggerService(ContactMariadbRepository.name)
 
-    @HandleDbErrors
     async create(contacts: internal.Contact[], sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.Admin.createQueryBuilder('contact')
         const values = contacts.map(contact => new db.billing.Contact().fromInternal(contact))
@@ -24,13 +23,11 @@ export class ContactMariadbRepository implements ContactRepository {
         return result.identifiers.map(obj => obj.id)
     }
 
-    @HandleDbErrors
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         await db.billing.Contact.delete(ids)
         return ids
     }
 
-    @HandleDbErrors
     async terminate(id: number, sr: ServiceRequest): Promise<number> {
         this.log.debug({
             message: 'terminate contact by id',
@@ -42,14 +39,12 @@ export class ContactMariadbRepository implements ContactRepository {
         return 0
     }
 
-    @HandleDbErrors
     async readWhereInIds(ids: number[], options?: ContactOptions): Promise<internal.Contact[]> {
         const qb = await this.createBaseQueryBuilder(options)
         const contacts = await qb.andWhereInIds(ids).getMany()
         return await Promise.all(contacts.map(async (contact) => contact.toInternal()))
     }
 
-    @HandleDbErrors
     async readById(id: number, options?: ContactOptions): Promise<internal.Contact> {
         const qb = await this.createBaseQueryBuilder(options)
         qb.andWhere('contact.id = :id', {id: id})
@@ -57,12 +52,10 @@ export class ContactMariadbRepository implements ContactRepository {
         return result.toInternal()
     }
 
-    @HandleDbErrors
     async readResellerById(id: number, sr: ServiceRequest): Promise<db.billing.Reseller> { // TODO: change type to internal.Reseller
         return await db.billing.Reseller.findOneBy({id: id})
     }
 
-    @HandleDbErrors
     async hasContactActiveContract(contactId: number, sr: ServiceRequest): Promise<boolean> {
         this.log.debug({
             message: 'check whether contact has active contract',
@@ -79,7 +72,6 @@ export class ContactMariadbRepository implements ContactRepository {
         return contracts.length != 0
     }
 
-    @HandleDbErrors
     async hasContactTerminatedContract(contactId: number, sr: ServiceRequest): Promise<boolean> {
         // v1 backwards compatability
         this.log.debug({
@@ -97,7 +89,6 @@ export class ContactMariadbRepository implements ContactRepository {
         return contracts.length != 0
     }
 
-    @HandleDbErrors
     async hasContactActiveSubscriber(contactId: number, sr: ServiceRequest): Promise<boolean> {
         this.log.debug({
             message: 'check whether contact has active subscribers',
@@ -114,7 +105,6 @@ export class ContactMariadbRepository implements ContactRepository {
         return subscribers.length != 0
     }
 
-    @HandleDbErrors
     async hasContactTerminatedSubscriber(contactId: number, sr: ServiceRequest): Promise<boolean> {
         this.log.debug({
             message: 'check whether contact has active subscribers',
@@ -131,7 +121,6 @@ export class ContactMariadbRepository implements ContactRepository {
         return subscribers.length != 0
     }
 
-    @HandleDbErrors
     async readAll(sr: ServiceRequest, options?: ContactOptions): Promise<[internal.Contact[], number]> {
         this.log.debug({
             message: 'read all contacts',
@@ -144,7 +133,6 @@ export class ContactMariadbRepository implements ContactRepository {
         return [result.map(r => r.toInternal()), count]
     }
 
-    @HandleDbErrors
     async update(updates: Dictionary<internal.Contact>, options?: ContactOptions): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {

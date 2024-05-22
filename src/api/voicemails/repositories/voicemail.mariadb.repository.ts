@@ -1,4 +1,3 @@
-import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {SelectQueryBuilder} from 'typeorm'
@@ -8,6 +7,7 @@ import {VoicemailSearchDto} from '../dto/voicemail-search.dto'
 import {VoicemailRepository} from '../interfaces/voicemail.repository'
 import {LoggerService} from '../../../logger/logger.service'
 import {Dictionary} from '../../../helpers/dictionary.helper'
+import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 
 export class MessagesCount {
     new_messages: number
@@ -19,10 +19,9 @@ export class MessagesCount {
     }
 }
 
-export class VoicemailMariadbRepository implements VoicemailRepository {
+export class VoicemailMariadbRepository extends MariaDbRepository implements VoicemailRepository {
     private readonly log = new LoggerService(VoicemailMariadbRepository.name)
 
-    @HandleDbErrors
     async readAll(sr: ServiceRequest): Promise<[internal.Voicemail[], number]> {
         const qb = await this.createBaseQueryBuilder(sr)
         const searchDto = new VoicemailSearchDto()
@@ -35,7 +34,6 @@ export class VoicemailMariadbRepository implements VoicemailRepository {
         return [result.map(voicemail => voicemail.toInternal()), count]
     }
 
-    @HandleDbErrors
     async read(id: number, sr: ServiceRequest): Promise<internal.Voicemail> {
         const qb = await this.createBaseQueryBuilder(sr)
         qb.where('voicemail.id = :id', {id: id})
@@ -43,7 +41,6 @@ export class VoicemailMariadbRepository implements VoicemailRepository {
         return result.toInternal()
     }
 
-    @HandleDbErrors
     async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Voicemail[]> {
         const qb = await this.createBaseQueryBuilder(sr)
         qb.whereInIds(ids)
@@ -51,19 +48,16 @@ export class VoicemailMariadbRepository implements VoicemailRepository {
         return await Promise.all(voicemails.map(async (voicemail) => voicemail.toInternal()))
     }
 
-    @HandleDbErrors
     async readCountOfIds(ids: number[], sr: ServiceRequest): Promise<number> {
         const qb = await this.createBaseQueryBuilder(sr)
         return await qb.whereInIds(ids).getCount()
     }
 
-    @HandleDbErrors
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         await db.kamailio.VoicemailSpool.delete(ids)
         return ids
     }
 
-    @HandleDbErrors
     async update(updates: Dictionary<internal.Voicemail>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         this.log.debug({message: 'update voicemail by id', func: this.update.name, user: sr.user.username, ids: ids})
@@ -78,7 +72,6 @@ export class VoicemailMariadbRepository implements VoicemailRepository {
         return ids
     }
 
-    @HandleDbErrors
     async readMessagesCountByUUID(uuid: string, sr: ServiceRequest): Promise<MessagesCount> {
         const qb = db.kamailio.VoicemailSpool.createQueryBuilder('v')
         qb.select(['v.dir as dir', 'COUNT(v.dir) as dir_count'])

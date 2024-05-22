@@ -1,6 +1,5 @@
 import {Injectable, NotFoundException} from '@nestjs/common'
 import {db, internal} from '../../../entities'
-import {HandleDbErrors} from '../../../decorators/handle-db-errors.decorator'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {NCOSSetSearchDto} from '../dto/ncos-set-search.dto'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
@@ -10,6 +9,7 @@ import {LoggerService} from '../../../logger/logger.service'
 import {SelectQueryBuilder} from 'typeorm'
 import {NCOSSetLevelSearchDto} from '../dto/ncos-set-level-search.dto'
 import {Dictionary} from '../../../helpers/dictionary.helper'
+import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 
 interface FilterBy {
     resellerId?: number
@@ -17,10 +17,9 @@ interface FilterBy {
 }
 
 @Injectable()
-export class NCOSSetMariadbRepository implements NCOSSetRepository {
+export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSSetRepository {
     private readonly log = new LoggerService(NCOSSetMariadbRepository.name)
 
-    @HandleDbErrors
     async create(entities: internal.NCOSSet[]): Promise<internal.NCOSSet[]> {
         const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
         const values = await Promise.all(entities.map(async entity => new db.billing.NCOSSet().fromInternal(entity)))
@@ -32,7 +31,6 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
         return await Promise.all(created.map(async entity => entity.toInternal()))
     }
 
-    @HandleDbErrors
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.NCOSSet[], number]> {
         const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
         const searchDto  = new NCOSSetSearchDto()
@@ -48,7 +46,6 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
         ), totalCount]
     }
 
-    @HandleDbErrors
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.NCOSSet> {
         const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
         const searchDto  = new NCOSSetSearchDto()
@@ -62,7 +59,6 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
         return result.toInternal()
     }
 
-    @HandleDbErrors
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.NCOSSet[]> {
         const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
         const searchDto  = new NCOSSetSearchDto()
@@ -76,7 +72,6 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
         return await Promise.all(result.map(async (d) => d.toInternal()))
     }
 
-    @HandleDbErrors
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
         const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
         const searchDto = new NCOSSetSearchDto()
@@ -89,7 +84,6 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
         return await qb.getCount()
     }
 
-    @HandleDbErrors
     async update(updates: Dictionary<internal.NCOSSet>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
@@ -100,7 +94,6 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
         return ids
     }
 
-    @HandleDbErrors
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         await db.billing.NCOSSet.delete(ids)
         return ids
@@ -149,7 +142,6 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
               .execute()
     }
 
-    @HandleDbErrors
     async createLevel(entities: internal.NCOSSetLevel[], sr: ServiceRequest): Promise<internal.NCOSSetLevel[]> {
         const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
         qb.innerJoinAndSelect('ncosSetLevel.level', 'level')
@@ -166,7 +158,6 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
         return await Promise.all(created.map(async entity => entity.toInternal()))
     }
 
-    @HandleDbErrors
     async readLevelAll(sr: ServiceRequest, id?: number, filterBy?: FilterBy): Promise<[internal.NCOSSetLevel[], number]> {
         const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
         qb.innerJoinAndSelect('ncosSetLevel.level', 'level')
@@ -180,7 +171,6 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
         ), totalCount]
     }
 
-    @HandleDbErrors
     async readLevelById(id: number, levelId: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.NCOSSetLevel> {
         const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
         qb.innerJoinAndSelect('ncosSetLevel.level', 'level')
@@ -199,7 +189,6 @@ export class NCOSSetMariadbRepository implements NCOSSetRepository {
         return result.toInternal()
     }
 
-    @HandleDbErrors
     async deleteLevel(id: number, levelId: number, sr: ServiceRequest): Promise<number> {
         await db.billing.NCOSSetLevel.delete({id: levelId})
 
