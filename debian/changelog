@@ -1,3 +1,11 @@
+ngcp-rest-api (12.5.0.0+0~mr12.5.0.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [926140f] MT#59809 /api/pbxgroups add domain and username fields
+  * [fe2abf4] MT#60117 remove platform restrictions from package.json
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 22 May 2024 14:32:23 +0200
+
 ngcp-rest-api (12.4.0.0+0~mr12.4.0.0) unstable; urgency=medium
 
   [ Fabricio Santolin da Silva ]
