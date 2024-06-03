@@ -4,7 +4,7 @@ import request from 'supertest'
 import {AppModule} from '../../app.module'
 import {AppService} from '../../app.service'
 import {AuthService} from '../../auth/auth.service'
-import {AdminCreateDto} from './dto/admin-create.dto'
+import {AdminRequestDto} from './dto/admin-request.dto'
 import {RbacRole} from '../../config/constants.config'
 import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {HttpExceptionFilter} from '../../helpers/http-exception.filter'
@@ -83,8 +83,8 @@ describe('AdminController', () => {
 
     describe('', () => { // main tests block
         describe('Create initial admins', () => {
-            const admins: AdminCreateDto[] = [
-                AdminCreateDto.create({
+            const admins: AdminRequestDto[] = [
+                AdminRequestDto.create({
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -98,7 +98,7 @@ describe('AdminController', () => {
                     role: RbacRole.admin,
                     show_passwords: true,
                 }),
-                AdminCreateDto.create({
+                AdminRequestDto.create({
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -112,7 +112,7 @@ describe('AdminController', () => {
                     role: RbacRole.admin,
                     show_passwords: true,
                 }),
-                AdminCreateDto.create({
+                AdminRequestDto.create({
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -126,7 +126,7 @@ describe('AdminController', () => {
                     role: RbacRole.system,
                     show_passwords: true,
                 }),
-                AdminCreateDto.create({
+                AdminRequestDto.create({
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -140,7 +140,7 @@ describe('AdminController', () => {
                     role: RbacRole.reseller,
                     show_passwords: true,
                 }),
-                AdminCreateDto.create({
+                AdminRequestDto.create({
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -154,7 +154,7 @@ describe('AdminController', () => {
                     role: RbacRole.reseller,
                     show_passwords: true,
                 }),
-                AdminCreateDto.create({
+                AdminRequestDto.create({
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -168,7 +168,7 @@ describe('AdminController', () => {
                     role: RbacRole.ccareadmin,
                     show_passwords: true,
                 }),
-                AdminCreateDto.create({
+                AdminRequestDto.create({
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -182,7 +182,7 @@ describe('AdminController', () => {
                     role: RbacRole.ccare,
                     show_passwords: true,
                 }),
-                AdminCreateDto.create({
+                AdminRequestDto.create({
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -386,7 +386,7 @@ describe('AdminController', () => {
                     const message = roleTest.want == 201 ? 'succeed' : 'fail'
                     it(`${test.username}: should ${message} creating {role: ${roleTest.role}, isMaster: ${roleTest.isMaster}}`, async () => {
                         const rand = getRandomInt(10000, 99999)
-                        const data = AdminCreateDto.create({
+                        const data = AdminRequestDto.create({
                             billing_data: true,
                             call_data: false,
                             can_reset_password: true,
@@ -418,7 +418,7 @@ describe('AdminController', () => {
                 }
             }
             it('should fail if required fields are missing', async () => {
-                const data = AdminCreateDto.create({
+                const data = AdminRequestDto.create({
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -438,7 +438,7 @@ describe('AdminController', () => {
                 expect(response.status).toEqual(want)
             })
             it('should fail if invalid fields are provided', async () => {
-                const data = AdminCreateDto.create({
+                const data = AdminRequestDto.create({
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -463,7 +463,7 @@ describe('AdminController', () => {
         describe('Admins PATCH', () => {
             let createdId: number
             it('should create admin', async () => {
-                const data = AdminCreateDto.create({
+                const data = AdminRequestDto.create({
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
