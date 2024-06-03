@@ -160,12 +160,12 @@ describe('NCOS Set', () => {
         describe('PUT', () => {
             let ncosset3: any = {
                 name: 'test_ncosset3',
-                reseller_id: 3,
+                reseller_id: 1,
                 description: 'test_ncosset3 description'
             }
             let ncosset4: any = {
                 name: 'test_ncosset4',
-                reseller_id: 3,
+                reseller_id: 1,
                 description: 'test_ncosset4 description'
             }
             it('update ncos set test_ncosset1 -> test_ncosset3', async () => {
@@ -189,7 +189,7 @@ describe('NCOS Set', () => {
                 expect(response.status).toEqual(200)
                 const ncosset: NCOSSetResponseDto = response.body
                 expect(ncosset.name).toEqual('test_ncosset3')
-                expect(ncosset.reseller_id).toEqual(3)
+                expect(ncosset.reseller_id).toEqual(1)
                 expect(ncosset.description).toEqual('test_ncosset3 description')
             })
             it('read updated ncos set 4', async () => {
@@ -199,7 +199,7 @@ describe('NCOS Set', () => {
                 expect(response.status).toEqual(200)
                 const ncosset: NCOSSetResponseDto = response.body
                 expect(ncosset.name).toEqual('test_ncosset4')
-                expect(ncosset.reseller_id).toEqual(3)
+                expect(ncosset.reseller_id).toEqual(1)
                 expect(ncosset.description).toEqual('test_ncosset4 description')
             })
             it('update non-existing customer speed dial', async () => {
@@ -238,7 +238,7 @@ describe('NCOS Set', () => {
                 expect(response.status).toEqual(200)
                 const ncosset: NCOSSetResponseDto = response.body
                 expect(ncosset.name).toEqual('test_ncosset5')
-                expect(ncosset.reseller_id).toEqual(3)
+                expect(ncosset.reseller_id).toEqual(1)
                 expect(ncosset.description).toEqual('test_ncosset5 description')
             })
             it('adjust non-existing customer speed dial', async () => {
