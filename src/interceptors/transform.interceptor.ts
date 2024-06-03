@@ -133,6 +133,8 @@ export class TransformInterceptor implements NestInterceptor {
     private async generateOpenAPIResource(req: any, res: any, data: any): Promise<CreateResponseDto<any>> {
         const response: CreateResponseDto<any> = new CreateResponseDto<any>()
 
+        res.setHeader('content-type', 'application/json')
+
         if (Array.isArray(data) && data.length == 2 && Number.isInteger(data[data.length - 1])) {
             response.data = data[0]
             response.total_count = data[1]
