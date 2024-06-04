@@ -7,17 +7,21 @@ import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
 export class XmlHostgroup extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: false,
     })
-        group_id: number
+        group_id!: number
 
     @Column({
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: false,
     })
-        host_id: number
+        host_id!: number
 }

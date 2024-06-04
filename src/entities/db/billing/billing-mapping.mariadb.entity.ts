@@ -10,56 +10,60 @@ import {internal} from '../../../entities'
 })
 export class BillingMapping extends BaseEntity {
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
-        nullable: true,
         type: 'date',
+        nullable: true,
     })
         start_date?: Date
 
     @Column({
-        nullable: true,
         type: 'date',
+        nullable: true,
     })
         end_date?: Date
 
      @Column({
-         nullable: true,
          type: 'int',
+         unsigned: true,
+         nullable: true,
      })
          billing_profile_id?: number
 
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: false,
     })
-        contract_id: number
+        contract_id!: number
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         product_id?: number
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         network_id?: number
 
     @ManyToOne(() => Contract, contract => contract.id)
     @JoinColumn({name: 'contract_id'})
-        contract?: Contract
+        contract!: Contract
 
     @ManyToOne(() => Product, product => product.id)
     @JoinColumn({name: 'product_id'})
-        product?: Product
+        product!: Product
 
     @ManyToOne(() => BillingNetwork, network => network.id)
     @JoinColumn({name: 'network_id'})
-        network?: BillingNetwork
+        network!: BillingNetwork
 
     toInternal(): internal.BillingMapping {
         return internal.BillingMapping.create({

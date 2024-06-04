@@ -10,126 +10,128 @@ import {PackageProfileSet} from './package-profile-set.mariadb.entity'
 })
 export class ProfilePackage extends BaseEntity {
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
-        nullable: true,
         type: 'int',
         width: 11,
-        default: null,
+        unsigned: true,
+        nullable: true,
     })
         reseller_id?: number
 
     @Column({
-        nullable: false,
         type: 'varchar',
         length: 255,
+        nullable: false,
     })
-        name: string
+        name!: string
 
     @Column({
-        nullable: false,
         type: 'varchar',
         length: 255,
+        nullable: false,
     })
-        description: string
+        description!: string
 
     @Column({
-        nullable: false,
         type: 'double',
+        nullable: false,
         default: 0,
     })
-        initial_balance: number
+        initial_balance!: number
 
     @Column({
-        nullable: false,
         type: 'double',
+        nullable: false,
         default: 0,
     })
-        service_charge: number
+        service_charge!: number
 
     @Column({
-        nullable: false,
         type: 'enum',
         enum: IntervalUnit,
+        nullable: false,
         default: IntervalUnit.Month,
     })
-        balance_interval_unit: IntervalUnit
+        balance_interval_unit!: IntervalUnit
 
     @Column({
-        nullable: false,
         type: 'int',
         width: 3,
+        unsigned: true,
+        nullable: false,
         default: 1,
     })
-        balance_interval_value: number
+        balance_interval_value!: number
 
     @Column({
-        nullable: false,
         type: 'enum',
         enum: IntervalStartMode,
+        nullable: false,
         default: IntervalStartMode.First,
     })
-        balance_interval_start_mode: IntervalStartMode
+        balance_interval_start_mode!: IntervalStartMode
 
     @Column({
-        nullable: false,
         type: 'enum',
         enum: CarryOverMode,
+        nullable: false,
         default: CarryOverMode.CarryOver,
     })
-        carry_over_mode: CarryOverMode
+        carry_over_mode!: CarryOverMode
 
     @Column({
-        nullable: true,
         type: 'enum',
         enum: IntervalUnit,
-        default: null,
+        nullable: true,
     })
-        timely_duration_unit: IntervalUnit
+        timely_duration_unit?: IntervalUnit
 
     @Column({
-        nullable: true,
         type: 'int',
         width: 3,
+        unsigned: true,
+        nullable: true,
     })
-        timely_duration_value: number
+        timely_duration_value?: number
 
     @Column({
-        nullable: true,
         type: 'int',
         width: 3,
+        unsigned: true,
+        nullable: true,
     })
-        notopup_discard_intervals: number
+        notopup_discard_intervals?: number
 
     @Column({
-        nullable: true,
         type: 'double',
+        nullable: true,
     })
-        underrun_lock_threshold: number
+        underrun_lock_threshold?: number
 
     @Column({
-        nullable: true,
         type: 'tinyint',
         width: 3,
+        nullable: true,
     })
-        underrun_lock_level: number
+        underrun_lock_level?: number
 
     @Column({
-        nullable: true,
         type: 'double',
+        nullable: true,
     })
-        underrun_profile_threshold: number
+        underrun_profile_threshold?: number
 
     @Column({
-        nullable: true,
         type: 'tinyint',
         width: 3,
+        nullable: true,
     })
-        topup_lock_level: number
+        topup_lock_level?: number
 
     @OneToMany(() => PackageProfileSet, pps => pps.package)
-    packageProfileSets: PackageProfileSet[]
+        packageProfileSets!: PackageProfileSet[]
 
     toInternal(): internal.ProfilePackage {
         return internal.ProfilePackage.create({

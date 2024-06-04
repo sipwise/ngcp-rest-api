@@ -7,7 +7,7 @@ import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
 export class Download extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
         type: 'enum',
@@ -15,29 +15,33 @@ export class Download extends BaseEntity {
             'NEW',
             'DOWNLOADED',
         ],
+        nullable: false,
+        default: 'NEW',
     })
-        state: string
+        state!: string
 
     @Column({
         type: 'datetime',
+        nullable: false,
     })
-        created_at: Date
+        created_at!: Date
 
     @Column({
         type: 'datetime',
+        nullable: false,
     })
-        updated_at: Date
+        updated_at!: Date
 
     @Column({
         type: 'char',
         length: 36,
         nullable: true,
     })
-        upload_id: string
+        upload_id?: string
 
     @Column({
         type: 'datetime',
         nullable: true,
     })
-        expires_at: Date
+        expires_at?: Date
 }

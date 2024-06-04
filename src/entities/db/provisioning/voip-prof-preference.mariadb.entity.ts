@@ -3,46 +3,46 @@ import {VoipPreference} from './voip-preference.mariadb.entity'
 import {internal} from '../..'
 
 @Entity({
-    name: 'voip_usr_preferences',
+    name: 'voip_prof_preferences',
     database: 'provisioning',
 })
 export class VoipProfPreference extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
         type: 'int',
-        unsigned: true,
         width: 11,
+        unsigned: true,
         nullable: false,
     })
-        profile_id: number
+        profile_id!: number
 
     @Column({
         type: 'int',
-        unsigned: true,
         width: 11,
+        unsigned: true,
         nullable: false,
     })
-        attribute_id: number
+        attribute_id!: number
 
     @Column({
         type: 'varchar',
         width: 128,
         nullable: false,
     })
-        value: string
+        value!: string
 
     @Column({
         type: 'timestamp',
         nullable: false,
-        default: () => "CURRENT_TIMESTAMP",
-        onUpdate: "CURRENT_TIMESTAMP",
+        default: () => 'CURRENT_TIMESTAMP',
+        onUpdate: 'CURRENT_TIMESTAMP',
     })
         modify_timestamp: Timestamp
 
     @ManyToOne(() => VoipPreference, voipPreference => voipPreference.id)
     @JoinColumn({name: 'attribute_id'})
-    voipPreference: VoipPreference
+        voipPreference!: VoipPreference
 }

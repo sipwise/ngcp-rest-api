@@ -16,59 +16,69 @@ import {ContractBillingProfileNetwork} from './contract-billing-profile-network.
 })
 export class Contract extends BaseEntity {
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         customer_id?: number
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         contact_id?: number
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         order_id?: number
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         profile_package_id?: number
 
     @Column({
         type: 'enum',
         enum: ContractStatus,
+        nullable: false,
         default: [ContractStatus.Active],
     })
         status!: ContractStatus
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
         external_id?: string
 
     @Column({
         type: 'date',
+        nullable:false,
+        default: () => 'CURRENT_TIMESTAMP',
+        onUpdate: 'CURRENT_TIMESTAMP',
     })
         modify_timestamp!: Date
 
     @Column({
         type: 'date',
+        nullable: false,
+        default: '0000-00-00 00:00:00',
     })
         create_timestamp!: Date
 
     @Column({
-        nullable: true,
         type: 'date',
+        nullable: true,
     })
         activate_timestamp?: Date
 
@@ -79,74 +89,89 @@ export class Contract extends BaseEntity {
         terminate_timestamp?: Date
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         max_subscribers?: number
 
     @Column({
         type: 'boolean',
+        nullable: false,
+        default: true,
     })
         send_invoice!: boolean
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         subscriber_email_template_id?: number
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         passreset_email_template_id?: number
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         invoice_email_template_id?: number
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         invoice_template_id?: number
 
     @Column({
         type: 'decimal',
+        precision: 14,
+        scale: 6,
+        nullable: false,
+        default: 0.000000,
     })
         vat_rate!: number
 
     @Column({
         type: 'boolean',
+        unsigned: true,
+        nullable: false,
     })
         add_vat!: boolean
 
     @Column({
         type: 'int',
+        unsigned: true,
+        nullable: false,
     })
         product_id!: number
 
     @ManyToOne(() => Contact, contact => contact.id)
     @JoinColumn({name: 'contact_id'})
-        contact?: Contact
+        contact!: Contact
 
     @OneToMany(() => VoipSubscriber, subscriber => subscriber.contract)
-        voipSubscribers?: VoipSubscriber[]
+        voipSubscribers!: VoipSubscriber[]
 
     @OneToMany(() => Reseller, reseller => reseller.contract)
-        resellers?: Reseller[]
+        resellers!: Reseller[]
 
     @ManyToOne(() => Product, product => product.contracts)
     @JoinColumn({name: 'product_id'})
-        product?: Product
+        product!: Product
 
     @OneToMany(() => VoipContractSpeedDial, csd => csd.contract_id)
-        voipContractSpeedDials?: VoipContractSpeedDial[]
+        voipContractSpeedDials!: VoipContractSpeedDial[]
 
     @OneToMany(() => ContractBillingProfileNetwork, billingProfileNetwork => billingProfileNetwork.contract, {eager: true})
-        billingMappings?: ContractBillingProfileNetwork[]
+        billingMappings!: ContractBillingProfileNetwork[]
 
     toInternal(): internal.Contract {
         const contract = internal.Contract.create({

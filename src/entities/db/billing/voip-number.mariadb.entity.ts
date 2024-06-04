@@ -9,61 +9,71 @@ import {VoipSubscriber} from './voip-subscriber.mariadb.entity'
 })
 export class VoipNumber extends BaseEntity {
     @PrimaryGeneratedColumn()
-    id?: number
+        id!: number
 
     @Column({
         type: 'int',
         unsigned: true,
+        nullable: false,
     })
-    cc?: number
+        cc!: number
 
     @Column({
         type: 'varchar',
         length: 7,
+        nullable: false,
     })
-    ac?: string
+        ac!: string
 
     @Column({
         type: 'varchar',
         length: 31,
+        nullable: false,
     })
-    sn?: string
+        sn!: string
 
     @Column({
         type: 'int',
         unsigned: true,
+        nullable: true,
     })
-    reseller_id?: number
+        reseller_id?: number
 
     @Column({
         type: 'int',
         unsigned: true,
+        nullable: true,
     })
-    subscriber_id?: number
+        subscriber_id?: number
 
     @Column({
         type: 'enum',
         enum: VoipNumberStatus,
+        nullable: false,
         default: VoipNumberStatus.Active,
     })
-    status: string
+        status!: string
 
     @Column({
         type: 'boolean',
+        nullable: false,
         default: false,
     })
-    ported: boolean
+        ported!: boolean
 
     @Column({
         type: 'date',
+        nullable: false,
+        default: () => 'CURRENT_TIMESTAMP',
+        onUpdate: 'CURRENT_TIMESTAMP',
     })
-    list_timestamp: Date
+        list_timestamp: Date
 
     @ManyToOne(() => Reseller, reseller => reseller.id)
     @JoinColumn({name: 'reseller_id'})
-    reseller?: Reseller
+        reseller!: Reseller
 
     @ManyToOne(() => VoipSubscriber, subscriber => subscriber.id)
     @JoinColumn({name: 'subscriber_id'})
-    subscriber?: VoipSubscriber
+        subscriber!: VoipSubscriber
 }

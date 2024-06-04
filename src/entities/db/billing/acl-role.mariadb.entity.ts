@@ -10,18 +10,21 @@ import {internal} from '../../../entities'
 export class AclRole extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
         type: 'varchar',
         length: 64,
+        nullable: false,
     })
-        role: string
+        role!: string
 
     @Column({
         type: 'boolean',
+        nullable: false,
+        default: false,
     })
-        is_acl: boolean
+        is_acl!: boolean
 
     @ManyToMany(() => AclRole)
     @JoinTable({
@@ -29,13 +32,13 @@ export class AclRole extends BaseEntity {
         joinColumn: {name: 'accessor_id', referencedColumnName: 'id'},
         inverseJoinColumn: {name: 'has_access_to_id', referencedColumnName: 'id'},
     })
-        has_access_to: AclRole[]
+        has_access_to!: AclRole[]
 
     @OneToMany(() => Admin, admin => admin.role)
-        admins: Admin[]
+        admins!: Admin[]
 
     @OneToMany(() => Journal, journal => journal.role)
-        journals: Journal[]
+        journals!: Journal[]
 
     fromInternal(role: internal.AclRole): AclRole {
         let admins: Admin[]

@@ -10,48 +10,55 @@ import {VoipNumber} from './voip-number.mariadb.entity'
 })
 export class VoipSubscriber extends BaseEntity {
     @PrimaryGeneratedColumn()
-    id?: number
+        id!: number
 
     @Column({
         type: 'int',
         unsigned: true,
+        nullable: false,
     })
-        contract_id: number
+        contract_id!: number
 
     @Column({
         type: 'char',
         length: 36,
+        nullable: false,
     })
-        uuid: string
+        uuid!: string
 
     @Column({
         type: 'varchar',
         length: 127,
+        nullable: false,
     })
-        username: string
+        username!: string
 
     @Column({
         type: 'int',
         unsigned: true,
+        nullable: false,
     })
-        domain_id: number
+        domain_id!: number
 
     @Column({
         type: 'enum',
         enum: VoipSubscriberStatus,
+        nullable: false,
         default: VoipSubscriberStatus.Active,
     })
-        status: string
+        status!: string
 
     @Column({
         type: 'int',
         unsigned: true,
+        nullable: true,
     })
         primary_number_id?: boolean
 
     @Column({
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
         external_id?: string
 
@@ -60,16 +67,16 @@ export class VoipSubscriber extends BaseEntity {
         unsigned: true,
         nullable: true,
     })
-    contact_id?: number
+        contact_id?: number
 
     @ManyToOne(() => Contract, contract => contract.id)
     @JoinColumn({name: 'contract_id'})
-    contract?: Contract
+        contract!: Contract
 
     @OneToOne(() => ProvisioningVoipSubscriber)
     @JoinColumn({name: 'uuid', referencedColumnName: 'uuid'})
-    provisioningVoipSubscriber: ProvisioningVoipSubscriber
+        provisioningVoipSubscriber!: ProvisioningVoipSubscriber
 
     @OneToMany(type => VoipNumber, number => number.subscriber)
-    voipNumbers?: VoipNumber[]
+        voipNumbers!: VoipNumber[]
 }

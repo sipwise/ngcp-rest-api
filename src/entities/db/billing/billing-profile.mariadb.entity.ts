@@ -8,103 +8,104 @@ import {internal} from '../../../entities'
 })
 export class BillingProfile extends BaseEntity {
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
-        nullable: true,
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: true,
     })
         reseller_id?: number
 
     @Column({
-        nullable: false,
         type: 'varchar',
         length: 63,
+        nullable: false,
     })
-        handle: string
+        handle!: string
 
     @Column({
-        nullable: false,
         type: 'varchar',
         length: 31,
+        nullable: false,
     })
-        name: string
+        name!: string
 
     @Column({
-        nullable: false,
         type: 'boolean',
+        nullable: false,
         default: false,
     })
-        prepaid: boolean
+        prepaid!: boolean
 
     @Column({
-        nullable: false,
         type: 'double',
+        nullable: false,
         default: 0,
     })
-        interval_charge: number
+        interval_charge!: number
 
     @Column({
-        nullable: false,
         type: 'int',
         width: 5,
+        nullable: false,
         default: 0,
     })
-        interval_free_time: number
+        interval_free_time!: number
 
     @Column({
-        nullable: false,
         type: 'double',
+        nullable: false,
         default: 0,
     })
-        interval_free_cash: number
+        interval_free_cash!: number
 
     @Column({
-        nullable: false,
         type: 'enum',
         enum: IntervalUnit,
+        nullable: false,
         default: IntervalUnit.Month,
     })
-        interval_unit: IntervalUnit
+        interval_unit!: IntervalUnit
 
     @Column({
-        nullable: false,
         type: 'tinyint',
         width: 3,
+        unsigned: true,
+        nullable: false,
         default: 1,
     })
-        interval_count: number
+        interval_count!: number
 
     @Column({
-        nullable: true,
         type: 'int',
         width: 11,
-        default: null,
+        unsigned: true,
+        nullable: true,
     })
         fraud_interval_limit?: number
 
     @Column({
-        nullable: true,
         type: 'tinyint',
         width: 3,
-        default: null,
+        unsigned: true,
+        nullable: true,
     })
         fraud_interval_lock?: number
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 255,
-        default: null,
+        nullable: true,
     })
         fraud_interval_notify?: string
 
     @Column({
-        nullable: true,
         type: 'int',
         width: 11,
-        default: null,
+        unsigned: true,
+        nullable: true,
     })
         fraud_daily_limit?: number
 
@@ -125,65 +126,72 @@ export class BillingProfile extends BaseEntity {
         fraud_daily_notify?: string
 
     @Column({
-        nullable: true,
         type: 'tinyint',
         width: 3,
+        unsigned: true,
+        nullable: true,
         default: 0,
     })
         fraud_use_reseller_rates?: number
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 31,
-        default: null,
+        nullable: true,
     })
         currency?: string
 
     @Column({
-        nullable: false,
         type: 'enum',
         enum: BillingProfileStatus,
+        nullable: false,
         default: BillingProfileStatus.Active,
     })
-        status: BillingProfileStatus
+        status!: BillingProfileStatus
 
     @Column({
         type: 'date',
-    })
-        modify_timestamp?: Date
-
-    @Column({
-        type: 'date',
-    })
-        create_timestamp?: Date
-
-    @Column({
-        type: 'date',
-    })
-        terminate_timestamp?: Date
-
-    @Column({
         nullable: false,
+        default: () => 'CURRENT_TIMESTAMP',
+        onUpdate: 'CURRENT_TIMESTAMP',
+    })
+        modify_timestamp!: Date
+
+    @Column({
+        type: 'date',
+        nullable: false,
+        default: '0000-00-00 00:00:00',
+    })
+        create_timestamp!: Date
+
+    @Column({
+        type: 'date',
+        nullable: false,
+        default: '0000-00-00 00:00:00',
+    })
+        terminate_timestamp!: Date
+
+    @Column({
         type: 'boolean',
+        nullable: false,
         default: false,
     })
-        advice_of_charge: boolean
+        advice_of_charge!: boolean
 
     @Column({
-        nullable: false,
         type: 'enum',
         enum: PrepaidLibrary,
+        nullable: false,
         default: PrepaidLibrary.LibswRate,
     })
-        prepaid_library: PrepaidLibrary
+        prepaid_library!: PrepaidLibrary
 
     @Column({
-        nullable: false,
         type: 'boolean',
+        nullable: false,
         default: false,
     })
-        ignore_domain: boolean
+        ignore_domain!: boolean
 
     fromInternal(profile: internal.BillingProfile): BillingProfile {
         this.id = profile.id

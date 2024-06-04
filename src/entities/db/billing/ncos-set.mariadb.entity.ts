@@ -9,34 +9,37 @@ import {NCOSSetLevel} from './ncos-set-level.mariadb.entity'
 export class NCOSSet extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
-        nullable: false,
         type: 'int',
         width: 11,
-    })
-        reseller_id: number
-
-    @Column({
-        nullable: false,
-        type: 'varchar',
-    })
-        name: string
-
-    @Column({
+        unsigned: true,
         nullable: true,
-        type: 'varchar',
     })
-        description: string
+        reseller_id?: number
+
+    @Column({
+        type: 'varchar',
+        nullable: false,
+    })
+        name!: string
+
+    @Column({
+        type: 'varchar',
+        nullable: true,
+    })
+        description?: string
 
     @Column({
         type: 'boolean',
+        nullable: false,
+        default: false,
     })
-        expose_to_customer: boolean
+        expose_to_customer!: boolean
 
     @OneToMany(type => NCOSSetLevel, ncosSetLevel => ncosSetLevel.ncos_set_id)
-    setLevels?: NCOSSetLevel[]
+        setLevels!: NCOSSetLevel[]
 
     toInternal(): internal.NCOSSet {
         const entity = new internal.NCOSSet()

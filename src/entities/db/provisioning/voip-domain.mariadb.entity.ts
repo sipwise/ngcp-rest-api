@@ -8,13 +8,14 @@ import {internal} from '../../../entities'
 export class VoipDomain extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-    id?: number
+        id!: number
 
     @Column({
         type: 'varchar',
         length: 127,
+        nullable: false,
     })
-    domain!: string
+        domain!: string
 
     fromInternal(domain: internal.Domain): VoipDomain {
         this.id = domain.id

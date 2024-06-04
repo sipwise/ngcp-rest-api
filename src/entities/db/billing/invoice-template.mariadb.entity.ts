@@ -8,22 +8,23 @@ import {InvoiceTemplateCallDirection, InvoiceTemplateType} from '../../internal/
 export class InvoiceTemplate extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id: number
+        id!: number
 
     @Column({
         type: 'int',
         width: 11,
-        nullable: false,
+        unsigned: true,
+        nullable: true,
     })
-        reseller_id: number
+        reseller_id?: number
 
     @Column({
         type: 'varchar',
         length: 255,
-        default: '',
         nullable: false,
+        default: '',
     })
-        name: string
+        name!: string
 
     @Column({
         type: 'enum',
@@ -31,12 +32,11 @@ export class InvoiceTemplate extends BaseEntity {
         nullable: false,
         default: InvoiceTemplateType.SVG,
     })
-        type: InvoiceTemplateType
+        type!: InvoiceTemplateType
 
     @Column({
-        nullable: true,
         type: 'mediumblob',
-        default: null,
+        nullable: true,
     })
         data?: Buffer
 
@@ -46,5 +46,5 @@ export class InvoiceTemplate extends BaseEntity {
         nullable: false,
         default: InvoiceTemplateCallDirection.Out,
     })
-        call_direction: InvoiceTemplateCallDirection
+        call_direction!: InvoiceTemplateCallDirection
 }

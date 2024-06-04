@@ -8,14 +8,16 @@ import {AclRole} from './acl-role.mariadb.entity'
 export class AclRoleMapping extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        accessor_id?: number
+        accessor_id!: number
 
     @Column({
         type: 'int',
+        unsigned: true,
+        nullable: false,
     })
-        has_access_to_id?: number
+        has_access_to_id!: number
 
     @ManyToOne(() => AclRole)
     @JoinColumn({name: 'accessor_id'})
-        id?: AclRole
+        id!: AclRole
 }

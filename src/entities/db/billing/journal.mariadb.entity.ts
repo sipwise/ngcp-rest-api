@@ -9,23 +9,28 @@ import {internal} from './../../../entities'
 })
 export class Journal extends BaseEntity {
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
         type: 'enum',
         enum: ['create', 'update', 'delete'],
+        nullable: false,
+        default: 'create',
     })
         operation!: string
 
     @Column({
         type: 'varchar',
         length: 64,
+        nullable: false,
     })
         resource_name!: string
 
     @Column({
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: false,
     })
         resource_id!: number
 
@@ -33,33 +38,36 @@ export class Journal extends BaseEntity {
         type: 'decimal',
         precision: 13,
         scale: 3,
+        nullable: false,
     })
         timestamp!: number
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 127,
+        nullable: true,
     })
         username?: string
 
     @Column({
         type: 'enum',
         enum: ['storable', 'json', 'json_deflate', 'sereal'],
+        nullable: false,
+        default: 'json',
     })
         content_format!: string
 
     @Column({
-        nullable: true,
         type: 'blob',
-        default: null,
+        nullable: true,
     })
         content?: Buffer | string
 
     @Column({
-        nullable: true,
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: true,
     })
         role_id?: number
 
@@ -68,29 +76,31 @@ export class Journal extends BaseEntity {
         role: AclRole
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 36,
+        nullable: true,
     })
-        tx_id: string
+        tx_id?: string
 
     @Column({
-        nullable: true,
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: true,
     })
-        reseller_id: number
+        reseller_id?: number
 
     @ManyToOne(type => Reseller, reseller => reseller.journals)
     @JoinColumn({name: 'reseller_id'})
-        reseller?: Reseller
+        reseller!: Reseller
 
     @Column({
-        nullable: true,
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: true,
     })
-        user_id: number
+        user_id!: number
 
     fromInternal(journal: internal.Journal) {
         this.id = journal.id

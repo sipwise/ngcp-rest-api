@@ -26,29 +26,33 @@ enum Status {
 })
 export class Reseller extends BaseEntity {
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
         type: 'int',
+        unsigned: true,
+        nullable: false,
     })
         contract_id!: number
 
     @Column({
         type: 'varchar',
         length: 63,
+        nullable: false,
     })
         name!: string
 
     @Column({
         type: 'enum',
         enum: ResellerStatus,
+        nullable: false,
         default: ResellerStatus.Active,
     })
         status!: ResellerStatus
 
     @ManyToOne(type => Contract, contract => contract.resellers)
     @JoinColumn({name: 'contract_id'})
-        contract?: Contract
+        contract!: Contract
 
     // @HasMany(() => Voucher, {
     //     sourceKey: 'id',
@@ -76,13 +80,13 @@ export class Reseller extends BaseEntity {
     // BillingProfiles?: BillingProfile[]
 
     @OneToMany(type => Contact, contact => contact.reseller)
-        contacts?: Contact[]
+        contacts!: Contact[]
 
     @OneToMany(type => Domain, domain => domain.reseller)
-        domains?: Domain[]
+        domains!: Domain[]
 
     @OneToMany(type => Journal, journal => journal.reseller)
-        journals?: Journal[]
+        journals!: Journal[]
 
     // @HasMany(() => VoipNumber, {
     //     sourceKey: 'id',

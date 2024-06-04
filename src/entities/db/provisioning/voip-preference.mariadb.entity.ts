@@ -20,29 +20,29 @@ export enum DataType {
 export class VoipPreference extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
         type: 'int',
-        unsigned: true,
         width: 11,
+        unsigned: true,
         nullable: false,
     })
-        voip_preference_groups_id: number
+        voip_preference_groups_id!: number
 
     @Column({
         type: 'varchar',
         width: 31,
         nullable: false,
     })
-        attribute: string
+        attribute!: string
 
     @Column({
         type: 'varchar',
         length: 255,
         nullable: false,
     })
-        label: string
+        label!: string
 
     @Column({
         type: 'int',
@@ -50,15 +50,15 @@ export class VoipPreference extends BaseEntity {
         nullable: false,
         default: 0,
     })
-        type: number
+        type!: number
 
     @Column({
         type: 'int',
+        width: 3,
         unsigned: true,
-        width: 3,
         nullable: false,
     })
-        max_occur: number
+        max_occur!: number
 
     @Column({
         type: 'int',
@@ -66,7 +66,7 @@ export class VoipPreference extends BaseEntity {
         nullable: false,
         default: 0,
     })
-        usr_pref: number
+        usr_pref!: number
 
     @Column({
         type: 'int',
@@ -74,7 +74,7 @@ export class VoipPreference extends BaseEntity {
         nullable: false,
         default: 0,
     })
-        prof_pref: number
+        prof_pref!: number
 
     @Column({
         type: 'int',
@@ -82,7 +82,7 @@ export class VoipPreference extends BaseEntity {
         nullable: false,
         default: 0,
     })
-        dom_pref: number
+        dom_pref!: number
 
     @Column({
         type: 'int',
@@ -90,7 +90,7 @@ export class VoipPreference extends BaseEntity {
         nullable: false,
         default: 0,
     })
-        peer_pref: number
+        peer_pref!: number
 
     @Column({
         type: 'int',
@@ -98,7 +98,7 @@ export class VoipPreference extends BaseEntity {
         nullable: false,
         default: 0,
     })
-        contract_pref: number
+        contract_pref!: number
 
     @Column({
         type: 'int',
@@ -106,7 +106,7 @@ export class VoipPreference extends BaseEntity {
         nullable: false,
         default: 0,
     })
-        contract_location_pref: number
+        contract_location_pref!: number
 
     @Column({
         type: 'int',
@@ -114,7 +114,7 @@ export class VoipPreference extends BaseEntity {
         nullable: false,
         default: 0,
     })
-        dev_pref: number
+        dev_pref!: number
 
     @Column({
         type: 'int',
@@ -122,7 +122,7 @@ export class VoipPreference extends BaseEntity {
         nullable: false,
         default: 0,
     })
-        devprof_pref: number
+        devprof_pref!: number
 
     @Column({
         type: 'int',
@@ -130,15 +130,15 @@ export class VoipPreference extends BaseEntity {
         nullable: false,
         default: 0,
     })
-        fielddev_pref: number
+        fielddev_pref!: number
 
     @Column({
         type: 'timestamp',
         nullable: false,
-        default: () => "CURRENT_TIMESTAMP",
-        onUpdate: "CURRENT_TIMESTAMP",
+        default: () => 'CURRENT_TIMESTAMP',
+        onUpdate: 'CURRENT_TIMESTAMP',
     })
-        modify_timestamp: Timestamp
+        modify_timestamp!: Timestamp
 
     @Column({
         type: 'int',
@@ -146,7 +146,7 @@ export class VoipPreference extends BaseEntity {
         nullable: false,
         default: 0,
     })
-        internal: number
+        internal!: number
 
     @Column({
         type: 'int',
@@ -154,14 +154,14 @@ export class VoipPreference extends BaseEntity {
         nullable: false,
         default: 0,
     })
-        expose_to_customer: number
+        expose_to_customer!: number
 
     @Column({
         type: 'enum',
         enum: DataType,
         nullable: true,
     })
-        data_type: DataType
+        data_type?: DataType
 
     @Column({
         type: 'int',
@@ -169,50 +169,50 @@ export class VoipPreference extends BaseEntity {
         nullable: false,
         default: 0,
     })
-        read_only: number
+        read_only!: number
 
     @Column({
         type: 'text',
         nullable: true,
     })
-        description: String
+        description?: string
 
     @Column({
         type: 'int',
-        unsigned: true,
         width: 1,
+        unsigned: true,
         nullable: false,
         default: 0,
     })
-        dynamic: number
+        dynamic!: number
 
     @Column({
         type: 'int',
-        unsigned: true,
         width: 1,
+        unsigned: true,
         nullable: false,
         default: 0,
     })
-        reseller_pref: number
+        reseller_pref!: number
 
     @Column({
         type: 'int',
-        unsigned: true,
         width: 1,
+        unsigned: true,
         nullable: false,
         default: 0,
     })
-        expose_to_subscriber: number
+        expose_to_subscriber!: number
 
     @OneToMany(() => VoipContractPreference, voipContractPreference => voipContractPreference.attribute_id)
-    voipContractPreference?: VoipContractPreference
+        voipContractPreference!: VoipContractPreference
 
     @OneToMany(() => VoipDomPreference, voipDomPreference => voipDomPreference.attribute_id)
-    voipDomPreference?: VoipDomPreference
+        voipDomPreference!: VoipDomPreference
 
     @OneToMany(() => VoipProfPreference, voipProfPreference => voipProfPreference.attribute_id)
-    voipProfPreference?: VoipProfPreference
+        voipProfPreference!: VoipProfPreference
 
     @OneToMany(() => VoipUsrPreference, voipUsrPreference => voipUsrPreference.attribute_id)
-    voipUsrPreference?: VoipUsrPreference
+        voipUsrPreference!: VoipUsrPreference
 }

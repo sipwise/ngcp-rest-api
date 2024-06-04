@@ -9,38 +9,40 @@ import {internal} from '../../../entities'
 })
 export class BillingNetwork extends BaseEntity {
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         reseller_id?: number
 
     @Column({
-        nullable: false,
         type: 'varchar',
         length: 255,
+        nullable: false,
     })
-        name: string
+        name!: string
 
     @Column({
-        nullable: false,
         type: 'varchar',
         length: 255,
+        nullable: false,
     })
-        description: string
+        description!: string
 
     @Column({
         type: 'enum',
         enum: BillingNetworkStatus,
+        nullable: false,
         default: [BillingNetworkStatus.Active],
     })
-        status: BillingNetworkStatus
+        status!: BillingNetworkStatus
 
     @ManyToOne(() => Reseller, reseller => reseller.id)
     @JoinColumn({name: 'reseller_id'})
-        reseller: Reseller
+        reseller!: Reseller
 
     fromInternal(network: internal.BillingNetwork): BillingNetwork {
         this.reseller_id = network.resellerId
@@ -59,7 +61,7 @@ export class BillingNetwork extends BaseEntity {
             reseller: this.reseller,
             name: this.name,
             status: this.status,
-            description: this.description
+            description: this.description,
         })
     }
 }

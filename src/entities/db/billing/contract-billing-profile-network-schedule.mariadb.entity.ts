@@ -8,23 +8,24 @@ import {ContractBillingProfileNetwork} from './contract-billing-profile-network.
 })
 export class ContractBillingProfileNetworkSchedule extends BaseEntity {
     @PrimaryGeneratedColumn()
-        id: number
+        id!: number
 
     @Column({
-        nullable: false,
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: false,
     })
-        profile_network_id: number
+        profile_network_id!: number
 
     @Column({
-        nullable: false,
         type: 'decimal',
+        nullable: false,
     })
-        effective_start_time: number
+        effective_start_time!: number
 
     @ManyToOne(() => ContractBillingProfileNetwork, cbpn => cbpn.id)
     @JoinColumn({name: 'profile_network_id'})
-        profileNetwork: ContractBillingProfileNetwork
+        profileNetwork!: ContractBillingProfileNetwork
 
 }

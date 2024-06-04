@@ -8,38 +8,45 @@ import {XmlGroup} from './xml-group.mariadb.entity'
 export class XmlHost extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
         type: 'varchar',
         length: 15,
+        nullable: false,
     })
         ip!: string
 
     @Column({
         type: 'int',
         width: 5,
+        unsigned: true,
+        nullable: false,
     })
-        port: number
+        port!: number
 
     @Column({
         type: 'varchar',
         length: 64,
+        nullable: false,
         default: '/',
     })
-        path: string
+        path!: string
 
     @Column({
         type: 'int',
         width: 5,
+        unsigned: true,
+        nullable: true,
     })
-        sip_port: number
+        sip_port?: number
 
     @Column({
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
-        description: string
+        description?: string
 
     @ManyToMany(type => XmlGroup, group => group.hosts)
     @JoinTable({
@@ -47,5 +54,5 @@ export class XmlHost extends BaseEntity {
         joinColumn: {name: 'host_id', referencedColumnName: 'id'},
         inverseJoinColumn: {name: 'group_id', referencedColumnName: 'id'},
     })
-        groups: XmlGroup[]
+        groups!: XmlGroup[]
 }

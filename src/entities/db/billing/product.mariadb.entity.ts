@@ -11,53 +11,61 @@ import {internal} from '../../../entities'
 export class Product extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         reseller_id?: number
 
     @Column({
         type: 'enum',
         enum: ProductClass,
+        nullable: false,
     })
-        class: ProductClass
+        class!: ProductClass
 
     @Column({
         type: 'varchar',
         length: 63,
+        nullable: false,
     })
         handle!: string
 
     @Column({
         type: 'varchar',
         length: 127,
+        nullable: false,
     })
         name!: string
 
     @Column({
         type: 'boolean',
+        nullable: false,
+        default: false,
     })
         on_sale!: boolean
 
     @Column({
-        nullable: true,
         type: 'double',
         width: 22,
+        nullable: true,
     })
         price?: number
 
     @Column({
-        nullable: true,
         type: 'mediumint',
+        unsigned: true,
+        nullable: true,
     })
         weight?: number
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         billing_profile_id?: number
 
@@ -65,11 +73,11 @@ export class Product extends BaseEntity {
     // BillingProfile?: BillingProfile
 
     @OneToMany(type => Contract, contract => contract.id)
-        contracts?: Contract[]
+        contracts!: Contract[]
 
     @ManyToOne(type => Reseller, reseller => reseller.id)
     @JoinColumn({name: 'reseller_id'})
-        reseller?: Reseller
+        reseller!: Reseller
 
     toInternal(): internal.Product {
         return internal.Product.create({

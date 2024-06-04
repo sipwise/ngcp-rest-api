@@ -9,23 +9,26 @@ import {internal} from '../../../entities'
 export class Domain extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
         type: 'varchar',
         length: 127,
+        nullable: false,
     })
         domain!: string
 
     @Column({
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: false,
     })
-        reseller_id: number
+        reseller_id!: number
 
     @ManyToOne(type => Reseller, reseller => reseller.domains)
     @JoinColumn({name: 'reseller_id'})
-        reseller?: Reseller
+        reseller!: Reseller
 
     fromInternal(domain: internal.Domain): Domain {
         this.id = domain.id

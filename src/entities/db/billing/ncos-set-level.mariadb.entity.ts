@@ -10,29 +10,31 @@ import {NCOSSet} from './ncos-set.mariadb.entity'
 export class NCOSSetLevel extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
-        nullable: false,
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: false,
     })
-        ncos_set_id: number
+        ncos_set_id!: number
 
     @Column({
-        nullable: false,
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: false,
     })
-        ncos_level_id: number
+        ncos_level_id!: number
 
     @ManyToOne(type => NCOSSet, ncosSet => ncosSet.id)
     @JoinColumn({name: 'ncos_set_id'})
-    set: NCOSSet
+        set!: NCOSSet
 
     @ManyToOne(type => NCOSLevel, ncosLevel => ncosLevel.id)
     @JoinColumn({name: 'ncos_level_id'})
-    level: NCOSLevel
+        level!: NCOSLevel
 
     toInternal(): internal.NCOSSetLevel {
         const entity = new internal.NCOSSetLevel()

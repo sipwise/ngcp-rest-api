@@ -9,25 +9,26 @@ import {internal} from '../../../entities'
 })
 export class Admin extends BaseEntity {
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
         type: 'int',
-        nullable: true,
         unsigned: true,
+        nullable: true,
     })
         reseller_id?: number
 
     @Column({
         type: 'varchar',
         length: 31,
+        nullable: false,
     })
         login!: string
 
     @Column({
         type: 'varchar',
-        nullable: true,
         length: 32,
+        nullable: true,
     })
         md5pass?: string
 
@@ -40,60 +41,70 @@ export class Admin extends BaseEntity {
 
     @Column({
         type: 'boolean',
+        nullable: false,
         default: false,
     })
-        is_master?: boolean
+        is_master!: boolean
 
     @Column({
         type: 'boolean',
-        default: 0,
+        nullable: false,
+        default: false,
     })
-        is_superuser?: boolean
+        is_superuser!: boolean
 
     @Column({
         type: 'boolean',
-        default: 0,
+        nullable: false,
+        default: false,
     })
-        is_ccare?: boolean
+        is_ccare!: boolean
 
     @Column({
         type: 'boolean',
-        default: 1,
+        nullable: false,
+        default: true,
     })
-        is_active?: boolean
+        is_active!: boolean
 
     @Column({
         type: 'boolean',
-        default: 0,
+        nullable: false,
+        default: false,
     })
         read_only?: boolean
 
     @Column({
         type: 'boolean',
-        default: 1,
+        nullable: false,
+        default: true,
     })
-        show_passwords?: boolean
+        show_passwords!: boolean
 
     @Column({
         type: 'boolean',
-        default: 0,
+        nullable: false,
+        default: false,
     })
-        call_data?: boolean
+        call_data!: boolean
 
     @Column({
         type: 'boolean',
-        default: 1,
+        nullable: false,
+        default: true,
     })
-        billing_data?: boolean
+        billing_data!: boolean
 
     @Column({
         type: 'boolean',
-        default: 0,
+        nullable: false,
+        default: false,
     })
-        lawful_intercept?: boolean
+        lawful_intercept!: boolean
 
     @Column({
         type: 'bigint',
+        unsigned: true,
         nullable: true,
     })
         ssl_client_m_serial?: number
@@ -113,25 +124,29 @@ export class Admin extends BaseEntity {
 
     @Column({
         type: 'boolean',
-        default: 1,
+        nullable: false,
+        default: true,
     })
-        can_reset_password?: boolean
+        can_reset_password!: boolean
 
     @Column({
         type: 'boolean',
-        default: 0,
+        nullable: false,
+        default: false,
     })
         is_system!: boolean
 
     @Column({
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: false,
     })
-        role_id: number
+        role_id!: number
 
     @ManyToOne(() => AclRole, role => role.admins)
     @JoinColumn({name: 'role_id'})
-        role: AclRole
+        role!: AclRole
 
     fromInternal(admin: internal.Admin): Admin {
         this.billing_data = admin.billing_data

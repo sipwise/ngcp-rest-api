@@ -8,58 +8,65 @@ import {NCOSSetLevel} from './ncos-set-level.mariadb.entity'
 export class NCOSLevel extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
-        nullable: false,
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: false,
     })
-        reseller_id: number
+        reseller_id?: number
 
     @Column({
-        nullable: false,
         type: 'varchar',
+        nullable: false,
     })
-        level: string
+        level!: string
 
     @Column({
         type: 'enum',
         enum: ['whitelist', 'blacklist'],
+        nullable: false,
         default: 'blacklist',
     })
-        mode: string
+        mode!: string
 
     @Column({
         type: 'boolean',
-        default: 0,
-    })
-        local_ac: boolean
-
-    @Column({
-        type: 'boolean',
-        default: 0,
-    })
-        intra_pbx: boolean
-
-    @Column({
-        nullable: true,
-        type: 'varchar',
-    })
-        description: string
-
-    @Column({
         nullable: false,
+        default: false,
+    })
+        local_ac!: boolean
+
+    @Column({
+        type: 'boolean',
+        nullable: false,
+        default: false,
+    })
+        intra_pbx!: boolean
+
+    @Column({
+        type: 'varchar',
+        nullable: true,
+    })
+        description?: string
+
+    @Column({
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: true,
     })
-        time_set_id: number
+        time_set_id?: number
 
     @Column({
         type: 'boolean',
+        nullable: false,
+        default: false,
     })
-        expose_to_customer: boolean
+        expose_to_customer!: boolean
 
     @OneToMany(type => NCOSSetLevel, ncosSetLevel => ncosSetLevel.ncos_level_id)
-    setLevels?: NCOSSetLevel[]
+        setLevels!: NCOSSetLevel[]
 }

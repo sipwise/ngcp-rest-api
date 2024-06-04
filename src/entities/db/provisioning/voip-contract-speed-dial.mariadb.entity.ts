@@ -9,15 +9,15 @@ import {internal} from '../../../entities'
 export class VoipContractSpeedDial extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
         type: 'int',
-        unsigned: true,
         width: 11,
+        unsigned: true,
         nullable: false,
     })
-        contract_id: number
+        contract_id!: number
 
     @Column({
         type: 'varchar',
@@ -25,18 +25,18 @@ export class VoipContractSpeedDial extends BaseEntity {
         width: 64,
         nullable: false,
     })
-        slot: string
+        slot!: string
 
     @Column({
         type: 'varchar',
         length: 192,
         nullable: false,
     })
-        destination: string
+        destination!: string
 
     @ManyToOne(() => Contract, contract => contract.id)
     @JoinColumn({name: 'contract_id'})
-    contract?: Contract
+        contract!: Contract
 
     fromInternal(csd: internal.CustomerSpeedDial): VoipContractSpeedDial {
         this.id = csd.id

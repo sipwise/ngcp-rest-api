@@ -11,228 +11,237 @@ import {internal} from '../../../entities'
 export class Contact extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
-        nullable: true,
         type: 'int',
+        unsigned: true,
+        nullable: true,
     })
         reseller_id?: number
 
     @Column({
-        nullable: true,
         type: 'enum',
         enum: ContactGender,
+        nullable: true,
     })
         gender?: ContactGender
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 127,
+        nullable: true,
     })
         firstname?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 127,
+        nullable: true,
     })
         lastname?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 31,
+        nullable: true,
     })
         comregnum?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 127,
+        nullable: true,
     })
         company?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 127,
+        nullable: true,
     })
         street?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 16,
+        nullable: true,
     })
         postcode?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 127,
+        nullable: true,
     })
         city?: string
 
     @Column({
-        nullable: true,
         type: 'char',
         length: 2,
+        nullable: true,
     })
         country?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 31,
+        nullable: true,
     })
         phonenumber?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 31,
+        nullable: true,
     })
         mobilenumber?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
         email?: string
 
     @Column({
         type: 'boolean',
+        nullable: false,
+        default: false,
     })
         newsletter!: boolean
 
     @Column({
         type: 'date',
+        nullable: false,
+        default: () => 'CURRENT_TIMESTAMP',
+        onUpdate: 'CURRENT_TIMESTAMP',
     })
         modify_timestamp!: Date
 
     @Column({
         type: 'date',
+        nullable: false,
+        default: '0000-00-00 00:00:00',
     })
         create_timestamp!: Date
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 31,
+        nullable: true,
     })
         faxnumber?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 34,
+        nullable: true,
     })
         iban?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 11,
+        nullable: true,
     })
         bic?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 127,
+        nullable: true,
     })
         vatnum?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
         bankname?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
         gpp0?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
         gpp1?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
         gpp2?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
         gpp3?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
         gpp4?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
         gpp5?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
         gpp6?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
         gpp7?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
         gpp8?: string
 
     @Column({
-        nullable: true,
         type: 'varchar',
         length: 255,
+        nullable: true,
     })
         gpp9?: string
 
     @Column({
         type: 'enum',
         enum: ContactStatus,
+        nullable: false,
         default: ContactStatus.Active,
     })
         status!: ContactStatus
 
     @Column({
-        nullable: true,
         type: 'date',
+        nullable: true,
     })
         terminate_timestamp?: Date
 
@@ -244,7 +253,7 @@ export class Contact extends BaseEntity {
         timezone?: string
 
     @OneToMany(type => Contract, contract => contract.contact)
-        contracts?: Contract[]
+        contracts!: Contract[]
 
     //  @OneToMany(type => Customer, customer => customer.contact)
     //  customers?: Customer[]
@@ -256,7 +265,7 @@ export class Contact extends BaseEntity {
 
     @ManyToOne(type => Reseller, reseller => reseller.contacts)
     @JoinColumn({name: 'reseller_id'})
-        reseller?: Reseller
+        reseller!: Reseller
 
     toInternal(): internal.Contact {
         const t: ContactInternalEntity = {

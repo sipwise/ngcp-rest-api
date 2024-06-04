@@ -10,81 +10,104 @@ import {internal} from '../../../entities'
 
 export class VoicemailSpool extends BaseEntity {
     @PrimaryGeneratedColumn()
-        id: number
+        id!: number
 
     @Column({
         type: 'integer',
+        nullable: false,
+        default: 0,
     })
-        msgnum: number
+        msgnum!: number
 
     @Column({
         type: 'varchar',
+        nullable: true,
+        default: '',
     })
-        dir: string
+        dir?: string
 
     @Column({
         type: 'varchar',
+        nullable: true,
+        default: '',
     })
-        context: string
+        context?: string
 
     @Column({
         type: 'varchar',
+        nullable: true,
+        default: '',
     })
-        macrocontext: string
+        macrocontext?: string
 
     @Column({
         type: 'varchar',
+        nullable: true,
+        default: '',
     })
-        callerid: string
+        callerid?: string
 
     @Column({
         type: 'varchar',
         length: 16,
+        nullable: true,
+        default: '',
     })
-        origtime: string
+        origtime?: string
 
     @Column({
         type: 'varchar',
+        nullable: true,
+        default: '',
     })
-        duration: string
+        duration?: string
 
     @Column({
         type: 'varchar',
+        nullable: true,
+        default: '',
     })
-        mailboxuser: string
+        mailboxuser?: string
 
     @Column({
         type: 'varchar',
+        nullable: true,
+        default: '',
     })
-        mailboxcontext: string
+        mailboxcontext?: string
 
     @Column({
         type: 'longblob',
+        nullable: true,
     })
-        recording: Buffer
+        recording?: Buffer
 
     @Column({
         type: 'varchar',
+        nullable: true,
+        default: '',
     })
-        flag: string
+        flag?: string
 
     @Column({
         type: 'varchar',
+        nullable: true,
     })
-        msg_id: string
+        msg_id?: string
 
     @Column({
         type: 'varchar',
+        nullable: true,
     })
-        call_id: string
+        call_id?: string
 
     @ManyToOne(() => BillingVoipSubscriber, bSub => bSub.id)
     @JoinColumn({name: 'mailboxuser', referencedColumnName: 'uuid'})
-        billingSubscriber: BillingVoipSubscriber
+        billingSubscriber!: BillingVoipSubscriber
 
     @ManyToOne(() => ProvisioningVoipSubscriber, pSub => pSub.id)
     @JoinColumn({name: 'mailboxuser', referencedColumnName: 'uuid'})
-        provisioningSubscriber: ProvisioningVoipSubscriber
+        provisioningSubscriber!: ProvisioningVoipSubscriber
 
     toInternal(): internal.Voicemail {
         return internal.Voicemail.create({

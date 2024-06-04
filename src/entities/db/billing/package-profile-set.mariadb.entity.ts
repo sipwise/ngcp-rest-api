@@ -9,39 +9,42 @@ import {internal} from '../../../entities'
 })
 export class PackageProfileSet {
     @PrimaryGeneratedColumn()
-    id?: number
+        id!: number
 
     @Column({
-        nullable: false,
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: false,
     })
-    package_id: number
+        package_id!: number
 
     @Column({
-        nullable: false,
         type: 'enum',
         enum: Discriminator,
-    })
-    discriminator: Discriminator
-
-    @Column({
         nullable: false,
-        type: 'int',
-        width: 11,
     })
-    profile_id: number
+        discriminator!: Discriminator
 
     @Column({
-        nullable: true,
         type: 'int',
         width: 11,
+        unsigned: true,
+        nullable: false,
     })
-    network_id?: number
+        profile_id!: number
+
+    @Column({
+        type: 'int',
+        width: 11,
+        unsigned: true,
+        nullable: true,
+    })
+        network_id?: number
 
     @ManyToOne(() => ProfilePackage, profilePackage => profilePackage.id)
     @JoinColumn({name: 'package_id'})
-    package: ProfilePackage
+        package!: ProfilePackage
 
     toInternal(): internal.ProfilePackageSet {
         return internal.ProfilePackageSet.create({

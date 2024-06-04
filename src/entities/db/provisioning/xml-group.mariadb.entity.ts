@@ -8,14 +8,15 @@ import {XmlHost} from './xml-host.mariadb.entity'
 export class XmlGroup extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
         type: 'varchar',
-        length: 32
+        length: 32,
+        nullable: false,
     })
         name!: string
 
     @ManyToMany(type => XmlHost, host => host.groups)
-        hosts: XmlHost[]
+        hosts!: XmlHost[]
 }

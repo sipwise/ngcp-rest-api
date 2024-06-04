@@ -4,63 +4,63 @@ import {ContractBillingProfileNetworkSchedule} from './contract-billing-profile-
 import {BillingProfile} from './billing-profile.mariadb.entity'
 
 @Entity({
-    database: 'billing',
     name: 'contracts_billing_profile_network',
+    database: 'billing',
 })
 export class ContractBillingProfileNetwork extends BaseEntity {
     @PrimaryGeneratedColumn()
-        id: number
+        id!: number
 
     @Column({
-        nullable: false,
         type: 'int',
         unsigned: true,
+        nullable: false,
     })
-        contract_id: number
+        contract_id!: number
 
     @Column({
-        nullable: false,
         type: 'int',
         unsigned: true,
+        nullable: false,
     })
-        billing_profile_id: number
+        billing_profile_id!: number
 
     @Column({
+        type: 'int',
+        unsigned: true,
         nullable: true,
-        type: 'int',
-        unsigned: true,
     })
         billing_network_id?: number
 
     @Column({
-        nullable: true,
         type: 'datetime',
+        nullable: true,
     })
         start_date?: Date
 
     @Column({
-        nullable: true,
         type: 'datetime',
+        nullable: true,
     })
         end_date?: Date
 
     @Column({
-        nullable: false,
         type: 'tinyint',
-        default: 0,
         width: 3,
+        nullable: false,
+        default: 0,
     })
-        base: number
+        base!: number
 
     @OneToMany(type => ContractBillingProfileNetworkSchedule, cbpns => cbpns.profileNetwork)
-        schedules: ContractBillingProfileNetworkSchedule[]
+        schedules!: ContractBillingProfileNetworkSchedule[]
 
     @ManyToOne(() => BillingProfile, billingProfile => billingProfile.id, {eager: true})
     @JoinColumn({name: 'billing_profile_id'})
-        billingProfile: BillingProfile
+        billingProfile!: BillingProfile
 
     @ManyToOne(() => Contract, contract => contract.id, )
     @JoinColumn({name: 'contract_id'})
-        contract: Contract
+        contract!: Contract
 
 }

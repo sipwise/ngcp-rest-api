@@ -24,71 +24,77 @@ import {VoipDBAlias} from './voip-dbalias.mariadb.entity'
 export class VoipSubscriber extends BaseEntity {
 
     @PrimaryGeneratedColumn()
-        id?: number
+        id!: number
 
     @Column({
         type: 'varchar',
         length: 127,
+        nullable: false,
     })
-        username: string
+        username!: string
 
     @Column({
         type: 'int',
         unsigned: true,
+        nullable: false,
     })
-        domain_id: number
+        domain_id!: number
 
     @Column({
         type: 'char',
         length: 36,
+        nullable: false,
     })
-        uuid: string
+        uuid!: string
 
     @Column({
         type: 'varchar',
         length: 40,
         nullable: true,
     })
-        password: string
+        password?: string
 
     @Column({
         type: 'boolean',
-        default: 0,
+        nullable: false,
+        default: false,
     })
-        admin: boolean
+        admin!: boolean
 
     @Column({
         type: 'int',
         unsigned: true,
         nullable: true,
     })
-        account_id: number
+        account_id?: number
 
     @Column({
         type: 'varchar',
         length: 127,
         nullable: true,
     })
-        webusername: string
+        webusername?: string
 
     @Column({
         type: 'char',
         length: 56,
         nullable: true,
     })
-        webpassword: string
+        webpassword?: string
 
     @Column({
         type: 'boolean',
-        default: 0,
+        nullable: false,
+        default: false,
     })
-        is_pbx_pilot: boolean
+        is_pbx_pilot!: boolean
 
     @Column({
         type: 'boolean',
-        default: 0,
+        nullable: false,
+        default: false,
     })
-        is_pbx_group: boolean
+        is_pbx_group!: boolean
 
     @Column({
         type: 'enum',
@@ -97,50 +103,67 @@ export class VoipSubscriber extends BaseEntity {
             'parallel',
             'random',
             'circular',
+            'none',
         ],
         nullable: true,
+        default: 'none',
     })
-        pbx_hunt_policy: string
+        pbx_hunt_policy?: string
 
     @Column({
         type: 'int',
         unsigned: true,
         nullable: true,
     })
-        pbx_hunt_timeout: number
+        pbx_hunt_timeout?: number
+
+    @Column({
+        type: 'enum',
+        enum: [
+            'bye',
+            'cancel',
+        ],
+        nullable: true,
+        default: 'cancel',
+    })
+        pbx_hangup_policy?: string
+
 
     @Column({
         type: 'varchar',
         length: 255,
         nullable: true,
     })
-        pbx_extension: string
+        pbx_extension?: string
 
     @Column({
         type: 'int',
         unsigned: true,
         nullable: true,
     })
-        profile_set_id: number
+        profile_set_id?: number
 
     @Column({
         type: 'int',
         unsigned: true,
         nullable: true,
     })
-        profile_id: number
+        profile_id?: number
 
     @Column({
         type: 'timestamp',
-        default: 'current_timestamp',
+        nullable: false,
+        default: () => 'CURRENT_TIMESTAMP',
+        onUpdate: 'CURRENT_TIMESTAMP',
     })
-        modify_timestamp: string
+        modify_timestamp!: string
 
     @Column({
         type: 'timestamp',
+        nullable: false,
         default: '0000-00-00 00:00:00',
     })
-        create_timestamp: string
+        create_timestamp!: string
 
     @OneToOne(() => BillingVoipSubscriber)
     @JoinColumn({name: 'uuid', referencedColumnName: 'uuid'})
@@ -148,15 +171,15 @@ export class VoipSubscriber extends BaseEntity {
 
     @ManyToOne(() => VoipDomain, domain => domain.id)
     @JoinColumn({name: 'domain_id'})
-        domain: VoipDomain
+        domain!: VoipDomain
 
     @ManyToOne(() => Contract)
     @JoinColumn({name: 'account_id'})
-        contract?: Contract
+        contract!: Contract
 
     @ManyToOne(() => VoipPbxGroup)
     @JoinColumn({name: 'id', referencedColumnName: 'subscriber_id'})
-        pbx_group?: VoipPbxGroup
+        pbx_group!: VoipPbxGroup
 
     // @OneToMany(() => VoipPbxGroup, group => group.subscriber)
     //     pbx_group_members?: VoipPbxGroup[]
@@ -167,12 +190,12 @@ export class VoipSubscriber extends BaseEntity {
         joinColumn: {name: 'group_id', referencedColumnName: 'id'},
         inverseJoinColumn: {name: 'subscriber_id', referencedColumnName: 'id'},
     })
-    pbx_group_members?: VoipSubscriber[]
+        pbx_group_members!: VoipSubscriber[]
 
-    members?: VoipSubscriber[]
+    members!: VoipSubscriber[]
 
     @OneToMany(type => VoipDBAlias, alias => alias.subscriber)
-    dbAliases?: VoipDBAlias[]
+        dbAliases!: VoipDBAlias[]
 
     toInternalPbxGroup(): internal.PbxGroup {
         const group = new internal.PbxGroup()
