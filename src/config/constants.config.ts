@@ -38,6 +38,9 @@ export interface RbacFlag {
 export const reservedQueryParams = [
     'page', // page number
     'rows', // row number
+    'order', // order asc/desc
+    'order_by', // order_by field
+    'search_or', // search multiple fields as "or" instead of "and" true/false
     'expand', // expand logic
     'soft_expand', // expand logic
     'allow_unknown_params', // when provided, unknown params are ignored
