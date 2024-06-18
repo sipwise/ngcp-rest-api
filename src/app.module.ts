@@ -30,7 +30,9 @@ import {FileshareModule} from './api/fileshare/fileshare.module'
 import {ProductModule} from './api/products/product.module'
 import {VoicemailModule} from './api/voicemails/voicemail.module'
 import {ExpandModule} from './helpers/expand.module'
-import {PbxGroupModule} from './api/pbxgroups/pbx-group.module'
+import {PbxModule} from './api/pbx/pbx.module'
+import {PbxGroupMemberModule} from './api/pbx/groups/members/pbx-group-member.module'
+import {PbxGroupModule} from './api/pbx/groups/pbx-group.module'
 import {ContactModule} from './api/contacts/contact.module'
 import {DbStateSchedule} from './schedules/dbstate.schedule'
 import {RedisStateSchedule} from './schedules/redisstate.schedule'
@@ -83,6 +85,8 @@ let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | Fo
     NCOSModule,
     NCOSSetModule,
     NumberModule,
+    PbxModule,
+    PbxGroupMemberModule,
     PbxGroupModule,
     ProductModule,
     RedisModule,

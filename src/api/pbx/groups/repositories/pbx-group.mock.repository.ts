@@ -1,7 +1,7 @@
 import {PbxGroupRepository} from '../interfaces/pbx-group.repository'
-import {internal} from '../../../entities'
-import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {PbxGroupMemberItem} from '../../../entities/internal'
+import {internal} from '../../../../entities'
+import {ServiceRequest} from '../../../../interfaces/service-request.interface'
+import {PbxGroupMember} from '../../../../entities/internal'
 import {NotFoundException} from '@nestjs/common'
 
 interface PbxGroupMockDB {
@@ -13,6 +13,18 @@ export class PbxGroupMockRepository implements PbxGroupRepository {
     private readonly pbxGroupDB: PbxGroupMockDB
 
     constructor() {
+        const member1 = new PbxGroupMember()
+        member1.extension = '102'
+        member1.subscriberId = 11
+        member1.username = 'test1'
+        member1.domain = 'example.org'
+
+        const member2 = new PbxGroupMember()
+        member2.extension = '102'
+        member2.subscriberId = 12
+        member2.username = 'test2'
+        member2.domain = 'example.org'
+
         this.pbxGroupDB = {
             1: internal.PbxGroup.create({
                 customerId: 1,
@@ -21,8 +33,8 @@ export class PbxGroupMockRepository implements PbxGroupRepository {
                 huntTimeout: 0,
                 id: 1,
                 members: [
-                    new PbxGroupMemberItem('102', 11, 'test1', 'example.org'),
-                    new PbxGroupMemberItem('102', 12, 'test2', 'example.org')
+                    member1,
+                    member2,
                 ],
                 name: 'group1',
                 domain: 'example.org',

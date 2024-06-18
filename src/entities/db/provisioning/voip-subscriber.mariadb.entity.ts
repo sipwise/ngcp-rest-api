@@ -204,11 +204,16 @@ export class VoipSubscriber extends BaseEntity {
         group.extension = this.pbx_extension
         group.huntPolicy = this.pbx_hunt_policy
         group.huntTimeout = this.pbx_hunt_timeout
-        group.members = this.members.map(member => member.toInternalPbxGroupMemberItem())
+        group.members = this.members.map(member => member.toInternalPbxGroupMember())
         return group
     }
 
-    toInternalPbxGroupMemberItem(): internal.PbxGroupMemberItem {
-        return new internal.PbxGroupMemberItem(this.pbx_extension, this.id, this.username, this.domain.domain)
+    toInternalPbxGroupMember(): internal.PbxGroupMember {
+        const groupMember = new internal.PbxGroupMember()
+        groupMember.extension = this.pbx_extension
+        groupMember.subscriberId = this.id
+        groupMember.username = this.username
+        groupMember.domain = this.domain.domain
+        return groupMember
     }
 }

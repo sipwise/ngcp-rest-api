@@ -1,21 +1,21 @@
 import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
 import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
-import {AdminResponseDto} from '../admins/dto/admin-response.dto'
+import {AdminResponseDto} from '../../admins/dto/admin-response.dto'
 import {PbxGroupResponseDto} from './dto/pbx-group-response.dto'
 import {PbxGroupService} from './pbx-group.service'
-import {CrudController} from '../../controllers/crud.controller'
-import {Auth} from '../../decorators/auth.decorator'
-import {RbacRole} from '../../config/constants.config'
-import {PaginatedDto} from '../../dto/paginated.dto'
-import {SearchLogic} from '../../helpers/search-logic.helper'
-import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
-import {LoggerService} from '../../logger/logger.service'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {CrudController} from '../../../controllers/crud.controller'
+import {Auth} from '../../../decorators/auth.decorator'
+import {RbacRole} from '../../../config/constants.config'
+import {PaginatedDto} from '../../../dto/paginated.dto'
+import {SearchLogic} from '../../../helpers/search-logic.helper'
+import {ApiPaginatedResponse} from '../../../decorators/api-paginated-response.decorator'
+import {LoggerService} from '../../../logger/logger.service'
+import {ServiceRequest} from '../../../interfaces/service-request.interface'
 
-const resourceName = 'pbxgroups'
+const resourceName = 'pbx/groups'
 
 @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.subscriber)
-@ApiTags('PbxGroup')
+@ApiTags('Pbx')
 @ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class PbxGroupController extends CrudController<never, PbxGroupResponseDto> {
@@ -42,7 +42,8 @@ export class PbxGroupController extends CrudController<never, PbxGroupResponseDt
         const sr = new ServiceRequest(req)
         const [pbxGroups, totalCount] =
             await this.pbxGroupService.readAll(sr)
-        const responseList = pbxGroups.map((group) => new PbxGroupResponseDto(group))
+
+        const responseList = pbxGroups.map((group) => new PbxGroupResponseDto(req.url, group))
         return [responseList, totalCount]
     }
 
@@ -59,6 +60,8 @@ export class PbxGroupController extends CrudController<never, PbxGroupResponseDt
         })
         const sr = new ServiceRequest(req)
         const group = await this.pbxGroupService.read(id, sr)
-        return new PbxGroupResponseDto(group)
+
+        const url = req.url.split('/').slice(0, -1).join('/')
+        return new PbxGroupResponseDto(url, group)
     }
 }

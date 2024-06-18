@@ -1,16 +1,4 @@
-export class PbxGroupMemberItem {
-    extension: string
-    subscriberId: number
-    username: string
-    domain: string
-
-    constructor(extension: string, subscriberId: number, username: string, domain: string) {
-        this.extension = extension
-        this.subscriberId = subscriberId
-        this.username = username
-        this.domain = domain
-    }
-}
+import {internal} from 'entities'
 
 export interface PbxGroupInternalEntity {
     provisioningGroupId?: number
@@ -19,7 +7,7 @@ export interface PbxGroupInternalEntity {
     extension: string
     huntPolicy: string
     huntTimeout: number
-    members: PbxGroupMemberItem[]
+    members: internal.PbxGroupMember[]
     id?: number
     customerId: number
     domain: string
@@ -29,7 +17,7 @@ export class PbxGroup implements PbxGroupInternalEntity {
     extension: string
     huntPolicy: string
     huntTimeout: number
-    members: PbxGroupMemberItem[]
+    members: internal.PbxGroupMember[]
     name: string
     id: number
     customerId: number

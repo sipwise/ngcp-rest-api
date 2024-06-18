@@ -1,8 +1,8 @@
 import {Inject, Injectable} from '@nestjs/common'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {internal} from '../../entities'
+import {ServiceRequest} from '../../../interfaces/service-request.interface'
+import {internal} from '../../../entities'
 import {PbxGroupMariadbRepository} from './repositories/pbx-group.mariadb.repository'
-import {LoggerService} from '../../logger/logger.service'
+import {LoggerService} from '../../../logger/logger.service'
 
 @Injectable()
 export class PbxGroupService {
@@ -23,7 +23,12 @@ export class PbxGroupService {
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.PbxGroup> {
-        this.log.debug({message: 'read pbxgroup by group id', func: this.read.name, user: sr.user.username, id: id})
+        this.log.debug({
+            message: 'read pbxgroup by group id',
+            func: this.read.name,
+            user: sr.user.username,
+            id: id,
+        })
         return await this.pbxGroupRepo.readById(id, sr)
     }
 }

@@ -1,19 +1,19 @@
 import {PbxGroupRepository} from '../interfaces/pbx-group.repository'
-import {db, internal} from '../../../entities'
-import {ServiceRequest} from '../../../interfaces/service-request.interface'
+import {db, internal} from '../../../../entities'
+import {ServiceRequest} from '../../../../interfaces/service-request.interface'
 import {SelectQueryBuilder} from 'typeorm'
-import {RbacRole} from '../../../config/constants.config'
-import {SearchLogic} from '../../../helpers/search-logic.helper'
+import {RbacRole} from '../../../../config/constants.config'
+import {SearchLogic} from '../../../../helpers/search-logic.helper'
 import {PbxGroupSearchDto} from '../dto/pbx-group-search.dto'
-import {LoggerService} from '../../../logger/logger.service'
-import {MariaDbRepository} from '../../../repositories/mariadb.repository'
+import {LoggerService} from '../../../../logger/logger.service'
+import {MariaDbRepository} from '../../../../repositories/mariadb.repository'
 
 export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxGroupRepository {
     private readonly log = new LoggerService(PbxGroupMariadbRepository.name)
 
     async readAll(sr: ServiceRequest): Promise<[internal.PbxGroup[], number]> {
         const searchLogic = new SearchLogic(sr, Object.keys(new PbxGroupSearchDto()))
-        const query = this.generateBaseQuery(sr, searchLogic)
+        const query = await this.generateBaseQuery(sr, searchLogic)
 
         query.limit(searchLogic.rows).offset(searchLogic.rows * (searchLogic.page - 1))
 
@@ -26,29 +26,25 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
         const result = await query.getRawMany()
         const totalCount = await query.getCount()
 
-        return [result.map(group => this.rawToInternalPbxGroup(group)), totalCount]
+        const transformed = await Promise.all(result.map(async group => {
+            return this.rawToInternalPbxGroup(group)
+        }))
+
+        return [transformed, totalCount]
     }
 
     async readById(id: number, sr: ServiceRequest): Promise<internal.PbxGroup> {
-
         // TODO: remove this once actual entity mappings are implemented; cannot call getOneOrFail for raw data
-        await db.billing.VoipSubscriber.findOneByOrFail({ id: id })
+        await db.provisioning.VoipPbxGroup.findOneByOrFail({group_id: id})
 
-        const result = await this.generateBaseQuery(sr)
-            .where('bg.id = :id', {id: id})
-            .getRawOne()
+        const query = await this.generateBaseQuery(sr)
+
+        const result = await query.getRawOne()
 
         return this.rawToInternalPbxGroup(result)
     }
 
-    private generateBaseQuery(sr: ServiceRequest, searchLogic?: SearchLogic): SelectQueryBuilder<db.provisioning.VoipSubscriber> {
-
-        const memberSubQuery = db.provisioning.VoipSubscriber.createQueryBuilder('sm')
-            .select('concat("[", group_concat(json_object("subscriberId", bm.id, "extension", sm.pbx_extension, "domain", dm.domain, "username", sm.username)), "]")')
-            .innerJoin('voip_pbx_groups', 'pm', 'pm.subscriber_id = sm.id and pm.group_id = sg.id')
-            .innerJoin('sm.billing_voip_subscriber', 'bm')
-            .innerJoin('sm.domain', 'dm')
-
+    private async generateBaseQuery(sr: ServiceRequest, searchLogic?: SearchLogic): Promise<SelectQueryBuilder<db.provisioning.VoipSubscriber>> {
         const query = db.provisioning.VoipSubscriber.createQueryBuilder('sg')
             .select('sg.username', 'group_name')
             .addSelect('sg.pbx_hunt_policy')
@@ -58,9 +54,10 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
             .addSelect('sg.id', 'group_psub_id')
             .addSelect('bg.contract_id', 'customer_id')
             .addSelect('dg.domain', 'domain')
-            .addSelect('(' + memberSubQuery.getQuery() + ')', 'members')
+            .addSelect('pg.group_id', 'group_id')
             .innerJoin('sg.billing_voip_subscriber', 'bg')
             .innerJoin('sg.domain', 'dg')
+            .innerJoin('voip_pbx_groups', 'pg', 'pg.group_id = sg.id')
             .where('sg.is_pbx_group = 1')
 
         this.addPermissionFilterToQueryBuilder(query, sr)
@@ -118,12 +115,11 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
 
     private rawToInternalPbxGroup(raw: any): internal.PbxGroup {
         const group = new internal.PbxGroup()
-        group.id = raw['group_bsub_id']
+        group.id = raw['group_id']
         group.extension = raw['sg_pbx_extension']
         group.name = raw['group_name']
         group.huntPolicy = raw['sg_pbx_hunt_policy']
         group.huntTimeout = raw['sg_pbx_hunt_timeout']
-        group.members = JSON.parse(raw['members'])
         group.customerId = raw['customer_id']
         group.domain = raw['domain']
         return group
