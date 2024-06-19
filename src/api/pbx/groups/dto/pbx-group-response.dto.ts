@@ -1,4 +1,5 @@
 import {UrlReference} from '../../../../types/url-reference.type'
+import {UrlReferenceType} from '../../../../enums/url-reference-type.enum'
 import {internal} from '../../../../entities'
 
 export class PbxGroupResponseDto {
@@ -19,7 +20,7 @@ export class PbxGroupResponseDto {
         this.id = pbxGroup.id
         this.domain = pbxGroup.domain
         this.members = {
-            type: 'link',
+            type: UrlReferenceType.Link,
             url: prefix + '/' + pbxGroup.id + '/members',
         }
         this.name = pbxGroup.name

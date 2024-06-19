@@ -2,11 +2,8 @@ import {internal} from '../../../entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsNotEmpty, IsOptional} from 'class-validator'
 import {ResponseDto} from '../../../dto/response.dto'
-
-export interface NCOSSetLevelReference {
-    type: string
-    link: string
-}
+import {UrlReference} from '../../../types/url-reference.type'
+import {UrlReferenceType} from '../../../enums/url-reference-type.enum'
 
 export class NCOSSetResponseDto implements ResponseDto {
     @IsNotEmpty()
@@ -30,7 +27,7 @@ export class NCOSSetResponseDto implements ResponseDto {
 
     @IsNotEmpty()
     @ApiProperty()
-        levels: NCOSSetLevelReference
+        levels: UrlReference
 
     constructor(prefix: string, entity: internal.NCOSSet) {
         this.id = entity.id
@@ -39,8 +36,8 @@ export class NCOSSetResponseDto implements ResponseDto {
         this.description = entity.description
         this.expose_to_customer = entity.exposeToCustomer
         this.levels = {
-            type: 'array',
-            link: prefix + '/' + entity.id + '/levels'
+            type: UrlReferenceType.Link,
+            url: prefix + '/' + entity.id + '/levels',
         }
     }
 }
