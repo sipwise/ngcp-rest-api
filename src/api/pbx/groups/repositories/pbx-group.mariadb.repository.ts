@@ -7,6 +7,7 @@ import {SearchLogic} from '../../../../helpers/search-logic.helper'
 import {PbxGroupSearchDto} from '../dto/pbx-group-search.dto'
 import {LoggerService} from '../../../../logger/logger.service'
 import {MariaDbRepository} from '../../../../repositories/mariadb.repository'
+import {NotFoundException} from '@nestjs/common'
 
 export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxGroupRepository {
     private readonly log = new LoggerService(PbxGroupMariadbRepository.name)
@@ -34,12 +35,13 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
     }
 
     async readById(id: number, sr: ServiceRequest): Promise<internal.PbxGroup> {
-        // TODO: remove this once actual entity mappings are implemented; cannot call getOneOrFail for raw data
-        await db.provisioning.VoipPbxGroup.findOneByOrFail({group_id: id})
-
         const query = await this.generateBaseQuery(sr)
+        query.andWhere('bg.id = :id', {id: id})
 
         const result = await query.getRawOne()
+        if (!result) {
+            throw new NotFoundException()
+        }
 
         return this.rawToInternalPbxGroup(result)
     }
@@ -54,10 +56,8 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
             .addSelect('sg.id', 'group_psub_id')
             .addSelect('bg.contract_id', 'customer_id')
             .addSelect('dg.domain', 'domain')
-            .addSelect('pg.group_id', 'group_id')
             .innerJoin('sg.billing_voip_subscriber', 'bg')
             .innerJoin('sg.domain', 'dg')
-            .innerJoin('voip_pbx_groups', 'pg', 'pg.group_id = sg.id')
             .where('sg.is_pbx_group = 1')
 
         this.addPermissionFilterToQueryBuilder(query, sr)
@@ -115,7 +115,7 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
 
     private rawToInternalPbxGroup(raw: any): internal.PbxGroup {
         const group = new internal.PbxGroup()
-        group.id = raw['group_id']
+        group.id = raw['group_bsub_id']
         group.extension = raw['sg_pbx_extension']
         group.name = raw['group_name']
         group.huntPolicy = raw['sg_pbx_hunt_policy']

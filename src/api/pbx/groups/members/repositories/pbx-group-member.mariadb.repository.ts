@@ -20,7 +20,7 @@ export class PbxGroupMemberMariadbRepository extends MariaDbRepository implement
         const searchLogic = new SearchLogic(sr, Object.keys(new PbxGroupMemberSearchDto()))
         const query = await this.generateBaseQuery(sr, searchLogic)
         this.addFilterBy(query, filter)
-        
+
         query.limit(searchLogic.rows).offset(searchLogic.rows * (searchLogic.page - 1))
 
         if (searchLogic.orderBy != null) {
@@ -46,7 +46,7 @@ export class PbxGroupMemberMariadbRepository extends MariaDbRepository implement
         query.andWhere('member_subquery.member_id = :id', {id: id})
 
         const result = await query.getRawOne()
-        if (!result || !result['member_id']) {
+        if (!result) {
             throw new NotFoundException()
         }
         return this.rawToInternalPbxGroupMember(result)
@@ -55,12 +55,12 @@ export class PbxGroupMemberMariadbRepository extends MariaDbRepository implement
     private async generateBaseQuery(sr: ServiceRequest, searchLogic?: SearchLogic): Promise<SelectQueryBuilder<db.provisioning.VoipSubscriber>> {
         const memberSubQuery = db.provisioning.VoipSubscriber.createQueryBuilder('sm')
             .select([
-                'sm.id AS member_subscriberId',
+                'bm.id AS member_subscriberId',
                 'sm.pbx_extension AS member_extension',
                 'dm.domain AS member_domain',
                 'sm.username AS member_username',
                 'pm.group_id AS member_group_id',
-                'sm.id AS member_id',
+                'pm.id AS member_id',
             ])
             .innerJoin('voip_pbx_groups', 'pm', 'pm.subscriber_id = sm.id')
             .innerJoin('sm.billing_voip_subscriber', 'bm')
@@ -144,7 +144,7 @@ export class PbxGroupMemberMariadbRepository extends MariaDbRepository implement
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, filterBy: FilterBy): void {
         if (filterBy) {
             if (filterBy.groupId) {
-                qb.andWhere('member_subquery.member_group_id = :groupId', {groupId: filterBy.groupId})
+                qb.andWhere('bg.id = :groupId', {groupId: filterBy.groupId})
             }
         }
     }
@@ -152,7 +152,7 @@ export class PbxGroupMemberMariadbRepository extends MariaDbRepository implement
     private rawToInternalPbxGroupMember(raw: any): internal.PbxGroupMember {
         const group = new internal.PbxGroupMember()
         group.id = raw['member_id']
-        group.groupId = raw['member_group_id']
+        group.groupId = raw['group_bsub_id']
         group.extension = raw['member_extension']
         group.subscriberId = raw['member_subscriberId']
         group.username = raw['member_username']
