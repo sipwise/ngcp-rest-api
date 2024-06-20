@@ -43,6 +43,8 @@ import {CustomerSpeedDialModule} from './api/customerspeeddials/customer-speed-d
 import {NumberModule} from './api/numbers/number.module'
 import {NCOSModule} from './api/ncos/ncos.module'
 import {NCOSSetModule} from './api/ncos-sets/ncos-set.module'
+import {HeaderManipulationModule} from './api/header-manipulations/header-manipulation.module'
+import {HeaderManipulationSetModule} from './api/header-manipulations/sets/header-manipulation-set.module'
 import {AcceptLanguageResolver, CookieResolver, HeaderResolver, I18nModule, QueryResolver} from 'nestjs-i18n'
 import {RedisModule} from './database/redis.module'
 
@@ -84,6 +86,8 @@ let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | Fo
     FileshareModule,
     NCOSModule,
     NCOSSetModule,
+    HeaderManipulationModule,
+    HeaderManipulationSetModule,
     NumberModule,
     PbxModule,
     PbxGroupMemberModule,

@@ -142,5 +142,9 @@
   "INVALID_SYSTEM_CONTACT": {
     "message": "The contact_id is not a valid ngcp:systemcontacts item, but an ngcp:customercontacts item",
     "code": 10036
+  },
+  "ENTRY_NOT_FOUND": {
+    "message": "Entry not found",
+    "code": 10037
   }
 }
