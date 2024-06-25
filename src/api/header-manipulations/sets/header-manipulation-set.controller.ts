@@ -36,7 +36,7 @@ const resourceName = 'header-manipulations/sets'
     RbacRole.admin,
     RbacRole.reseller,
 )
-@ApiTags('Header-Manipulations')
+@ApiTags('HeaderManipulation')
 @ApiExtraModels(CreateResponseDto, PaginatedDto)
 @Controller(resourceName)
 export class HeaderManipulationSetController extends CrudController<HeaderManipulationSetRequestDto, HeaderManipulationSetResponseDto> {

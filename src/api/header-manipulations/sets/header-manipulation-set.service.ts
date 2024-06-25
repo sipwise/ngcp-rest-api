@@ -8,6 +8,7 @@ import {I18nService} from 'nestjs-i18n'
 import {Dictionary} from '../../../helpers/dictionary.helper'
 import {GenerateErrorMessageArray} from 'helpers/http-error.helper'
 import {ErrorMessage} from '../../../interfaces/error-message.interface'
+import {RbacRole} from '../../../config/constants.config'
 
 @Injectable()
 export class HeaderManipulationSetService implements CrudService<internal.HeaderRuleSet> {
@@ -23,40 +24,34 @@ export class HeaderManipulationSetService implements CrudService<internal.Header
         await Promise.all(entities.map(async entity => {
             if (!entity.resellerId)
                 entity.resellerId = sr.user.reseller_id
-            await this.checkPermissions(entity.resellerId, sr)
+
+            if (sr.user.reseller_id_required)
+                await this.checkPermissions(entity.resellerId, sr)
         }))
         return await this.ruleSetRepo.create(entities)
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.HeaderRuleSet[], number]> {
-        switch (sr.user.role) {
-        case 'reseller':
+        if (sr.user.reseller_id_required)
             return await this.ruleSetRepo.readAll(sr, {resellerId: sr.user.reseller_id})
-        case 'subscriberadmin':
-            return await this.ruleSetRepo.readAll(sr, {resellerId: sr.user.reseller_id})
-        default:
-            return await this.ruleSetRepo.readAll(sr)
-        }
+
+        return await this.ruleSetRepo.readAll(sr)
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.HeaderRuleSet> {
-        switch (sr.user.role) {
-        case 'reseller':
+        if (sr.user.reseller_id_required)
             return await this.ruleSetRepo.readById(id, sr, {resellerId: sr.user.reseller_id})
-        default:
-            return await this.ruleSetRepo.readById(id, sr)
-        }
+
+        return await this.ruleSetRepo.readById(id, sr)
     }
 
     async update(updates: Dictionary<internal.HeaderRuleSet>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
 
         let sets: internal.HeaderRuleSet[]
-        switch (sr.user.role) {
-        case 'reseller':
+        if (sr.user.reseller_id_required) {
             sets = await this.ruleSetRepo.readWhereInIds(ids, sr, {resellerId: sr.user.reseller_id})
-            break
-        default:
+        } else {
             sets = await this.ruleSetRepo.readWhereInIds(ids, sr)
         }
 
@@ -73,11 +68,10 @@ export class HeaderManipulationSetService implements CrudService<internal.Header
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         let sets: internal.HeaderRuleSet[]
-        switch (sr.user.role) {
-        case 'reseller':
+
+        if (sr.user.reseller_id_required) {
             sets = await this.ruleSetRepo.readWhereInIds(ids, sr, {resellerId: sr.user.reseller_id})
-            break
-        default:
+        } else {
             sets = await this.ruleSetRepo.readWhereInIds(ids, sr)
         }
 

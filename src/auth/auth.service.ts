@@ -117,7 +117,11 @@ export class AuthService {
             showPasswords: admin.show_passwords,
             username: admin.login,
             is_master: admin.is_master,
-            reseller_id_required: admin.role.role == RbacRole.reseller || admin.role.role == RbacRole.ccare,
+            reseller_id_required:
+                admin.role.role == RbacRole.reseller ||
+                admin.role.role == RbacRole.ccare ||
+                admin.role.role == RbacRole.subscriber ||
+                admin.role.role == RbacRole.subscriberadmin,
         }
         this.log.debug({
             message: 'admin user authentication',

@@ -8,7 +8,7 @@ export enum HeaderRuleDirection {
     CfInbound = 'cf_inbound',
     CfOutbound = 'cf_outbound',
     Reply = 'reply',
-} 
+}
 
 
 export class HeaderRule {
