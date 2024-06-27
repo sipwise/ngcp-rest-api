@@ -8,7 +8,6 @@ import {I18nService} from 'nestjs-i18n'
 import {Dictionary} from '../../../helpers/dictionary.helper'
 import {GenerateErrorMessageArray} from 'helpers/http-error.helper'
 import {ErrorMessage} from '../../../interfaces/error-message.interface'
-import {RbacRole} from '../../../config/constants.config'
 
 @Injectable()
 export class HeaderManipulationSetService implements CrudService<internal.HeaderRuleSet> {

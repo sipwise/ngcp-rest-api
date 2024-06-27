@@ -1,29 +1,31 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
-import {AppModule} from '../../../../app.module'
-import {AppService} from '../../../../app.service'
-import {AuthService} from '../../../../auth/auth.service'
-import {HeaderManipulationSetModule} from '../header-manipulation-set.module'
-import {HeaderManipulationRuleModule} from './header-manipulation-rule.module'
-import {Operation as PatchOperation} from '../../../../helpers/patch.helper'
-import {HttpExceptionFilter} from '../../../../helpers/http-exception.filter'
-import {ValidateInputPipe} from '../../../../pipes/validate.pipe'
+import {AppModule} from '../../../../../app.module'
+import {AppService} from '../../../../../app.service'
+import {AuthService} from '../../../../../auth/auth.service'
+import {HeaderManipulationSetModule} from '../../header-manipulation-set.module'
+import {HeaderManipulationRuleModule} from '../header-manipulation-rule.module'
+import {HeaderManipulationRuleActionModule} from './header-manipulation-rule-action.module'
+import {Operation as PatchOperation} from '../../../../../helpers/patch.helper'
+import {HttpExceptionFilter} from '../../../../../helpers/http-exception.filter'
+import {ValidateInputPipe} from '../../../../../pipes/validate.pipe'
 import {validate} from 'class-validator'
-import {HeaderManipulationRuleResponseDto} from './dto/header-manipulation-rule-response.dto'
+import {HeaderManipulationRuleActionResponseDto} from './dto/header-manipulation-rule-action-response.dto'
 
-describe('Rule', () => {
+describe('Rule Action', () => {
     let app: INestApplication
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
     let createdSetIds: number[] = []
     let createdRuleIds: number[] = []
+    let createdActionIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
-            imports: [HeaderManipulationSetModule,HeaderManipulationRuleModule, AppModule],
+            imports: [HeaderManipulationRuleActionModule, HeaderManipulationSetModule,HeaderManipulationRuleModule, AppModule],
         })
             .compile()
 
@@ -32,6 +34,7 @@ describe('Rule', () => {
 
         createdSetIds = []
         createdRuleIds = []
+        createdActionIds = []
 
         app = moduleRef.createNestApplication()
 
@@ -79,24 +82,11 @@ describe('Rule', () => {
                 reseller_id: 1,
                 description: 'test_ruleset1 description',
             }
-            const ruleset2: any = {
-                name: 'test_ruleset2',
-                reseller_id: 1,
-                description: 'test_ruleset2 description',
-            }
             it('create set test_ruleset1', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/header-manipulations/sets')
                     .set(...authHeader)
                     .send(ruleset1)
-                expect(response.status).toEqual(201)
-                createdSetIds.push(+response.body[0].id)
-            })
-            it('create set test_ruleset2', async () => {
-                const response = await request(app.getHttpServer())
-                    .post('/header-manipulations/sets')
-                    .set(...authHeader)
-                    .send(ruleset2)
                 expect(response.status).toEqual(201)
                 createdSetIds.push(+response.body[0].id)
             })
@@ -119,120 +109,103 @@ describe('Rule', () => {
                 createdRuleIds.push(+response.body[0].id)
             })
 
-            it('create rule 2', async () => {
-
-                const rule2:any = {
-                    set_id: createdSetIds[1],
-                    name: 'test_rule2',
-                    description: 'test_rule2 description',
-                    priority: 200,
-                    direction: 'outbound',
-                    stopper: true,
-                    enabled: false,
-                }
-                const response = await request(app.getHttpServer())
-                    .post('/header-manipulations/sets/rules')
-                    .set(...authHeader)
-                    .send(rule2)
-                expect(response.status).toEqual(201)
-                createdRuleIds.push(+response.body[0].id)
-            })
-
-            it('create rule 3', async () => {
-                const rule3:any = {
-                    set_id: createdSetIds[1],
-                    name: 'test_rule3',
-                    description: 'test_rule3 description',
-                    priority: 300,
-                    direction: 'inbound',
-                    stopper: true,
+            it ('create action 1', async () => {
+                const action1:any = {
+                    rule_id: createdRuleIds[0],
+                    header: 'X-Test-Header',
+                    header_part: 'full',
+                    action_type: 'set',
+                    value_part: 'full',
+                    value: 'test',
                     enabled: true,
                 }
                 const response = await request(app.getHttpServer())
-                    .post('/header-manipulations/sets/rules')
+                    .post('/header-manipulations/sets/rules/actions')
                     .set(...authHeader)
-                    .send(rule3)
+                    .send(action1)
                 expect(response.status).toEqual(201)
-                createdRuleIds.push(+response.body[0].id)
+                createdActionIds.push(+response.body[0].id)
+            })
+
+            it ('create action 2', async () => {
+                const action2:any = {
+                    rule_id: createdRuleIds[0],
+                    header: 'X-Test-Header2',
+                    header_part: 'full',
+                    action_type: 'set',
+                    value_part: 'full',
+                    value: 'test2',
+                    enabled: true,
+                }
+                const response = await request(app.getHttpServer())
+                    .post('/header-manipulations/sets/rules/actions')
+                    .set(...authHeader)
+                    .send(action2)
+                expect(response.status).toEqual(201)
+                createdActionIds.push(+response.body[0].id)
             })
         })
 
         describe('GET', () => {
-            it('read created rule 1', async () => {
+            it('read created rule action', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/header-manipulations/sets/rules/${createdRuleIds[0]}`)
+                    .get(`/header-manipulations/sets/rules/actions/${createdActionIds[0]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
-                const rule: HeaderManipulationRuleResponseDto = response.body
-                expect(rule.set_id).toEqual(createdSetIds[0])
-                expect(rule.name).toEqual('test_rule1')
-                expect(rule.description).toEqual('test_rule1 description')
-                expect(rule.priority).toEqual(100)
-                expect(rule.direction).toEqual('inbound')
-                expect(rule.stopper).toEqual(false)
-                expect(rule.enabled).toEqual(true)
+                const action: HeaderManipulationRuleActionResponseDto = response.body
+                expect(action.rule_id).toEqual(createdRuleIds[0])
+                expect(action.header).toEqual('X-Test-Header')
+                expect(action.header_part).toEqual('full')
             })
-            it('read created rule 2', async () => {
+            it('read non-existing action', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/header-manipulations/sets/${createdSetIds[1]}/rules/${createdRuleIds[1]}`)
-                    .set(...authHeader)
-                expect(response.status).toEqual(200)
-                const rule: HeaderManipulationRuleResponseDto = response.body
-                expect(rule.set_id).toEqual(createdSetIds[1])
-                expect(rule.name).toEqual('test_rule2')
-                expect(rule.description).toEqual('test_rule2 description')
-                expect(rule.priority).toEqual(200)
-                expect(rule.direction).toEqual('outbound')
-                expect(rule.stopper).toEqual(true)
-                expect(rule.enabled).toEqual(false)
-            })
-            it('read non-existing rule', async () => {
-                const response = await request(app.getHttpServer())
-                    .get('/header-manipulations/rules/999911111122')
+                    .get('/header-manipulations/sets/rules/actions/999911111122')
                     .set(...authHeader)
                 expect(response.status).toEqual(404)
             })
         })
 
         describe('PUT', () => {
-            it('update rule test_rule1 > test_rule_foo', async () => {
-                const rulefoo: any = {
-                    set_id: createdSetIds[0],
-                    name: 'test_rule_foo',
-                    description: 'test_rule_foo description',
-                    priority: 101,
-                    direction: 'outbound',
-                    stopper: true,
+            it('update action 1 header', async () => {
+                const action1:any = {
+                    rule_id: createdRuleIds[0],
+                    header: 'X-Test-Header-Foo',
+                    header_part: 'full',
+                    action_type: 'set',
+                    value_part: 'full',
+                    value: 'test',
                     enabled: false,
                 }
                 const response = await request(app.getHttpServer())
-                    .put(`/header-manipulations/sets/${createdSetIds[0]}/rules/${createdRuleIds[0]}`)
+                    .put(`/header-manipulations/sets/rules/actions/${createdActionIds[0]}`)
                     .set(...authHeader)
-                    .send (rulefoo)
+                    .send(action1)
                 expect(response.status).toEqual(200)
             })
-            it('read updated rule', async () => {
+
+            it('read updated action 1', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/header-manipulations/sets/${createdSetIds[0]}/rules/${createdRuleIds[0]}`)
+                    .get(`/header-manipulations/sets/rules/actions/${createdActionIds[0]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
-                const ruleset: HeaderManipulationRuleResponseDto = response.body
-                expect(ruleset.name).toEqual('test_rule_foo')
+                const action: HeaderManipulationRuleActionResponseDto = response.body
+                expect(action.header).toEqual('X-Test-Header-Foo')
             })
-            it('update non-existing rule', async () => {
-                const rulefoo: any = {
-                    set_id: createdSetIds[1],
-                    name: 'test_rule_foo',
-                    description: 'test_rule_foo description',
-                    priority: 101,
-                    direction: 'outbound',
-                    stopper: true,
+
+            it('update non-existing action', async () => {
+                const action1:any = {
+                    rule_id: createdRuleIds[0],
+                    header: 'X-Test-Header-Foo',
+                    header_part: 'full',
+                    action_type: 'set',
+                    value_part: 'full',
+                    value: 'test',
                     enabled: false,
                 }
                 const response = await request(app.getHttpServer())
-                    .put('/header-manipulations/sets/rules/999911111122')
+                    .put('/header-manipulations/sets/rules/actions/999911111122')
                     .set(...authHeader)
-                    .send (rulefoo)
+                    .send(action1)
                 expect(response.status).toEqual(404)
             })
         })
@@ -241,34 +214,37 @@ describe('Rule', () => {
             const patch: PatchOperation[] = [
                 {
                     op: 'replace',
-                    path: '/name',
-                    value: 'test_rule5',
+                    path: '/header',
+                    value: 'X-Test-Header-Bar',
                 },
                 {
                     op: 'replace',
-                    path: '/description',
-                    value: 'test_rule5 description',
+                    path: '/enabled',
+                    value: false,
                 },
             ]
-            it('adjust rule  3 -> 5', async () => {
+
+            it('adjust action header X-Test-Header-Foo -> X-Test-Header-Bar', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch(`/header-manipulations/sets/rules/${createdRuleIds[2]}`)
+                    .patch(`/header-manipulations/sets/rules/actions/${createdActionIds[0]}`)
                     .set(...authHeader)
                     .send(patch)
                 expect(response.status).toEqual(200)
             })
-            it('read updated rule  5', async () => {
+
+            it('read updated action', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/header-manipulations/sets/rules/${createdRuleIds[2]}`)
+                    .get(`/header-manipulations/sets/rules/actions/${createdActionIds[0]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
-                const ruleset: HeaderManipulationRuleResponseDto = response.body
-                expect(ruleset.name).toEqual('test_rule5')
-                expect(ruleset.description).toEqual('test_rule5 description')
+                const action: HeaderManipulationRuleActionResponseDto = response.body
+                expect(action.header).toEqual('X-Test-Header-Bar')
+                expect(action.enabled).toEqual(false)
             })
-            it('adjust non-existing rule', async () => {
+
+            it('adjust non-existing action', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch('/header-manipulations/sets/rules/999911111122')
+                    .patch('/header-manipulations/sets/rules/actions/999911111122')
                     .set(...authHeader)
                     .send(patch)
                 expect(response.status).toEqual(404)
@@ -276,7 +252,15 @@ describe('Rule', () => {
         })
     })
 
-    describe('Rule DELETE', () => {
+    describe('Rule action DELETE', () => {
+        it('delete created actions', async () => {
+            for (const id of createdActionIds) {
+                const result = await request(app.getHttpServer())
+                    .delete(`/header-manipulations/sets/rules/actions/${id}`)
+                    .set(...authHeader)
+                expect(result.status).toEqual(200)
+            }
+        })
         it('delete created rules', async () => {
             for (const id of createdRuleIds) {
                 const result = await request(app.getHttpServer())

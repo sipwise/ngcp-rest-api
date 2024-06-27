@@ -6,7 +6,6 @@ import {CrudService} from '../../../../interfaces/crud-service.interface'
 import {LoggerService} from '../../../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
 import {Dictionary} from '../../../../helpers/dictionary.helper'
-import {RbacRole} from '../../../../config/constants.config'
 import {ErrorMessage} from '../../../../interfaces/error-message.interface'
 import {GenerateErrorMessageArray} from '../../../../helpers/http-error.helper'
 import {HeaderManipulationSetMariadbRepository} from '../repositories/header-manipulation-set.mariadb.repository'
@@ -23,10 +22,12 @@ export class HeaderManipulationRuleService implements CrudService<internal.Heade
     }
 
     async create(entities: internal.HeaderRule[], sr: ServiceRequest): Promise<internal.HeaderRule[]> {
-        const sets = await this.ruleSetRepo.readWhereInIds(entities.map(entity => entity.setId), sr)
-        if (sets.some(set => set.resellerId != sr.user.reseller_id)) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            throw new UnprocessableEntityException(error.message)
+        if (sr.user.reseller_id_required) {
+            const sets = await this.ruleSetRepo.readWhereInIds(entities.map(entity => entity.setId), sr)
+            if (sets.some(set => set.resellerId != sr.user.reseller_id)) {
+                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
+                throw new UnprocessableEntityException(error.message)
+            }
         }
 
         return await this.ruleRepo.create(entities)

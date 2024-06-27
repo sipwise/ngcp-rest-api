@@ -82,9 +82,7 @@ export class VoipHeaderRuleAction extends BaseEntity {
         priority!: number
 
     @Column({
-        type: 'tinyint',
-        width: 1,
-        unsigned: true,
+        type: 'boolean',
         nullable: false,
         default: false,
     })
@@ -106,6 +104,7 @@ export class VoipHeaderRuleAction extends BaseEntity {
         entity.rwrSetId = this.rwr_set_id
         entity.rwrDpId = this.rwr_dp_id
         entity.priority = this.priority
+        entity.enabled = this.enabled
         return entity
     }
 
@@ -123,5 +122,4 @@ export class VoipHeaderRuleAction extends BaseEntity {
         this.enabled = entity.enabled
         return this
     }
-    
 }

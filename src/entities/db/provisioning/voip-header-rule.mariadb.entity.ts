@@ -4,16 +4,16 @@ import {VoipHeaderRuleSet} from './voip-header-rule-set.mariadb.entity'
 import {VoipHeaderRuleAction} from './voip-header-rule-action.mariadb.entity'
 import {VoipHeaderRuleCondition} from './voip-header-rule-condition.mariadb.entity'
 import {internal} from 'entities'
-    
+
 @Entity({
     name: 'voip_header_rules',
     database: 'provisioning',
 })
 export class VoipHeaderRule extends BaseEntity {
-    
+
         @PrimaryGeneratedColumn()
             id!: number
-    
+
         @Column({
             type: 'int',
             width: 11,
@@ -21,21 +21,21 @@ export class VoipHeaderRule extends BaseEntity {
             nullable: false,
         })
             set_id!: number
-    
+
         @Column({
             type: 'varchar',
             length: 255,
             nullable: false,
         })
             name!: string
-    
+
         @Column({
             type: 'varchar',
             length: 255,
             nullable: true,
         })
             description?: string
-    
+
         @Column({
             type: 'int',
             width: 11,
@@ -44,7 +44,7 @@ export class VoipHeaderRule extends BaseEntity {
             default: 100,
         })
             priority!: number
-    
+
         @Column({
             type: 'enum',
             enum: HeaderRuleDirection,
@@ -52,20 +52,16 @@ export class VoipHeaderRule extends BaseEntity {
             default: HeaderRuleDirection.Inbound,
         })
             direction!: HeaderRuleDirection
-    
+
         @Column({
-            type: 'tinyint',
-            width: 1,
-            unsigned: true,
+            type: 'boolean',
             nullable: false,
             default: false,
         })
             stopper!: boolean
-    
+
         @Column({
-            type: 'tinyint',
-            width: 1,
-            unsigned: true,
+            type: 'boolean',
             nullable: false,
             default: true,
         })
@@ -93,7 +89,7 @@ export class VoipHeaderRule extends BaseEntity {
             entity.enabled = this.enabled
             return entity
         }
-    
+
         fromInternal(entity: internal.HeaderRule): VoipHeaderRule {
             this.id = entity.id
             this.set_id = entity.setId

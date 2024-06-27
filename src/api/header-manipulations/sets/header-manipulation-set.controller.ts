@@ -1,7 +1,7 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req, UnprocessableEntityException} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
-import {Operation} from 'helpers/patch.helper'
+import {Operation} from '../../../helpers/patch.helper'
 import {RbacRole} from '../../../config/constants.config'
 import {CrudController} from '../../../controllers/crud.controller'
 import {ApiCreatedResponse} from '../../../decorators/api-created-response.decorator'
@@ -48,8 +48,6 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
     ) {
         super(resourceName, ruleSetService)
     }
-
-    /* Rule Set */
 
     @Post()
     @ApiCreatedResponse(HeaderManipulationSetResponseDto)

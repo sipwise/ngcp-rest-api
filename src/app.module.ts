@@ -44,6 +44,7 @@ import {NumberModule} from './api/numbers/number.module'
 import {NCOSModule} from './api/ncos/ncos.module'
 import {NCOSSetModule} from './api/ncos-sets/ncos-set.module'
 import {HeaderManipulationModule} from './api/header-manipulations/header-manipulation.module'
+import {HeaderManipulationRuleActionModule} from './api/header-manipulations/sets/rules/actions/header-manipulation-rule-action.module'
 import {HeaderManipulationRuleModule} from './api/header-manipulations/sets/rules/header-manipulation-rule.module'
 import {HeaderManipulationSetModule} from './api/header-manipulations/sets/header-manipulation-set.module'
 import {AcceptLanguageResolver, CookieResolver, HeaderResolver, I18nModule, QueryResolver} from 'nestjs-i18n'
@@ -88,6 +89,7 @@ let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | Fo
     NCOSModule,
     NCOSSetModule,
     HeaderManipulationModule,
+    HeaderManipulationRuleActionModule,
     HeaderManipulationRuleModule,
     HeaderManipulationSetModule,
     NumberModule,
