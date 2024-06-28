@@ -44,8 +44,20 @@
     "description": "[/journals] Journal of the API operations performed on the platform"
 },
 {
-    "name": "PbxGroup",
-    "description": "[/pbxgroups] A list of PBX groups and their members"
+    "name": "HeaderManipulation",
+    "description": "[/header-manipulation] Available Header Manipulation related routes including sets, rules, actions and conditions"
+},
+{
+    "name": "NCOS",
+    "description": "[/ncos] Available NCOS related routes including Sets and their levels"
+},
+{
+    "name": "Number",
+    "description": "[/numbers] Available VOIP numbers"
+},
+{
+    "name": "Pbx",
+    "description": "[/pbx] Available PBX related routes including groups and their members"
 },
 {
     "name": "Product",
