@@ -1,0 +1,158 @@
+import {Injectable, NotFoundException} from '@nestjs/common'
+import {db, internal} from '../../../../../../entities'
+import {ServiceRequest} from '../../../../../../interfaces/service-request.interface'
+import {HeaderManipulationRuleConditionSearchDto} from '../dto/header-manipulation-rule-condition-search.dto'
+import {configureQueryBuilder} from '../../../../../../helpers/query-builder.helper'
+import {HeaderManipulationRuleConditionRepository} from '../interfaces/header-manipulation-rule-condition.repository'
+import {SearchLogic} from '../../../../../../helpers/search-logic.helper'
+import {LoggerService} from '../../../../../../logger/logger.service'
+import {SelectQueryBuilder} from 'typeorm'
+import {Dictionary} from '../../../../../../helpers/dictionary.helper'
+import {MariaDbRepository} from '../../../../../../repositories/mariadb.repository'
+
+export interface FilterBy {
+    ruleId?: number
+    setId?: number
+    resellerId?: number
+}
+
+@Injectable()
+export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRepository implements HeaderManipulationRuleConditionRepository {
+    private readonly log = new LoggerService(HeaderManipulationRuleConditionMariadbRepository.name)
+
+    async create(entities: internal.HeaderRuleCondition[]): Promise<internal.HeaderRuleCondition[]> {
+        const createdEntities: db.provisioning.VoipHeaderRuleCondition[] = []
+
+        await Promise.all(entities.map(async entity => {
+            const condition = db.provisioning.VoipHeaderRuleCondition.create().fromInternal(entity)
+            await condition.save()
+
+            if (entity.values && entity.values.length > 0) {
+                const conditionValues = entity.values.map(value => {
+                    const conditionValue = new db.provisioning.VoipHeaderRuleConditionValue()
+                    conditionValue.condition_id = condition.id
+                    conditionValue.value = value
+                    return conditionValue
+                })
+                await Promise.all(conditionValues.map(conditionValue => conditionValue.save()))
+            }
+            createdEntities.push(condition)
+        }))
+        return await Promise.all(createdEntities.map(async entity => entity.toInternal()))
+    }
+
+    async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRuleCondition[], number]> {
+        const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
+        const searchDto  = new HeaderManipulationRuleConditionSearchDto()
+        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
+            Object.keys(searchDto),
+        ))
+        this.addFilterBy(qb, filterBy)
+        const [result, totalCount] = await qb.getManyAndCount()
+        return [await Promise.all(
+            result.map(async (d) =>
+                d.toInternal(),
+            ),
+        ), totalCount]
+    }
+
+    async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleCondition> {
+        const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
+        const searchDto  = new HeaderManipulationRuleConditionSearchDto()
+        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
+            Object.keys(searchDto),
+            undefined,
+        ))
+        qb.where({id: id})
+        this.addFilterBy(qb, filterBy)
+        const result = await qb.getOneOrFail()
+        return result.toInternal()
+    }
+
+    async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleCondition[]> {
+        const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
+        const searchDto  = new HeaderManipulationRuleConditionSearchDto()
+        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
+            Object.keys(searchDto),
+            undefined,
+        ))
+        qb.whereInIds(ids)
+        this.addFilterBy(qb, filterBy)
+        const result = await qb.getMany()
+        return await Promise.all(result.map(async (d) => d.toInternal()))
+    }
+
+    async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
+        const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
+        const searchDto = new HeaderManipulationRuleConditionSearchDto()
+        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
+            Object.keys(searchDto),
+            undefined,
+        ))
+        qb.whereInIds(ids)
+        this.addFilterBy(qb, filterBy)
+        return await qb.getCount()
+    }
+
+    async update(updates: Dictionary<internal.HeaderRuleCondition>, sr: ServiceRequest): Promise<number[]> {
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        for (const id of ids) {
+            const dbEntity = db.provisioning.VoipHeaderRuleCondition.create().fromInternal(updates[id])
+            dbEntity.fromInternal(updates[id])
+            await db.provisioning.VoipHeaderRuleCondition.update(id, dbEntity)
+            await db.provisioning.VoipHeaderRuleConditionValue.delete({condition_id: id})
+            await Promise.all(updates[id].values.map(async value => {
+                const conditionValue = new db.provisioning.VoipHeaderRuleConditionValue()
+                conditionValue.condition_id = id
+                conditionValue.value = value
+                await conditionValue.save()
+            }))
+        }
+        return ids
+    }
+
+    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+        await db.provisioning.VoipHeaderRuleCondition.delete(ids)
+        return ids
+    }
+
+    async readConditionValues(conditionId: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRuleConditionValue[], number]> {
+        const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
+        qb.where({id: conditionId})
+        this.addFilterBy(qb, filterBy)
+        await qb.getOneOrFail()
+        const qbValues = db.provisioning.VoipHeaderRuleConditionValue.createQueryBuilder('headerRuleConditionValue')
+        qbValues.where({condition_id: conditionId})
+
+        const [result, totalCount] = await qbValues.getManyAndCount()
+        return [await Promise.all(
+            result.map(async (d) =>
+                d.toInternal(),
+            ),
+        ), totalCount]
+    }
+
+    private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipHeaderRuleCondition>, filterBy: FilterBy): void {
+        if (filterBy) {
+            let ruleJoin = false
+            if (filterBy.ruleId) {
+                qb.andWhere('rule_id = :ruleId', {ruleId: filterBy.ruleId})
+            }
+            if (filterBy.setId) {
+                if (!ruleJoin) {
+                    qb.innerJoin('headerRuleCondition.rule', 'headerRule')
+                    ruleJoin = true
+                }
+                qb.andWhere('headerRule.set_id = :setId', {setId: filterBy.setId})
+            }
+            if (filterBy.resellerId) {
+                if (!ruleJoin) {
+                    qb.innerJoin('headerRuleCondition.rule', 'headerRule')
+                    ruleJoin = true
+                }
+                qb.innerJoin('headerRule.set', 'headerRuleSet')
+                qb.andWhere('headerRuleSet.reseller_id = :resellerId', {resellerId: filterBy.resellerId})
+            }
+        }
+    }
+}

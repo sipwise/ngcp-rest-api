@@ -1,14 +1,14 @@
-import {BaseEntity, Column, Entity, ManyToOne, JoinColumn, PrimaryGeneratedColumn} from 'typeorm'
+import {BaseEntity, Column, Entity, ManyToOne, JoinColumn, PrimaryGeneratedColumn, OneToMany} from 'typeorm'
 import {VoipHeaderRule} from './voip-header-rule.mariadb.entity'
 import {HeaderRuleConditionExpression, HeaderRuleConditionMatchPart, HeaderRuleConditionMatchType, HeaderRuleConditionValueType} from 'entities/internal/header-rule-condition.internal.entity'
 import {VoipHeaderRuleConditionValue} from './voip-header-rule-condition-value.mariadb.entity'
+import {internal} from '../..'
 
 @Entity({
     name: 'voip_header_rule_conditions',
     database: 'provisioning',
 })
 export class VoipHeaderRuleCondition extends BaseEntity {
-    
     @PrimaryGeneratedColumn()
         id!: number
 
@@ -86,12 +86,43 @@ export class VoipHeaderRuleCondition extends BaseEntity {
         default: true,
     })
         enabled!: boolean
-        
+
     @ManyToOne(() => VoipHeaderRule, rule => rule.id)
     @JoinColumn({name: 'rule_id'})
         rule!: VoipHeaderRule
-    
 
-    // @OneToMany(() => VoipHeaderRuleConditionValue, value => value.condition)
-    //     values!: VoipHeaderRuleConditionValue[]
+    @OneToMany(() => VoipHeaderRuleConditionValue, value => value.condition_id)
+        values!: VoipHeaderRuleConditionValue[]
+
+    toInternal(): internal.HeaderRuleCondition {
+        const entity = new internal.HeaderRuleCondition()
+        entity.id = this.id
+        entity.ruleId = this.rule_id
+        entity.matchType = this.match_type
+        entity.matchPart = this.match_part
+        entity.matchName = this.match_name
+        entity.expression = this.expression
+        entity.expressionNegation = this.expression_negation
+        entity.valueType = this.value_type
+        entity.rwrSetId = this.rwr_set_id
+        entity.rwrDpId = this.rwr_dp_id
+        entity.enabled = this.enabled
+        return entity
+    }
+
+    fromInternal(entity: internal.HeaderRuleCondition): VoipHeaderRuleCondition {
+        this.id = entity.id
+        this.rule_id = entity.ruleId
+        this.match_type = entity.matchType
+        this.match_part = entity.matchPart
+        this.match_name = entity.matchName
+        this.expression = entity.expression
+        this.expression_negation = entity.expressionNegation
+        this.value_type = entity.valueType
+        this.rwr_set_id = entity.rwrSetId
+        this.rwr_dp_id = entity.rwrDpId
+        this.enabled = entity.enabled
+
+        return this
+    }
 }

@@ -14,6 +14,7 @@ export class HeaderManipulationResponseDto implements ResponseDto {
             url + '/sets/rules',
             url + '/sets/rules/actions',
             url + '/sets/rules/conditions',
+            url + '/sets/rules/conditions/:id/@values',
         ]
     }
 }

@@ -27,7 +27,7 @@ import {HeaderManipulationRuleActionResponseDto} from './dto/header-manipulation
 import {HeaderManipulationRuleActionRequestDto} from './dto/header-manipulation-rule-action-request.dto'
 import {JournalService} from '../../../../../api/journals/journal.service'
 import {JournalResponseDto} from '../../../../../api/journals/dto/journal-response.dto'
-import {HeaderRuleActionRequestParamDto} from './dto/header-manipulation-rule-action-request-param.dto'
+import {HeaderManipulationRuleActionRequestParamDto} from './dto/header-manipulation-rule-action-request-param.dto'
 import {number} from 'yargs'
 
 const resourceName = 'header-manipulations/sets'
@@ -40,8 +40,8 @@ const resourceName = 'header-manipulations/sets'
 @ApiTags('HeaderManipulation')
 @ApiExtraModels(CreateResponseDto, PaginatedDto)
 @Controller(resourceName)
-export class HeaderManipulationRuleController extends CrudController<HeaderManipulationRuleActionRequestDto, HeaderManipulationRuleActionResponseDto> {
-    private readonly log = new LoggerService(HeaderManipulationRuleController.name)
+export class HeaderManipulationRuleActionController extends CrudController<HeaderManipulationRuleActionRequestDto, HeaderManipulationRuleActionResponseDto> {
+    private readonly log = new LoggerService(HeaderManipulationRuleActionController.name)
 
     constructor(
         private readonly ruleActionService: HeaderManipulationRuleActionService,
@@ -77,7 +77,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     @ApiPaginatedResponse(HeaderManipulationRuleActionResponseDto)
     async readAll(
         @Req() req: Request,
-        @Param(new ValidationPipe()) reqParams: HeaderRuleActionRequestParamDto): Promise<[HeaderManipulationRuleActionResponseDto[], number]> {
+        @Param(new ValidationPipe()) reqParams: HeaderManipulationRuleActionRequestParamDto): Promise<[HeaderManipulationRuleActionResponseDto[], number]> {
         this.log.debug({
             message: 'read all header rule actions',
             func: this.readAll.name,
@@ -93,8 +93,9 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
 
     @Get(':setId?/rules/:ruleId?/actions/:id')
     async read(
-        @Param('id', ParseIntPipe) id: number, req: Request,
-        @Param(new ValidationPipe()) reqParams: HeaderRuleActionRequestParamDto = new HeaderRuleActionRequestParamDto(),
+        @Param('id', ParseIntPipe) id: number,
+        @Req() req: Request,
+        @Param(new ValidationPipe()) reqParams: HeaderManipulationRuleActionRequestParamDto = new HeaderManipulationRuleActionRequestParamDto(),
     ): Promise<HeaderManipulationRuleActionResponseDto> {
         this.log.debug({
             message: 'read header rule action by id',
@@ -114,8 +115,8 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     })
     async update(@Param('id', ParseIntPipe) id: number,
         dto: HeaderManipulationRuleActionRequestDto,
-        req: Request,
-        @Param(new ValidationPipe()) reqParams: HeaderRuleActionRequestParamDto = new HeaderRuleActionRequestParamDto(),
+        @Req() req: Request,
+        @Param(new ValidationPipe()) reqParams: HeaderManipulationRuleActionRequestParamDto = new HeaderManipulationRuleActionRequestParamDto(),
     ): Promise<HeaderManipulationRuleActionResponseDto> {
         this.log.debug({
             message: 'update header rule action by id',
@@ -139,7 +140,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     async updateMany(
         @Body(new ParseIdDictionary({items: HeaderManipulationRuleActionRequestDto})) updates: Dictionary<HeaderManipulationRuleActionRequestDto>,
         @Req() req,
-        @Param(new ValidationPipe()) reqParams: HeaderRuleActionRequestParamDto = new HeaderRuleActionRequestParamDto(),
+        @Param(new ValidationPipe()) reqParams: HeaderManipulationRuleActionRequestParamDto = new HeaderManipulationRuleActionRequestParamDto(),
     ) {
         this.log.debug({message: 'update header rule actions bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -159,8 +160,8 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
-        @Param(new ValidationPipe()) reqParams: HeaderRuleActionRequestParamDto = new HeaderRuleActionRequestParamDto(),
+        @Req() req: Request,
+        @Param(new ValidationPipe()) reqParams: HeaderManipulationRuleActionRequestParamDto = new HeaderManipulationRuleActionRequestParamDto(),
     ): Promise<HeaderManipulationRuleActionResponseDto> {
         this.log.debug({
             message: 'patch header rule set by id',
@@ -189,7 +190,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
-        @Param(new ValidationPipe()) reqParams: HeaderRuleActionRequestParamDto = new HeaderRuleActionRequestParamDto(),
+        @Param(new ValidationPipe()) reqParams: HeaderManipulationRuleActionRequestParamDto = new HeaderManipulationRuleActionRequestParamDto(),
     ) {
         this.log.debug({
             message: 'patch header rule actions bulk',
@@ -216,7 +217,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,
-        @Param(new ValidationPipe()) reqParams: HeaderRuleActionRequestParamDto = new HeaderRuleActionRequestParamDto(),
+        @Param(new ValidationPipe()) reqParams: HeaderManipulationRuleActionRequestParamDto = new HeaderManipulationRuleActionRequestParamDto(),
     ): Promise<number[]> {
         this.log.debug({
             message: 'delete header rule action by id',

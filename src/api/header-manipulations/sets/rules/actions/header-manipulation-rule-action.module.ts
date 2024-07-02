@@ -1,5 +1,5 @@
 import {forwardRef, Module} from '@nestjs/common'
-import {HeaderManipulationRuleController} from './header-manipulation-rule-action.controller'
+import {HeaderManipulationRuleActionController} from './header-manipulation-rule-action.controller'
 import {JournalModule} from '../../../../journals/journal.module'
 import {ExpandModule} from '../../../../../helpers/expand.module'
 import {HeaderManipulationRuleActionService} from './header-manipulation-rule-action.service'
@@ -12,7 +12,7 @@ import {HeaderManipulationSetMariadbRepository} from '../../repositories/header-
         JournalModule,
         forwardRef(() => ExpandModule),
     ],
-    controllers: [HeaderManipulationRuleController],
+    controllers: [HeaderManipulationRuleActionController],
     providers: [HeaderManipulationRuleActionService, HeaderManipulationRuleMariadbRepository, HeaderManipulationSetMariadbRepository, HeaderManipulationRuleActionMariadbRepository],
 })
 export class HeaderManipulationRuleActionModule {

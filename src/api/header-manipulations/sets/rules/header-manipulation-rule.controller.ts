@@ -28,7 +28,7 @@ import {HeaderManipulationRuleResponseDto} from './dto/header-manipulation-rule-
 import {HeaderManipulationRuleRequestDto} from './dto/header-manipulation-rule-request.dto'
 import {JournalService} from '../../../../api/journals/journal.service'
 import {JournalResponseDto} from '../../../../api/journals/dto/journal-response.dto'
-import {HeaderRuleRequestParamDto} from './dto/header-manipulation-rule-request-param.dto'
+import {HeaderManipulationRuleRequestParamDto} from './dto/header-manipulation-rule-request-param.dto'
 
 const resourceName = 'header-manipulations/sets'
 
@@ -77,7 +77,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     @ApiPaginatedResponse(HeaderManipulationRuleResponseDto)
     async readAll(
         @Req() req: Request,
-        @Param(new ValidationPipe()) reqParams: HeaderRuleRequestParamDto): Promise<[HeaderManipulationRuleResponseDto[], number]> {
+        @Param(new ValidationPipe()) reqParams: HeaderManipulationRuleRequestParamDto): Promise<[HeaderManipulationRuleResponseDto[], number]> {
         this.log.debug({
             message: 'read all header rules across all rule sets',
             func: this.readAll.name,
@@ -96,8 +96,9 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
         type: HeaderManipulationRuleResponseDto,
     })
     async read(
-        @Param('id', ParseIntPipe) id: number, req: Request,
-        @Param(new ValidationPipe()) {setId}: HeaderRuleRequestParamDto = new HeaderRuleRequestParamDto(),
+        @Param('id', ParseIntPipe) id: number, 
+        @Req() req: Request,
+        @Param(new ValidationPipe()) {setId}: HeaderManipulationRuleRequestParamDto = new HeaderManipulationRuleRequestParamDto(),
     ): Promise<HeaderManipulationRuleResponseDto> {
         this.log.debug({
             message: 'read header rule by id',
@@ -118,8 +119,8 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     })
     async update(@Param('id', ParseIntPipe) id: number,
         dto: HeaderManipulationRuleRequestDto,
-        req: Request,
-        @Param(new ValidationPipe()) {setId}: HeaderRuleRequestParamDto = new HeaderRuleRequestParamDto(),  
+        @Req() req: Request,
+        @Param(new ValidationPipe()) {setId}: HeaderManipulationRuleRequestParamDto = new HeaderManipulationRuleRequestParamDto(),  
     ): Promise<HeaderManipulationRuleResponseDto> {
         this.log.debug({
             message: 'update header rule by id',
@@ -162,7 +163,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
+        @Req() req: Request,
     ): Promise<HeaderManipulationRuleResponseDto> {
         this.log.debug({
             message: 'patch header rule set by id',
