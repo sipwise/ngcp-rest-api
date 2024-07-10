@@ -21,7 +21,8 @@ ExecStart=/usr/bin/node --title ngcp-rest-api /usr/share/ngcp-rest-api/server
 MemoryDenyWriteExecute=false
 
 # Files + directories not directly associated are made invisible in the /proc/ file system
-ProcSubset=pid
+# ProcSubset=pid
+# Disabled: MT#60078 to be able to read /proc/ngcp
 
 # Writes to the hardware clock or system clock will be denied
 ProtectClock=true
@@ -48,7 +49,8 @@ ProtectSystem=strict
 ProtectKernelLogs=true
 
 # Processes owned by other users are hidden from /proc/
-ProtectProc=invisible
+# ProtectProc=invisible
+# Disabled: MT#60078 to be able to read /proc/ngcp
 
 # Service may execute system calls only with native ABI
 SystemCallArchitectures=native
