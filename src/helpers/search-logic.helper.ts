@@ -43,6 +43,8 @@ export class SearchLogic {
             this.orderBy = sr.query['order_by']
             if (!searchableFields.includes(this.orderBy))
                 throw new BadRequestException()
+            if (this.aliases && this.orderBy in this.aliases)
+                this.orderBy = this.aliases[this.orderBy]
             this.order = sr.query['order_by_direction'] != null && sr.query['order_by_direction'].toUpperCase() === Order.DESC ? Order.DESC : Order.ASC
         }
         this.searchOr = sr.query['search_or'] != null && (sr.query['search_or'] === '1' || sr.query['search_or'] === 'true')
