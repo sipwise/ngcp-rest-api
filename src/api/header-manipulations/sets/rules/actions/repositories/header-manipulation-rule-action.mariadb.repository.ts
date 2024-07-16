@@ -36,6 +36,8 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
         const searchDto  = new HeaderManipulationRuleActionSearchDto()
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
+            undefined,
+            searchDto._alias,
         ))
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
@@ -52,6 +54,7 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
+            searchDto._alias,
         ))
         qb.where({id: id})
         this.addFilterBy(qb, filterBy)

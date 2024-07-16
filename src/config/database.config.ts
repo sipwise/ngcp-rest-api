@@ -37,5 +37,8 @@ export const databaseConfig: DataSourceOptions = {
     trace: false,
     debug: false,
     supportBigNumbers: true,
-    logger: new TypeormLoggerService(['info', 'error']),
+    logger: new TypeormLoggerService(
+        process.env.NODE_ENV == 'development'
+            ? ['info', 'error', 'query'] : ['info', 'error'],
+    ),
 }
