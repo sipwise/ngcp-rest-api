@@ -1,7 +1,8 @@
 import {internal} from '../../../../../../entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsNotEmpty, IsOptional} from 'class-validator'
+import {IsEnum, IsNotEmpty, IsOptional} from 'class-validator'
 import {ResponseDto} from '../../../../../../dto/response.dto'
+import {RwrDpEnum} from '../../../../../../enums/rwr-dp.enum'
 
 export class HeaderManipulationRuleActionResponseDto implements ResponseDto {
     @IsNotEmpty()
@@ -36,9 +37,9 @@ export class HeaderManipulationRuleActionResponseDto implements ResponseDto {
     @ApiPropertyOptional()
         rwr_set_id?: number
 
+    @IsEnum(RwrDpEnum)
     @IsOptional()
-    @ApiPropertyOptional()
-        rwr_dp_id?: number
+        rwr_dp?: RwrDpEnum
 
     @IsOptional()
     @ApiPropertyOptional()
@@ -57,7 +58,7 @@ export class HeaderManipulationRuleActionResponseDto implements ResponseDto {
         this.value_part = entity.valuePart
         this.value = entity.value
         this.rwr_set_id = entity.rwrSetId
-        this.rwr_dp_id = entity.rwrDpId
+        this.rwr_dp = entity.rwrDp ?? null
         this.priority = entity.priority
         this.enabled = entity.enabled
     }

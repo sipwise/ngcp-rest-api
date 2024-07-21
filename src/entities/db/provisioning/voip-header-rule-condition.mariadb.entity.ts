@@ -3,6 +3,9 @@ import {VoipHeaderRule} from './voip-header-rule.mariadb.entity'
 import {HeaderRuleConditionExpression, HeaderRuleConditionMatchPart, HeaderRuleConditionMatchType, HeaderRuleConditionValueType} from 'entities/internal/header-rule-condition.internal.entity'
 import {VoipHeaderRuleConditionValue} from './voip-header-rule-condition-value.mariadb.entity'
 import {internal} from '../..'
+import {VoipRewriteRuleSet} from './voip-rewrite-rule-set.mariadb.entity'
+import {VoipRewriteRule} from './voip-rewrite-rule.mariadb.entity'
+import {RwrDpEnum} from '../../../enums/rwr-dp.enum'
 
 @Entity({
     name: 'voip_header_rule_conditions',
@@ -94,6 +97,14 @@ export class VoipHeaderRuleCondition extends BaseEntity {
     @OneToMany(() => VoipHeaderRuleConditionValue, value => value.condition_id)
         values!: VoipHeaderRuleConditionValue[]
 
+    @ManyToOne(() => VoipRewriteRuleSet, rwrSet => rwrSet.id)
+    @JoinColumn({name: 'rwr_set_id'})
+        rwr_set!: VoipRewriteRuleSet
+
+    @ManyToOne(() => VoipRewriteRule, rwr => rwr.id)
+    @JoinColumn({name: 'rwr_dp_id'})
+        rwr!: VoipRewriteRule
+
     toInternal(): internal.HeaderRuleCondition {
         const entity = new internal.HeaderRuleCondition()
         entity.id = this.id
@@ -107,6 +118,18 @@ export class VoipHeaderRuleCondition extends BaseEntity {
         entity.rwrSetId = this.rwr_set_id
         entity.rwrDpId = this.rwr_dp_id
         entity.enabled = this.enabled
+
+        if (this.rwr_dp_id && this.rwr_set) {
+            ['caller', 'callee'].forEach(field => {
+                ['in', 'out', 'lnp'].forEach(direction => {
+                    const dp = `${field}_${direction}`
+                    const col_dp = `${field}_${direction}_dpid`
+                    if (col_dp in this.rwr_set && this.rwr_set[col_dp] == this.rwr_dp_id) {
+                        entity.rwrDp = RwrDpEnum[dp]
+                    }
+                })
+            })
+        }
         return entity
     }
 

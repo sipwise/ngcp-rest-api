@@ -3,6 +3,8 @@ import {IsEnum, IsNotEmpty, IsOptional} from 'class-validator'
 import {RequestDto, RequestDtoOptions} from '../../../../../../dto/request.dto'
 import {internal} from '../../../../../../entities'
 import {HeaderRuleActionActionType, HeaderRuleActionHeaderPart, HeaderRuleActionValuePart} from '../../../../../../entities/internal/header-rule-action.internal.entity'
+import {RwrDpEnum} from '../../../../../../enums/rwr-dp.enum'
+import {Requires} from '../../../../../../decorators/requires.decorator'
 
 export class HeaderManipulationRuleActionRequestDto implements RequestDto {
 
@@ -34,12 +36,15 @@ export class HeaderManipulationRuleActionRequestDto implements RequestDto {
         value?: string
 
     @IsOptional()
-    @ApiPropertyOptional({description: 'Action RWR Set ID', example: 1})
+    @Requires('rwr_dp')
+    @ApiPropertyOptional({description: 'Action Rewrite Rule Set Id', example: 1})
         rwr_set_id?: number
 
+    @IsEnum(RwrDpEnum)
     @IsOptional()
-    @ApiPropertyOptional({description: 'Action RWR DP ID', example: 1})
-        rwr_dp_id?: number
+    @Requires('rwr_set_id')
+    @ApiPropertyOptional({description: 'Action Rewrite Rule', enum: RwrDpEnum, example: 'caller_in'})
+        rwr_dp?: RwrDpEnum
 
     @IsOptional()
     @ApiPropertyOptional({description: 'Action priority', example: 100})
@@ -59,7 +64,7 @@ export class HeaderManipulationRuleActionRequestDto implements RequestDto {
         this.value_part = entity.valuePart
         this.value = entity.value
         this.rwr_set_id = entity.rwrSetId
-        this.rwr_dp_id = entity.rwrDpId
+        this.rwr_dp = entity.rwrDp
         this.priority = entity.priority
         this.enabled = entity.enabled
     }
@@ -73,7 +78,7 @@ export class HeaderManipulationRuleActionRequestDto implements RequestDto {
         entity.valuePart = this.value_part
         entity.value = this.value
         entity.rwrSetId = this.rwr_set_id
-        entity.rwrDpId = this.rwr_dp_id
+        entity.rwrDp = this.rwr_dp
         entity.priority = this.priority
         entity.enabled = this.enabled
         if (options.id)

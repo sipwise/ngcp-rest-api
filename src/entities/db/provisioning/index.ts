@@ -11,6 +11,8 @@ export {VoipHeaderRuleConditionValue} from './voip-header-rule-condition-value.m
 export {VoipPbxGroup} from './voip-pbx-group.mariadb.entity'
 export {VoipPreference} from './voip-preference.mariadb.entity'
 export {VoipProfPreference} from './voip-prof-preference.mariadb.entity'
+export {VoipRewriteRule} from './voip-rewrite-rule.mariadb.entity'
+export {VoipRewriteRuleSet} from './voip-rewrite-rule-set.mariadb.entity'
 export {VoipSubscriber} from './voip-subscriber.mariadb.entity'
 export {VoipUsrPreference} from './voip-usr-preference.mariadb.entity'
 export {XmlGroup} from './xml-group.mariadb.entity'

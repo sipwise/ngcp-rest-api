@@ -1,9 +1,10 @@
 import {internal} from '../../../../../../entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsNotEmpty, IsOptional} from 'class-validator'
+import {IsEnum, IsNotEmpty, IsOptional} from 'class-validator'
 import {ResponseDto} from '../../../../../../dto/response.dto'
 import {UrlReferenceType} from '../../../../../../enums/url-reference-type.enum'
 import {UrlReference} from '../../../../../../types/url-reference.type'
+import {RwrDpEnum} from '../../../../../../enums/rwr-dp.enum'
 
 export class HeaderManipulationRuleConditionResponseDto implements ResponseDto {
     @IsNotEmpty()
@@ -42,9 +43,9 @@ export class HeaderManipulationRuleConditionResponseDto implements ResponseDto {
     @ApiPropertyOptional()
         rwr_set_id?: number
 
+    @IsEnum(RwrDpEnum)
     @IsOptional()
-    @ApiPropertyOptional()
-        rwr_dp_id?: number
+        rwr_dp?: RwrDpEnum
 
     @IsNotEmpty()
     @ApiProperty()
@@ -66,7 +67,7 @@ export class HeaderManipulationRuleConditionResponseDto implements ResponseDto {
         this.expression_negation = entity.expressionNegation
         this.value_type = entity.valueType
         this.rwr_set_id = entity.rwrSetId
-        this.rwr_dp_id = entity.rwrDpId
+        this.rwr_dp = entity.rwrDp ?? null
         this.enabled = entity.enabled
         this.values = {
             type: UrlReferenceType.Link,

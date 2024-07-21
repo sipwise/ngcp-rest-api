@@ -3,6 +3,8 @@ import {IsEnum, IsNotEmpty, IsOptional, MaxLength} from 'class-validator'
 import {RequestDto, RequestDtoOptions} from '../../../../../../dto/request.dto'
 import {internal} from '../../../../../../entities'
 import {HeaderRuleConditionExpression, HeaderRuleConditionMatchPart, HeaderRuleConditionMatchType, HeaderRuleConditionValueType} from '../../../../../../entities/internal/header-rule-condition.internal.entity'
+import {RwrDpEnum} from '../../../../../../enums/rwr-dp.enum'
+import {Requires} from '../../../../../../decorators/requires.decorator'
 
 export class HeaderManipulationRuleConditionRequestDto implements RequestDto {
     @IsNotEmpty()
@@ -39,12 +41,15 @@ export class HeaderManipulationRuleConditionRequestDto implements RequestDto {
         value_type: HeaderRuleConditionValueType
 
     @IsOptional()
-    @ApiPropertyOptional({description: 'Condition RWR Set ID', example: 1})
+    @Requires('rwr_dp')
+    @ApiPropertyOptional({description: 'Condition Rewrite Rule Set Id', example: 1})
         rwr_set_id?: number
 
+    @IsEnum(RwrDpEnum)
     @IsOptional()
-    @ApiPropertyOptional({description: 'Condition RWR DP ID', example: 1})
-        rwr_dp_id?: number
+    @Requires('rwr_set_id')
+    @ApiPropertyOptional({description: 'Condition Rewrite Rule', enum: RwrDpEnum, example: 'caller_in'})
+        rwr_dp?: RwrDpEnum
 
     @IsNotEmpty()
     @ApiProperty({description: 'Condition enabled', example: true})
@@ -65,7 +70,7 @@ export class HeaderManipulationRuleConditionRequestDto implements RequestDto {
         this.expression_negation = entity.expressionNegation
         this.value_type = entity.valueType
         this.rwr_set_id = entity.rwrSetId
-        this.rwr_dp_id = entity.rwrDpId
+        this.rwr_dp = entity.rwrDp
         this.enabled = entity.enabled
         this.values = entity.values
     }
@@ -80,7 +85,7 @@ export class HeaderManipulationRuleConditionRequestDto implements RequestDto {
         entity.expressionNegation = this.expression_negation
         entity.valueType = this.value_type
         entity.rwrSetId = this.rwr_set_id
-        entity.rwrDpId = this.rwr_dp_id
+        entity.rwrDp = this.rwr_dp
         entity.enabled = this.enabled
         entity.values = this.values
         if (options.id)

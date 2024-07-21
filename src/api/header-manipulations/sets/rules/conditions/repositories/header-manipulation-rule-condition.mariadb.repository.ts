@@ -21,7 +21,9 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
     private readonly log = new LoggerService(HeaderManipulationRuleConditionMariadbRepository.name)
 
     async create(entities: internal.HeaderRuleCondition[]): Promise<internal.HeaderRuleCondition[]> {
-        const createdEntities: db.provisioning.VoipHeaderRuleCondition[] = []
+        await this.addRewruleRuleSetDpidToEntities(entities)
+
+        const ids = []
 
         await Promise.all(entities.map(async entity => {
             const condition = db.provisioning.VoipHeaderRuleCondition.create().fromInternal(entity)
@@ -36,9 +38,13 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
                 })
                 await Promise.all(conditionValues.map(conditionValue => conditionValue.save()))
             }
-            createdEntities.push(condition)
+            ids.push(condition.id)
         }))
-        return await Promise.all(createdEntities.map(async entity => entity.toInternal()))
+
+        const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
+        this.joinAndMapRewriteRuleSet(qb)
+        const created = await qb.andWhereInIds(ids).getMany()
+        return await Promise.all(created.map(async entity => entity.toInternal()))
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRuleCondition[], number]> {
@@ -95,18 +101,21 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
     }
 
     async update(updates: Dictionary<internal.HeaderRuleCondition>, sr: ServiceRequest): Promise<number[]> {
+        await this.addRewruleRuleSetDpidToDict(updates)
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const dbEntity = db.provisioning.VoipHeaderRuleCondition.create().fromInternal(updates[id])
             dbEntity.fromInternal(updates[id])
             await db.provisioning.VoipHeaderRuleCondition.update(id, dbEntity)
             await db.provisioning.VoipHeaderRuleConditionValue.delete({condition_id: id})
-            await Promise.all(updates[id].values.map(async value => {
-                const conditionValue = new db.provisioning.VoipHeaderRuleConditionValue()
-                conditionValue.condition_id = id
-                conditionValue.value = value
-                await conditionValue.save()
-            }))
+            if (updates[id].values) {
+                await Promise.all(updates[id].values.map(async value => {
+                    const conditionValue = new db.provisioning.VoipHeaderRuleConditionValue()
+                    conditionValue.condition_id = id
+                    conditionValue.value = value
+                    await conditionValue.save()
+                }))
+            }
         }
         return ids
     }
@@ -154,5 +163,42 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
                 qb.andWhere('headerRuleSet.reseller_id = :resellerId', {resellerId: filterBy.resellerId})
             }
         }
+    }
+
+    private joinAndMapRewriteRuleSet(qb: SelectQueryBuilder<db.provisioning.VoipHeaderRuleCondition>): void {
+        qb.leftJoinAndMapOne(
+            'headerRuleCondition.rwr_set',
+            db.provisioning.VoipRewriteRuleSet,
+            'rwrSet',
+            'rwrSet.id=headerRuleCondition.rwr_set_id'
+        )
+    }
+
+    private async addRewruleRuleSetDpidToEntities(entities: internal.HeaderRuleCondition[]): Promise<void> {
+        const qbRwrSet = db.provisioning.VoipRewriteRuleSet.createQueryBuilder('rewriteRuleSet')
+        const ids = await Promise.all(entities.map(async entity => entity.rwrSetId ? entity.rwrSetId : 0))
+        qbRwrSet.whereInIds(ids)
+        const rwrSetsResult = await qbRwrSet.getMany()
+        const rwrSetsMap = new Map<number, db.provisioning.VoipRewriteRuleSet>()
+        await Promise.all(rwrSetsResult.map(async entry => rwrSetsMap.set(entry.id, entry)))
+        await Promise.all(entities.map(async entity => {
+            if (entity.rwrDp && entity.rwrSetId && rwrSetsMap.has(entity.rwrSetId)) {
+                entity.rwrDpId = rwrSetsMap.get(entity.rwrSetId)[`${entity.rwrDp}_dpid`]
+            }
+        }))
+    }
+
+    private async addRewruleRuleSetDpidToDict(updates: Dictionary<internal.HeaderRuleCondition>): Promise<void> {
+        const qbRwrSet = db.provisioning.VoipRewriteRuleSet.createQueryBuilder('rewriteRuleSet')
+        const ids = await Promise.all(Object.values(updates).map(async entity => entity.rwrSetId ? entity.rwrSetId : 0))
+        qbRwrSet.whereInIds(ids)
+        const rwrSetsResult = await qbRwrSet.getMany()
+        const rwrSetsMap = new Map<number, db.provisioning.VoipRewriteRuleSet>()
+        await Promise.all(rwrSetsResult.map(async entry => rwrSetsMap.set(entry.id, entry)))
+        await Promise.all(Object.values(updates).map(async entity => {
+            if (entity.rwrDp && entity.rwrSetId && rwrSetsMap.has(entity.rwrSetId)) {
+                entity.rwrDpId = rwrSetsMap.get(entity.rwrSetId)[`${entity.rwrDp}_dpid`]
+            }
+        }))
     }
 }

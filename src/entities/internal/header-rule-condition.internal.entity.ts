@@ -1,4 +1,5 @@
 import {IsEnum, IsNotEmpty, IsNumber, IsOptional, MaxLength} from 'class-validator'
+import {RwrDpEnum} from '../../enums/rwr-dp.enum'
 
 export enum HeaderRuleConditionMatchType {
     Header = 'header',
@@ -65,6 +66,10 @@ export class HeaderRuleCondition {
     @IsOptional()
     @IsNumber()
         rwrDpId: number
+
+    @IsOptional()
+    @IsNumber()
+        rwrDp?: RwrDpEnum
 
     @IsNotEmpty()
         enabled: boolean
