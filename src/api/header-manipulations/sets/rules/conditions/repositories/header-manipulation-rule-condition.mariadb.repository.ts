@@ -54,6 +54,7 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
             Object.keys(searchDto),
         ))
         this.addFilterBy(qb, filterBy)
+        this.joinAndMapRewriteRuleSet(qb)
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(
             result.map(async (d) =>
@@ -71,6 +72,7 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         ))
         qb.where({id: id})
         this.addFilterBy(qb, filterBy)
+        this.joinAndMapRewriteRuleSet(qb)
         const result = await qb.getOneOrFail()
         return result.toInternal()
     }
@@ -105,7 +107,6 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const dbEntity = db.provisioning.VoipHeaderRuleCondition.create().fromInternal(updates[id])
-            dbEntity.fromInternal(updates[id])
             await db.provisioning.VoipHeaderRuleCondition.update(id, dbEntity)
             await db.provisioning.VoipHeaderRuleConditionValue.delete({condition_id: id})
             if (updates[id].values) {
@@ -198,6 +199,8 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         await Promise.all(Object.values(updates).map(async entity => {
             if (entity.rwrDp && entity.rwrSetId && rwrSetsMap.has(entity.rwrSetId)) {
                 entity.rwrDpId = rwrSetsMap.get(entity.rwrSetId)[`${entity.rwrDp}_dpid`]
+            } else {
+                entity.rwrDpId = null
             }
         }))
     }

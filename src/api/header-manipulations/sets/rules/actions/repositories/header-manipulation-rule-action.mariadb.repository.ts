@@ -99,8 +99,7 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
         await this.addRewruleRuleSetDpidToDict(updates)
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
-            const dbEntity = db.provisioning.VoipHeaderRuleAction.create()
-            dbEntity.fromInternal(updates[id])
+            const dbEntity = db.provisioning.VoipHeaderRuleAction.create().fromInternal(updates[id])
             await db.provisioning.VoipHeaderRuleAction.update(id, dbEntity)
         }
         return ids
@@ -168,6 +167,8 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
         await Promise.all(Object.values(updates).map(async entity => {
             if (entity.rwrDp && entity.rwrSetId && rwrSetsMap.has(entity.rwrSetId)) {
                 entity.rwrDpId = rwrSetsMap.get(entity.rwrSetId)[`${entity.rwrDp}_dpid`]
+            } else {
+                entity.rwrDpId = null
             }
         }))
     }

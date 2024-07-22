@@ -58,7 +58,7 @@ export class HeaderManipulationRuleActionResponseDto implements ResponseDto {
         this.value_part = entity.valuePart
         this.value = entity.value
         this.rwr_set_id = entity.rwrSetId
-        this.rwr_dp = entity.rwrDp ?? null
+        this.rwr_dp = entity.rwrDp
         this.priority = entity.priority
         this.enabled = entity.enabled
     }

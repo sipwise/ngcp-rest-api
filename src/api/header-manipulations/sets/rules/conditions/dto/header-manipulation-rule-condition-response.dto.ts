@@ -67,7 +67,7 @@ export class HeaderManipulationRuleConditionResponseDto implements ResponseDto {
         this.expression_negation = entity.expressionNegation
         this.value_type = entity.valueType
         this.rwr_set_id = entity.rwrSetId
-        this.rwr_dp = entity.rwrDp ?? null
+        this.rwr_dp = entity.rwrDp
         this.enabled = entity.enabled
         this.values = {
             type: UrlReferenceType.Link,

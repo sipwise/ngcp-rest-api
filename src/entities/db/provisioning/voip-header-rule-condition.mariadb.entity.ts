@@ -129,6 +129,8 @@ export class VoipHeaderRuleCondition extends BaseEntity {
                     }
                 })
             })
+        } else {
+            entity.rwrDp = null
         }
         return entity
     }
