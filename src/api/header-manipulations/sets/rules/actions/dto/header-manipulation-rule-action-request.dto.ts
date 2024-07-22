@@ -4,7 +4,7 @@ import {RequestDto, RequestDtoOptions} from '../../../../../../dto/request.dto'
 import {internal} from '../../../../../../entities'
 import {HeaderRuleActionActionType, HeaderRuleActionHeaderPart, HeaderRuleActionValuePart} from '../../../../../../entities/internal/header-rule-action.internal.entity'
 import {RwrDpEnum} from '../../../../../../enums/rwr-dp.enum'
-import {Requires} from '../../../../../../decorators/requires.decorator'
+import {DependsOn} from '../../../../../../decorators/depends-on.decorator'
 
 export class HeaderManipulationRuleActionRequestDto implements RequestDto {
 
@@ -36,13 +36,13 @@ export class HeaderManipulationRuleActionRequestDto implements RequestDto {
         value?: string
 
     @IsOptional()
-    @Requires('rwr_dp')
+    @DependsOn('rwr_dp')
     @ApiPropertyOptional({description: 'Action Rewrite Rule Set Id', example: 1})
         rwr_set_id?: number
 
     @IsEnum(RwrDpEnum)
     @IsOptional()
-    @Requires('rwr_set_id')
+    @DependsOn('rwr_set_id')
     @ApiPropertyOptional({description: 'Action Rewrite Rule', enum: RwrDpEnum, example: 'caller_in'})
         rwr_dp?: RwrDpEnum
 

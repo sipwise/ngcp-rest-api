@@ -1,14 +1,14 @@
 import {ValidationArguments, registerDecorator} from 'class-validator'
 
-export function Requires(otherProperty: string) {
+export function DependsOn(otherProperty: string) {
     return function (object: unknown, propertyName: string) {
         registerDecorator({
-            name: 'Requires',
+            name: 'DependsOn',
             target: object.constructor,
             propertyName,
             validator: {
                 defaultMessage() {
-                    return `${otherProperty} is required if ${propertyName} is used`
+                    return `${otherProperty} is required if ${propertyName} is defined`
                 },
                 validate(_value: unknown, args?: ValidationArguments) {
                     const thisObject = args.object

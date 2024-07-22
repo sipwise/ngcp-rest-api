@@ -4,7 +4,7 @@ import {RequestDto, RequestDtoOptions} from '../../../../../../dto/request.dto'
 import {internal} from '../../../../../../entities'
 import {HeaderRuleConditionExpression, HeaderRuleConditionMatchPart, HeaderRuleConditionMatchType, HeaderRuleConditionValueType} from '../../../../../../entities/internal/header-rule-condition.internal.entity'
 import {RwrDpEnum} from '../../../../../../enums/rwr-dp.enum'
-import {Requires} from '../../../../../../decorators/requires.decorator'
+import {DependsOn} from '../../../../../../decorators/depends-on.decorator'
 
 export class HeaderManipulationRuleConditionRequestDto implements RequestDto {
     @IsNotEmpty()
@@ -41,13 +41,13 @@ export class HeaderManipulationRuleConditionRequestDto implements RequestDto {
         value_type: HeaderRuleConditionValueType
 
     @IsOptional()
-    @Requires('rwr_dp')
+    @DependsOn('rwr_dp')
     @ApiPropertyOptional({description: 'Condition Rewrite Rule Set Id', example: 1})
         rwr_set_id?: number
 
     @IsEnum(RwrDpEnum)
     @IsOptional()
-    @Requires('rwr_set_id')
+    @DependsOn('rwr_set_id')
     @ApiPropertyOptional({description: 'Condition Rewrite Rule', enum: RwrDpEnum, example: 'caller_in'})
         rwr_dp?: RwrDpEnum
 
