@@ -68,7 +68,7 @@ export class HeaderRuleCondition {
         rwrDpId: number
 
     @IsOptional()
-    @IsNumber()
+    @IsEnum(RwrDpEnum)
         rwrDp?: RwrDpEnum
 
     @IsNotEmpty()

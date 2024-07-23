@@ -1,8 +1,8 @@
 import {RequestDto} from '../dto/request.dto'
 import * as core from 'fast-json-patch'
-import {validateOrReject} from 'class-validator'
+import {validate as classValidate} from 'class-validator'
 import {BadRequestException, UnprocessableEntityException} from '@nestjs/common'
-import {deepCopy} from './deep-copy.helper'
+import {formatValidationErrors} from '../helpers/errors.helper'
 
 export function normalisePatch(patch: core.Operation | core.Operation[]) {
     return Array.isArray(patch) ? patch : Array(patch)
@@ -27,11 +27,9 @@ export async function patchToEntity<T extends {id?: number}, D extends RequestDt
     const patchEntity = Object.assign(Object.create(oldEntity), oldEntity)
     const dto = applyPatch(new requestDto(patchEntity), patch).newDocument
     const entity: T = Object.assign(patchEntity, dto.toInternal({id: +oldEntity.id}))
-    try {
-        await validateOrReject(entity)
-    } catch (e) {
-        throw new UnprocessableEntityException(e)
-    }
+    const errors = await classValidate(entity)
+    if (errors && errors.length)
+        throw new UnprocessableEntityException(formatValidationErrors(errors))
     return entity
 }
 

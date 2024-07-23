@@ -59,7 +59,7 @@ export class HeaderRuleAction {
         rwrSetId?: number
 
     @IsOptional()
-    @IsNumber()
+    @IsEnum(RwrDpEnum)
         rwrDp?: RwrDpEnum
 
     @IsOptional()
