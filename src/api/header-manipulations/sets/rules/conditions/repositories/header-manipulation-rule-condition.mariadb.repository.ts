@@ -132,6 +132,11 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         this.addFilterBy(qb, filterBy)
         await qb.getOneOrFail()
         const qbValues = db.provisioning.VoipHeaderRuleConditionValue.createQueryBuilder('headerRuleConditionValue')
+        const searchDto  = new HeaderManipulationRuleConditionSearchDto()
+        configureQueryBuilder(qbValues, sr.query, new SearchLogic(sr,
+            Object.keys(searchDto),
+            undefined,
+        ))
         qbValues.where({condition_id: conditionId})
 
         const [result, totalCount] = await qbValues.getManyAndCount()
