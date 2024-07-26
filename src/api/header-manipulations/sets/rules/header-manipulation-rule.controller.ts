@@ -131,7 +131,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
         })
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.HeaderRule>()
-        updates[id] = Object.assign(new HeaderManipulationRuleRequestDto(), dto).toInternal({id: id})
+        updates[id] = Object.assign(new HeaderManipulationRuleRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const ids = await this.ruleService.update(updates, sr)
         const entity = await this.ruleService.read(ids[0], sr)
         const response = new HeaderManipulationRuleResponseDto(req.url, entity)
@@ -150,7 +150,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
         const sets = new Dictionary<internal.HeaderRule>()
         for (const id of Object.keys(updates)) {
             const dto: HeaderManipulationRuleRequestDto = updates[id]
-            sets[id] = dto.toInternal({id: parseInt(id)})
+            sets[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
         return await this.ruleService.update(sets, sr)
     }

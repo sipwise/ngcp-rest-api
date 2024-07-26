@@ -118,8 +118,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
         this.log.debug({message: 'update contract by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Contract>()
-        updates[id] = update.toInternal({id: id})
-
+        updates[id] = update.toInternal({id: id, assignNulls: true})
         await this.contractService.update(updates, sr)
 
         const response = new ContractResponseDto(await this.contractService.read(id, sr))
@@ -138,8 +137,9 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
         const contracts = new Dictionary<internal.Contract>()
         for (const id of Object.keys(updates)) {
             const dto: ContractRequestDto = updates[id]
-            contracts[id] = dto.toInternal({id: parseInt(id)})
+            contracts[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
+
         return await this.contractService.update(contracts, sr)
     }
 
@@ -154,7 +154,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-        req,
+            req,
     ): Promise<ContractResponseDto> {
         this.log.debug({message: 'patch contract by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)

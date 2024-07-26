@@ -140,6 +140,13 @@ export class SystemContactRequestDto implements RequestDto {
         const contact = internal.Contact.create(this)
         if (options.id)
             contact.id = options.id
+
+        if (options.assignNulls) {
+            Object.keys(contact).forEach(k => {
+                if (contact[k] === undefined)
+                    contact[k] = null
+            })
+        }
         return contact
     }
 }

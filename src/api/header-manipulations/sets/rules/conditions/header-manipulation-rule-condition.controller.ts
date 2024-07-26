@@ -130,7 +130,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         })
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.HeaderRuleCondition>()
-        updates[id] = Object.assign(new HeaderManipulationRuleConditionRequestDto(), dto).toInternal({id: id})
+        updates[id] = Object.assign(new HeaderManipulationRuleConditionRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const ids = await this.ruleConditionService.update(updates, sr)
         const entity = await this.ruleConditionService.read(ids[0], sr)
         const response = new HeaderManipulationRuleConditionResponseDto(entity)
@@ -150,7 +150,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         const conditions = new Dictionary<internal.HeaderRuleCondition>()
         for (const id of Object.keys(updates)) {
             const dto: HeaderManipulationRuleConditionRequestDto = updates[id]
-            conditions[id] = dto.toInternal({id: parseInt(id)})
+            conditions[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
         return await this.ruleConditionService.update(conditions, sr)
     }

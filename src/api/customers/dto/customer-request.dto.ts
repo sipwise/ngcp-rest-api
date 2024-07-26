@@ -109,6 +109,13 @@ export class CustomerRequestDto implements RequestDto{
         })
         if (options.id)
             customer.id = options.id
+
+        if (options.assignNulls) {
+            Object.keys(customer).forEach(k => {
+                if (customer[k] === undefined)
+                    customer[k] = null
+            })
+        }
         return customer
     }
 

@@ -146,12 +146,12 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         let response: AdminResponseDto
         if (this.app.config.legacy.put) {
             const update = new Dictionary<internal.Admin>()
-            update[id] = admin.toInternal({setDefaults: false, id: id})
+            update[id] = admin.toInternal({setDefaults: false, id: id, assignNulls: true})
             const ids = await this.adminService.update(update, sr)
             const updateAdmin = await this.adminService.read(ids[0], sr)
             response = new AdminResponseDto(updateAdmin, sr.user.role)
         }
-        const updateAdmin = await this.adminService.updateOrCreate(id, await admin.toInternal({setDefaults: true, id: id}), sr)
+        const updateAdmin = await this.adminService.updateOrCreate(id, await admin.toInternal({setDefaults: true, id: id, assignNulls:true}), sr)
         response = new AdminResponseDto(updateAdmin, sr.user.role)
         await this.journalService.writeJournal(sr, id, response)
         return response
@@ -168,7 +168,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         const admins = new Dictionary<internal.Admin>()
         for (const id of Object.keys(updates)) {
             const dto: AdminRequestDto = updates[id]
-            admins[id] = dto.toInternal({setDefaults: true, id: parseInt(id)})
+            admins[id] = dto.toInternal({setDefaults: true, id: parseInt(id), assignNulls: true})
         }
         return await this.adminService.update(admins, sr)
     }

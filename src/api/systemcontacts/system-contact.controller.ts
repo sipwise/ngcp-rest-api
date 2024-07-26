@@ -119,7 +119,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
         })
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Contact>()
-        updates[id] = entity.toInternal({id: id})
+        updates[id] = entity.toInternal({id: id, assignNulls: true})
         const ids = await this.contactService.update(updates, sr)
         const contact = await this.contactService.read(ids[0], sr)
         const response = new SystemContactResponseDto(contact)
@@ -143,7 +143,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
         const contacts = new Dictionary<internal.Contact>()
         for (const id of Object.keys(updates)) {
             const dto: SystemContactRequestDto = updates[id]
-            contacts[id] = dto.toInternal({id: parseInt(id)})
+            contacts[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
         return await this.contactService.update(contacts, sr)
     }

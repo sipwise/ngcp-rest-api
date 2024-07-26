@@ -33,6 +33,13 @@ export class CustomerSpeedDialRequestDto implements RequestDto {
         csd.destination = this.destination
         if (options.id)
             csd.id = options.id
+
+        if (options.assignNulls) {
+            Object.keys(csd).forEach(k => {
+                if (csd[k] === undefined)
+                    csd[k] = null
+            })
+        }
         return csd
     }
 }
