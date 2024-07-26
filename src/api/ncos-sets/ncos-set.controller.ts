@@ -247,7 +247,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         })
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.NCOSSet>()
-        updates[id] = Object.assign(new NCOSSetRequestDto(), dto).toInternal({id: id})
+        updates[id] = Object.assign(new NCOSSetRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const ids = await this.ncosSetService.update(updates, sr)
         const entity = await this.ncosSetService.read(ids[0], sr)
         const response = new NCOSSetResponseDto(req.url, entity)
@@ -266,7 +266,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         const sets = new Dictionary<internal.NCOSSet>()
         for (const id of Object.keys(updates)) {
             const dto: NCOSSetRequestDto = updates[id]
-            sets[id] = dto.toInternal({id: parseInt(id)})
+            sets[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
         return await this.ncosSetService.update(sets, sr)
     }

@@ -111,7 +111,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
         this.log.debug({message: 'update reseller by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Reseller>()
-        updates[id] = entity.toInternal({id: id})
+        updates[id] = entity.toInternal({id: id, assignNulls: true})
         const ids = await this.resellerService.update(updates, sr)
         const reseller = await this.resellerService.read(ids[0], sr)
         const response = new ResellerResponseDto(reseller)
@@ -130,7 +130,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
         const resellers = new Dictionary<internal.Reseller>()
         for (const id of Object.keys(updates)) {
             const dto: ResellerRequestDto = updates[id]
-            resellers[id] = dto.toInternal({id: parseInt(id)})
+            resellers[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
         return await this.resellerService.update(resellers, sr)
     }

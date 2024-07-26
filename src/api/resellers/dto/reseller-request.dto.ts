@@ -38,6 +38,12 @@ export class ResellerRequestDto implements RequestDto {
         if (options.id)
             reseller.id = options.id
 
+        if (options.assignNulls) {
+            Object.keys(reseller).forEach(k => {
+                if (reseller[k] === undefined)
+                    reseller[k] = null
+            })
+        }
         return reseller
     }
 }

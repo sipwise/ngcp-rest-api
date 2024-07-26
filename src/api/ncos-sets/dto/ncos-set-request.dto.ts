@@ -37,6 +37,13 @@ export class NCOSSetRequestDto implements RequestDto {
         entity.exposeToCustomer = this.expose_to_customer
         if (options.id)
             entity.id = options.id
+
+        if (options.assignNulls) {
+            Object.keys(entity).forEach(k => {
+                if (entity[k] === undefined)
+                    entity[k] = null
+            })
+        }
         return entity
     }
 }

@@ -73,6 +73,12 @@ export class HeaderManipulationRuleActionService implements CrudService<internal
         return await this.ruleActionRepo.update(updates, sr)
     }
 
+    async recreate(updates: Dictionary<internal.HeaderRuleAction>, sr: ServiceRequest): Promise<number[]> {
+        await this.delete(Object.keys(updates).map(id => parseInt(id)), sr)
+        const created = await this.create(Object.values(updates), sr)
+        return Promise.resolve(created.map(action => action.id))
+    }
+
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         let actions: internal.HeaderRuleAction[]
         if (sr.user.reseller_id_required) {

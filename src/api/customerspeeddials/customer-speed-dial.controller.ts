@@ -120,7 +120,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         })
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.CustomerSpeedDial>()
-        updates[id] = Object.assign(new CustomerSpeedDialRequestDto(), entity).toInternal({id: id})
+        updates[id] = Object.assign(new CustomerSpeedDialRequestDto(), entity).toInternal({id: id, assignNulls: true})
         const ids = await this.customerSpeedDialService.update(updates, sr)
         const csd = await this.customerSpeedDialService.read(ids[0], sr)
         const response = new CustomerSpeedDialResponseDto(csd)

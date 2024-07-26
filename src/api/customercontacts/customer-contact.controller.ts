@@ -130,7 +130,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-        req,
+            req,
     ): Promise<CustomerContactResponseDto> {
         this.log.debug({
             message: 'patch customer contact by id',
@@ -184,7 +184,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
         })
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Contact>()
-        updates[id] = entity.toInternal({id: id})
+        updates[id] = entity.toInternal({id: id, assignNulls: true})
         const ids = await this.contactService.update(updates, sr)
         const contact = await this.contactService.read(ids[0], sr)
         const response = new CustomerContactResponseDto(contact, sr.user.role)
@@ -208,7 +208,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
         const contacts = new Dictionary<internal.Contact>()
         for (const id of Object.keys(updates)) {
             const dto: CustomerContactRequestDto = updates[id]
-            contacts[id] = dto.toInternal({id: parseInt(id)})
+            contacts[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
         return await this.contactService.update(contacts, sr)
     }

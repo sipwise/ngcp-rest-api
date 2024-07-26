@@ -128,8 +128,9 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+
         const updates = new Dictionary<internal.HeaderRuleAction>()
-        updates[id] = Object.assign(new HeaderManipulationRuleActionRequestDto(), dto).toInternal({id: id})
+        updates[id] = Object.assign(new HeaderManipulationRuleActionRequestDto(), dto).toInternal({id: id, assignNulls:true})
         const ids = await this.ruleActionService.update(updates, sr)
         const entity = await this.ruleActionService.read(ids[0], sr)
         const response = new HeaderManipulationRuleActionResponseDto(entity)
@@ -149,9 +150,9 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         const actions = new Dictionary<internal.HeaderRuleAction>()
         for (const id of Object.keys(updates)) {
             const dto: HeaderManipulationRuleActionRequestDto = updates[id]
-            actions[id] = dto.toInternal({id: parseInt(id)})
+            actions[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
-        return await this.ruleActionService.update(actions, sr)
+        return await this.ruleActionService.recreate(actions, sr)
     }
 
     @Patch(':setId?/rules/:ruleId?/actions/:id')

@@ -24,6 +24,12 @@ export class VoicemailRequestDto implements RequestDto {
         if (options.id)
             voicemail.id = options.id
 
+        if (options.assignNulls) {
+            Object.keys(voicemail).forEach(k => {
+                if (voicemail[k] === undefined)
+                    voicemail[k] = null
+            })
+        }
         return voicemail
     }
 }

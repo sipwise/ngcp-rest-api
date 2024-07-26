@@ -110,6 +110,12 @@ export class AdminRequestDto implements RequestDto {
         if (options.id)
             admin.id = options.id
 
+        if (options.assignNulls) {
+            Object.keys(admin).forEach(k => {
+                if (admin[k] === undefined)
+                    admin[k] = null
+            })
+        }
         return admin
     }
 

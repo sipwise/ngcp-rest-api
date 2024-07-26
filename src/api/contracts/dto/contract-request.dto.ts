@@ -60,6 +60,13 @@ export class ContractRequestDto implements RequestDto {
         })
         if (options.id)
             contract.id = options.id
+
+        if (options.assignNulls) {
+            Object.keys(contract).forEach(k => {
+                if (contract[k] === undefined)
+                    contract[k] = null
+            })
+        }
         return contract
     }
 }
