@@ -115,8 +115,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
         this.log.debug({message: 'update customer by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Customer>()
-        updates[id] = update.toInternal({id: id})
-
+        updates[id] = update.toInternal({id: id, assignNulls: true})
         await this.customerService.update(updates, sr)
 
         const response = new CustomerResponseDto(await this.customerService.read(id, sr))
@@ -135,7 +134,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
         const customers = new Dictionary<internal.Customer>()
         for (const id of Object.keys(updates)) {
             const dto: CustomerRequestDto = updates[id]
-            customers[id] = dto.toInternal({id: parseInt(id)})
+            customers[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
         return await this.customerService.update(customers, sr)
     }

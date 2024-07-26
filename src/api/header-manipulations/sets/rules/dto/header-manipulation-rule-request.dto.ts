@@ -60,6 +60,13 @@ export class HeaderManipulationRuleRequestDto implements RequestDto {
         entity.enabled = this.enabled
         if (options.id)
             entity.id = options.id
+
+        if (options.assignNulls) {
+            Object.keys(entity).forEach(k => {
+                if (entity[k] === undefined)
+                    entity[k] = null
+            })
+        }
         return entity
     }
 }

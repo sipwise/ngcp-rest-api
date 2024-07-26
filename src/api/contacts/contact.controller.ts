@@ -167,7 +167,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
         this.log.debug({message: 'update contact by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Contact>()
-        updates[id] = entity.toInternal({id: id})
+        updates[id] = entity.toInternal({id: id, assignNulls: true})
         const ids = await this.contactService.update(updates, sr)
         const contact = await this.contactService.read(ids[0], sr)
         const response = new ContactResponseDto(contact, sr.user.role)
@@ -186,7 +186,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
         const contacts = new Dictionary<internal.Contact>()
         for (const id of Object.keys(updates)) {
             const dto: ContactRequestDto = updates[id]
-            contacts[id] = dto.toInternal({id: parseInt(id)})
+            contacts[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
         return await this.contactService.update(contacts, sr)
     }

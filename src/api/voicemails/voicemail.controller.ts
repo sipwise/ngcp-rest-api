@@ -154,7 +154,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
         })
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Voicemail>()
-        updates[id] = update.toInternal({id: id})
+        updates[id] = update.toInternal({id: id, assignNulls: true})
         const ids = await this.voicemailService.update(updates, sr)
         const voicemail = await this.voicemailService.read(ids[0], sr)
         const response = new VoicemailResponseDto(voicemail)
@@ -178,7 +178,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
         const voicemails = new Dictionary<internal.Voicemail>()
         for (const id of Object.keys(updates)) {
             const dto: VoicemailRequestDto = updates[id]
-            voicemails[id] = dto.toInternal({id: parseInt(id)})
+            voicemails[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
         return await this.voicemailService.update(voicemails, sr)
     }

@@ -38,6 +38,13 @@ export class HeaderManipulationSetRequestDto implements RequestDto {
         entity.description = this.description
         if (options.id)
             entity.id = options.id
+
+        if (options.assignNulls) {
+            Object.keys(entity).forEach(k => {
+                if (entity[k] === undefined)
+                    entity[k] = null
+            })
+        }
         return entity
     }
 }
