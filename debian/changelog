@@ -1,3 +1,33 @@
+ngcp-rest-api (13.0.0.0+0~mr13.0.0.0) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [583375a] MT#60113 Make error handling global for MariaDb repositories
+  * [b7011cb] MT#60218 Update and consolidate typeorm entities
+  * [483f5c7] MT#60316 Add nested implementation for /api/pbxgroups
+  * [67e40c6] MT#60316 PBX group and member responses show the billing subscriber id
+  * [cd7a72d] MT#60181 Migrate /api/headerrulesets to API v2
+  * [4e1e547] MT#60182 Migrate /api/headerrules as /api/header-manipulations
+  * [bda7023] MT#60184 Migrate /api/headerruleactions as /api/header-manipulations
+  * [67ea9d3] MT#60416 Add pbx,ncos,number,headermanipulation swagger tag descriptions
+  * [3942d51] MT#60183 Migrate /api/headerruleconditions as /api/header-manipulations
+  * [83a2ef9] MT#60078 Add license support for API
+  * [e816060] MT#60522 Add pagination to HM condition @values
+
+  [ Kirill Solomko ]
+  * [a269c8e] MT#60224 fix admin.controller.e2e dto relation
+  * [bdf9e07] MT#60227 set response application/json
+  * [289128a] MT#55688 fix ncos-sets.e2e test reseller_id
+  * [fdac30e] MT#59483 add order,order_by,search_or to reserved params
+  * [8876b2d] MT#60349 UrlReference is a type, add UrlReferenceType
+  * [1064bc5] MT#60078 disable ProtectSubset and ProtectProc hardenings
+  * [647344f] MT#60505 fix search/order by for header rule actions
+  * [1d7504c] MT#60538 header rule conditions and action rwr_dp serialisation
+  * [566d95a] MT#60538 conditions and actions rwrDp null handling
+  * [7ad01f1] MT#60544 remove debug validator error message, Requires->DependsOn
+  * [b315979] MT#60544 fix rwrDp internal validate, improve PATCH validate error
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Sun, 28 Jul 2024 12:03:38 +0200
+
 ngcp-rest-api (12.5.0.0+0~mr12.5.0.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
