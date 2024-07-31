@@ -19,7 +19,7 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
         query.limit(searchLogic.rows).offset(searchLogic.rows * (searchLogic.page - 1))
 
         if (searchLogic.orderBy != null) {
-            query.addOrderBy(searchLogic.orderBy, searchLogic.order)
+            query.addOrderBy(searchLogic.orderBy, searchLogic.orderByDirection)
         }
 
         this.addSearchFilterToQueryBuilder(query, searchLogic, sr)

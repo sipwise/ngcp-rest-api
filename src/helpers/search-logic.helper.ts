@@ -7,7 +7,7 @@ interface Join {
     property: string
 }
 
-enum Order {
+enum OrderByDirection {
     ASC = 'ASC',
     DESC = 'DESC'
 }
@@ -22,8 +22,8 @@ export class SearchLogic {
         rows: number
     @ApiPropertyOptional({description: 'field name to order by', name: 'order_by'})
         orderBy: string
-    @ApiPropertyOptional({default: Order.ASC.toLowerCase()})
-        order: Order = Order.ASC
+    @ApiPropertyOptional({default: OrderByDirection.ASC.toLowerCase(), name: 'order_by_direction'})
+        orderByDirection: OrderByDirection = OrderByDirection.ASC
     @ApiPropertyOptional({default: false, name: 'search_or'})
         searchOr: boolean
 
@@ -45,7 +45,12 @@ export class SearchLogic {
                 throw new BadRequestException()
             if (this.aliases && this.orderBy in this.aliases)
                 this.orderBy = this.aliases[this.orderBy]
-            this.order = sr.query['order_by_direction'] != null && sr.query['order_by_direction'].toUpperCase() === Order.DESC ? Order.DESC : Order.ASC
+            this.orderByDirection =
+                sr.query['order_by_direction'] != null &&
+                sr.query['order_by_direction'].toUpperCase() === OrderByDirection.DESC
+                    ? OrderByDirection.DESC
+                    : OrderByDirection.ASC
+
         }
         this.searchOr = sr.query['search_or'] != null && (sr.query['search_or'] === '1' || sr.query['search_or'] === 'true')
     }

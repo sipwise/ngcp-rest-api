@@ -63,7 +63,7 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
 
 export function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
     if (searchLogic.orderBy != null) {
-        qb.addOrderBy(searchLogic.orderBy, searchLogic.order)
+        qb.addOrderBy(searchLogic.orderBy, searchLogic.orderByDirection)
     }
 }
 
