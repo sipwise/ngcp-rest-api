@@ -1,4 +1,4 @@
-import {HeaderRuleDirection} from 'entities/internal/header-rule.internal.entity'
+import {HeaderRuleDirection} from '../../../entities/internal/header-rule.internal.entity'
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
 import {VoipHeaderRuleSet} from './voip-header-rule-set.mariadb.entity'
 import {VoipHeaderRuleAction} from './voip-header-rule-action.mariadb.entity'
@@ -49,7 +49,7 @@ export class VoipHeaderRule extends BaseEntity {
             type: 'enum',
             enum: HeaderRuleDirection,
             nullable: false,
-            default: HeaderRuleDirection.Inbound,
+            default: HeaderRuleDirection.AInbound,
         })
             direction!: HeaderRuleDirection
 

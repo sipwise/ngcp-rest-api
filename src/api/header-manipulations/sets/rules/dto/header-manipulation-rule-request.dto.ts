@@ -26,7 +26,7 @@ export class HeaderManipulationRuleRequestDto implements RequestDto {
 
     @IsNotEmpty()
     @IsEnum(HeaderRuleDirection)
-    @ApiProperty({description: 'Rule direction', example: 'inbound'})
+    @ApiProperty({description: 'Rule direction', example: 'a_inbound'})
         direction: HeaderRuleDirection
 
     @IsNotEmpty()
