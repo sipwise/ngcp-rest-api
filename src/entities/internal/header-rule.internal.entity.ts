@@ -1,8 +1,10 @@
 import {IsEnum, IsNotEmpty, IsNumber, IsOptional, MaxLength} from 'class-validator'
 
 export enum HeaderRuleDirection {
-    Inbound = 'inbound',
-    Outbound = 'outbound',
+    AInbound = 'a_inbound',
+    BInbound = 'b_inbound',
+    AOutbound = 'a_outbound',
+    BOutbound = 'b_outbound',
     Local = 'local',
     Peer = 'peer',
     CfInbound = 'cf_inbound',
