@@ -97,7 +97,7 @@ describe('Rule Action', () => {
                     name: 'test_rule1',
                     description: 'test_rule1 description',
                     priority: 100,
-                    direction: 'inbound',
+                    direction: 'a_inbound',
                     stopper: false,
                     enabled: true,
                 }

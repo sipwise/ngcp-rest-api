@@ -107,7 +107,7 @@ describe('Rule', () => {
                     name: 'test_rule1',
                     description: 'test_rule1 description',
                     priority: 100,
-                    direction: 'inbound',
+                    direction: 'a_inbound',
                     stopper: false,
                     enabled: true,
                 }
@@ -126,7 +126,7 @@ describe('Rule', () => {
                     name: 'test_rule2',
                     description: 'test_rule2 description',
                     priority: 200,
-                    direction: 'outbound',
+                    direction: 'a_outbound',
                     stopper: true,
                     enabled: false,
                 }
@@ -144,7 +144,7 @@ describe('Rule', () => {
                     name: 'test_rule3',
                     description: 'test_rule3 description',
                     priority: 300,
-                    direction: 'inbound',
+                    direction: 'a_inbound',
                     stopper: true,
                     enabled: true,
                 }
@@ -168,7 +168,7 @@ describe('Rule', () => {
                 expect(rule.name).toEqual('test_rule1')
                 expect(rule.description).toEqual('test_rule1 description')
                 expect(rule.priority).toEqual(100)
-                expect(rule.direction).toEqual('inbound')
+                expect(rule.direction).toEqual('a_inbound')
                 expect(rule.stopper).toEqual(false)
                 expect(rule.enabled).toEqual(true)
             })
@@ -182,7 +182,7 @@ describe('Rule', () => {
                 expect(rule.name).toEqual('test_rule2')
                 expect(rule.description).toEqual('test_rule2 description')
                 expect(rule.priority).toEqual(200)
-                expect(rule.direction).toEqual('outbound')
+                expect(rule.direction).toEqual('a_outbound')
                 expect(rule.stopper).toEqual(true)
                 expect(rule.enabled).toEqual(false)
             })
@@ -201,7 +201,7 @@ describe('Rule', () => {
                     name: 'test_rule_foo',
                     description: 'test_rule_foo description',
                     priority: 101,
-                    direction: 'outbound',
+                    direction: 'a_outbound',
                     stopper: true,
                     enabled: false,
                 }
@@ -225,7 +225,7 @@ describe('Rule', () => {
                     name: 'test_rule_foo',
                     description: 'test_rule_foo description',
                     priority: 101,
-                    direction: 'outbound',
+                    direction: 'a_outbound',
                     stopper: true,
                     enabled: false,
                 }
