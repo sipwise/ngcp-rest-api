@@ -10,6 +10,7 @@ export class HeaderManipulationRuleActionSearchDto {
     rwr_set_id: number = undefined
     value_part: string = undefined
     value: string = undefined
+    subscriber_id: number = undefined
     _alias = {
         action_type: 'headerRuleAction.action_type',
         enabled: 'headerRuleAction.enabled',
@@ -22,5 +23,6 @@ export class HeaderManipulationRuleActionSearchDto {
         rwr_set_id: 'headerRuleAction.rwr_set_id',
         value_part: 'headerRuleAction.value_part',
         value: 'headerRuleAction.value',
+        subscriber_id: 'headerRuleSet.subscriber_id',
     }
 }

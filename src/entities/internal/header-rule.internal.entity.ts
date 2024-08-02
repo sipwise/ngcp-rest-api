@@ -1,4 +1,4 @@
-import {IsEnum, IsNotEmpty, IsNumber, MaxLength} from 'class-validator'
+import {IsEnum, IsNotEmpty, IsNumber, IsOptional, MaxLength} from 'class-validator'
 
 export enum HeaderRuleDirection {
     Inbound = 'inbound',
@@ -16,9 +16,13 @@ export class HeaderRule {
     @IsNotEmpty()
         id: number
 
+    @IsOptional()
     @IsNumber()
-    @IsNotEmpty()
-        setId: number
+        setId?: number
+
+    @IsOptional()
+    @IsNumber()
+        subscriberId?: number
 
     @MaxLength(255)
     @IsNotEmpty()
