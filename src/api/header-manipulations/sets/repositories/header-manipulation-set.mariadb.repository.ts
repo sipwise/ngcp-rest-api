@@ -10,8 +10,9 @@ import { SelectQueryBuilder } from 'typeorm'
 import { Dictionary } from '../../../../helpers/dictionary.helper'
 import { MariaDbRepository } from '../../../../repositories/mariadb.repository'
 
-interface FilterBy {
+export interface FilterBy {
     resellerId?: number
+    showSubscriberSets?: boolean
 }
 
 @Injectable()
@@ -111,7 +112,7 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
 
     async readBySubscriberId(subscriberId: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleSet[]> {
         const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
-        const searchDto = new HeaderManipulationSetSearchDto()
+        const searchDto  = new HeaderManipulationSetSearchDto()
         configureQueryBuilder(
             qb,
             await this.configureSrQuery(sr),
@@ -180,6 +181,10 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
         if (filterBy) {
             if (filterBy.resellerId) {
                 qb.andWhere('reseller_id = :id', { id: filterBy.resellerId })
+            }
+
+            if (!filterBy.showSubscriberSets) {
+                qb.andWhere('subscriber_id IS NULL')
             }
         }
     }

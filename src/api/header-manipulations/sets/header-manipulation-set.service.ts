@@ -1,7 +1,7 @@
 import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {internal} from '../../../entities'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {HeaderManipulationSetMariadbRepository} from './repositories/header-manipulation-set.mariadb.repository'
+import {FilterBy, HeaderManipulationSetMariadbRepository} from './repositories/header-manipulation-set.mariadb.repository'
 import {CrudService} from '../../../interfaces/crud-service.interface'
 import {LoggerService} from '../../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
@@ -31,17 +31,25 @@ export class HeaderManipulationSetService implements CrudService<internal.Header
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.HeaderRuleSet[], number]> {
+        const filters: FilterBy = {}
         if (sr.user.reseller_id_required)
-            return await this.ruleSetRepo.readAll(sr, {resellerId: sr.user.reseller_id})
+            filters.resellerId = sr.user.reseller_id
 
-        return await this.ruleSetRepo.readAll(sr)
+        if (sr.query.subscriber_id)
+            filters.showSubscriberSets = true
+
+        return await this.ruleSetRepo.readAll(sr, filters)
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.HeaderRuleSet> {
+        const filters: FilterBy = {}
         if (sr.user.reseller_id_required)
-            return await this.ruleSetRepo.readById(id, sr, {resellerId: sr.user.reseller_id})
+            filters.resellerId = sr.user.reseller_id
 
-        return await this.ruleSetRepo.readById(id, sr)
+        if (sr.query.subscriber_id)
+            filters.showSubscriberSets = true
+
+        return await this.ruleSetRepo.readById(id, sr, filters)
     }
 
     async update(updates: Dictionary<internal.HeaderRuleSet>, sr: ServiceRequest): Promise<number[]> {

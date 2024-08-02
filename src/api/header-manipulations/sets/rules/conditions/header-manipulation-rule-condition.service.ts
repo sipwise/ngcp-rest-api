@@ -41,6 +41,9 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
         if (sr.user.reseller_id_required)
             filterBy.resellerId = sr.user.reseller_id
 
+        if (sr.query.subscriber_id)
+            filterBy.showSubscriberConditions = true
+
         return await this.ruleConditionRepo.readAll(sr, filterBy)
     }
 
@@ -48,6 +51,9 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
         const filterBy = this.getFiltersFromServiceRequest(sr)
         if (sr.user.reseller_id_required)
             filterBy.resellerId = sr.user.reseller_id
+
+        if (sr.query.subscriber_id)
+            filterBy.showSubscriberConditions = true
 
         return await this.ruleConditionRepo.readById(id, sr, filterBy)
     }
@@ -96,6 +102,10 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
         const filterBy = this.getFiltersFromServiceRequest(sr)
         if (sr.user.reseller_id_required)
             filterBy.resellerId = sr.user.reseller_id
+
+        if (sr.query.subscriber_id)
+            filterBy.showSubscriberConditions = true
+
         return await this.ruleConditionRepo.readConditionValues(conditionId, sr, filterBy)
     }
 

@@ -3,12 +3,17 @@ import {IsEnum, IsNotEmpty, IsNumber, IsOptional, MaxLength} from 'class-validat
 import {RequestDto, RequestDtoOptions} from '../../../../../dto/request.dto'
 import {internal} from '../../../../../entities'
 import {HeaderRuleDirection} from 'entities/internal/header-rule.internal.entity'
+import {OneOf} from 'decorators/one-of.decorator'
 
 export class HeaderManipulationRuleRequestDto implements RequestDto {
 
-    @IsNotEmpty()
+    @OneOf('subscriber_id')
     @ApiProperty({description: 'Set id', example: '1'})
-        set_id: number
+        set_id?: number
+
+    @OneOf('set_id')
+    @ApiProperty({description: 'Subscriber id', example: '1'})
+        subscriber_id?: number
 
     @IsNotEmpty()
     @ApiProperty({description: 'Rule name', example: 'Foo Rule'})
@@ -52,6 +57,7 @@ export class HeaderManipulationRuleRequestDto implements RequestDto {
     toInternal(options: RequestDtoOptions = {}): internal.HeaderRule {
         const entity = new internal.HeaderRule()
         entity.setId = this.set_id
+        entity.subscriberId = this.subscriber_id
         entity.name = this.name
         entity.description = this.description
         entity.priority = this.priority
