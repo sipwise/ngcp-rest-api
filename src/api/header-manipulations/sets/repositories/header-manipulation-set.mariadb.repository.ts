@@ -10,8 +10,9 @@ import {SelectQueryBuilder} from 'typeorm'
 import {Dictionary} from '../../../../helpers/dictionary.helper'
 import {MariaDbRepository} from '../../../../repositories/mariadb.repository'
 
-interface FilterBy {
+export interface FilterBy {
     resellerId?: number
+    showSubscriberSets?: boolean
 }
 
 @Injectable()
@@ -81,6 +82,19 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
         return await qb.getCount()
     }
 
+    async readBySubscriberId(subscriberId: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleSet[]> {
+        const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
+        const searchDto  = new HeaderManipulationSetSearchDto()
+        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
+            Object.keys(searchDto),
+            undefined,
+        ))
+        qb.andWhere('subscriber_id = :id', {id: subscriberId})
+        this.addFilterBy(qb, filterBy)
+        const result = await qb.getMany()
+        return await Promise.all(result.map(async (d) => d.toInternal()))
+    }
+
     async update(updates: Dictionary<internal.HeaderRuleSet>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
@@ -100,6 +114,10 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
         if (filterBy) {
             if (filterBy.resellerId) {
                 qb.andWhere('reseller_id = :id', {id: filterBy.resellerId})
+            }
+
+            if (!filterBy.showSubscriberSets) {
+                qb.andWhere('subscriber_id IS NULL')
             }
         }
     }

@@ -14,6 +14,7 @@ export interface FilterBy {
     ruleId?: number
     setId?: number
     resellerId?: number
+    showSubscriberActions?: boolean
 }
 
 @Injectable()
@@ -45,6 +46,8 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
             undefined,
             searchDto._alias,
         ))
+        qb.innerJoin('headerRuleAction.rule', 'headerRule')
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
         this.joinAndMapRewriteRuleSet(qb)
 
@@ -63,6 +66,8 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
             searchDto._alias,
         ))
         qb.where({id: id})
+        qb.innerJoin('headerRuleAction.rule', 'headerRule')
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
         this.joinAndMapRewriteRuleSet(qb)
         const result = await qb.getOneOrFail()
@@ -75,8 +80,11 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
+            searchDto._alias,
         ))
         qb.whereInIds(ids)
+        qb.innerJoin('headerRuleAction.rule', 'headerRule')
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
         this.joinAndMapRewriteRuleSet(qb)
         const result = await qb.getMany()
@@ -89,7 +97,10 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
+            searchDto._alias,
         ))
+        qb.innerJoin('headerRuleAction.rule', 'headerRule')
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         qb.whereInIds(ids)
         this.addFilterBy(qb, filterBy)
         return await qb.getCount()
@@ -112,24 +123,17 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
 
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipHeaderRuleAction>, filterBy: FilterBy): void {
         if (filterBy) {
-            let ruleJoin = false
             if (filterBy.ruleId) {
                 qb.andWhere('rule_id = :ruleId', {ruleId: filterBy.ruleId})
             }
             if (filterBy.setId) {
-                if (!ruleJoin) {
-                    qb.innerJoin('headerRuleAction.rule', 'headerRule')
-                    ruleJoin = true
-                }
                 qb.andWhere('headerRule.set_id = :setId', {setId: filterBy.setId})
             }
             if (filterBy.resellerId) {
-                if (!ruleJoin) {
-                    qb.innerJoin('headerRuleAction.rule', 'headerRule')
-                    ruleJoin = true
-                }
-                qb.innerJoin('headerRule.set', 'headerRuleSet')
                 qb.andWhere('headerRuleSet.reseller_id = :resellerId', {resellerId: filterBy.resellerId})
+            }
+            if (!filterBy.showSubscriberActions) {
+                qb.andWhere('headerRuleSet.subscriber_id IS NULL')
             }
         }
     }

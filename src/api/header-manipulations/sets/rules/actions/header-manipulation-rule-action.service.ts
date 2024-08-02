@@ -41,6 +41,9 @@ export class HeaderManipulationRuleActionService implements CrudService<internal
         if (sr.user.reseller_id_required)
             filterBy.resellerId = sr.user.reseller_id
 
+        if (sr.query.subscriber_id)
+            filterBy.showSubscriberActions = true
+
         return await this.ruleActionRepo.readAll(sr, filterBy)
     }
 
@@ -48,6 +51,9 @@ export class HeaderManipulationRuleActionService implements CrudService<internal
         const filterBy = this.getFiltersFromServiceRequest(sr)
         if (sr.user.reseller_id_required)
             filterBy.resellerId = sr.user.reseller_id
+
+        if (sr.query.subscriber_id)
+            filterBy.showSubscriberActions = true
 
         return await this.ruleActionRepo.readById(id, sr, filterBy)
     }

@@ -13,6 +13,7 @@ import {MariaDbRepository} from '../../../../../repositories/mariadb.repository'
 export interface FilterBy {
     setId?: number
     resellerId?: number
+    showSubscriberRules?: boolean
 }
 
 @Injectable()
@@ -35,7 +36,10 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
         const searchDto  = new HeaderManipulationRuleSearchDto()
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
+            undefined,
+            searchDto._alias,
         ))
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(
@@ -51,11 +55,19 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
+            searchDto._alias,
         ))
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         qb.where({id: id})
         this.addFilterBy(qb, filterBy)
         const result = await qb.getOneOrFail()
         return result.toInternal()
+    }
+
+    async readCountInSet(setId: number, sr: ServiceRequest): Promise<number> {
+        const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
+        qb.where('set_id = :setId', {setId: setId})
+        return await qb.getCount()
     }
 
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRule[]> {
@@ -64,7 +76,9 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
+            searchDto._alias,
         ))
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         qb.whereInIds(ids)
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
@@ -77,7 +91,9 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
+            searchDto._alias,
         ))
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         qb.whereInIds(ids)
         this.addFilterBy(qb, filterBy)
         return await qb.getCount()
@@ -104,8 +120,10 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
                 qb.andWhere('set_id = :setId', {setId: filterBy.setId})
             }
             if (filterBy.resellerId) {
-                qb.innerJoin('headerRule.set', 'headerRuleSet')
                 qb.andWhere('headerRuleSet.reseller_id = :id', {id: filterBy.resellerId})
+            }
+            if (!filterBy.showSubscriberRules) {
+                qb.andWhere('headerRuleSet.subscriber_id IS NULL')
             }
         }
     }

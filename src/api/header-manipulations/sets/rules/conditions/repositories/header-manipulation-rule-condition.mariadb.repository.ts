@@ -14,6 +14,7 @@ export interface FilterBy {
     ruleId?: number
     setId?: number
     resellerId?: number
+    showSubscriberConditions?: boolean
 }
 
 @Injectable()
@@ -52,7 +53,11 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         const searchDto  = new HeaderManipulationRuleConditionSearchDto()
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
+            undefined,
+            searchDto._alias,
         ))
+        qb.innerJoin('headerRuleCondition.rule', 'headerRule')
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
         this.joinAndMapRewriteRuleSet(qb)
         const [result, totalCount] = await qb.getManyAndCount()
@@ -69,8 +74,11 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
+            searchDto._alias,
         ))
         qb.where({id: id})
+        qb.innerJoin('headerRuleCondition.rule', 'headerRule')
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
         this.joinAndMapRewriteRuleSet(qb)
         const result = await qb.getOneOrFail()
@@ -83,8 +91,11 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
+            searchDto._alias,
         ))
         qb.whereInIds(ids)
+        qb.innerJoin('headerRuleCondition.rule', 'headerRule')
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
         return await Promise.all(result.map(async (d) => d.toInternal()))
@@ -96,8 +107,11 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
+            searchDto._alias,
         ))
         qb.whereInIds(ids)
+        qb.innerJoin('headerRuleCondition.rule', 'headerRule')
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
         return await qb.getCount()
     }
@@ -129,6 +143,8 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
     async readConditionValues(conditionId: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRuleConditionValue[], number]> {
         const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
         qb.where({id: conditionId})
+        qb.innerJoin('headerRuleCondition.rule', 'headerRule')
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
         await qb.getOneOrFail()
         const qbValues = db.provisioning.VoipHeaderRuleConditionValue.createQueryBuilder('headerRuleConditionValue')
@@ -136,6 +152,7 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         configureQueryBuilder(qbValues, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
+            searchDto._alias,
         ))
         qbValues.where({condition_id: conditionId})
 
@@ -149,24 +166,17 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
 
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipHeaderRuleCondition>, filterBy: FilterBy): void {
         if (filterBy) {
-            let ruleJoin = false
             if (filterBy.ruleId) {
                 qb.andWhere('rule_id = :ruleId', {ruleId: filterBy.ruleId})
             }
             if (filterBy.setId) {
-                if (!ruleJoin) {
-                    qb.innerJoin('headerRuleCondition.rule', 'headerRule')
-                    ruleJoin = true
-                }
                 qb.andWhere('headerRule.set_id = :setId', {setId: filterBy.setId})
             }
             if (filterBy.resellerId) {
-                if (!ruleJoin) {
-                    qb.innerJoin('headerRuleCondition.rule', 'headerRule')
-                    ruleJoin = true
-                }
-                qb.innerJoin('headerRule.set', 'headerRuleSet')
                 qb.andWhere('headerRuleSet.reseller_id = :resellerId', {resellerId: filterBy.resellerId})
+            }
+            if (!filterBy.showSubscriberConditions) {
+                qb.andWhere('headerRuleSet.subscriber_id IS NULL')
             }
         }
     }

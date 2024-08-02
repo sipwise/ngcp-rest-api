@@ -3,7 +3,12 @@ import {HeaderRuleDirection} from '../../../../../entities/internal/header-rule.
 export class HeaderManipulationRuleSearchDto {
     name: string = undefined
     set_id: number = undefined
+    subscriber_id: number = undefined
     stopper: boolean = undefined
     enabled: boolean = undefined
     direction: HeaderRuleDirection = undefined
+
+    _alias = {
+        subscriber_id: 'headerRuleSet.subscriber_id',
+    }
 }
