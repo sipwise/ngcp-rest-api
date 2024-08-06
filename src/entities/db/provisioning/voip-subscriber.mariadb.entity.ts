@@ -126,7 +126,7 @@ export class VoipSubscriber extends BaseEntity {
         nullable: true,
         default: 'cancel',
     })
-        pbx_hangup_policy?: string
+        pbx_hunt_cancel_mode?: string
 
 
     @Column({
