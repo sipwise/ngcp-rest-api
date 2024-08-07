@@ -88,7 +88,7 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         if (await this.voicemailRepo.readCountOfIds(ids, sr) != ids.length)
             throw new UnprocessableEntityException()
-        const notifies: Array<internal.Voicemail> = []
+        const notifies: Array<[internal.Voicemail, string]> = []
         const voicemails: Array<internal.Voicemail> = await this.voicemailRepo.readWhereInIds(ids, sr)
 
         for (const voicemail of voicemails) {
@@ -96,6 +96,7 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
             const update = updates[id]
             const dir = voicemail.dir.substring(voicemail.dir.lastIndexOf('/') + 1)
             const dirDiff: boolean = update.dir && update.dir != dir
+            let action_type = 'r'
             if (dirDiff) {
                 let validDir = undefined
                 this.supported_dirs.forEach((checkDir) => {
@@ -106,15 +107,18 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
                 })
                 if (!validDir)
                     throw new BadRequestException(`not a valid value ${update.dir}`)
+                if (update.dir.toLowerCase() == 'inbox')
+                    action_type = 'x'
                 update.dir = `${this.voicemailDir}${voicemail.mailboxuser}/${validDir}`
-                notifies.push(voicemail)
+                notifies.push([voicemail, action_type])
             }
         }
 
         const result = await this.voicemailRepo.update(updates, sr)
 
-        for (const voicemail of notifies)
-            await this.sendNotification(voicemail, sr, 'r')
+        for (const [voicemail, action_type] of notifies) {
+            await this.sendNotification(voicemail, sr, action_type)
+        }
 
         return result
     }
