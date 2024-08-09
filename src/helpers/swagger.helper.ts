@@ -49,7 +49,9 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string) 
             onComplete: () => { // reset auth that might come with the browser
                 this.ui.preauthorizeBasic('basicAuth', '123', '123')
                 this.ui.preauthorizeApiKey('bearerAuth', '123')
-            }
+            },
         },
+        jsonDocumentUrl: api_prefix + '/swagger.json',
+        yamlDocumentUrl: api_prefix + '/swagger.yaml',
     })
 }
