@@ -110,7 +110,7 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
         const responseItem = new DomainResponseDto(domain)
         if (req.query.expand && !req.isRedirected) {
             const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
-            await this.expander.expandObjects(responseItem, domainSearchDtoKeys, sr)
+            await this.expander.expandObjects([responseItem], domainSearchDtoKeys, sr)
         }
         return responseItem
     }

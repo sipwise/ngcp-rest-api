@@ -4,6 +4,7 @@ import {ResellerStatus} from '../../../entities/internal/reseller.internal.entit
 import {internal} from '../../../entities'
 import {ContractResponseDto} from '../../contracts/dto/contract-response.dto'
 import {ResponseDto} from '../../../dto/response.dto'
+import { Expandable } from 'decorators/expandable.decorator'
 
 export class ResellerResponseDto implements ResponseDto {
     @ApiProperty()
@@ -11,10 +12,8 @@ export class ResellerResponseDto implements ResponseDto {
 
     @ApiProperty()
     @IsNotEmpty()
+    @Expandable({name: 'contract_id', controller: 'contractController'})
         contract_id: number
-
-    @ApiHideProperty()
-        contract_id_expand: ContractResponseDto
 
     @ApiProperty()
         name: string

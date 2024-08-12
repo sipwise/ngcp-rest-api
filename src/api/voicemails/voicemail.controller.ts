@@ -71,7 +71,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
         const responseItem = new VoicemailResponseDto(voicemail)
         if (req.query.expand && !req.isRedirected) {
             const voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
-            await this.expander.expandObjects(responseItem, voicemailSearchDtoKeys, sr)
+            await this.expander.expandObjects([responseItem], voicemailSearchDtoKeys, sr)
         }
         return responseItem
     }

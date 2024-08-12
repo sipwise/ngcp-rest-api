@@ -125,7 +125,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         const responseItem = new AdminResponseDto(admin, sr.user.role)
         if (req.query.expand && !req.isRedirected) {
             const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
-            await this.expander.expandObjects(responseItem, adminSearchDtoKeys, req)
+            await this.expander.expandObjects([responseItem], adminSearchDtoKeys, req)
         }
         return responseItem
     }

@@ -1,7 +1,7 @@
 import {internal} from '../../../entities'
-import {ApiHideProperty, ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
+import {ApiProperty} from '@nestjs/swagger'
 import {ResponseDto} from '../../../dto/response.dto'
+import {Expandable} from '../../../decorators/expandable.decorator'
 
 export class DomainResponseDto implements ResponseDto {
     @ApiProperty()
@@ -9,9 +9,8 @@ export class DomainResponseDto implements ResponseDto {
     @ApiProperty()
         id: number
     @ApiProperty()
+    @Expandable({name: 'reseller_id', controller: 'resellerController'})
         reseller_id: number
-    @ApiHideProperty()
-        reseller_id_expand?: ResellerResponseDto
 
     constructor(domain: internal.Domain) {
         this.domain = domain.domain

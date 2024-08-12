@@ -1,8 +1,8 @@
-import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
 import {internal} from '../../../entities'
-import {ApiHideProperty, ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {RbacRole} from '../../../config/constants.config'
 import {ResponseDto} from '../../../dto/response.dto'
+import {Expandable} from '../../../decorators/expandable.decorator'
 
 export class AdminResponseDto implements ResponseDto {
     @ApiProperty()
@@ -32,9 +32,8 @@ export class AdminResponseDto implements ResponseDto {
     @ApiProperty()
         read_only: boolean
     @ApiPropertyOptional()
+    @Expandable({name: 'reseller_id', controller: 'resellerController'})
         reseller_id?: number
-    @ApiHideProperty()
-        reseller_id_expand?: ResellerResponseDto
     @ApiProperty()
         role: RbacRole
     @ApiProperty()

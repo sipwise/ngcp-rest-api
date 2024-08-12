@@ -1,12 +1,12 @@
-import {ApiHideProperty, ApiProperty} from '@nestjs/swagger'
+import {ApiProperty} from '@nestjs/swagger'
 import {
     ContractStatus as CustomerStatus,
 } from '../../../entities/internal/contract.internal.entity'
 import {internal} from '../../../entities'
-import {ContactResponseDto} from '../../contacts/dto/contact-response.dto'
 import {CustomerType} from '../../../entities/internal/customer.internal.entity'
 import {BillingMapping} from '../../../entities/internal'
 import {BillingMappingResponseDto} from './billing-mapping-response.dto'
+import {Expandable} from '../../../decorators/expandable.decorator'
 
 export class CustomerResponseDto {
     @ApiProperty()
@@ -22,10 +22,8 @@ export class CustomerResponseDto {
         billing_profile_id: number
 
     @ApiProperty({description: 'The contact id this contract belongs to'})
+    @Expandable({name:'contact_id', controller: 'contactController'})
         contact_id?: number
-
-    @ApiHideProperty()
-        contact_id_expand?: ContactResponseDto
 
     @ApiProperty()
         create_timestamp: Date

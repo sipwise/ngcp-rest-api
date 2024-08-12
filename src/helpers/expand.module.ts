@@ -20,14 +20,26 @@ import {ContactController} from '../api/contacts/contact.controller'
         ContactModule,
         ResellerModule,
         ContractModule,
+        CustomerContactModule,
         JournalModule,
     ],
     providers: [
         ExpandHelper,
-        AdminController,
-        ContactController,
-        ResellerController,
-        ContractController,
+        {
+            provide: 'BASE_CONTROLLERS_MAP',
+            useFactory: (
+                resellerController: ResellerController,
+                contactController: ContactController,
+                contractController: ContractController,
+            ) => {
+                return {
+                    resellerController: resellerController,
+                    contactController: contactController,
+                    contractController: contractController,
+                }
+            },
+            inject: [ResellerController, ContactController, ContractController],
+        },
         JournalService,
     ],
     exports: [ExpandHelper],

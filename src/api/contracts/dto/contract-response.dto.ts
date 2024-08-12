@@ -1,4 +1,4 @@
-import {ApiHideProperty, ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsNotEmpty} from 'class-validator'
 import {
     ContractBillingProfileDefinition,
@@ -6,8 +6,8 @@ import {
     ContractType,
 } from '../../../entities/internal/contract.internal.entity'
 import {internal} from '../../../entities'
-import {ContactResponseDto} from '../../contacts/dto/contact-response.dto'
 import {ResponseDto} from '../../../dto/response.dto'
+import {Expandable} from '../../../decorators/expandable.decorator'
 
 export class ContractResponseDto implements ResponseDto {
     @ApiProperty({description: 'Unique identifier of the contract'})
@@ -23,10 +23,8 @@ export class ContractResponseDto implements ResponseDto {
         billing_profile_id: number
 
     @ApiProperty({description: 'The contact id this contract belongs to'})
+    @Expandable({name: 'contact_id', controller: 'contactController'})
         contact_id?: number
-
-    @ApiHideProperty()
-        contact_id_expand?: ContactResponseDto
 
     @ApiProperty({description: 'A non-unique external ID e.g., provided by a 3rd party provisioning'})
     @IsNotEmpty()

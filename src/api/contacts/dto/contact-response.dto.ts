@@ -1,9 +1,9 @@
 import {ContactGender, ContactStatus} from '../../../entities/internal/contact.internal.entity'
-import {ApiHideProperty, ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {RbacRole} from '../../../config/constants.config'
 import {internal} from '../../../entities'
 import {ResponseDto} from '../../../dto/response.dto'
+import {Expandable} from '../../../decorators/expandable.decorator'
 
 export class ContactResponseDto implements ResponseDto {
     @ApiProperty()
@@ -61,9 +61,8 @@ export class ContactResponseDto implements ResponseDto {
     @ApiPropertyOptional()
         postcode?: string
     @ApiPropertyOptional()
+    @Expandable({name: 'reseller_id', controller: 'resellerController'})
         reseller_id?: number
-    @ApiHideProperty()
-        reseller_id_expand?: ResellerResponseDto
     @ApiProperty()
         status: ContactStatus
     @ApiPropertyOptional()

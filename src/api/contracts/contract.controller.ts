@@ -105,7 +105,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
         const response = new ContractResponseDto(contract)
         if (req.query.expand && !req.isRedirected) {
             const contractSearchDtoKeys = Object.keys(new ContractSearchDto())
-            await this.expander.expandObjects(response, contractSearchDtoKeys, req)
+            await this.expander.expandObjects([response], contractSearchDtoKeys, req)
         }
         return response
     }

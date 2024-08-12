@@ -109,7 +109,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
         const responseItem = new ContactResponseDto(contact, sr.user.role)
         if (req.query.expand && !req.isRedirected) {
             const contactSearchDtoKeys = Object.keys(new ContactSearchDto())
-            await this.expander.expandObjects(responseItem, contactSearchDtoKeys, sr)
+            await this.expander.expandObjects([responseItem], contactSearchDtoKeys, sr)
         }
         return responseItem
     }

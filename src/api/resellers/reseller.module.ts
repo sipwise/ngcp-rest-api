@@ -10,9 +10,9 @@ import {ResellerMariadbRepository} from './repositories/reseller.mariadb.reposit
         JournalModule,
         forwardRef(() => ExpandModule),
     ],
-    providers: [ResellerService, ResellerMariadbRepository],
+    providers: [ResellerService, ResellerMariadbRepository, ResellerController],
     controllers: [ResellerController],
-    exports: [ResellerService],
+    exports: [ResellerService, ResellerController],
 })
 export class ResellerModule {
 }

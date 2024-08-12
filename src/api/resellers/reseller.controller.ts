@@ -98,7 +98,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
         const responseItem = new ResellerResponseDto(reseller)
         if (req.query.expand && !req.isRedirected) {
             const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
-            await this.expander.expandObjects(responseItem, resellerSearchDtoKeys, sr)
+            await this.expander.expandObjects([responseItem], resellerSearchDtoKeys, sr)
         }
         return responseItem
     }

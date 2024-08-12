@@ -100,7 +100,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
         const response = new SystemContactResponseDto(contact)
         if (req.query.expand && !req.isRedirected) {
             const contactSearchDtoKeys = Object.keys(new SystemContactSearchDto())
-            await this.expander.expandObjects(response, contactSearchDtoKeys, sr)
+            await this.expander.expandObjects([response], contactSearchDtoKeys, sr)
         }
         return response
     }

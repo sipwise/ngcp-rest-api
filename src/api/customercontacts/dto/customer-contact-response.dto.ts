@@ -1,8 +1,7 @@
 import {internal} from '../../../entities'
 import {RbacRole} from '../../../config/constants.config'
 import {ContactGender, ContactStatus} from '../../../entities/internal/contact.internal.entity'
-import {ApiHideProperty, ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {ResponseDto} from '../../../dto/response.dto'
 
 export class CustomerContactResponseDto implements ResponseDto {
@@ -62,8 +61,6 @@ export class CustomerContactResponseDto implements ResponseDto {
         postcode?: string
     @ApiPropertyOptional()
         reseller_id?: number
-    @ApiHideProperty()
-        reseller_id_expand?: ResellerResponseDto
     @ApiProperty()
         status: ContactStatus
     @ApiPropertyOptional()

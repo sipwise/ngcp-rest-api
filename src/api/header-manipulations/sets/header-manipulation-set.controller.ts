@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req, UnprocessableEntityException} from '@nestjs/common'
+import {Body, Controller, Delete, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, UnprocessableEntityException} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from '../../../helpers/patch.helper'
@@ -29,6 +29,8 @@ import {JournalService} from '../../journals/journal.service'
 import {JournalResponseDto} from '../../journals/dto/journal-response.dto'
 import {License as LicenseType, RbacRole} from '../../../config/constants.config'
 import {License} from '../../../decorators/license.decorator'
+import {ExpandHelper} from '../../../helpers/expand.helper'
+import {HeaderManipulationSetSearchDto} from './dto/header-manipulation-set-search.dto'
 
 const resourceName = 'header-manipulations/sets'
 
@@ -46,6 +48,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
 
     constructor(
         private readonly ruleSetService: HeaderManipulationSetService,
+        @Inject(forwardRef(() => ExpandHelper)) private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
         super(resourceName, ruleSetService)
@@ -87,6 +90,10 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
         const [entity, totalCount] =
             await this.ruleSetService.readAll(sr)
         const responseList = entity.map(e => new HeaderManipulationSetResponseDto(req.url, e))
+        if (req.query.expand) {
+            const setSearchDtoKeys = Object.keys(new HeaderManipulationSetSearchDto())
+            await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
+        }
         return [responseList, totalCount]
     }
 
@@ -102,10 +109,13 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
             url: req.url,
             method: req.method,
         })
-        return new HeaderManipulationSetResponseDto(
-            req.url,
-            await this.ruleSetService.read(id, new ServiceRequest(req)),
-        )
+        const sr = new ServiceRequest(req)
+        const response = new HeaderManipulationSetResponseDto(req.url, await this.ruleSetService.read(id, sr))
+        if (req.query.expand) {
+            const setSearchDtoKeys = Object.keys(new HeaderManipulationSetSearchDto())
+            await this.expander.expandObjects([response], setSearchDtoKeys, sr)
+        }
+        return response
     }
 
     @Put(':id')

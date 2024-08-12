@@ -58,7 +58,7 @@ export class ProductController extends CrudController<never, ProductResponseDto>
         const response = new ProductResponseDto(product)
         if (req.query.expand && !req.isRedirected) {
             const productSearchDtoKeys = Object.keys(new ProductSearchDto())
-            await this.expander.expandObjects(response, productSearchDtoKeys, req)
+            await this.expander.expandObjects([response], productSearchDtoKeys, req)
         }
         return response
     }

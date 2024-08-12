@@ -4,6 +4,7 @@ import {IsNotEmpty, IsOptional} from 'class-validator'
 import {ResponseDto} from '../../../../dto/response.dto'
 import {UrlReference} from '../../../../types/url-reference.type'
 import {UrlReferenceType} from '../../../../enums/url-reference-type.enum'
+import {Expandable} from '../../../../decorators/expandable.decorator'
 
 export class HeaderManipulationSetResponseDto implements ResponseDto {
     @IsNotEmpty()
@@ -12,6 +13,7 @@ export class HeaderManipulationSetResponseDto implements ResponseDto {
 
     @IsOptional()
     @ApiPropertyOptional()
+    @Expandable({name: 'reseller_id', controller: 'resellerController'})
         reseller_id: number
 
     @IsNotEmpty()

@@ -1,5 +1,7 @@
 import {CrudController} from '../controllers/crud.controller'
 import {UnauthorizedException} from '@nestjs/common'
+import {RequestDto} from '../dto/request.dto'
+import {ResponseDto} from '../dto/response.dto'
 
 /**
  * `hasPermissionToAccessController` returns whether the provided `role` has access to a controller, or it's `read` method.
@@ -12,7 +14,7 @@ import {UnauthorizedException} from '@nestjs/common'
  * @param role user role
  * @param controller controller that extends CrudController
  */
-async function hasPermissionToAccessController(role: string, controller: CrudController<any, any>): Promise<boolean> {
+async function hasPermissionToAccessController(role: string, controller: CrudController<RequestDto,ResponseDto>): Promise<boolean> {
     const methodMetadata: string[] = Reflect.getMetadata('rbacroles', controller.read)
     if (methodMetadata != undefined) {
         return methodMetadata.includes(role)
@@ -36,7 +38,7 @@ async function hasPermissionToAccessController(role: string, controller: CrudCon
  * @throws UnauthorizedException
  * @constructor
  */
-export async function ProtectedReadCall(controller: CrudController<any, any>, id: number, req: any): Promise<any> {
+export async function ProtectedReadCall(controller: CrudController<RequestDto,ResponseDto>, id: number, req: any): Promise<any> {
     const role = req.user.role
     if (!await hasPermissionToAccessController(role, controller)) {
         throw new UnauthorizedException()

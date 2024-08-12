@@ -98,7 +98,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
         const response = new CustomerResponseDto(customer)
         if (req.query.expand && !req.isRedirected) {
             const customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
-            await this.expander.expandObjects(response, customerSearchDtoKeys, req)
+            await this.expander.expandObjects([response], customerSearchDtoKeys, req)
         }
         return response
     }
