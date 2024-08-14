@@ -1,3 +1,14 @@
+ngcp-rest-api (12.5.1.1+0~mr12.5.1.1) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [190d8f4] MT#60645 rename pbx_hangup_policy to pbx_hunt_cancel_mode
+  * [d6a2dfd] MT#60678 add specific names for swagger docspec urls
+
+  [ Fabricio Santolin da Silva ]
+  * [1e63a5d] MT#58961 Add 'unread' flag when changing to Inbox
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 14 Aug 2024 14:00:10 +0200
+
 ngcp-rest-api (12.5.1.0+0~mr12.5.1.0) unstable; urgency=medium
 
   [ Bertold Vincze ]
