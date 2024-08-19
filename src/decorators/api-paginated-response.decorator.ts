@@ -1,11 +1,12 @@
 import {applyDecorators, Type} from '@nestjs/common'
 import {PaginatedDto} from '../dto/paginated.dto'
-import {ApiOkResponse, getSchemaPath} from '@nestjs/swagger'
+import {ApiExtraModels, ApiOkResponse, getSchemaPath} from '@nestjs/swagger'
 
 export const ApiPaginatedResponse = <TModel extends Type<any>>(
     model: TModel,
 ) => {
     return applyDecorators(
+        ApiExtraModels(PaginatedDto, model),
         ApiOkResponse({
             schema: {
                 title: `PaginatedResponseOf${model.name}`,

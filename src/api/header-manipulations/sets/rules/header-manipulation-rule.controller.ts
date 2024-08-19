@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Optional, Param, ParseIntPipe, Patch, Post, Put, Req, UnprocessableEntityException, ValidationPipe} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from '../../../../helpers/patch.helper'
 import {RbacRole} from '../../../../config/constants.config'
@@ -10,8 +10,6 @@ import {Auth} from '../../../../decorators/auth.decorator'
 import {SearchLogic} from '../../../../helpers/search-logic.helper'
 import {ServiceRequest} from '../../../../interfaces/service-request.interface'
 import {LoggerService} from '../../../../logger/logger.service'
-import {CreateResponseDto} from '../../../../dto/create-response.dto'
-import {PaginatedDto} from '../../../../dto/paginated.dto'
 import {PatchDto} from '../../../../dto/patch.dto'
 import {ParseOneOrManyPipe} from '../../../../pipes/parse-one-or-many.pipe'
 import {number} from 'yargs'
@@ -38,7 +36,6 @@ const resourceName = 'header-manipulations/sets'
     RbacRole.reseller,
 )
 @ApiTags('HeaderManipulation')
-@ApiExtraModels(CreateResponseDto, PaginatedDto)
 @Controller(resourceName)
 export class HeaderManipulationRuleController extends CrudController<HeaderManipulationRuleRequestDto, HeaderManipulationRuleResponseDto> {
     private readonly log = new LoggerService(HeaderManipulationRuleController.name)

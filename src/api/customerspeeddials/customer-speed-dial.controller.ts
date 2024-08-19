@@ -1,4 +1,4 @@
-import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
@@ -9,7 +9,6 @@ import {CustomerSpeedDialService} from './customer-speed-dial.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalService} from '../journals/journal.service'
 import {RbacRole} from '../../config/constants.config'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
@@ -38,7 +37,6 @@ const resourceName = 'customerspeeddials'
     RbacRole.subscriberadmin,
 )
 @ApiTags('CustomerSpeedDial')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class CustomerSpeedDialController extends CrudController<CustomerSpeedDialRequestDto, CustomerSpeedDialResponseDto> {
     private readonly log = new LoggerService(CustomerSpeedDialController.name)

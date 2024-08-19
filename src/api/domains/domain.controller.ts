@@ -1,4 +1,4 @@
-import {ApiBody, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {
     BadRequestException,
@@ -24,7 +24,6 @@ import {RbacRole} from '../../config/constants.config'
 import {Roles} from '../../decorators/roles.decorator'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {DomainSearchDto} from './dto/domain-search.dto'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
@@ -44,7 +43,6 @@ const resourceName = 'domains'
     RbacRole.system,
 )
 @ApiTags('Domain')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class DomainController extends CrudController<DomainRequestDto, DomainResponseDto> {
     private readonly log = new LoggerService(DomainController.name)

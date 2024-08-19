@@ -1,9 +1,8 @@
 import {Controller, Get, Req} from '@nestjs/common'
-import {ApiExtraModels, ApiTags} from '@nestjs/swagger'
+import {ApiTags} from '@nestjs/swagger'
 import {PbxResponseDto} from './dto/pbx-response.dto'
 import {CrudController} from '../../controllers/crud.controller'
 import {Auth} from '../../decorators/auth.decorator'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {License as LicenseType, RbacRole} from '../../config/constants.config'
@@ -18,7 +17,6 @@ const resourceName = 'pbx'
     RbacRole.subscriber,
 )
 @ApiTags('Pbx')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 @License(LicenseType.pbx)
 export class PbxController extends CrudController<never, PbxResponseDto> {

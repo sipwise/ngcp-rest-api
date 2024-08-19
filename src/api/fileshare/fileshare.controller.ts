@@ -1,4 +1,4 @@
-import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {
     BadRequestException,
     Body,
@@ -23,7 +23,6 @@ import {FileInterceptor} from '@nestjs/platform-express'
 import {AppService} from '../../app.service'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {FileshareSearchDto} from './dto/fileshare-search.dto'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
@@ -35,7 +34,6 @@ import {ParseUUIDArrayPipe} from '../../pipes/parse-uuid-array.pipe'
 const resourceName = 'fileshare'
 
 @ApiTags('Fileshare')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class FileshareController extends CrudController<FileshareRequestDto, FileshareResponseDto> {
     private readonly log = new LoggerService(FileshareController.name)

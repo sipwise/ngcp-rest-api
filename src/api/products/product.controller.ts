@@ -1,5 +1,5 @@
 import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
-import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {JournalService} from '../journals/journal.service'
 import {ProductResponseDto} from './dto/product-response.dto'
@@ -7,7 +7,6 @@ import {ProductService} from './product.service'
 import {RbacRole} from '../../config/constants.config'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ProductSearchDto} from './dto/product-search.dto'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {CrudController} from '../../controllers/crud.controller'
@@ -18,7 +17,6 @@ const resourceName = 'products'
 
 @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.lintercept)
 @ApiTags('Product')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class ProductController extends CrudController<never, ProductResponseDto>{
     private readonly log = new LoggerService(ProductController.name)

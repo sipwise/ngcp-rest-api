@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req, UnprocessableEntityException} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'helpers/patch.helper'
 import {RbacRole} from '../../config/constants.config'
@@ -12,8 +12,6 @@ import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {LoggerService} from '../../logger/logger.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalService} from '../journals/journal.service'
-import {CreateResponseDto} from '../../dto/create-response.dto'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {PatchDto} from '../../dto/patch.dto'
 import {NCOSSetRequestDto} from './dto/ncos-set-request.dto'
 import {NCOSSetLevelRequestDto} from './dto/ncos-set-level-request.dto'
@@ -39,7 +37,6 @@ const resourceName = 'ncos/sets'
     RbacRole.reseller,
 )
 @ApiTags('NCOS')
-@ApiExtraModels(CreateResponseDto, PaginatedDto)
 @Controller(resourceName)
 export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSetResponseDto> {
     private readonly log = new LoggerService(NCOSSetController.name)

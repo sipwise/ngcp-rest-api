@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'
 import {JournalService} from '../journals/journal.service'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
@@ -13,7 +13,6 @@ import {PatchDto} from '../../dto/patch.dto'
 import {number} from 'yargs'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {SystemContactSearchDto} from './dto/system-contact-search.dto'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
@@ -33,7 +32,6 @@ const resourceName = 'systemcontacts'
 
 @Auth(RbacRole.system, RbacRole.admin)
 @ApiTags('SystemContact')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class SystemContactController extends CrudController<SystemContactRequestDto, SystemContactResponseDto> {
     private readonly log = new LoggerService(SystemContactController.name)

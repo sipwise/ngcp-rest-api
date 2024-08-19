@@ -4,12 +4,11 @@ import {Operation as PatchOperation, Operation, patchToEntity} from '../../helpe
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalService} from '../journals/journal.service'
 import {Request} from 'express'
-import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {RbacRole} from '../../config/constants.config'
 import {PatchDto} from '../../dto/patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
@@ -36,7 +35,6 @@ const resourceName = 'customers'
     RbacRole.ccareadmin,
 )
 @ApiTags('Customer')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class CustomerController extends CrudController<CustomerRequestDto, CustomerResponseDto> {
     private readonly log = new LoggerService(CustomerController.name)

@@ -16,7 +16,7 @@ import {AdminRequestDto} from './dto/admin-request.dto'
 import {AdminResponseDto} from './dto/admin-response.dto'
 import {AdminSearchDto} from './dto/admin-search.dto'
 import {AdminService} from './admin.service'
-import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '../../decorators/api-put-body.decorator'
@@ -29,7 +29,6 @@ import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalService} from '../journals/journal.service'
 import {LoggerService} from '../../logger/logger.service'
 import {Operation as PatchOperation, patchToEntity, validate} from '../../helpers/patch.helper'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {ParamOrBody} from '../../decorators/param-or-body.decorator'
 import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
@@ -46,7 +45,6 @@ import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
 const resourceName = 'admins'
 
 @ApiTags('Admin')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller)
 export class AdminController extends CrudController<AdminRequestDto, AdminResponseDto> {

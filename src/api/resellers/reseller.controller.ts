@@ -6,13 +6,12 @@ import {ResellerRequestDto} from './dto/reseller-request.dto'
 import {ResellerResponseDto} from './dto/reseller-response.dto'
 import {Auth} from '../../decorators/auth.decorator'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
-import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Operation as PatchOperation, Operation, patchToEntity} from '../../helpers/patch.helper'
 import {Request} from 'express'
 import {PatchDto} from '../../dto/patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ResellerSearchDto} from './dto/reseller-search.dto'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
@@ -31,7 +30,6 @@ const resourceName = 'resellers'
 
 @Auth(RbacRole.admin, RbacRole.system)
 @ApiTags('Reseller')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 @License(LicenseType.reseller)
 export class ResellerController extends CrudController<ResellerRequestDto, ResellerResponseDto> {

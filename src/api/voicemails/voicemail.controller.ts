@@ -1,4 +1,4 @@
-import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Put, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
@@ -12,7 +12,6 @@ import {VoicemailResponseDto} from './dto/voicemail-response.dto'
 import {VoicemailService} from './voicemail.service'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {VoicemailSearchDto} from './dto/voicemail-search.dto'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
@@ -31,7 +30,6 @@ const resourceName = 'voicemails'
 
 @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller)
 @ApiTags('Voicemail')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class VoicemailController extends CrudController<VoicemailRequestDto, VoicemailResponseDto> {
     private readonly log = new LoggerService(VoicemailController.name)

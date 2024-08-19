@@ -1,12 +1,8 @@
-import {
-    ApiExtraModels,
-    ApiTags,
-} from '@nestjs/swagger'
+import {ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {Controller, Get, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {HeaderManipulationResponseDto} from './dto/header-manipulation-response.dto'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {License as LicenseType, RbacRole} from '../../config/constants.config'
@@ -20,7 +16,6 @@ const resourceName = 'header-manipulations'
     RbacRole.reseller,
 )
 @ApiTags('HeaderManipulation')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 @License(LicenseType.headerManipulation)
 export class HeaderManipulationController extends CrudController<never, HeaderManipulationResponseDto> {

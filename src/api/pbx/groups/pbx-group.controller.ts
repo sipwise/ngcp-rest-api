@@ -1,11 +1,10 @@
 import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
-import {ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {AdminResponseDto} from '../../admins/dto/admin-response.dto'
 import {PbxGroupResponseDto} from './dto/pbx-group-response.dto'
 import {PbxGroupService} from './pbx-group.service'
 import {CrudController} from '../../../controllers/crud.controller'
 import {Auth} from '../../../decorators/auth.decorator'
-import {PaginatedDto} from '../../../dto/paginated.dto'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../../logger/logger.service'
@@ -17,7 +16,6 @@ const resourceName = 'pbx/groups'
 
 @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.subscriber)
 @ApiTags('Pbx')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 @License(LicenseType.pbx)
 export class PbxGroupController extends CrudController<never, PbxGroupResponseDto> {

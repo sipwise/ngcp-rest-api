@@ -12,7 +12,7 @@ import {
     Put,
     Req,
 } from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {CustomerContactService} from './customer-contact.service'
 import {CustomerContactRequestDto} from './dto/customer-contact-request.dto'
 import {CrudController} from '../../controllers/crud.controller'
@@ -27,7 +27,6 @@ import {Operation as PatchOperation, Operation, patchToEntity} from '../../helpe
 import {PatchDto} from '../../dto/patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {CustomerContactSearchDto} from './dto/customer-contact-search.dto'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
@@ -46,7 +45,6 @@ const resourceName = 'customercontacts'
 
 @Auth(RbacRole.system, RbacRole.admin, RbacRole.ccare, RbacRole.ccareadmin, RbacRole.reseller)
 @ApiTags('CustomerContact')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class CustomerContactController extends CrudController<CustomerContactRequestDto, CustomerContactResponseDto> {
     private readonly log = new LoggerService(CustomerContactController.name)

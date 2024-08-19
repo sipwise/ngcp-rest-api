@@ -13,7 +13,7 @@ import {
     Req,
 } from '@nestjs/common'
 import {Auth} from '../../decorators/auth.decorator'
-import {ApiBody, ApiConsumes, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {CrudController} from '../../controllers/crud.controller'
 import {ContractRequestDto} from './dto/contract-request.dto'
 import {ContractResponseDto} from './dto/contract-response.dto'
@@ -26,7 +26,6 @@ import {RbacRole} from '../../config/constants.config'
 import {PatchDto} from '../../dto/patch.dto'
 import {ExpandHelper} from '../../helpers/expand.helper'
 import {ContractSearchDto} from './dto/contract-search.dto'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiCreatedResponse} from '../../decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
@@ -43,7 +42,6 @@ const resourceName = 'contracts'
 
 @Auth(RbacRole.admin, RbacRole.system)
 @ApiTags('Contract')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class ContractController extends CrudController<ContractRequestDto, ContractResponseDto> {
     private readonly log = new LoggerService(ContractController.name)

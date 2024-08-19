@@ -1,12 +1,8 @@
-import {
-    ApiExtraModels,
-    ApiTags,
-} from '@nestjs/swagger'
+import {ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {Controller, Get, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {NCOSResponseDto} from './dto/ncos-response.dto'
-import {PaginatedDto} from '../../dto/paginated.dto'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {RbacRole} from '../../config/constants.config'
@@ -19,7 +15,6 @@ const resourceName = 'ncos'
     RbacRole.reseller,
 )
 @ApiTags('NCOS')
-@ApiExtraModels(PaginatedDto)
 @Controller(resourceName)
 export class NCOSController extends CrudController<never, NCOSResponseDto> {
     private readonly log = new LoggerService(NCOSController.name)
