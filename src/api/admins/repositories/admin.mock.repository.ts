@@ -22,6 +22,7 @@ export class AdminMockRepository implements AdminRepository {
                 is_master: true,
                 billing_data: false,
                 is_superuser: true,
+                reseller_id: 1,
             }),
             2: internal.Admin.create({id: 2, login: 'administrator', role: RbacRole.admin}),
             3: internal.Admin.create({
@@ -30,13 +31,15 @@ export class AdminMockRepository implements AdminRepository {
                 saltedpass: 'verysalty',
                 role: RbacRole.reseller,
                 is_master: true,
+                reseller_id: 1,
             }),
-            4: internal.Admin.create({id: 4, login: 'reseller', role: RbacRole.reseller}),
+            4: internal.Admin.create({id: 4, login: 'reseller', role: RbacRole.reseller, reseller_id: 1}),
             5: internal.Admin.create({
                 id: 5,
                 login: 'ccareadmin_master',
                 role: RbacRole.ccareadmin,
                 is_master: true,
+                reseller_id: 1,
             }),
             6: internal.Admin.create({id: 6, login: 'ccareadmin', role: RbacRole.ccareadmin}),
         }
