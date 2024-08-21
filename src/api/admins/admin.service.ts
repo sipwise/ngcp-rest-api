@@ -9,15 +9,18 @@ import {I18nService} from 'nestjs-i18n'
 import {AdminOptions} from './interfaces/admin-options.interface'
 import {Dictionary} from '../../helpers/dictionary.helper'
 import {RbacRole} from '../../config/constants.config'
+import {AdminPasswordJournalMariadbRepository} from './repositories/admin-password-journal.mariadb.repository'
+import {AdminPasswordJournal} from '../../entities/internal'
 
 @Injectable()
 export class AdminService { //} implements CrudService<internal.Admin> {
     private readonly log = new LoggerService(AdminService.name)
 
     constructor(
-        private readonly app: AppService,
+        @Inject(AppService) private readonly app: AppService,
         @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(AdminMariadbRepository) private readonly adminRepo: AdminMariadbRepository,
+        @Inject(AdminPasswordJournalMariadbRepository) private readonly adminPasswordJournalRepo: AdminPasswordJournalMariadbRepository,
         @Inject(AclRoleRepository) private readonly aclRepo: AclRoleRepository,
     ) {
     }
@@ -28,7 +31,24 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             await this.populateAdmin(admin, accessorRole, sr)
         }
         const createdIds = await this.adminRepo.create(admins)
-        return await this.adminRepo.readWhereInIds(createdIds, this.getAdminOptionsFromServiceRequest(sr))
+        const created = await this.adminRepo.readWhereInIds(createdIds, this.getAdminOptionsFromServiceRequest(sr))
+
+        const keepPasswordAmount = this.app.config.security.password.web_keep_last_used
+        if (this.app.config.security.password.web_validate && this.app.config.security.password.web_keep_last_used > 0) {
+            for (const admin of admins) {
+                if (admin.password) {
+                    const createdAdmin = created.find(a => a.login == admin.login)
+                    if (createdAdmin) {
+                        admin.id = createdAdmin.id
+                        const journalHash = await admin.generateSaltedpass(6)
+                        const journal = AdminPasswordJournal.create({admin_id: admin.id, value: journalHash})
+                        await this.adminPasswordJournalRepo.create([journal])
+                        await this.adminPasswordJournalRepo.keepLastNPasswords(admin.id, keepPasswordAmount)
+                    }
+                }
+            }
+        }
+        return created
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Admin[], number]> {
@@ -129,8 +149,28 @@ export class AdminService { //} implements CrudService<internal.Admin> {
                 this.i18n.t('errors.PERMISSION_DENIED'),
             )
         }
-        if (admin.password)
-            await admin.generateSaltedpass()
+
+        if (admin.password) {
+            admin.saltedpass = await admin.generateSaltedpass()
+            if (admin.id &&
+                this.app.config.security.password.web_validate &&
+                this.app.config.security.password.web_keep_last_used > 0
+            ) {
+                const lastPasswords = await this.adminPasswordJournalRepo.readLastNPasswords(admin.id, this.app.config.security.password.web_keep_last_used)
+                for (const pass of lastPasswords) {
+                    const [storedSalt, storedHash] = pass.value.split('$')
+                    const generatedHash = await admin.generateSaltedpass(6, storedSalt)
+                    if (generatedHash.split('$')[1] === storedHash) {
+                        throw new UnprocessableEntityException(this.i18n.t('errors.PASSWORD_ALREADY_USED'))
+                    }
+                }
+                const journalHash = await admin.generateSaltedpass(6)
+                const journal = AdminPasswordJournal.create({admin_id: admin.id, value: journalHash})
+                const keepPasswordAmount = this.app.config.security.password.web_keep_last_used
+                await this.adminPasswordJournalRepo.create([journal])
+                await this.adminPasswordJournalRepo.keepLastNPasswords(admin.id, keepPasswordAmount)
+            }
+        }
 
         if (sr.user.reseller_id_required || admin.reseller_id == undefined) {
             admin.reseller_id = sr.user.reseller_id

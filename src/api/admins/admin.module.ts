@@ -6,6 +6,7 @@ import {ExpandModule} from '../../helpers/expand.module'
 import {JournalModule} from '../journals/journal.module'
 import {JournalService} from '../journals/journal.service'
 import {AclRoleRepository} from '../../repositories/acl-role.repository'
+import {AdminPasswordJournalMariadbRepository} from './repositories/admin-password-journal.mariadb.repository'
 
 @Module({
     imports: [
@@ -19,6 +20,7 @@ import {AclRoleRepository} from '../../repositories/acl-role.repository'
     providers: [
         AclRoleRepository,
         AdminMariadbRepository,
+        AdminPasswordJournalMariadbRepository,
         AdminService,
         JournalService,
     ],

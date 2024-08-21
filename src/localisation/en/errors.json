@@ -146,5 +146,9 @@
   "ENTRY_NOT_FOUND": {
     "message": "Entry not found",
     "code": 10037
+  },
+  "PASSWORD_ALREADY_USED": {
+    "message": "Password has been used before",
+    "code": 10038
   }
 }
