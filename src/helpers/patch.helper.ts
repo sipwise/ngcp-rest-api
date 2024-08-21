@@ -26,10 +26,12 @@ export async function patchToEntity<T extends {id?: number}, D extends RequestDt
     }
     const patchEntity = Object.assign(Object.create(oldEntity), oldEntity)
     const dto = applyPatch(new requestDto(patchEntity), patch).newDocument
-    const entity: T = Object.assign(patchEntity, dto.toInternal({id: +oldEntity.id}))
-    const errors = await classValidate(entity)
-    if (errors && errors.length)
+    const errors = await classValidate(dto)
+    if (errors && errors.length) {
         throw new UnprocessableEntityException(formatValidationErrors(errors))
+    }
+
+    const entity: T = Object.assign(patchEntity, dto.toInternal({id: +oldEntity.id}))
     return entity
 }
 

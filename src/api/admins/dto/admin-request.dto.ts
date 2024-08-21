@@ -8,14 +8,16 @@ import {AdminInterface} from '../../../entities/internal/admin.internal.entity'
 import {RequestDto, RequestDtoOptions} from '../../../dto/request.dto'
 
 export class AdminRequestDto implements RequestDto {
+    @IsOptional()
     @IsEmail()
     @MaxLength(255)
     @ApiPropertyOptional({description: 'Email address', example: 'admin@example.com'})
         email?: string
 
+    @IsOptional()
     @IsNotEmpty()
     @ApiPropertyOptional({example: 1, description: 'Unique identifier of a reseller', type: 'integer'})
-        reseller_id: number
+        reseller_id?: number
 
     @IsNotEmpty()
     @MinLength(5)

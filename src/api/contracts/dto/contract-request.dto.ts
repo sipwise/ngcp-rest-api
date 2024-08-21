@@ -1,5 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsEnum, IsNotEmpty, IsNumber} from 'class-validator'
+import {IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString} from 'class-validator'
 import {
     ContractBillingProfileDefinition,
     ContractStatus,
@@ -9,10 +9,11 @@ import {internal} from '../../../entities'
 import {RequestDto, RequestDtoOptions} from '../../../dto/request.dto'
 
 export class ContractRequestDto implements RequestDto {
+    @IsOptional()
     @IsEnum(ContractBillingProfileDefinition)
     @IsNotEmpty()
     @ApiProperty({description: 'Explicitly declare the way how you want to set billing profiles for this API call.'})
-        billing_profile_definition: ContractBillingProfileDefinition
+        billing_profile_definition?: ContractBillingProfileDefinition
 
     @IsNumber()
     @ApiProperty({
@@ -25,9 +26,11 @@ export class ContractRequestDto implements RequestDto {
     @ApiProperty({description: 'The contact id this contract belongs to'})
         contact_id?: number
 
+    @IsOptional()
     @IsNotEmpty()
+    @IsString()
     @ApiProperty({description: 'A non-unique external ID e.g., provided by a 3rd party provisioning'})
-        external_id: string
+        external_id?: string
 
     @IsNotEmpty()
     @IsEnum(ContractStatus)
