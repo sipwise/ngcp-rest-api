@@ -1,4 +1,5 @@
 export {Admin} from './admin.internal.entity'
+export {AdminPasswordJournal} from './admin-password-journal.internal.entity'
 export {AclRole} from './acl-role.internal.entity'
 export {BillingMapping} from './billing-mapping.internal.entity'
 export {BillingNetwork} from './billing-network.internal.entity'

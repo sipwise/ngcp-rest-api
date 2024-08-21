@@ -17,6 +17,8 @@ import {deepCopy} from '../../helpers/deep-copy.helper'
 import {AdminOptions} from './interfaces/admin-options.interface'
 import {Dictionary} from '../../helpers/dictionary.helper'
 import {AdminRequestDto} from './dto/admin-request.dto'
+import {AdminPasswordJournalMockRepository} from './repositories/admin-password-journal.mock.repository'
+import {AdminPasswordJournalMariadbRepository} from './repositories/admin-password-journal.mariadb.repository'
 
 const role_data = internal.AclRole.create({
     has_access_to: [
@@ -39,6 +41,7 @@ const user: AuthResponseDto = {
 describe('AdminService', () => {
     let service: AdminService
     let adminMockRepo: AdminMockRepository
+    let adminPasswordJournalMockRepo: AdminPasswordJournalMockRepository
     const aclRoleMockRepo: AclRoleMockRepository = new AclRoleMockRepository()
 
     let sr: ServiceRequest
@@ -46,11 +49,13 @@ describe('AdminService', () => {
 
     beforeEach(async () => {
         adminMockRepo = new AdminMockRepository()
+        adminPasswordJournalMockRepo = new AdminPasswordJournalMockRepository()
         const module: TestingModule = await Test.createTestingModule({
-            imports: [AdminModule, ExpandModule, AppModule],
+            imports: [AppModule, AdminModule, ExpandModule],
         })
             .overrideProvider(AclRoleRepository).useValue(aclRoleMockRepo)
             .overrideProvider(AdminMariadbRepository).useValue(adminMockRepo)
+            .overrideProvider(AdminPasswordJournalMariadbRepository).useValue(adminPasswordJournalMockRepo)
             .compile()
         service = module.get<AdminService>(AdminService)
         sr = {returnContent: true, headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
@@ -225,10 +230,59 @@ describe('AdminService', () => {
             expect(got.saltedpass).not.toStrictEqual(oldPass)
         })
 
+        it('should not update password if it was previously set', async () => {
+            const id = 2
+            const old = await adminMockRepo.readById(id, options)
+            const oldPass = old.saltedpass
+            const updates = new Dictionary<internal.Admin>()
+            updates[id] = internal.Admin.create({
+                login: 'jest',
+                role: 'admin',
+                password: 'supersecret1',
+            })
+            await service.update(updates, sr) // this will set the password to a new value
+            await expect(service.update(updates, sr)).rejects.toThrow() // this will try to set the password to the same value
+        })
+
         it('should throw an error if ID does not exist', async () => {
             const id = 100
             const updates = new Dictionary<internal.Admin>()
             updates[id] = internal.Admin.create({})
+            await expect(service.update(updates, sr)).rejects.toThrow()
+        })
+
+        it('should not replace the whole object if the password is the same', async () => {
+            const created = (await service.create([internal.Admin.create({
+                billing_data: true,
+                call_data: true,
+                can_reset_password: true,
+                email: 'jester@example.com',
+                is_active: true,
+                is_master: false,
+                login: 'jester',
+                read_only: false,
+                reseller_id: 4,
+                password: 'supersecret',
+                role: 'reseller',
+                show_passwords: true,
+            })], sr))[0]
+
+            const updates = new Dictionary<internal.Admin>()
+
+            updates[created.id] = internal.Admin.create({
+                billing_data: false,
+                call_data: false,
+                can_reset_password: false,
+                is_active: false,
+                is_master: true,
+                login: 'anotherjester',
+                password: 'supersecret',
+                read_only: true,
+                reseller_id: 2,
+                role: 'reseller',
+                show_passwords: false,
+            })
+
             await expect(service.update(updates, sr)).rejects.toThrow()
         })
 
@@ -241,9 +295,9 @@ describe('AdminService', () => {
                 is_active: true,
                 is_master: false,
                 login: 'jester',
-                password: 'supersecret',
                 read_only: false,
                 reseller_id: 4,
+                password: 'supersecret1',
                 role: 'reseller',
                 show_passwords: true,
             })], sr))[0]

@@ -1,5 +1,5 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsEmail, IsEnum, IsNotEmpty, IsOptional, MaxLength, MinLength} from 'class-validator'
+import {IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength} from 'class-validator'
 import {internal} from '../../../entities'
 import {RbacRole} from '../../../config/constants.config'
 import {IsValidPassword} from '../../../decorators/is-valid-password.decorator'
@@ -57,10 +57,11 @@ export class AdminRequestDto implements RequestDto {
     @ApiPropertyOptional({description: 'Can reset password', default: true})
         can_reset_password?: boolean
 
-    @IsOptional()
-    @IsValidPassword()
+    @IsString()
+    @IsNotEmpty()
+    @IsValidPassword({username: 'login'})
     @ApiProperty({description: 'Password to be set for the user'})
-        password?: string
+        password: string
 
     @IsNotEmpty()
     @IsEnum(RbacRole)
