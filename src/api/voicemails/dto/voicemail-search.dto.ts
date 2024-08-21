@@ -11,6 +11,12 @@ export class VoicemailSearchDto implements VoicemailResponseDto {
     _alias = {
         subscriber_id: 'bSubscriber.id',
         caller: 'callerid',
+        folder: {
+            field: 'dir',
+            comparator: 'like',
+            transform: 'lower',
+            format: (args: string[]) => `/var/spool/asterisk/voicemail/default/%/${args[0]}`,
+        },
         time: 'origtime',
     }
 }

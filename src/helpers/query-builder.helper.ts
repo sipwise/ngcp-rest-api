@@ -44,7 +44,7 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
 
         let qb_alias = qb.alias
         let alias    = propertyAlias
-        if (propertyAlias.indexOf('.') != -1) {
+        if (typeof propertyAlias === 'string' && propertyAlias.indexOf('.') != -1) {
             [qb_alias, alias] = propertyAlias.split('.')
         }
 
@@ -52,11 +52,31 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
         const whereComparator = searchValue.includes('*') ? 'like' : '='
         const value = searchValue.replace(/\*/g, '%')
 
+        const complexSearch: (args: string[]) => string = typeof propertyAlias === 'object' && propertyAlias['format']
+
+        let whereBy: string
+        let whereValue: object | null
+        if (complexSearch) {
+            const field = propertyAlias['field']
+            const comparator = propertyAlias['comparator']
+            const transform = propertyAlias['transform']
+            const formatValue = complexSearch([value])
+            if (transform) {
+                whereBy = `${transform}(${qb_alias}.${field}) ${comparator} ${transform}('${formatValue}')`
+            } else {
+                whereBy = `${qb_alias}.${alias} ${comparator} :${field}`
+                whereValue = {[`${field}`]: formatValue}
+            }
+        } else {
+            whereBy = `${qb_alias}.${alias} ${whereComparator} :${propertyAlias}`
+            whereValue = {[`${propertyAlias}`]: value}
+        }
+
         // TODO: value should be number | string | boolean and add type casting
         if (searchLogic.searchOr) {
-            qb.orWhere(`${qb_alias}.${alias} ${whereComparator} :${propertyAlias}`, {[`${propertyAlias}`]: value})
+            qb.orWhere(whereBy, whereValue)
         } else {
-            qb.andWhere(`${qb_alias}.${alias} ${whereComparator} :${propertyAlias}`, {[`${propertyAlias}`]: value})
+            qb.andWhere(whereBy, whereValue)
         }
     })
 }

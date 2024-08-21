@@ -14,7 +14,7 @@ enum OrderByDirection {
 
 export class SearchLogic {
     joins?: Join[]
-    aliases?: {[key: string]: string}
+    aliases?: {[key: string]: string | object}
     searchableFields: string[]
     @ApiPropertyOptional({default: 1})
         page: number
@@ -27,7 +27,7 @@ export class SearchLogic {
     @ApiPropertyOptional({default: false, name: 'search_or'})
         searchOr: boolean
 
-    constructor(sr: ServiceRequest, searchableFields: string[], joins?: Join[], aliases?: {[key: string]: string}) {
+    constructor(sr: ServiceRequest, searchableFields: string[], joins?: Join[], aliases?: {[key: string]: string | object}) {
         this.searchableFields = searchableFields
         delete this.searchableFields['_alias']
         delete this.searchableFields['_joins']
@@ -43,8 +43,13 @@ export class SearchLogic {
             this.orderBy = sr.query['order_by']
             if (!searchableFields.includes(this.orderBy))
                 throw new BadRequestException()
-            if (this.aliases && this.orderBy in this.aliases)
-                this.orderBy = this.aliases[this.orderBy]
+            if (this.aliases && this.orderBy in this.aliases) {
+                const propertyAlias = this.aliases[this.orderBy]
+                if (typeof propertyAlias == 'object' && 'field' in Object.keys(propertyAlias))
+                    this.orderBy = propertyAlias['field']
+                else if (typeof propertyAlias == 'string')
+                    this.orderBy = propertyAlias
+            }
             this.orderByDirection =
                 sr.query['order_by_direction'] != null &&
                 sr.query['order_by_direction'].toUpperCase() === OrderByDirection.DESC
