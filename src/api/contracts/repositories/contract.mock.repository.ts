@@ -1,7 +1,7 @@
 import {ContractRepository} from '../interfaces/contract.respository'
 import {internal} from '../../../entities'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {ContractStatus, ContractType} from '../../../entities/internal/contract.internal.entity'
+import {ContractBillingProfileDefinition, ContractStatus, ContractType} from '../../../entities/internal/contract.internal.entity'
 import {ContactStatus} from '../../../entities/internal/contact.internal.entity'
 import {NotFoundException} from '@nestjs/common'
 import {ProductClass} from '../../../entities/internal/product.internal.entity'
@@ -40,18 +40,27 @@ export class ContractMockRepository implements ContractRepository {
                 status: ContractStatus.Active,
                 contact_id: 3,
                 type: ContractType.Reseller,
+                billing_profile_definition: ContractBillingProfileDefinition.ID,
+                billing_profile_id: 1,
+                external_id: '1',
             }),
             2: internal.Contract.create({
                 id: 2,
                 status: ContractStatus.Active,
                 contact_id: 2,
                 type: ContractType.SipPeering,
+                billing_profile_definition: ContractBillingProfileDefinition.ID,
+                billing_profile_id: 1,
+                external_id: '1',
             }),
             3: internal.Contract.create({
                 id: 3,
                 status: ContractStatus.Active,
                 contact_id: 1,
                 type: ContractType.Reseller,
+                billing_profile_definition: ContractBillingProfileDefinition.ID,
+                billing_profile_id: 1,
+                external_id: '1',
             }),
         }
 

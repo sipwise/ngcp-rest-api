@@ -102,6 +102,7 @@ describe('ContractsService', () => {
                 contact_id: 3,
                 status: ContractStatus.Active,
                 type: ContractType.Reseller,
+                billing_profile_id: 1,
             })
             const ids = await service.update(updates, sr)
             const result = await service.read(ids[0], sr)
@@ -115,6 +116,7 @@ describe('ContractsService', () => {
                 contact_id: contactId,
                 status: ContractStatus.Active,
                 type: ContractType.Reseller,
+                billing_profile_id: 1,
             })
             await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
         })
@@ -154,9 +156,7 @@ describe('ContractsService', () => {
                 {op: 'replace', path: '/type', value: 'invalid'},
             ]
             const oldEntity = await service.read(id, sr)
-            const entity = await patchToEntity<internal.Contract, ContractRequestDto>(oldEntity, patch, ContractRequestDto)
-            const update = new Dictionary<internal.Contract>(id.toString(), entity)
-            await expect(service.update(update, sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(patchToEntity<internal.Contract, ContractRequestDto>(oldEntity, patch, ContractRequestDto)).rejects.toThrow(UnprocessableEntityException)
         })
     })
 })
