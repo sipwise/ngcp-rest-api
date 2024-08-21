@@ -97,18 +97,19 @@ export class Admin implements AdminInterface {
         }
     }
 
-    /**
-     * Generates salted hash from plain text password.
-     */
-    async generateSaltedpass() {
+    async generateSaltedpass(bcrypt_cost: number = 13, salt?: string) {
         const bcrypt_version = 'b'
-        const bcrypt_cost = 13
-        const re = new RegExp(`^\\$2${bcrypt_version}\\$${bcrypt_cost}\\$(.*)$`)
+        if (!salt) {
+            salt = await genSalt(bcrypt_cost)
+        } else {
+            salt = `$2${bcrypt_version}$${bcrypt_cost.toString().padStart(2, '0')}$${salt}`
+        }
 
-        const salt = await genSalt(bcrypt_cost, bcrypt_version)
-        const hashPwd = (await hash(this.password, salt)).match(re)[1]
-        const b64salt = hashPwd.slice(0, 22)
-        const b64hash = hashPwd.slice(22)
-        this.saltedpass = b64salt + '$' + b64hash
+        // Generate the hash using bcrypt with the custom salt
+        const fullHash = await hash(this.password, salt)
+        const rawSalt = fullHash.slice(7, 29)
+        const b64hash = fullHash.slice(29)
+        const saltedpass = `${rawSalt}$${b64hash}`
+        return saltedpass
     }
 }

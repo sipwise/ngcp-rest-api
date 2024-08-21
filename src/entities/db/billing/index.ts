@@ -1,6 +1,7 @@
 export {AclRoleMapping} from './acl-role-mapping.mariadb.entity'
 export {AclRole} from './acl-role.mariadb.entity'
 export {Admin} from './admin.mariadb.entity'
+export {AdminPasswordJournal} from './admin-password-journal.mariadb.entity'
 export {BillingMapping} from './billing-mapping.mariadb.entity'
 export {BillingNetwork} from './billing-network.mariadb.entity'
 export {BillingProfile} from './billing-profile.mariadb.entity'
