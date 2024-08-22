@@ -25,6 +25,7 @@ async function bootstrap() {
                 rejectUnauthorized: false,
             },
             logger: WinstonModule.createLogger(winstonLoggerConfig),
+            cors: true,
         },
     )
 
