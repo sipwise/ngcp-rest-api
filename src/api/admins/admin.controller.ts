@@ -139,20 +139,18 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         @Body() update: AdminRequestDto,
         @Req() req: Request,
     ): Promise<AdminResponseDto> {
-        this.log.debug({message: 'update admin by id', func: this.update.name, url: req.url, method: req.method})
-        const admin = Object.assign(new AdminRequestDto(), update)
+        this.log.debug({
+            message: 'update admin by id',
+            func: this.update.name,
+            url: req.url,
+            method: req.method,
+        })
         const sr = new ServiceRequest(req)
-        this.log.debug({message: 'put mode legacy', enabled: this.app.config.legacy.put})
-        let response: AdminResponseDto
-        if (this.app.config.legacy.put) {
-            const update = new Dictionary<internal.Admin>()
-            update[id] = admin.toInternal({setDefaults: false, id: id, assignNulls: true})
-            const ids = await this.adminService.update(update, sr)
-            const updateAdmin = await this.adminService.read(ids[0], sr)
-            response = new AdminResponseDto(updateAdmin, sr.user.role)
-        }
-        const updateAdmin = await this.adminService.updateOrCreate(id, await admin.toInternal({setDefaults: true, id: id, assignNulls:true}), sr)
-        response = new AdminResponseDto(updateAdmin, sr.user.role)
+        const updates = new Dictionary<internal.Admin>()
+        update[id] = Object.assign(new AdminRequestDto(), update).toInternal({setDefaults: false, id: id, assignNulls: true})
+        const ids = await this.adminService.update(updates, sr)
+        const updateAdmin = await this.adminService.read(ids[0], sr)
+        const response = new AdminResponseDto(updateAdmin, sr.user.role)
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
