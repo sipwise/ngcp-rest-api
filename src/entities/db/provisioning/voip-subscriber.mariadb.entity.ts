@@ -165,6 +165,15 @@ export class VoipSubscriber extends BaseEntity {
     })
         create_timestamp!: string
 
+    @Column({
+        type: 'int',
+        width: 11,
+        nullable: false,
+        unsigned: true,
+        default: 0,
+    })
+        ban_increment_stage!: number
+
     @OneToOne(() => BillingVoipSubscriber)
     @JoinColumn({name: 'uuid', referencedColumnName: 'uuid'})
         billing_voip_subscriber: BillingVoipSubscriber
