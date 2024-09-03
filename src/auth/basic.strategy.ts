@@ -1,16 +1,17 @@
-import {Injectable, UnauthorizedException} from '@nestjs/common'
+import {Injectable, UnauthorizedException, UnprocessableEntityException} from '@nestjs/common'
 import {PassportStrategy} from '@nestjs/passport'
-import {ServiceRequest} from 'interfaces/service-request.interface'
+import {ServiceRequest} from '../interfaces/service-request.interface'
 import {BasicStrategy} from 'passport-http'
 import {Strategy} from 'passport-local'
 import {AuthService} from './auth.service'
 import {AuthResponseDto} from './dto/auth-response.dto'
+import {Request} from 'express'
 
 /**
  * Defines authentication function format
  */
 interface Authenticator {
-    (username: string, password: string, realm: string, service: AuthService): Promise<AuthResponseDto>
+    (req:ServiceRequest, username: string, password: string, realm: string, service: AuthService): Promise<AuthResponseDto>
 }
 
 /**
@@ -19,21 +20,31 @@ interface Authenticator {
  * @param password Login password
  * @param service AuthService that is called to validate the Admin
  */
-async function pwd_auth(username: string, password: string, realm: string, service: AuthService): Promise<AuthResponseDto> {
+async function pwd_auth(req:ServiceRequest, username: string, password: string, realm: string, service: AuthService): Promise<AuthResponseDto> {
+    if (realm != 'admin' && realm != 'subscriber')
+        throw new UnprocessableEntityException()
     if (realm == 'subscriber') {
         const userInfo = username.split('@')
         if (userInfo.length != 2)
             throw new UnauthorizedException()
-        const subscriber = await service.validateSubscriber(userInfo[0], userInfo[1], password)
+        const domain = userInfo[1]
+        const subscriber = await service.validateSubscriber(req, userInfo[0], password, domain, realm)
         if (!subscriber) {
+            await service.registerFailedLoginAttempt(userInfo[0], domain, realm, req.req.ip)
             throw new UnauthorizedException()
         }
+        await service.clearFailedLoginAttempts(userInfo[0], domain, realm, req.req.ip)
+        await service.resetBanIncrementStage(userInfo[0], realm)
         return subscriber
     } else {
-        const admin = await service.validateAdmin(username, password)
+        const domain = req.req.header('host') || 'ngcp-rest-api'
+        const admin = await service.validateAdmin(req, username, password, domain, realm)
         if (!admin) {
+            await service.registerFailedLoginAttempt(username, domain, realm, req.req.ip)
             throw new UnauthorizedException()
         }
+        await service.clearFailedLoginAttempts(username, domain, realm, req.req.ip)
+        await service.resetBanIncrementStage(username, realm)
         return admin
     }
 }
@@ -61,11 +72,12 @@ export class BasicHTTPStrategy extends PassportStrategy(BasicStrategy) {
      * @param username Username in 'Authorization' header
      * @param password Password in 'Authorization' header
      */
-    async validate(req: ServiceRequest, username: string, password: string): Promise<AuthResponseDto> {
+    async validate(req: Request, username: string, password: string): Promise<AuthResponseDto> {
+        const sr = new ServiceRequest(req)
         let realm = 'admin'
         if ('x-auth-realm' in req.headers)
-            realm = req.headers['x-auth-realm']
-        return await this.auth(username, password, realm, this.authService)
+            realm = sr.headers['x-auth-realm']
+        return await this.auth(sr, username, password, realm, this.authService)
     }
 }
 
@@ -92,11 +104,12 @@ export class BasicJSONStrategy extends PassportStrategy(Strategy) {
      * @param username Username from JSON
      * @param password Password from JSON
      */
-    async validate(req: ServiceRequest, username: string, password: string): Promise<AuthResponseDto> {
+    async validate(req: Request, username: string, password: string): Promise<AuthResponseDto> {
+        const sr = new ServiceRequest(req)
         let realm = 'admin'
         if ('x-auth-realm' in req.headers)
-            realm = req.headers['x-auth-realm']
-        return await this.auth(username, password, realm, this.authService)
+            realm = sr.headers['x-auth-realm']
+        return await this.auth(sr, username, password, realm, this.authService)
     }
 }
 

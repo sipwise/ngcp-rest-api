@@ -1,4 +1,4 @@
-import {ForbiddenException, Injectable} from '@nestjs/common'
+import {ForbiddenException, Injectable, UnauthorizedException} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
 import {AppService} from '../app.service'
 import {AuthResponseDto} from './dto/auth-response.dto'
@@ -6,6 +6,7 @@ import {compare} from 'bcrypt'
 import {db} from '../entities'
 import {RbacRole} from '../config/constants.config'
 import {LoggerService} from '../logger/logger.service'
+import {ServiceRequest} from '../interfaces/service-request.interface'
 
 /**
  * `AuthService` provides functionality to authenticate Admins and to sign JWTs for authenticated users
@@ -22,6 +23,13 @@ export class AuthService {
         private readonly app: AppService,
         private jwtService: JwtService,
     ) {
+    }
+
+    async getRedisBanDb() {
+        const DB = 19
+        const redis = await this.app.redis
+        await redis.select(DB)
+        return redis
     }
 
     isAdminValid(admin: db.billing.Admin): boolean {
@@ -46,7 +54,7 @@ export class AuthService {
      *
      * @returns Authenticated `AuthResponseDto` on success else `null`
      */
-    async validateAdmin(username: string, password: string): Promise<AuthResponseDto> {
+    async validateAdmin(req:ServiceRequest, username: string, password: string, domain:string, realm:string): Promise<AuthResponseDto> {
         this.log.debug({message: 'starting user authentication', method: this.validateAdmin.name, username: username})
         const admin = await this.app.dbRepo(db.billing.Admin).findOne({
             where: {login: username},
@@ -150,7 +158,7 @@ export class AuthService {
      *
      * @returns Authenticated `AuthResponseDto` on success else `null`
      */
-    async validateSubscriber(username: string, domain: string, password: string): Promise<AuthResponseDto> {
+    async validateSubscriber(req: ServiceRequest, username: string, password: string, domain: string, realm:string): Promise<AuthResponseDto> {
         this.log.debug({
             message: 'starting subscriber user authentication',
             method: this.validateAdmin.name,
@@ -233,5 +241,106 @@ export class AuthService {
             return true
         }
         return await compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`)
+    }
+
+    async ban(username: string, domain: string, realm: string, ip: string) {
+        if (!this.app.config.security.login.ban_enable) {
+            return
+        }
+
+        const minTime = this.app.config.security.login.ban_min_time || 300
+        const maxTime = this.app.config.security.login.ban_max_time || 3600
+        const increment = this.app.config.security.login.ban_increment || 300
+        const key = `login:ban:${username}:${domain}:${realm}:${ip}`
+        let incrementStage = -1
+        let expire = 3600
+
+        const userRepo = realm === 'subscriber' ? db.provisioning.VoipSubscriber : db.billing.Admin
+        const userField = realm === 'subscriber' ? 'webusername' : 'login'
+        const user = await this.app.dbRepo(userRepo).findOne({
+            where: {
+                [userField]: username,
+            },
+            select: ['ban_increment_stage'],
+        })
+        if (user) {
+            incrementStage = user.ban_increment_stage
+        }
+        if (incrementStage >= 0) {
+            expire = Math.min(maxTime, minTime + incrementStage * increment)
+            incrementStage++
+        }
+
+        this.app.logger().debug({
+            message: `Banning user for ${expire} seconds`,
+            username: username,
+            domain: domain,
+            realm: realm,
+            ip: ip,
+        })
+
+        await (await this.getRedisBanDb()).hset(key, 'banned_at', Math.floor(Date.now() / 1000))
+        await (await this.getRedisBanDb()).expire(key, expire)
+        if (incrementStage >= 0 && user) {
+            await this.app.dbRepo(userRepo).update({[userField]: username}, {ban_increment_stage: incrementStage})
+        }
+    }
+
+    async registerFailedLoginAttempt(username:string, domain:string, realm:string, ip:string) {
+        if (!this.app.config.security.login.ban_enable) {
+            return
+        }
+        const maxAttempts = this.app.config.security.login.max_attempts
+        const expire = this.app.config.security.login.ban_max_time || 3600
+        const key = `login:fail:${username}:${domain}:${realm}:${ip}`
+        const attempted = +(await (await this.getRedisBanDb()).hget(key, 'attempts') || 0) + 1
+
+        if (attempted >= maxAttempts) {
+            await this.ban(username, domain, realm, ip)
+        } else {
+            await (await this.getRedisBanDb()).multi()
+                .hset(key, 'attempts', attempted)
+                .hset(key, 'last_attempt', Math.floor(Date.now() / 1000))
+                .expire(key, expire)
+                .exec()
+        }
+    }
+
+    async isUserBanned(username:string, domain:string, realm:string, ip:string) {
+        if (!this.app.config.security.login.ban_enable) {
+            return false
+        }
+        const key = `login:ban:${username}:${domain}:${realm}:${ip}`
+        return await (await this.getRedisBanDb()).exists(key) == 1
+    }
+
+    async clearFailedLoginAttempts(username:string, domain:string, realm:string, ip:string) {
+        if (!this.app.config.security.login.ban_enable) {
+            return
+        }
+        const key = `login:fail:${username}:${domain}:${realm}:${ip}`
+        await (await this.getRedisBanDb()).del(key)
+    }
+
+    async resetBanIncrementStage(username: string, realm: string) {
+        if (!this.app.config.security.login.ban_enable) {
+            return
+        }
+        const userRepo = realm === 'subscriber' ? db.provisioning.VoipSubscriber : db.billing.Admin
+        const userField = realm === 'subscriber' ? 'webusername' : 'login'
+
+        const user = await this.app.dbRepo(userRepo).findOne({
+            where: {
+                [userField]: username,
+            },
+        })
+
+        if (user) {
+            this.app.logger().debug({
+                message: 'Resetting ban increment stage',
+                username: username,
+            })
+            await this.app.dbRepo(userRepo).update({[userField]: username}, {ban_increment_stage: 0})
+        }
     }
 }
