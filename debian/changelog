@@ -1,3 +1,15 @@
+ngcp-rest-api (12.5.1.3+0~mr12.5.1.3) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [1a01126] MT#60541 Improve PUT behaviour
+  * [3d15b3c] MT#60739 Fix PATCH validation
+  * [5f41f98] MT#60739 Validate only requested changes on PATCH
+  * [9a8d799] MT#60802 Remove new PUT implementation from admins
+  * [57a1ee0] MT#60657 Implement enhanced password validation
+  * [e22a365] MT#60659 Implement login progressive ban support for admins
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 11 Sep 2024 15:05:29 +0200
+
 ngcp-rest-api (12.5.1.2+0~mr12.5.1.2) unstable; urgency=medium
 
   [ Kirill Solomko ]
