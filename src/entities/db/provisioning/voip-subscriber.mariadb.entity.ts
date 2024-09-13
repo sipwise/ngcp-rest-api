@@ -83,6 +83,13 @@ export class VoipSubscriber extends BaseEntity {
         webpassword?: string
 
     @Column({
+        type: 'timestamp',
+        nullable: false,
+        default: () => 'CURRENT_TIMESTAMP',
+    })
+        webpassword_modify_timestamp: Date
+
+    @Column({
         type: 'boolean',
         nullable: false,
         default: false,

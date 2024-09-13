@@ -19,6 +19,7 @@ describe('AdminController', () => {
     let authHeader: [string, string]
     const preferHeader: [string, string] = ['prefer', 'return=representation']
     let createdAdminIds: number[] = []
+    const strongPassword = 'FFFooobarbaz123!!!' //  MT#60560
     const creds = {username: 'administrator', password: 'administrator'}
 
     beforeAll(async () => {
@@ -61,6 +62,7 @@ describe('AdminController', () => {
         admin.email = 'staticadmin@example.com'
         admin.role_id = 1
         admin.is_master = true
+        admin.saltedpass = strongPassword
 
         await db.billing.Admin.insert(admin)
     })
@@ -90,7 +92,7 @@ describe('AdminController', () => {
                     is_master: true,
                     email: 'adminmaster@example.com',
                     login: 'adminmaster',
-                    password: 'adminmaster',
+                    password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
                     role: RbacRole.admin,
@@ -104,7 +106,7 @@ describe('AdminController', () => {
                     is_master: false,
                     email: 'admin@example.com',
                     login: 'admin',
-                    password: 'adminthere',
+                    password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
                     role: RbacRole.admin,
@@ -118,7 +120,7 @@ describe('AdminController', () => {
                     is_master: true,
                     email: 'system@example.com',
                     login: 'system',
-                    password: 'system',
+                    password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
                     role: RbacRole.system,
@@ -132,7 +134,7 @@ describe('AdminController', () => {
                     is_master: true,
                     email: 'resellermaster@example.com',
                     login: 'resellermaster',
-                    password: 'resellermaster',
+                    password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
                     role: RbacRole.reseller,
@@ -146,7 +148,7 @@ describe('AdminController', () => {
                     is_master: false,
                     email: 'reseller@example.com',
                     login: 'reseller',
-                    password: 'reseller',
+                    password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
                     role: RbacRole.reseller,
@@ -160,7 +162,7 @@ describe('AdminController', () => {
                     is_master: true,
                     email: 'ccareadmin@example.com',
                     login: 'ccareadmin',
-                    password: 'ccareadmin',
+                    password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
                     role: RbacRole.ccareadmin,
@@ -174,7 +176,7 @@ describe('AdminController', () => {
                     is_master: true,
                     email: 'ccare@example.com',
                     login: 'ccare',
-                    password: 'ccarethere',
+                    password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
                     role: RbacRole.ccare,
@@ -188,7 +190,7 @@ describe('AdminController', () => {
                     is_master: true,
                     email: 'lintercept@example.com',
                     login: 'lintercept',
-                    password: 'lintercept',
+                    password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
                     role: RbacRole.lintercept,
@@ -224,35 +226,35 @@ describe('AdminController', () => {
             const tt = [
                 {
                     username: 'system',
-                    password: 'system', want: 200, canSeeResellerId: true,
+                    password: strongPassword, want: 200, canSeeResellerId: true,
                 },
                 {
                     username: 'adminmaster',
-                    password: 'adminmaster', want: 200, canSeeResellerId: true,
+                    password: strongPassword, want: 200, canSeeResellerId: true,
                 },
                 {
                     username: 'admin',
-                    password: 'adminthere', want: 200, canSeeResellerId: true,
+                    password: strongPassword, want: 200, canSeeResellerId: true,
                 },
                 {
                     username: 'resellermaster',
-                    password: 'resellermaster', want: 200, canSeeResellerId: false,
+                    password: strongPassword, want: 200, canSeeResellerId: false,
                 },
                 {
                     username: 'reseller',
-                    password: 'reseller', want: 200, canSeeResellerId: false,
+                    password: strongPassword, want: 200, canSeeResellerId: false,
                 },
                 {
                     username: 'ccareadmin',
-                    password: 'ccareadmin', want: 200, canSeeResellerId: true,
+                    password: strongPassword, want: 200, canSeeResellerId: true,
                 },
                 {
                     username: 'ccare',
-                    password: 'ccarethere', want: 200, canSeeResellerId: false,
+                    password: strongPassword, want: 200, canSeeResellerId: false,
                 },
                 {
                     username: 'lintercept',
-                    password: 'lintercept', want: 403, canSeeResellerId: false,
+                    password: strongPassword, want: 403, canSeeResellerId: false,
                 },
             ]
             for (const test of tt) {
@@ -276,7 +278,7 @@ describe('AdminController', () => {
             const tt = [
                 {
                     username: 'system',
-                    password: 'system', roles: [
+                    password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 201},
                         {role: RbacRole.admin, isMaster: true, want: 201},
                         {role: RbacRole.admin, isMaster: false, want: 201},
@@ -289,7 +291,7 @@ describe('AdminController', () => {
                 },
                 {
                     username: 'adminmaster',
-                    password: 'adminmaster', roles: [
+                    password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 403},
                         {role: RbacRole.admin, isMaster: true, want: 201},
                         {role: RbacRole.admin, isMaster: false, want: 201},
@@ -302,7 +304,7 @@ describe('AdminController', () => {
                 },
                 {
                     username: 'admin',
-                    password: 'adminthere', roles: [
+                    password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 403},
                         {role: RbacRole.admin, isMaster: true, want: 403},
                         {role: RbacRole.admin, isMaster: false, want: 403},
@@ -315,7 +317,7 @@ describe('AdminController', () => {
                 },
                 {
                     username: 'resellermaster',
-                    password: 'resellermaster', roles: [
+                    password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 403},
                         {role: RbacRole.admin, isMaster: true, want: 403},
                         {role: RbacRole.admin, isMaster: false, want: 403},
@@ -328,7 +330,7 @@ describe('AdminController', () => {
                 },
                 {
                     username: 'reseller',
-                    password: 'reseller', roles: [
+                    password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 403},
                         {role: RbacRole.admin, isMaster: true, want: 403},
                         {role: RbacRole.admin, isMaster: false, want: 403},
@@ -341,7 +343,7 @@ describe('AdminController', () => {
                 },
                 {
                     username: 'ccareadmin',
-                    password: 'ccareadmin', roles: [
+                    password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 403},
                         {role: RbacRole.admin, isMaster: true, want: 403},
                         {role: RbacRole.admin, isMaster: false, want: 403},
@@ -354,7 +356,7 @@ describe('AdminController', () => {
                 },
                 {
                     username: 'ccare',
-                    password: 'ccarethere', roles: [
+                    password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 403},
                         {role: RbacRole.admin, isMaster: true, want: 403},
                         {role: RbacRole.admin, isMaster: false, want: 403},
@@ -367,7 +369,7 @@ describe('AdminController', () => {
                 },
                 {
                     username: 'lintercept',
-                    password: 'lintercept', roles: [
+                    password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 403},
                         {role: RbacRole.admin, isMaster: true, want: 403},
                         {role: RbacRole.admin, isMaster: false, want: 403},
@@ -392,7 +394,7 @@ describe('AdminController', () => {
                             is_master: roleTest.isMaster,
                             email: `${test.username}_create_${rand}@example.com`,
                             login: `${test.username}_create_${rand}`,
-                            password: `${test.username}_create${rand}`,
+                            password: `${strongPassword}_create${rand}`,
                             read_only: false,
                             reseller_id: 1,
                             role: roleTest.role,
@@ -469,7 +471,7 @@ describe('AdminController', () => {
                     is_master: true,
                     email: 'update_self@example.com',
                     login: 'update_self',
-                    password: 'update_self',
+                    password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
                     role: RbacRole.admin,
@@ -496,11 +498,21 @@ describe('AdminController', () => {
                     ]
                     const patchResponse = await request(app.getHttpServer())
                         .patch(`/admins/${createdId}`)
-                        .auth('update_self', 'update_self')
+                        .auth('update_self', strongPassword)
                         .send(patch)
                     expect(patchResponse.status).toEqual(403)
                 })
             }
+            it('should fail password validation', async () => {
+                const patch: PatchOperation[] = [
+                    {op: 'replace', path: '/password', value: 'weakpassword'},
+                ]
+                const patchResponse = await request(app.getHttpServer())
+                    .patch(`/admins/${createdId}`)
+                    .auth('update_self', strongPassword)
+                    .send(patch)
+                expect(patchResponse.status).toEqual(422)
+            })
         })
 
     })

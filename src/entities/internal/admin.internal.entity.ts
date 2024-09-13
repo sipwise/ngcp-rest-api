@@ -22,6 +22,7 @@ export interface AdminInterface {
     role?: string
     role_id?: number
     saltedpass?: string
+    saltedpass_modify_timestamp?: Date
     show_passwords?: boolean
 }
 
@@ -45,6 +46,7 @@ export class Admin implements AdminInterface {
     role: RbacRole
     role_id: number
     saltedpass: string
+    saltedpass_modify_timestamp: Date
     show_passwords: boolean
 
     static create(data: AdminInterface): Admin {

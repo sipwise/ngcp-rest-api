@@ -1,4 +1,4 @@
-import {ForbiddenException, Injectable, UnauthorizedException} from '@nestjs/common'
+import {ForbiddenException, Injectable} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
 import {AppService} from '../app.service'
 import {AuthResponseDto} from './dto/auth-response.dto'
@@ -125,6 +125,7 @@ export class AuthService {
             showPasswords: admin.show_passwords,
             username: admin.login,
             is_master: admin.is_master,
+            password_modified_timestamp: admin.saltedpass_modify_timestamp,
             reseller_id_required:
                 admin.role.role == RbacRole.reseller ||
                 admin.role.role == RbacRole.ccare ||
@@ -203,6 +204,7 @@ export class AuthService {
             is_master: false,
             uuid: subscriber.uuid,
             customer_id: subscriber.account_id,
+            password_modified_timestamp: subscriber.webpassword_modify_timestamp,
         }
         this.log.debug({
             message: 'subscriber user authentication',
@@ -342,5 +344,15 @@ export class AuthService {
             })
             await this.app.dbRepo(userRepo).update({[userField]: username}, {ban_increment_stage: 0})
         }
+    }
+
+    async isPasswordExpired(passwordModified: Date) {
+        if (this.app.config.security.password.web_max_age_days > 0) {
+            const diff = Math.abs(new Date().getTime() - passwordModified.getTime())
+            const diffDays = Math.ceil(diff / (1000 * 3600 * 24))
+            return diffDays > this.app.config.security.password.web_max_age_days
+        }
+
+        return false
     }
 }

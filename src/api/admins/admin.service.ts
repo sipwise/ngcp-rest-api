@@ -152,6 +152,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
 
         if (admin.password) {
             admin.saltedpass = await admin.generateSaltedpass()
+            admin.saltedpass_modify_timestamp = new Date()
             if (admin.id &&
                 this.app.config.security.password.web_validate &&
                 this.app.config.security.password.web_keep_last_used > 0

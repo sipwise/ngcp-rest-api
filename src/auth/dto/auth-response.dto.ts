@@ -13,4 +13,5 @@ export class AuthResponseDto {
     is_master: boolean
     uuid?: string
     customer_id?: number
+    password_modified_timestamp?: Date
 }

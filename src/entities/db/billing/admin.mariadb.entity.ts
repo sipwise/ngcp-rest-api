@@ -40,6 +40,13 @@ export class Admin extends BaseEntity {
         saltedpass?: string
 
     @Column({
+        type: 'timestamp',
+        nullable: false,
+        default: () => 'CURRENT_TIMESTAMP',
+    })
+        saltedpass_modify_timestamp: Date
+
+    @Column({
         type: 'boolean',
         nullable: false,
         default: false,
@@ -176,6 +183,7 @@ export class Admin extends BaseEntity {
             this.role = new AclRole().fromInternal(admin.role_data)
         this.role_id = admin.role_id
         this.show_passwords = admin.show_passwords
+        this.saltedpass_modify_timestamp = admin.saltedpass_modify_timestamp
         if (admin.saltedpass != undefined)
             this.saltedpass = admin.saltedpass
 
