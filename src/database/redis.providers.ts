@@ -1,13 +1,13 @@
-import {createRedisConnection, Redis} from '@nestjs-modules/ioredis'
-import {ConsoleLogger} from '@nestjs/common'
+import {createRedisConnection} from '@nestjs-modules/ioredis'
 import {redisConfig} from '../config/redis.config'
 import {LoggerService} from '../logger/logger.service'
+import {Redis, Cluster} from 'ioredis'
 
 export const redisProviders = [
     {
         provide: 'Redis',
         useFactory: async () => {
-            let redis: Redis
+            let redis: Redis | Cluster
             const log = new LoggerService('databaseProviders[Redis]')
             if (process.env.NODE_ENV == 'test' && process.env.NODE_TEST_E2E !== 'true') {
                 log.debug('test environment detected, skip database connection')
@@ -25,7 +25,7 @@ export const redisProviders = [
     {
         provide: 'RedisPubSub',
         useFactory: async () => {
-            let redis: Redis
+            let redis: Redis | Cluster
             const log = new LoggerService('databaseProviders[RedisPubSub]')
             if (process.env.NODE_ENV == 'test' && process.env.NODE_TEST_E2E !== 'true') {
                 log.debug('test environment detected, skip database connection')

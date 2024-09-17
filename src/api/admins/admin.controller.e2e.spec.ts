@@ -43,8 +43,6 @@ describe('AdminController', () => {
     })
 
     afterAll(async () => {
-        if (appService.db.isInitialized)
-            await appService.db.destroy()
         await app.close()
     })
 

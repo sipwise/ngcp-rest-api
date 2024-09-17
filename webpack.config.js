@@ -107,13 +107,13 @@ module.exports =
         options: {
           multiple: [
             {
-              search: "exports.decode = function(buffer, encoding, start, end, options) {\n  if (Buffer.isEncoding(encoding)) {",
-              replace: "exports.decode = function(buffer, encoding, start, end, options) {\n  if (!encoding || encoding == 'undefined') encoding = 'utf8'\n  if (Buffer.isEncoding(encoding)) {",
+              search: "exports.decode = function (buffer, encoding, start, end, options) {\n  if (Buffer.isEncoding(encoding)) {",
+              replace: "exports.decode = function (buffer, encoding, start, end, options) {\n  if (!encoding || encoding == 'undefined') encoding = 'utf8'\n  if (Buffer.isEncoding(encoding)) {",
               strict: true,
             },
             {
-              search: "exports.encode = function(string, encoding, options) {\n  if (Buffer.isEncoding(encoding)) {",
-              replace: "exports.encode = function(string, encoding, options) {\n  if (!encoding || encoding == 'undefined') encoding = 'utf8'\n  if (Buffer.isEncoding(encoding)) {",
+              search: "exports.encode = function (string, encoding, options) {\n  if (Buffer.isEncoding(encoding)) {",
+              replace: "exports.encode = function (string, encoding, options) {\n  if (!encoding || encoding == 'undefined') encoding = 'utf8'\n  if (Buffer.isEncoding(encoding)) {",
               strict: true,
             },
           ]
@@ -143,9 +143,10 @@ module.exports =
           '@google-cloud/spanner',
           '@nestjs/microservices/microservices-module',
           '@nestjs/microservices',
-          '@nestjs/microservices',
+          '@nestjs/terminus',
           '@nestjs/websockets/socket-module',
           '@sap/hana-client',
+          '@sap/hana-client/extension/Stream',
           'better-sqlite3',
           'cache-manager',
           'cardinal',
@@ -170,6 +171,7 @@ module.exports =
 
         const ignoreImports = [
             '@mapbox/node-pre-gyp',
+            '@nestjs/terminus',
         ]
 
         if (ignoreImports.includes(resource))

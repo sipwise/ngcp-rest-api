@@ -2,7 +2,7 @@ import {internal} from '../../../../../entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsNotEmpty, IsOptional} from 'class-validator'
 import {ResponseDto} from '../../../../../dto/response.dto'
-import {HeaderRuleDirection} from 'entities/internal/header-rule.internal.entity'
+import {HeaderRuleDirection} from '../../../../../entities/internal/header-rule.internal.entity'
 import { UrlReference } from 'types/url-reference.type'
 import { UrlReferenceType } from 'enums/url-reference-type.enum'
 

@@ -1,19 +1,20 @@
 import {NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {EntityNotFoundError, QueryFailedError, TypeORMError} from 'typeorm'
+import {QueryError} from 'mysql2'
 import errors from '../localisation/en/errors.json'
 
 export function handleTypeORMError(err: Error) {
     if (err instanceof TypeORMError) {
         switch (err.constructor) {
-        case EntityNotFoundError:
-            return new NotFoundException()
-        case QueryFailedError:
-            // eslint-disable-next-line no-case-declarations
-            const qErr = <QueryFailedError>err
-            switch (qErr.driverError.code) {
-            case 'ER_DUP_ENTRY':
-                return new UnprocessableEntityException(errors.DUPLICATE_ENTRY)
-            }
+            case EntityNotFoundError:
+                return new NotFoundException()
+            case QueryFailedError:
+                // eslint-disable-next-line no-case-declarations
+                const qErr = <QueryFailedError<QueryError>>err
+                switch (qErr.driverError.code) {
+                    case 'ER_DUP_ENTRY':
+                        return new UnprocessableEntityException(errors.DUPLICATE_ENTRY)
+                }
         }
         // return new UnprocessableEntityException(err.message)
         return new UnprocessableEntityException()

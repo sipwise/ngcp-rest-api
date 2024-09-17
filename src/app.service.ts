@@ -1,6 +1,6 @@
 import {Inject, Injectable, Logger} from '@nestjs/common'
 import {DataSource, EntityTarget} from 'typeorm'
-import {Redis} from '@nestjs-modules/ioredis'
+import {Redis, Cluster} from 'ioredis'
 import {config as AppConfig} from './config/main.config'
 
 @Injectable()
@@ -14,8 +14,8 @@ export class AppService {
     constructor(
         @Inject(Logger) private readonly defaultLogger: Logger,
         @Inject('DB') private readonly defaultDatabase: DataSource,
-        @Inject('Redis') private readonly redisDatabase: Redis,
-        @Inject('RedisPubSub') private readonly redisPubSubDatabase: Redis,
+        @Inject('Redis') private readonly redisDatabase: Redis | Cluster,
+        @Inject('RedisPubSub') private readonly redisPubSubDatabase: Redis | Cluster,
     ) {
     }
 

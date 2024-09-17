@@ -1,11 +1,11 @@
 import {BaseEntity, Column, Entity, ManyToOne, JoinColumn, PrimaryGeneratedColumn, OneToMany} from 'typeorm'
 import {VoipHeaderRule} from './voip-header-rule.mariadb.entity'
-import {HeaderRuleConditionExpression, HeaderRuleConditionMatchPart, HeaderRuleConditionMatchType, HeaderRuleConditionValueType} from 'entities/internal/header-rule-condition.internal.entity'
+import {HeaderRuleConditionExpression, HeaderRuleConditionMatchPart, HeaderRuleConditionMatchType, HeaderRuleConditionValueType} from '../../../entities/internal/header-rule-condition.internal.entity'
 import {VoipHeaderRuleConditionValue} from './voip-header-rule-condition-value.mariadb.entity'
-import {internal} from '../..'
 import {VoipRewriteRuleSet} from './voip-rewrite-rule-set.mariadb.entity'
 import {VoipRewriteRule} from './voip-rewrite-rule.mariadb.entity'
 import {RwrDpEnum} from '../../../enums/rwr-dp.enum'
+import {internal} from '../../../entities'
 
 @Entity({
     name: 'voip_header_rule_conditions',

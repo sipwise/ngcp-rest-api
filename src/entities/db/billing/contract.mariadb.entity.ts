@@ -7,7 +7,6 @@ import {internal} from '../../../entities'
 import {VoipSubscriber} from './voip-subscriber.mariadb.entity'
 import {VoipContractSpeedDial} from '../provisioning'
 import {CustomerType} from '../../internal/customer.internal.entity'
-import {BillingMapping} from './billing-mapping.mariadb.entity'
 import {ContractBillingProfileNetwork} from './contract-billing-profile-network.mariadb.entity'
 
 @Entity({

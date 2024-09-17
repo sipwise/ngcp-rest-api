@@ -3,7 +3,7 @@ import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGen
 import {VoipHeaderRuleSet} from './voip-header-rule-set.mariadb.entity'
 import {VoipHeaderRuleAction} from './voip-header-rule-action.mariadb.entity'
 import {VoipHeaderRuleCondition} from './voip-header-rule-condition.mariadb.entity'
-import {internal} from 'entities'
+import {internal} from '../../../entities'
 
 @Entity({
     name: 'voip_header_rules',
