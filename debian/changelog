@@ -1,3 +1,10 @@
+ngcp-rest-api (11.5.1.5+0~mr11.5.1.5) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [7af50d9] MT#61083 license update, rebuild for node v20.17.0
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 18 Sep 2024 17:06:40 +0200
+
 ngcp-rest-api (11.5.1.4+0~mr11.5.1.4) unstable; urgency=medium
 
   [ Kirill Solomko ]
