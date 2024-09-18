@@ -5,7 +5,7 @@
   "productName": "NGCP REST API",
   "author": "",
   "private": true,
-  "license": "GPL-3+",
+  "license": "GPL-3.0-or-later",
   "os": [
     "linux"
   ],
