@@ -66,6 +66,12 @@ module.exports =
         use: 'ignore-loader',
       },
       {
+        // "Fixes" build issue as suggested by @[linsolas](https://github.com/linsolas)
+        //  https://github.com/nestjs/terminus/issues/1423#issue-1002145070
+        test: /@nestjs\/terminus\/dist\/utils\/.*\.(ts|js\.map)$/,
+        loader: 'null-loader',
+      },
+      {
         test: /bcrypt\/bcrypt\.js$/,
         loader: 'string-replace-loader',
         options: {
@@ -141,8 +147,11 @@ module.exports =
         [
           '@fastify/static',
           '@google-cloud/spanner',
+          '@mikro-orm/core',
           '@nestjs/microservices/microservices-module',
           '@nestjs/microservices',
+          '@nestjs/mongoose',
+          '@nestjs/sequelize/dist/common/sequelize.utils',
           '@nestjs/terminus',
           '@nestjs/websockets/socket-module',
           '@sap/hana-client',
@@ -171,7 +180,6 @@ module.exports =
 
         const ignoreImports = [
             '@mapbox/node-pre-gyp',
-            '@nestjs/terminus',
         ]
 
         if (ignoreImports.includes(resource))

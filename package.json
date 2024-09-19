@@ -57,6 +57,7 @@
     "mysql2": "3.11.3",
     "nest-winston": "1.9.7",
     "nestjs-i18n": "10.4.9",
+    "null-loader": "4.0.1",
     "passport": "0.7.0",
     "passport-http": "0.3.0",
     "passport-http-header-strategy": "1.1.0",
