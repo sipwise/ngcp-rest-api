@@ -13,7 +13,12 @@ import {NumberService} from './number.service'
 
 const resourceName = 'numbers'
 
-@Auth(RbacRole.system, RbacRole.admin, RbacRole.reseller, RbacRole.subscriberadmin)
+@Auth(
+    RbacRole.system,
+    RbacRole.admin,
+    RbacRole.reseller,
+    RbacRole.subscriberadmin
+)
 @ApiTags('Number')
 @Controller(resourceName)
 export class NumberController extends CrudController<never, NumberResponseDto> {

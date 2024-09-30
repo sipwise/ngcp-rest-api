@@ -15,7 +15,12 @@ import {License} from '../../../../decorators/license.decorator'
 
 const resourceName = 'pbx/groups'
 
-@Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.subscriber)
+@Auth(
+    RbacRole.admin,
+    RbacRole.system,
+    RbacRole.reseller,
+    RbacRole.subscriber
+)
 @ApiTags('Pbx')
 @Controller(resourceName)
 @License(LicenseType.pbx)

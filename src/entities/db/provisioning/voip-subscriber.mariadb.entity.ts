@@ -213,6 +213,14 @@ export class VoipSubscriber extends BaseEntity {
     @OneToMany(type => VoipDBAlias, alias => alias.subscriber)
         dbAliases!: VoipDBAlias[]
 
+    toInternal(): internal.VoipSubscriber {
+        const subscriber = new internal.VoipSubscriber()
+        subscriber.id = this.id
+        subscriber.webPassword = this.password
+        subscriber.webPasswordModifyTimestamp = this.webpassword_modify_timestamp
+        return subscriber
+    }
+
     toInternalPbxGroup(): internal.PbxGroup {
         const group = new internal.PbxGroup()
         group.id = this.id

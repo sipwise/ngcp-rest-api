@@ -1,4 +1,4 @@
-import {ForbiddenException, Injectable} from '@nestjs/common'
+import {ForbiddenException, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
 import {AppService} from '../app.service'
 import {AuthResponseDto} from './dto/auth-response.dto'

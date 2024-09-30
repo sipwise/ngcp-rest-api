@@ -15,7 +15,12 @@ import {ServiceRequest} from '../../interfaces/service-request.interface'
 
 const resourceName = 'products'
 
-@Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.lintercept)
+@Auth(
+    RbacRole.admin,
+    RbacRole.system,
+    RbacRole.reseller,
+    RbacRole.lintercept
+)
 @ApiTags('Product')
 @Controller(resourceName)
 export class ProductController extends CrudController<never, ProductResponseDto>{

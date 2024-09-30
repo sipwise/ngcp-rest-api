@@ -18,6 +18,12 @@ export class PasswordMaxAgeGuard implements CanActivate {
         if (await publicGuard.canActivate(context))
             return true
 
+        const handlerSkipMaxAge = this.reflector.get<boolean>('skipMaxAge', context.getHandler())
+        const classSkipMaxAge = this.reflector.get<boolean>('skipMaxAge', context.getClass())
+
+        if (handlerSkipMaxAge || classSkipMaxAge)
+            return true
+
         const request = context.switchToHttp().getRequest<Request>()
         const sr = new ServiceRequest(request)
 

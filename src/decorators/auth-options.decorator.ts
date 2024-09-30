@@ -1,0 +1,12 @@
+import {applyDecorators, SetMetadata} from '@nestjs/common'
+
+// We can add more options as needed (e.g skipBanCheck)
+interface AuthOptions {
+    skipMaxAge: boolean
+}
+
+export function AuthOptions(options: AuthOptions) {
+    return applyDecorators(
+        SetMetadata('skipMaxAge', options.skipMaxAge),
+    )
+}

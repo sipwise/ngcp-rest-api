@@ -41,7 +41,11 @@ import {ParsePatchPipe} from '../../pipes/parse-patch.pipe'
 
 const resourceName = 'contacts'
 
-@Auth(RbacRole.system, RbacRole.admin, RbacRole.ccareadmin)
+@Auth(
+    RbacRole.system,
+    RbacRole.admin,
+    RbacRole.ccareadmin
+)
 @ApiTags('Contact')
 @Controller(resourceName)
 export class ContactController extends CrudController<ContactRequestDto, ContactResponseDto> {

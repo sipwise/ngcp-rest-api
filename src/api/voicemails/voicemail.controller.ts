@@ -28,7 +28,11 @@ import {Request} from 'express'
 
 const resourceName = 'voicemails'
 
-@Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller)
+@Auth(
+    RbacRole.admin,
+    RbacRole.system,
+    RbacRole.reseller
+)
 @ApiTags('Voicemail')
 @Controller(resourceName)
 export class VoicemailController extends CrudController<VoicemailRequestDto, VoicemailResponseDto> {

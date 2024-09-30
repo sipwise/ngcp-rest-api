@@ -1,8 +1,5 @@
-import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
-import {AclRole} from './acl-role.mariadb.entity'
-import {RbacRole} from '../../../config/constants.config'
+import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
 import {internal} from '../..'
-import { IsNumber } from 'class-validator'
 
 @Entity({
     name: 'admin_password_journal',

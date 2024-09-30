@@ -12,7 +12,11 @@ import {SearchLogic} from '../../helpers/search-logic.helper'
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 
-@Auth(RbacRole.system, RbacRole.admin, RbacRole.reseller)
+@Auth(
+    RbacRole.system,
+    RbacRole.admin,
+    RbacRole.reseller
+)
 @ApiTags('Journal')
 @Controller('journals')
 export class JournalController {

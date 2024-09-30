@@ -28,7 +28,10 @@ import {License} from '../../decorators/license.decorator'
 
 const resourceName = 'resellers'
 
-@Auth(RbacRole.admin, RbacRole.system)
+@Auth(
+    RbacRole.admin,
+    RbacRole.system
+)
 @ApiTags('Reseller')
 @Controller(resourceName)
 @License(LicenseType.reseller)

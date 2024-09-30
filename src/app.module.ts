@@ -52,6 +52,8 @@ import {AcceptLanguageResolver, CookieResolver, HeaderResolver, I18nModule, Quer
 import {RedisModule} from './database/redis.module'
 import {LicenseService} from './license/license.service'
 import {LicenseModule} from './license/license.module'
+import {PasswordModule} from './api/auth/password/password.module'
+import {PasswordChangeModule} from './api/auth/password/change/password-change.module'
 
 import * as path from 'path'
 
@@ -106,6 +108,8 @@ let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | Fo
     SystemContactModule,
     VoicemailModule,
     LicenseModule,
+    PasswordModule,
+    PasswordChangeModule,
     ScheduleModule.forRoot(),
 ]
 if (process.env.NODE_ENV != 'test') {

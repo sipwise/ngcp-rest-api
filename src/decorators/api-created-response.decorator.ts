@@ -1,11 +1,12 @@
-import {applyDecorators, Type, Controller} from '@nestjs/common'
+import {applyDecorators, Type} from '@nestjs/common'
 import {CreateResponseDto} from '../dto/create-response.dto'
-import {ApiCreatedResponse as ApiSwaggerCreatedResponse, getSchemaPath} from '@nestjs/swagger'
+import {ApiExtraModels, ApiCreatedResponse as ApiSwaggerCreatedResponse, getSchemaPath} from '@nestjs/swagger'
 
 export const ApiCreatedResponse = <TModel extends Type<any>>(
     model: TModel,
 ) => {
     return applyDecorators(
+        ApiExtraModels(CreateResponseDto, model),
         ApiSwaggerCreatedResponse({
             schema: {
                 title: `CreatedResponseOf${model.name}`,

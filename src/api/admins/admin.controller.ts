@@ -46,7 +46,11 @@ const resourceName = 'admins'
 
 @ApiTags('Admin')
 @Controller(resourceName)
-@Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller)
+@Auth(
+    RbacRole.admin,
+    RbacRole.system,
+    RbacRole.reseller
+)
 export class AdminController extends CrudController<AdminRequestDto, AdminResponseDto> {
     private readonly log = new LoggerService(AdminController.name)
 
@@ -84,7 +88,13 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     }
 
     @Get()
-    @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.ccareadmin, RbacRole.ccare)
+    @Auth(
+        RbacRole.admin,
+        RbacRole.system,
+        RbacRole.reseller,
+        RbacRole.ccareadmin,
+        RbacRole.ccare
+    )
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(AdminResponseDto)
     async readAll(@Req() req: Request): Promise<[AdminResponseDto[], number]> {
@@ -107,7 +117,13 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     }
 
     @Get(':id')
-    @Auth(RbacRole.admin, RbacRole.system, RbacRole.reseller, RbacRole.ccareadmin, RbacRole.ccare)
+    @Auth(
+        RbacRole.admin,
+        RbacRole.system,
+        RbacRole.reseller,
+        RbacRole.ccareadmin,
+        RbacRole.ccare
+    )
     @ApiOkResponse({
         type: AdminResponseDto,
     })
