@@ -1,3 +1,34 @@
+ngcp-rest-api (13.0.1.0+0~mr13.0.1.0) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [e745221] MT#60541 Improve PUT behaviour
+  * [3eda09f] MT#60607 Fix query params in swagger doc
+  * [9ab7f90] MT#60620 Adjust header rule directions
+  * [8824ab6] MT#60616 Implicit header rule set creation/deletion when working subscriber rules
+  * [aeb7bf6] MT#60470 Improve existing expand functionality and make it more autonomous and well integrated
+  * [7b4ab7d] MT#60690 Fix Swagger doc schema refs
+  * [f2d2938] MT#60739 Fix PATCH validation
+  * [f40cc54] MT#60739 Validate only requested changes on PATCH
+  * [11c889e] MT#60802 Remove new PUT implementation from admins
+  * [8daef3e] MT#60657 Implement enhanced password validation
+  * [f0b361d] MT#60659 Implement login progressive ban support for admins
+  * [3e65ac5] MT#60658 Implement password max age
+
+  [ Kirill Solomko ]
+  * [c612fe9] MT#60645 rename pbx_hangup_policy to pbx_hunt_cancel_mode
+  * [6092dc9] MT#60678 add specific names for swagger docspec urls
+  * [9925478] MT#60720 voicemails fix search by time column
+  * [e05333d] MT#60742 add complex search initial implementation
+  * [5816999] MT#60757 enable CORS
+  * [9416467] MT#60219 modules upgrade
+  * [4a410b9] MT#60219 resolve module security issues
+  * [3f9ffa2] MT#60219 fix @nestjs/terminus webpack prod build issue
+
+  [ Fabricio Santolin da Silva ]
+  * [d003ba6] MT#58961 Add 'unread' flag when changing to Inbox
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 01 Oct 2024 10:00:49 +0200
+
 ngcp-rest-api (13.0.0.0+0~mr13.0.0.0) unstable; urgency=medium
 
   [ Bertold Vincze ]
