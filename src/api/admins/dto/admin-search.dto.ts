@@ -18,4 +18,8 @@ export class AdminSearchDto implements AdminResponseDto {
     reseller_id?: number = undefined
     role: RbacRole = undefined
     show_passwords: boolean = undefined
+    password_last_modify_time: string = undefined
+    _alias = {
+        password_last_modify_time: 'saltedpass_modify_timestamp',
+    }
 }

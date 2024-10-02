@@ -28,10 +28,15 @@ export class AdminMariadbRepository extends MariaDbRepository implements AdminRe
         const result = await qb.insert().values(values).execute()
         return result.identifiers.map(obj => obj.id)
     }
-    
+
     async readAll(options: AdminOptions, sr: ServiceRequest): Promise<[internal.Admin[], number]> {
         const qb = db.billing.Admin.createQueryBuilder('admin')
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr, Object.keys(new AdminSearchDto())))
+        const searchDto = new AdminSearchDto()
+        configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(sr, Object.keys(searchDto), undefined, searchDto._alias),
+        )
         await this.addPermissionCheckToQueryBuilder(qb, options)
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(result.map(async (adm) => adm.toInternal())), totalCount]

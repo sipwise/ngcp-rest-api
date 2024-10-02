@@ -38,6 +38,8 @@ export class AdminResponseDto implements ResponseDto {
         role: RbacRole
     @ApiProperty()
         show_passwords: boolean
+    @ApiProperty()
+        password_last_modify_time: string
 
     constructor(admin: internal.Admin, role: RbacRole) {
         this.billing_data = admin.billing_data
@@ -55,6 +57,7 @@ export class AdminResponseDto implements ResponseDto {
         this.read_only = admin.read_only
         this.role = admin.role
         this.show_passwords = admin.show_passwords
+        this.password_last_modify_time = admin.saltedpass_modify_timestamp.toISOString()
 
         if ([RbacRole.admin, RbacRole.system, RbacRole.ccareadmin].includes(role)) {
             this.reseller_id = admin.reseller_id

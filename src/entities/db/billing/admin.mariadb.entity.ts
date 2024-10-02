@@ -208,6 +208,7 @@ export class Admin extends BaseEntity {
         admin.read_only = this.read_only
         admin.reseller_id = this.reseller_id
         admin.role_id = this.role_id
+        admin.saltedpass_modify_timestamp = this.saltedpass_modify_timestamp
         if (this.role != undefined) {
             admin.role = RbacRole[this.role.role]
             admin.role_data = this.role.toInternal()
