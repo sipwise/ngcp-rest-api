@@ -1,4 +1,4 @@
-import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {
     BadRequestException,
     Body,
@@ -10,6 +10,8 @@ import {
     Req,
     Response,
     StreamableFile,
+    UnprocessableEntityException,
+    UploadedFile,
     UseInterceptors,
 } from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
@@ -28,8 +30,8 @@ import {ApiCreatedResponse} from '../../decorators/api-created-response.decorato
 import {ApiPaginatedResponse} from '../../decorators/api-paginated-response.decorator'
 import {LoggerService} from '../../logger/logger.service'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {ParseUUIDPipe} from '../../pipes/parse-uuid.pipe'
 import {ParseUUIDArrayPipe} from '../../pipes/parse-uuid-array.pipe'
+import {ParamOrBody} from '../../decorators/param-or-body.decorator'
 
 const resourceName = 'fileshare'
 
@@ -47,13 +49,21 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
     }
 
     @Post()
+    @ApiConsumes('multipart/form-data')
     @ApiCreatedResponse(FileshareResponseDto)
     @UseInterceptors(FileInterceptor('file', {
         limits: {
             fileSize: AppService.config.fileshare.limits.upload_size || null,
         },
     }))
-    async createFile(createDto: FileshareRequestDto, req, file): Promise<FileshareResponseDto> {
+    async createFile(
+        @Body() createDto: FileshareRequestDto,
+        @Req() req,
+        @UploadedFile() file,
+    ): Promise<FileshareResponseDto> {
+        if (!file) {
+            throw new UnprocessableEntityException()
+        }
         this.log.debug({message: 'create fileshare', func: this.create.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const response = await this.fileshareService.create(createDto, sr, file)
@@ -64,7 +74,7 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
     @Get()
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(FileshareResponseDto)
-    async readAll(req): Promise<[FileshareResponseDto[], number]> {
+    async readAll(@Req() req): Promise<[FileshareResponseDto[], number]> {
         this.log.debug({message: 'fetch all fileshares', func: this.readAll.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const [responseList, totalCount] =
@@ -81,7 +91,11 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
     @ApiOkResponse({
         type: StreamableFile,
     })
-    async readFile(@Param('id', ) id: string, req, @Response({passthrough: true}) res): Promise<StreamableFile> {
+    async readFile(
+        @Param('id') id: string,
+        @Req() req,
+        @Response({passthrough: true}) res,
+    ): Promise<StreamableFile> {
         this.log.debug({message: 'fetch fileshare by id', func: this.readFile.name, url: req.url, method: req.method})
         const stream = await this.fileshareService.read(id)
         let size = 0
@@ -104,8 +118,8 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
     @Delete(':id?')
     @ApiOkResponse({})
     async delete(
-        @Param('id', new ParseUUIDArrayPipe()) ids: string[],
-        @Req() req
+        @ParamOrBody('id', new ParseUUIDArrayPipe()) ids: string[],
+        @Req() req,
     ): Promise<string[]>{
         this.log.debug({message: 'delete fileshare by id', func: this.delete.name, url: req.url, method: req.method})
 
@@ -121,7 +135,10 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, req) {
+    async journal(
+        @Param('id') id: number | string,
+        @Req() req,
+    ) {
         this.log.debug({message: 'fetch fileshare journal by id', func: this.journal.name, url: req.url, method: req.method})
         return super.journal(id, req)
     }
