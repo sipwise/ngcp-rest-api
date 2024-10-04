@@ -1,5 +1,5 @@
 import {AppService} from '../../app.service'
-import {Inject, Injectable, NotImplementedException, StreamableFile, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable, NotFoundException, StreamableFile, UnprocessableEntityException} from '@nestjs/common'
 import {FileshareRequestDto} from './dto/fileshare-request.dto'
 import {FileshareResponseDto} from './dto/fileshare-response.dto'
 import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
@@ -10,6 +10,8 @@ import {v4 as uuidv4} from 'uuid'
 import {FindManyOptions} from 'typeorm'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {I18nService} from 'nestjs-i18n'
+import {GenerateErrorMessageArray} from '../../helpers/http-error.helper'
+import {ErrorMessage} from '../../interfaces/error-message.interface'
 
 @Injectable()
 export class FileshareService { // implements CrudService<FileshareRequestDto, FileshareResponseDto> {
@@ -21,6 +23,7 @@ export class FileshareService { // implements CrudService<FileshareRequestDto, F
 
     filterOptions(sr: ServiceRequest): FindManyOptions {
         const filter: FindManyOptions = {}
+        filter.where = {}
         if (['reseller', 'ccare'].includes(sr.user.role))
             filter.where = {reseller_id: sr.user.reseller_id}
         if (sr.user.role == 'subscriber')
@@ -123,7 +126,7 @@ export class FileshareService { // implements CrudService<FileshareRequestDto, F
 
     @HandleDbErrors
     async read(id: string): Promise<StreamableFile> {
-        const upload = await db.fileshare.Upload.findOneByOrFail({ id: id })
+        const upload = await db.fileshare.Upload.findOneByOrFail({id: id})
         const stream = new StreamableFile(upload.data, {
             type: upload.mime_type,
             disposition: `attachment; filename="${upload.original_name}"; size=${upload.size}`,
@@ -135,19 +138,30 @@ export class FileshareService { // implements CrudService<FileshareRequestDto, F
     @HandleDbErrors
     async delete(ids: string[], sr: ServiceRequest): Promise<string[]> {
         const filter = this.filterOptions(sr)
-        const qb = db.fileshare.Upload.createQueryBuilder('fileshare')
-        qb.andWhere(filter)
-        qb.whereInIds(ids)
 
-        const uploads = await qb.getMany()
+        const selectQb = db.fileshare.Upload.createQueryBuilder('fileshare')
+            .select('fileshare.id')
+            .where(filter.where)
+            .andWhere('fileshare.id IN (:...ids)', {ids})
 
-        if (ids.length != uploads.length)
-            throw new UnprocessableEntityException()
+        const foundIds = await selectQb.getRawMany()
+        const existingIds = foundIds.map(row => row.fileshare_id)
 
-        const deleteQb = qb.delete().whereInIds(ids)
+        if (existingIds.length === 0)
+            throw new NotFoundException()
 
+        if (existingIds.length !== ids.length) {
+            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
+            const message = GenerateErrorMessageArray(ids, error.message)
+            throw new UnprocessableEntityException(message)
+        }
+
+        const deleteQb = db.fileshare.Upload.createQueryBuilder('fileshare')
+            .delete()
+            .where(filter.where)
+            .andWhere('id IN (:...ids)', {ids: existingIds})
         await deleteQb.execute()
 
-        return ids
+        return existingIds
     }
 }
