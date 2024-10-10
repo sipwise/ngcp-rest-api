@@ -2,10 +2,13 @@
   "watch": [
     "package.json",
     "nodemon.json",
-    ".eslintrc.json",
+    "eslint.config.mjs",
     ".prettierrc",
     "src/"
   ],
   "verbose": true,
-  "ignore": ["*.test.js", "*.spec.js"]
+  "ignore": [
+    "*.test.js",
+    "*.spec.js"
+  ]
 }
