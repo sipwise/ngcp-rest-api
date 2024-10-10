@@ -7,7 +7,7 @@ export class HeaderManipulationRuleSearchDto {
     stopper: boolean = undefined
     enabled: boolean = undefined
     direction: HeaderRuleDirection = undefined
-
+    priority: number = undefined
     _alias = {
         subscriber_id: 'headerRuleSet.subscriber_id',
     }

@@ -3,7 +3,7 @@ import {VoipHeaderRule} from './voip-header-rule.mariadb.entity'
 import {HeaderRuleActionActionType, HeaderRuleActionHeaderPart, HeaderRuleActionValuePart} from '../../../entities/internal/header-rule-action.internal.entity' 
 import {VoipRewriteRuleSet} from './voip-rewrite-rule-set.mariadb.entity'
 import {VoipRewriteRule} from './voip-rewrite-rule.mariadb.entity'
-import {internal} from 'entities'
+import {internal} from '../../../entities'
 import {RwrDpEnum} from '../../../enums/rwr-dp.enum'
 
 @Entity({
