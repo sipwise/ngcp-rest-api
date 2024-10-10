@@ -29,7 +29,7 @@ export const databaseConfig: DataSourceOptions = {
     name: 'default',
     username: db_user,
     password: db_pass,
-    port: db_port,
+    port: +db_port,
     host: db_host,
     type: 'mariadb',
     entities: entities,
