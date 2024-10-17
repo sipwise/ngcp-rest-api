@@ -51,6 +51,7 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRuleCondition[], number]> {
         const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
         const searchDto  = new HeaderManipulationRuleConditionSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
@@ -71,6 +72,7 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleCondition> {
         const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
         const searchDto  = new HeaderManipulationRuleConditionSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
@@ -88,6 +90,7 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleCondition[]> {
         const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
         const searchDto  = new HeaderManipulationRuleConditionSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
@@ -104,6 +107,7 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
         const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
         const searchDto = new HeaderManipulationRuleConditionSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
@@ -186,7 +190,7 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
             'headerRuleCondition.rwr_set',
             db.provisioning.VoipRewriteRuleSet,
             'rwrSet',
-            'rwrSet.id=headerRuleCondition.rwr_set_id'
+            'rwrSet.id=headerRuleCondition.rwr_set_id',
         )
     }
 
@@ -218,5 +222,22 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
                 entity.rwrDpId = null
             }
         }))
+    }
+
+    private async configureSrQuery(sr: ServiceRequest): Promise<void> {
+        if (sr.query.subscriber_id) {
+            sr.query.subscriber_id = (await this.billingToProvisioning(+sr.query.subscriber_id)).toString()
+        }
+    }
+
+    private async billingToProvisioning(billingSubscriberId: number | null | undefined): Promise<number> {
+        if (!billingSubscriberId) {
+            return billingSubscriberId
+        }
+        const qb = db.billing.VoipSubscriber.createQueryBuilder('bVoipSubscriber')
+        qb.where({id: billingSubscriberId})
+        qb.leftJoinAndSelect('bVoipSubscriber.provisioningVoipSubscriber', 'provisioningVoipSubscriber')
+        const subscriber = await qb.getOneOrFail()
+        return subscriber.provisioningVoipSubscriber.id
     }
 }

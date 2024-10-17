@@ -34,6 +34,7 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRule[], number]> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
         const searchDto  = new HeaderManipulationRuleSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
@@ -52,6 +53,7 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRule> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
         const searchDto  = new HeaderManipulationRuleSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
@@ -66,6 +68,7 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
 
     async readCountInSet(setId: number, sr: ServiceRequest): Promise<number> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
+        await this.configureSrQuery(sr)
         qb.where('set_id = :setId', {setId: setId})
         return await qb.getCount()
     }
@@ -73,6 +76,7 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRule[]> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
         const searchDto  = new HeaderManipulationRuleSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
@@ -88,6 +92,7 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
         const searchDto = new HeaderManipulationRuleSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
@@ -112,6 +117,23 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         await db.provisioning.VoipHeaderRule.delete(ids)
         return ids
+    }
+
+    private async configureSrQuery(sr: ServiceRequest): Promise<void> {
+        if (sr.query.subscriber_id) {
+            sr.query.subscriber_id = (await this.billingToProvisioning(+sr.query.subscriber_id)).toString()
+        }
+    }
+
+    private async billingToProvisioning(billingSubscriberId: number | null | undefined): Promise<number> {
+        if (!billingSubscriberId) {
+            return billingSubscriberId
+        }
+        const qb = db.billing.VoipSubscriber.createQueryBuilder('bVoipSubscriber')
+        qb.where({id: billingSubscriberId})
+        qb.leftJoinAndSelect('bVoipSubscriber.provisioningVoipSubscriber', 'provisioningVoipSubscriber')
+        const subscriber = await qb.getOneOrFail()
+        return subscriber.provisioningVoipSubscriber.id
     }
 
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipHeaderRule>, filterBy: FilterBy): void {

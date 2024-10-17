@@ -32,7 +32,7 @@ export class HeaderManipulationRuleService implements CrudService<internal.Heade
 
         for (const entity of entities) {
             if (entity.subscriberId) {
-                const sets = await this.ruleSetRepo.readBySubscriberId(entity.setId, sr)
+                const sets = await this.ruleSetRepo.readBySubscriberId(entity.subscriberId, sr)
                 if (sets.length == 0) {
                     const newEntity = new internal.HeaderRuleSet()
                     newEntity.id = entity.setId
