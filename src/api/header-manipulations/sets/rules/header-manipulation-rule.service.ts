@@ -25,7 +25,7 @@ export class HeaderManipulationRuleService implements CrudService<internal.Heade
         if (sr.user.reseller_id_required) {
             const sets = await this.ruleSetRepo.readWhereInIds(entities.map(entity => entity.setId), sr)
             if (sets.some(set => set.resellerId != sr.user.reseller_id)) {
-                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
+                const error: ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
                 throw new UnprocessableEntityException(error.message)
             }
         }
@@ -54,7 +54,7 @@ export class HeaderManipulationRuleService implements CrudService<internal.Heade
 
         let rules: internal.HeaderRule[]
         if (sr.user.reseller_id_required) {
-            rules = await this.ruleRepo.readWhereInIds(ids, sr, {resellerId: sr.user.reseller_id})
+            rules = await this.ruleRepo.readWhereInIds(ids, sr, { resellerId: sr.user.reseller_id })
         } else {
             rules = await this.ruleRepo.readWhereInIds(ids, sr)
         }
@@ -62,7 +62,7 @@ export class HeaderManipulationRuleService implements CrudService<internal.Heade
         if (rules.length == 0) {
             throw new NotFoundException()
         } else if (ids.length != rules.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
+            const error: ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
             const message = GenerateErrorMessageArray(ids, error.message)
             throw new UnprocessableEntityException(message)
         }
@@ -73,7 +73,7 @@ export class HeaderManipulationRuleService implements CrudService<internal.Heade
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         let rules: internal.HeaderRule[]
         if (sr.user.reseller_id_required) {
-            rules = await this.ruleRepo.readWhereInIds(ids, sr, {resellerId: sr.user.reseller_id})
+            rules = await this.ruleRepo.readWhereInIds(ids, sr, { resellerId: sr.user.reseller_id })
         } else {
             rules = await this.ruleRepo.readWhereInIds(ids, sr)
         }
@@ -81,7 +81,7 @@ export class HeaderManipulationRuleService implements CrudService<internal.Heade
         if (rules.length == 0) {
             throw new NotFoundException()
         } else if (ids.length != rules.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
+            const error: ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
             const message = GenerateErrorMessageArray(ids, error.message)
             throw new UnprocessableEntityException(message)
         }

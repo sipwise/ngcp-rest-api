@@ -1,4 +1,4 @@
-import {Injectable, NotFoundException} from '@nestjs/common'
+import {Injectable} from '@nestjs/common'
 import {db, internal} from '../../../../entities'
 import {ServiceRequest} from '../../../../interfaces/service-request.interface'
 import {HeaderManipulationSetSearchDto} from '../dto/header-manipulation-set-search.dto'
@@ -20,45 +20,56 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
 
     async create(entities: internal.HeaderRuleSet[]): Promise<internal.HeaderRuleSet[]> {
         const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
-        const values = await Promise.all(entities.map(async entity => new db.provisioning.VoipHeaderRuleSet().fromInternal(entity)))
+        const values = await Promise.all(entities.map(async entity => {
+            entity.subscriberId = await this.billingToProvisioning(entity.subscriberId)
+            return new db.provisioning.VoipHeaderRuleSet().fromInternal(entity)
+        }))
         const result = await qb.insert().values(values).execute()
         const ids = await Promise.all(result.identifiers.map(async obj => obj.id))
         const created = await qb.andWhereInIds(ids).getMany()
 
-        return await Promise.all(created.map(async entity => entity.toInternal()))
+        return await Promise.all(created.map(async entity => {
+            entity.subscriber_id = await this.provisioningToBilling(entity.subscriber_id)
+            return entity.toInternal()
+        }))
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRuleSet[], number]> {
         const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
-        const searchDto  = new HeaderManipulationSetSearchDto()
+        const searchDto = new HeaderManipulationSetSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
         ))
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(
-            result.map(async (d) =>
-                d.toInternal(),
-            ),
+            result.map(async (d) => {
+                d.subscriber_id = await this.provisioningToBilling(d.subscriber_id)
+                return d.toInternal()
+            }),
         ), totalCount]
     }
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleSet> {
         const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
-        const searchDto  = new HeaderManipulationSetSearchDto()
+        const searchDto = new HeaderManipulationSetSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
         ))
-        qb.where({id: id})
+        qb.where({ id: id })
         this.addFilterBy(qb, filterBy)
         const result = await qb.getOneOrFail()
+        result.subscriber_id = await this.provisioningToBilling(result.subscriber_id)
         return result.toInternal()
     }
 
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleSet[]> {
         const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
-        const searchDto  = new HeaderManipulationSetSearchDto()
+        const searchDto = new HeaderManipulationSetSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
@@ -66,12 +77,16 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
         qb.whereInIds(ids)
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => d.toInternal()))
+        return await Promise.all(result.map(async (d) => {
+            d.subscriber_id = await this.provisioningToBilling(d.subscriber_id)
+            return d.toInternal()
+        }))
     }
 
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
         const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
         const searchDto = new HeaderManipulationSetSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
@@ -79,6 +94,23 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
         qb.whereInIds(ids)
         this.addFilterBy(qb, filterBy)
         return await qb.getCount()
+    }
+
+    async readBySubscriberId(subscriberId: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleSet[]> {
+        const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
+        const searchDto = new HeaderManipulationSetSearchDto()
+        await this.configureSrQuery(sr)
+        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
+            Object.keys(searchDto),
+            undefined,
+        ))
+        qb.andWhere('subscriber_id = :id', { id: subscriberId })
+        this.addFilterBy(qb, filterBy)
+        const result = await qb.getMany()
+        return await Promise.all(result.map(async (d) => {
+            d.subscriber_id = await this.provisioningToBilling(d.subscriber_id)
+            return d.toInternal()
+        }))
     }
 
     async update(updates: Dictionary<internal.HeaderRuleSet>, sr: ServiceRequest): Promise<number[]> {
@@ -96,10 +128,38 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
         return ids
     }
 
+    private async billingToProvisioning(billingSubscriberId: number | null | undefined): Promise<number> {
+        if (!billingSubscriberId) {
+            return billingSubscriberId
+        }
+        const qb = db.billing.VoipSubscriber.createQueryBuilder('bVoipSubscriber')
+        qb.where({ id: billingSubscriberId })
+        qb.leftJoinAndSelect('bVoipSubscriber.provisioningVoipSubscriber', 'provisioningVoipSubscriber')
+        const subscriber = await qb.getOneOrFail()
+        return subscriber.provisioningVoipSubscriber.id
+    }
+
+    private async provisioningToBilling(provisioningSubscriberId: number | null | undefined): Promise<number> {
+        if (!provisioningSubscriberId) {
+            return provisioningSubscriberId
+        }
+        const qb = db.provisioning.VoipSubscriber.createQueryBuilder('pVoipSubscriber')
+        qb.leftJoinAndSelect('pVoipSubscriber.billing_voip_subscriber', 'billing_voip_subscriber')
+        qb.where({ id: provisioningSubscriberId })
+        const subscriber = await qb.getOneOrFail()
+        return subscriber.billing_voip_subscriber.id
+    }
+
+    private async configureSrQuery(sr: ServiceRequest): Promise<void> {
+        if (sr.query.subscriber_id) {
+            sr.query.subscriber_id = (await this.billingToProvisioning(+sr.query.subscriber_id)).toString()
+        }
+    }
+
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipHeaderRuleSet>, filterBy: FilterBy): void {
         if (filterBy) {
             if (filterBy.resellerId) {
-                qb.andWhere('reseller_id = :id', {id: filterBy.resellerId})
+                qb.andWhere('reseller_id = :id', { id: filterBy.resellerId })
             }
         }
     }

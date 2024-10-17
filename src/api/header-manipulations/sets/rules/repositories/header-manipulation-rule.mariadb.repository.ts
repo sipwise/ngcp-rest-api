@@ -32,7 +32,8 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRule[], number]> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
-        const searchDto  = new HeaderManipulationRuleSearchDto()
+        const searchDto = new HeaderManipulationRuleSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
         ))
@@ -47,20 +48,29 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRule> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
-        const searchDto  = new HeaderManipulationRuleSearchDto()
+        const searchDto = new HeaderManipulationRuleSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
         ))
-        qb.where({id: id})
+        qb.where({ id: id })
         this.addFilterBy(qb, filterBy)
         const result = await qb.getOneOrFail()
         return result.toInternal()
     }
 
+    async readCountInSet(setId: number, sr: ServiceRequest): Promise<number> {
+        const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
+        await this.configureSrQuery(sr)
+        qb.where('set_id = :setId', { setId: setId })
+        return await qb.getCount()
+    }
+
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRule[]> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
-        const searchDto  = new HeaderManipulationRuleSearchDto()
+        const searchDto = new HeaderManipulationRuleSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
@@ -74,6 +84,7 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
         const searchDto = new HeaderManipulationRuleSearchDto()
+        await this.configureSrQuery(sr)
         configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
             Object.keys(searchDto),
             undefined,
@@ -98,14 +109,31 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
         return ids
     }
 
+    private async configureSrQuery(sr: ServiceRequest): Promise<void> {
+        if (sr.query.subscriber_id) {
+            sr.query.subscriber_id = (await this.billingToProvisioning(+sr.query.subscriber_id)).toString()
+        }
+    }
+
+    private async billingToProvisioning(billingSubscriberId: number | null | undefined): Promise<number> {
+        if (!billingSubscriberId) {
+            return billingSubscriberId
+        }
+        const qb = db.billing.VoipSubscriber.createQueryBuilder('bVoipSubscriber')
+        qb.where({ id: billingSubscriberId })
+        qb.leftJoinAndSelect('bVoipSubscriber.provisioningVoipSubscriber', 'provisioningVoipSubscriber')
+        const subscriber = await qb.getOneOrFail()
+        return subscriber.provisioningVoipSubscriber.id
+    }
+
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipHeaderRule>, filterBy: FilterBy): void {
         if (filterBy) {
             if (filterBy.setId) {
-                qb.andWhere('set_id = :setId', {setId: filterBy.setId})
+                qb.andWhere('set_id = :setId', { setId: filterBy.setId })
             }
             if (filterBy.resellerId) {
                 qb.innerJoin('headerRule.set', 'headerRuleSet')
-                qb.andWhere('headerRuleSet.reseller_id = :id', {id: filterBy.resellerId})
+                qb.andWhere('headerRuleSet.reseller_id = :id', { id: filterBy.resellerId })
             }
         }
     }
