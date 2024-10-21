@@ -1,3 +1,10 @@
+ngcp-rest-api (13.0.1.1+0~mr13.0.1.1) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [14a981c] MT#61202 Fix fileshare endpoint
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 21 Oct 2024 19:22:37 +0200
+
 ngcp-rest-api (13.0.1.0+0~mr13.0.1.0) unstable; urgency=medium
 
   [ Bertold Vincze ]
