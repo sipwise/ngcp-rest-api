@@ -1,14 +1,14 @@
-import {Injectable, NotFoundException} from '@nestjs/common'
-import {db, internal} from '../../../../../entities'
-import {ServiceRequest} from '../../../../../interfaces/service-request.interface'
-import {HeaderManipulationRuleSearchDto} from '../dto/header-manipulation-rule-search.dto'
-import {configureQueryBuilder} from '../../../../../helpers/query-builder.helper'
-import {HeaderManipulationRuleRepository} from '../interfaces/header-manipulation-rule.repository'
-import {SearchLogic} from '../../../../../helpers/search-logic.helper'
-import {LoggerService} from '../../../../../logger/logger.service'
-import {SelectQueryBuilder} from 'typeorm'
-import {Dictionary} from '../../../../../helpers/dictionary.helper'
-import {MariaDbRepository} from '../../../../../repositories/mariadb.repository'
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { db, internal } from '../../../../../entities'
+import { ParamsDictionary, ServiceRequest } from '../../../../../interfaces/service-request.interface'
+import { HeaderManipulationRuleSearchDto } from '../dto/header-manipulation-rule-search.dto'
+import { configureQueryBuilder } from '../../../../../helpers/query-builder.helper'
+import { HeaderManipulationRuleRepository } from '../interfaces/header-manipulation-rule.repository'
+import { SearchLogic } from '../../../../../helpers/search-logic.helper'
+import { LoggerService } from '../../../../../logger/logger.service'
+import { SelectQueryBuilder } from 'typeorm'
+import { Dictionary } from '../../../../../helpers/dictionary.helper'
+import { MariaDbRepository } from '../../../../../repositories/mariadb.repository'
 
 export interface FilterBy {
     setId?: number
@@ -33,10 +33,15 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRule[], number]> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
         const searchDto = new HeaderManipulationRuleSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-        ))
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+            ),
+        )
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(
@@ -49,11 +54,16 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRule> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
         const searchDto = new HeaderManipulationRuleSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-        ))
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+            ),
+        )
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         qb.where({ id: id })
         this.addFilterBy(qb, filterBy)
         const result = await qb.getOneOrFail()
@@ -62,7 +72,6 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
 
     async readCountInSet(setId: number, sr: ServiceRequest): Promise<number> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
-        await this.configureSrQuery(sr)
         qb.where('set_id = :setId', { setId: setId })
         return await qb.getCount()
     }
@@ -70,11 +79,16 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRule[]> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
         const searchDto = new HeaderManipulationRuleSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-        ))
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+            ),
+        )
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         qb.whereInIds(ids)
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
@@ -84,11 +98,16 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
         const searchDto = new HeaderManipulationRuleSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-        ))
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+            ),
+        )
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         qb.whereInIds(ids)
         this.addFilterBy(qb, filterBy)
         return await qb.getCount()
@@ -109,10 +128,12 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
         return ids
     }
 
-    private async configureSrQuery(sr: ServiceRequest): Promise<void> {
+    private async configureSrQuery(sr: ServiceRequest): Promise<ParamsDictionary> {
+        const query = { ...sr.query }
         if (sr.query.subscriber_id) {
-            sr.query.subscriber_id = (await this.billingToProvisioning(+sr.query.subscriber_id)).toString()
+            query.subscriber_id = (await this.billingToProvisioning(+sr.query.subscriber_id)).toString()
         }
+        return query
     }
 
     private async billingToProvisioning(billingSubscriberId: number | null | undefined): Promise<number> {

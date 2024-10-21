@@ -1,14 +1,14 @@
-import {Injectable, NotFoundException} from '@nestjs/common'
-import {db, internal} from '../../../../../../entities'
-import {ServiceRequest} from '../../../../../../interfaces/service-request.interface'
-import {HeaderManipulationRuleActionSearchDto} from '../dto/header-manipulation-rule-action-search.dto'
-import {configureQueryBuilder} from '../../../../../../helpers/query-builder.helper'
-import {HeaderManipulationRuleActionRepository} from '../interfaces/header-manipulation-rule-action.repository'
-import {SearchLogic} from '../../../../../../helpers/search-logic.helper'
-import {LoggerService} from '../../../../../../logger/logger.service'
-import {SelectQueryBuilder} from 'typeorm'
-import {Dictionary} from '../../../../../../helpers/dictionary.helper'
-import {MariaDbRepository} from '../../../../../../repositories/mariadb.repository'
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { db, internal } from '../../../../../../entities'
+import { ParamsDictionary, ServiceRequest } from '../../../../../../interfaces/service-request.interface'
+import { HeaderManipulationRuleActionSearchDto } from '../dto/header-manipulation-rule-action-search.dto'
+import { configureQueryBuilder } from '../../../../../../helpers/query-builder.helper'
+import { HeaderManipulationRuleActionRepository } from '../interfaces/header-manipulation-rule-action.repository'
+import { SearchLogic } from '../../../../../../helpers/search-logic.helper'
+import { LoggerService } from '../../../../../../logger/logger.service'
+import { SelectQueryBuilder } from 'typeorm'
+import { Dictionary } from '../../../../../../helpers/dictionary.helper'
+import { MariaDbRepository } from '../../../../../../repositories/mariadb.repository'
 
 export interface FilterBy {
     ruleId?: number
@@ -39,13 +39,18 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRuleAction[], number]> {
         const qb = db.provisioning.VoipHeaderRuleAction.createQueryBuilder('headerRuleAction')
-        const searchDto  = new HeaderManipulationRuleActionSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-            searchDto._alias,
-        ))
+        const searchDto = new HeaderManipulationRuleActionSearchDto()
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
+        qb.innerJoin('headerRuleAction.rule', 'headerRule')
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
         this.joinAndMapRewriteRuleSet(qb)
 
@@ -57,14 +62,17 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleAction> {
         const qb = db.provisioning.VoipHeaderRuleAction.createQueryBuilder('headerRuleAction')
-        const searchDto  = new HeaderManipulationRuleActionSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-            searchDto._alias,
-        ))
-        qb.where({id: id})
+        const searchDto = new HeaderManipulationRuleActionSearchDto()
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
+        qb.where({ id: id })
         this.addFilterBy(qb, filterBy)
         this.joinAndMapRewriteRuleSet(qb)
         const result = await qb.getOneOrFail()
@@ -73,12 +81,16 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
 
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleAction[]> {
         const qb = db.provisioning.VoipHeaderRuleAction.createQueryBuilder('headerRuleAction')
-        const searchDto  = new HeaderManipulationRuleActionSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-        ))
+        const searchDto = new HeaderManipulationRuleActionSearchDto()
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         qb.whereInIds(ids)
         this.addFilterBy(qb, filterBy)
         this.joinAndMapRewriteRuleSet(qb)
@@ -89,11 +101,17 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
         const qb = db.provisioning.VoipHeaderRuleAction.createQueryBuilder('headerRuleAction')
         const searchDto = new HeaderManipulationRuleActionSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-        ))
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
+        qb.innerJoin('headerRuleAction.rule', 'headerRule')
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
         qb.whereInIds(ids)
         this.addFilterBy(qb, filterBy)
         return await qb.getCount()
@@ -118,14 +136,14 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
         if (filterBy) {
             let ruleJoin = false
             if (filterBy.ruleId) {
-                qb.andWhere('rule_id = :ruleId', {ruleId: filterBy.ruleId})
+                qb.andWhere('rule_id = :ruleId', { ruleId: filterBy.ruleId })
             }
             if (filterBy.setId) {
                 if (!ruleJoin) {
                     qb.innerJoin('headerRuleAction.rule', 'headerRule')
                     ruleJoin = true
                 }
-                qb.andWhere('headerRule.set_id = :setId', {setId: filterBy.setId})
+                qb.andWhere('headerRule.set_id = :setId', { setId: filterBy.setId })
             }
             if (filterBy.resellerId) {
                 if (!ruleJoin) {
@@ -133,7 +151,7 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
                     ruleJoin = true
                 }
                 qb.innerJoin('headerRule.set', 'headerRuleSet')
-                qb.andWhere('headerRuleSet.reseller_id = :resellerId', {resellerId: filterBy.resellerId})
+                qb.andWhere('headerRuleSet.reseller_id = :resellerId', { resellerId: filterBy.resellerId })
             }
         }
     }
@@ -177,10 +195,12 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
         }))
     }
 
-    private async configureSrQuery(sr: ServiceRequest): Promise<void> {
+    private async configureSrQuery(sr: ServiceRequest): Promise<ParamsDictionary> {
+        const query = { ...sr.query }
         if (sr.query.subscriber_id) {
-            sr.query.subscriber_id = (await this.billingToProvisioning(+sr.query.subscriber_id)).toString()
+            query.subscriber_id = (await this.billingToProvisioning(+sr.query.subscriber_id)).toString()
         }
+        return query
     }
 
     private async billingToProvisioning(billingSubscriberId: number | null | undefined): Promise<number> {
@@ -188,7 +208,7 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
             return billingSubscriberId
         }
         const qb = db.billing.VoipSubscriber.createQueryBuilder('bVoipSubscriber')
-        qb.where({id: billingSubscriberId})
+        qb.where({ id: billingSubscriberId })
         qb.leftJoinAndSelect('bVoipSubscriber.provisioningVoipSubscriber', 'provisioningVoipSubscriber')
         const subscriber = await qb.getOneOrFail()
         return subscriber.provisioningVoipSubscriber.id
