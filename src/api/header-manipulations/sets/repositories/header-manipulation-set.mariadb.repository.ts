@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common'
 import {db, internal} from '../../../../entities'
-import {ServiceRequest} from '../../../../interfaces/service-request.interface'
+import {ParamsDictionary, ServiceRequest} from '../../../../interfaces/service-request.interface'
 import {HeaderManipulationSetSearchDto} from '../dto/header-manipulation-set-search.dto'
 import {configureQueryBuilder} from '../../../../helpers/query-builder.helper'
 import {HeaderManipulationSetRepository} from '../interfaces/header-manipulation-set.repository'
@@ -38,10 +38,14 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRuleSet[], number]> {
         const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
         const searchDto  = new HeaderManipulationSetSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-        ))
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+            ),
+        )
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(
@@ -55,11 +59,14 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleSet> {
         const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
         const searchDto  = new HeaderManipulationSetSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-        ))
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+            ),
+        )
         qb.where({id: id})
         this.addFilterBy(qb, filterBy)
         const result = await qb.getOneOrFail()
@@ -70,11 +77,14 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleSet[]> {
         const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
         const searchDto  = new HeaderManipulationSetSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-        ))
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+            ),
+        )
         qb.whereInIds(ids)
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
@@ -87,11 +97,14 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
         const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
         const searchDto = new HeaderManipulationSetSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-        ))
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+            ),
+        )
         qb.whereInIds(ids)
         this.addFilterBy(qb, filterBy)
         return await qb.getCount()
@@ -100,12 +113,17 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
     async readBySubscriberId(subscriberId: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleSet[]> {
         const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
         const searchDto  = new HeaderManipulationSetSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-        ))
-        qb.andWhere('subscriber_id = :id', {id: subscriberId})
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+            ),
+        )
+        qb.andWhere('subscriber_id = :id', {
+            id: await this.billingToProvisioning(subscriberId),
+        })
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
         return await Promise.all(result.map(async (d) => {
@@ -151,10 +169,12 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
         return subscriber.billing_voip_subscriber.id
     }
 
-    private async configureSrQuery(sr: ServiceRequest): Promise<void> {
+    private async configureSrQuery(sr: ServiceRequest): Promise<ParamsDictionary> {
+        const query = {...sr.query}
         if (sr.query.subscriber_id) {
-            sr.query.subscriber_id = (await this.billingToProvisioning(+sr.query.subscriber_id)).toString()
+            query.subscriber_id = (await this.billingToProvisioning(+sr.query.subscriber_id)).toString()
         }
+        return query
     }
 
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipHeaderRuleSet>, filterBy: FilterBy): void {

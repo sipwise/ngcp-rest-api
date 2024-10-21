@@ -1,6 +1,6 @@
 import {Injectable, NotFoundException} from '@nestjs/common'
 import {db, internal} from '../../../../../../entities'
-import {ServiceRequest} from '../../../../../../interfaces/service-request.interface'
+import {ParamsDictionary, ServiceRequest} from '../../../../../../interfaces/service-request.interface'
 import {HeaderManipulationRuleConditionSearchDto} from '../dto/header-manipulation-rule-condition-search.dto'
 import {configureQueryBuilder} from '../../../../../../helpers/query-builder.helper'
 import {HeaderManipulationRuleConditionRepository} from '../interfaces/header-manipulation-rule-condition.repository'
@@ -51,12 +51,16 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRuleCondition[], number]> {
         const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
         const searchDto  = new HeaderManipulationRuleConditionSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-            searchDto._alias,
-        ))
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         qb.innerJoin('headerRuleCondition.rule', 'headerRule')
         qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
@@ -72,12 +76,16 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleCondition> {
         const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
         const searchDto  = new HeaderManipulationRuleConditionSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-            searchDto._alias,
-        ))
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         qb.where({id: id})
         qb.innerJoin('headerRuleCondition.rule', 'headerRule')
         qb.innerJoin('headerRule.set', 'headerRuleSet')
@@ -90,12 +98,16 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleCondition[]> {
         const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
         const searchDto  = new HeaderManipulationRuleConditionSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-            searchDto._alias,
-        ))
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         qb.whereInIds(ids)
         qb.innerJoin('headerRuleCondition.rule', 'headerRule')
         qb.innerJoin('headerRule.set', 'headerRuleSet')
@@ -107,12 +119,16 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
         const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
         const searchDto = new HeaderManipulationRuleConditionSearchDto()
-        await this.configureSrQuery(sr)
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-            searchDto._alias,
-        ))
+        configureQueryBuilder(
+            qb,
+            await this.configureSrQuery(sr),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         qb.whereInIds(ids)
         qb.innerJoin('headerRuleCondition.rule', 'headerRule')
         qb.innerJoin('headerRule.set', 'headerRuleSet')
@@ -224,10 +240,12 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         }))
     }
 
-    private async configureSrQuery(sr: ServiceRequest): Promise<void> {
+    private async configureSrQuery(sr: ServiceRequest): Promise<ParamsDictionary> {
+        const query = {...sr.query}
         if (sr.query.subscriber_id) {
-            sr.query.subscriber_id = (await this.billingToProvisioning(+sr.query.subscriber_id)).toString()
+            query.subscriber_id = (await this.billingToProvisioning(+sr.query.subscriber_id)).toString()
         }
+        return query
     }
 
     private async billingToProvisioning(billingSubscriberId: number | null | undefined): Promise<number> {
