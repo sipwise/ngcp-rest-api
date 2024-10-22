@@ -1,3 +1,11 @@
+ngcp-rest-api (12.5.1.5+0~mr12.5.1.5) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [65030a8] MT#61300 Fix subscriber set creation
+  * [8dea782] MT#61300 Fix sr query immutability in HM/sets/rules/actions/conditions
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 22 Oct 2024 15:52:44 +0200
+
 ngcp-rest-api (12.5.1.4+0~mr12.5.1.4) unstable; urgency=medium
 
   [ Bertold Vincze ]
