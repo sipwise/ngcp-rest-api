@@ -1,4 +1,4 @@
-import {Reseller} from '../db/billing'
+import {Reseller} from '~/entities/db/billing'
 
 export enum BillingNetworkStatus {
     Active = 'active',

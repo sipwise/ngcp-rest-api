@@ -2,7 +2,7 @@ import {readFileSync} from 'fs'
 import {load} from 'js-yaml'
 import {validateOrReject} from 'class-validator'
 import {plainToInstance} from 'class-transformer'
-import {AppConfig} from './schemas/app.config.schema'
+import {AppConfig} from '~/config/schemas/app.config.schema'
 
 const configFile = process.env.NODE_ENV == 'development' || process.env.NODE_ENV == 'test'
     ? './etc/api.conf'

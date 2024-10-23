@@ -1,5 +1,5 @@
 import {applyDecorators, Type} from '@nestjs/common'
-import {CreateResponseDto} from '../dto/create-response.dto'
+import {CreateResponseDto} from '~/dto/create-response.dto'
 import {ApiExtraModels, ApiCreatedResponse as ApiSwaggerCreatedResponse, getSchemaPath} from '@nestjs/swagger'
 
 export const ApiCreatedResponse = <TModel extends Type<any>>(

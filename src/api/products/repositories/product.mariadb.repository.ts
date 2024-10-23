@@ -1,12 +1,12 @@
-import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {db, internal} from '../../../entities'
-import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
-import {SearchLogic} from '../../../helpers/search-logic.helper'
-import {ProductSearchDto} from '../dto/product-search.dto'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {db, internal} from '~/entities'
+import {configureQueryBuilder} from '~/helpers/query-builder.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {ProductSearchDto} from '~/api/products/dto/product-search.dto'
 import {Injectable} from '@nestjs/common'
-import {ProductRepository} from '../interfaces/product.repository'
-import {LoggerService} from '../../../logger/logger.service'
-import {MariaDbRepository} from '../../../repositories/mariadb.repository'
+import {ProductRepository} from '~/api/products/interfaces/product.repository'
+import {LoggerService} from '~/logger/logger.service'
+import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
 @Injectable()
 export class ProductMariadbRepository extends MariaDbRepository implements ProductRepository {

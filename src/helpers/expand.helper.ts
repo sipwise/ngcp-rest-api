@@ -1,11 +1,11 @@
-import {ServiceRequest} from '../interfaces/service-request.interface'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
-import {ProtectedReadCall} from './protected-controller-calls.helper'
+import {ProtectedReadCall} from '~/helpers/protected-controller-calls.helper'
 import {Reflector} from '@nestjs/core'
-import {ResponseDto} from '../dto/response.dto'
-import {LoggerService} from '../logger/logger.service'
-import {CrudController} from '../controllers/crud.controller'
-import {RequestDto} from '../dto/request.dto'
+import {ResponseDto} from '~/dto/response.dto'
+import {LoggerService} from '~/logger/logger.service'
+import {CrudController} from '~/controllers/crud.controller'
+import {RequestDto} from '~/dto/request.dto'
 
 @Injectable()
 export class ExpandHelper {

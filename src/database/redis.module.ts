@@ -1,5 +1,5 @@
 import {Module} from '@nestjs/common'
-import {redisProviders} from './redis.providers'
+import {redisProviders} from '~/database/redis.providers'
 
 @Module({
     providers: [...redisProviders],

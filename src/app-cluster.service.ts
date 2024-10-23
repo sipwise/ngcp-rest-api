@@ -2,11 +2,11 @@ import {Injectable} from '@nestjs/common'
 import cluster from 'cluster'
 import fs from 'fs'
 import sdNotify from 'sd-notify'
-import {AppService} from './app.service'
+import {AppService} from '~/app.service'
 import {WinstonModule} from 'nest-winston'
-import {winstonLoggerConfig} from './config/logger.config'
+import {winstonLoggerConfig} from '~/config/logger.config'
 import {exit} from 'process'
-import {LoggerService} from './logger/logger.service'
+import {LoggerService} from '~/logger/logger.service'
 
 const workersAmount = AppService.config.common.workers
 

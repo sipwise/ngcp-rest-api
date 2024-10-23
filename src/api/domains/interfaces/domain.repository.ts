@@ -1,5 +1,5 @@
-import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {internal} from '../../../entities'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {internal} from '~/entities'
 
 export interface DomainRepository {
     create(domain: internal.Domain[], sr: ServiceRequest): Promise<number[]>

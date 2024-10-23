@@ -1,15 +1,15 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
-import {AppModule} from '../../../app.module'
-import {AppService} from '../../../app.service'
-import {AuthService} from '../../../auth/auth.service'
-import {HeaderManipulationSetModule} from './header-manipulation-set.module'
-import {Operation as PatchOperation} from '../../../helpers/patch.helper'
-import {HttpExceptionFilter} from '../../../helpers/http-exception.filter'
-import {ValidateInputPipe} from '../../../pipes/validate.pipe'
+import {AppModule} from '~/app.module'
+import {AppService} from '~/app.service'
+import {AuthService} from '~/auth/auth.service'
+import {HeaderManipulationSetModule} from '~/api/header-manipulations/sets/header-manipulation-set.module'
+import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {ValidateInputPipe} from '~/pipes/validate.pipe'
 import {validate} from 'class-validator'
-import {HeaderManipulationSetResponseDto} from './dto/header-manipulation-set-response.dto'
+import {HeaderManipulationSetResponseDto} from '~/api/header-manipulations/sets/dto/header-manipulation-set-response.dto'
 
 describe('Rule Set', () => {
     let app: INestApplication

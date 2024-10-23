@@ -1,6 +1,6 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {IsNotEmpty} from 'class-validator'
-import {ResponseDto} from '../../../dto/response.dto'
+import {ResponseDto} from '~/dto/response.dto'
 
 export class HeaderManipulationResponseDto implements ResponseDto {
     @IsNotEmpty()

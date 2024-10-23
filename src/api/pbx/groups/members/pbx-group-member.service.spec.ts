@@ -1,12 +1,12 @@
 import {Test, TestingModule} from '@nestjs/testing'
-import {AuthResponseDto} from '../../../../auth/dto/auth-response.dto'
-import {ServiceRequest} from '../../../../interfaces/service-request.interface'
-import {ExpandModule} from '../../../../helpers/expand.module'
-import {AppModule} from '../../../../app.module'
-import {PbxGroupMockRepository} from './repositories/pbx-group-member.mock.repository'
-import {PbxGroupMemberModule} from './pbx-group-member.module'
-import {PbxGroupMemberMariadbRepository} from './repositories/pbx-group-member.mariadb.repository'
-import {PbxGroupMemberService} from './pbx-group-member.service'
+import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {ExpandModule} from '~/helpers/expand.module'
+import {AppModule} from '~/app.module'
+import {PbxGroupMockRepository} from '~/api/pbx/groups/members/repositories/pbx-group-member.mock.repository'
+import {PbxGroupMemberModule} from '~/api/pbx/groups/members/pbx-group-member.module'
+import {PbxGroupMemberMariadbRepository} from '~/api/pbx/groups/members/repositories/pbx-group-member.mariadb.repository'
+import {PbxGroupMemberService} from '~/api/pbx/groups/members/pbx-group-member.service'
 
 const user: AuthResponseDto = {
     readOnly: false,

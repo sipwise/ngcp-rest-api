@@ -1,3 +1,3 @@
-import {ResponseDto} from '../../../../../dto/response.dto'
+import {ResponseDto} from '~/dto/response.dto'
 
 export class PasswordChangeResponseDto implements ResponseDto {}

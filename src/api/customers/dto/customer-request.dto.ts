@@ -2,10 +2,10 @@ import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsEnum, IsNotEmpty, IsNumber, IsOptional} from 'class-validator'
 import {
     ContractStatus as CustomerStatus,
-} from '../../../entities/internal/contract.internal.entity'
-import {internal} from '../../../entities'
-import {CustomerType} from '../../../entities/internal/customer.internal.entity'
-import {RequestDto, RequestDtoOptions} from '../../../dto/request.dto'
+} from '~/entities/internal/contract.internal.entity'
+import {internal} from '~/entities'
+import {CustomerType} from '~/entities/internal/customer.internal.entity'
+import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 
 export class CustomerRequestDto implements RequestDto{
 

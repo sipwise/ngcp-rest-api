@@ -1,5 +1,5 @@
-import {LoggerService} from '../logger/logger.service'
-import {handleTypeORMError} from '../helpers/errors.helper'
+import {LoggerService} from '~/logger/logger.service'
+import {handleTypeORMError} from '~/helpers/errors.helper'
 
 function applyDecorator(target: any, propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor {
     const log = new LoggerService(`${target.constructor.name}/${propertyKey}`)

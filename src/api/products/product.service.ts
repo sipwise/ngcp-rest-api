@@ -1,8 +1,8 @@
-import {internal} from '../../entities'
+import {internal} from '~/entities'
 import {Inject, Injectable} from '@nestjs/common'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {ProductMariadbRepository} from './repositories/product.mariadb.repository'
-import {LoggerService} from '../../logger/logger.service'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {ProductMariadbRepository} from '~/api/products/repositories/product.mariadb.repository'
+import {LoggerService} from '~/logger/logger.service'
 
 @Injectable()
 export class ProductService {

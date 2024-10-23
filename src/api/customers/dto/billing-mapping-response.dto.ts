@@ -1,5 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {internal} from '../../../entities'
+import {internal} from '~/entities'
 
 export class BillingMappingResponseDto {
     @ApiProperty()

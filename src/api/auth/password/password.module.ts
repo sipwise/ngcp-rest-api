@@ -1,5 +1,5 @@
 import {Module} from '@nestjs/common'
-import {PasswordController} from './password.controller'
+import {PasswordController} from '~/api/auth/password/password.controller'
 
 @Module({
     controllers: [PasswordController],

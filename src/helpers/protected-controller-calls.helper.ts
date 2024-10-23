@@ -1,7 +1,7 @@
-import {CrudController} from '../controllers/crud.controller'
+import {CrudController} from '~/controllers/crud.controller'
 import {UnauthorizedException} from '@nestjs/common'
-import {RequestDto} from '../dto/request.dto'
-import {ResponseDto} from '../dto/response.dto'
+import {RequestDto} from '~/dto/request.dto'
+import {ResponseDto} from '~/dto/response.dto'
 
 /**
  * `hasPermissionToAccessController` returns whether the provided `role` has access to a controller, or it's `read` method.

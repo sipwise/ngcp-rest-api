@@ -1,6 +1,6 @@
 import {
     ContractStatus,
-} from '../../../entities/internal/contract.internal.entity'
+} from '~/entities/internal/contract.internal.entity'
 
 export class CustomerSearchDto {
     id: number = undefined

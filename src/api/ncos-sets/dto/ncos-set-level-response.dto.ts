@@ -1,7 +1,7 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {IsNotEmpty} from 'class-validator'
-import {ResponseDto} from '../../../dto/response.dto'
-import {internal} from '../../../entities'
+import {ResponseDto} from '~/dto/response.dto'
+import {internal} from '~/entities'
 
 export class NCOSSetLevelResponseDto implements ResponseDto {
     @IsNotEmpty()

@@ -1,6 +1,6 @@
 import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
-import {BillingProfileStatus, IntervalUnit, PrepaidLibrary} from '../../internal/billing-profile.internal.entity'
-import {internal} from '../../../entities'
+import {BillingProfileStatus, IntervalUnit, PrepaidLibrary} from '~/entities/internal/billing-profile.internal.entity'
+import {internal} from '~/entities'
 
 @Entity({
     name: 'billing_profiles',

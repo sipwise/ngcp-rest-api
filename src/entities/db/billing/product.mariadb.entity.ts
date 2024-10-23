@@ -1,8 +1,8 @@
-import {Contract} from './contract.mariadb.entity'
-import {Reseller} from './reseller.mariadb.entity'
+import {Contract} from '~/entities/db/billing/contract.mariadb.entity'
+import {Reseller} from '~/entities/db/billing/reseller.mariadb.entity'
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
-import {ProductClass} from '../../internal/product.internal.entity'
-import {internal} from '../../../entities'
+import {ProductClass} from '~/entities/internal/product.internal.entity'
+import {internal} from '~/entities'
 
 @Entity({
     name: 'products',

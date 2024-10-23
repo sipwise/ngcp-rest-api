@@ -1,7 +1,7 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
-import {BillingNetworkStatus} from '../../internal/billing-network.internal.entity'
-import {Reseller} from './reseller.mariadb.entity'
-import {internal} from '../../../entities'
+import {BillingNetworkStatus} from '~/entities/internal/billing-network.internal.entity'
+import {Reseller} from '~/entities/db/billing/reseller.mariadb.entity'
+import {internal} from '~/entities'
 
 @Entity({
     name: 'billing_networks',

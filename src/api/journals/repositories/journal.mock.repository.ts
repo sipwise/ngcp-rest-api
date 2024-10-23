@@ -1,6 +1,6 @@
-import {JournalRepository} from '../interfaces/journal.repository'
-import {internal} from '../../../entities'
-import {ServiceRequest} from '../../../interfaces/service-request.interface'
+import {JournalRepository} from '~/api/journals/interfaces/journal.repository'
+import {internal} from '~/entities'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 interface JournalMockDB {
     [key: number]: internal.Journal

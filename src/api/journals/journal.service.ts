@@ -1,14 +1,14 @@
 import {Inject, Injectable} from '@nestjs/common'
-import {internal} from '../../entities'
-import {HandleDbErrors} from '../../decorators/handle-db-errors.decorator'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {JournalMariadbRepository} from './repositories/journal.mariadb.repository'
-import {extractResourceName} from '../../helpers/uri.helper'
-import {AppService} from '../../app.service'
-import Context from '../../helpers/context.helper'
+import {internal} from '~/entities'
+import {HandleDbErrors} from '~/decorators/handle-db-errors.decorator'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {JournalMariadbRepository} from '~/api/journals/repositories/journal.mariadb.repository'
+import {extractResourceName} from '~/helpers/uri.helper'
+import {AppService} from '~/app.service'
+import Context from '~/helpers/context.helper'
 import {isObject} from 'class-validator'
-import {obfuscatePasswordJSON} from '../../helpers/password-obfuscator.helper'
-import {LoggerService} from '../../logger/logger.service'
+import {obfuscatePasswordJSON} from '~/helpers/password-obfuscator.helper'
+import {LoggerService} from '~/logger/logger.service'
 
 const operation = {
     'PATCH': 'update',

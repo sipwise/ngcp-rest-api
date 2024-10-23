@@ -1,5 +1,5 @@
-import {RbacRole} from '../../config/constants.config'
-import {internal} from './../../entities'
+import {RbacRole} from '~/config/constants.config'
+import {internal} from '~/entities'
 import {genSalt, hash} from 'bcrypt'
 
 export interface AdminInterface {

@@ -1,4 +1,4 @@
-import {ProfilePackage} from './profile-package.internal.entity'
+import {ProfilePackage} from '~/entities/internal/profile-package.internal.entity'
 
 export enum Discriminator {
     Initial = 'initial',

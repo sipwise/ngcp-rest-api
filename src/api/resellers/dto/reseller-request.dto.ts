@@ -1,8 +1,8 @@
 import {IsEnum, IsNotEmpty} from 'class-validator'
-import {ResellerStatus} from '../../../entities/internal/reseller.internal.entity'
+import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {ApiProperty} from '@nestjs/swagger'
-import {RequestDto, RequestDtoOptions} from '../../../dto/request.dto'
-import {internal} from '../../../entities'
+import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
+import {internal} from '~/entities'
 
 export class ResellerRequestDto implements RequestDto {
     @IsNotEmpty()

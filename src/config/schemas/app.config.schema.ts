@@ -1,12 +1,12 @@
 import {IsNumber, IsOptional, ValidateNested} from 'class-validator'
 import {Type} from 'class-transformer'
-import {DatabaseConfig} from './database.config.schema'
-import {RedisConfig} from './redis.config.schema'
-import {CommonConfig} from './common.config.schema'
-import {FileShareConfig} from './fileshare.config.schema'
-import {SecurityConfig} from './security.config.schema'
-import {SSLConfig} from './ssl.config.schema'
-import {LegacyConfig} from './legacy.config.schema'
+import {DatabaseConfig} from '~/config/schemas/database.config.schema'
+import {RedisConfig} from '~/config/schemas/redis.config.schema'
+import {CommonConfig} from '~/config/schemas/common.config.schema'
+import {FileShareConfig} from '~/config/schemas/fileshare.config.schema'
+import {SecurityConfig} from '~/config/schemas/security.config.schema'
+import {SSLConfig} from '~/config/schemas/ssl.config.schema'
+import {LegacyConfig} from '~/config/schemas/legacy.config.schema'
 
 export class AppConfig {
     @ValidateNested()

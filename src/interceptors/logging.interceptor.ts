@@ -3,8 +3,8 @@ import {classToPlain} from 'class-transformer'
 import {isObject} from 'class-validator'
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
-import Context from '../helpers/context.helper'
-import {LoggerService} from '../logger/logger.service'
+import Context from '~/helpers/context.helper'
+import {LoggerService} from '~/logger/logger.service'
 
 /**
  * LoggingInterceptor intercepts requests and writes relevant information to log.

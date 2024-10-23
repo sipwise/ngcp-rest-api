@@ -1,4 +1,4 @@
-import {internal} from '../../../entities'
+import {internal} from '~/entities'
 
 export interface AdminPasswordJournalRepository {
     create(journals: internal.AdminPasswordJournal[]): Promise<number[]>

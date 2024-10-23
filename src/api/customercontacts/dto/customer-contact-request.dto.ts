@@ -1,8 +1,8 @@
-import {ContactGender, ContactStatus} from '../../../entities/internal/contact.internal.entity'
-import {internal} from '../../../entities'
+import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
+import {internal} from '~/entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsEnum, IsNotEmpty, IsOptional} from 'class-validator'
-import {RequestDto, RequestDtoOptions} from '../../../dto/request.dto'
+import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 
 export class CustomerContactRequestDto implements RequestDto {
     @IsOptional()

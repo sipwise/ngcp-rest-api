@@ -1,8 +1,8 @@
 import {Inject, Injectable} from '@nestjs/common'
-import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {internal} from '../../../entities'
-import {PbxGroupMariadbRepository} from './repositories/pbx-group.mariadb.repository'
-import {LoggerService} from '../../../logger/logger.service'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {internal} from '~/entities'
+import {PbxGroupMariadbRepository} from '~/api/pbx/groups/repositories/pbx-group.mariadb.repository'
+import {LoggerService} from '~/logger/logger.service'
 
 @Injectable()
 export class PbxGroupService {

@@ -1,4 +1,4 @@
-import {ContactGender, ContactStatus} from '../../../entities/internal/contact.internal.entity'
+import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
 
 export class CustomerContactSearchDto {
     id: number = undefined

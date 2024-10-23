@@ -1,10 +1,10 @@
 import {forwardRef, Module} from '@nestjs/common'
-import {CustomerContactService} from './customer-contact.service'
-import {CustomerContactController} from './customer-contact.controller'
-import {JournalModule} from '../journals/journal.module'
-import {ExpandModule} from '../../helpers/expand.module'
-import {ContactModule} from '../contacts/contact.module'
-import {ContactMariadbRepository} from '../contacts/repositories/contact.mariadb.repository'
+import {CustomerContactService} from '~/api/customercontacts/customer-contact.service'
+import {CustomerContactController} from '~/api/customercontacts/customer-contact.controller'
+import {JournalModule} from '~/api/journals/journal.module'
+import {ExpandModule} from '~/helpers/expand.module'
+import {ContactModule} from '~/api/contacts/contact.module'
+import {ContactMariadbRepository} from '~/api/contacts/repositories/contact.mariadb.repository'
 
 @Module({
     imports: [

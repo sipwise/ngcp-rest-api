@@ -1,8 +1,8 @@
 import {ArgumentsHost, Catch, ExceptionFilter, HttpException} from '@nestjs/common'
 import {Request, Response} from 'express'
-import Context from '../helpers/context.helper'
-import {config} from '../config/main.config'
-import {LoggerService} from '../logger/logger.service'
+import Context from '~/helpers/context.helper'
+import {config} from '~/config/main.config'
+import {LoggerService} from '~/logger/logger.service'
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {

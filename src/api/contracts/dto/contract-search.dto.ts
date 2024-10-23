@@ -1,9 +1,9 @@
-import {ContractResponseDto} from './contract-response.dto'
+import {ContractResponseDto} from '~/api/contracts/dto/contract-response.dto'
 import {
     ContractBillingProfileDefinition,
     ContractStatus,
     ContractType,
-} from '../../../entities/internal/contract.internal.entity'
+} from '~/entities/internal/contract.internal.entity'
 
 export class ContractSearchDto implements ContractResponseDto {
     id: number = undefined

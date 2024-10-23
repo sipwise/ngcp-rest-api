@@ -13,10 +13,10 @@ import {ErrorHttpStatusCode} from '@nestjs/common/utils/http-error-by-code.util'
 import {classToPlain, plainToClass} from 'class-transformer'
 import {validate} from 'class-validator'
 import {isUndefined} from 'util'
-import {formatValidationErrors} from '../helpers/errors.helper'
-import {obfuscatePasswordValidationErrors} from '../helpers/password-obfuscator.helper'
-import {LoggerService} from '../logger/logger.service'
-import {Dictionary} from '../helpers/dictionary.helper'
+import {formatValidationErrors} from '~/helpers/errors.helper'
+import {obfuscatePasswordValidationErrors} from '~/helpers/password-obfuscator.helper'
+import {LoggerService} from '~/logger/logger.service'
+import {Dictionary} from '~/helpers/dictionary.helper'
 
 export interface ValidationPipeOptions extends ValidatorOptions {
     transform?: boolean;

@@ -1,7 +1,7 @@
-import {db} from '../entities'
+import {db} from '~/entities'
 
 import {Telnet} from 'telnet-client'
-import {LoggerService} from '../logger/logger.service'
+import {LoggerService} from '~/logger/logger.service'
 
 interface TelnetError {
     message: string

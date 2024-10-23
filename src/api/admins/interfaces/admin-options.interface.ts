@@ -1,4 +1,4 @@
-import {FilterBy} from '../../../interfaces/filter-by.interface'
+import {FilterBy} from '~/interfaces/filter-by.interface'
 
 interface AdminFilterBy extends FilterBy {
    userId: number

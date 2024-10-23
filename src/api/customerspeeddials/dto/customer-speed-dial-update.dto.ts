@@ -1,4 +1,4 @@
-import {internal} from '../../../entities'
+import {internal} from '~/entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsNotEmpty} from 'class-validator'
 

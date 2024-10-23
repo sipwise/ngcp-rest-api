@@ -1,12 +1,12 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {
     ContractStatus as CustomerStatus,
-} from '../../../entities/internal/contract.internal.entity'
-import {internal} from '../../../entities'
-import {CustomerType} from '../../../entities/internal/customer.internal.entity'
-import {BillingMapping} from '../../../entities/internal'
-import {BillingMappingResponseDto} from './billing-mapping-response.dto'
-import {Expandable} from '../../../decorators/expandable.decorator'
+} from '~/entities/internal/contract.internal.entity'
+import {internal} from '~/entities'
+import {CustomerType} from '~/entities/internal/customer.internal.entity'
+import {BillingMapping} from '~/entities/internal'
+import {BillingMappingResponseDto} from '~/api/customers/dto/billing-mapping-response.dto'
+import {Expandable} from '~/decorators/expandable.decorator'
 
 export class CustomerResponseDto {
     @ApiProperty()

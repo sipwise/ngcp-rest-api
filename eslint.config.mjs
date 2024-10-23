@@ -1,5 +1,6 @@
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
 import unusedImports from 'eslint-plugin-unused-imports'
+import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths'
 import globals from 'globals'
 import tsParser from '@typescript-eslint/parser'
 import path from 'node:path'
@@ -19,6 +20,7 @@ const defaultOptions = {
     plugins: {
         '@typescript-eslint': typescriptEslint,
         'unused-imports': unusedImports,
+        'no-relative-import-paths': noRelativeImportPaths,
     },
     languageOptions: {
         globals: {
@@ -48,6 +50,14 @@ const defaultOptions = {
         'array-bracket-spacing': ['error', 'never'],
         'import/prefer-default-export': [0],
         'unused-imports/no-unused-imports': 'error',
+        'no-relative-import-paths/no-relative-import-paths': [
+            'error',
+            {
+                'allowSameFolder': true,
+                'rootDir': 'src',
+                'prefix': '~',
+            },
+        ],
         '@typescript-eslint/no-unused-vars': [
             'error',
             {

@@ -1,6 +1,6 @@
-import {ServiceRequest} from '../../../../../../interfaces/service-request.interface'
-import {internal} from '../../../../../../entities'
-import {Dictionary} from '../../../../../../helpers/dictionary.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {internal} from '~/entities'
+import {Dictionary} from '~/helpers/dictionary.helper'
 
 export interface HeaderManipulationRuleConditionRepository {
     create(sd: internal.HeaderRuleCondition[], sr: ServiceRequest): Promise<internal.HeaderRuleCondition[]>

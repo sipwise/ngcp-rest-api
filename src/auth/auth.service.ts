@@ -1,12 +1,12 @@
 import {ForbiddenException, Injectable} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
-import {AppService} from '../app.service'
-import {AuthResponseDto} from './dto/auth-response.dto'
+import {AppService} from '~/app.service'
+import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {compare} from 'bcrypt'
-import {db} from '../entities'
-import {RbacRole} from '../config/constants.config'
-import {LoggerService} from '../logger/logger.service'
-import {ServiceRequest} from '../interfaces/service-request.interface'
+import {db} from '~/entities'
+import {RbacRole} from '~/config/constants.config'
+import {LoggerService} from '~/logger/logger.service'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 import Redis, {Cluster} from 'ioredis'
 
 /**

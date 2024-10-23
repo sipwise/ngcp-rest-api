@@ -1,6 +1,6 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {internal} from '../../../../../entities'
-import {ResponseDto} from '../../../../../dto/response.dto'
+import {internal} from '~/entities'
+import {ResponseDto} from '~/dto/response.dto'
 import {IsNotEmpty, IsNumber} from 'class-validator'
 
 export class PbxGroupMemberResponseDto implements ResponseDto {

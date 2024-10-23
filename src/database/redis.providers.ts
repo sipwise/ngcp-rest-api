@@ -1,6 +1,6 @@
 import {createRedisConnection} from '@nestjs-modules/ioredis'
-import {redisConfig} from '../config/redis.config'
-import {LoggerService} from '../logger/logger.service'
+import {redisConfig} from '~/config/redis.config'
+import {LoggerService} from '~/logger/logger.service'
 import {Redis, Cluster} from 'ioredis'
 
 export const redisProviders = [

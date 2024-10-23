@@ -1,13 +1,13 @@
-import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {SearchLogic} from '../../../helpers/search-logic.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {SearchLogic} from '~/helpers/search-logic.helper'
 import {SelectQueryBuilder} from 'typeorm'
-import {db, internal} from '../../../entities'
-import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
-import {VoicemailSearchDto} from '../dto/voicemail-search.dto'
-import {VoicemailRepository} from '../interfaces/voicemail.repository'
-import {LoggerService} from '../../../logger/logger.service'
-import {Dictionary} from '../../../helpers/dictionary.helper'
-import {MariaDbRepository} from '../../../repositories/mariadb.repository'
+import {db, internal} from '~/entities'
+import {configureQueryBuilder} from '~/helpers/query-builder.helper'
+import {VoicemailSearchDto} from '~/api/voicemails/dto/voicemail-search.dto'
+import {VoicemailRepository} from '~/api/voicemails/interfaces/voicemail.repository'
+import {LoggerService} from '~/logger/logger.service'
+import {Dictionary} from '~/helpers/dictionary.helper'
+import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
 export class MessagesCount {
     new_messages: number

@@ -1,11 +1,11 @@
 import {applyDecorators, UseGuards} from '@nestjs/common'
 import {ApiBasicAuth, ApiBearerAuth, ApiSecurity} from '@nestjs/swagger'
-import {OmniGuard} from '../guards/omni.guard'
-import {ReadOnlyGuard} from '../guards/read-only.guard'
-import {RolesGuard} from '../guards/roles.guard'
-import {Roles} from './roles.decorator'
-import {BanGuard} from '../guards/ban.guard'
-import {PasswordMaxAgeGuard} from '../guards/password-max-age.guard'
+import {OmniGuard} from '~/guards/omni.guard'
+import {ReadOnlyGuard} from '~/guards/read-only.guard'
+import {RolesGuard} from '~/guards/roles.guard'
+import {Roles} from '~/decorators/roles.decorator'
+import {BanGuard} from '~/guards/ban.guard'
+import {PasswordMaxAgeGuard} from '~/guards/password-max-age.guard'
 
 export function Auth(...roles: string[]): ClassDecorator & MethodDecorator {
     return applyDecorators(

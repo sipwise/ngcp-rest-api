@@ -1,6 +1,6 @@
 import {NestApplication} from '@nestjs/core'
 import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger'
-import swaggerTags from '../localisation/en/swagger-tags.json'
+import swaggerTags from '~/localisation/en/swagger-tags.json'
 
 // TODO: only en localisation for now as swagger cannot switch languages dynamically
 export function createSwaggerDocument(app: NestApplication, api_prefix: string): void {

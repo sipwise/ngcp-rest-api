@@ -1,12 +1,12 @@
-import {AuthResponseDto} from '../../auth/dto/auth-response.dto'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
+import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {Test, TestingModule} from '@nestjs/testing'
-import {ExpandModule} from '../../helpers/expand.module'
-import {AppModule} from '../../app.module'
-import {ProductService} from './product.service'
-import {ProductModule} from './product.module'
-import {ProductMariadbRepository} from './repositories/product.mariadb.repository'
-import {ProductMockRepository} from './repositories/product.mock.repository'
+import {ExpandModule} from '~/helpers/expand.module'
+import {AppModule} from '~/app.module'
+import {ProductService} from '~/api/products/product.service'
+import {ProductModule} from '~/api/products/product.module'
+import {ProductMariadbRepository} from '~/api/products/repositories/product.mariadb.repository'
+import {ProductMockRepository} from '~/api/products/repositories/product.mock.repository'
 
 const user: AuthResponseDto = {
     readOnly: false,

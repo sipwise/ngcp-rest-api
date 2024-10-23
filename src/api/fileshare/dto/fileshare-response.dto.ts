@@ -1,4 +1,4 @@
-import {ResponseDto} from '../../../dto/response.dto'
+import {ResponseDto} from '~/dto/response.dto'
 
 export class FileshareResponseDto implements ResponseDto {
     id: string

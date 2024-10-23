@@ -1,6 +1,6 @@
-import {DomainRepository} from '../interfaces/domain.repository'
-import {internal} from '../../../entities'
-import {ServiceRequest} from '../../../interfaces/service-request.interface'
+import {DomainRepository} from '~/api/domains/interfaces/domain.repository'
+import {internal} from '~/entities'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {NotFoundException} from '@nestjs/common'
 
 interface DomainMockDB {

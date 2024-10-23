@@ -1,14 +1,14 @@
 import {Injectable} from '@nestjs/common'
-import {db, internal} from '../../../../entities'
-import {ParamsDictionary, ServiceRequest} from '../../../../interfaces/service-request.interface'
-import {HeaderManipulationSetSearchDto} from '../dto/header-manipulation-set-search.dto'
-import {configureQueryBuilder} from '../../../../helpers/query-builder.helper'
-import {HeaderManipulationSetRepository} from '../interfaces/header-manipulation-set.repository'
-import {SearchLogic} from '../../../../helpers/search-logic.helper'
-import {LoggerService} from '../../../../logger/logger.service'
+import {db, internal} from '~/entities'
+import {ParamsDictionary, ServiceRequest} from '~/interfaces/service-request.interface'
+import {HeaderManipulationSetSearchDto} from '~/api/header-manipulations/sets/dto/header-manipulation-set-search.dto'
+import {configureQueryBuilder} from '~/helpers/query-builder.helper'
+import {HeaderManipulationSetRepository} from '~/api/header-manipulations/sets/interfaces/header-manipulation-set.repository'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {LoggerService} from '~/logger/logger.service'
 import {SelectQueryBuilder} from 'typeorm'
-import {Dictionary} from '../../../../helpers/dictionary.helper'
-import {MariaDbRepository} from '../../../../repositories/mariadb.repository'
+import {Dictionary} from '~/helpers/dictionary.helper'
+import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
 export interface FilterBy {
     resellerId?: number

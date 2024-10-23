@@ -1,6 +1,6 @@
-import {internal} from '../../../entities'
-import {RbacRole} from '../../../config/constants.config'
-import {ResponseDto} from '../../../dto/response.dto'
+import {internal} from '~/entities'
+import {RbacRole} from '~/config/constants.config'
+import {ResponseDto} from '~/dto/response.dto'
 
 export class NumberResponseDto implements ResponseDto {
     subscriber_id: number

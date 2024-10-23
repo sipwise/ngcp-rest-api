@@ -1,8 +1,8 @@
 import {DataSourceOptions} from 'typeorm'
 import '@nestjs-modules/ioredis'
-import {db} from '../entities'
-import {AppService} from '../app.service'
-import {TypeormLoggerService} from '../logger/typeorm-logger.service'
+import {db} from '~/entities'
+import {AppService} from '~/app.service'
+import {TypeormLoggerService} from '~/logger/typeorm-logger.service'
 
 const db_user = process.env.API_DB_USER || AppService.config.database.user
 const db_pass = process.env.API_DB_PASS || AppService.config.database.pass

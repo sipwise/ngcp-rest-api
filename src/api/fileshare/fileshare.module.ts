@@ -1,8 +1,8 @@
 import {Module} from '@nestjs/common'
-import {JournalModule} from '../journals/journal.module'
-import {FileshareController} from './fileshare.controller'
-import {FileshareService} from './fileshare.service'
-import {ExpandModule} from '../../helpers/expand.module'
+import {JournalModule} from '~/api/journals/journal.module'
+import {FileshareController} from '~/api/fileshare/fileshare.controller'
+import {FileshareService} from '~/api/fileshare/fileshare.service'
+import {ExpandModule} from '~/helpers/expand.module'
 
 @Module({
     imports: [JournalModule, ExpandModule],

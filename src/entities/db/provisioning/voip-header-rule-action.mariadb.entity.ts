@@ -1,10 +1,10 @@
 import {BaseEntity, Column, Entity, ManyToOne, JoinColumn, PrimaryGeneratedColumn} from 'typeorm'
-import {VoipHeaderRule} from './voip-header-rule.mariadb.entity'
-import {HeaderRuleActionActionType, HeaderRuleActionHeaderPart, HeaderRuleActionValuePart} from '../../../entities/internal/header-rule-action.internal.entity' 
-import {VoipRewriteRuleSet} from './voip-rewrite-rule-set.mariadb.entity'
-import {VoipRewriteRule} from './voip-rewrite-rule.mariadb.entity'
-import {internal} from '../../../entities'
-import {RwrDpEnum} from '../../../enums/rwr-dp.enum'
+import {VoipHeaderRule} from '~/entities/db/provisioning/voip-header-rule.mariadb.entity'
+import {HeaderRuleActionActionType, HeaderRuleActionHeaderPart, HeaderRuleActionValuePart} from '~/entities/internal/header-rule-action.internal.entity' 
+import {VoipRewriteRuleSet} from '~/entities/db/provisioning/voip-rewrite-rule-set.mariadb.entity'
+import {VoipRewriteRule} from '~/entities/db/provisioning/voip-rewrite-rule.mariadb.entity'
+import {internal} from '~/entities'
+import {RwrDpEnum} from '~/enums/rwr-dp.enum'
 
 @Entity({
     name: 'voip_header_rule_actions',

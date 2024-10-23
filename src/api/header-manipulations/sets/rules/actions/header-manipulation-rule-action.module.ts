@@ -1,11 +1,11 @@
 import {forwardRef, Module} from '@nestjs/common'
-import {HeaderManipulationRuleActionController} from './header-manipulation-rule-action.controller'
-import {JournalModule} from '../../../../journals/journal.module'
-import {ExpandModule} from '../../../../../helpers/expand.module'
-import {HeaderManipulationRuleActionService} from './header-manipulation-rule-action.service'
-import {HeaderManipulationRuleActionMariadbRepository} from './repositories/header-manipulation-rule-action.mariadb.repository'
-import {HeaderManipulationRuleMariadbRepository} from '../repositories/header-manipulation-rule.mariadb.repository'
-import {HeaderManipulationSetMariadbRepository} from '../../repositories/header-manipulation-set.mariadb.repository'
+import {HeaderManipulationRuleActionController} from '~/api/header-manipulations/sets/rules/actions/header-manipulation-rule-action.controller'
+import {JournalModule} from '~/api/journals/journal.module'
+import {ExpandModule} from '~/helpers/expand.module'
+import {HeaderManipulationRuleActionService} from '~/api/header-manipulations/sets/rules/actions/header-manipulation-rule-action.service'
+import {HeaderManipulationRuleActionMariadbRepository} from '~/api/header-manipulations/sets/rules/actions/repositories/header-manipulation-rule-action.mariadb.repository'
+import {HeaderManipulationRuleMariadbRepository} from '~/api/header-manipulations/sets/rules/repositories/header-manipulation-rule.mariadb.repository'
+import {HeaderManipulationSetMariadbRepository} from '~/api/header-manipulations/sets/repositories/header-manipulation-set.mariadb.repository'
 
 @Module({
     imports: [

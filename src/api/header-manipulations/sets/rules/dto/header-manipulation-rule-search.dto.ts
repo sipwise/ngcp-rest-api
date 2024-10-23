@@ -1,4 +1,4 @@
-import {HeaderRuleDirection} from '../../../../../entities/internal/header-rule.internal.entity'
+import {HeaderRuleDirection} from '~/entities/internal/header-rule.internal.entity'
 
 export class HeaderManipulationRuleSearchDto {
     name: string = undefined

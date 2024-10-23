@@ -1,10 +1,10 @@
 import {NotFoundException} from '@nestjs/common'
-import {db, internal} from '../../../entities'
-import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {ResellerStatus} from '../../../entities/internal/reseller.internal.entity'
-import {ContractStatus} from '../../../entities/internal/contract.internal.entity'
-import {ResellerRepository} from '../interfaces/reseller.repository'
-import {Dictionary} from '../../../helpers/dictionary.helper'
+import {db, internal} from '~/entities'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
+import {ContractStatus} from '~/entities/internal/contract.internal.entity'
+import {ResellerRepository} from '~/api/resellers/interfaces/reseller.repository'
+import {Dictionary} from '~/helpers/dictionary.helper'
 
 interface ResellerMockDB {
     [key: number]: internal.Reseller

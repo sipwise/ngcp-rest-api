@@ -1,12 +1,12 @@
-import {AppService} from '../../app.service'
+import {AppService} from '~/app.service'
 import {Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
-import {internal} from '../../entities'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {ContractMariadbRepository} from './repositories/contract.mariadb.repository'
-import {CrudService} from '../../interfaces/crud-service.interface'
-import {LoggerService} from '../../logger/logger.service'
+import {internal} from '~/entities'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {ContractMariadbRepository} from '~/api/contracts/repositories/contract.mariadb.repository'
+import {CrudService} from '~/interfaces/crud-service.interface'
+import {LoggerService} from '~/logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
-import {Dictionary} from '../../helpers/dictionary.helper'
+import {Dictionary} from '~/helpers/dictionary.helper'
 
 @Injectable()
 export class ContractService implements CrudService<internal.Contract> {

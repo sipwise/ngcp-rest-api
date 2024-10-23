@@ -1,9 +1,9 @@
 import {Injectable} from '@nestjs/common'
-import {db, internal} from '../../../../../entities'
-import {LoggerService} from '../../../../../logger/logger.service'
-import {MariaDbRepository} from '../../../../../repositories/mariadb.repository'
-import {SubscriberPasswordJournalRepository} from '../interfaces/subscriber-password-journal.repository'
-import {ServiceRequest} from '../../../../../interfaces/service-request.interface'
+import {db, internal} from '~/entities'
+import {LoggerService} from '~/logger/logger.service'
+import {MariaDbRepository} from '~/repositories/mariadb.repository'
+import {SubscriberPasswordJournalRepository} from '~/api/auth/password/change/interfaces/subscriber-password-journal.repository'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 @Injectable()
 export class SubscriberPasswordJournalMariadbRepository extends MariaDbRepository implements SubscriberPasswordJournalRepository {

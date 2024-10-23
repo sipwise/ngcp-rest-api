@@ -1,13 +1,13 @@
 import {Injectable} from '@nestjs/common'
 import {PassportStrategy} from '@nestjs/passport'
 import {Strategy} from 'passport-jwt'
-import {jwtConstants} from '../config/constants.config'
-import {db} from '../entities'
-import {AuthService} from './auth.service'
-import {AppService} from '../app.service'
+import {jwtConstants} from '~/config/constants.config'
+import {db} from '~/entities'
+import {AuthService} from '~/auth/auth.service'
+import {AppService} from '~/app.service'
 import {ServiceRequest} from 'interfaces/service-request.interface'
-import {LoggerService} from '../logger/logger.service'
-import {AuthResponseDto} from './dto/auth-response.dto'
+import {LoggerService} from '~/logger/logger.service'
+import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 
 /**
  * Implementation of the JWT authentication strategy

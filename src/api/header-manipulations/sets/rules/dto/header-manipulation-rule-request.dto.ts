@@ -1,8 +1,8 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsEnum, IsNotEmpty, IsNumber, IsOptional, MaxLength} from 'class-validator'
-import {RequestDto, RequestDtoOptions} from '../../../../../dto/request.dto'
-import {internal} from '../../../../../entities'
-import {HeaderRuleDirection} from '../../../../../entities/internal/header-rule.internal.entity'
+import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
+import {internal} from '~/entities'
+import {HeaderRuleDirection} from '~/entities/internal/header-rule.internal.entity'
 import {OneOf} from 'decorators/one-of.decorator'
 
 export class HeaderManipulationRuleRequestDto implements RequestDto {

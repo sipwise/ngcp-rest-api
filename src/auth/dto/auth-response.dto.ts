@@ -1,4 +1,4 @@
-import {internal} from '../../entities'
+import {internal} from '~/entities'
 
 export class AuthResponseDto {
     active: boolean

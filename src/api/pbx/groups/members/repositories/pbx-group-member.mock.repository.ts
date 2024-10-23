@@ -1,7 +1,7 @@
-import {PbxGroupMemberRepository} from '../interfaces/pbx-group-member.repository'
-import {internal} from '../../../../../entities'
-import {ServiceRequest} from '../../../../../interfaces/service-request.interface'
-import {PbxGroupMember} from '../../../../../entities/internal'
+import {PbxGroupMemberRepository} from '~/api/pbx/groups/members/interfaces/pbx-group-member.repository'
+import {internal} from '~/entities'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {PbxGroupMember} from '~/entities/internal'
 import {NotFoundException} from '@nestjs/common'
 
 interface PbxGroupMemberMockDB {

@@ -1,4 +1,4 @@
-import {Contact, Contract, Domain, Journal} from '../db/billing'
+import {Contact, Contract, Domain, Journal} from '~/entities/db/billing'
 
 export enum ResellerStatus {
     Active = 'active',

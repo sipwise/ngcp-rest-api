@@ -11,9 +11,9 @@ import {
 } from '@nestjs/common'
 import {HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
 import {isString, isUndefined} from '@nestjs/common/utils/shared.utils'
-import {Dictionary} from '../helpers/dictionary.helper'
-import {PatchDto} from '../dto/patch.dto'
-import {validate} from '../helpers/patch.helper'
+import {Dictionary} from '~/helpers/dictionary.helper'
+import {PatchDto} from '~/dto/patch.dto'
+import {validate} from '~/helpers/patch.helper'
 
 interface ParseIdDictionaryOptions extends Omit<
     ValidationPipeOptions,

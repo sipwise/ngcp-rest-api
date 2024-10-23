@@ -1,6 +1,6 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
-import {Contract} from '../billing/contract.mariadb.entity'
-import {internal} from '../../../entities'
+import {Contract} from '~/entities/db/billing/contract.mariadb.entity'
+import {internal} from '~/entities'
 
 @Entity({
     name: 'voip_contract_speed_dial',

@@ -4,9 +4,9 @@ import {
     ContractBillingProfileDefinition,
     ContractStatus,
     ContractType,
-} from '../../../entities/internal/contract.internal.entity'
-import {internal} from '../../../entities'
-import {RequestDto, RequestDtoOptions} from '../../../dto/request.dto'
+} from '~/entities/internal/contract.internal.entity'
+import {internal} from '~/entities'
+import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 
 export class ContractRequestDto implements RequestDto {
     @IsOptional()

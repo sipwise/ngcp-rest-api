@@ -1,5 +1,5 @@
 import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
-import {InvoiceTemplateCallDirection, InvoiceTemplateType} from '../../internal/invoice-template.internal.entity'
+import {InvoiceTemplateCallDirection, InvoiceTemplateType} from '~/entities/internal/invoice-template.internal.entity'
 
 @Entity({
     name: 'invoice_templates',

@@ -1,5 +1,5 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
-import {ContractBillingProfileNetwork} from './contract-billing-profile-network.mariadb.entity'
+import {ContractBillingProfileNetwork} from '~/entities/db/billing/contract-billing-profile-network.mariadb.entity'
 
 
 @Entity({

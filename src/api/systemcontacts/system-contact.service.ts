@@ -1,13 +1,13 @@
 import {Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
-import {internal} from '../../entities'
-import {ServiceRequest} from '../../interfaces/service-request.interface'
-import {ContactMariadbRepository} from '../contacts/repositories/contact.mariadb.repository'
-import {CrudService} from '../../interfaces/crud-service.interface'
-import {LoggerService} from '../../logger/logger.service'
+import {internal} from '~/entities'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {ContactMariadbRepository} from '~/api/contacts/repositories/contact.mariadb.repository'
+import {CrudService} from '~/interfaces/crud-service.interface'
+import {LoggerService} from '~/logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
-import {ContactOptions} from '../contacts/interfaces/contact-options.interface'
-import {ContactType} from '../../entities/internal/contact.internal.entity'
-import {Dictionary} from '../../helpers/dictionary.helper'
+import {ContactOptions} from '~/api/contacts/interfaces/contact-options.interface'
+import {ContactType} from '~/entities/internal/contact.internal.entity'
+import {Dictionary} from '~/helpers/dictionary.helper'
 
 @Injectable()
 export class SystemContactService implements CrudService<internal.Contact> {

@@ -1,7 +1,7 @@
 import {Controller, Get, Post, Req} from '@nestjs/common'
 import {ApiTags} from '@nestjs/swagger'
-import {Auth} from './decorators/auth.decorator'
-import {AuthService} from './auth/auth.service'
+import {Auth} from '~/decorators/auth.decorator'
+import {AuthService} from '~/auth/auth.service'
 
 @Auth()
 @Controller()

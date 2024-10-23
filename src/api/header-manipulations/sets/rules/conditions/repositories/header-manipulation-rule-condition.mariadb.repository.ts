@@ -1,14 +1,14 @@
 import {Injectable} from '@nestjs/common'
-import {db, internal} from '../../../../../../entities'
-import {ParamsDictionary, ServiceRequest} from '../../../../../../interfaces/service-request.interface'
-import {HeaderManipulationRuleConditionSearchDto} from '../dto/header-manipulation-rule-condition-search.dto'
-import {configureQueryBuilder} from '../../../../../../helpers/query-builder.helper'
-import {HeaderManipulationRuleConditionRepository} from '../interfaces/header-manipulation-rule-condition.repository'
-import {SearchLogic} from '../../../../../../helpers/search-logic.helper'
-import {LoggerService} from '../../../../../../logger/logger.service'
+import {db, internal} from '~/entities'
+import {ParamsDictionary, ServiceRequest} from '~/interfaces/service-request.interface'
+import {HeaderManipulationRuleConditionSearchDto} from '~/api/header-manipulations/sets/rules/conditions/dto/header-manipulation-rule-condition-search.dto'
+import {configureQueryBuilder} from '~/helpers/query-builder.helper'
+import {HeaderManipulationRuleConditionRepository} from '~/api/header-manipulations/sets/rules/conditions/interfaces/header-manipulation-rule-condition.repository'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {LoggerService} from '~/logger/logger.service'
 import {SelectQueryBuilder} from 'typeorm'
-import {Dictionary} from '../../../../../../helpers/dictionary.helper'
-import {MariaDbRepository} from '../../../../../../repositories/mariadb.repository'
+import {Dictionary} from '~/helpers/dictionary.helper'
+import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
 export interface FilterBy {
     ruleId?: number

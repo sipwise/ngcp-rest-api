@@ -1,7 +1,7 @@
 import {Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
-import {Discriminator} from '../../internal/profile-package-set.internal.entity'
-import {ProfilePackage} from './profile-package.mariadb.entity'
-import {internal} from '../../../entities'
+import {Discriminator} from '~/entities/internal/profile-package-set.internal.entity'
+import {ProfilePackage} from '~/entities/db/billing/profile-package.mariadb.entity'
+import {internal} from '~/entities'
 
 @Entity({
     name: 'package_profile_sets',

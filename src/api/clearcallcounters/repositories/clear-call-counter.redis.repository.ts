@@ -1,9 +1,9 @@
 import {Injectable} from '@nestjs/common'
-import {LoggerService} from '../../../logger/logger.service'
-import {AppService} from '../../../app.service'
-import {Request as TaskAgentRequest} from '../../../entities/task-agent/request.task-agent.entity'
-import {Response as TaskAgentResponse} from '../../../entities/task-agent/response.task-agent.entity'
-import {HandleRedisErrors} from '../../../decorators/handle-redis-errors.decorator'
+import {LoggerService} from '~/logger/logger.service'
+import {AppService} from '~/app.service'
+import {Request as TaskAgentRequest} from '~/entities/task-agent/request.task-agent.entity'
+import {Response as TaskAgentResponse} from '~/entities/task-agent/response.task-agent.entity'
+import {HandleRedisErrors} from '~/decorators/handle-redis-errors.decorator'
 
 type MessageCallback = (response: TaskAgentResponse) => Promise<void>
 

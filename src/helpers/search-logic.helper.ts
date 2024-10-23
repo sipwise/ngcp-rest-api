@@ -1,4 +1,4 @@
-import {ServiceRequest} from '../interfaces/service-request.interface'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {BadRequestException} from '@nestjs/common'
 import {ApiPropertyOptional} from '@nestjs/swagger'
 

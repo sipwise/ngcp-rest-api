@@ -1,5 +1,5 @@
-import {Admin} from './admin.internal.entity'
-import {RbacRole} from '../../config/constants.config'
+import {Admin} from '~/entities/internal/admin.internal.entity'
+import {RbacRole} from '~/config/constants.config'
 
 export interface AclRoleInterface {
     id?: number,

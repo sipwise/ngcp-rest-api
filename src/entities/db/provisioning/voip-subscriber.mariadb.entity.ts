@@ -10,12 +10,12 @@ import {
     OneToOne,
     PrimaryGeneratedColumn,
 } from 'typeorm'
-import {Contract} from '../billing/contract.mariadb.entity'
-import {VoipSubscriber as BillingVoipSubscriber} from '../billing/voip-subscriber.mariadb.entity'
-import {VoipDomain} from './voip-domain.mariadb.entity'
-import {VoipPbxGroup} from './voip-pbx-group.mariadb.entity'
-import {internal} from '../../../entities'
-import {VoipDBAlias} from './voip-dbalias.mariadb.entity'
+import {Contract} from '~/entities/db/billing/contract.mariadb.entity'
+import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
+import {VoipDomain} from '~/entities/db/provisioning/voip-domain.mariadb.entity'
+import {VoipPbxGroup} from '~/entities/db/provisioning/voip-pbx-group.mariadb.entity'
+import {internal} from '~/entities'
+import {VoipDBAlias} from '~/entities/db/provisioning/voip-dbalias.mariadb.entity'
 
 @Entity({
     name: 'voip_subscribers',

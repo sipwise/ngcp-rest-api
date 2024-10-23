@@ -1,5 +1,5 @@
 import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
-import {internal} from '../..'
+import {internal} from '~/entities'
 
 @Entity({
     name: 'admin_password_journal',

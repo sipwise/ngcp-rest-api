@@ -10,7 +10,12 @@
     "baseUrl": "./src",
     "incremental": false,
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "paths": {
+      "~/*": [
+        "./*"
+      ]
+    },
   },
   "exclude": [
     "dist",

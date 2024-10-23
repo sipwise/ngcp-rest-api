@@ -1,4 +1,4 @@
-import {ServiceRequest} from '../interfaces/service-request.interface'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export abstract class Repository<T> {
     abstract create(entity: T): Promise<T>

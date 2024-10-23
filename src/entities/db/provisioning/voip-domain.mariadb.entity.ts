@@ -1,5 +1,5 @@
 import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
-import {internal} from '../../../entities'
+import {internal} from '~/entities'
 
 @Entity({
     name: 'voip_domains',

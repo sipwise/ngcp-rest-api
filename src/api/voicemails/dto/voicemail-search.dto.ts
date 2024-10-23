@@ -1,4 +1,4 @@
-import {VoicemailResponseDto} from './voicemail-response.dto'
+import {VoicemailResponseDto} from '~/api/voicemails/dto/voicemail-response.dto'
 
 export class VoicemailSearchDto implements VoicemailResponseDto {
     id: number = undefined

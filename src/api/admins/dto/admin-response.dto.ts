@@ -1,8 +1,8 @@
-import {internal} from '../../../entities'
+import {internal} from '~/entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {RbacRole} from '../../../config/constants.config'
-import {ResponseDto} from '../../../dto/response.dto'
-import {Expandable} from '../../../decorators/expandable.decorator'
+import {RbacRole} from '~/config/constants.config'
+import {ResponseDto} from '~/dto/response.dto'
+import {Expandable} from '~/decorators/expandable.decorator'
 
 export class AdminResponseDto implements ResponseDto {
     @ApiProperty()

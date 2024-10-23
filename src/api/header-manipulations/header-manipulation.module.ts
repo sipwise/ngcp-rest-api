@@ -1,6 +1,6 @@
 import {forwardRef, Module} from '@nestjs/common'
-import {HeaderManipulationController} from './header-manipulation.controller'
-import {ExpandModule} from '../../helpers/expand.module'
+import {HeaderManipulationController} from '~/api/header-manipulations/header-manipulation.controller'
+import {ExpandModule} from '~/helpers/expand.module'
 
 @Module({
     imports: [

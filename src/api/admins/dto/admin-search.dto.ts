@@ -1,5 +1,5 @@
-import {AdminResponseDto} from './admin-response.dto'
-import {RbacRole} from '../../../config/constants.config'
+import {AdminResponseDto} from '~/api/admins/dto/admin-response.dto'
+import {RbacRole} from '~/config/constants.config'
 
 export class AdminSearchDto implements AdminResponseDto {
     billing_data: boolean = undefined

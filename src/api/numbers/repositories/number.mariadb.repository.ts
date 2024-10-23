@@ -1,13 +1,13 @@
-import {ServiceRequest} from '../../../interfaces/service-request.interface'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {BaseEntity, EntityNotFoundError, SelectQueryBuilder} from 'typeorm'
-import {addOrderByToQueryBuilder} from '../../../helpers/query-builder.helper'
-import {SearchLogic} from '../../../helpers/search-logic.helper'
-import {db, internal} from '../../../entities'
-import {LoggerService} from '../../../logger/logger.service'
-import {AppService} from '../../../app.service'
+import {addOrderByToQueryBuilder} from '~/helpers/query-builder.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {db, internal} from '~/entities'
+import {LoggerService} from '~/logger/logger.service'
+import {AppService} from '~/app.service'
 import {Injectable} from '@nestjs/common'
-import {NumberSearchDto} from '../dto/number-search.dto'
-import {MariaDbRepository} from '../../../repositories/mariadb.repository'
+import {NumberSearchDto} from '~/api/numbers/dto/number-search.dto'
+import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
 interface RawNumberRow {
     id: number

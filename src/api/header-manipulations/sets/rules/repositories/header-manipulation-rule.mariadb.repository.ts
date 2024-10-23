@@ -1,14 +1,14 @@
 import {Injectable} from '@nestjs/common'
-import {db, internal} from '../../../../../entities'
-import {ParamsDictionary, ServiceRequest} from '../../../../../interfaces/service-request.interface'
-import {HeaderManipulationRuleSearchDto} from '../dto/header-manipulation-rule-search.dto'
-import {configureQueryBuilder} from '../../../../../helpers/query-builder.helper'
-import {HeaderManipulationRuleRepository} from '../interfaces/header-manipulation-rule.repository'
-import {SearchLogic} from '../../../../../helpers/search-logic.helper'
-import {LoggerService} from '../../../../../logger/logger.service'
+import {db, internal} from '~/entities'
+import {ParamsDictionary, ServiceRequest} from '~/interfaces/service-request.interface'
+import {HeaderManipulationRuleSearchDto} from '~/api/header-manipulations/sets/rules/dto/header-manipulation-rule-search.dto'
+import {configureQueryBuilder} from '~/helpers/query-builder.helper'
+import {HeaderManipulationRuleRepository} from '~/api/header-manipulations/sets/rules/interfaces/header-manipulation-rule.repository'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {LoggerService} from '~/logger/logger.service'
 import {SelectQueryBuilder} from 'typeorm'
-import {Dictionary} from '../../../../../helpers/dictionary.helper'
-import {MariaDbRepository} from '../../../../../repositories/mariadb.repository'
+import {Dictionary} from '~/helpers/dictionary.helper'
+import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
 export interface FilterBy {
     setId?: number
@@ -74,7 +74,7 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
         return result.toInternal()
     }
 
-    async readCountInSet(setId: number, sr: ServiceRequest): Promise<number> {
+    async readCountInSet(setId: number, _sr: ServiceRequest): Promise<number> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
         qb.where('set_id = :setId', {setId: setId})
         return await qb.getCount()

@@ -1,6 +1,6 @@
 
 import {IsEnum, IsNotEmpty, IsNumber, IsOptional, MaxLength} from 'class-validator'
-import {RwrDpEnum} from '../../enums/rwr-dp.enum'
+import {RwrDpEnum} from '~/enums/rwr-dp.enum'
 
 export enum HeaderRuleActionHeaderPart {
     Full = 'full',

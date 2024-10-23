@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common'
-import {License as LicenseType} from '../config/constants.config'
-import {License} from '../license/license.service'
+import {License as LicenseType} from '~/config/constants.config'
+import {License} from '~/license/license.service'
 
 @Injectable()
 export class LicenseMockRepository {

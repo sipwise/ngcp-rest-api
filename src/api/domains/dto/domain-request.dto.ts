@@ -1,7 +1,7 @@
-import {internal} from '../../../entities'
+import {internal} from '~/entities'
 import {ApiProperty} from '@nestjs/swagger'
 import {IsNotEmpty, IsNumber} from 'class-validator'
-import {RequestDto} from '../../../dto/request.dto'
+import {RequestDto} from '~/dto/request.dto'
 
 export class DomainRequestDto implements RequestDto {
     @IsNotEmpty()

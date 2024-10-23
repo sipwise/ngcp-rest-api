@@ -1,5 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {ResponseDto} from '../../../dto/response.dto'
+import {ResponseDto} from '~/dto/response.dto'
 
 export class ClearCallCounterResponseDto implements ResponseDto  {
     @ApiProperty()

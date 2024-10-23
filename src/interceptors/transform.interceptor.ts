@@ -1,9 +1,9 @@
 import halson from 'halson'
-import {AppService} from '../app.service'
+import {AppService} from '~/app.service'
 import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestjs/common'
 import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
-import {CreateResponseDto} from '../dto/create-response.dto'
+import {CreateResponseDto} from '~/dto/create-response.dto'
 
 /**
  * Defines the names of query parameters for pagination

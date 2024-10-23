@@ -1,7 +1,7 @@
-import {db} from '../entities'
-import {HttpRequest} from './http-request'
+import {db} from '~/entities'
+import {HttpRequest} from '~/helpers/http-request'
 import {RequestOptions} from 'http'
-import {LoggerService} from '../logger/logger.service'
+import {LoggerService} from '~/logger/logger.service'
 
 export class XmlDispatcher {
     private readonly log = new LoggerService(XmlDispatcher.name)

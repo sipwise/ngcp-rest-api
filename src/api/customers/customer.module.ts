@@ -1,10 +1,10 @@
 import {Module} from '@nestjs/common'
-import {CustomerService} from './customer.service'
-import {CustomerController} from './customer.controller'
-import {JournalModule} from '../journals/journal.module'
-import {ExpandModule} from '../../helpers/expand.module'
-import {CustomerMariadbRepository} from './repositories/customer.mariadb.repository'
-import {ContactMariadbRepository} from '../contacts/repositories/contact.mariadb.repository'
+import {CustomerService} from '~/api/customers/customer.service'
+import {CustomerController} from '~/api/customers/customer.controller'
+import {JournalModule} from '~/api/journals/journal.module'
+import {ExpandModule} from '~/helpers/expand.module'
+import {CustomerMariadbRepository} from '~/api/customers/repositories/customer.mariadb.repository'
+import {ContactMariadbRepository} from '~/api/contacts/repositories/contact.mariadb.repository'
 
 @Module({
     imports: [JournalModule, ExpandModule],

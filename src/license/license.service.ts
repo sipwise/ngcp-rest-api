@@ -1,7 +1,7 @@
 import {Inject, Injectable} from '@nestjs/common'
-import {LicenseRepository} from '../repositories/license.repository'
-import {AppService} from '../app.service'
-import {License as LicenseType} from '../config/constants.config'
+import {LicenseRepository} from '~/repositories/license.repository'
+import {AppService} from '~/app.service'
+import {License as LicenseType} from '~/config/constants.config'
 
 export type License = {
     [key in LicenseType]: number

@@ -1,8 +1,8 @@
 import {forwardRef, Module} from '@nestjs/common'
-import {JournalController} from './journal.controller'
-import {JournalService} from './journal.service'
-import {ExpandModule} from '../../helpers/expand.module'
-import {JournalMariadbRepository} from './repositories/journal.mariadb.repository'
+import {JournalController} from '~/api/journals/journal.controller'
+import {JournalService} from '~/api/journals/journal.service'
+import {ExpandModule} from '~/helpers/expand.module'
+import {JournalMariadbRepository} from '~/api/journals/repositories/journal.mariadb.repository'
 
 @Module({
     controllers: [JournalController],

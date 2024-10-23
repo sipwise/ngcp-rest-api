@@ -1,6 +1,6 @@
 import {Module} from '@nestjs/common'
-import {LicenseService} from './license.service'
-import {LicenseRepository} from '../repositories/license.repository'
+import {LicenseService} from '~/license/license.service'
+import {LicenseRepository} from '~/repositories/license.repository'
 
 @Module({
     providers: [

@@ -1,11 +1,11 @@
 import {BadRequestException, Body, Param, Req, UploadedFile} from '@nestjs/common'
-import {Operation as PatchOperation, validate} from '../helpers/patch.helper'
-import {JournalService} from '../api/journals/journal.service'
+import {Operation as PatchOperation, validate} from '~/helpers/patch.helper'
+import {JournalService} from '~/api/journals/journal.service'
 import {Request} from 'express'
-import {Auth} from '../decorators/auth.decorator'
-import {ServiceRequest} from '../interfaces/service-request.interface'
-import {JournalResponseDto} from '../api/journals/dto/journal-response.dto'
-import {ParamOrBody} from '../decorators/param-or-body.decorator'
+import {Auth} from '~/decorators/auth.decorator'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
+import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 
 @Auth()
 export class CrudController<CreateDTO, _ResponseDTO> {

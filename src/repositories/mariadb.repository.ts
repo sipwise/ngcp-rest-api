@@ -1,4 +1,4 @@
-import {HandleDbErrors} from '../decorators/handle-db-errors.decorator'
+import {HandleDbErrors} from '~/decorators/handle-db-errors.decorator'
 
 export abstract class MariaDbRepository {
     /*  We need this as a constructor because the scope is limited to the calling class.

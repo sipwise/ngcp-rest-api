@@ -1,5 +1,5 @@
 import {RedisSingleOptions} from '@nestjs-modules/ioredis'
-import {AppService} from '../app.service'
+import {AppService} from '~/app.service'
 
 const redis_host = process.env.API_REDIS_HOST || AppService.config.redis.host
 const redis_port = process.env.API_REDIS_PORT || AppService.config.redis.port

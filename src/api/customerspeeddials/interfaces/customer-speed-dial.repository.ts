@@ -1,6 +1,6 @@
-import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {internal} from '../../../entities'
-import {Dictionary} from '../../../helpers/dictionary.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {internal} from '~/entities'
+import {Dictionary} from '~/helpers/dictionary.helper'
 
 export interface CustomerSpeedDialRepository {
     create(sd: internal.CustomerSpeedDial[], sr: ServiceRequest): Promise<number[]>

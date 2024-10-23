@@ -1,7 +1,7 @@
-import {ServiceRequest} from '../interfaces/service-request.interface'
-import {internal} from '../entities'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {internal} from '~/entities'
 import {NotFoundException} from '@nestjs/common'
-import {deepCopy} from '../helpers/deep-copy.helper'
+import {deepCopy} from '~/helpers/deep-copy.helper'
 
 export class AclRoleMockRepository {
 

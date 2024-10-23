@@ -1,13 +1,13 @@
 import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
-import {internal} from '../../../entities'
-import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {FilterBy, HeaderManipulationSetMariadbRepository} from './repositories/header-manipulation-set.mariadb.repository'
-import {CrudService} from '../../../interfaces/crud-service.interface'
-import {LoggerService} from '../../../logger/logger.service'
+import {internal} from '~/entities'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {FilterBy, HeaderManipulationSetMariadbRepository} from '~/api/header-manipulations/sets/repositories/header-manipulation-set.mariadb.repository'
+import {CrudService} from '~/interfaces/crud-service.interface'
+import {LoggerService} from '~/logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
-import {Dictionary} from '../../../helpers/dictionary.helper'
+import {Dictionary} from '~/helpers/dictionary.helper'
 import {GenerateErrorMessageArray} from 'helpers/http-error.helper'
-import {ErrorMessage} from '../../../interfaces/error-message.interface'
+import {ErrorMessage} from '~/interfaces/error-message.interface'
 
 @Injectable()
 export class HeaderManipulationSetService implements CrudService<internal.HeaderRuleSet> {

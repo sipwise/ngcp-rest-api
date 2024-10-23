@@ -1,10 +1,10 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsEnum, IsNotEmpty, IsOptional, MaxLength} from 'class-validator'
-import {RequestDto, RequestDtoOptions} from '../../../../../../dto/request.dto'
-import {internal} from '../../../../../../entities'
-import {HeaderRuleConditionExpression, HeaderRuleConditionMatchPart, HeaderRuleConditionMatchType, HeaderRuleConditionValueType} from '../../../../../../entities/internal/header-rule-condition.internal.entity'
-import {RwrDpEnum} from '../../../../../../enums/rwr-dp.enum'
-import {DependsOn} from '../../../../../../decorators/depends-on.decorator'
+import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
+import {internal} from '~/entities'
+import {HeaderRuleConditionExpression, HeaderRuleConditionMatchPart, HeaderRuleConditionMatchType, HeaderRuleConditionValueType} from '~/entities/internal/header-rule-condition.internal.entity'
+import {RwrDpEnum} from '~/enums/rwr-dp.enum'
+import {DependsOn} from '~/decorators/depends-on.decorator'
 
 export class HeaderManipulationRuleConditionRequestDto implements RequestDto {
     @IsNotEmpty()

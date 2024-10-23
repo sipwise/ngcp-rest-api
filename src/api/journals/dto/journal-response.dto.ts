@@ -1,7 +1,7 @@
-import {internal} from './../../../entities'
-import {ResellerResponseDto} from '../../resellers/dto/reseller-response.dto'
+import {internal} from '~/entities'
+import {ResellerResponseDto} from '~/api/resellers/dto/reseller-response.dto'
 import {ApiHideProperty, ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {ResponseDto} from '../../../dto/response.dto'
+import {ResponseDto} from '~/dto/response.dto'
 
 export class JournalResponseDto implements ResponseDto {
     @ApiProperty()

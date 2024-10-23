@@ -1,4 +1,4 @@
-import {FileshareResponseDto} from './fileshare-response.dto'
+import {FileshareResponseDto} from '~/api/fileshare/dto/fileshare-response.dto'
 
 export class FileshareSearchDto implements FileshareResponseDto {
     id: string = undefined

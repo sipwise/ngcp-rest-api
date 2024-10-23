@@ -1,4 +1,4 @@
-import {ResellerStatus} from '../../../entities/internal/reseller.internal.entity'
+import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 
 export class ResellerSearchDto {
     id: number = undefined

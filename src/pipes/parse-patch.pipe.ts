@@ -9,8 +9,8 @@ import {
     ValidationPipeOptions,
 } from '@nestjs/common'
 import {HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
-import {Operation, validate} from '../helpers/patch.helper'
-import {PatchDto} from '../dto/patch.dto'
+import {Operation, validate} from '~/helpers/patch.helper'
+import {PatchDto} from '~/dto/patch.dto'
 
 interface ParsePatchOptions extends Omit<
     ValidationPipeOptions,

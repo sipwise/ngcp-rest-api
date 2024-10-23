@@ -1,4 +1,4 @@
-import {AppService} from '../app.service'
+import {AppService} from '~/app.service'
 
 export const DATABASES = {
     accounting: {
