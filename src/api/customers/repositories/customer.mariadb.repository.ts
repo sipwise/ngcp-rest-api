@@ -1,8 +1,7 @@
 import {Injectable, MethodNotAllowedException, UnprocessableEntityException} from '@nestjs/common'
 import {LoggerService} from '../../../logger/logger.service'
 import {ServiceRequest} from '../../../interfaces/service-request.interface'
-import {IsNull, Not, SelectQueryBuilder} from 'typeorm'
-import {ContactStatus} from '../../../entities/internal/contact.internal.entity'
+import {SelectQueryBuilder} from 'typeorm'
 import {ProductClass} from '../../../entities/internal/product.internal.entity'
 import {configureQueryBuilder} from '../../../helpers/query-builder.helper'
 import {SearchLogic} from '../../../helpers/search-logic.helper'
@@ -11,7 +10,6 @@ import {db, internal} from '../../../entities'
 import {CustomerSearchDto} from '../dto/customer-search.dto'
 import {AppService} from '../../../app.service'
 import {Discriminator} from '../../../entities/internal/profile-package-set.internal.entity'
-import {ContactOptions} from '../../contacts/interfaces/contact-options.interface'
 import {CustomerFindOptions} from '../interfaces/customer-find-options.interface'
 import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 
@@ -25,7 +23,7 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         super()
     }
 
-    async create(customers: internal.Customer[], now: Date, sr: ServiceRequest): Promise<number[]> {
+    async create(customers: internal.Customer[], now: Date, _sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.Contract.createQueryBuilder('contract')
         const ids: number[] = []
         for (const customer of customers) {
@@ -38,14 +36,14 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         return ids
     }
 
-    async appendBillingMappings(customerId: number, now: Date, mappings: internal.BillingMapping[]) {
+    async appendBillingMappings(customerId: number, now: Date, mappings: internal.BillingMapping[]): Promise<void> {
         const mappingsString = mappings.map(mapping => mapping.toCSVString()).join(';')
         const nowString = now.toISOString().slice(0, 19).replace('T', ' ')
-        const result = await this.app.db.query('call billing.schedule_contract_billing_profile_network(?,?,?);', [customerId, nowString, mappingsString])
+        await this.app.db.query('call billing.schedule_contract_billing_profile_network(?,?,?);', [customerId, nowString, mappingsString])
         return
     }
 
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
+    async delete(_id: number, _sr: ServiceRequest): Promise<number> {
         throw new MethodNotAllowedException()
     }
 
@@ -97,7 +95,7 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         return product != undefined ? product.toInternal() : undefined
     }
 
-    async update(updates: Dictionary<internal.Customer>, sr: ServiceRequest): Promise<number[]> {
+    async update(updates: Dictionary<internal.Customer>, _sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const update = new db.billing.Contract().fromInternalCustomer(updates[id])
@@ -130,7 +128,7 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         return profilePackage.toInternal()
     }
 
-    async readEmailTemplateIdsByIds(ids: number[], resellerId: number) {
+    async readEmailTemplateIdsByIds(ids: number[], resellerId: number): Promise<[number[], number]> {
         const qb = db.billing.EmailTemplate.createQueryBuilder('emailTemplate')
         qb.andWhere('emailTemplate.reseller_id = :resellerId', {resellerId: resellerId})
         qb.andWhereInIds(ids)
@@ -140,7 +138,7 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         return [readIds, count]
     }
 
-    async readInvoiceTemplateById(id: number, resellerId: number) {
+    async readInvoiceTemplateById(id: number, resellerId: number): Promise<void> {
         const qb = db.billing.InvoiceTemplate.createQueryBuilder('invoiceTemplate')
         qb.andWhere('invoiceTemplate.reseller_id = :resellerId', {resellerId: resellerId})
         qb.andWhere('invoiceTemplate.id = :id', {id: id})
@@ -223,7 +221,7 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         return qb
     }
 
-    private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contract>, options: CustomerFindOptions) {
+    private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contract>, options: CustomerFindOptions): void {
         if (options.filterBy && options.filterBy.resellerId) {
             qb.andWhere('contact.reseller_id = :reseller_id', {reseller_id: options.filterBy.resellerId})
         }

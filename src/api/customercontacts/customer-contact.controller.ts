@@ -162,7 +162,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
         const updates = new Dictionary<internal.Contact>()
@@ -201,7 +201,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     async updateMany(
         @Body(new ParseIdDictionary({items: CustomerContactRequestDto})) updates: Dictionary<CustomerContactRequestDto>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         this.log.debug({
             message: 'update customer contacts bulk',
             func: this.updateMany.name,
@@ -244,7 +244,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, @Req() req) {
+    async journal(@Param('id') id: number | string, @Req() req): Promise<[JournalResponseDto[], number]> {
         this.log.debug({message: 'fetch customer contact journal by id', func: this.journal.name, url: req.url, method: req.method})
         return super.journal(id, req)
     }

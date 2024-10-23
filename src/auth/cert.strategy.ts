@@ -12,7 +12,7 @@ export class CertStrategy extends PassportStrategy(Strategy, 'cert-header') {
      * Sets the HTTP header that the certificate serial number is read from to `x-ssl-client-serial`
      * @param authService AuthService to validate the Admin certificate
      */
-    constructor(private authService: AuthService) {
+    constructor(private readonly authService: AuthService) {
         super({header: 'x-ssl-client-serial'})
     }
 

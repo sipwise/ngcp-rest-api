@@ -6,7 +6,7 @@ export class CallId implements CallIdInternalEntity {
     id: string
 
     constructor(
-        callId?: string
+        callId?: string,
     ) {
         this.id = callId
     }

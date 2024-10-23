@@ -5,7 +5,7 @@ import {deepCopy} from '../helpers/deep-copy.helper'
 
 export class AclRoleMockRepository {
 
-    async readOneByRole(role: string, req: ServiceRequest): Promise<internal.AclRole> {
+    async readOneByRole(role: string, _req: ServiceRequest): Promise<internal.AclRole> {
         const system = internal.AclRole.create({id: 1, role: 'system', is_acl: false})
         const admin = internal.AclRole.create({id: 3, role: 'admin', is_acl: false})
         const reseller = internal.AclRole.create({id: 5, role: 'reseller', is_acl: false})

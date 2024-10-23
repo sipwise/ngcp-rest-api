@@ -19,6 +19,5 @@
     "prod",
     "test",
     "tools",
-    "**/*spec.ts"
   ]
 }

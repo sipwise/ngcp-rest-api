@@ -28,6 +28,8 @@ export class ParseIntIdArrayPipe implements PipeTransform {
         this.options = options
         this.exceptionFactory =
             exceptionFactory ||
+            // TODO: Fix the return type
+            // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
             (error => new HttpErrorByCode[errorHttpStatusCode](error))
     }
     async transform(value: any, metadata: ArgumentMetadata): Promise<number[]> {

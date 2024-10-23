@@ -84,7 +84,7 @@ export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSS
         return await qb.getCount()
     }
 
-    async update(updates: Dictionary<internal.NCOSSet>, sr: ServiceRequest): Promise<number[]> {
+    async update(updates: Dictionary<internal.NCOSSet>, _sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const dbEntity = db.billing.NCOSSet.create()
@@ -94,55 +94,55 @@ export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSS
         return ids
     }
 
-    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+    async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
         await db.billing.NCOSSet.delete(ids)
         return ids
     }
 
     async revokeNCOSSetPreferences(setIds: number[]): Promise<void> {
         const preference = await db.provisioning.VoipPreference.createQueryBuilder()
-            .where('attribute = :attribute', { attribute: 'ncos_set_id' })
+            .where('attribute = :attribute', {attribute: 'ncos_set_id'})
             .getOneOrFail()
         await db.provisioning.VoipContractPreference.createQueryBuilder()
-              .delete()
-              .where('attribute_id = :id', { id: preference.id })
-              .andWhere('value in (:...ids)', { ids: setIds })
-              .execute()
+            .delete()
+            .where('attribute_id = :id', {id: preference.id})
+            .andWhere('value in (:...ids)', {ids: setIds})
+            .execute()
         await db.provisioning.VoipUsrPreference.createQueryBuilder()
-              .delete()
-              .where('attribute_id = :id', { id: preference.id })
-              .andWhere('value in (:...ids)', { ids: setIds })
-              .execute()
+            .delete()
+            .where('attribute_id = :id', {id: preference.id})
+            .andWhere('value in (:...ids)', {ids: setIds})
+            .execute()
     }
 
     async deleteNCOSSetPreferences(setIds: number[]): Promise<void> {
         const preferences = await db.provisioning.VoipPreference.createQueryBuilder()
-            .where('attribute in (:...attributes)', { attributes: ['ncos_set_id', 'adm_ncos_set_id','adm_cf_ncos_set_id'] })
+            .where('attribute in (:...attributes)', {attributes: ['ncos_set_id', 'adm_ncos_set_id','adm_cf_ncos_set_id']})
             .getMany()
         const attributeIds = preferences.map(p => p.id)
         await db.provisioning.VoipContractPreference.createQueryBuilder()
-              .delete()
-              .where('attribute_id in (:...attributeIds)', { attributeIds: [attributeIds] })
-              .andWhere('value in (:...ids)', { ids: setIds })
-              .execute()
+            .delete()
+            .where('attribute_id in (:...attributeIds)', {attributeIds: [attributeIds]})
+            .andWhere('value in (:...ids)', {ids: setIds})
+            .execute()
         await db.provisioning.VoipDomPreference.createQueryBuilder()
-              .delete()
-              .where('attribute_id in (:...attributeIds)', { attributeIds: [attributeIds] })
-              .andWhere('value in (:...ids)', { ids: setIds })
-              .execute()
+            .delete()
+            .where('attribute_id in (:...attributeIds)', {attributeIds: [attributeIds]})
+            .andWhere('value in (:...ids)', {ids: setIds})
+            .execute()
         await db.provisioning.VoipProfPreference.createQueryBuilder()
-              .delete()
-              .where('attribute_id in (:...attributeIds)', { attributeIds: [attributeIds] })
-              .andWhere('value in (:...ids)', { ids: setIds })
-              .execute()
+            .delete()
+            .where('attribute_id in (:...attributeIds)', {attributeIds: [attributeIds]})
+            .andWhere('value in (:...ids)', {ids: setIds})
+            .execute()
         await db.provisioning.VoipUsrPreference.createQueryBuilder()
-              .delete()
-              .where('attribute_id in (:...attributeIds)', { attributeIds: [attributeIds] })
-              .andWhere('value in (:...ids)', { ids: setIds })
-              .execute()
+            .delete()
+            .where('attribute_id in (:...attributeIds)', {attributeIds: [attributeIds]})
+            .andWhere('value in (:...ids)', {ids: setIds})
+            .execute()
     }
 
-    async createLevel(entities: internal.NCOSSetLevel[], sr: ServiceRequest): Promise<internal.NCOSSetLevel[]> {
+    async createLevel(entities: internal.NCOSSetLevel[], _sr: ServiceRequest): Promise<internal.NCOSSetLevel[]> {
         const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
         qb.innerJoinAndSelect('ncosSetLevel.level', 'level')
         const values = await Promise.all(
@@ -158,7 +158,7 @@ export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSS
         return await Promise.all(created.map(async entity => entity.toInternal()))
     }
 
-    async readLevelAll(sr: ServiceRequest, id?: number, filterBy?: FilterBy): Promise<[internal.NCOSSetLevel[], number]> {
+    async readLevelAll(_sr: ServiceRequest, id?: number, _filterBy?: FilterBy): Promise<[internal.NCOSSetLevel[], number]> {
         const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
         qb.innerJoinAndSelect('ncosSetLevel.level', 'level')
         if (id)
@@ -189,7 +189,7 @@ export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSS
         return result.toInternal()
     }
 
-    async deleteLevel(id: number, levelId: number, sr: ServiceRequest): Promise<number> {
+    async deleteLevel(_id: number, levelId: number, _sr: ServiceRequest): Promise<number> {
         await db.billing.NCOSSetLevel.delete({id: levelId})
 
         return 1

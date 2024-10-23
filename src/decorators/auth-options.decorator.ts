@@ -5,7 +5,7 @@ interface AuthOptions {
     skipMaxAge: boolean
 }
 
-export function AuthOptions(options: AuthOptions) {
+export function AuthOptions(options: AuthOptions): ClassDecorator & MethodDecorator {
     return applyDecorators(
         SetMetadata('skipMaxAge', options.skipMaxAge),
     )

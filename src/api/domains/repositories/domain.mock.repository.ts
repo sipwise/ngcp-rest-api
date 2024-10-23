@@ -22,7 +22,7 @@ export class DomainMockRepository implements DomainRepository {
         this.nextId = Object.keys(this.db).length + 1
     }
 
-    async create(domains: internal.Domain[], sr: ServiceRequest): Promise<number[]> {
+    async create(domains: internal.Domain[], _sr: ServiceRequest): Promise<number[]> {
         const ids: number[] = []
         for (const domain of domains) {
             domain.id = this.nextId
@@ -33,22 +33,22 @@ export class DomainMockRepository implements DomainRepository {
         return Promise.resolve(ids)
     }
 
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
+    async delete(id: number, _sr: ServiceRequest): Promise<number> {
         this.throwErrorIfIdNotExists(id)
         return Promise.resolve(id)
     }
 
-    async readAll(sr: ServiceRequest): Promise<[internal.Domain[], number]> {
+    async readAll(_sr: ServiceRequest): Promise<[internal.Domain[], number]> {
         const domains: [internal.Domain[], number] =
             [Object.keys(this.db).map(id => this.db[id]), Object.keys(this.db).length]
         return Promise.resolve(domains)
     }
 
-    async readByDomain(domain: string, sr: ServiceRequest): Promise<internal.Domain> {
+    async readByDomain(_domain: string, _sr: ServiceRequest): Promise<internal.Domain> {
         return Promise.resolve(undefined)
     }
 
-    async readById(id: number, sr: ServiceRequest): Promise<internal.Domain> {
+    async readById(id: number, _sr: ServiceRequest): Promise<internal.Domain> {
         this.throwErrorIfIdNotExists(id)
         return Promise.resolve(this.db[id])
     }
@@ -61,7 +61,7 @@ export class DomainMockRepository implements DomainRepository {
         return Promise.resolve(domains)
     }
 
-    private throwErrorIfIdNotExists(id: number) {
+    private throwErrorIfIdNotExists(id: number): void {
         if (this.db[id] == undefined)
             throw new NotFoundException()
     }

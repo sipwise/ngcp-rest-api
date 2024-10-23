@@ -3,6 +3,6 @@ export class CustomerSpeedDialSearchDto {
     slot: string = undefined
     destination: string = undefined
     _alias = {
-            customer_id: 'contract_id'
+        customer_id: 'contract_id',
     }
 }

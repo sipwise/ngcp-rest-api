@@ -1,5 +1,4 @@
 import {
-    BadRequestException,
     Body,
     Controller,
     forwardRef,
@@ -19,7 +18,7 @@ import {ContractRequestDto} from './dto/contract-request.dto'
 import {ContractResponseDto} from './dto/contract-response.dto'
 import {ContractService} from './contract.service'
 import {JournalService} from '../journals/journal.service'
-import {Operation as PatchOperation, Operation, validate, patchToEntity} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, Operation, patchToEntity} from '../../helpers/patch.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {Request} from 'express'
 import {RbacRole} from '../../config/constants.config'
@@ -42,7 +41,7 @@ const resourceName = 'contracts'
 
 @Auth(
     RbacRole.admin,
-    RbacRole.system
+    RbacRole.system,
 )
 @ApiTags('Contract')
 @Controller(resourceName)
@@ -132,7 +131,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     async updateMany(
         @Body(new ParseIdDictionary({items: ContractRequestDto})) updates: Dictionary<ContractRequestDto>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         this.log.debug({message: 'update contracts bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const contracts = new Dictionary<internal.Contract>()
@@ -177,7 +176,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
         const updates = new Dictionary<internal.Contract>()
@@ -194,7 +193,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, req) {
+    async journal(@Param('id') id: number | string, req): Promise<[JournalResponseDto[], number]> {
         this.log.debug({
             message: 'fetch contract journal by id',
             func: this.journal.name,

@@ -10,7 +10,7 @@ import {ContactMariadbRepository} from '../contacts/repositories/contact.mariadb
     imports: [
         JournalModule,
         forwardRef(() => ExpandModule),
-        ContactModule
+        ContactModule,
     ],
     controllers: [CustomerContactController],
     providers: [

@@ -210,7 +210,7 @@ export class VoipSubscriber extends BaseEntity {
 
     members!: VoipSubscriber[]
 
-    @OneToMany(type => VoipDBAlias, alias => alias.subscriber)
+    @OneToMany(() => VoipDBAlias, alias => alias.subscriber)
         dbAliases!: VoipDBAlias[]
 
     toInternal(): internal.VoipSubscriber {

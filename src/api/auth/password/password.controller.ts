@@ -10,7 +10,7 @@ import {AuthOptions} from '../../../decorators/auth-options.decorator'
 const resourceName = 'auth/password'
 
 @Controller(resourceName)
-@AuthOptions({ skipMaxAge: true })
+@AuthOptions({skipMaxAge: true})
 @Auth()
 @ApiTags('Auth')
 export class PasswordController extends CrudController<never, PasswordResponseDto> {
@@ -28,7 +28,7 @@ export class PasswordController extends CrudController<never, PasswordResponseDt
             message: 'read all password routes',
             func: this.readAll.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         const response = [new PasswordResponseDto(req.url)]
         return [response, 1]

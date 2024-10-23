@@ -60,7 +60,7 @@ export class BasicHTTPStrategy extends PassportStrategy(BasicStrategy) {
      * Creates a new `BasicHTTPStrategy` and sets the authentication method to [`pwd_auth`]{@link pwd_auth}.
      * @param authService AuthService to validate the Admin
      */
-    constructor(private authService: AuthService) {
+    constructor(private readonly authService: AuthService) {
         super({
             passReqToCallback: true,
         })
@@ -92,7 +92,7 @@ export class BasicJSONStrategy extends PassportStrategy(Strategy) {
      * Creates a new `BasicJSONStrategy` and sets the authentication method that is used.
      * @param authService AuthService to validate the Admin
      */
-    constructor(private authService: AuthService) {
+    constructor(private readonly authService: AuthService) {
         super({
             passReqToCallback: true,
         })

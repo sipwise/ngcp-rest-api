@@ -53,7 +53,7 @@ export class VoicemailMariadbRepository extends MariaDbRepository implements Voi
         return await qb.whereInIds(ids).getCount()
     }
 
-    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+    async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
         await db.kamailio.VoicemailSpool.delete(ids)
         return ids
     }
@@ -72,7 +72,7 @@ export class VoicemailMariadbRepository extends MariaDbRepository implements Voi
         return ids
     }
 
-    async readMessagesCountByUUID(uuid: string, sr: ServiceRequest): Promise<MessagesCount> {
+    async readMessagesCountByUUID(uuid: string, _sr: ServiceRequest): Promise<MessagesCount> {
         const qb = db.kamailio.VoicemailSpool.createQueryBuilder('v')
         qb.select(['v.dir as dir', 'COUNT(v.dir) as dir_count'])
         qb.where('v.mailboxuser = :uuid', {uuid: uuid})
@@ -90,7 +90,7 @@ export class VoicemailMariadbRepository extends MariaDbRepository implements Voi
         return mCount
     }
 
-    private async createBaseQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.kamailio.VoicemailSpool>> {
+    private async createBaseQueryBuilder(_sr: ServiceRequest): Promise<SelectQueryBuilder<db.kamailio.VoicemailSpool>> {
         const qb = db.kamailio.VoicemailSpool.createQueryBuilder('voicemail')
         qb.leftJoinAndSelect('voicemail.billingSubscriber', 'bSubscriber')
         qb.leftJoinAndSelect('voicemail.provisioningSubscriber', 'pSubscriber')

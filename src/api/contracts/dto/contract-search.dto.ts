@@ -4,7 +4,6 @@ import {
     ContractStatus,
     ContractType,
 } from '../../../entities/internal/contract.internal.entity'
-import {ContactResponseDto} from '../../contacts/dto/contact-response.dto'
 
 export class ContractSearchDto implements ContractResponseDto {
     id: number = undefined

@@ -19,7 +19,7 @@ interface SpeedDialOptions {
 export class CustomerSpeedDialMariadbRepository extends MariaDbRepository implements CustomerSpeedDialRepository {
     private readonly log = new LoggerService(CustomerSpeedDialMariadbRepository.name)
 
-    async create(entities: internal.CustomerSpeedDial[], sr: ServiceRequest): Promise<number[]> {
+    async create(entities: internal.CustomerSpeedDial[], _sr: ServiceRequest): Promise<number[]> {
         const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('csd')
         const values = entities.map(csd => new db.provisioning.VoipContractSpeedDial().fromInternal(csd))
         const result = await qb.insert().values(values).execute()
@@ -71,7 +71,7 @@ export class CustomerSpeedDialMariadbRepository extends MariaDbRepository implem
         return result.toInternal()
     }
 
-    async update(updates: Dictionary<internal.CustomerSpeedDial>, sr: ServiceRequest): Promise<number[]> {
+    async update(updates: Dictionary<internal.CustomerSpeedDial>, _sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const dbCSD = db.provisioning.VoipContractSpeedDial.create()
@@ -81,7 +81,7 @@ export class CustomerSpeedDialMariadbRepository extends MariaDbRepository implem
         return ids
     }
 
-    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+    async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
         await db.provisioning.VoipContractSpeedDial.delete(ids)
         return ids
     }

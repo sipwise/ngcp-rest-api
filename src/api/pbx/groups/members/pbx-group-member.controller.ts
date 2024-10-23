@@ -19,7 +19,7 @@ const resourceName = 'pbx/groups'
     RbacRole.admin,
     RbacRole.system,
     RbacRole.reseller,
-    RbacRole.subscriber
+    RbacRole.subscriber,
 )
 @ApiTags('Pbx')
 @Controller(resourceName)
@@ -38,7 +38,7 @@ export class PbxGroupMemberController extends CrudController<never, PbxGroupMemb
     @ApiPaginatedResponse(PbxGroupMemberResponseDto)
     async readAll(
         @Req() req,
-        @Param(new ValidationPipe()) reqParams: PbxGroupMemberRequestParamDto,
+        @Param(new ValidationPipe()) _reqParams: PbxGroupMemberRequestParamDto,
     ): Promise<[PbxGroupMemberResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all pbx group members',
@@ -63,7 +63,7 @@ export class PbxGroupMemberController extends CrudController<never, PbxGroupMemb
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req,
-        @Param(new ValidationPipe()) reqParams: PbxGroupMemberRequestParamDto,
+        @Param(new ValidationPipe()) _reqParams: PbxGroupMemberRequestParamDto,
     ): Promise<PbxGroupMemberResponseDto> {
         this.log.debug({
             message: 'fetch pbx group member by id',

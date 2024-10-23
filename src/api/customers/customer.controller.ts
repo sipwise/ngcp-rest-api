@@ -126,7 +126,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     async updateMany(
         @Body(new ParseIdDictionary({items: CustomerRequestDto})) updates: Dictionary<CustomerRequestDto>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         this.log.debug({message: 'update customers bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const customers = new Dictionary<internal.Customer>()
@@ -169,7 +169,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Customer>()
 
@@ -184,7 +184,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, req) {
+    async journal(@Param('id') id: number | string, req): Promise<[JournalResponseDto[], number]> {
         this.log.debug({
             message: 'fetch customer journal by id',
             func: this.journal.name,

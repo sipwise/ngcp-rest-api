@@ -7,6 +7,7 @@ import {AuthService} from './auth.service'
 import {AppService} from '../app.service'
 import {ServiceRequest} from 'interfaces/service-request.interface'
 import {LoggerService} from '../logger/logger.service'
+import {AuthResponseDto} from './dto/auth-response.dto'
 
 /**
  * Implementation of the JWT authentication strategy
@@ -36,7 +37,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
      * @param payload Extracted JWT
      * @returns token User information contained in the JWT
      */
-    async validate(req: ServiceRequest, payload: any) {
+    async validate(req: ServiceRequest, payload: any): Promise<AuthResponseDto> {
         this.log.debug('got payload in validate ' + JSON.stringify(payload))
         let realm = 'admin'
         if ('x-auth-realm' in req.headers)
@@ -87,7 +88,7 @@ const re = /(\S+)\s+(\S+)/
 const AUTH_HEADER = 'authorization'
 const AUTH_SCHEME = 'bearer'
 
-function parseAuthHeader(hdrValue) {
+function parseAuthHeader(hdrValue): { scheme: string, value: string } {
     if (typeof hdrValue !== 'string') {
         return null
     }
@@ -96,7 +97,7 @@ function parseAuthHeader(hdrValue) {
 }
 
 function fromAuthHeaderAsBearerToken() {
-    return function (request) {
+    return function (request): any {
         let token = null
         const l = new LoggerService(fromAuthHeaderAsBearerToken.name)
         l.debug('get bearer token from auth header')

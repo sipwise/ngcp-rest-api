@@ -132,7 +132,7 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
         }))
     }
 
-    async update(updates: Dictionary<internal.HeaderRuleSet>, sr: ServiceRequest): Promise<number[]> {
+    async update(updates: Dictionary<internal.HeaderRuleSet>, _sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const dbEntity = db.provisioning.VoipHeaderRuleSet.create()
@@ -142,7 +142,7 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
         return ids
     }
 
-    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+    async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
         await db.provisioning.VoipHeaderRuleSet.delete(ids)
         return ids
     }

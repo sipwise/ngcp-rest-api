@@ -15,7 +15,7 @@ import {LoggerService} from '../../logger/logger.service'
 @Auth(
     RbacRole.system,
     RbacRole.admin,
-    RbacRole.reseller
+    RbacRole.reseller,
 )
 @ApiTags('Journal')
 @Controller('journals')

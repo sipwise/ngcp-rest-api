@@ -31,7 +31,7 @@ export class NCOSController extends CrudController<never, NCOSResponseDto> {
             message: 'read all ncos',
             func: this.readAll.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         const response = [new NCOSResponseDto(req.url)]
         return [response, 1]

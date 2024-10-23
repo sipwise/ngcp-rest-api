@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Optional, Param, ParseIntPipe, Patch, Post, Put, Req, UnprocessableEntityException, ValidationPipe} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req, ValidationPipe} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from '../../../../helpers/patch.helper'
@@ -74,7 +74,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     @ApiPaginatedResponse(HeaderManipulationRuleResponseDto)
     async readAll(
         @Req() req: Request,
-        @Param(new ValidationPipe()) reqParams: HeaderManipulationRuleRequestParamDto): Promise<[HeaderManipulationRuleResponseDto[], number]> {
+        @Param(new ValidationPipe()) _reqParams: HeaderManipulationRuleRequestParamDto): Promise<[HeaderManipulationRuleResponseDto[], number]> {
         this.log.debug({
             message: 'read all header rules across all rule sets',
             func: this.readAll.name,
@@ -95,6 +95,8 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     async read(
         @Param('id', ParseIntPipe) id: number, 
         @Req() req: Request,
+        // TODO: _Prefix does not work here, fix?
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         @Param(new ValidationPipe()) {setId}: HeaderManipulationRuleRequestParamDto = new HeaderManipulationRuleRequestParamDto(),
     ): Promise<HeaderManipulationRuleResponseDto> {
         this.log.debug({
@@ -117,6 +119,8 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     async update(@Param('id', ParseIntPipe) id: number,
         dto: HeaderManipulationRuleRequestDto,
         @Req() req: Request,
+        // TODO: _Prefix does not work here, fix?
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         @Param(new ValidationPipe()) {setId}: HeaderManipulationRuleRequestParamDto = new HeaderManipulationRuleRequestParamDto(),  
     ): Promise<HeaderManipulationRuleResponseDto> {
         this.log.debug({
@@ -141,7 +145,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     async updateMany(
         @Body(new ParseIdDictionary({items: HeaderManipulationRuleRequestDto})) updates: Dictionary<HeaderManipulationRuleRequestDto>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         this.log.debug({message: 'update header rule Sets bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const sets = new Dictionary<internal.HeaderRule>()
@@ -189,7 +193,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
         const updates = new Dictionary<internal.HeaderRule>()
@@ -229,7 +233,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, @Req() req: Request) {
+    async journal(@Param('id') id: number | string, @Req() req: Request): Promise<[JournalResponseDto[], number]> {
         this.log.debug({
             message: 'read header rule journal by id',
             id: id,

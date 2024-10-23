@@ -4,7 +4,7 @@ import {PublicGuard} from './public.guard'
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-    constructor(private reflector: Reflector) {
+    constructor(private readonly reflector: Reflector) {
     }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {

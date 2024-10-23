@@ -1,4 +1,4 @@
-import {IsEnum, IsNotEmpty, IsNumber, IsOptional, MaxLength} from 'class-validator'
+import {IsNotEmpty, IsNumber, MaxLength} from 'class-validator'
 
 export class HeaderRuleConditionValue {
     @IsNumber()

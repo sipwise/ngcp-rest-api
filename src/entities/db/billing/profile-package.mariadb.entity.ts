@@ -1,7 +1,6 @@
 import {BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
 import {CarryOverMode, IntervalStartMode, IntervalUnit} from '../../internal/profile-package.internal.entity'
 import {internal} from '../../../entities'
-import {Admin} from './admin.mariadb.entity'
 import {PackageProfileSet} from './package-profile-set.mariadb.entity'
 
 @Entity({
@@ -156,7 +155,7 @@ export class ProfilePackage extends BaseEntity {
         })
     }
 
-    fromInternal(profilePackage: internal.ProfilePackage): ProfilePackage {
+    fromInternal(_profilePackage: internal.ProfilePackage): ProfilePackage {
         return this
     }
 }

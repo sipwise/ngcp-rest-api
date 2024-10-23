@@ -1,7 +1,6 @@
 import {ApiBody, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
 import {
-    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -9,7 +8,6 @@ import {
     Get,
     Inject,
     Param,
-    ParseArrayPipe,
     ParseIntPipe,
     Post,
     Req,
@@ -33,7 +31,6 @@ import {Request} from 'express'
 import {ParseOneOrManyPipe} from '../../pipes/parse-one-or-many.pipe'
 import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
 import {number} from 'yargs'
-import {ParseIntIdPipe} from '../../pipes/parse-int-id.pipe'
 
 const resourceName = 'domains'
 
@@ -115,11 +112,11 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
 
     @Delete(':id?')
     @ApiOkResponse({
-        type: [number]
+        type: [number],
     })
     async delete(
         @Param('id', new ParseIntIdArrayPipe()) ids: number[],
-        @Req() req
+        @Req() req,
     ): Promise<number[]> {
         this.log.debug({message: 'delete domain by id', func: this.delete.name, url: req.url, method: req.method})
 
@@ -135,7 +132,7 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, @Req() req) {
+    async journal(@Param('id') id: number | string, @Req() req): Promise<[JournalResponseDto[], number]> {
         this.log.debug({message: 'read domain journal by id', func: this.delete.name, url: req.url, method: req.method})
         return super.journal(id, req)
     }

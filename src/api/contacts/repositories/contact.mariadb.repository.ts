@@ -16,14 +16,14 @@ import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 export class ContactMariadbRepository extends MariaDbRepository implements ContactRepository {
     private readonly log = new LoggerService(ContactMariadbRepository.name)
 
-    async create(contacts: internal.Contact[], sr: ServiceRequest): Promise<number[]> {
+    async create(contacts: internal.Contact[], _sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.Admin.createQueryBuilder('contact')
         const values = contacts.map(contact => new db.billing.Contact().fromInternal(contact))
         const result = await qb.insert().values(values).execute()
         return result.identifiers.map(obj => obj.id)
     }
 
-    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+    async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
         await db.billing.Contact.delete(ids)
         return ids
     }
@@ -52,7 +52,7 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
         return result.toInternal()
     }
 
-    async readResellerById(id: number, sr: ServiceRequest): Promise<db.billing.Reseller> { // TODO: change type to internal.Reseller
+    async readResellerById(id: number, _sr: ServiceRequest): Promise<db.billing.Reseller> { // TODO: change type to internal.Reseller
         return await db.billing.Reseller.findOneBy({id: id})
     }
 
@@ -133,7 +133,7 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
         return [result.map(r => r.toInternal()), count]
     }
 
-    async update(updates: Dictionary<internal.Contact>, options?: ContactOptions): Promise<number[]> {
+    async update(updates: Dictionary<internal.Contact>, _options?: ContactOptions): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const update = new db.billing.Contact().fromInternal(updates[id])
@@ -155,7 +155,7 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
         return qb
     }
 
-    private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contact>, options: ContactOptions) {
+    private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contact>, options: ContactOptions): void {
         if (options.filterBy && options.filterBy.resellerId) {
             qb.andWhere('contact.reseller_id = :reseller_id', {reseller_id: options.filterBy.resellerId})
         }

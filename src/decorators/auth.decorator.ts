@@ -7,7 +7,7 @@ import {Roles} from './roles.decorator'
 import {BanGuard} from '../guards/ban.guard'
 import {PasswordMaxAgeGuard} from '../guards/password-max-age.guard'
 
-export function Auth(...roles: string[]) {
+export function Auth(...roles: string[]): ClassDecorator & MethodDecorator {
     return applyDecorators(
         Roles(...roles),
         // OmniGuard binds user auth object to request, Guards requiring user object must always come after

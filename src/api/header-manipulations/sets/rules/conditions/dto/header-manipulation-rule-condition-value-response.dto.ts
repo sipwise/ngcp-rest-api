@@ -1,6 +1,6 @@
 import {internal} from '../../../../../../entities'
-import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsNotEmpty, IsOptional} from 'class-validator'
+import {ApiProperty} from '@nestjs/swagger'
+import {IsNotEmpty} from 'class-validator'
 import {ResponseDto} from '../../../../../../dto/response.dto'
 
 export class HeaderManipulationRuleConditionValueResponseDto implements ResponseDto {

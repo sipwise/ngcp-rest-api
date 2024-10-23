@@ -1,4 +1,3 @@
-import {Logger} from '@nestjs/common'
 import {db} from '../entities'
 import {HttpRequest} from './http-request'
 import {RequestOptions} from 'http'
@@ -7,7 +6,7 @@ import {LoggerService} from '../logger/logger.service'
 export class XmlDispatcher {
     private readonly log = new LoggerService(XmlDispatcher.name)
 
-    async dispatch(target: string, all: boolean, sync: boolean, body: string) {
+    async dispatch(target: string, all: boolean, sync: boolean, body: string): Promise<void> {
         const group = await db.provisioning.XmlGroup.findOne({where: {name: target}, relations: ['hosts']})
 
         const request = new HttpRequest()
@@ -44,7 +43,7 @@ export class XmlDispatcher {
 
     // }
 
-    async sipDomainReload(domain: string) {
+    async sipDomainReload(_domain: string): Promise<void> {
         const reloadCommand = `
 <?xml version="1.0" ?>
 <methodCall>

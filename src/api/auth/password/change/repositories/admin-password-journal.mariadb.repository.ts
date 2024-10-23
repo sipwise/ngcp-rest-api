@@ -16,14 +16,14 @@ export class AdminPasswordJournalMariadbRepository extends MariaDbRepository imp
         super()
     }
 
-    async create(admins: internal.AdminPasswordJournal[], sr: ServiceRequest): Promise<number[]> {
+    async create(admins: internal.AdminPasswordJournal[], _sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.AdminPasswordJournal.createQueryBuilder('pass')
         const values = admins.map(admin => new db.billing.AdminPasswordJournal().fromInternal(admin))
         const result = await qb.insert().values(values).execute()
         return result.identifiers.map(obj => obj.id)
     }
 
-    async readLastNPasswords(adminId: number, n: number, sr: ServiceRequest): Promise<internal.AdminPasswordJournal[]> {
+    async readLastNPasswords(adminId: number, n: number, _sr: ServiceRequest): Promise<internal.AdminPasswordJournal[]> {
         const qb = db.billing.AdminPasswordJournal.createQueryBuilder('pass')
         qb.where('pass.admin_id = :admin_id', {admin_id: adminId})
         qb.orderBy('pass.id', 'DESC')
@@ -31,7 +31,7 @@ export class AdminPasswordJournalMariadbRepository extends MariaDbRepository imp
         return await qb.getMany()
     }
 
-    async keepLastNPasswords(adminId: number, n: number, sr: ServiceRequest): Promise<void> {
+    async keepLastNPasswords(adminId: number, n: number, _sr: ServiceRequest): Promise<void> {
         const idsQb = db.billing.AdminPasswordJournal.createQueryBuilder('pass')
             .select('pass.id')
             .where('pass.admin_id = :admin_id', {admin_id: adminId})

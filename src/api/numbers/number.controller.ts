@@ -17,7 +17,7 @@ const resourceName = 'numbers'
     RbacRole.system,
     RbacRole.admin,
     RbacRole.reseller,
-    RbacRole.subscriberadmin
+    RbacRole.subscriberadmin,
 )
 @ApiTags('Number')
 @Controller(resourceName)

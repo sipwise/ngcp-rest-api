@@ -1,4 +1,4 @@
-import {BaseEntity, Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
+import {BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
 import {internal} from '../..'
 import {NCOSSetLevel} from './ncos-set-level.mariadb.entity'
 
@@ -38,7 +38,7 @@ export class NCOSSet extends BaseEntity {
     })
         expose_to_customer!: boolean
 
-    @OneToMany(type => NCOSSetLevel, ncosSetLevel => ncosSetLevel.ncos_set_id)
+    @OneToMany(() => NCOSSetLevel, ncosSetLevel => ncosSetLevel.ncos_set_id)
         setLevels!: NCOSSetLevel[]
 
     toInternal(): internal.NCOSSet {

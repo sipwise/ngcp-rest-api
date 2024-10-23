@@ -9,7 +9,7 @@ const db_pass = process.env.API_DB_PASS || AppService.config.database.pass
 const db_host = process.env.API_DB_HOST || AppService.config.database.host
 const db_port = process.env.API_DB_PORT || AppService.config.database.port
 
-const getDBEntries = () => {
+const getDBEntries = (): any => {
     const entities = []
     Object.entries(db).forEach(([, e]) => {
         Object.entries(e).forEach(([, t]) => {
@@ -22,8 +22,8 @@ const getDBEntries = () => {
 const entities = !process.env.NODE_WP_BUNDLE &&
                 process.env.NODE_ENV == 'development' &&
                 process.env.NODE_JEST !== 'true'
-                    ? ['dist/entities/db/**/*.entity.js']
-                    : [...getDBEntries()]
+    ? ['dist/entities/db/**/*.entity.js']
+    : [...getDBEntries()]
 
 export const databaseConfig: DataSourceOptions = {
     name: 'default',

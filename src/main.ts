@@ -12,7 +12,7 @@ import {HttpExceptionFilter} from './helpers/http-exception.filter'
 import {createSwaggerDocument} from './helpers/swagger.helper'
 import {ValidateInputPipe} from './pipes/validate.pipe'
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
     const config = AppService.config
     const app = await NestFactory.create<NestApplication>(
         AppModule,

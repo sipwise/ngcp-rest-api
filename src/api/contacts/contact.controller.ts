@@ -44,7 +44,7 @@ const resourceName = 'contacts'
 @Auth(
     RbacRole.system,
     RbacRole.admin,
-    RbacRole.ccareadmin
+    RbacRole.ccareadmin,
 )
 @ApiTags('Contact')
 @Controller(resourceName)
@@ -128,7 +128,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-        req,
+            req,
     ): Promise<ContactResponseDto> {
         this.log.debug({message: 'patch contact by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -150,7 +150,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
         const updates = new Dictionary<internal.Contact>()
@@ -184,7 +184,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
     async updateMany(
         @Body(new ParseIdDictionary({items: ContactRequestDto})) updates: Dictionary<ContactRequestDto>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         this.log.debug({message: 'update contacts bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const contacts = new Dictionary<internal.Contact>()
@@ -216,7 +216,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, @Req() req) {
+    async journal(@Param('id') id: number | string, @Req() req): Promise<[JournalResponseDto[], number]> {
         this.log.debug({
             message: 'fetch customer contact journal by id',
             func: this.journal.name,

@@ -8,5 +8,5 @@ export class PasswordChangeRequestDto implements RequestDto {
     @ApiPropertyOptional({description: 'New Password', example: 'FooBarBaz123!!!'})
         new_password!: string
 
-    toInternal() {}
+    toInternal(): void {/*TODO: empty?*/}
 }

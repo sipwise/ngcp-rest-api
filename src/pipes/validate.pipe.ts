@@ -64,7 +64,7 @@ export class ValidateInputPipe implements PipeTransform<any> {
         this.expectedType = expectedType
     }
 
-    public async transform(value: any, metadata: ArgumentMetadata) {
+    public async transform(value: any, metadata: ArgumentMetadata): Promise<any> {
         if (this.expectedType) {
             metadata = {...metadata, metatype: this.expectedType}
         }
@@ -121,7 +121,8 @@ export class ValidateInputPipe implements PipeTransform<any> {
             : value
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
+    // TODO: Change {} to object?
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     protected toEmptyIfNil<T = any, R = any>(value: T): R | {} {
         return isNil(value) ? {} : value
     }
@@ -139,7 +140,7 @@ export class ValidateInputPipe implements PipeTransform<any> {
         return !types.some(t => metatype === t) && !isNil(metatype)
     }
 
-    protected transformPrimitive(value: any, metadata: ArgumentMetadata) {
+    protected transformPrimitive(value: any, metadata: ArgumentMetadata): any {
         if (!metadata.data) {
             // leave top-level query/param objects unmodified
             return value

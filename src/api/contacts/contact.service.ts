@@ -68,7 +68,7 @@ export class ContactService implements CrudService<internal.Contact>{
         return await this.contactRepo.delete(ids, sr)
     }
 
-    async read(id: number, sr: ServiceRequest): Promise<internal.Contact> {
+    async read(id: number, _sr: ServiceRequest): Promise<internal.Contact> {
         return await this.contactRepo.readById(id)
     }
 

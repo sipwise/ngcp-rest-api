@@ -15,7 +15,7 @@ export class FileshareSchedule {
     }
 
     @Interval(5000)
-    private async cleanupExpiredUploads() {
+    private async cleanupExpiredUploads(): Promise<void> {
         if (!this.app.isDbInitialised || !this.app.isDbAvailable)
             return
         try {

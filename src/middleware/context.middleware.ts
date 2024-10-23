@@ -7,7 +7,7 @@ import Context from '../helpers/context.helper'
  */
 @Injectable()
 export class ContextMiddleware implements NestMiddleware {
-    use(req: any, res: Response, next: NextFunction): any {
+    use(req: any, _res: Response, next: NextFunction): any {
         Context.bind(req)
         next()
     }

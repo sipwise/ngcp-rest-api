@@ -8,7 +8,7 @@ import {JournalService} from '../api/journals/journal.service'
 @Module({
     imports: [
         forwardRef(() => JournalModule),
-        LoggerModule
+        LoggerModule,
     ],
     providers: [LoggingInterceptor, LoggerService, JournalService],
     exports: [JournalModule, LoggerModule],

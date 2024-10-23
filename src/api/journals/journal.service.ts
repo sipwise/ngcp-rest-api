@@ -62,11 +62,11 @@ export class JournalService {
      * @param id ID of Journal
      */
     @HandleDbErrors
-    async read(id: number): Promise<internal.Journal> {
+    async read(_id: number): Promise<internal.Journal> {
         return
     }
 
-    public async writeJournal(sr: ServiceRequest, id: number, data: any) {
+    public async writeJournal(sr: ServiceRequest, id: number, data: any): Promise<boolean> {
         // Set content format and default to json
         let cf = contentFormat[sr.headers['Content-Type']]
         if (cf === undefined) {

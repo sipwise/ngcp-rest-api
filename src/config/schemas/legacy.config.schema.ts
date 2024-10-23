@@ -1,6 +1,6 @@
-import {IsBoolean} from "class-validator";
+import {IsBoolean} from 'class-validator'
 
 export class LegacyConfig {
     @IsBoolean()
-        errors: boolean;
+        errors: boolean
 }

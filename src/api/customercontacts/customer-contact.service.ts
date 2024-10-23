@@ -42,7 +42,7 @@ export class CustomerContactService implements CrudService<internal.Contact> {
         return await this.contactRepo.readWhereInIds(createdIds)
     }
 
-    private async resellerIdExists(id: number, sr: ServiceRequest) {
+    private async resellerIdExists(id: number, sr: ServiceRequest): Promise<void> {
         const reseller = await this.contactRepo.readResellerById(id, sr)
         if (!reseller) {
             throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))

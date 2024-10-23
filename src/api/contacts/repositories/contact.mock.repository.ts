@@ -47,7 +47,7 @@ export class ContactMockRepository implements ContactRepository {
         }
     }
 
-    create(contacts: internal.Contact[], sr: ServiceRequest): Promise<number[]> {
+    create(contacts: internal.Contact[], _sr: ServiceRequest): Promise<number[]> {
         const ids: number[] = []
         for (const contact of contacts) {
             const nextId = this.getNextId(this.contactDB)
@@ -58,14 +58,14 @@ export class ContactMockRepository implements ContactRepository {
         return Promise.resolve(ids)
     }
 
-    delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+    delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
         for (const id of ids) {
             this.throwErrorIfIdNotExists(this.contactDB, id)
         }
         return Promise.resolve(ids)
     }
 
-    hasContactActiveContract(contactId: number, sr: ServiceRequest): Promise<boolean> {
+    hasContactActiveContract(contactId: number, _sr: ServiceRequest): Promise<boolean> {
         this.throwErrorIfIdNotExists(this.contactDB, contactId)
         for (const key of Object.keys(this.contractDB)) {
             const id: number = +key
@@ -77,7 +77,7 @@ export class ContactMockRepository implements ContactRepository {
         return Promise.resolve(false)
     }
 
-    hasContactActiveSubscriber(contactId: number, sr: ServiceRequest): Promise<boolean> {
+    hasContactActiveSubscriber(contactId: number, _sr: ServiceRequest): Promise<boolean> {
         this.throwErrorIfIdNotExists(this.contactDB, contactId)
         // TODO: implement once we have internal.VoipSubscriber
         // for (const key of Object.keys(this.contractsDB)) {
@@ -90,7 +90,7 @@ export class ContactMockRepository implements ContactRepository {
         return Promise.resolve(false)
     }
 
-    hasContactTerminatedContract(contactId: number, sr: ServiceRequest): Promise<boolean> {
+    hasContactTerminatedContract(contactId: number, _sr: ServiceRequest): Promise<boolean> {
         this.throwErrorIfIdNotExists(this.contactDB, contactId)
         for (const key of Object.keys(this.contractDB)) {
             const id: number = +key
@@ -102,11 +102,11 @@ export class ContactMockRepository implements ContactRepository {
         return Promise.resolve(false)
     }
 
-    hasContactTerminatedSubscriber(contactId: number, sr: ServiceRequest): Promise<boolean> {
+    hasContactTerminatedSubscriber(_contactId: number, _sr: ServiceRequest): Promise<boolean> {
         return Promise.resolve(false)
     }
 
-    readAll(sr: ServiceRequest, options?: ContactOptions): Promise<[internal.Contact[], number]> {
+    readAll(_sr: ServiceRequest, _options?: ContactOptions): Promise<[internal.Contact[], number]> {
         const contacts: [internal.Contact[], number] =
             [Object.keys(this.contactDB).map(id => this.contactDB[id]), Object.keys(this.contactDB).length]
         return Promise.resolve(contacts)
@@ -141,16 +141,16 @@ export class ContactMockRepository implements ContactRepository {
         return Promise.resolve(contacts)
     }
 
-    readResellerById(id: number, sr: ServiceRequest): Promise<internal.Reseller> {
+    readResellerById(id: number, _sr: ServiceRequest): Promise<internal.Reseller> {
         return Promise.resolve(this.resellerDB[id])
     }
 
-    terminate(id: number, sr: ServiceRequest): Promise<number> {
+    terminate(id: number, _sr: ServiceRequest): Promise<number> {
         this.throwErrorIfIdNotExists(this.contactDB, id)
         return Promise.resolve(1)
     }
 
-    update(updates: Dictionary<internal.Contact>, options: ContactOptions): Promise<number[]> {
+    update(updates: Dictionary<internal.Contact>, _options: ContactOptions): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const contact = updates[id]
@@ -166,7 +166,7 @@ export class ContactMockRepository implements ContactRepository {
         return (+keys[keys.length - 1]) + 1
     }
 
-    private throwErrorIfIdNotExists(db: any, id: number) {
+    private throwErrorIfIdNotExists(db: any, id: number): void {
         if (db[id] == undefined)
             throw new NotFoundException()
     }

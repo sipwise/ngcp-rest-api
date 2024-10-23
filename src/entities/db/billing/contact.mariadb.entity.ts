@@ -252,10 +252,10 @@ export class Contact extends BaseEntity {
     })
         timezone?: string
 
-    @OneToMany(type => Contract, contract => contract.contact)
+    @OneToMany(() => Contract, contract => contract.contact)
         contracts!: Contract[]
 
-    //  @OneToMany(type => Customer, customer => customer.contact)
+    //  @OneToMany(() => Customer, customer => customer.contact)
     //  customers?: Customer[]
 
     // @HasMany(() => Order, {
@@ -263,7 +263,7 @@ export class Contact extends BaseEntity {
     // })
     // Orders?: Order[]
 
-    @ManyToOne(type => Reseller, reseller => reseller.contacts)
+    @ManyToOne(() => Reseller, reseller => reseller.contacts)
     @JoinColumn({name: 'reseller_id'})
         reseller!: Reseller
 
@@ -308,7 +308,7 @@ export class Contact extends BaseEntity {
         return internal.Contact.create(t)
     }
 
-    fromInternal(contact: internal.Contact) {
+    fromInternal(contact: internal.Contact): this {
         this.bankname = contact.bankname
         this.bic = contact.bic
         this.city = contact.city

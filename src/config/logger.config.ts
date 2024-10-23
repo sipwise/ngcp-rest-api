@@ -24,6 +24,6 @@ export const winstonLoggerConfig: LoggerOptions = {
                     winston.format.ms(),
                     utilities.format.nestLike('ngcp-rest-api', {prettyPrint: true}),
                 ),
-            })
+            }),
     ],
 }

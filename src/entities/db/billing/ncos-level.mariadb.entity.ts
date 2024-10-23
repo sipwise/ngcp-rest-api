@@ -67,6 +67,6 @@ export class NCOSLevel extends BaseEntity {
     })
         expose_to_customer!: boolean
 
-    @OneToMany(type => NCOSSetLevel, ncosSetLevel => ncosSetLevel.ncos_level_id)
+    @OneToMany(() => NCOSSetLevel, ncosSetLevel => ncosSetLevel.ncos_level_id)
         setLevels!: NCOSSetLevel[]
 }

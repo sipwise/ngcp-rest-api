@@ -19,7 +19,8 @@ let workersOnline = 0
 
 @Injectable()
 export class AppClusterService {
-    // eslint-disable-next-line @typescript-eslint/ban-types
+    // TODO: Fix callback type
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     static clusterize(callback: Function): void {
         let logger: LoggerService
         try {
@@ -46,7 +47,7 @@ export class AppClusterService {
                         started = 0
                     }
                 })
-                cluster.on('disconnect', (worker) => {
+                cluster.on('disconnect', (_worker) => {
                     if (started) {
                         sdNotify.sendStatus('STOPPING=1')
                         if (fs.existsSync(`${pidDir}/${pidFile}`)) {
@@ -73,7 +74,12 @@ export class AppClusterService {
             }
         }
         catch(e) {
-            logger ? logger.error(e) : console.error(e)
+            if (logger) {
+                logger.error(e)
+            } else {
+                // eslint-disable-next-line no-console
+                console.error(e)
+            }
             sdNotify.sendStatus('STOPPING=1')
             started = 0
             exit(1)

@@ -22,7 +22,7 @@ export class ResellerMariadbRepository extends MariaDbRepository implements Rese
         super()
     }
 
-    async createEmailTemplates(resellerId: number | number[]) {
+    async createEmailTemplates(resellerId: number | number[]): Promise<void> {
         this.log.debug({
             message: 'create email templates',
             func: this.createEmailTemplates.name,
@@ -53,14 +53,14 @@ export class ResellerMariadbRepository extends MariaDbRepository implements Rese
         )
     }
 
-    async create(resellers: internal.Reseller[], sr: ServiceRequest): Promise<number[]> {
+    async create(resellers: internal.Reseller[], _sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.Reseller.createQueryBuilder('reseller')
         const values = resellers.map(reseller => new db.billing.Reseller().fromInternal(reseller))
         const result = await qb.insert().values(values).execute()
         return result.identifiers.map(obj => obj.id)
     }
 
-    async terminate(id: number, sr: ServiceRequest): Promise<number> {
+    async terminate(id: number, _sr: ServiceRequest): Promise<number> {
         this.log.debug({message: 'delete reseller by id', func: this.terminate.name, id: id})
         let reseller = await db.billing.Reseller.findOneByOrFail({id: id})
         reseller = await db.billing.Reseller.merge(reseller, {status: ResellerStatus.Terminated})
@@ -136,11 +136,11 @@ export class ResellerMariadbRepository extends MariaDbRepository implements Rese
         return contract.contact.reseller_id == undefined
     }
 
-    async renameReseller(id: number, name: string) {
+    async renameReseller(id: number, name: string): Promise<void> {
         await db.billing.Reseller.update(id, {name: `old_${id}_${name}`})
     }
 
-    private async createBaseQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Reseller>> {
+    private async createBaseQueryBuilder(_sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Reseller>> {
         const qb = db.billing.Reseller.createQueryBuilder('reseller')
         return qb
     }

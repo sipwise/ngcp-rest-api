@@ -1,4 +1,3 @@
-import {ServiceRequest} from '../../../interfaces/service-request.interface'
 import {internal} from '../../../entities'
 
 export interface AdminPasswordJournalRepository {

@@ -122,7 +122,7 @@ export class AdminRequestDto implements RequestDto {
         return admin
     }
 
-    private setDefaultsForUndefined() {
+    private setDefaultsForUndefined(): void {
         this.is_master ??= false
         this.is_active ??= true
         this.read_only ??= false

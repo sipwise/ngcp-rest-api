@@ -14,11 +14,11 @@ import {internal} from '../../../entities'
 // import {NcosLevel} from './ncos-level.entity'
 // import {Order} from './order.entity'
 
-enum Status {
-    Active = 'active',
-    Locked = 'locked',
-    Terminated = 'terminated'
-}
+// enum Status {
+//     Active = 'active',
+//     Locked = 'locked',
+//     Terminated = 'terminated'
+// }
 
 @Entity({
     name: 'resellers',
@@ -50,7 +50,7 @@ export class Reseller extends BaseEntity {
     })
         status!: ResellerStatus
 
-    @ManyToOne(type => Contract, contract => contract.resellers)
+    @ManyToOne(() => Contract, contract => contract.resellers)
     @JoinColumn({name: 'contract_id'})
         contract!: Contract
 
@@ -79,13 +79,13 @@ export class Reseller extends BaseEntity {
     // })
     // BillingProfiles?: BillingProfile[]
 
-    @OneToMany(type => Contact, contact => contact.reseller)
+    @OneToMany(() => Contact, contact => contact.reseller)
         contacts!: Contact[]
 
-    @OneToMany(type => Domain, domain => domain.reseller)
+    @OneToMany(() => Domain, domain => domain.reseller)
         domains!: Domain[]
 
-    @OneToMany(type => Journal, journal => journal.reseller)
+    @OneToMany(() => Journal, journal => journal.reseller)
         journals!: Journal[]
 
     // @HasMany(() => VoipNumber, {
@@ -96,7 +96,7 @@ export class Reseller extends BaseEntity {
     // @HasMany(() => Customer, {
     //     sourceKey: 'id',
     // })
-    // @OneToMany(type => Customer, customer => customer.reseller)
+    // @OneToMany(() => Customer, customer => customer.reseller)
     // customers?: Customer[]
 
     // @HasMany(() => NcosLevel, {

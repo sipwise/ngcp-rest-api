@@ -1,6 +1,5 @@
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {
-    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -138,7 +137,7 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
     async journal(
         @Param('id') id: number | string,
         @Req() req,
-    ) {
+    ): Promise<[JournalResponseDto[], number]> {
         this.log.debug({message: 'fetch fileshare journal by id', func: this.journal.name, url: req.url, method: req.method})
         return super.journal(id, req)
     }

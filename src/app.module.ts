@@ -56,13 +56,14 @@ import {PasswordModule} from './api/auth/password/password.module'
 import {PasswordChangeModule} from './api/auth/password/change/password-change.module'
 
 import * as path from 'path'
+import {AppConfig} from 'config/schemas/app.config.schema'
 
 let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
     ConfigModule.forRoot({
         isGlobal: true,
         ignoreEnvFile: true,
         load: [
-            function () {
+            function (): AppConfig {
                 return AppService.config
             },
         ],

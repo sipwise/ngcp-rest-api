@@ -58,7 +58,7 @@ export class Admin implements AdminInterface {
         return admin
     }
 
-    async setPermissionFlags() {
+    async setPermissionFlags(): Promise<void> {
         switch (this.role) {
         case RbacRole.system:
             this.is_system = true
@@ -99,7 +99,7 @@ export class Admin implements AdminInterface {
         }
     }
 
-    async generateSaltedpass(bcrypt_cost: number = 13, salt?: string) {
+    async generateSaltedpass(bcrypt_cost: number = 13, salt?: string): Promise<string> {
         const bcrypt_version = 'b'
         if (!salt) {
             salt = await genSalt(bcrypt_cost)

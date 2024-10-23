@@ -15,7 +15,7 @@ export class VoicemailSearchDto implements VoicemailResponseDto {
             field: 'dir',
             comparator: 'like',
             transform: 'lower',
-            format: (args: string[]) => `/var/spool/asterisk/voicemail/default/%/${args[0]}`,
+            format: (args: string[]): string => `/var/spool/asterisk/voicemail/default/%/${args[0]}`,
         },
         time: 'origtime',
     }

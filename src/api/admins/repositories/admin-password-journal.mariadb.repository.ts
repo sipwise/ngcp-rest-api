@@ -1,9 +1,7 @@
 import {Inject, Injectable} from '@nestjs/common'
 import {db, internal} from '../../../entities'
-import {SelectQueryBuilder} from 'typeorm'
 import {LoggerService} from '../../../logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
-import {AdminOptions} from '../interfaces/admin-options.interface'
 import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 import {AdminPasswordJournalRepository} from '../interfaces/admin-password-journal.repository'
 

@@ -1,7 +1,5 @@
-import {Injectable, InternalServerErrorException, NotFoundException} from '@nestjs/common'
-import {ServiceRequest} from '../../../interfaces/service-request.interface'
+import {Injectable} from '@nestjs/common'
 import {LoggerService} from '../../../logger/logger.service'
-import {Dictionary} from '../../../helpers/dictionary.helper'
 import {AppService} from '../../../app.service'
 import {Request as TaskAgentRequest} from '../../../entities/task-agent/request.task-agent.entity'
 import {Response as TaskAgentResponse} from '../../../entities/task-agent/response.task-agent.entity'

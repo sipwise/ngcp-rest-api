@@ -4,7 +4,7 @@ import {ApiExtraModels, ApiOkResponse, getSchemaPath} from '@nestjs/swagger'
 
 export const ApiPaginatedResponse = <TModel extends Type<any>>(
     model: TModel,
-) => {
+): MethodDecorator => {
     return applyDecorators(
         ApiExtraModels(PaginatedDto, model),
         ApiOkResponse({

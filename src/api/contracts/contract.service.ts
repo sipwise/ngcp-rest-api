@@ -31,7 +31,7 @@ export class ContractService implements CrudService<internal.Contract> {
         return await this.contractsRepo.readWhereInIds(createdIds, sr)
     }
 
-    private async setProductId(contract: internal.Contract, sr: ServiceRequest) {
+    private async setProductId(contract: internal.Contract, sr: ServiceRequest): Promise<void> {
         const product = await this.contractsRepo.readProductByType(contract.type, sr)
         if (product == undefined) {
             throw new UnprocessableEntityException(this.i18n.t('errors.TYPE_INVALID'))
@@ -39,7 +39,7 @@ export class ContractService implements CrudService<internal.Contract> {
         contract.product_id = product.id
     }
 
-    private async validateSystemContact(contract: internal.Contract, sr: ServiceRequest) {
+    private async validateSystemContact(contract: internal.Contract, sr: ServiceRequest): Promise<void> {
         const systemContact = await this.contractsRepo.readActiveSystemContact(contract.contact_id, sr)
         if (systemContact == undefined) {
             throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_ID_INVALID'))

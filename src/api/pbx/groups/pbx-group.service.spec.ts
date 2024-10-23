@@ -35,7 +35,7 @@ describe('PbxGroupService', () => {
             .compile()
 
         service = module.get<PbxGroupService>(PbxGroupService)
-        sr = {headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
+        sr = {headers: [undefined], params: undefined, query: undefined, user: user, req: undefined, returnContent:undefined}
     })
 
     it('should be defined', () => {

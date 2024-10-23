@@ -71,7 +71,7 @@ export class Journal extends BaseEntity {
     })
         role_id?: number
 
-    @ManyToOne(type => AclRole, role => role.journals)
+    @ManyToOne(() => AclRole, role => role.journals)
     @JoinColumn({name: 'role_id'})
         role: AclRole
 
@@ -90,7 +90,7 @@ export class Journal extends BaseEntity {
     })
         reseller_id?: number
 
-    @ManyToOne(type => Reseller, reseller => reseller.journals)
+    @ManyToOne(() => Reseller, reseller => reseller.journals)
     @JoinColumn({name: 'reseller_id'})
         reseller!: Reseller
 
@@ -102,7 +102,7 @@ export class Journal extends BaseEntity {
     })
         user_id!: number
 
-    fromInternal(journal: internal.Journal) {
+    fromInternal(journal: internal.Journal): void {
         this.id = journal.id
         this.reseller_id = journal.reseller_id
         this.role_id = journal.role_id

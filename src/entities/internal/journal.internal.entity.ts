@@ -38,7 +38,7 @@ export class Journal implements JournalInterface {
         return journal
     }
 
-    decodeContent() {
+    decodeContent(): void {
         if (this.content_format == 'application/json' || this.content_format == 'json')  {
             this.content = this.content && this.content instanceof Buffer
                 ? JSON.parse(this.content.toString())

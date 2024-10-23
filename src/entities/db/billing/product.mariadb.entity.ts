@@ -69,13 +69,13 @@ export class Product extends BaseEntity {
     })
         billing_profile_id?: number
 
-    // @ManyToOne(type => BillingProfile, billingProfile => billingProfile.id)
+    // @ManyToOne(() => BillingProfile, billingProfile => billingProfile.id)
     // BillingProfile?: BillingProfile
 
-    @OneToMany(type => Contract, contract => contract.id)
+    @OneToMany(() => Contract, contract => contract.id)
         contracts!: Contract[]
 
-    @ManyToOne(type => Reseller, reseller => reseller.id)
+    @ManyToOne(() => Reseller, reseller => reseller.id)
     @JoinColumn({name: 'reseller_id'})
         reseller!: Reseller
 

@@ -35,7 +35,7 @@ describe('JournalService', () => {
             .compile()
 
         service = module.get<JournalService>(JournalService)
-        sr = {headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
+        sr = {headers: [undefined], params: undefined, query: undefined, user: user, req: undefined, returnContent:undefined}
     })
 
     it('should be defined', () => {
@@ -50,7 +50,7 @@ describe('JournalService', () => {
         })
     })
 
-    describe('writeJournal', () => {
+    // describe('writeJournal', () => {
 
-    })
+    // })
 })

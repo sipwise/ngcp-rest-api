@@ -92,7 +92,7 @@ export class NumberMariadbRepository extends MariaDbRepository {
         }))
     }
 
-    private createBaseQueryBuilder(sr: ServiceRequest, filterBy: FilterBy): SelectQueryBuilder<db.billing.VoipNumber> {
+    private createBaseQueryBuilder(_sr: ServiceRequest, filterBy: FilterBy): SelectQueryBuilder<db.billing.VoipNumber> {
         const qb = db.billing.VoipNumber.createQueryBuilder('voipNumber')
         qb.innerJoinAndSelect('voipNumber.subscriber', 'billingSubscriber')
         qb.innerJoinAndSelect('billingSubscriber.contract', 'contract')

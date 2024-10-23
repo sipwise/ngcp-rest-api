@@ -104,7 +104,7 @@ export class TransformInterceptor implements NestInterceptor {
         }))
     }
 
-    private addLocationHeader(req: any, res: any, data) {
+    private addLocationHeader(req: any, res: any, data): void {
         const path = req.route.path
         let id: number | string
         let length: number
@@ -130,7 +130,7 @@ export class TransformInterceptor implements NestInterceptor {
         return accept.length == 1 && accept[0] === 'application/json' ? false : true
     }
 
-    private async generateOpenAPIResource(req: any, res: any, data: any): Promise<CreateResponseDto<any>> {
+    private async generateOpenAPIResource(_req: any, res: any, data: any): Promise<CreateResponseDto<any>> {
         const response: CreateResponseDto<any> = new CreateResponseDto<any>()
 
         res.setHeader('content-type', 'application/json')
@@ -225,7 +225,7 @@ export class TransformInterceptor implements NestInterceptor {
             return
 
         await Promise.all(data.map(async e =>
-            resource.links.push(`${path}/${e.id}`)
+            resource.links.push(`${path}/${e.id}`),
         ))
 
         return req.method == 'GET' && this.expectedHAL(req)
@@ -247,7 +247,7 @@ export class TransformInterceptor implements NestInterceptor {
             return
 
         await Promise.all(data.map(async e =>
-            resource.ids.push(e.id)
+            resource.ids.push(e.id),
         ))
 
         return req.method == 'GET' && this.expectedHAL(req)
@@ -275,7 +275,7 @@ export class TransformInterceptor implements NestInterceptor {
 
         const resNameArray = []
 
-        pathArray.forEach((e, i) => {
+        pathArray.forEach((_e, i) => {
             if (!(pathArray[i].startsWith(':')))
                 resNameArray.push(pathArray[i])
         })

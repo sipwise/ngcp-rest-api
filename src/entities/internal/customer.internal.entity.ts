@@ -1,5 +1,4 @@
 import {
-    ContractBillingProfileDefinition as CustomerBillingProfileDefinition,
     ContractStatus as CustomerStatus,
 } from './contract.internal.entity'
 import {internal} from '../../entities'

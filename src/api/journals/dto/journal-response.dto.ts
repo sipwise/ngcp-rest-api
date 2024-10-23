@@ -34,8 +34,7 @@ export class JournalResponseDto implements ResponseDto {
     constructor(journal: internal.Journal) {
         try {
             journal.decodeContent()
-        } catch (e) {
-        }
+        } catch {/*TODO: empty*/}
 
         this.id = journal.id
         this.reseller_id = journal.reseller_id

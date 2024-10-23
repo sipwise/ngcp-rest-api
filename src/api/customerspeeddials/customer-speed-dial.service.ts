@@ -71,7 +71,7 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
         }
     }
 
-    private async checkAndTransformDestination(entity: internal.CustomerSpeedDial, sr: ServiceRequest): Promise<void> {
+    private async checkAndTransformDestination(entity: internal.CustomerSpeedDial, _sr: ServiceRequest): Promise<void> {
         if (!RegExp('^sip:').test(entity.destination)) {
             let domain: string
             domain = await this.customerSpeedDialRepo.readSubscriberDomain(entity.contractId, {isPilot: true})

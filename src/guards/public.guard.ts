@@ -3,7 +3,7 @@ import {Reflector} from '@nestjs/core'
 
 @Injectable()
 export class PublicGuard implements CanActivate {
-    constructor(private reflector: Reflector) {
+    constructor(private readonly reflector: Reflector) {
     }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {

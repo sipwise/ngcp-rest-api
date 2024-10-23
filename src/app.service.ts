@@ -1,5 +1,5 @@
 import {Inject, Injectable, Logger} from '@nestjs/common'
-import {DataSource, EntityTarget} from 'typeorm'
+import {DataSource, EntityManager, EntityTarget, Repository} from 'typeorm'
 import {Redis, Cluster} from 'ioredis'
 import {config as AppConfig} from './config/main.config'
 
@@ -19,11 +19,11 @@ export class AppService {
     ) {
     }
 
-    get isDbInitialised() {
+    get isDbInitialised(): boolean {
         return this.db.isInitialized
     }
 
-    get isDbAvailable() {
+    get isDbAvailable(): boolean {
         return this.dbAvailable
     }
 
@@ -31,19 +31,19 @@ export class AppService {
         this.dbAvailable = dbAvailable
     }
 
-    get db() {
+    get db(): DataSource {
         return this.defaultDatabase
     }
 
-    public dbConnection() {
+    public dbConnection(): EntityManager {
         return this.db.manager
     }
 
-    public dbRepo<Entity>(target: EntityTarget<Entity>) {
+    public dbRepo<Entity>(target: EntityTarget<Entity>): Repository<Entity> {
         return this.dbConnection().getRepository(target)
     }
 
-    get isRedisAvailable() {
+    get isRedisAvailable(): boolean {
         return this.redisAvailable
     }
 
@@ -51,15 +51,15 @@ export class AppService {
         this.redisAvailable = redisAvailable
     }
 
-    get redis() {
+    get redis(): Redis | Cluster {
         return this.redisDatabase
     }
 
-    get redisPubSub() {
+    get redisPubSub(): Redis | Cluster {
         return this.redisPubSubDatabase
     }
 
-    public logger() {
+    public logger(): Logger {
         return this.defaultLogger
     }
 }

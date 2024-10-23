@@ -29,15 +29,15 @@ export class JournalMockRepository implements JournalRepository {
         }
     }
 
-    create(journal: internal.Journal): Promise<internal.Journal> {
+    create(_journal: internal.Journal): Promise<internal.Journal> {
         return Promise.resolve(undefined)
     }
 
-    read(id: number, sr: ServiceRequest): Promise<internal.Journal> {
+    read(_id: number, _sr: ServiceRequest): Promise<internal.Journal> {
         return Promise.resolve(undefined)
     }
 
-    readAll(sr: ServiceRequest, resourceName?: string, resourceId?: number | string): Promise<[internal.Journal[], number]> {
+    readAll(_sr: ServiceRequest, _resourceName?: string, _resourceId?: number | string): Promise<[internal.Journal[], number]> {
         return Promise.resolve([[], 0])
     }
 

@@ -1,10 +1,10 @@
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Auth} from '../../decorators/auth.decorator'
-import {BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Put, Req} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Put, Req} from '@nestjs/common'
 import {CrudController} from '../../controllers/crud.controller'
 import {JournalService} from '../journals/journal.service'
 import {number} from 'yargs'
-import {Operation, Operation as PatchOperation, patchToEntity, validate} from '../../helpers/patch.helper'
+import {Operation, Operation as PatchOperation, patchToEntity} from '../../helpers/patch.helper'
 import {PatchDto} from '../../dto/patch.dto'
 import {RbacRole} from '../../config/constants.config'
 import {VoicemailRequestDto} from './dto/voicemail-request.dto'
@@ -31,7 +31,7 @@ const resourceName = 'voicemails'
 @Auth(
     RbacRole.admin,
     RbacRole.system,
-    RbacRole.reseller
+    RbacRole.reseller,
 )
 @ApiTags('Voicemail')
 @Controller(resourceName)
@@ -84,7 +84,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     })
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
-        @Req() req
+        @Req() req,
     ): Promise<number[]> {
         this.log.debug({message: 'delete voicemail by id', func: this.delete.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -129,7 +129,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
         const updates = new Dictionary<internal.Voicemail>()
@@ -169,7 +169,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     async updateMany(
         @Body(new ParseIdDictionary({items: VoicemailRequestDto})) updates: Dictionary<VoicemailRequestDto>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         this.log.debug({
             message: 'update voicemails bulk',
             func: this.updateMany.name,
@@ -189,7 +189,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, @Req() req) {
+    async journal(@Param('id') id: number | string, @Req() req): Promise<[JournalResponseDto[], number]> {
         this.log.debug({
             message: 'fetch voicemail journal by id',
             func: this.journal.name,

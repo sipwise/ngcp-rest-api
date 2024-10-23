@@ -46,7 +46,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
             path: request.url,
             method: request.method,
             error: exception.response.errorCode || exception.response.error,
-            message: message
+            message: message,
         })
     }
 }

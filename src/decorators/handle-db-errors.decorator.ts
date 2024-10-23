@@ -1,10 +1,12 @@
 import {LoggerService} from '../logger/logger.service'
 import {handleTypeORMError} from '../helpers/errors.helper'
 
-function applyDecorator(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+function applyDecorator(target: any, propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor {
     const log = new LoggerService(`${target.constructor.name}/${propertyKey}`)
     const originalMethod = descriptor.value
 
+    // TODO: Fix this function type hint
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     descriptor.value = async function (...args: any[]) {
         try {
             const result = await originalMethod.apply(this, args)

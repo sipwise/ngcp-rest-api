@@ -1,16 +1,16 @@
-import {IsNotEmpty, IsNumber} from "class-validator"
+import {IsNotEmpty, IsNumber} from 'class-validator'
 
 export class NCOSSet {
     @IsNumber()
     @IsNotEmpty()
-    id: number
+        id: number
 
     @IsNumber()
     @IsNotEmpty()
-    resellerId: number
+        resellerId: number
 
     @IsNotEmpty()
-    name: string
+        name: string
 
     description?: string
 

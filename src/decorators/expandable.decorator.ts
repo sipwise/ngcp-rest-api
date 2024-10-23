@@ -6,7 +6,7 @@ export type ExpandableOptions = ApiPropertyOptions & {
 }
 
 export function Expandable(options: ExpandableOptions) {
-    return function (target: object, propertyKey: string | symbol) {
+    return function (target: object, propertyKey: string | symbol): void {
         options.name = `${options?.name || ''} (expandable)`.trim()
         applyDecorators(
             ApiProperty(options),

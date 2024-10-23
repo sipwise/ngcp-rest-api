@@ -52,14 +52,14 @@ export class ContractBillingProfileNetwork extends BaseEntity {
     })
         base!: number
 
-    @OneToMany(type => ContractBillingProfileNetworkSchedule, cbpns => cbpns.profileNetwork)
+    @OneToMany(() => ContractBillingProfileNetworkSchedule, cbpns => cbpns.profileNetwork)
         schedules!: ContractBillingProfileNetworkSchedule[]
 
     @ManyToOne(() => BillingProfile, billingProfile => billingProfile.id, {eager: true})
     @JoinColumn({name: 'billing_profile_id'})
         billingProfile!: BillingProfile
 
-    @ManyToOne(() => Contract, contract => contract.id, )
+    @ManyToOne(() => Contract, contract => contract.id )
     @JoinColumn({name: 'contract_id'})
         contract!: Contract
 

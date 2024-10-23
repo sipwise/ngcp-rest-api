@@ -5,7 +5,7 @@ import {LoggerService} from '../logger/logger.service'
 export const databaseProviders = [
     {
         provide: 'DB',
-        useFactory: async () => {
+        useFactory: async (): Promise<DataSource> => {
             const log = new LoggerService('databaseProviders[DB]')
             const ds  = new DataSource(databaseConfig)
             if (process.env.NODE_ENV == 'test' && process.env.NODE_TEST_E2E !== 'true') {

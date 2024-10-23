@@ -28,11 +28,11 @@ export class NCOSSetLevel extends BaseEntity {
     })
         ncos_level_id!: number
 
-    @ManyToOne(type => NCOSSet, ncosSet => ncosSet.id)
+    @ManyToOne(() => NCOSSet, ncosSet => ncosSet.id)
     @JoinColumn({name: 'ncos_set_id'})
         set!: NCOSSet
 
-    @ManyToOne(type => NCOSLevel, ncosLevel => ncosLevel.id)
+    @ManyToOne(() => NCOSLevel, ncosLevel => ncosLevel.id)
     @JoinColumn({name: 'ncos_level_id'})
         level!: NCOSLevel
 

@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, UnprocessableEntityException} from '@nestjs/common'
+import {Body, Controller, Delete, forwardRef, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from '../../../helpers/patch.helper'
@@ -142,7 +142,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
     async updateMany(
         @Body(new ParseIdDictionary({items: HeaderManipulationSetRequestDto})) updates: Dictionary<HeaderManipulationSetRequestDto>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         this.log.debug({message: 'update header rule Sets bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const sets = new Dictionary<internal.HeaderRuleSet>()
@@ -189,7 +189,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         this.log.debug({
             message: 'patch header rule set bulk',
             func: this.adjustMany.name,
@@ -235,7 +235,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, @Req() req: Request) {
+    async journal(@Param('id') id: number | string, @Req() req: Request): Promise<[JournalResponseDto[], number]> {
         this.log.debug({
             message: 'read header rule set journal by id',
             id: id,

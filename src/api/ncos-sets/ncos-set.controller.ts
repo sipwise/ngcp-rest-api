@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req, UnprocessableEntityException} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'helpers/patch.helper'
@@ -144,9 +144,9 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     })
     async journalLevel(
         @Req() req: Request,
-        @Param('id') id: number,
+        @Param('id') _id: number,
         @Param('levelId') levelId: number,
-    ) {
+    ): Promise<[JournalResponseDto[], number]> {
         this.log.debug({
             message: 'read ncos set journal level by id',
             id: levelId,
@@ -257,7 +257,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     async updateMany(
         @Body(new ParseIdDictionary({items: NCOSSetRequestDto})) updates: Dictionary<NCOSSetRequestDto>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         this.log.debug({message: 'update NCOS Sets bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const sets = new Dictionary<internal.NCOSSet>()
@@ -305,7 +305,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
         const updates = new Dictionary<internal.NCOSSet>()
@@ -345,7 +345,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, @Req() req: Request) {
+    async journal(@Param('id') id: number | string, @Req() req: Request): Promise<[JournalResponseDto[], number]> {
         this.log.debug({
             message: 'read ncos set journal by id',
             id: id,

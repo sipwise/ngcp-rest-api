@@ -51,18 +51,18 @@ export class ProductMockRepository implements ProductRepository {
         }
     }
 
-    read(id: number, sr: ServiceRequest): Promise<internal.Product> {
+    read(id: number, _sr: ServiceRequest): Promise<internal.Product> {
         this.throwErrorIfIdNotExists(this.productDB, id)
         return Promise.resolve(this.productDB[id])
     }
 
-    readAll(sr: ServiceRequest): Promise<[internal.Product[], number]> {
+    readAll(_sr: ServiceRequest): Promise<[internal.Product[], number]> {
         const products: [internal.Product[], number] =
             [Object.keys(this.productDB).map(id => this.productDB[id]), Object.keys(this.productDB).length]
         return Promise.resolve(products)
     }
 
-    private throwErrorIfIdNotExists(db: any, id: number) {
+    private throwErrorIfIdNotExists(db: any, id: number): void {
         if (db[id] == undefined)
             throw new NotFoundException()
     }

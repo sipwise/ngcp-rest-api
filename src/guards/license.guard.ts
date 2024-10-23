@@ -6,7 +6,7 @@ import {LicenseService} from '../license/license.service'
 @Injectable()
 export class LicenseGuard implements CanActivate {
     constructor(
-        private reflector: Reflector,
+        private readonly reflector: Reflector,
         private readonly licenseService: LicenseService,
     ) {
     }

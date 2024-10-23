@@ -81,7 +81,7 @@ export class ResellerService implements CrudService<internal.Reseller> {
         return true
     }
 
-    private async validateContract(reseller: internal.Reseller) {
+    private async validateContract(reseller: internal.Reseller): Promise<void> {
         if (!await this.resellerRepo.contractExists(reseller.contract_id)) {
             throw new UnprocessableEntityException(this.i18n.t('errors.CONTRACT_NOT_FOUND'))
         }

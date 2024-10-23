@@ -1,6 +1,6 @@
 import {execFileSync} from 'child_process'
 
-test("typechecks", () => {
+test('typechecks', () => {
     try {
         execFileSync('tsc', ['--pretty', '--skipLibCheck', '--noEmit'], {timeout: 30 * 1000})
     }

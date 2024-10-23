@@ -40,7 +40,7 @@ export class ResellerMockRepository implements ResellerRepository {
         return Promise.resolve(this.contractDB[contractId].contact_id != undefined)
     }
 
-    create(resellers: internal.Reseller[], sr: ServiceRequest): Promise<number[]> {
+    create(resellers: internal.Reseller[], _sr: ServiceRequest): Promise<number[]> {
         const ids: number[] = []
         for (const reseller of resellers) {
             const nextId = this.getNextId(this.resellerDB)
@@ -52,7 +52,7 @@ export class ResellerMockRepository implements ResellerRepository {
         return Promise.resolve(ids)
     }
 
-    createEmailTemplates(resellerId: number): Promise<void> {
+    createEmailTemplates(_resellerId: number): Promise<void> {
         return Promise.resolve(undefined)
     }
 
@@ -60,18 +60,18 @@ export class ResellerMockRepository implements ResellerRepository {
         return Promise.resolve([])
     }
 
-    read(id: number, sr: ServiceRequest): Promise<internal.Reseller> {
+    read(id: number, _sr: ServiceRequest): Promise<internal.Reseller> {
         this.throwErrorIfIdNotExists(this.resellerDB, id)
         return Promise.resolve(this.resellerDB[id])
     }
 
-    readAll(sr: ServiceRequest): Promise<[internal.Reseller[], number]> {
+    readAll(_sr: ServiceRequest): Promise<[internal.Reseller[], number]> {
         const resellers: [internal.Reseller[], number] =
             [Object.keys(this.resellerDB).map(id => this.resellerDB[id]), Object.keys(this.resellerDB).length]
         return Promise.resolve(resellers)
     }
 
-    readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Reseller[]> {
+    readWhereInIds(ids: number[], _sr: ServiceRequest): Promise<internal.Reseller[]> {
         const resellers: internal.Reseller[] = []
         for (const id of ids) {
             this.throwErrorIfIdNotExists(this.resellerDB, id)
@@ -80,7 +80,7 @@ export class ResellerMockRepository implements ResellerRepository {
         return Promise.resolve(resellers)
     }
 
-    readByName(name: string, sr: ServiceRequest): Promise<internal.Reseller> {
+    readByName(name: string, _sr: ServiceRequest): Promise<internal.Reseller> {
         for (const key of Object.keys(this.resellerDB)) {
             const id: number = +key
             const reseller: internal.Reseller = this.resellerDB[id]
@@ -91,7 +91,7 @@ export class ResellerMockRepository implements ResellerRepository {
         return Promise.resolve(undefined)
     }
 
-    renameReseller(id: number, name: string): Promise<void> {
+    renameReseller(_id: number, _name: string): Promise<void> {
         return Promise.resolve(undefined)
     }
 
@@ -105,11 +105,11 @@ export class ResellerMockRepository implements ResellerRepository {
         return Promise.resolve(false)
     }
 
-    terminate(id: number, sr: ServiceRequest): Promise<number> {
+    terminate(_id: number, _sr: ServiceRequest): Promise<number> {
         return Promise.resolve(0)
     }
 
-    update(updates: Dictionary<internal.Reseller>, sr: ServiceRequest): Promise<number[]> {
+    update(_updates: Dictionary<internal.Reseller>, _sr: ServiceRequest): Promise<number[]> {
         return Promise.resolve(undefined)
     }
 
@@ -118,7 +118,7 @@ export class ResellerMockRepository implements ResellerRepository {
         return (+keys[keys.length - 1]) + 1
     }
 
-    private throwErrorIfIdNotExists(db: any, id: number) {
+    private throwErrorIfIdNotExists(db: any, id: number): void {
         if (db[id] == undefined)
             throw new NotFoundException()
     }

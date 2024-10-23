@@ -3,9 +3,7 @@ import {
     BadRequestException,
     HttpStatus,
     Injectable,
-    Optional,
-    ParseIntPipe,
-    ParseIntPipeOptions, ParseUUIDPipe, ParseUUIDPipeOptions,
+    Optional, ParseUUIDPipe, ParseUUIDPipeOptions,
     PipeTransform,
 } from '@nestjs/common'
 import {HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
@@ -28,6 +26,8 @@ export class ParseUUIDArrayPipe implements PipeTransform {
         this.options = options
         this.exceptionFactory =
             exceptionFactory ||
+            // TODO: Fix the return type
+            // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
             (error => new HttpErrorByCode[errorHttpStatusCode](error))
     }
     async transform(value: any, metadata: ArgumentMetadata): Promise<string[]> {

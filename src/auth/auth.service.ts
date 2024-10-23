@@ -1,4 +1,4 @@
-import {ForbiddenException, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {ForbiddenException, Injectable} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
 import {AppService} from '../app.service'
 import {AuthResponseDto} from './dto/auth-response.dto'
@@ -7,6 +7,7 @@ import {db} from '../entities'
 import {RbacRole} from '../config/constants.config'
 import {LoggerService} from '../logger/logger.service'
 import {ServiceRequest} from '../interfaces/service-request.interface'
+import Redis, {Cluster} from 'ioredis'
 
 /**
  * `AuthService` provides functionality to authenticate Admins and to sign JWTs for authenticated users
@@ -21,11 +22,11 @@ export class AuthService {
      */
     constructor(
         private readonly app: AppService,
-        private jwtService: JwtService,
+        private readonly jwtService: JwtService,
     ) {
     }
 
-    async getRedisBanDb() {
+    async getRedisBanDb(): Promise<Redis | Cluster> {
         const DB = 19
         const redis = await this.app.redis
         await redis.select(DB)
@@ -54,7 +55,7 @@ export class AuthService {
      *
      * @returns Authenticated `AuthResponseDto` on success else `null`
      */
-    async validateAdmin(req:ServiceRequest, username: string, password: string, domain:string, realm:string): Promise<AuthResponseDto> {
+    async validateAdmin(_req:ServiceRequest, username: string, password: string, _domain:string, _realm:string): Promise<AuthResponseDto> {
         this.log.debug({message: 'starting user authentication', method: this.validateAdmin.name, username: username})
         const admin = await this.app.dbRepo(db.billing.Admin).findOne({
             where: {login: username},
@@ -159,7 +160,7 @@ export class AuthService {
      *
      * @returns Authenticated `AuthResponseDto` on success else `null`
      */
-    async validateSubscriber(req: ServiceRequest, username: string, password: string, domain: string, realm:string): Promise<AuthResponseDto> {
+    async validateSubscriber(_req: ServiceRequest, username: string, password: string, domain: string, _realm:string): Promise<AuthResponseDto> {
         this.log.debug({
             message: 'starting subscriber user authentication',
             method: this.validateAdmin.name,
@@ -222,7 +223,9 @@ export class AuthService {
      *
      * @returns JSON Web Token
      */
-    async signJwt(user: AuthResponseDto) {
+    async signJwt(user: AuthResponseDto): Promise<{
+        access_token: string;
+    }> {
         const payload = user.role == 'subscriber'
             ? {username: user.username, subscriber_uuid: user.uuid}
             : {username: user.username, id: user.id}
@@ -232,7 +235,7 @@ export class AuthService {
         }
     }
 
-    async compareBcryptPassword(password: string, password2: string) {
+    async compareBcryptPassword(password: string, password2: string): Promise<boolean> {
         const [b64salt, b64hash] = password2.split('$')
         const bcrypt_version = '2b'
         const bcrypt_cost = 13
@@ -245,7 +248,7 @@ export class AuthService {
         return await compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`)
     }
 
-    async ban(username: string, domain: string, realm: string, ip: string) {
+    async ban(username: string, domain: string, realm: string, ip: string): Promise<void> {
         if (!this.app.config.security.login.ban_enable) {
             return
         }
@@ -288,7 +291,7 @@ export class AuthService {
         }
     }
 
-    async registerFailedLoginAttempt(username:string, domain:string, realm:string, ip:string) {
+    async registerFailedLoginAttempt(username:string, domain:string, realm:string, ip:string): Promise<void> {
         if (!this.app.config.security.login.ban_enable) {
             return
         }
@@ -308,7 +311,7 @@ export class AuthService {
         }
     }
 
-    async isUserBanned(username:string, domain:string, realm:string, ip:string) {
+    async isUserBanned(username:string, domain:string, realm:string, ip:string): Promise<boolean> {
         if (!this.app.config.security.login.ban_enable) {
             return false
         }
@@ -316,7 +319,7 @@ export class AuthService {
         return await (await this.getRedisBanDb()).exists(key) == 1
     }
 
-    async clearFailedLoginAttempts(username:string, domain:string, realm:string, ip:string) {
+    async clearFailedLoginAttempts(username:string, domain:string, realm:string, ip:string): Promise<void> {
         if (!this.app.config.security.login.ban_enable) {
             return
         }
@@ -324,7 +327,7 @@ export class AuthService {
         await (await this.getRedisBanDb()).del(key)
     }
 
-    async resetBanIncrementStage(username: string, realm: string) {
+    async resetBanIncrementStage(username: string, realm: string): Promise<void> {
         if (!this.app.config.security.login.ban_enable) {
             return
         }
@@ -346,7 +349,7 @@ export class AuthService {
         }
     }
 
-    async isPasswordExpired(passwordModified: Date) {
+    async isPasswordExpired(passwordModified: Date): Promise<boolean> {
         if (this.app.config.security.password.web_max_age_days > 0) {
             const diff = Math.abs(new Date().getTime() - passwordModified.getTime())
             const diffDays = Math.ceil(diff / (1000 * 3600 * 24))

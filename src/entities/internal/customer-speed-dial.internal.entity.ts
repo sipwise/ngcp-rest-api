@@ -1,16 +1,16 @@
-import {IsNotEmpty, IsNumber} from "class-validator"
+import {IsNotEmpty, IsNumber} from 'class-validator'
 
 export class CustomerSpeedDial {
     @IsNumber()
     @IsNotEmpty()
-    id: number
+        id: number
 
     @IsNumber()
-    contractId?: number
+        contractId?: number
 
     @IsNotEmpty()
-    slot: string
+        slot: string
 
     @IsNotEmpty()
-    destination: string
+        destination: string
 }

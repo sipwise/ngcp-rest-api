@@ -4,16 +4,16 @@ import {validate as classValidate} from 'class-validator'
 import {BadRequestException, UnprocessableEntityException} from '@nestjs/common'
 import {formatValidationErrors} from '../helpers/errors.helper'
 
-export function normalisePatch(patch: core.Operation | core.Operation[]) {
+export function normalisePatch(patch: core.Operation | core.Operation[]): core.Operation[] {
     return Array.isArray(patch) ? patch : Array(patch)
 }
 
-export function applyPatch<T>(document: T, patch: core.Operation | core.Operation[], validateOperation?: | core.Validator<T> | boolean, mutateDocument?: boolean) {
+export function applyPatch<T>(document: T, patch: core.Operation | core.Operation[], validateOperation?: | core.Validator<T> | boolean, mutateDocument?: boolean): core.PatchResult<T> {
     const patchArray = normalisePatch(patch)
     return core.applyPatch<T>(document, patchArray, validateOperation, mutateDocument)
 }
 
-export function validate<T>(sequence: core.Operation | core.Operation[], document?: T, externalValidator?: core.Validator<T>) {
+export function validate<T>(sequence: core.Operation | core.Operation[], document?: T, externalValidator?: core.Validator<T>): core.JsonPatchError {
     const patchArray = normalisePatch(sequence)
     return core.validate<T>(patchArray, document, externalValidator)
 }

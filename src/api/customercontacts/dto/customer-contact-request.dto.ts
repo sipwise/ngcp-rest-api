@@ -140,7 +140,7 @@ export class CustomerContactRequestDto implements RequestDto {
         })
     }
 
-    toInternal(options: RequestDtoOptions = {}) {
+    toInternal(options: RequestDtoOptions = {}): internal.Contact {
         const contact = internal.Contact.create(this)
         if (options.id)
             contact.id = options.id

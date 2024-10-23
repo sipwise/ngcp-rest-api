@@ -48,7 +48,7 @@ export class XmlHost extends BaseEntity {
     })
         description?: string
 
-    @ManyToMany(type => XmlGroup, group => group.hosts)
+    @ManyToMany(() => XmlGroup, group => group.hosts)
     @JoinTable({
         name: 'xmlhostgroups',
         joinColumn: {name: 'host_id', referencedColumnName: 'id'},

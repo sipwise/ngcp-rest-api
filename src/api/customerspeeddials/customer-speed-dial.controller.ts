@@ -97,7 +97,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
             id: id,
             func: this.readAll.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         return new CustomerSpeedDialResponseDto(
             await this.customerSpeedDialService.read(id, new ServiceRequest(req)),
@@ -134,7 +134,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-        req,
+            req,
     ): Promise<CustomerSpeedDialResponseDto> {
         this.log.debug({
             message: 'patch customer speed dial by id',
@@ -163,7 +163,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
         const updates = new Dictionary<internal.CustomerSpeedDial>()
@@ -203,13 +203,13 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, @Req() req) {
+    async journal(@Param('id') id: number | string, @Req() req): Promise<[JournalResponseDto[], number]>{
         this.log.debug({
             message: 'read customer speed dial journal by id',
             id: id,
             func: this.delete.name,
             url: req.url,
-            method: req.method
+            method: req.method,
         })
         return super.journal(id, req)
     }

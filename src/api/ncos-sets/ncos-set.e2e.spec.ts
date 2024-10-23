@@ -18,7 +18,7 @@ describe('NCOS Set', () => {
     let authService: AuthService
     let authHeader: [string, string]
     let createdIds: number[] = []
-    let creds = {username: 'administrator', password: 'administrator'}
+    const creds = {username: 'administrator', password: 'administrator'}
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -72,15 +72,15 @@ describe('NCOS Set', () => {
 
     describe('', () => { // main tests block
         describe('POST', () => {
-            let ncosset1: any = {
+            const ncosset1: any = {
                 name: 'test_ncosset1',
                 reseller_id: 1,
-                description: 'test_ncosset1 description'
+                description: 'test_ncosset1 description',
             }
-            let ncosset2: any = {
+            const ncosset2: any = {
                 name: 'test_ncosset2',
                 reseller_id: 1,
-                description: 'test_ncosset2 description'
+                description: 'test_ncosset2 description',
             }
             it('create ncos set test_ncosset1', async () => {
                 const response = await request(app.getHttpServer())
@@ -109,7 +109,7 @@ describe('NCOS Set', () => {
                 const response = await request(app.getHttpServer())
                     .post('/ncos/sets')
                     .set(...authHeader)
-                    .send({ unknownField: 'test' })
+                    .send({unknownField: 'test'})
                 expect(response.status).toEqual(422)
             })
         })
@@ -117,7 +117,7 @@ describe('NCOS Set', () => {
         describe('GET', () => {
             it('read created ncos set 1', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/ncos/sets/?name=test_ncosset1`)
+                    .get('/ncos/sets/?name=test_ncosset1')
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const setCollection: NCOSSetLevelResponseDto = response.body
@@ -134,7 +134,7 @@ describe('NCOS Set', () => {
             })
             it('read created ncos set 2', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/ncos/sets/?name=test_ncosset2`)
+                    .get('/ncos/sets/?name=test_ncosset2')
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const setCollection: NCOSSetLevelResponseDto = response.body
@@ -158,15 +158,15 @@ describe('NCOS Set', () => {
         })
 
         describe('PUT', () => {
-            let ncosset3: any = {
+            const ncosset3: any = {
                 name: 'test_ncosset3',
                 reseller_id: 1,
-                description: 'test_ncosset3 description'
+                description: 'test_ncosset3 description',
             }
-            let ncosset4: any = {
+            const ncosset4: any = {
                 name: 'test_ncosset4',
                 reseller_id: 1,
-                description: 'test_ncosset4 description'
+                description: 'test_ncosset4 description',
             }
             it('update ncos set test_ncosset1 -> test_ncosset3', async () => {
                 const response = await request(app.getHttpServer())
@@ -214,15 +214,15 @@ describe('NCOS Set', () => {
         describe('PATCH', () => {
             const patch: PatchOperation[] = [
                 {
-                    op: "replace",
-                    path: "/name",
+                    op: 'replace',
+                    path: '/name',
                     value: 'test_ncosset5',
                 },
                 {
-                    op: "replace",
-                    path: "/description",
+                    op: 'replace',
+                    path: '/description',
                     value: 'test_ncosset5 description',
-                }
+                },
             ]
             it('adjust ncos set 3 -> 5', async () => {
                 const response = await request(app.getHttpServer())

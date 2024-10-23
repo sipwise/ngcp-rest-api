@@ -26,7 +26,7 @@ export class Domain extends BaseEntity {
     })
         reseller_id!: number
 
-    @ManyToOne(type => Reseller, reseller => reseller.domains)
+    @ManyToOne(() => Reseller, reseller => reseller.domains)
     @JoinColumn({name: 'reseller_id'})
         reseller!: Reseller
 

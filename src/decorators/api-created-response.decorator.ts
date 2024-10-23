@@ -4,7 +4,7 @@ import {ApiExtraModels, ApiCreatedResponse as ApiSwaggerCreatedResponse, getSche
 
 export const ApiCreatedResponse = <TModel extends Type<any>>(
     model: TModel,
-) => {
+): MethodDecorator => {
     return applyDecorators(
         ApiExtraModels(CreateResponseDto, model),
         ApiSwaggerCreatedResponse({

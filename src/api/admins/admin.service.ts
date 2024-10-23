@@ -99,7 +99,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             await this.adminRepo.readById(id, options)
             const ids = await this.update(data, sr)
             return await this.adminRepo.readById(ids[0], options)
-        } catch (e) {
+        } catch {
             return (await this.create([admin], sr))[0]
         }
     }
@@ -131,7 +131,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             isMaster: sr.user.is_master,
         }
     }
-    private async populateAdmin(admin: internal.Admin, accessorRole: internal.AclRole, sr: ServiceRequest) {
+    private async populateAdmin(admin: internal.Admin, accessorRole: internal.AclRole, sr: ServiceRequest): Promise<void> {
         const role = await this.aclRepo.readOneByRole(admin.role, sr)
         await admin.setPermissionFlags()
         admin.role_id = role.id

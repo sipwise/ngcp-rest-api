@@ -52,7 +52,7 @@ export class PbxGroupMemberMariadbRepository extends MariaDbRepository implement
         return this.rawToInternalPbxGroupMember(result)
     }
 
-    private async generateBaseQuery(sr: ServiceRequest, searchLogic?: SearchLogic): Promise<SelectQueryBuilder<db.provisioning.VoipSubscriber>> {
+    private async generateBaseQuery(sr: ServiceRequest, _searchLogic?: SearchLogic): Promise<SelectQueryBuilder<db.provisioning.VoipSubscriber>> {
         const memberSubQuery = db.provisioning.VoipSubscriber.createQueryBuilder('sm')
             .select([
                 'bm.id AS member_subscriberId',
@@ -93,7 +93,7 @@ export class PbxGroupMemberMariadbRepository extends MariaDbRepository implement
         return query
     }
 
-    private addSearchFilterToQueryBuilder(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, searchLogic: SearchLogic, sr: ServiceRequest) {
+    private addSearchFilterToQueryBuilder(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, searchLogic: SearchLogic, sr: ServiceRequest): void {
         const params = sr.query
         for (const property of searchLogic.searchableFields) {
             if (params[property] != null) {
@@ -130,7 +130,7 @@ export class PbxGroupMemberMariadbRepository extends MariaDbRepository implement
         }
     }
 
-    private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, sr: ServiceRequest) {
+    private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, sr: ServiceRequest): void {
         if (sr.user.role == RbacRole.reseller) {
             qb
                 .innerJoin('bg.contract', 'contract')

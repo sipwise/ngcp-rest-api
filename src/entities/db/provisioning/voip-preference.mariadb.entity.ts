@@ -1,9 +1,8 @@
-import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, Timestamp} from 'typeorm'
+import {BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn, Timestamp} from 'typeorm'
 import {VoipContractPreference} from './voip-contract-preference.mariadb.entity'
 import {VoipDomPreference} from './voip-dom-preference.mariadb.entity'
 import {VoipProfPreference} from './voip-prof-preference.mariadb.entity'
 import {VoipUsrPreference} from './voip-usr-preference.mariadb.entity'
-import {internal} from '../..'
 
 export enum DataType {
     Boolean = 'boolean',

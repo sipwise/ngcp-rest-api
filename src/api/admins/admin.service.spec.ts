@@ -68,15 +68,15 @@ describe('AdminService', () => {
 
     it('mock service.getAdminOptionsFromServiceRequest', () => {
         jest.spyOn(service, 'getAdminOptionsFromServiceRequest').mockImplementation(() => {
-            return {isMaster: true, hasAccessTo: [1],filterBy: {userId: 1}}
+            return {isMaster: true, hasAccessTo: [1], filterBy: {userId: 1}}
         })
         expect(service.getAdminOptionsFromServiceRequest({
             headers: undefined,
             params: undefined,
             req: undefined,
             returnContent: false,
-            user: undefined
-        })).toStrictEqual({isMaster: true, hasAccessTo: [1],filterBy: {userId: 1}})
+            user: undefined,
+        })).toStrictEqual({isMaster: true, hasAccessTo: [1], filterBy: {userId: 1}})
     })
 
     describe('readAll', () => {
@@ -232,8 +232,6 @@ describe('AdminService', () => {
 
         it('should not update password if it was previously set', async () => {
             const id = 2
-            const old = await adminMockRepo.readById(id, options)
-            const oldPass = old.saltedpass
             const updates = new Dictionary<internal.Admin>()
             updates[id] = internal.Admin.create({
                 login: 'jest',
@@ -398,7 +396,7 @@ describe('AdminService', () => {
 
         it('should return number of deleted items', async () => {
             const id = 2
-            const result = await service.delete([id], sr)
+            await service.delete([id], sr)
             // expect(result).toStrictEqual(1)
         })
 

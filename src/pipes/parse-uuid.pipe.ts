@@ -26,6 +26,8 @@ export class ParseUUIDPipe implements PipeTransform {
         } = options
         this.exceptionFactory =
             exceptionFactory ||
+            // TODO: Fix the return type
+            // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
             (error => new HttpErrorByCode[errorHttpStatusCode](error))
     }
 

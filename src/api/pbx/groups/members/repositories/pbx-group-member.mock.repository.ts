@@ -35,18 +35,18 @@ export class PbxGroupMockRepository implements PbxGroupMemberRepository {
         }
     }
 
-    readAll(sr: ServiceRequest): Promise<[internal.PbxGroupMember[], number]> {
+    readAll(_sr: ServiceRequest): Promise<[internal.PbxGroupMember[], number]> {
         const groups: [internal.PbxGroupMember[], number] =
             [Object.keys(this.pbxGroupMemberDB).map(id => this.pbxGroupMemberDB[id]), Object.keys(this.pbxGroupMemberDB).length]
         return Promise.resolve(groups)
     }
 
-    readById(id: number, sr: ServiceRequest): Promise<internal.PbxGroupMember> {
+    readById(id: number, _sr: ServiceRequest): Promise<internal.PbxGroupMember> {
         this.throwErrorIfIdNotExists(this.pbxGroupMemberDB, id)
         return Promise.resolve(this.pbxGroupMemberDB[id])
     }
 
-    private throwErrorIfIdNotExists(db: any, id: number) {
+    private throwErrorIfIdNotExists(db: any, id: number): void {
         if (db[id] == undefined)
             throw new NotFoundException()
     }

@@ -31,7 +31,7 @@ export class AppConfig {
 
     @ValidateNested()
     @Type(() => LegacyConfig)
-        legacy: LegacyConfig;
+        legacy: LegacyConfig
 
     @ValidateNested()
     @Type(() => SecurityConfig)

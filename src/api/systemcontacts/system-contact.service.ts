@@ -1,4 +1,4 @@
-import {BadRequestException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {internal} from '../../entities'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {ContactMariadbRepository} from '../contacts/repositories/contact.mariadb.repository'
@@ -19,7 +19,7 @@ export class SystemContactService implements CrudService<internal.Contact> {
     ) {
     }
 
-    async create(contacts: internal.Contact[], sr: ServiceRequest) {
+    async create(contacts: internal.Contact[], sr: ServiceRequest): Promise<internal.Contact[]> {
         const createdIds = await this.contactRepo.create(contacts, sr)
         return await this.contactRepo.readWhereInIds(createdIds)
     }

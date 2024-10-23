@@ -1,4 +1,4 @@
-import {Inject, Injectable, InternalServerErrorException, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable, InternalServerErrorException} from '@nestjs/common'
 import {ServiceRequest} from '../../interfaces/service-request.interface'
 import {SearchLogic} from '../../helpers/search-logic.helper'
 import {LoggerService} from '../../logger/logger.service'

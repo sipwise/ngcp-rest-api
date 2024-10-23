@@ -34,7 +34,7 @@ export class AclRole implements AclRoleInterface {
         for (const role of this.has_access_to) {
             if (role.id == roleId) {
                 if(this.role == RbacRole.admin || this.role == RbacRole.reseller)
-                   return isMaster
+                    return isMaster
                 return true
             }
         }

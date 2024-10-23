@@ -13,7 +13,7 @@ export class DbStateSchedule {
     }
 
     @Interval(5000)
-    private async checkDbAvailable() {
+    private async checkDbAvailable(): Promise<void> {
         if (!this.app.db.isInitialized) {
             try {
                 await this.app.db.initialize()
@@ -31,7 +31,7 @@ export class DbStateSchedule {
                 if (!this.app.isDbAvailable)
                     this.log.debug('Reconnected to the database')
                 this.app.setDbAvailable = true
-            } catch (err) {
+            } catch {
                 if (this.app.isDbAvailable)
                     this.log.debug('Lost connection to the database')
                 this.app.setDbAvailable = false

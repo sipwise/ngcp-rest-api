@@ -30,7 +30,7 @@ const resourceName = 'resellers'
 
 @Auth(
     RbacRole.admin,
-    RbacRole.system
+    RbacRole.system,
 )
 @ApiTags('Reseller')
 @Controller(resourceName)
@@ -48,7 +48,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     }
 
 
-// TODO: could we use DELETE to terminate resellers? https://datatracker.ietf.org/doc/html/rfc7231#section-4.3.5
+    // TODO: could we use DELETE to terminate resellers? https://datatracker.ietf.org/doc/html/rfc7231#section-4.3.5
 
     @Post()
     @ApiCreatedResponse(ResellerResponseDto)
@@ -125,7 +125,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     async updateMany(
         @Body(new ParseIdDictionary({items: ResellerRequestDto})) updates: Dictionary<ResellerRequestDto>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         this.log.debug({message: 'update resellers bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const resellers = new Dictionary<internal.Reseller>()
@@ -147,7 +147,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-        req,
+            req,
     ): Promise<ResellerResponseDto> {
         this.log.debug({message: 'patch reseller by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -170,7 +170,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
         const updates = new Dictionary<internal.Reseller>()
@@ -187,7 +187,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, @Req() req) {
+    async journal(@Param('id') id: number | string, @Req() req): Promise<[JournalResponseDto[], number]> {
         this.log.debug({
             message: 'fetch reseller journal by id',
             func: this.journal.name,

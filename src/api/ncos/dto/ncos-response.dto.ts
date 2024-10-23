@@ -11,7 +11,7 @@ export class NCOSResponseDto implements ResponseDto {
         const url = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix
         this.links = [
             url + '/sets',
-            url + '/sets/levels'
+            url + '/sets/levels',
         ]
     }
 }

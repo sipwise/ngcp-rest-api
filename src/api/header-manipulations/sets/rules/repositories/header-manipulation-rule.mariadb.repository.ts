@@ -1,4 +1,4 @@
-import {Injectable, NotFoundException} from '@nestjs/common'
+import {Injectable} from '@nestjs/common'
 import {db, internal} from '../../../../../entities'
 import {ParamsDictionary, ServiceRequest} from '../../../../../interfaces/service-request.interface'
 import {HeaderManipulationRuleSearchDto} from '../dto/header-manipulation-rule-search.dto'
@@ -119,7 +119,7 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
         return await qb.getCount()
     }
 
-    async update(updates: Dictionary<internal.HeaderRule>, sr: ServiceRequest): Promise<number[]> {
+    async update(updates: Dictionary<internal.HeaderRule>, _sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const dbEntity = db.provisioning.VoipHeaderRule.create()
@@ -129,7 +129,7 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
         return ids
     }
 
-    async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
+    async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
         await db.provisioning.VoipHeaderRule.delete(ids)
         return ids
     }

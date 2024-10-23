@@ -6,7 +6,7 @@ import {License} from '../license/license.service'
 
 @Injectable()
 export class LicenseRepository {
-    private directoryPath = procLicensesLocation
+    private readonly directoryPath = procLicensesLocation
 
     async readLicenses(): Promise<License> {
         const licenseStatuses = {} as License

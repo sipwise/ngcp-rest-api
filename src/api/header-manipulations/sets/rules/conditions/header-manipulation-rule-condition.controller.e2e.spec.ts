@@ -11,7 +11,6 @@ import {Operation as PatchOperation} from '../../../../../helpers/patch.helper'
 import {HttpExceptionFilter} from '../../../../../helpers/http-exception.filter'
 import {ValidateInputPipe} from '../../../../../pipes/validate.pipe'
 import {HeaderManipulationRuleConditionResponseDto} from './dto/header-manipulation-rule-condition-response.dto'
-import {HeaderManipulationRuleConditionValueResponseDto} from './dto/header-manipulation-rule-condition-value-response.dto'
 
 describe('Rule Condition', () => {
     let app: INestApplication

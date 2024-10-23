@@ -80,13 +80,13 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
 
     async readLevelAll(sr: ServiceRequest, id?: number): Promise<[internal.NCOSSetLevel[], number]> {
         if (sr.user.role == 'reseller')
-            return await this.ncosSetRepo.readLevelAll(sr, id, { resellerId: sr.user.reseller_id })
+            return await this.ncosSetRepo.readLevelAll(sr, id, {resellerId: sr.user.reseller_id})
         return await this.ncosSetRepo.readLevelAll(sr, id)
     }
 
     async readLevel(id: number, levelId: number, sr: ServiceRequest): Promise<internal.NCOSSetLevel> {
         if (sr.user.role == 'reseller')
-            return await this.ncosSetRepo.readLevelById(id, levelId, sr, { resellerId: sr.user.reseller_id })
+            return await this.ncosSetRepo.readLevelById(id, levelId, sr, {resellerId: sr.user.reseller_id})
         return await this.ncosSetRepo.readLevelById(id, levelId, sr)
     }
 

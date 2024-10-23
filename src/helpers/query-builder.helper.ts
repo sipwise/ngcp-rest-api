@@ -4,7 +4,7 @@ import {ParamsDictionary} from '../interfaces/service-request.interface'
 import {BadRequestException} from '@nestjs/common'
 import {reservedQueryParams} from '../config/constants.config'
 
-export function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
+export function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic): void {
     addJoinFilterToQueryBuilder(qb, params, searchLogic)
     addSearchFilterToQueryBuilder(qb, params, searchLogic)
     addOrderByToQueryBuilder(qb, params, searchLogic)
@@ -12,7 +12,7 @@ export function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuild
     qb.andWhere('1 = 1')
 }
 
-function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
+function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic): void {
     for (const joinCondition in searchLogic.joins) {
         const joinTable = searchLogic.joins[joinCondition].alias
         const joinColumn = searchLogic.joins[joinCondition].property
@@ -25,7 +25,7 @@ function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilde
     }
 }
 
-function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
+function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic): void {
     const allow_unknown_params = 'allow_unknown_params' in params
                                     && JSON.parse(params['allow_unknown_params'])
     Object.keys(params).forEach((searchField: string) => {
@@ -81,13 +81,13 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
     })
 }
 
-export function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic) {
+export function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, _params: ParamsDictionary, searchLogic: SearchLogic): void {
     if (searchLogic.orderBy != null) {
         qb.addOrderBy(searchLogic.orderBy, searchLogic.orderByDirection)
     }
 }
 
-export function addPaginationToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, searchLogic: SearchLogic) {
+export function addPaginationToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, searchLogic: SearchLogic): void {
     qb.limit(searchLogic.rows)
     qb.offset(searchLogic.rows * (searchLogic.page - 1))
 }

@@ -28,7 +28,7 @@ import {ExpandHelper} from '../../helpers/expand.helper'
 import {JournalResponseDto} from '../journals/dto/journal-response.dto'
 import {JournalService} from '../journals/journal.service'
 import {LoggerService} from '../../logger/logger.service'
-import {Operation as PatchOperation, patchToEntity, validate} from '../../helpers/patch.helper'
+import {Operation as PatchOperation, patchToEntity} from '../../helpers/patch.helper'
 import {ParamOrBody} from '../../decorators/param-or-body.decorator'
 import {ParseIdDictionary} from '../../pipes/parse-id-dictionary.pipe'
 import {ParseIntIdArrayPipe} from '../../pipes/parse-int-id-array.pipe'
@@ -49,7 +49,7 @@ const resourceName = 'admins'
 @Auth(
     RbacRole.admin,
     RbacRole.system,
-    RbacRole.reseller
+    RbacRole.reseller,
 )
 export class AdminController extends CrudController<AdminRequestDto, AdminResponseDto> {
     private readonly log = new LoggerService(AdminController.name)
@@ -93,7 +93,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         RbacRole.system,
         RbacRole.reseller,
         RbacRole.ccareadmin,
-        RbacRole.ccare
+        RbacRole.ccare,
     )
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(AdminResponseDto)
@@ -122,7 +122,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         RbacRole.system,
         RbacRole.reseller,
         RbacRole.ccareadmin,
-        RbacRole.ccare
+        RbacRole.ccare,
     )
     @ApiOkResponse({
         type: AdminResponseDto,
@@ -174,7 +174,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     async updateMany(
         @Body(new ParseIdDictionary({items: AdminRequestDto})) updates: Dictionary<AdminRequestDto>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         this.log.debug({message: 'update admin bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const admins = new Dictionary<internal.Admin>()
@@ -219,7 +219,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
         const updates = new Dictionary<internal.Admin>()
@@ -257,7 +257,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     async journal(
         @Param('id') id: number | string,
         @Req() req,
-    ) {
+    ): Promise<[JournalResponseDto[], number]> {
         const [journals, count] = await this.journalService.readAll(new ServiceRequest(req), 'admins', id)
         const responseList = journals.map(j => new JournalResponseDto(j))
         return [responseList, count]

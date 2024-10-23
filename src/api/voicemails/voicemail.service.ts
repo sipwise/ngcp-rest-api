@@ -23,7 +23,7 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
     ) {
     }
 
-    async sendNotification(voicemail: internal.Voicemail, sr: ServiceRequest, actionType: string = 'r') {
+    async sendNotification(voicemail: internal.Voicemail, sr: ServiceRequest, actionType: string = 'r'): Promise<void> {
         const context: string = 'default'
         const messagesCount = await this.voicemailRepo.readMessagesCountByUUID(voicemail.mailboxuser, sr)
         const new_messages = messagesCount.new_messages.toString()
@@ -58,7 +58,7 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
         ]
 
         await execFileAsync('/usr/bin/ngcp-vmnotify', args, {cwd: '/usr/bin', shell: false, timeout: 5 * 1000},
-        ).then(async (ret) => {
+        ).then(async (_ret) => {
             return true
         }).catch(error => {
             this.log.error(`execFileAsync ${error.cmd} error: ${error.stdout}, ${error.stderr}`)

@@ -1,9 +1,6 @@
 import {
-    ContractBillingProfileDefinition,
     ContractStatus,
-    ContractType,
 } from '../../../entities/internal/contract.internal.entity'
-import {CustomerResponseDto} from './customer-response.dto'
 
 export class CustomerSearchDto {
     id: number = undefined

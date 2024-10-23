@@ -77,6 +77,6 @@ export class VoipSubscriber extends BaseEntity {
     @JoinColumn({name: 'uuid', referencedColumnName: 'uuid'})
         provisioningVoipSubscriber!: ProvisioningVoipSubscriber
 
-    @OneToMany(type => VoipNumber, number => number.subscriber)
+    @OneToMany(() => VoipNumber, number => number.subscriber)
         voipNumbers!: VoipNumber[]
 }

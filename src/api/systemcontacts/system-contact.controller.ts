@@ -32,7 +32,7 @@ const resourceName = 'systemcontacts'
 
 @Auth(
     RbacRole.system,
-    RbacRole.admin
+    RbacRole.admin,
 )
 @ApiTags('SystemContact')
 @Controller(resourceName)
@@ -133,7 +133,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
     async updateMany(
         @Body(new ParseIdDictionary({items: SystemContactRequestDto})) updates: Dictionary<SystemContactRequestDto>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         this.log.debug({
             message: 'update system contacts bulk',
             func: this.updateMany.name,
@@ -157,7 +157,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-        req,
+            req,
     ): Promise<SystemContactResponseDto> {
         this.log.debug({
             message: 'patch system contact by id',
@@ -185,7 +185,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req,
-    ) {
+    ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
         const updates = new Dictionary<internal.Contact>()
@@ -226,7 +226,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, @Req() req) {
+    async journal(@Param('id') id: number | string, @Req() req): Promise<[JournalResponseDto[], number]> {
         this.log.debug({message: 'fetch system contact journal by id', func: this.journal.name, id: id, url: req.url, method: req.method})
         return super.journal(id, req)
     }

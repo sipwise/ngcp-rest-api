@@ -6,8 +6,6 @@ import {ContactStatus} from '../../../entities/internal/contact.internal.entity'
 import {NotFoundException} from '@nestjs/common'
 import {ProductClass} from '../../../entities/internal/product.internal.entity'
 import {Dictionary} from '../../../helpers/dictionary.helper'
-import {ContactOptions} from '../../contacts/interfaces/contact-options.interface'
-import {AdminOptions} from '../../admins/interfaces/admin-options.interface'
 
 interface ContractMockDB {
     [key: number]: internal.Contract
@@ -103,7 +101,7 @@ export class ContractMockRepository implements ContractRepository {
         }
     }
 
-    create(contracts: internal.Contract[], sr: ServiceRequest): Promise<number[]> {
+    create(contracts: internal.Contract[], _sr: ServiceRequest): Promise<number[]> {
         const ids: number[] = []
         for (const contract of contracts) {
             const nextId = this.getNextId(this.contractDB)
@@ -115,17 +113,17 @@ export class ContractMockRepository implements ContractRepository {
         return Promise.resolve(ids)
     }
 
-    delete(id: number, sr: ServiceRequest): Promise<number> {
+    delete(id: number, _sr: ServiceRequest): Promise<number> {
         this.throwErrorIfIdNotExists(this.contractDB, id)
         return Promise.resolve(1)
     }
 
-    read(id: number, sr: ServiceRequest): Promise<internal.Contract> {
+    read(id: number, _sr: ServiceRequest): Promise<internal.Contract> {
         this.throwErrorIfIdNotExists(this.contractDB, id)
         return Promise.resolve(this.contractDB[id])
     }
 
-    readActiveSystemContact(id: number, sr: ServiceRequest): Promise<internal.Contact> {
+    readActiveSystemContact(id: number, _sr: ServiceRequest): Promise<internal.Contact> {
         const contact = this.contactDB[+id]
         if (contact == undefined)
             return Promise.resolve(undefined)
@@ -134,13 +132,13 @@ export class ContractMockRepository implements ContractRepository {
         return Promise.resolve(undefined)
     }
 
-    readAll(sr: ServiceRequest): Promise<[internal.Contract[], number]> {
+    readAll(_sr: ServiceRequest): Promise<[internal.Contract[], number]> {
         const contracts: [internal.Contract[], number] =
             [Object.keys(this.contractDB).map(id => this.contractDB[id]), Object.keys(this.contractDB).length]
         return Promise.resolve(contracts)
     }
 
-    readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Contract[]> {
+    readWhereInIds(ids: number[], _sr: ServiceRequest): Promise<internal.Contract[]> {
         const contracts: internal.Contract[] = []
         for (const id of ids) {
             this.throwErrorIfIdNotExists(this.contractDB, id)
@@ -149,7 +147,7 @@ export class ContractMockRepository implements ContractRepository {
         return Promise.resolve(contracts)
     }
 
-    readProductByType(type: string, sr: ServiceRequest): Promise<internal.Product> {
+    readProductByType(type: string, _sr: ServiceRequest): Promise<internal.Product> {
         for (const key of Object.keys(this.productDB)) {
             const id: number = +key
             const product: internal.Product = this.productDB[id]
@@ -160,11 +158,11 @@ export class ContractMockRepository implements ContractRepository {
         return Promise.resolve(undefined)
     }
 
-    save(id: number, newContract: internal.Contract): Promise<internal.Contract> {
+    save(_id: number, _newContract: internal.Contract): Promise<internal.Contract> {
         return Promise.resolve(undefined)
     }
 
-    update(updates: Dictionary<internal.Contract>, sr: ServiceRequest): Promise<number[]> {
+    update(updates: Dictionary<internal.Contract>, _sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const contract = updates[id]
@@ -180,7 +178,7 @@ export class ContractMockRepository implements ContractRepository {
         return (+keys[keys.length - 1]) + 1
     }
 
-    private throwErrorIfIdNotExists(db: any, id: number) {
+    private throwErrorIfIdNotExists(db: any, id: number): void {
         if (db[id] == undefined)
             throw new NotFoundException()
     }

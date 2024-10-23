@@ -1,7 +1,7 @@
 import {ValidationArguments, registerDecorator} from 'class-validator'
 
 export function OneOf(otherProperty: string) {
-    return function (object: unknown, propertyName: string) {
+    return function (object: unknown, propertyName: string): void {
         registerDecorator({
             name: 'OneOf',
             target: object.constructor,

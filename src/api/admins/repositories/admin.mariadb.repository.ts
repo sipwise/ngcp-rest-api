@@ -62,7 +62,7 @@ export class AdminMariadbRepository extends MariaDbRepository implements AdminRe
         return await qb.andWhereInIds(ids).getCount()
     }
 
-    async update(updates: Dictionary<internal.Admin>, options: AdminOptions): Promise<number[]> {
+    async update(updates: Dictionary<internal.Admin>, _options: AdminOptions): Promise<number[]> {
         const ids: number[] = []
         for (const key of Object.keys(updates)) {
             const id = parseInt(key)

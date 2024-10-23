@@ -5,9 +5,11 @@ export function HandleRedisErrors(
     target: any,
     propertyKey: string,
     descriptor: PropertyDescriptor,
-) {
+): PropertyDescriptor {
     const log = new LoggerService(HandleRedisErrors.name)
     const fn = descriptor.value
+    // TODO: Fix this function type hint
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     descriptor.value = async function DescriptorValue(...args: any[]) {
         try {
             const result = await fn.apply(this, args)

@@ -45,11 +45,15 @@ export class ParseIdDictionary implements PipeTransform {
         } = options
         this.exceptionFactory =
             exceptionFactory ||
+            // TODO: Fix the return type
+            // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
             (error => new HttpErrorByCode[errorHttpStatusCode](error))
     }
 
     async transform(value: any, metadata: ArgumentMetadata): Promise<Dictionary<unknown>> {
         const parseIdOptions = this.options
+        // TODO: Fix the return type
+        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
         parseIdOptions.exceptionFactory = (error => new HttpErrorByCode[HttpStatus.BAD_REQUEST](error))  // set exception factory to throw BAD_REQUEST when id cannot be parsed
         const parseId = new ParseIntPipe(parseIdOptions)
         if (typeof value != 'object')
@@ -118,7 +122,7 @@ export class ParseIdDictionary implements PipeTransform {
         return err
     }
 
-    private async toClassInstance(item: any, index?: number) {
+    private async toClassInstance(item: any, index?: number): Promise<any> {
         const validationMetadata: ArgumentMetadata = {
             metatype: this.options.items,
             type: 'body',
@@ -126,7 +130,7 @@ export class ParseIdDictionary implements PipeTransform {
 
         try {
             item = JSON.parse(item)
-        } catch (err) {
+        } catch {
             //throw new BadRequestException(err)
         }
 
@@ -150,7 +154,7 @@ export class ParseIdDictionary implements PipeTransform {
         return [Boolean, Number, String].includes(this.options.items as any)
     }
 
-    protected validatePrimitive(originalValue: any, index?: number) {
+    protected validatePrimitive(originalValue: any, index?: number): any {
         if (this.options.items === Number) {
             const value =
                 originalValue !== null && originalValue !== '' ? +originalValue : NaN

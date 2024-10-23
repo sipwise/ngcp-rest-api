@@ -1,4 +1,4 @@
-import {Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException} from '@nestjs/common'
+import {Injectable, CanActivate, ExecutionContext, UnauthorizedException} from '@nestjs/common'
 import {AuthService} from '../auth/auth.service'
 import {Request} from 'express'
 import {ServiceRequest} from '../interfaces/service-request.interface'
@@ -72,7 +72,7 @@ export class BanGuard implements CanActivate {
         try {
             const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString('ascii'))
             return payload.username || null
-        } catch (err) {
+        } catch {
             return null
         }
     }

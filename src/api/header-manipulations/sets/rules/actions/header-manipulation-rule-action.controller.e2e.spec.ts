@@ -10,7 +10,6 @@ import {HeaderManipulationRuleActionModule} from './header-manipulation-rule-act
 import {Operation as PatchOperation} from '../../../../../helpers/patch.helper'
 import {HttpExceptionFilter} from '../../../../../helpers/http-exception.filter'
 import {ValidateInputPipe} from '../../../../../pipes/validate.pipe'
-import {validate} from 'class-validator'
 import {HeaderManipulationRuleActionResponseDto} from './dto/header-manipulation-rule-action-response.dto'
 
 describe('Rule Action', () => {

@@ -8,7 +8,7 @@ import {JournalResponseDto} from '../api/journals/dto/journal-response.dto'
 import {ParamOrBody} from '../decorators/param-or-body.decorator'
 
 @Auth()
-export class CrudController<CreateDTO, ResponseDTO> {
+export class CrudController<CreateDTO, _ResponseDTO> {
 
     constructor(
         private readonly resourceName: string,
@@ -16,22 +16,22 @@ export class CrudController<CreateDTO, ResponseDTO> {
         private readonly journalCrudService?: JournalService) {
     }
 
-    async create(@Body() entity: CreateDTO[], @Req() req: Request, @UploadedFile() file?: Express.Multer.File, @Param() params?: unknown) {
+    async create(@Body() entity: CreateDTO[], @Req() req: Request, @UploadedFile() file?: Express.Multer.File, @Param() _params?: unknown): Promise<any> {
         return await this.repo.create(entity, new ServiceRequest(req), file)
     }
 
     async readAll(
         @Req() req: Request,
-        @Param() params?: unknown,
-    ) {
+        @Param() _params?: unknown,
+    ): Promise<any> {
         return await this.repo.readAll(new ServiceRequest(req))
     }
 
     async read(
         @Param('id') id: number | string,
         @Req() req: Request,
-        @Param() params?: unknown,
-    ) {
+        @Param() _params?: unknown,
+    ): Promise<any> {
         return await this.repo.read(id, new ServiceRequest(req))
     }
 
@@ -39,8 +39,8 @@ export class CrudController<CreateDTO, ResponseDTO> {
         @Param('id') id: number | string,
         @Body() dto: CreateDTO,
         @Req() req: Request,
-        @Param() params?: unknown,
-    ) {
+        @Param() _params?: unknown,
+    ): Promise<any> {
         return await this.repo.update(id, dto, new ServiceRequest(req))
     }
 
@@ -48,8 +48,8 @@ export class CrudController<CreateDTO, ResponseDTO> {
         @Param('id') id: number | string,
         @Body() patch: PatchOperation[],
         @Req() req: Request,
-        @Param() params?: unknown,
-    ) {
+        @Param() _params?: unknown,
+    ): Promise<any> {
         const err = validate(patch)
         if (err) {
             const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
@@ -61,7 +61,7 @@ export class CrudController<CreateDTO, ResponseDTO> {
     async delete(
         @ParamOrBody('id') id: number[] | string[],
         @Req() req: Request,
-        @Param() params?: unknown,
+        @Param() _params?: unknown,
     ): Promise<number[] | string[]> {
         return await this.repo.delete(id, new ServiceRequest(req))
     }
@@ -69,8 +69,8 @@ export class CrudController<CreateDTO, ResponseDTO> {
     async journal(
         @Param('id') id: number | string,
         @Req() req,
-        @Param() params?: unknown,
-    ) {
+        @Param() _params?: unknown,
+    ): Promise<[JournalResponseDto[], number]>{
         const sr = new ServiceRequest(req)
         const [result, count] = await this.journalCrudService.readAll(sr, this.resourceName, id)
         return [result.map(j => new JournalResponseDto(j)), count]

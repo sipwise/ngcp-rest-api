@@ -28,6 +28,8 @@ export class ParsePatchPipe implements PipeTransform {
     constructor(@Optional() options?: ParsePatchOptions) {
         const errorHttpStatusCode = HttpStatus.UNPROCESSABLE_ENTITY
         this.exceptionFactory =
+            // TODO: Fix the return type
+            // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
             (error => new HttpErrorByCode[errorHttpStatusCode](error))
         this.options = options || {exceptionFactory: this.exceptionFactory}
         this.validationPipe = new ValidationPipe({
@@ -37,7 +39,7 @@ export class ParsePatchPipe implements PipeTransform {
         })
     }
 
-    async transform(value: any, metadata: ArgumentMetadata): Promise<Operation[]> {
+    async transform(value: any, _metadata: ArgumentMetadata): Promise<Operation[]> {
         value = Array.isArray(value) ? value : [value]
         let errors = []
         const patches: Operation[] = []
@@ -58,7 +60,7 @@ export class ParsePatchPipe implements PipeTransform {
         return patches
     }
 
-    private async toClassInstance(item: any, index?: number) {
+    private async toClassInstance(item: any, _index?: number): Promise<any> {
         const validationMetadata: ArgumentMetadata = {
             metatype: PatchDto, // TODO: check why PatchOperation cannot be used as type here
             type: 'body',
@@ -66,7 +68,7 @@ export class ParsePatchPipe implements PipeTransform {
 
         try {
             item = JSON.parse(item)
-        } catch (err) {
+        } catch {
             //throw new BadRequestException(err)
         }
 

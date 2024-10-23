@@ -123,14 +123,14 @@ export class CustomerService implements CrudService<internal.Customer> {
      * @param sr
      * @private
      */
-    private async getContactFromCustomer(customer: internal.Customer, sr: ServiceRequest) {
+    private async getContactFromCustomer(customer: internal.Customer, sr: ServiceRequest): Promise<internal.Contact> {
         let contact: internal.Contact
         try {
             const options: ContactOptions = {type: ContactType.CustomerContact}
             if (sr.user.role == RbacRole.reseller || sr.user.role == RbacRole.ccare)
                 options.filterBy = {resellerId: sr.user.reseller_id}
             contact = await this.contactRepo.readById(customer.contactId, options)
-        } catch (e) {
+        } catch {
             throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_ID_INVALID'))
         }
         if (contact.status == ContactStatus.Terminated) {
@@ -145,7 +145,7 @@ export class CustomerService implements CrudService<internal.Customer> {
      * @param sr
      * @private
      */
-    private async setProductId(customer: internal.Customer, sr: ServiceRequest) {
+    private async setProductId(customer: internal.Customer, sr: ServiceRequest): Promise<void> {
         const product = await this.customerRepo.readProductByType(customer.type, sr)
         if (product == undefined) {
             throw new UnprocessableEntityException(this.i18n.t('errors.TYPE_INVALID'))
@@ -170,13 +170,13 @@ export class CustomerService implements CrudService<internal.Customer> {
 
     }
 
-    private async validateTemplates(customer: internal.Customer, sr: ServiceRequest) {
+    private async validateTemplates(customer: internal.Customer, sr: ServiceRequest): Promise<void> {
         const contact = await this.getContactFromCustomer(customer, sr)
         await this.validateEmailTemplates(customer, contact.reseller_id)
         await this.validateInvoiceTemplate(customer, contact.reseller_id)
     }
 
-    private async validateEmailTemplates(customer: internal.Customer, resellerId: number) {
+    private async validateEmailTemplates(customer: internal.Customer, resellerId: number): Promise<boolean> {
         const emailTemplateIds: number[] = []
         if (customer.subscriberEmailTemplateId)
             emailTemplateIds.push(customer.subscriberEmailTemplateId)
@@ -186,7 +186,7 @@ export class CustomerService implements CrudService<internal.Customer> {
             emailTemplateIds.push(customer.invoiceEmailTemplateId)
 
         if (emailTemplateIds.length > 0) {
-            const [ids, count] = await this.customerRepo.readEmailTemplateIdsByIds(emailTemplateIds, resellerId)
+            const [_ids, count] = await this.customerRepo.readEmailTemplateIdsByIds(emailTemplateIds, resellerId)
             if (emailTemplateIds.length != count) {
                 throw new UnprocessableEntityException('customer contact\'s reseller_id does not match email template reseller id')
             }
@@ -194,7 +194,7 @@ export class CustomerService implements CrudService<internal.Customer> {
         return true
     }
 
-    private async validateInvoiceTemplate(customer: internal.Customer, resellerId: number) {
+    private async validateInvoiceTemplate(customer: internal.Customer, resellerId: number): Promise<boolean> {
         if (customer.invoiceTemplateId) {
             await this.customerRepo.readInvoiceTemplateById(customer.invoiceTemplateId, resellerId)
         }
@@ -208,7 +208,7 @@ export class CustomerService implements CrudService<internal.Customer> {
      * @throws UnprocessableEntityException if neither `billingProfileId` nor `profilePackageId` are set
      * @private
      */
-    private async validateBillingMappingDefinition(customer: internal.Customer) {
+    private async validateBillingMappingDefinition(customer: internal.Customer): Promise<void> {
         if (customer.billingProfileId && customer.profilePackageId) {
             throw new UnprocessableEntityException('cannot provide "billing_profile_id" and "profile_package_id" simultaneously')
         }
@@ -217,8 +217,8 @@ export class CustomerService implements CrudService<internal.Customer> {
         }
     }
 
-    private async validateUpdate(oldEntity: internal.Customer, newEntity: internal.Customer, sr: ServiceRequest): Promise<boolean> {
-        const contact = await this.getContactFromCustomer(newEntity, sr)
+    private async validateUpdate(_oldEntity: internal.Customer, newEntity: internal.Customer, sr: ServiceRequest): Promise<boolean> {
+        await this.getContactFromCustomer(newEntity, sr)
         return true
     }
 

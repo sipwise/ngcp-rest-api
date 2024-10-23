@@ -8,7 +8,7 @@ import {ContactMariadbRepository} from '../contacts/repositories/contact.mariadb
 import {SystemContactModule} from './system-contact.module'
 import {AuthResponseDto} from '../../auth/dto/auth-response.dto'
 import {internal} from '../../entities'
-import {BadRequestException, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {Operation as PatchOperation, patchToEntity} from '../../helpers/patch.helper'
 import {ContactStatus, ContactType} from '../../entities/internal/contact.internal.entity'
 import {ContractStatus} from '../../entities/internal/contract.internal.entity'

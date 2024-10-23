@@ -35,7 +35,7 @@ describe('ProductService', () => {
             .compile()
 
         service = module.get<ProductService>(ProductService)
-        sr = {headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
+        sr = {headers: [undefined], params: undefined, query: undefined, user: user, req: undefined, returnContent:undefined}
     })
 
     it('should be defined', () => {

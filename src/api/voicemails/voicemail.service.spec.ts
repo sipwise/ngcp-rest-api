@@ -24,6 +24,7 @@ describe('VoicemailsService', () => {
     let service: VoicemailService
     let voicemailMockRepo: VoicemailMockRepository
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let sr: ServiceRequest
 
     beforeAll(async () => {
@@ -35,7 +36,7 @@ describe('VoicemailsService', () => {
             .compile()
 
         service = module.get<VoicemailService>(VoicemailService)
-        sr = {headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
+        sr = {headers: [undefined], params: undefined, query: undefined, user: user, req: undefined, returnContent:undefined}
     })
 
     it('should be defined', () => {
@@ -43,27 +44,27 @@ describe('VoicemailsService', () => {
         expect(voicemailMockRepo).toBeDefined()
     })
 
-    describe('read', () => {
+    // describe('read', () => {
 
-    })
+    // })
 
-    describe('readAll', () => {
+    // describe('readAll', () => {
 
-    })
+    // })
 
-    describe('create', () => {
+    // describe('create', () => {
 
-    })
+    // })
 
-    describe('update', () => {
+    // describe('update', () => {
 
-    })
+    // })
 
-    describe('adjust', () => {
+    // describe('adjust', () => {
 
-    })
+    // })
 
-    describe('delete', () => {
+    // describe('delete', () => {
 
-    })
+    // })
 })

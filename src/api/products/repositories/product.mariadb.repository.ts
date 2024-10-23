@@ -24,7 +24,7 @@ export class ProductMariadbRepository extends MariaDbRepository implements Produ
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Product> {
         this.log.debug({message: 'read product by id', func: this.read.name, user: sr.user.username, id: id})
-        const result = await db.billing.Product.findOneByOrFail({ id: id })
+        const result = await db.billing.Product.findOneByOrFail({id: id})
         return result.toInternal()
     }
 }

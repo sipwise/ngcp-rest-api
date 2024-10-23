@@ -16,7 +16,7 @@ const resourceName = 'auth/password/change'
 
 @ApiTags('Auth')
 @Controller(resourceName)
-@AuthOptions({ skipMaxAge: true })
+@AuthOptions({skipMaxAge: true})
 @Auth()
 export class PasswordChangeController extends CrudController<PasswordChangeRequestDto, PasswordChangeResponseDto> {
     private readonly log = new LoggerService(PasswordChangeController.name)

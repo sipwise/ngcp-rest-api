@@ -19,7 +19,7 @@ const resourceName = 'products'
     RbacRole.admin,
     RbacRole.system,
     RbacRole.reseller,
-    RbacRole.lintercept
+    RbacRole.lintercept,
 )
 @ApiTags('Product')
 @Controller(resourceName)

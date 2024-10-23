@@ -1,33 +1,33 @@
 // Import required decorators
-import { Type, Transform } from 'class-transformer';
-import { IsNumber, IsString, ValidateNested } from 'class-validator';
+import {Type, Transform} from 'class-transformer'
+import {IsNumber, IsString, ValidateNested} from 'class-validator'
 
 class FileShareLimits {
     @IsNumber()
-        quota: number;
+        quota: number
 
     @IsNumber()
-        upload_size: number;
+        upload_size: number
 
     @IsNumber()
-        user_files: number;
+        user_files: number
 
     @IsNumber()
-        user_quota: number;
+        user_quota: number
 }
 
 export class FileShareConfig {
     @IsString()
-        enable: string;
+        enable: string
 
     @IsNumber()
-        ttl: number;
+        ttl: number
 
     // Transform 'yes'/'no' strings to boolean values
-    @Transform(({ value }) => value === 'yes', { toClassOnly: true })
-        public_links: boolean;
+    @Transform(({value}) => value === 'yes', {toClassOnly: true})
+        public_links: boolean
 
     @ValidateNested()
     @Type(() => FileShareLimits)
-        limits: FileShareLimits;
+        limits: FileShareLimits
 }

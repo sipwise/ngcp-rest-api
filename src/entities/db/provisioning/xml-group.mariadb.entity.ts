@@ -17,6 +17,6 @@ export class XmlGroup extends BaseEntity {
     })
         name!: string
 
-    @ManyToMany(type => XmlHost, host => host.groups)
+    @ManyToMany(() => XmlHost, host => host.groups)
         hosts!: XmlHost[]
 }

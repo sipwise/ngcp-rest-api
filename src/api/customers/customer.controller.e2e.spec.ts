@@ -22,7 +22,9 @@ describe('CustomerController', () => {
     let authHeader: [string, string]
     const preferHeader: [string, string] = ['prefer', 'return=representation']
     let createdCustomerIds: number[] = []
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let createdContractIds: number[] = []
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let createdResellerIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
 
@@ -302,9 +304,9 @@ describe('CustomerController', () => {
                     .send(data)
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
             })
-            it('put customer bulk', async () => {
+            // it('put customer bulk', async () => {
 
-            })
+            // })
         })
 
         describe('Customer DELETE', () => {

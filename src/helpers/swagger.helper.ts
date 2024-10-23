@@ -3,14 +3,14 @@ import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger'
 import swaggerTags from '../localisation/en/swagger-tags.json'
 
 // TODO: only en localisation for now as swagger cannot switch languages dynamically
-export function createSwaggerDocument(app: NestApplication, api_prefix: string) {
+export function createSwaggerDocument(app: NestApplication, api_prefix: string): void {
     const docBuilder = new DocumentBuilder()
     docBuilder
-    .setTitle('Sipwise NGCP API Documentation')
+        .setTitle('Sipwise NGCP API Documentation')
     //.setDescription('NGCP API schema definition')
-    .setVersion('2.0')
-    .addBasicAuth()
-    .addBearerAuth(undefined, "JWT")
+        .setVersion('2.0')
+        .addBasicAuth()
+        .addBearerAuth(undefined, 'JWT')
     /* TODO: consider if this needs to be enabled
     .addSecurity('cert', {
         type: 'http',
@@ -23,8 +23,8 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string) 
     })
 
     if (!process.env.NODE_WP_BUNDLE) {
-        app.useStaticAssets('./public/css',   { prefix: '/css' })
-        app.useStaticAssets('./public/fonts', { prefix: '/fonts' })
+        app.useStaticAssets('./public/css',   {prefix: '/css'})
+        app.useStaticAssets('./public/fonts', {prefix: '/fonts'})
     }
 
     const document = SwaggerModule.createDocument(app, docBuilder.build())

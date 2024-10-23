@@ -16,14 +16,14 @@ import {MariaDbRepository} from '../../../repositories/mariadb.repository'
 export class ContractMariadbRepository extends MariaDbRepository implements ContractRepository {
     private readonly log = new LoggerService(ContractMariadbRepository.name)
 
-    async create(contracts: internal.Contract[], sr: ServiceRequest): Promise<number[]> {
+    async create(contracts: internal.Contract[], _sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.Contract.createQueryBuilder('contract')
         const values = contracts.map(contract => new db.billing.Contract().fromInternal(contract))
         const result = await qb.insert().values(values).execute()
         return result.identifiers.map(obj => obj.id)
     }
 
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
+    async delete(_id: number, _sr: ServiceRequest): Promise<number> {
         throw new MethodNotAllowedException()
     }
 
@@ -34,7 +34,7 @@ export class ContractMariadbRepository extends MariaDbRepository implements Cont
             user: sr.user.username,
             id: id,
         })
-        return (await db.billing.Contract.findOneByOrFail({ id: id })).toInternal()
+        return (await db.billing.Contract.findOneByOrFail({id: id})).toInternal()
     }
 
     async readActiveSystemContact(id: number, sr: ServiceRequest): Promise<internal.Contact> {
@@ -59,7 +59,7 @@ export class ContractMariadbRepository extends MariaDbRepository implements Cont
             user: sr.user.username,
             type: type,
         })
-        const product = await db.billing.Product.findOneBy({ class: <ProductClass>type })
+        const product = await db.billing.Product.findOneBy({class: <ProductClass>type})
         return product != undefined ? product.toInternal() : undefined
     }
 
@@ -86,7 +86,7 @@ export class ContractMariadbRepository extends MariaDbRepository implements Cont
         return await Promise.all(created.map(async (contract) => contract.toInternal()))
     }
 
-    async update(updates: Dictionary<internal.Contract>, sr: ServiceRequest): Promise<number[]> {
+    async update(updates: Dictionary<internal.Contract>, _sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const update = new db.billing.Contract().fromInternal(updates[id])

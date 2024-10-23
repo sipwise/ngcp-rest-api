@@ -12,11 +12,11 @@ import {JournalMariadbRepository} from './repositories/journal.mariadb.repositor
     ],
     providers: [
         JournalService,
-        JournalMariadbRepository
+        JournalMariadbRepository,
     ],
     exports: [
         JournalService,
-        JournalMariadbRepository
+        JournalMariadbRepository,
     ],
 })
 export class JournalModule {

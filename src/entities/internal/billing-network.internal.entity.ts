@@ -1,5 +1,4 @@
 import {Reseller} from '../db/billing'
-import {AdminInterface} from './admin.internal.entity'
 
 export enum BillingNetworkStatus {
     Active = 'active',

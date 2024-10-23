@@ -14,14 +14,14 @@ export class SubscriberPasswordJournalMariadbRepository extends MariaDbRepositor
         super()
     }
 
-    async create(subscribers: internal.SubscriberWebPasswordJournal[], sr: ServiceRequest): Promise<number[]> {
+    async create(subscribers: internal.SubscriberWebPasswordJournal[], _sr: ServiceRequest): Promise<number[]> {
         const qb = db.provisioning.VoipSubscriberWebPasswordJournal.createQueryBuilder('pass')
         const values = subscribers.map(subscriber => new db.provisioning.VoipSubscriberWebPasswordJournal().fromInternal(subscriber))
         const result = await qb.insert().values(values).execute()
         return result.identifiers.map(obj => obj.id)
     }
 
-    async readLastNPasswords(subscriberId: number, n: number, sr: ServiceRequest): Promise<internal.SubscriberWebPasswordJournal[]> {
+    async readLastNPasswords(subscriberId: number, n: number, _sr: ServiceRequest): Promise<internal.SubscriberWebPasswordJournal[]> {
         const qb = db.provisioning.VoipSubscriberWebPasswordJournal.createQueryBuilder('pass')
         qb.where('pass.subscriber_id = :subscriber_id', {subscriber_id: subscriberId})
         qb.orderBy('pass.id', 'DESC')
@@ -29,7 +29,7 @@ export class SubscriberPasswordJournalMariadbRepository extends MariaDbRepositor
         return await qb.getMany()
     }
 
-    async keepLastNPasswords(subscriberId: number, n: number, sr: ServiceRequest): Promise<void> {
+    async keepLastNPasswords(subscriberId: number, n: number, _sr: ServiceRequest): Promise<void> {
         const idsQb = db.provisioning.VoipSubscriberWebPasswordJournal.createQueryBuilder('pass')
             .select('pass.id')
             .where('pass.subscriber_id = :subscriber_id', {subscriber_id: subscriberId})

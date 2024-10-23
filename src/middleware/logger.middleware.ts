@@ -9,7 +9,7 @@ import {deepCopy} from '../helpers/deep-copy.helper'
 export class LoggerMiddleware implements NestMiddleware {
     private readonly log = new LoggerService(LoggerMiddleware.name)
 
-    use(req: Request, res: Response, next: NextFunction): any {
+    use(req: Request, _res: Response, next: NextFunction): any {
         const ctx = Context.get(req)
         let body = JSON.stringify(req.body, obfuscatePasswordJSON)
 
@@ -32,7 +32,7 @@ export class LoggerMiddleware implements NestMiddleware {
 
         if (headers['authorization'])
             delete headers['authorization']
-        
+
         this.log.log({
             message: 'REQUEST',
             tx: ctx.txid,

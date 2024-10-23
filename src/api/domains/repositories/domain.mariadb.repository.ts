@@ -15,7 +15,7 @@ import {MariaDbRepository} from 'repositories/mariadb.repository'
 export class DomainMariadbRepository extends MariaDbRepository implements DomainRepository {
     private readonly log = new LoggerService(DomainMariadbRepository.name)
 
-    async create(domains: internal.Domain[], sr: ServiceRequest): Promise<number[]> {
+    async create(domains: internal.Domain[], _sr: ServiceRequest): Promise<number[]> {
         // billing
         const qbBilling = db.billing.Domain.createQueryBuilder('domain')
         const valuesBilling = domains.map(domain => new db.billing.Domain().fromInternal(domain))
@@ -58,7 +58,7 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
         return [result.map(d => d.toInternal()), totalCount]
     }
 
-    async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Domain[]> {
+    async readWhereInIds(ids: number[], _sr: ServiceRequest): Promise<internal.Domain[]> {
         const qb = db.billing.Domain.createQueryBuilder('domain')
         const created = await qb.andWhereInIds(ids).getMany()
         return await Promise.all(created.map(async (domain) => domain.toInternal()))
@@ -82,14 +82,14 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
         return (await db.billing.Domain.findOne({where: {domain: domain}})).toInternal()
     }
 
-    async readResellerById(id: number, sr: ServiceRequest): Promise<internal.Reseller> {
+    async readResellerById(id: number, _sr: ServiceRequest): Promise<internal.Reseller> {
         const reseller = await db.billing.Reseller.findOneBy({id: id})
         if (reseller)
             return reseller.toInternal()
         return undefined
     }
 
-    async delete(id: number, sr: ServiceRequest): Promise<number> {
+    async delete(id: number, _sr: ServiceRequest): Promise<number> {
         const domain = await db.billing.Domain.findOneByOrFail({id: id})
         await db.billing.Domain.delete(id)
 

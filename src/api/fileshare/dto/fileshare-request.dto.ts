@@ -1,4 +1,4 @@
-import {IsNumber, IsNumberString, IsOptional} from 'class-validator'
+import {IsNumberString, IsOptional} from 'class-validator'
 import {RequestDto} from '../../../dto/request.dto'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 

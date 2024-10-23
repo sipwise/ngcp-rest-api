@@ -19,7 +19,7 @@ export class PasswordChangeService {
     ) {
     }
 
-    async changePassword(sr: ServiceRequest, id:number, newPassword:string, realm:string) {
+    async changePassword(sr: ServiceRequest, id:number, newPassword:string, realm:string): Promise<void> {
         if (realm === 'subscriber') {
             return await this.changeSubscriberPassword(sr, id, newPassword)
         } else if (realm === 'admin') {
@@ -29,7 +29,7 @@ export class PasswordChangeService {
         }
     }
 
-    async changeAdminPassword(sr: ServiceRequest, id:number, newPassword: string) {
+    async changeAdminPassword(sr: ServiceRequest, id:number, newPassword: string): Promise<void> {
         const admin = await db.billing.Admin.findOne({
             where: {
                 id: id,
@@ -45,26 +45,26 @@ export class PasswordChangeService {
         internal.saltedpass_modify_timestamp = new Date()
         if (this.app.config.security.password.web_validate && this.app.config.security.password.web_keep_last_used > 0) {
             const lastPasswords = await this.adminPasswordJournalRepo.readLastNPasswords(admin.id, this.app.config.security.password.web_keep_last_used, sr)
-                for (const pass of lastPasswords) {
-                    const [storedSalt, storedHash] = pass.value.split('$')
-                    const generatedHash = await internal.generateSaltedpass(6, storedSalt)
-                    if (generatedHash.split('$')[1] === storedHash) {
-                        throw new UnprocessableEntityException(this.i18n.t('errors.PASSWORD_ALREADY_USED'))
-                    }
+            for (const pass of lastPasswords) {
+                const [storedSalt, storedHash] = pass.value.split('$')
+                const generatedHash = await internal.generateSaltedpass(6, storedSalt)
+                if (generatedHash.split('$')[1] === storedHash) {
+                    throw new UnprocessableEntityException(this.i18n.t('errors.PASSWORD_ALREADY_USED'))
                 }
-                const journalHash = await internal.generateSaltedpass(6)
-                const journal = db.billing.AdminPasswordJournal.create({admin_id: admin.id, value: journalHash})
-                const keepPasswordAmount = this.app.config.security.password.web_keep_last_used
-                await this.adminPasswordJournalRepo.create([journal], sr)
-                await this.adminPasswordJournalRepo.keepLastNPasswords(admin.id, keepPasswordAmount, sr)
+            }
+            const journalHash = await internal.generateSaltedpass(6)
+            const journal = db.billing.AdminPasswordJournal.create({admin_id: admin.id, value: journalHash})
+            const keepPasswordAmount = this.app.config.security.password.web_keep_last_used
+            await this.adminPasswordJournalRepo.create([journal], sr)
+            await this.adminPasswordJournalRepo.keepLastNPasswords(admin.id, keepPasswordAmount, sr)
         }
         await this.app.dbRepo(db.billing.Admin).update(
-            { id: admin.id },
-            { saltedpass: internal.saltedpass , saltedpass_modify_timestamp: internal.saltedpass_modify_timestamp }
-        );
+            {id: admin.id},
+            {saltedpass: internal.saltedpass , saltedpass_modify_timestamp: internal.saltedpass_modify_timestamp},
+        )
     }
 
-    async changeSubscriberPassword(sr: ServiceRequest, id:number, newPassword: string) {
+    async changeSubscriberPassword(sr: ServiceRequest, id:number, newPassword: string): Promise<void> {
         const subscriber = await db.provisioning.VoipSubscriber.findOne({
             where: {
                 id: id,
@@ -80,22 +80,22 @@ export class PasswordChangeService {
         internal.webPasswordModifyTimestamp = new Date()
         if (this.app.config.security.password.web_validate && this.app.config.security.password.web_keep_last_used > 0) {
             const lastPasswords = await this.subscriberPasswordJournalRepo.readLastNPasswords(subscriber.id, this.app.config.security.password.web_keep_last_used, sr)
-                for (const pass of lastPasswords) {
-                    const [storedSalt, storedHash] = pass.value.split('$')
-                    const generatedHash = await internal.generateSaltedpass(6, storedSalt)
-                    if (generatedHash.split('$')[1] === storedHash) {
-                        throw new UnprocessableEntityException(this.i18n.t('errors.PASSWORD_ALREADY_USED'))
-                    }
+            for (const pass of lastPasswords) {
+                const [storedSalt, storedHash] = pass.value.split('$')
+                const generatedHash = await internal.generateSaltedpass(6, storedSalt)
+                if (generatedHash.split('$')[1] === storedHash) {
+                    throw new UnprocessableEntityException(this.i18n.t('errors.PASSWORD_ALREADY_USED'))
                 }
-                const journalHash = await internal.generateSaltedpass(6)
-                const journal = db.provisioning.VoipSubscriberWebPasswordJournal.create({subscriber_id: subscriber.id, value: journalHash})
-                const keepPasswordAmount = this.app.config.security.password.web_keep_last_used
-                await this.subscriberPasswordJournalRepo.create([journal], sr)
-                await this.subscriberPasswordJournalRepo.keepLastNPasswords(subscriber.id, keepPasswordAmount, sr)
+            }
+            const journalHash = await internal.generateSaltedpass(6)
+            const journal = db.provisioning.VoipSubscriberWebPasswordJournal.create({subscriber_id: subscriber.id, value: journalHash})
+            const keepPasswordAmount = this.app.config.security.password.web_keep_last_used
+            await this.subscriberPasswordJournalRepo.create([journal], sr)
+            await this.subscriberPasswordJournalRepo.keepLastNPasswords(subscriber.id, keepPasswordAmount, sr)
         }
         await this.app.dbRepo(db.provisioning.VoipSubscriber).update(
-            { id: subscriber.id },
-            { webpassword: internal.webPassword , webpassword_modify_timestamp: internal.webPasswordModifyTimestamp }
-        );
+            {id: subscriber.id},
+            {webpassword: internal.webPassword , webpassword_modify_timestamp: internal.webPasswordModifyTimestamp},
+        )
     }
 }

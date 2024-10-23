@@ -60,12 +60,12 @@ export class AdminMockRepository implements AdminRepository {
         return Promise.resolve(ids)
     }
 
-    readById(id: number, options: AdminOptions): Promise<internal.Admin> {
+    readById(id: number, _options: AdminOptions): Promise<internal.Admin> {
         this.throwErrorIfIdNotExists(id)
         return Promise.resolve(this.db[id])
     }
 
-    readWhereInIds(ids: number[], options: AdminOptions): Promise<internal.Admin[]> {
+    readWhereInIds(ids: number[], _options: AdminOptions): Promise<internal.Admin[]> {
         const admins: internal.Admin[] = []
         for (const i of ids) {
             this.throwErrorIfIdNotExists(i)
@@ -74,17 +74,17 @@ export class AdminMockRepository implements AdminRepository {
         return Promise.resolve(admins)
     }
 
-    readAll(options: AdminOptions, sr: ServiceRequest): Promise<[internal.Admin[], number]> {
+    readAll(_options: AdminOptions, _sr: ServiceRequest): Promise<[internal.Admin[], number]> {
         const admins: [internal.Admin[], number] =
             [Object.keys(this.db).map(id => this.db[id]), Object.keys(this.db).length]
         return Promise.resolve(admins)
     }
 
-    readCountOfIds(ids: number[], options?: AdminOptions): Promise<number> {
+    readCountOfIds(ids: number[], _options?: AdminOptions): Promise<number> {
         return Promise.resolve(ids.length)
     }
 
-    update(updates: Dictionary<internal.Admin>, options: AdminOptions): Promise<number[]> {
+    update(updates: Dictionary<internal.Admin>, _options: AdminOptions): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             this.throwErrorIfIdNotExists(id)
@@ -98,7 +98,7 @@ export class AdminMockRepository implements AdminRepository {
         return (+keys[keys.length - 1]) + 1
     }
 
-    private throwErrorIfIdNotExists(id: number) {
+    private throwErrorIfIdNotExists(id: number): void {
         if (this.db[id] == undefined)
             throw new NotFoundException()
     }

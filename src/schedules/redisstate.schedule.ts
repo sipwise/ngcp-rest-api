@@ -13,7 +13,7 @@ export class RedisStateSchedule {
     }
 
     @Interval(5000)
-    private async checkRedisAvailable() {
+    private async checkRedisAvailable(): Promise<void> {
         try {
             let curStatus = this.app.redis.status
             if (curStatus == 'ready')

@@ -10,17 +10,16 @@ import {Operation as PatchOperation} from '../../helpers/patch.helper'
 import {HttpExceptionFilter} from '../../helpers/http-exception.filter'
 import {ValidateInputPipe} from '../../pipes/validate.pipe'
 import {validate} from 'class-validator'
-import console from 'console'
 
 describe('CustomerSpeedDial', () => {
     let app: INestApplication
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
-    let testCustomerId = 13
+    const testCustomerId = 13
     let createdIds: number[] = []
     let createdEntries = []
-    let creds = {username: 'administrator', password: 'administrator'}
+    const creds = {username: 'administrator', password: 'administrator'}
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -74,15 +73,15 @@ describe('CustomerSpeedDial', () => {
 
     describe('', () => { // main tests block
         describe('POST', () => {
-            let csd1: any = {
+            const csd1: any = {
                 customer_id: testCustomerId,
                 slot: '*1',
-                destination: '4310001'
+                destination: '4310001',
             }
-            let csd2: any = {
+            const csd2: any = {
                 customer_id: testCustomerId,
                 slot: '*2',
-                destination: '4310002'
+                destination: '4310002',
             }
             it('create customer speed dial *1', async () => {
                 const response = await request(app.getHttpServer())
@@ -111,7 +110,7 @@ describe('CustomerSpeedDial', () => {
                 const response = await request(app.getHttpServer())
                     .post('/customerspeeddials')
                     .set(...authHeader)
-                    .send({ customer_id: testCustomerId })
+                    .send({customer_id: testCustomerId})
                 expect(response.status).toEqual(422)
             })
         })
@@ -146,15 +145,15 @@ describe('CustomerSpeedDial', () => {
         })
 
         describe('PUT', () => {
-            let csd1: any = {
+            const csd1: any = {
                 customer_id: testCustomerId,
                 slot: '*3',
-                destination: '4310003'
+                destination: '4310003',
             }
-            let csd2: any = {
+            const csd2: any = {
                 customer_id: testCustomerId,
                 slot: '*4',
-                destination: '4310004'
+                destination: '4310004',
             }
             it('update customer speed dial *1 -> *3', async () => {
                 const response = await request(app.getHttpServer())
@@ -209,7 +208,7 @@ describe('CustomerSpeedDial', () => {
                     op: 'replace',
                     path: '/destination',
                     value: '4310005',
-                }
+                },
             ]
             it('adjust customer speed dial *3 -> *5', async () => {
                 const response = await request(app.getHttpServer())

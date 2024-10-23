@@ -5,7 +5,7 @@ import {License} from '../license/license.service'
 @Injectable()
 export class LicenseMockRepository {
     private license: License
-    private defaultLicense: License
+    private readonly defaultLicense: License
 
     constructor() {
         this.license = {
