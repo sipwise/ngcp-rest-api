@@ -1,8 +1,10 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn} from 'typeorm'
-import {Contract} from '~/entities/db/billing/contract.mariadb.entity'
+
+import {Contract} from './contract.mariadb.entity'
+import {VoipNumber} from './voip-number.mariadb.entity'
+
 import {VoipSubscriber as ProvisioningVoipSubscriber} from '~/entities/db/provisioning/voip-subscriber.mariadb.entity'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
-import {VoipNumber} from '~/entities/db/billing/voip-number.mariadb.entity'
 
 @Entity({
     name: 'voip_subscribers',

@@ -1,11 +1,13 @@
-import {ApiTags} from '@nestjs/swagger'
-import {Auth} from '~/decorators/auth.decorator'
 import {Controller, Get, Req} from '@nestjs/common'
-import {CrudController} from '~/controllers/crud.controller'
-import {NCOSResponseDto} from '~/api/ncos/dto/ncos-response.dto'
-import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
-import {LoggerService} from '~/logger/logger.service'
+import {ApiTags} from '@nestjs/swagger'
+
+import {NCOSResponseDto} from './dto/ncos-response.dto'
+
 import {RbacRole} from '~/config/constants.config'
+import {CrudController} from '~/controllers/crud.controller'
+import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {Auth} from '~/decorators/auth.decorator'
+import {LoggerService} from '~/logger/logger.service'
 
 const resourceName = 'ncos'
 

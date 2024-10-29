@@ -1,9 +1,11 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {IsEnum, IsNotEmpty} from 'class-validator'
-import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
-import {internal} from '~/entities'
-import {ResponseDto} from '~/dto/response.dto'
 import {Expandable} from 'decorators/expandable.decorator'
+
+import {ResponseDto} from '~/dto/response.dto'
+import {internal} from '~/entities'
+import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
+
 
 export class ResellerResponseDto implements ResponseDto {
     @ApiProperty()

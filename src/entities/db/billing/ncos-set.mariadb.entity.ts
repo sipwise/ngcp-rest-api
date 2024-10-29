@@ -1,6 +1,8 @@
 import {BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
+
+import {NCOSSetLevel} from './ncos-set-level.mariadb.entity'
+
 import {internal} from '~/entities'
-import {NCOSSetLevel} from '~/entities/db/billing/ncos-set-level.mariadb.entity'
 
 @Entity({
     name: 'ncos_sets',

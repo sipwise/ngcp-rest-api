@@ -1,10 +1,11 @@
-import {internal} from '~/entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsNotEmpty, IsOptional} from 'class-validator'
-import {ResponseDto} from '~/dto/response.dto'
-import {UrlReference} from '~/types/url-reference.type'
-import {UrlReferenceType} from '~/enums/url-reference-type.enum'
+
 import {Expandable} from '~/decorators/expandable.decorator'
+import {ResponseDto} from '~/dto/response.dto'
+import {internal} from '~/entities'
+import {UrlReferenceType} from '~/enums/url-reference-type.enum'
+import {UrlReference} from '~/types/url-reference.type'
 
 export class HeaderManipulationSetResponseDto implements ResponseDto {
     @IsNotEmpty()

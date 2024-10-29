@@ -1,16 +1,18 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
+
+import {HeaderManipulationRuleConditionResponseDto} from './dto/header-manipulation-rule-condition-response.dto'
+import {HeaderManipulationRuleConditionModule} from './header-manipulation-rule-condition.module'
+
+import {HeaderManipulationSetModule} from '~/api/header-manipulations/sets/header-manipulation-set.module'
+import {HeaderManipulationRuleModule} from '~/api/header-manipulations/sets/rules/header-manipulation-rule.module'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
-import {HeaderManipulationSetModule} from '~/api/header-manipulations/sets/header-manipulation-set.module'
-import {HeaderManipulationRuleModule} from '~/api/header-manipulations/sets/rules/header-manipulation-rule.module'
-import {HeaderManipulationRuleConditionModule} from '~/api/header-manipulations/sets/rules/conditions/header-manipulation-rule-condition.module'
-import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
-import {HeaderManipulationRuleConditionResponseDto} from '~/api/header-manipulations/sets/rules/conditions/dto/header-manipulation-rule-condition-response.dto'
 
 describe('Rule Condition', () => {
     let app: INestApplication

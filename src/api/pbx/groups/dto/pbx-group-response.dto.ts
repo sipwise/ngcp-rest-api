@@ -1,6 +1,6 @@
-import {UrlReference} from '~/types/url-reference.type'
-import {UrlReferenceType} from '~/enums/url-reference-type.enum'
 import {internal} from '~/entities'
+import {UrlReferenceType} from '~/enums/url-reference-type.enum'
+import {UrlReference} from '~/types/url-reference.type'
 
 export class PbxGroupResponseDto {
     customer_id: number

@@ -1,7 +1,8 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
-import {Contract} from '~/entities/db/billing/contract.mariadb.entity'
-import {ContractBillingProfileNetworkSchedule} from '~/entities/db/billing/contract-billing-profile-network-schedule.mariadb.entity'
-import {BillingProfile} from '~/entities/db/billing/billing-profile.mariadb.entity'
+
+import {BillingProfile} from './billing-profile.mariadb.entity'
+import {ContractBillingProfileNetworkSchedule} from './contract-billing-profile-network-schedule.mariadb.entity'
+import {Contract} from './contract.mariadb.entity'
 
 @Entity({
     name: 'contracts_billing_profile_network',

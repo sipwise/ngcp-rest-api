@@ -2,7 +2,6 @@ import {
     Body,
     Controller,
     Delete,
-    forwardRef,
     Get,
     Inject,
     Param,
@@ -11,35 +10,38 @@ import {
     Post,
     Put,
     Req,
+    forwardRef,
 } from '@nestjs/common'
-import {AdminRequestDto} from '~/api/admins/dto/admin-request.dto'
-import {AdminResponseDto} from '~/api/admins/dto/admin-response.dto'
-import {AdminSearchDto} from '~/api/admins/dto/admin-search.dto'
-import {AdminService} from '~/api/admins/admin.service'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {Request} from 'express'
+import {number} from 'yargs'
+
+import {AdminService} from './admin.service'
+import {AdminRequestDto} from './dto/admin-request.dto'
+import {AdminResponseDto} from './dto/admin-response.dto'
+import {AdminSearchDto} from './dto/admin-search.dto'
+
+import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
+import {JournalService} from '~/api/journals/journal.service'
+import {AppService} from '~/app.service'
+import {RbacRole} from '~/config/constants.config'
+import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
-import {AppService} from '~/app.service'
 import {Auth} from '~/decorators/auth.decorator'
-import {CrudController} from '~/controllers/crud.controller'
+import {ParamOrBody} from '~/decorators/param-or-body.decorator'
+import {PatchDto} from '~/dto/patch.dto'
+import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
-import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
-import {JournalService} from '~/api/journals/journal.service'
-import {LoggerService} from '~/logger/logger.service'
 import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
-import {ParamOrBody} from '~/decorators/param-or-body.decorator'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
 import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
-import {PatchDto} from '~/dto/patch.dto'
-import {RbacRole} from '~/config/constants.config'
-import {Request} from 'express'
-import {SearchLogic} from '~/helpers/search-logic.helper'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {internal} from '~/entities'
-import {number} from 'yargs'
 import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
 const resourceName = 'admins'

@@ -2,8 +2,8 @@ import {
     ArgumentMetadata,
     HttpStatus,
     Optional,
-    ParseUUIDPipeOptions,
     ParseUUIDPipe as UUIDPipe,
+    ParseUUIDPipeOptions,
     PipeTransform,
 } from '@nestjs/common'
 import {HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'

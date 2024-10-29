@@ -1,9 +1,11 @@
-import {HeaderRuleDirection} from '~/entities/internal/header-rule.internal.entity'
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
-import {VoipHeaderRuleSet} from '~/entities/db/provisioning/voip-header-rule-set.mariadb.entity'
-import {VoipHeaderRuleAction} from '~/entities/db/provisioning/voip-header-rule-action.mariadb.entity'
-import {VoipHeaderRuleCondition} from '~/entities/db/provisioning/voip-header-rule-condition.mariadb.entity'
+
+import {VoipHeaderRuleAction} from './voip-header-rule-action.mariadb.entity'
+import {VoipHeaderRuleCondition} from './voip-header-rule-condition.mariadb.entity'
+import {VoipHeaderRuleSet} from './voip-header-rule-set.mariadb.entity'
+
 import {internal} from '~/entities'
+import {HeaderRuleDirection} from '~/entities/internal/header-rule.internal.entity'
 
 @Entity({
     name: 'voip_header_rules',

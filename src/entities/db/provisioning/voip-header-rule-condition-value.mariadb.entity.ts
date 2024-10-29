@@ -1,5 +1,7 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
-import {VoipHeaderRuleCondition} from '~/entities/db/provisioning/voip-header-rule-condition.mariadb.entity'
+
+import {VoipHeaderRuleCondition} from './voip-header-rule-condition.mariadb.entity'
+
 import {internal} from '~/entities'
 
 @Entity({

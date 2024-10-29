@@ -1,6 +1,8 @@
-import {db} from '~/entities'
-import {HttpRequest} from '~/helpers/http-request'
 import {RequestOptions} from 'http'
+
+import {HttpRequest} from './http-request'
+
+import {db} from '~/entities'
 import {LoggerService} from '~/logger/logger.service'
 
 export class XmlDispatcher {

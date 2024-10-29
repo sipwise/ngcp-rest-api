@@ -2,7 +2,6 @@ import {
     Body,
     Controller,
     Delete,
-    forwardRef,
     Get,
     Inject,
     Param,
@@ -11,32 +10,35 @@ import {
     Post,
     Put,
     Req,
+    forwardRef,
 } from '@nestjs/common'
-import {Auth} from '~/decorators/auth.decorator'
-import {RbacRole} from '~/config/constants.config'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
-import {CrudController} from '~/controllers/crud.controller'
-import {JournalService} from '~/api/journals/journal.service'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Request} from 'express'
 import {number} from 'yargs'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {PatchDto} from '~/dto/patch.dto'
-import {Operation as PatchOperation, Operation, patchToEntity} from '~/helpers/patch.helper'
-import {ContactService} from '~/api/contacts/contact.service'
-import {ContactRequestDto} from '~/api/contacts/dto/contact-request.dto'
-import {ContactResponseDto} from '~/api/contacts/dto/contact-response.dto'
-import {ContactSearchDto} from '~/api/contacts/dto/contact-search.dto'
+
+import {ContactService} from './contact.service'
+import {ContactRequestDto} from './dto/contact-request.dto'
+import {ContactResponseDto} from './dto/contact-response.dto'
+import {ContactSearchDto} from './dto/contact-search.dto'
+
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
-import {LoggerService} from '~/logger/logger.service'
+import {JournalService} from '~/api/journals/journal.service'
+import {RbacRole} from '~/config/constants.config'
+import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
-import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
-import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
-import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
-import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
+import {Auth} from '~/decorators/auth.decorator'
+import {ParamOrBody} from '~/decorators/param-or-body.decorator'
+import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ExpandHelper} from '~/helpers/expand.helper'
+import {Operation,Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
+import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
+import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
+import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
 import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
 const resourceName = 'contacts'

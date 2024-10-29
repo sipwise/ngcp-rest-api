@@ -1,6 +1,7 @@
+import {genSalt, hash} from 'bcrypt'
+
 import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
-import {genSalt, hash} from 'bcrypt'
 
 export interface AdminInterface {
     billing_data?: boolean

@@ -1,16 +1,18 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
+import {validate} from 'class-validator'
 import request from 'supertest'
+
+import {NCOSSetLevelResponseDto} from './dto/ncos-set-level-response.dto'
+import {NCOSSetResponseDto} from './dto/ncos-set-response.dto'
+import {NCOSSetModule} from './ncos-set.module'
+
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
-import {NCOSSetModule} from '~/api/ncos-sets/ncos-set.module'
-import {NCOSSetResponseDto} from '~/api/ncos-sets/dto/ncos-set-response.dto'
-import {NCOSSetLevelResponseDto} from '~/api/ncos-sets/dto/ncos-set-level-response.dto'
-import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
-import {validate} from 'class-validator'
 
 describe('NCOS Set', () => {
     let app: INestApplication

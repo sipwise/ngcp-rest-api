@@ -1,4 +1,5 @@
-import {SystemContactResponseDto} from '~/api/systemcontacts/dto/system-contact-response.dto'
+import {SystemContactResponseDto} from './system-contact-response.dto'
+
 import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
 
 export class SystemContactSearchDto implements SystemContactResponseDto {

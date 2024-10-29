@@ -1,11 +1,13 @@
 import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
-import {internal} from '~/entities'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {NCOSSetMariadbRepository} from '~/api/ncos-sets/repositories/ncos-set.mariadb.repository'
-import {CrudService} from '~/interfaces/crud-service.interface'
-import {LoggerService} from '~/logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
+
+import {NCOSSetMariadbRepository} from './repositories/ncos-set.mariadb.repository'
+
+import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {CrudService} from '~/interfaces/crud-service.interface'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
 
 @Injectable()
 export class NCOSSetService implements CrudService<internal.NCOSSet> {

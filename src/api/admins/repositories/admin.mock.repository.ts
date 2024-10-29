@@ -1,10 +1,11 @@
-import {RbacRole} from '~/config/constants.config'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {NotFoundException} from '@nestjs/common'
-import {internal} from '~/entities'
-import {AdminRepository} from '~/api/admins/interfaces/admin.repository'
+
 import {AdminOptions} from '~/api/admins/interfaces/admin-options.interface'
+import {AdminRepository} from '~/api/admins/interfaces/admin.repository'
+import {RbacRole} from '~/config/constants.config'
+import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 interface AdminMockDB {
     [key: number]: internal.Admin

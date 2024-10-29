@@ -1,12 +1,13 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString} from 'class-validator'
+
+import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
+import {internal} from '~/entities'
 import {
     ContractBillingProfileDefinition,
     ContractStatus,
     ContractType,
 } from '~/entities/internal/contract.internal.entity'
-import {internal} from '~/entities'
-import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 
 export class ContractRequestDto implements RequestDto {
     @IsOptional()

@@ -1,17 +1,19 @@
 import {Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
-import {AppService} from '~/app.service'
-import {internal} from '~/entities'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {CrudService} from '~/interfaces/crud-service.interface'
-import {Dictionary} from '~/helpers/dictionary.helper'
-import {CustomerMariadbRepository} from '~/api/customers/repositories/customer.mariadb.repository'
 import {I18nService} from 'nestjs-i18n'
-import {ContactMariadbRepository} from '~/api/contacts/repositories/contact.mariadb.repository'
-import {ContactStatus, ContactType} from '~/entities/internal/contact.internal.entity'
+
+import {CustomerFindOptions} from './interfaces/customer-find-options.interface'
+import {CustomerMariadbRepository} from './repositories/customer.mariadb.repository'
+
 import {ContactOptions} from '~/api/contacts/interfaces/contact-options.interface'
+import {ContactMariadbRepository} from '~/api/contacts/repositories/contact.mariadb.repository'
+import {AppService} from '~/app.service'
 import {RbacRole} from '~/config/constants.config'
+import {internal} from '~/entities'
+import {ContactStatus, ContactType} from '~/entities/internal/contact.internal.entity'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
-import {CustomerFindOptions} from '~/api/customers/interfaces/customer-find-options.interface'
+import {Dictionary} from '~/helpers/dictionary.helper'
+import {CrudService} from '~/interfaces/crud-service.interface'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 @Injectable()
 export class CustomerService implements CrudService<internal.Customer> {

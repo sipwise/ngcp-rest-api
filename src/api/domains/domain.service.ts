@@ -1,11 +1,14 @@
 import {ForbiddenException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
-import {internal} from '~/entities'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {RbacRole} from '~/config/constants.config'
-import {DomainMariadbRepository} from '~/api/domains/repositories/domain.mariadb.repository'
-import {CrudService} from '~/interfaces/crud-service.interface'
-import {LoggerService} from '~/logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
+
+import {DomainMariadbRepository} from './repositories/domain.mariadb.repository'
+
+import {RbacRole} from '~/config/constants.config'
+import {internal} from '~/entities'
+import {CrudService} from '~/interfaces/crud-service.interface'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
+
 
 @Injectable()
 export class DomainService implements CrudService<internal.Domain> {

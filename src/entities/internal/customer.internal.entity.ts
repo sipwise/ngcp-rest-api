@@ -1,6 +1,7 @@
 import {
     ContractStatus as CustomerStatus,
-} from '~/entities/internal/contract.internal.entity'
+} from './contract.internal.entity'
+
 import {internal} from '~/entities'
 
 export enum CustomerType {

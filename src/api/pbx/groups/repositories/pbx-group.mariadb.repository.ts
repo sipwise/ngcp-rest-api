@@ -1,13 +1,15 @@
-import {PbxGroupRepository} from '~/api/pbx/groups/interfaces/pbx-group.repository'
-import {db, internal} from '~/entities'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {NotFoundException} from '@nestjs/common'
 import {SelectQueryBuilder} from 'typeorm'
-import {RbacRole} from '~/config/constants.config'
-import {SearchLogic} from '~/helpers/search-logic.helper'
+
 import {PbxGroupSearchDto} from '~/api/pbx/groups/dto/pbx-group-search.dto'
+import {PbxGroupRepository} from '~/api/pbx/groups/interfaces/pbx-group.repository'
+import {RbacRole} from '~/config/constants.config'
+import {db, internal} from '~/entities'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
-import {NotFoundException} from '@nestjs/common'
+
 
 export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxGroupRepository {
     private readonly log = new LoggerService(PbxGroupMariadbRepository.name)

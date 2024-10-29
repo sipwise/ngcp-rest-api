@@ -1,13 +1,14 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {IsNotEmpty} from 'class-validator'
+
+import {Expandable} from '~/decorators/expandable.decorator'
+import {ResponseDto} from '~/dto/response.dto'
+import {internal} from '~/entities'
 import {
     ContractBillingProfileDefinition,
     ContractStatus,
     ContractType,
 } from '~/entities/internal/contract.internal.entity'
-import {internal} from '~/entities'
-import {ResponseDto} from '~/dto/response.dto'
-import {Expandable} from '~/decorators/expandable.decorator'
 
 export class ContractResponseDto implements ResponseDto {
     @ApiProperty({description: 'Unique identifier of the contract'})

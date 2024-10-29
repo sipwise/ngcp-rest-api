@@ -1,14 +1,16 @@
 import {Injectable, InternalServerErrorException} from '@nestjs/common'
+import {MariaDbRepository} from 'repositories/mariadb.repository'
+
+import {DomainSearchDto} from '~/api/domains/dto/domain-search.dto'
+import {DomainRepository} from '~/api/domains/interfaces/domain.repository'
 import {db, internal} from '~/entities'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {configureQueryBuilder} from '~/helpers/query-builder.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
 import {TelnetDispatcher} from '~/helpers/telnet-dispatcher'
 import {XmlDispatcher} from '~/helpers/xml-dispatcher'
-import {DomainSearchDto} from '~/api/domains/dto/domain-search.dto'
-import {configureQueryBuilder} from '~/helpers/query-builder.helper'
-import {DomainRepository} from '~/api/domains/interfaces/domain.repository'
-import {SearchLogic} from '~/helpers/search-logic.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
-import {MariaDbRepository} from 'repositories/mariadb.repository'
+
 
 
 @Injectable()

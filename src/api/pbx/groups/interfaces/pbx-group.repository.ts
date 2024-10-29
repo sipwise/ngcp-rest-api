@@ -1,5 +1,5 @@
-import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {internal} from '~/entities'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export interface PbxGroupRepository {
     readAll(sr: ServiceRequest): Promise<[internal.PbxGroup[], number]>

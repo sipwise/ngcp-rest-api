@@ -1,13 +1,16 @@
+import path from 'path'
+
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
+
+import {FileshareModule} from './fileshare.module'
+
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
-import {FileshareModule} from '~/api/fileshare/fileshare.module'
-import path from 'path'
 
 describe('Fileshare', () => {
     let app: INestApplication

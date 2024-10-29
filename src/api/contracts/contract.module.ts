@@ -1,13 +1,15 @@
-import {forwardRef, Module} from '@nestjs/common'
-import {ContractService} from '~/api/contracts/contract.service'
-import {ContractController} from '~/api/contracts/contract.controller'
+import {Module,forwardRef} from '@nestjs/common'
+
+import {ContractController} from './contract.controller'
+import {ContractService} from './contract.service'
+import {ContractMariadbRepository} from './repositories/contract.mariadb.repository'
+
 import {JournalModule} from '~/api/journals/journal.module'
 import {ExpandModule} from '~/helpers/expand.module'
-import {ContractMariadbRepository} from '~/api/contracts/repositories/contract.mariadb.repository'
 
 @Module({
     imports: [
-        JournalModule,
+        forwardRef(() => JournalModule),
         forwardRef(() => ExpandModule),
     ],
     providers: [

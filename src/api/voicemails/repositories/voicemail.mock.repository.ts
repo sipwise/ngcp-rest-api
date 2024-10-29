@@ -1,7 +1,7 @@
 import {VoicemailRepository} from '~/api/voicemails/interfaces/voicemail.repository'
 import {internal} from '~/entities'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 interface VoicemailMockDB {
     [key: number]: internal.Voicemail

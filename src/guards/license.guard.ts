@@ -1,6 +1,8 @@
 import {CanActivate, ExecutionContext, Injectable} from '@nestjs/common'
 import {Reflector} from '@nestjs/core'
-import {PublicGuard} from '~/guards/public.guard'
+
+import {PublicGuard} from './public.guard'
+
 import {LicenseService} from '~/license/license.service'
 
 @Injectable()

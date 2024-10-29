@@ -1,13 +1,15 @@
-import {PbxGroupMemberRepository} from '~/api/pbx/groups/members/interfaces/pbx-group-member.repository'
-import {db, internal} from '~/entities'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {NotFoundException} from '@nestjs/common'
 import {SelectQueryBuilder} from 'typeorm'
-import {RbacRole} from '~/config/constants.config'
-import {SearchLogic} from '~/helpers/search-logic.helper'
+
 import {PbxGroupMemberSearchDto} from '~/api/pbx/groups/members/dto/pbx-group-member-search.dto'
+import {PbxGroupMemberRepository} from '~/api/pbx/groups/members/interfaces/pbx-group-member.repository'
+import {RbacRole} from '~/config/constants.config'
+import {db, internal} from '~/entities'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
-import {NotFoundException} from '@nestjs/common'
+
 
 export interface FilterBy {
     groupId?: number

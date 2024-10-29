@@ -1,4 +1,3 @@
-import {ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {
     Body,
     Controller,
@@ -13,24 +12,27 @@ import {
     UploadedFile,
     UseInterceptors,
 } from '@nestjs/common'
-import {CrudController} from '~/controllers/crud.controller'
-import {FileshareRequestDto} from '~/api/fileshare/dto/fileshare-request.dto'
-import {FileshareResponseDto} from '~/api/fileshare/dto/fileshare-response.dto'
-import {FileshareService} from '~/api/fileshare/fileshare.service'
+import {FileInterceptor} from '@nestjs/platform-express'
+import {ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+
+import {FileshareRequestDto} from './dto/fileshare-request.dto'
+import {FileshareResponseDto} from './dto/fileshare-response.dto'
+import {FileshareSearchDto} from './dto/fileshare-search.dto'
+import {FileshareService} from './fileshare.service'
+
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
-import {Public} from '~/decorators/public.decorator'
-import {FileInterceptor} from '@nestjs/platform-express'
 import {AppService} from '~/app.service'
-import {ExpandHelper} from '~/helpers/expand.helper'
-import {FileshareSearchDto} from '~/api/fileshare/dto/fileshare-search.dto'
-import {SearchLogic} from '~/helpers/search-logic.helper'
+import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
-import {LoggerService} from '~/logger/logger.service'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {ParseUUIDArrayPipe} from '~/pipes/parse-uuid-array.pipe'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
+import {Public} from '~/decorators/public.decorator'
+import {ExpandHelper} from '~/helpers/expand.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
+import {ParseUUIDArrayPipe} from '~/pipes/parse-uuid-array.pipe'
 
 const resourceName = 'fileshare'
 

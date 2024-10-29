@@ -1,18 +1,20 @@
+import {UnprocessableEntityException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
-import {ContractService} from '~/api/contracts/contract.service'
-import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {ExpandModule} from '~/helpers/expand.module'
+
+import {ContractModule} from './contract.module'
+import {ContractService} from './contract.service'
+import {ContractRequestDto} from './dto/contract-request.dto'
+import {ContractMariadbRepository} from './repositories/contract.mariadb.repository'
+import {ContractMockRepository} from './repositories/contract.mock.repository'
+
 import {AppModule} from '~/app.module'
-import {ContractMockRepository} from '~/api/contracts/repositories/contract.mock.repository'
-import {ContractModule} from '~/api/contracts/contract.module'
-import {ContractMariadbRepository} from '~/api/contracts/repositories/contract.mariadb.repository'
+import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {ContractStatus, ContractType} from '~/entities/internal/contract.internal.entity'
-import {UnprocessableEntityException} from '@nestjs/common'
-import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ContractRequestDto} from '~/api/contracts/dto/contract-request.dto'
+import {ExpandModule} from '~/helpers/expand.module'
+import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
     readOnly: false,

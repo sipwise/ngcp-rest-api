@@ -1,13 +1,15 @@
-import {Contact} from '~/entities/db/billing/contact.mariadb.entity'
-import {Reseller} from '~/entities/db/billing/reseller.mariadb.entity'
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
-import {Product} from '~/entities/db/billing/product.mariadb.entity'
-import {ContractStatus, ContractType} from '~/entities/internal/contract.internal.entity'
+
+import {Contact} from './contact.mariadb.entity'
+import {ContractBillingProfileNetwork} from './contract-billing-profile-network.mariadb.entity'
+import {Product} from './product.mariadb.entity'
+import {Reseller} from './reseller.mariadb.entity'
+import {VoipSubscriber} from './voip-subscriber.mariadb.entity'
+
 import {internal} from '~/entities'
-import {VoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
 import {VoipContractSpeedDial} from '~/entities/db/provisioning'
+import {ContractStatus, ContractType} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
-import {ContractBillingProfileNetwork} from '~/entities/db/billing/contract-billing-profile-network.mariadb.entity'
 
 @Entity({
     name: 'contracts',

@@ -1,4 +1,4 @@
-import {BadRequestException, createParamDecorator, ExecutionContext} from '@nestjs/common'
+import {BadRequestException, ExecutionContext, createParamDecorator} from '@nestjs/common'
 
 export const ParamOrBody = createParamDecorator(
     (data: string, ctx: ExecutionContext) => {

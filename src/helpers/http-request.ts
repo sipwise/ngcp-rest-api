@@ -2,6 +2,7 @@ import {ClientRequest} from 'http'
 // TODO: remove the require and use import instead
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import http = require('http')
+
 import {LoggerService} from '~/logger/logger.service'
 
 export class HttpRequest {

@@ -1,7 +1,8 @@
-import {internal} from '~/entities'
 import {ApiProperty} from '@nestjs/swagger'
-import {ResponseDto} from '~/dto/response.dto'
+
 import {Expandable} from '~/decorators/expandable.decorator'
+import {ResponseDto} from '~/dto/response.dto'
+import {internal} from '~/entities'
 
 export class DomainResponseDto implements ResponseDto {
     @ApiProperty()

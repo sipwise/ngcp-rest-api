@@ -1,13 +1,15 @@
-import {forwardRef, Module} from '@nestjs/common'
-import {ResellerService} from '~/api/resellers/reseller.service'
-import {ResellerController} from '~/api/resellers/reseller.controller'
+import {Module,forwardRef} from '@nestjs/common'
+
+import {ResellerMariadbRepository} from './repositories/reseller.mariadb.repository'
+import {ResellerController} from './reseller.controller'
+import {ResellerService} from './reseller.service'
+
 import {JournalModule} from '~/api/journals/journal.module'
 import {ExpandModule} from '~/helpers/expand.module'
-import {ResellerMariadbRepository} from '~/api/resellers/repositories/reseller.mariadb.repository'
 
 @Module({
     imports: [
-        JournalModule,
+        forwardRef(() => JournalModule),
         forwardRef(() => ExpandModule),
     ],
     providers: [ResellerService, ResellerMariadbRepository, ResellerController],

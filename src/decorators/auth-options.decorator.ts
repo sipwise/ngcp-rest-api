@@ -1,4 +1,4 @@
-import {applyDecorators, SetMetadata} from '@nestjs/common'
+import {SetMetadata,applyDecorators} from '@nestjs/common'
 
 // We can add more options as needed (e.g skipBanCheck)
 interface AuthOptions {

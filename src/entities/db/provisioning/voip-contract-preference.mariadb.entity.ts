@@ -1,5 +1,6 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Timestamp} from 'typeorm'
-import {VoipPreference} from '~/entities/db/provisioning/voip-preference.mariadb.entity'
+
+import {VoipPreference} from './voip-preference.mariadb.entity'
 
 @Entity({
     name: 'voip_contract_preferences',

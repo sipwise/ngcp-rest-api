@@ -1,11 +1,12 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength} from 'class-validator'
-import {internal} from '~/entities'
+import {generate as passwordGenerator} from 'generate-password'
+
 import {RbacRole} from '~/config/constants.config'
 import {IsValidPassword} from '~/decorators/is-valid-password.decorator'
-import {generate as passwordGenerator} from 'generate-password'
-import {AdminInterface} from '~/entities/internal/admin.internal.entity'
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
+import {internal} from '~/entities'
+import {AdminInterface} from '~/entities/internal/admin.internal.entity'
 
 export class AdminRequestDto implements RequestDto {
     @IsOptional()

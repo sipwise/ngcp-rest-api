@@ -1,11 +1,14 @@
 import {Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {I18nService} from 'nestjs-i18n'
+
+import {AdminPasswordJournalMariadbRepository} from './repositories/admin-password-journal.mariadb.repository'
+import {SubscriberPasswordJournalMariadbRepository} from './repositories/subscriber-password-journal.mariadb.repository'
+
 import {AppService} from '~/app.service'
 import {db} from '~/entities'
-import {LoggerService} from '~/logger/logger.service'
-import {AdminPasswordJournalMariadbRepository} from '~/api/auth/password/change/repositories/admin-password-journal.mariadb.repository'
-import {I18nService} from 'nestjs-i18n'
-import {SubscriberPasswordJournalMariadbRepository} from '~/api/auth/password/change/repositories/subscriber-password-journal.mariadb.repository'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
+
 
 @Injectable()
 export class PasswordChangeService {

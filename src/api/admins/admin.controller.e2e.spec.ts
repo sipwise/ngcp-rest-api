@@ -1,16 +1,18 @@
 import {HttpStatus, INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
+
+import {AdminModule} from './admin.module'
+import {AdminRequestDto} from './dto/admin-request.dto'
+
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
-import {AdminRequestDto} from '~/api/admins/dto/admin-request.dto'
 import {RbacRole} from '~/config/constants.config'
-import {Operation as PatchOperation} from '~/helpers/patch.helper'
-import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
-import {ValidateInputPipe} from '~/pipes/validate.pipe'
-import {AdminModule} from '~/api/admins/admin.module'
 import {db} from '~/entities'
+import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 describe('AdminController', () => {
     let app: INestApplication

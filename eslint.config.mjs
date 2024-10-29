@@ -1,12 +1,14 @@
-import typescriptEslint from '@typescript-eslint/eslint-plugin'
-import unusedImports from 'eslint-plugin-unused-imports'
-import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths'
-import globals from 'globals'
-import tsParser from '@typescript-eslint/parser'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
-import js from '@eslint/js'
+
 import {FlatCompat} from '@eslint/eslintrc'
+import js from '@eslint/js'
+import typescriptEslint from '@typescript-eslint/eslint-plugin'
+import tsParser from '@typescript-eslint/parser'
+import importPlugin from 'eslint-plugin-import'
+import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths'
+import unusedImports from 'eslint-plugin-unused-imports'
+import globals from 'globals'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -21,6 +23,7 @@ const defaultOptions = {
         '@typescript-eslint': typescriptEslint,
         'unused-imports': unusedImports,
         'no-relative-import-paths': noRelativeImportPaths,
+        'import': importPlugin,
     },
     languageOptions: {
         globals: {
@@ -50,6 +53,26 @@ const defaultOptions = {
         'array-bracket-spacing': ['error', 'never'],
         'import/prefer-default-export': [0],
         'unused-imports/no-unused-imports': 'error',
+        'import/order': [
+            'error',
+            {
+                'groups': [
+                    'builtin',
+                    'external',
+                    'internal',
+                    'sibling',
+                    'parent',
+                    'index',
+                ],
+                'newlines-between': 'always',
+                'named': true,
+                'alphabetize': {
+                    order: 'asc',
+                    caseInsensitive: false,
+                    orderImportKind: 'asc',
+                },
+            },
+        ],
         'no-relative-import-paths/no-relative-import-paths': [
             'error',
             {

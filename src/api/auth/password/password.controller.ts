@@ -1,11 +1,13 @@
-import {ApiTags} from '@nestjs/swagger'
-import {Auth} from '~/decorators/auth.decorator'
 import {Controller, Get, Req} from '@nestjs/common'
+import {ApiTags} from '@nestjs/swagger'
+
+import {PasswordResponseDto} from './dto/password-response.dto'
+
 import {CrudController} from '~/controllers/crud.controller'
-import {PasswordResponseDto} from '~/api/auth/password/dto/password-response.dto'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
-import {LoggerService} from '~/logger/logger.service'
 import {AuthOptions} from '~/decorators/auth-options.decorator'
+import {Auth} from '~/decorators/auth.decorator'
+import {LoggerService} from '~/logger/logger.service'
 
 const resourceName = 'auth/password'
 

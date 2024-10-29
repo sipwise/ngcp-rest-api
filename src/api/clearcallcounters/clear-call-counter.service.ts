@@ -1,14 +1,17 @@
+import * as os from 'os'
+import {setInterval} from 'timers/promises'
+
 import {Inject, Injectable, InternalServerErrorException} from '@nestjs/common'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {SearchLogic} from '~/helpers/search-logic.helper'
-import {LoggerService} from '~/logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
-import {ClearCallCounterRedisRepository} from '~/api/clearcallcounters/repositories/clear-call-counter.redis.repository'
 import {v4 as uuidv4} from 'uuid'
+
+import {ClearCallCounterRedisRepository} from './repositories/clear-call-counter.redis.repository'
+
 import {Request as TaskAgentRequest} from '~/entities/task-agent/request.task-agent.entity'
 import {Response as TaskAgentResponse} from '~/entities/task-agent/response.task-agent.entity'
-import {setInterval} from 'timers/promises'
-import * as os from 'os'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
 
 @Injectable()
 export class ClearCallCounterService {

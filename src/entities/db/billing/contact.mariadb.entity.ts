@@ -1,8 +1,10 @@
-import {Reseller} from '~/entities/db/billing/reseller.mariadb.entity'
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
-import {Contract} from '~/entities/db/billing/contract.mariadb.entity'
-import {ContactGender, ContactInternalEntity, ContactStatus} from '~/entities/internal/contact.internal.entity'
+
+import {Contract} from './contract.mariadb.entity'
+import {Reseller} from './reseller.mariadb.entity'
+
 import {internal} from '~/entities'
+import {ContactGender, ContactInternalEntity, ContactStatus} from '~/entities/internal/contact.internal.entity'
 
 @Entity({
     name: 'contacts',

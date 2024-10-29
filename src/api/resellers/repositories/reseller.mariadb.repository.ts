@@ -1,15 +1,16 @@
 import {Injectable} from '@nestjs/common'
-import {AppService} from '~/app.service'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {ResellerSearchDto} from '~/api/resellers/dto/reseller-search.dto'
 import {IsNull, SelectQueryBuilder} from 'typeorm'
+
+import {ResellerSearchDto} from '~/api/resellers/dto/reseller-search.dto'
+import {ResellerRepository} from '~/api/resellers/interfaces/reseller.repository'
+import {AppService} from '~/app.service'
 import {db, internal} from '~/entities'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
+import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
-import {ResellerRepository} from '~/api/resellers/interfaces/reseller.repository'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
-import {Dictionary} from '~/helpers/dictionary.helper'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
 @Injectable()

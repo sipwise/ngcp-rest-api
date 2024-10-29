@@ -1,9 +1,10 @@
 import {Inject, Injectable} from '@nestjs/common'
+import {I18nService} from 'nestjs-i18n'
+
+import {AdminPasswordJournalRepository} from '~/api/admins/interfaces/admin-password-journal.repository'
 import {db, internal} from '~/entities'
 import {LoggerService} from '~/logger/logger.service'
-import {I18nService} from 'nestjs-i18n'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
-import {AdminPasswordJournalRepository} from '~/api/admins/interfaces/admin-password-journal.repository'
 
 @Injectable()
 export class AdminPasswordJournalMariadbRepository extends MariaDbRepository implements AdminPasswordJournalRepository{

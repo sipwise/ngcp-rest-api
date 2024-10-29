@@ -1,16 +1,18 @@
-import {AppClusterService} from '~/app-cluster.service'
-import {AppModule} from '~/app.module'
-import {AppService} from '~/app.service'
-import {NestApplication, NestFactory} from '@nestjs/core'
-import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {readFileSync} from 'fs'
-import {WinstonModule} from 'nest-winston'
-import {winstonLoggerConfig} from '~/config/logger.config'
+
+import {NestApplication, NestFactory} from '@nestjs/core'
 import bodyParser from 'body-parser'
-import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
-import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
-import {createSwaggerDocument} from '~/helpers/swagger.helper'
-import {ValidateInputPipe} from '~/pipes/validate.pipe'
+import {WinstonModule} from 'nest-winston'
+
+import {AppClusterService} from './app-cluster.service'
+import {AppModule} from './app.module'
+import {AppService} from './app.service'
+import {winstonLoggerConfig} from './config/logger.config'
+import {HttpExceptionFilter} from './helpers/http-exception.filter'
+import {createSwaggerDocument} from './helpers/swagger.helper'
+import {LoggingInterceptor} from './interceptors/logging.interceptor'
+import {TransformInterceptor} from './interceptors/transform.interceptor'
+import {ValidateInputPipe} from './pipes/validate.pipe'
 
 async function bootstrap(): Promise<void> {
     const config = AppService.config

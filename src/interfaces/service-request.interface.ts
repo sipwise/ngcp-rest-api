@@ -1,5 +1,6 @@
-import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {Request} from 'express'
+
+import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 
 export interface ParamsDictionary {
     [key: string]: string

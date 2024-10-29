@@ -1,17 +1,19 @@
 import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
 import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
-import {Auth} from '~/decorators/auth.decorator'
+
+import {ProductResponseDto} from './dto/product-response.dto'
+import {ProductSearchDto} from './dto/product-search.dto'
+import {ProductService} from './product.service'
+
 import {JournalService} from '~/api/journals/journal.service'
-import {ProductResponseDto} from '~/api/products/dto/product-response.dto'
-import {ProductService} from '~/api/products/product.service'
 import {RbacRole} from '~/config/constants.config'
-import {ExpandHelper} from '~/helpers/expand.helper'
-import {ProductSearchDto} from '~/api/products/dto/product-search.dto'
-import {SearchLogic} from '~/helpers/search-logic.helper'
-import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {CrudController} from '~/controllers/crud.controller'
-import {LoggerService} from '~/logger/logger.service'
+import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {Auth} from '~/decorators/auth.decorator'
+import {ExpandHelper} from '~/helpers/expand.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
 
 const resourceName = 'products'
 

@@ -1,7 +1,9 @@
-import {IsNotEmpty, IsString, registerDecorator, ValidationArguments, ValidationOptions} from 'class-validator'
 import {applyDecorators} from '@nestjs/common'
-import {config} from '~/config/main.config'
+import {IsNotEmpty, IsString, ValidationArguments, ValidationOptions, registerDecorator} from 'class-validator'
 import zxcvbn from 'zxcvbn-typescript'
+
+import {config} from '~/config/main.config'
+
 
 export type PasswordOptions = {
     username?: string

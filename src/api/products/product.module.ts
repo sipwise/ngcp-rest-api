@@ -1,9 +1,11 @@
-import {InterceptorModule} from '~/interceptors/interceptor.module'
 import {Module} from '@nestjs/common'
-import {ProductController} from '~/api/products/product.controller'
-import {ProductService} from '~/api/products/product.service'
+
+import {ProductController} from './product.controller'
+import {ProductService} from './product.service'
+import {ProductMariadbRepository} from './repositories/product.mariadb.repository'
+
 import {ExpandModule} from '~/helpers/expand.module'
-import {ProductMariadbRepository} from '~/api/products/repositories/product.mariadb.repository'
+import {InterceptorModule} from '~/interceptors/interceptor.module'
 
 @Module({
     imports: [InterceptorModule, ExpandModule],

@@ -1,6 +1,6 @@
-import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export interface ResellerRepository {
     createEmailTemplates(resellerId: number): Promise<void>

@@ -1,15 +1,17 @@
+import {UnprocessableEntityException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {ExpandModule} from '~/helpers/expand.module'
+
+import {ResellerMariadbRepository} from './repositories/reseller.mariadb.repository'
+import {ResellerMockRepository} from './repositories/reseller.mock.repository'
+import {ResellerModule} from './reseller.module'
+import {ResellerService} from './reseller.service'
+
 import {AppModule} from '~/app.module'
-import {ResellerMockRepository} from '~/api/resellers/repositories/reseller.mock.repository'
-import {ResellerMariadbRepository} from '~/api/resellers/repositories/reseller.mariadb.repository'
-import {ResellerService} from '~/api/resellers/reseller.service'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
-import {ResellerModule} from '~/api/resellers/reseller.module'
 import {internal} from '~/entities'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
-import {UnprocessableEntityException} from '@nestjs/common'
+import {ExpandModule} from '~/helpers/expand.module'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
     readOnly: false,

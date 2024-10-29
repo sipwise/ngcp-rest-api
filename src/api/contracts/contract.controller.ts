@@ -1,7 +1,6 @@
 import {
     Body,
     Controller,
-    forwardRef,
     Get,
     Inject,
     Param,
@@ -10,31 +9,34 @@ import {
     Post,
     Put,
     Req,
+    forwardRef,
 } from '@nestjs/common'
-import {Auth} from '~/decorators/auth.decorator'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
-import {CrudController} from '~/controllers/crud.controller'
-import {ContractRequestDto} from '~/api/contracts/dto/contract-request.dto'
-import {ContractResponseDto} from '~/api/contracts/dto/contract-response.dto'
-import {ContractService} from '~/api/contracts/contract.service'
-import {JournalService} from '~/api/journals/journal.service'
-import {Operation as PatchOperation, Operation, patchToEntity} from '~/helpers/patch.helper'
-import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {Request} from 'express'
+
+import {ContractService} from './contract.service'
+import {ContractRequestDto} from './dto/contract-request.dto'
+import {ContractResponseDto} from './dto/contract-response.dto'
+import {ContractSearchDto} from './dto/contract-search.dto'
+
+import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
+import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
-import {PatchDto} from '~/dto/patch.dto'
-import {ExpandHelper} from '~/helpers/expand.helper'
-import {ContractSearchDto} from '~/api/contracts/dto/contract-search.dto'
-import {SearchLogic} from '~/helpers/search-logic.helper'
+import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
-import {LoggerService} from '~/logger/logger.service'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
-import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
+import {Auth} from '~/decorators/auth.decorator'
+import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ExpandHelper} from '~/helpers/expand.helper'
+import {Operation,Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
+import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
+import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
 import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
 const resourceName = 'contracts'

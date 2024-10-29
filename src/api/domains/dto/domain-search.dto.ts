@@ -1,4 +1,4 @@
-import {DomainResponseDto} from '~/api/domains/dto/domain-response.dto'
+import {DomainResponseDto} from './domain-response.dto'
 
 export class DomainSearchDto implements DomainResponseDto {
     domain: string = undefined

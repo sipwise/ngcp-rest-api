@@ -1,7 +1,8 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
+
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
+import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
 
 export class SystemContactResponseDto implements ResponseDto {
     @ApiProperty()

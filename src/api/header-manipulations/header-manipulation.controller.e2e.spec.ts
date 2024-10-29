@@ -1,14 +1,16 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
+import {validate} from 'class-validator'
 import request from 'supertest'
+
+import {HeaderManipulationResponseDto} from './dto/header-manipulation-response.dto'
+import {HeaderManipulationModule} from './header-manipulation.module'
+
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
-import {validate} from 'class-validator'
-import {HeaderManipulationModule} from '~/api/header-manipulations/header-manipulation.module'
-import {HeaderManipulationResponseDto} from '~/api/header-manipulations/dto/header-manipulation-response.dto'
 
 describe('', () => {
     let app: INestApplication

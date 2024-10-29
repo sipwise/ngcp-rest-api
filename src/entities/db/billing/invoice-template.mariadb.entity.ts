@@ -1,4 +1,5 @@
 import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
+
 import {InvoiceTemplateCallDirection, InvoiceTemplateType} from '~/entities/internal/invoice-template.internal.entity'
 
 @Entity({

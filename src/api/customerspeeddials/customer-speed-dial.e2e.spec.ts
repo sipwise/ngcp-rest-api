@@ -1,15 +1,17 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
+import {validate} from 'class-validator'
 import request from 'supertest'
+
+import {CustomerSpeedDialModule} from './customer-speed-dial.module'
+import {CustomerSpeedDialResponseDto} from './dto/customer-speed-dial-response.dto'
+
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
-import {CustomerSpeedDialModule} from '~/api/customerspeeddials/customer-speed-dial.module'
-import {CustomerSpeedDialResponseDto} from '~/api/customerspeeddials/dto/customer-speed-dial-response.dto'
-import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
-import {validate} from 'class-validator'
 
 describe('CustomerSpeedDial', () => {
     let app: INestApplication

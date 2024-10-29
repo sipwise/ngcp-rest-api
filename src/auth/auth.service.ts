@@ -1,13 +1,15 @@
 import {ForbiddenException, Injectable} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
-import {AppService} from '~/app.service'
-import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {compare} from 'bcrypt'
-import {db} from '~/entities'
-import {RbacRole} from '~/config/constants.config'
-import {LoggerService} from '~/logger/logger.service'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
 import Redis, {Cluster} from 'ioredis'
+
+import {AuthResponseDto} from './dto/auth-response.dto'
+
+import {AppService} from '~/app.service'
+import {RbacRole} from '~/config/constants.config'
+import {db} from '~/entities'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
 
 /**
  * `AuthService` provides functionality to authenticate Admins and to sign JWTs for authenticated users

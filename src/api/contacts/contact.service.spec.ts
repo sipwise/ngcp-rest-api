@@ -1,16 +1,18 @@
+import {HttpException, UnprocessableEntityException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
-import {ContactService} from '~/api/contacts/contact.service'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {ExpandModule} from '~/helpers/expand.module'
+
+import {ContactModule} from './contact.module'
+import {ContactService} from './contact.service'
+import {ContactMariadbRepository} from './repositories/contact.mariadb.repository'
+import {ContactMockRepository} from './repositories/contact.mock.repository'
+
 import {AppModule} from '~/app.module'
-import {ContactMockRepository} from '~/api/contacts/repositories/contact.mock.repository'
-import {ContactMariadbRepository} from '~/api/contacts/repositories/contact.mariadb.repository'
-import {ContactModule} from '~/api/contacts/contact.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
-import {HttpException, UnprocessableEntityException} from '@nestjs/common'
 import {ContactType} from '~/entities/internal/contact.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ExpandModule} from '~/helpers/expand.module'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
     readOnly: false,

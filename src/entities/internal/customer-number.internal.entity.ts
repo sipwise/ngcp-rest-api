@@ -1,4 +1,4 @@
-import {VoipNumber} from '~/entities/internal/voip-number.internal.entity'
+import {VoipNumber} from './voip-number.internal.entity'
 
 export interface CustomerNumberInternalEntity {
     id: number

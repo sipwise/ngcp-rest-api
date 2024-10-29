@@ -1,9 +1,10 @@
-import {internal} from '~/entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsNotEmpty, IsOptional} from 'class-validator'
+
 import {ResponseDto} from '~/dto/response.dto'
-import {UrlReference} from '~/types/url-reference.type'
+import {internal} from '~/entities'
 import {UrlReferenceType} from '~/enums/url-reference-type.enum'
+import {UrlReference} from '~/types/url-reference.type'
 
 export class NCOSSetResponseDto implements ResponseDto {
     @IsNotEmpty()

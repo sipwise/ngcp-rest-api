@@ -1,6 +1,7 @@
 import {NotFoundException, UnprocessableEntityException} from '@nestjs/common'
-import {EntityNotFoundError, QueryFailedError, TypeORMError} from 'typeorm'
 import {QueryError} from 'mysql2'
+import {EntityNotFoundError, QueryFailedError, TypeORMError} from 'typeorm'
+
 import errors from '~/localisation/en/errors.json'
 
 export function handleTypeORMError(err: Error): Error {

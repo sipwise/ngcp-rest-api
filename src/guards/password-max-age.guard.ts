@@ -1,9 +1,13 @@
-import {Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException} from '@nestjs/common'
-import {AuthService} from '~/auth/auth.service'
-import {Request} from 'express'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {CanActivate, ExecutionContext, ForbiddenException,Injectable, UnauthorizedException} from '@nestjs/common'
 import {Reflector} from '@nestjs/core'
-import {PublicGuard} from '~/guards/public.guard'
+import {Request} from 'express'
+
+import {PublicGuard} from './public.guard'
+
+import {AuthService} from '~/auth/auth.service'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+
+
 
 @Injectable()
 export class PasswordMaxAgeGuard implements CanActivate {

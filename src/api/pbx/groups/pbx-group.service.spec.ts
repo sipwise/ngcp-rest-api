@@ -1,12 +1,14 @@
 import {Test, TestingModule} from '@nestjs/testing'
-import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {ExpandModule} from '~/helpers/expand.module'
+
+import {PbxGroupModule} from './pbx-group.module'
+import {PbxGroupService} from './pbx-group.service'
+import {PbxGroupMariadbRepository} from './repositories/pbx-group.mariadb.repository'
+import {PbxGroupMockRepository} from './repositories/pbx-group.mock.repository'
+
 import {AppModule} from '~/app.module'
-import {PbxGroupMockRepository} from '~/api/pbx/groups/repositories/pbx-group.mock.repository'
-import {PbxGroupModule} from '~/api/pbx/groups/pbx-group.module'
-import {PbxGroupMariadbRepository} from '~/api/pbx/groups/repositories/pbx-group.mariadb.repository'
-import {PbxGroupService} from '~/api/pbx/groups/pbx-group.service'
+import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
+import {ExpandModule} from '~/helpers/expand.module'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
     readOnly: false,

@@ -1,6 +1,8 @@
 import {promises as fs} from 'fs'
 import path from 'path'
+
 import {Injectable} from '@nestjs/common'
+
 import {License as LicenseType, procLicensesLocation} from '~/config/constants.config'
 import {License} from '~/license/license.service'
 

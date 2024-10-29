@@ -1,6 +1,6 @@
-import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export interface ContractRepository {
     create(entity: internal.Contract[], sr: ServiceRequest): Promise<number[]>

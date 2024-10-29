@@ -1,12 +1,14 @@
 import {Test, TestingModule} from '@nestjs/testing'
-import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {ExpandModule} from '~/helpers/expand.module'
+
+import {JournalModule} from './journal.module'
+import {JournalService} from './journal.service'
+import {JournalMariadbRepository} from './repositories/journal.mariadb.repository'
+import {JournalMockRepository} from './repositories/journal.mock.repository'
+
 import {AppModule} from '~/app.module'
-import {JournalMockRepository} from '~/api/journals/repositories/journal.mock.repository'
-import {JournalMariadbRepository} from '~/api/journals/repositories/journal.mariadb.repository'
-import {JournalModule} from '~/api/journals/journal.module'
-import {JournalService} from '~/api/journals/journal.service'
+import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
+import {ExpandModule} from '~/helpers/expand.module'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
     readOnly: false,

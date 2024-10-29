@@ -1,7 +1,8 @@
-import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {ContactOptions} from './contact-options.interface'
+
 import {internal} from '~/entities'
-import {ContactOptions} from '~/api/contacts/interfaces/contact-options.interface'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export interface ContactRepository {
     create(contacts: internal.Contact[], sr: ServiceRequest): Promise<number[]>

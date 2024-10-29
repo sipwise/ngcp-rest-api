@@ -1,36 +1,39 @@
-import {ApiBody, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
-import {Auth} from '~/decorators/auth.decorator'
 import {
     Body,
     Controller,
     Delete,
-    forwardRef,
     Get,
     Inject,
     Param,
     ParseIntPipe,
     Post,
     Req,
+    forwardRef,
 } from '@nestjs/common'
-import {CrudController} from '~/controllers/crud.controller'
-import {DomainRequestDto} from '~/api/domains/dto/domain-request.dto'
-import {DomainResponseDto} from '~/api/domains/dto/domain-response.dto'
-import {DomainService} from '~/api/domains/domain.service'
+import {ApiBody, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {Request} from 'express'
+import {number} from 'yargs'
+
+import {DomainService} from './domain.service'
+import {DomainRequestDto} from './dto/domain-request.dto'
+import {DomainResponseDto} from './dto/domain-response.dto'
+import {DomainSearchDto} from './dto/domain-search.dto'
+
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
-import {Roles} from '~/decorators/roles.decorator'
-import {ExpandHelper} from '~/helpers/expand.helper'
-import {DomainSearchDto} from '~/api/domains/dto/domain-search.dto'
-import {SearchLogic} from '~/helpers/search-logic.helper'
+import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
-import {LoggerService} from '~/logger/logger.service'
+import {Auth} from '~/decorators/auth.decorator'
+import {Roles} from '~/decorators/roles.decorator'
+import {ExpandHelper} from '~/helpers/expand.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {Request} from 'express'
-import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
+import {LoggerService} from '~/logger/logger.service'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
-import {number} from 'yargs'
+import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
+
 
 const resourceName = 'domains'
 

@@ -1,11 +1,15 @@
 import {Injectable, UnauthorizedException, UnprocessableEntityException} from '@nestjs/common'
 import {PassportStrategy} from '@nestjs/passport'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {Request} from 'express'
 import {BasicStrategy} from 'passport-http'
 import {Strategy} from 'passport-local'
-import {AuthService} from '~/auth/auth.service'
-import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
-import {Request} from 'express'
+
+
+import {AuthService} from './auth.service'
+import {AuthResponseDto} from './dto/auth-response.dto'
+
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+
 
 /**
  * Defines authentication function format

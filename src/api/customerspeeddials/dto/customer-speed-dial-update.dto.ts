@@ -1,6 +1,7 @@
-import {internal} from '~/entities'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsNotEmpty} from 'class-validator'
+
+import {internal} from '~/entities'
 
 export class CustomerSpeedDialUpdateDto {
     @IsNotEmpty()

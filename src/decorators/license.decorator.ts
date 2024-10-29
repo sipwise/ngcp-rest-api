@@ -1,4 +1,5 @@
-import {applyDecorators, SetMetadata, UseGuards} from '@nestjs/common'
+import {SetMetadata, UseGuards,applyDecorators} from '@nestjs/common'
+
 import {LicenseGuard} from '~/guards/license.guard'
 
 export const License = (...licenses: (string | false)[]): ClassDecorator & MethodDecorator => {

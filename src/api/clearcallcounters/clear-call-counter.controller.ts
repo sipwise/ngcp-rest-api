@@ -1,14 +1,18 @@
 import {Controller, Get, Post, Req} from '@nestjs/common'
 import {ApiCreatedResponse, ApiTags} from '@nestjs/swagger'
-import {CrudController} from '~/controllers/crud.controller'
-import {Auth} from '~/decorators/auth.decorator'
-import {RbacRole} from '~/config/constants.config'
-import {LoggerService} from '~/logger/logger.service'
-import {ClearCallCounterService} from '~/api/clearcallcounters/clear-call-counter.service'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {ClearCallCounterResponseDto} from '~/api/clearcallcounters/dto/clear-call-counter-response.dto'
 import {Request} from 'express'
+
+import {ClearCallCounterService} from './clear-call-counter.service'
+import {ClearCallCounterResponseDto} from './dto/clear-call-counter-response.dto'
+
+import {RbacRole} from '~/config/constants.config'
+import {CrudController} from '~/controllers/crud.controller'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {Auth} from '~/decorators/auth.decorator'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
+
+
 
 const resourceName = 'clearcallcounters'
 

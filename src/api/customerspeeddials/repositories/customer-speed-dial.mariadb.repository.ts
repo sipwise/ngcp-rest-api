@@ -1,14 +1,15 @@
 import {Injectable, NotFoundException} from '@nestjs/common'
-import {db, internal} from '~/entities'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {CustomerSpeedDialSearchDto} from '~/api/customerspeeddials/dto/customer-speed-dial-search.dto'
-import {configureQueryBuilder} from '~/helpers/query-builder.helper'
-import {CustomerSpeedDialRepository} from '~/api/customerspeeddials/interfaces/customer-speed-dial.repository'
-import {SearchLogic} from '~/helpers/search-logic.helper'
-import {LoggerService} from '~/logger/logger.service'
 import {SelectQueryBuilder} from 'typeorm'
-import {FilterBy} from '~/interfaces/filter-by.interface'
+
+import {CustomerSpeedDialSearchDto} from '~/api/customerspeeddials/dto/customer-speed-dial-search.dto'
+import {CustomerSpeedDialRepository} from '~/api/customerspeeddials/interfaces/customer-speed-dial.repository'
+import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {configureQueryBuilder} from '~/helpers/query-builder.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {FilterBy} from '~/interfaces/filter-by.interface'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
 interface SpeedDialOptions {

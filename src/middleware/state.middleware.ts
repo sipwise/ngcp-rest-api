@@ -1,5 +1,6 @@
 import {Injectable, NestMiddleware, ServiceUnavailableException} from '@nestjs/common'
 import {NextFunction, Request, Response} from 'express'
+
 import {AppService} from '~/app.service'
 
 @Injectable()

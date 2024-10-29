@@ -1,8 +1,9 @@
 import {NotFoundException} from '@nestjs/common'
-import {internal} from '~/entities'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {ProductClass} from '~/entities/internal/product.internal.entity'
+
 import {ProductRepository} from '~/api/products/interfaces/product.repository'
+import {internal} from '~/entities'
+import {ProductClass} from '~/entities/internal/product.internal.entity'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 interface ProductMockDB {
     [key: number]: internal.Product

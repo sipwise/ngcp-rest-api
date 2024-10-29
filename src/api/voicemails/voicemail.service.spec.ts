@@ -1,12 +1,14 @@
-import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {Test, TestingModule} from '@nestjs/testing'
-import {ExpandModule} from '~/helpers/expand.module'
+
+import {VoicemailMariadbRepository} from './repositories/voicemail.mariadb.repository'
+import {VoicemailMockRepository} from './repositories/voicemail.mock.repository'
+import {VoicemailModule} from './voicemail.module'
+import {VoicemailService} from './voicemail.service'
+
 import {AppModule} from '~/app.module'
-import {VoicemailModule} from '~/api/voicemails/voicemail.module'
-import {VoicemailService} from '~/api/voicemails/voicemail.service'
-import {VoicemailMockRepository} from '~/api/voicemails/repositories/voicemail.mock.repository'
-import {VoicemailMariadbRepository} from '~/api/voicemails/repositories/voicemail.mariadb.repository'
+import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
+import {ExpandModule} from '~/helpers/expand.module'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
     readOnly: false,

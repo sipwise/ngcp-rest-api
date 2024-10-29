@@ -1,10 +1,11 @@
-import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {Injectable} from '@nestjs/common'
+
+import {ProductSearchDto} from '~/api/products/dto/product-search.dto'
+import {ProductRepository} from '~/api/products/interfaces/product.repository'
 import {db, internal} from '~/entities'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
-import {ProductSearchDto} from '~/api/products/dto/product-search.dto'
-import {Injectable} from '@nestjs/common'
-import {ProductRepository} from '~/api/products/interfaces/product.repository'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
 

@@ -1,12 +1,14 @@
 import {Controller, Get, Req} from '@nestjs/common'
 import {ApiTags} from '@nestjs/swagger'
-import {PbxResponseDto} from '~/api/pbx/dto/pbx-response.dto'
-import {CrudController} from '~/controllers/crud.controller'
-import {Auth} from '~/decorators/auth.decorator'
-import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
-import {LoggerService} from '~/logger/logger.service'
+
+import {PbxResponseDto} from './dto/pbx-response.dto'
+
 import {License as LicenseType, RbacRole} from '~/config/constants.config'
+import {CrudController} from '~/controllers/crud.controller'
+import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {Auth} from '~/decorators/auth.decorator'
 import {License} from '~/decorators/license.decorator'
+import {LoggerService} from '~/logger/logger.service'
 
 const resourceName = 'pbx'
 

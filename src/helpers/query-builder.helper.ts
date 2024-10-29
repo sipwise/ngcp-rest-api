@@ -1,8 +1,10 @@
-import {BaseEntity, SelectQueryBuilder} from 'typeorm'
-import {SearchLogic} from '~/helpers/search-logic.helper'
-import {ParamsDictionary} from '~/interfaces/service-request.interface'
 import {BadRequestException} from '@nestjs/common'
+import {BaseEntity, SelectQueryBuilder} from 'typeorm'
+
+import {SearchLogic} from './search-logic.helper'
+
 import {reservedQueryParams} from '~/config/constants.config'
+import {ParamsDictionary} from '~/interfaces/service-request.interface'
 
 export function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic): void {
     addJoinFilterToQueryBuilder(qb, params, searchLogic)

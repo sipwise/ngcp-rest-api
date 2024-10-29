@@ -1,12 +1,13 @@
+import {NotFoundException} from '@nestjs/common'
+
+import {ContactOptions} from '~/api/contacts/interfaces/contact-options.interface'
 import {ContactRepository} from '~/api/contacts/interfaces/contact.repository'
 import {internal} from '~/entities'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {ContactStatus, ContactType} from '~/entities/internal/contact.internal.entity'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
-import {NotFoundException} from '@nestjs/common'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
-import {ContactOptions} from '~/api/contacts/interfaces/contact-options.interface'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 interface ContactMockDB {
     [key: number]: internal.Contact

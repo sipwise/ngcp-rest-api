@@ -1,4 +1,5 @@
-import {ContractResponseDto} from '~/api/contracts/dto/contract-response.dto'
+import {ContractResponseDto} from './contract-response.dto'
+
 import {
     ContractBillingProfileDefinition,
     ContractStatus,

@@ -1,6 +1,7 @@
-import {Logger as TypeormLogger, LoggerOptions, QueryRunner} from 'typeorm'
 import {Injectable} from '@nestjs/common'
+import {Logger as TypeormLogger, LoggerOptions, QueryRunner} from 'typeorm'
 import winston from 'winston'
+
 import {winstonLoggerConfig} from '~/config/logger.config'
 
 @Injectable()

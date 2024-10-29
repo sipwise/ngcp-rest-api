@@ -1,16 +1,18 @@
 import {Body, Controller, Post, Req} from '@nestjs/common'
 import {ApiBody, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+
+import {PasswordChangeRequestDto} from './dto/password-change-request.dto'
+import {PasswordChangeResponseDto} from './dto/password-change-response.dto'
+import {PasswordChangeService} from './password-change.service'
+
+import {JournalService} from '~/api/journals/journal.service'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
+import {AuthOptions} from '~/decorators/auth-options.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
-import {JournalService} from '~/api/journals/journal.service'
-import {PasswordChangeRequestDto} from '~/api/auth/password/change/dto/password-change-request.dto'
-import {PasswordChangeResponseDto} from '~/api/auth/password/change/dto/password-change-response.dto'
-import {PasswordChangeService} from '~/api/auth/password/change/password-change.service'
-import {AuthOptions} from '~/decorators/auth-options.decorator'
 
 const resourceName = 'auth/password/change'
 

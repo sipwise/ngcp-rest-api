@@ -1,12 +1,14 @@
-import {ApiTags} from '@nestjs/swagger'
-import {Auth} from '~/decorators/auth.decorator'
 import {Controller, Get, Req} from '@nestjs/common'
-import {CrudController} from '~/controllers/crud.controller'
-import {HeaderManipulationResponseDto} from '~/api/header-manipulations/dto/header-manipulation-response.dto'
-import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
-import {LoggerService} from '~/logger/logger.service'
+import {ApiTags} from '@nestjs/swagger'
+
+import {HeaderManipulationResponseDto} from './dto/header-manipulation-response.dto'
+
 import {License as LicenseType, RbacRole} from '~/config/constants.config'
+import {CrudController} from '~/controllers/crud.controller'
+import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {Auth} from '~/decorators/auth.decorator'
 import {License} from '~/decorators/license.decorator'
+import {LoggerService} from '~/logger/logger.service'
 
 const resourceName = 'header-manipulations'
 

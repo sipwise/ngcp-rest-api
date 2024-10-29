@@ -1,6 +1,7 @@
-import {IsNumberString, IsOptional} from 'class-validator'
-import {RequestDto} from '~/dto/request.dto'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {IsNumberString, IsOptional} from 'class-validator'
+
+import {RequestDto} from '~/dto/request.dto'
 
 export class FileshareRequestDto implements RequestDto {
     @ApiProperty({

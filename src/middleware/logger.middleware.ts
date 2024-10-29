@@ -1,9 +1,10 @@
 import {Injectable, NestMiddleware} from '@nestjs/common'
 import {NextFunction, Request, Response} from 'express'
+
 import Context from '~/helpers/context.helper'
+import {deepCopy} from '~/helpers/deep-copy.helper'
 import {obfuscatePasswordJSON} from '~/helpers/password-obfuscator.helper'
 import {LoggerService} from '~/logger/logger.service'
-import {deepCopy} from '~/helpers/deep-copy.helper'
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {

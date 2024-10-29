@@ -1,7 +1,8 @@
 import {ExecutionContext, Injectable} from '@nestjs/common'
 import {Reflector} from '@nestjs/core'
 import {AuthGuard} from '@nestjs/passport'
-import {PublicGuard} from '~/guards/public.guard'
+
+import {PublicGuard} from './public.guard'
 
 @Injectable()
 export class OmniGuard extends AuthGuard(['jwt', 'cert-header', 'basic', 'local']) {

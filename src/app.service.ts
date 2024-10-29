@@ -1,7 +1,8 @@
 import {Inject, Injectable, Logger} from '@nestjs/common'
+import {Cluster,Redis} from 'ioredis'
 import {DataSource, EntityManager, EntityTarget, Repository} from 'typeorm'
-import {Redis, Cluster} from 'ioredis'
-import {config as AppConfig} from '~/config/main.config'
+
+import {config as AppConfig} from './config/main.config'
 
 @Injectable()
 export class AppService {

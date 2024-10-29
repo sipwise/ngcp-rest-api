@@ -1,5 +1,6 @@
 import {BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
-import {VoipSubscriber} from '~/entities/db/provisioning/voip-subscriber.mariadb.entity'
+
+import {VoipSubscriber} from './voip-subscriber.mariadb.entity'
 
 @Entity({
     name: 'voip_pbx_groups',

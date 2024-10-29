@@ -1,13 +1,17 @@
 import {ForbiddenException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {I18nService} from 'nestjs-i18n'
+
+import {ResellerMariadbRepository} from './repositories/reseller.mariadb.repository'
+
 import {AppService} from '~/app.service'
 import {internal} from '~/entities'
-import {ResellerMariadbRepository} from '~/api/resellers/repositories/reseller.mariadb.repository'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
-import {CrudService} from '~/interfaces/crud-service.interface'
-import {LoggerService} from '~/logger/logger.service'
-import {I18nService} from 'nestjs-i18n'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {CrudService} from '~/interfaces/crud-service.interface'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
+
+
 
 @Injectable()
 export class ResellerService implements CrudService<internal.Reseller> {

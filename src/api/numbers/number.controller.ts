@@ -1,15 +1,17 @@
-import {Auth} from '~/decorators/auth.decorator'
-import {RbacRole} from '~/config/constants.config'
+import {Controller, Get, Inject, Param, ParseIntPipe, Req, forwardRef} from '@nestjs/common'
 import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
-import {Controller, forwardRef, Get, Inject, Param, ParseIntPipe, Req} from '@nestjs/common'
-import {CrudController} from '~/controllers/crud.controller'
-import {LoggerService} from '~/logger/logger.service'
+
+import {NumberResponseDto} from './dto/number-response.dto'
+import {NumberService} from './number.service'
+
 import {JournalService} from '~/api/journals/journal.service'
+import {AppService} from '~/app.service'
+import {RbacRole} from '~/config/constants.config'
+import {CrudController} from '~/controllers/crud.controller'
+import {Auth} from '~/decorators/auth.decorator'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {AppService} from '~/app.service'
-import {NumberResponseDto} from '~/api/numbers/dto/number-response.dto'
-import {NumberService} from '~/api/numbers/number.service'
+import {LoggerService} from '~/logger/logger.service'
 
 const resourceName = 'numbers'
 

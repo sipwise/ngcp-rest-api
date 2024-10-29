@@ -1,16 +1,18 @@
 import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
 import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+
+import {PbxGroupResponseDto} from './dto/pbx-group-response.dto'
+import {PbxGroupService} from './pbx-group.service'
+
 import {AdminResponseDto} from '~/api/admins/dto/admin-response.dto'
-import {PbxGroupResponseDto} from '~/api/pbx/groups/dto/pbx-group-response.dto'
-import {PbxGroupService} from '~/api/pbx/groups/pbx-group.service'
-import {CrudController} from '~/controllers/crud.controller'
-import {Auth} from '~/decorators/auth.decorator'
-import {SearchLogic} from '~/helpers/search-logic.helper'
-import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
-import {LoggerService} from '~/logger/logger.service'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {License as LicenseType, RbacRole} from '~/config/constants.config'
+import {CrudController} from '~/controllers/crud.controller'
+import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {Auth} from '~/decorators/auth.decorator'
 import {License} from '~/decorators/license.decorator'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
 
 const resourceName = 'pbx/groups'
 

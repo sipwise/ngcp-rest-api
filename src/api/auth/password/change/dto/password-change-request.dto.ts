@@ -1,6 +1,7 @@
 import {ApiPropertyOptional} from '@nestjs/swagger'
-import {RequestDto} from '~/dto/request.dto'
+
 import {IsValidPassword} from '~/decorators/is-valid-password.decorator'
+import {RequestDto} from '~/dto/request.dto'
 
 export class PasswordChangeRequestDto implements RequestDto {
 

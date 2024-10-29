@@ -1,6 +1,6 @@
-import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export interface NCOSSetRepository {
     create(sd: internal.NCOSSet[], sr: ServiceRequest): Promise<internal.NCOSSet[]>

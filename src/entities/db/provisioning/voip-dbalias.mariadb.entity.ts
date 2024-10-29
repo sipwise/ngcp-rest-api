@@ -1,6 +1,7 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
-import {VoipDomain} from '~/entities/db/provisioning/voip-domain.mariadb.entity'
-import {VoipSubscriber} from '~/entities/db/provisioning/voip-subscriber.mariadb.entity'
+
+import {VoipDomain} from './voip-domain.mariadb.entity'
+import {VoipSubscriber} from './voip-subscriber.mariadb.entity'
 
 @Entity({
     name: 'voip_dbaliases',

@@ -1,11 +1,12 @@
+import {NotFoundException} from '@nestjs/common'
+
 import {ContractRepository} from '~/api/contracts/interfaces/contract.respository'
 import {internal} from '~/entities'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {ContractBillingProfileDefinition, ContractStatus, ContractType} from '~/entities/internal/contract.internal.entity'
 import {ContactStatus} from '~/entities/internal/contact.internal.entity'
-import {NotFoundException} from '@nestjs/common'
+import {ContractBillingProfileDefinition, ContractStatus, ContractType} from '~/entities/internal/contract.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 interface ContractMockDB {
     [key: number]: internal.Contract

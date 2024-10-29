@@ -1,9 +1,11 @@
-import {InterceptorModule} from '~/interceptors/interceptor.module'
 import {Module} from '@nestjs/common'
-import {VoicemailController} from '~/api/voicemails/voicemail.controller'
-import {VoicemailService} from '~/api/voicemails/voicemail.service'
+
+import {VoicemailMariadbRepository} from './repositories/voicemail.mariadb.repository'
+import {VoicemailController} from './voicemail.controller'
+import {VoicemailService} from './voicemail.service'
+
 import {ExpandModule} from '~/helpers/expand.module'
-import {VoicemailMariadbRepository} from '~/api/voicemails/repositories/voicemail.mariadb.repository'
+import {InterceptorModule} from '~/interceptors/interceptor.module'
 
 @Module({
     imports: [InterceptorModule, ExpandModule],

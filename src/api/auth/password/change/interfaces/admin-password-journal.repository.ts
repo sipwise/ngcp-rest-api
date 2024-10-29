@@ -1,5 +1,5 @@
-import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {internal} from '~/entities'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export interface AdminPasswordJournalRepository {
     create(journals: internal.AdminPasswordJournal[], sr: ServiceRequest): Promise<number[]>

@@ -1,7 +1,8 @@
-import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {AdminOptions} from './admin-options.interface'
+
 import {internal} from '~/entities'
-import {AdminOptions} from '~/api/admins/interfaces/admin-options.interface'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export interface AdminRepository {
     create(admins: internal.Admin[]): Promise<number[]>

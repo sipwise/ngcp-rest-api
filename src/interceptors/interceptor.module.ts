@@ -1,9 +1,11 @@
-import {forwardRef, Module} from '@nestjs/common'
+import {Module,forwardRef} from '@nestjs/common'
+
+import {LoggingInterceptor} from './logging.interceptor'
+
 import {JournalModule} from '~/api/journals/journal.module'
+import {JournalService} from '~/api/journals/journal.service'
 import {LoggerModule} from '~/logger/logger.module'
 import {LoggerService} from '~/logger/logger.service'
-import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
-import {JournalService} from '~/api/journals/journal.service'
 
 @Module({
     imports: [

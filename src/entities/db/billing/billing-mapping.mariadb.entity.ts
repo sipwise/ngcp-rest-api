@@ -1,7 +1,9 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
-import {Contract} from '~/entities/db/billing/contract.mariadb.entity'
-import {Product} from '~/entities/db/billing/product.mariadb.entity'
-import {BillingNetwork} from '~/entities/db/billing/billing-network.mariadb.entity'
+
+import {BillingNetwork} from './billing-network.mariadb.entity'
+import {Contract} from './contract.mariadb.entity'
+import {Product} from './product.mariadb.entity'
+
 import {internal} from '~/entities'
 
 @Entity({

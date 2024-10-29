@@ -1,8 +1,11 @@
-import {internal} from '~/entities'
-import {RbacRole} from '~/config/constants.config'
-import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+
+import {RbacRole} from '~/config/constants.config'
 import {ResponseDto} from '~/dto/response.dto'
+import {internal} from '~/entities'
+import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
+
+
 
 export class CustomerContactResponseDto implements ResponseDto {
     @ApiProperty()

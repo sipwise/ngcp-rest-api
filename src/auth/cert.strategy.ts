@@ -1,7 +1,8 @@
 import {Injectable, UnauthorizedException} from '@nestjs/common'
 import {PassportStrategy} from '@nestjs/passport'
 import {Strategy} from 'passport-http-header-strategy'
-import {AuthService} from '~/auth/auth.service'
+
+import {AuthService} from './auth.service'
 
 /**
  * Implementation of the HTTP header strategy

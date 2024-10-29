@@ -1,12 +1,14 @@
 import {Test, TestingModule} from '@nestjs/testing'
-import {DomainService} from '~/api/domains/domain.service'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
+
+import {DomainModule} from './domain.module'
+import {DomainService} from './domain.service'
+import {DomainMariadbRepository} from './repositories/domain.mariadb.repository'
+import {DomainMockRepository} from './repositories/domain.mock.repository'
+
 import {AppModule} from '~/app.module'
-import {DomainMockRepository} from '~/api/domains/repositories/domain.mock.repository'
-import {DomainModule} from '~/api/domains/domain.module'
-import {DomainMariadbRepository} from '~/api/domains/repositories/domain.mariadb.repository'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {deepCopy} from '~/helpers/deep-copy.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
     readOnly: false,

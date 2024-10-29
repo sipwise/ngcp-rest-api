@@ -1,15 +1,17 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
+
+import {HeaderManipulationRuleResponseDto} from './dto/header-manipulation-rule-response.dto'
+import {HeaderManipulationRuleModule} from './header-manipulation-rule.module'
+
+import {HeaderManipulationSetModule} from '~/api/header-manipulations/sets/header-manipulation-set.module'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
-import {HeaderManipulationSetModule} from '~/api/header-manipulations/sets/header-manipulation-set.module'
-import {HeaderManipulationRuleModule} from '~/api/header-manipulations/sets/rules/header-manipulation-rule.module'
-import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
-import {HeaderManipulationRuleResponseDto} from '~/api/header-manipulations/sets/rules/dto/header-manipulation-rule-response.dto'
 
 describe('Rule', () => {
     let app: INestApplication

@@ -1,7 +1,8 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
+
+import {internal} from '~/entities'
 import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing'
 import {VoipSubscriber as ProvisioningVoipSubscriber} from '~/entities/db/provisioning'
-import {internal} from '~/entities'
 
 @Entity({
     name: 'voicemail_spool',

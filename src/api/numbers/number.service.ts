@@ -1,10 +1,12 @@
-import {CrudService} from '~/interfaces/crud-service.interface'
-import {internal} from '~/entities'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {Inject, Injectable} from '@nestjs/common'
-import {LoggerService} from '~/logger/logger.service'
+
+import {NumberMariadbRepository} from './repositories/number.mariadb.repository'
+
 import {RbacRole} from '~/config/constants.config'
-import {NumberMariadbRepository} from '~/api/numbers/repositories/number.mariadb.repository'
+import {internal} from '~/entities'
+import {CrudService} from '~/interfaces/crud-service.interface'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
 
 @Injectable()
 export class NumberService implements CrudService<internal.VoipNumber> {

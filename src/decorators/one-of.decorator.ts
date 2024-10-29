@@ -1,4 +1,4 @@
-import {ValidationArguments, registerDecorator} from 'class-validator'
+import {ValidationArguments,registerDecorator} from 'class-validator'
 
 export function OneOf(otherProperty: string) {
     return function (object: unknown, propertyName: string): void {

@@ -1,14 +1,16 @@
 import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
-import {internal} from '~/entities'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {FilterBy, HeaderManipulationRuleMariadbRepository} from '~/api/header-manipulations/sets/rules/repositories/header-manipulation-rule.mariadb.repository'
-import {CrudService} from '~/interfaces/crud-service.interface'
-import {LoggerService} from '~/logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
-import {Dictionary} from '~/helpers/dictionary.helper'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
-import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+
+import {FilterBy, HeaderManipulationRuleMariadbRepository} from './repositories/header-manipulation-rule.mariadb.repository'
+
 import {HeaderManipulationSetMariadbRepository} from '~/api/header-manipulations/sets/repositories/header-manipulation-set.mariadb.repository'
+import {internal} from '~/entities'
+import {Dictionary} from '~/helpers/dictionary.helper'
+import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {CrudService} from '~/interfaces/crud-service.interface'
+import {ErrorMessage} from '~/interfaces/error-message.interface'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
 
 @Injectable()
 export class HeaderManipulationRuleService implements CrudService<internal.HeaderRule> {

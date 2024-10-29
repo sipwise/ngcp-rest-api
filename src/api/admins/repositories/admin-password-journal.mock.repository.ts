@@ -1,6 +1,6 @@
 
-import {internal} from '~/entities'
 import {AdminPasswordJournalRepository} from '~/api/admins/interfaces/admin-password-journal.repository'
+import {internal} from '~/entities'
 
 interface AdminPasswordJournalMockDB {
     [key: number]: internal.AdminPasswordJournal

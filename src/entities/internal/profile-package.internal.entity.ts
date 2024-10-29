@@ -1,4 +1,4 @@
-import {ProfilePackageSet} from '~/entities/internal/profile-package-set.internal.entity'
+import {ProfilePackageSet} from './profile-package-set.internal.entity'
 
 export enum IntervalUnit {
     Minute = 'minute',

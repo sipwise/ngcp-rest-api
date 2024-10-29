@@ -1,5 +1,6 @@
 import {Injectable} from '@nestjs/common'
 import {Interval} from '@nestjs/schedule'
+
 import {AppService} from '~/app.service'
 import {LoggerService} from '~/logger/logger.service'
 

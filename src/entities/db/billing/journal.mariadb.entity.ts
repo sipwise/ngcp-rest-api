@@ -1,6 +1,8 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
-import {Reseller} from '~/entities/db/billing/reseller.mariadb.entity'
-import {AclRole} from '~/entities/db/billing/acl-role.mariadb.entity'
+
+import {AclRole} from './acl-role.mariadb.entity'
+import {Reseller} from './reseller.mariadb.entity'
+
 import {internal} from '~/entities'
 
 @Entity({

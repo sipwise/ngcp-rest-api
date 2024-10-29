@@ -1,19 +1,21 @@
 import {HttpStatus, INestApplication} from '@nestjs/common'
+import {Test} from '@nestjs/testing'
+import {validate} from 'class-validator'
+import request from 'supertest'
+
+import {CustomerModule} from './customer.module'
+import {CustomerRequestDto} from './dto/customer-request.dto'
+import {CustomerResponseDto} from './dto/customer-response.dto'
+
+import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
-import {Test} from '@nestjs/testing'
-import {AppModule} from '~/app.module'
-import {ValidateInputPipe} from '~/pipes/validate.pipe'
-import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
-import request from 'supertest'
-import {ContractStatus as CustomerStatus} from '~/entities/internal/contract.internal.entity'
-import {validate} from 'class-validator'
-import {Operation as PatchOperation} from '~/helpers/patch.helper'
-import {CustomerModule} from '~/api/customers/customer.module'
-import {CustomerRequestDto} from '~/api/customers/dto/customer-request.dto'
-import {CustomerType} from '~/entities/internal/customer.internal.entity'
-import {CustomerResponseDto} from '~/api/customers/dto/customer-response.dto'
 import {internal} from '~/entities'
+import {ContractStatus as CustomerStatus} from '~/entities/internal/contract.internal.entity'
+import {CustomerType} from '~/entities/internal/customer.internal.entity'
+import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 describe('CustomerController', () => {
     let app: INestApplication

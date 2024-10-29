@@ -1,6 +1,6 @@
+import {utilities} from 'nest-winston'
 import winston, {LoggerOptions} from 'winston'
 import {Syslog} from 'winston-syslog'
-import {utilities} from 'nest-winston'
 
 export const winstonLoggerConfig: LoggerOptions = {
     // TODO: Set level when template supports log_level setting

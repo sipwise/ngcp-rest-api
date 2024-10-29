@@ -1,19 +1,22 @@
+import {NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
-import {SystemContactService} from '~/api/systemcontacts/system-contact.service'
-import {ContactMockRepository} from '~/api/contacts/repositories/contact.mock.repository'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {ExpandModule} from '~/helpers/expand.module'
-import {AppModule} from '~/app.module'
+
+
+import {SystemContactRequestDto} from './dto/system-contact-request.dto'
+import {SystemContactModule} from './system-contact.module'
+import {SystemContactService} from './system-contact.service'
+
 import {ContactMariadbRepository} from '~/api/contacts/repositories/contact.mariadb.repository'
-import {SystemContactModule} from '~/api/systemcontacts/system-contact.module'
+import {ContactMockRepository} from '~/api/contacts/repositories/contact.mock.repository'
+import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
-import {NotFoundException, UnprocessableEntityException} from '@nestjs/common'
-import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
 import {ContactStatus, ContactType} from '~/entities/internal/contact.internal.entity'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {SystemContactRequestDto} from '~/api/systemcontacts/dto/system-contact-request.dto'
+import {ExpandModule} from '~/helpers/expand.module'
+import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
     readOnly: false,

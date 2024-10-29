@@ -1,15 +1,17 @@
-import {RbacRole} from '~/config/constants.config'
-import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
-import {Auth} from '~/decorators/auth.decorator'
-import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
+import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+
+import {JournalResponseDto} from './dto/journal-response.dto'
+import {JournalSearchDto} from './dto/journal-search.dto'
+import {JournalService} from './journal.service'
+
 import {AppService} from '~/app.service'
-import {JournalService} from '~/api/journals/journal.service'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {ExpandHelper} from '~/helpers/expand.helper'
-import {JournalSearchDto} from '~/api/journals/dto/journal-search.dto'
-import {SearchLogic} from '~/helpers/search-logic.helper'
+import {RbacRole} from '~/config/constants.config'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {Auth} from '~/decorators/auth.decorator'
+import {ExpandHelper} from '~/helpers/expand.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
 @Auth(

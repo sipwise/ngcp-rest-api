@@ -1,7 +1,9 @@
 import {StreamableFile} from '@nestjs/common'
-import {Operation as PatchOperation} from '~/helpers/patch.helper'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
+
+import {ServiceRequest} from './service-request.interface'
+
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {Operation as PatchOperation} from '~/helpers/patch.helper'
 
 export interface CrudService<InternalEntity> {
     create?(entities: InternalEntity[], sr: ServiceRequest, file?: Express.Multer.File): Promise<InternalEntity[]>

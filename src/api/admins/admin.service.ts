@@ -1,16 +1,18 @@
-import {AppService} from '~/app.service'
 import {ForbiddenException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {AdminMariadbRepository} from '~/api/admins/repositories/admin.mariadb.repository'
-import {internal} from '~/entities'
-import {AclRoleRepository} from '~/repositories/acl-role.repository'
-import {LoggerService} from '~/logger/logger.service'
 import {I18nService} from 'nestjs-i18n'
-import {AdminOptions} from '~/api/admins/interfaces/admin-options.interface'
-import {Dictionary} from '~/helpers/dictionary.helper'
+
+import {AdminOptions} from './interfaces/admin-options.interface'
+import {AdminPasswordJournalMariadbRepository} from './repositories/admin-password-journal.mariadb.repository'
+import {AdminMariadbRepository} from './repositories/admin.mariadb.repository'
+
+import {AppService} from '~/app.service'
 import {RbacRole} from '~/config/constants.config'
-import {AdminPasswordJournalMariadbRepository} from '~/api/admins/repositories/admin-password-journal.mariadb.repository'
+import {internal} from '~/entities'
 import {AdminPasswordJournal} from '~/entities/internal'
+import {Dictionary} from '~/helpers/dictionary.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
+import {AclRoleRepository} from '~/repositories/acl-role.repository'
 
 @Injectable()
 export class AdminService { //} implements CrudService<internal.Admin> {

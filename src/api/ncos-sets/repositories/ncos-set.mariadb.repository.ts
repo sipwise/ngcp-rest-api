@@ -1,14 +1,15 @@
 import {Injectable, NotFoundException} from '@nestjs/common'
-import {db, internal} from '~/entities'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
-import {NCOSSetSearchDto} from '~/api/ncos-sets/dto/ncos-set-search.dto'
-import {configureQueryBuilder} from '~/helpers/query-builder.helper'
-import {NCOSSetRepository} from '~/api/ncos-sets/interfaces/ncos-set.repository'
-import {SearchLogic} from '~/helpers/search-logic.helper'
-import {LoggerService} from '~/logger/logger.service'
 import {SelectQueryBuilder} from 'typeorm'
+
 import {NCOSSetLevelSearchDto} from '~/api/ncos-sets/dto/ncos-set-level-search.dto'
+import {NCOSSetSearchDto} from '~/api/ncos-sets/dto/ncos-set-search.dto'
+import {NCOSSetRepository} from '~/api/ncos-sets/interfaces/ncos-set.repository'
+import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {configureQueryBuilder} from '~/helpers/query-builder.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
 interface FilterBy {

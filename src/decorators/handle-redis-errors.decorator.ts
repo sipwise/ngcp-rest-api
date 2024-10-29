@@ -1,4 +1,5 @@
 import {InternalServerErrorException} from '@nestjs/common'
+
 import {LoggerService} from '~/logger/logger.service'
 
 export function HandleRedisErrors(

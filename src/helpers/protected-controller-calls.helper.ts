@@ -1,5 +1,6 @@
-import {CrudController} from '~/controllers/crud.controller'
 import {UnauthorizedException} from '@nestjs/common'
+
+import {CrudController} from '~/controllers/crud.controller'
 import {RequestDto} from '~/dto/request.dto'
 import {ResponseDto} from '~/dto/response.dto'
 

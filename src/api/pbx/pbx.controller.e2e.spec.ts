@@ -1,17 +1,19 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
+import {validate} from 'class-validator'
 import request from 'supertest'
+
+import {PbxResponseDto} from './dto/pbx-response.dto'
+import {PbxModule} from './pbx.module'
+
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {License as LicenseType} from '~/config/constants.config'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
-import {validate} from 'class-validator'
-import {PbxModule} from '~/api/pbx/pbx.module'
-import {PbxResponseDto} from '~/api/pbx/dto/pbx-response.dto'
 import {LicenseMockRepository} from '~/repositories/license.mock.repository'
 import {LicenseRepository} from '~/repositories/license.repository'
-import {License as LicenseType} from '~/config/constants.config'
 
 describe('', () => {
     let app: INestApplication
