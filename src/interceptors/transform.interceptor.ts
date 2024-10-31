@@ -1,3 +1,7 @@
+// TODO: Anys here seem to be necessary due to the nature of the data being transformed.
+// Wait for NestJS to provide a better way to handle this.
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestjs/common'
 import halson from 'halson'
 import {Observable} from 'rxjs'
@@ -48,9 +52,9 @@ export class TransformInterceptor implements NestInterceptor {
      *
      * @returns data JSON or HAL+JSON
      */
-    async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+    async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
         const ctx = context.switchToHttp()
-        return next.handle().pipe(map(data => {
+        return next.handle().pipe(map((data: any) => {
             const req = ctx.getRequest()
             const res = ctx.getResponse()
             const config = AppService.config

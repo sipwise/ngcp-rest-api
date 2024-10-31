@@ -17,5 +17,7 @@ export class PatchDto {
         path!: string
 
     @ApiPropertyOptional()
+        // TODO: Fix any type, can we use never here?
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         value: any
 }

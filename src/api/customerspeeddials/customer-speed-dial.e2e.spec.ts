@@ -13,6 +13,12 @@ import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
+type CustomerSpeedDialPost = {
+    customer_id: number
+    slot: string
+    destination: string
+}
+
 describe('CustomerSpeedDial', () => {
     let app: INestApplication
     let appService: AppService
@@ -75,12 +81,12 @@ describe('CustomerSpeedDial', () => {
 
     describe('', () => { // main tests block
         describe('POST', () => {
-            const csd1: any = {
+            const csd1: CustomerSpeedDialPost = {
                 customer_id: testCustomerId,
                 slot: '*1',
                 destination: '4310001',
             }
-            const csd2: any = {
+            const csd2: CustomerSpeedDialPost = {
                 customer_id: testCustomerId,
                 slot: '*2',
                 destination: '4310002',
@@ -147,12 +153,12 @@ describe('CustomerSpeedDial', () => {
         })
 
         describe('PUT', () => {
-            const csd1: any = {
+            const csd1: CustomerSpeedDialPost = {
                 customer_id: testCustomerId,
                 slot: '*3',
                 destination: '4310003',
             }
-            const csd2: any = {
+            const csd2: CustomerSpeedDialPost = {
                 customer_id: testCustomerId,
                 slot: '*4',
                 destination: '4310004',

@@ -13,6 +13,12 @@ import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
+type RuleSetPost = {
+    name: string
+    reseller_id: number
+    description: string
+}
+
 describe('Rule Set', () => {
     let app: INestApplication
     let appService: AppService
@@ -73,12 +79,12 @@ describe('Rule Set', () => {
 
     describe('', () => { // main tests block
         describe('POST', () => {
-            const ruleset1: any = {
+            const ruleset1: RuleSetPost = {
                 name: 'test_ruleset1',
                 reseller_id: 1,
                 description: 'test_ruleset1 description',
             }
-            const ruleset2: any = {
+            const ruleset2: RuleSetPost = {
                 name: 'test_ruleset2',
                 reseller_id: 1,
                 description: 'test_ruleset2 description',
@@ -169,12 +175,12 @@ describe('Rule Set', () => {
         })
 
         describe('PUT', () => {
-            const ruleset3: any = {
+            const ruleset3: RuleSetPost = {
                 name: 'test ruleset3',
                 reseller_id: 1,
                 description: 'test ruleset3 description',
             }
-            const ruleset4: any = {
+            const ruleset4: RuleSetPost = {
                 name: 'test_ruleset4',
                 reseller_id: 1,
                 description: 'test_ruleset4 description',

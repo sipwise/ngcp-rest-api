@@ -14,6 +14,34 @@ import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
+type RuleSetPost = {
+    name: string
+    reseller_id: number
+    description: string
+}
+
+type RulePost = {
+    set_id: number
+    name: string
+    description: string
+    priority: number
+    direction: string
+    stopper: boolean
+    enabled: boolean
+}
+
+type RuleConditionPost = {
+    rule_id: number
+    match_type: string
+    match_part: string
+    match_name: string
+    expression: string
+    expression_negation: boolean
+    value_type: string
+    enabled: boolean
+    values?: string[]
+}
+
 describe('Rule Condition', () => {
     let app: INestApplication
     let appService: AppService
@@ -78,7 +106,7 @@ describe('Rule Condition', () => {
 
     describe('', () => { // main tests block
         describe('POST', () => {
-            const ruleset1: any = {
+            const ruleset1: RuleSetPost = {
                 name: 'test_ruleset1',
                 reseller_id: 1,
                 description: 'test_ruleset1 description',
@@ -93,7 +121,7 @@ describe('Rule Condition', () => {
             })
 
             it('create rule 1', async () => {
-                const rule1:any = {
+                const rule1: RulePost = {
                     set_id: createdSetIds[0],
                     name: 'test_rule1',
                     description: 'test_rule1 description',
@@ -111,7 +139,7 @@ describe('Rule Condition', () => {
             })
 
             it ('create condition 1', async () => {
-                const condition1:any = {
+                const condition1: RuleConditionPost = {
                     rule_id: createdRuleIds[0],
                     match_type: 'header',
                     match_part: 'full',
@@ -131,7 +159,7 @@ describe('Rule Condition', () => {
             })
 
             it ('create condition 2', async () => {
-                const condition2:any = {
+                const condition2: RuleConditionPost = {
                     rule_id: createdRuleIds[0],
                     match_type: 'header',
                     match_part: 'full',
@@ -178,7 +206,7 @@ describe('Rule Condition', () => {
 
         describe('PUT', () => {
             it('update condition 1 match_name', async () => {
-                const condition1:any = {
+                const condition1: RuleConditionPost = {
                     rule_id: createdRuleIds[0],
                     match_type: 'header',
                     match_part: 'full',
@@ -206,7 +234,7 @@ describe('Rule Condition', () => {
             })
 
             it('update non-existing condition', async () => {
-                const condition:any = {
+                const condition: RuleConditionPost = {
                     rule_id: createdRuleIds[0],
                     match_type: 'header',
                     match_part: 'full',
@@ -225,7 +253,7 @@ describe('Rule Condition', () => {
             })
 
             it('update condition 1 values', async () => {
-                const condition1:any = {
+                const condition1: RuleConditionPost = {
                     rule_id: createdRuleIds[0],
                     match_type: 'header',
                     match_part: 'full',

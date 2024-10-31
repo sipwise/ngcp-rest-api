@@ -27,7 +27,7 @@ export class BanGuard implements CanActivate {
 
         let realm = 'admin'
         if ('x-auth-realm' in sr.headers) {
-            realm = sr.headers['x-auth-realm']
+            realm = sr.headers['x-auth-realm'].toString()
         }
 
         let username = this.extractUsername(sr)
@@ -75,7 +75,7 @@ export class BanGuard implements CanActivate {
     private extractUsernameFromJwt(token: string): string | null {
         try {
             const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString('ascii'))
-            return payload.username || null
+            return payload.username as string || null
         } catch {
             return null
         }

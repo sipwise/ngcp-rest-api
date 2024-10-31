@@ -44,7 +44,7 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
             await xmlDispatcher.sipDomainReload(domain.domain)
         }
 
-        return resultBilling.identifiers.map(obj => obj.id)
+        return resultBilling.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Domain[], number]> {

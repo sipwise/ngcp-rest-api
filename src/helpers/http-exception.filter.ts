@@ -9,7 +9,9 @@ import {LoggerService} from '~/logger/logger.service'
 export class HttpExceptionFilter implements ExceptionFilter {
     private readonly log = new LoggerService(HttpExceptionFilter.name)
 
-    catch(exception: any, host: ArgumentsHost): any {
+    // TODO: Is there a type-safe way to catch exceptions?
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    catch(exception: any, host: ArgumentsHost): void {
         const httpContext = host.switchToHttp()
         const response = httpContext.getResponse<Response>()
         const request = httpContext.getRequest<Request>()
@@ -17,7 +19,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
         const ctx = Context.get(request)
 
-        const user: any = request.user // this is required because we cannot typecast to AuthResponseDto here
+        // TODO: This is required because we cannot typecast to AuthResponseDto here
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const user: any = request.user
 
         const now = Date.now()
 

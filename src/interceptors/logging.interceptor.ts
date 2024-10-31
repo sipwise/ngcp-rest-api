@@ -21,7 +21,7 @@ export class LoggingInterceptor implements NestInterceptor {
      *
      * @returns data unmodified as received
      */
-    intercept(context: ExecutionContext, next: CallHandler<any>): Observable<any> | Promise<Observable<any>> {
+    intercept(context: ExecutionContext, next: CallHandler<unknown>): Observable<unknown> | Promise<Observable<unknown>> {
         return next.handle().pipe(
             map(data => {
                 // TODO: only log to console when executed in Debug mode
@@ -29,7 +29,7 @@ export class LoggingInterceptor implements NestInterceptor {
                 const req = httpCtx.getRequest()
 
                 // Get redacted version of response data
-                const redacted: any = this.getRedactedPlain(data)
+                const redacted: unknown = this.getRedactedPlain(data)
 
                 const ctx = Context.get(req)
                 const now = Date.now()
@@ -61,7 +61,7 @@ export class LoggingInterceptor implements NestInterceptor {
      * @param data Object or array of objects
      * @private
      */
-    private getRedactedPlain(data: any): any {
+    private getRedactedPlain(data: unknown): unknown {
         this.log.debug('generating redacted data')
         // check if data is array
         if (isObject(data) && 'stream' in data) {

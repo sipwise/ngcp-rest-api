@@ -61,7 +61,7 @@ import {FileshareSchedule} from './schedules/fileshare.schedule'
 import {RedisStateSchedule} from './schedules/redisstate.schedule'
 
 
-let modulesImport: Array<Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
+let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
     ConfigModule.forRoot({
         isGlobal: true,
         ignoreEnvFile: true,
@@ -149,7 +149,7 @@ if (process.env.NODE_ENV != 'test') {
     ],
 })
 export class AppModule implements NestModule {
-    configure(consumer: MiddlewareConsumer): any {
+    configure(consumer: MiddlewareConsumer): void {
         consumer.apply(ContextMiddleware, LoggerMiddleware, StateMiddleware).forRoutes({
             path: '*',
             method: RequestMethod.ALL,

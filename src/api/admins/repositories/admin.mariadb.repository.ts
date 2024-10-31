@@ -27,7 +27,7 @@ export class AdminMariadbRepository extends MariaDbRepository implements AdminRe
         const qb = db.billing.Admin.createQueryBuilder('admin')
         const values = admins.map(admin => new db.billing.Admin().fromInternal(admin))
         const result = await qb.insert().values(values).execute()
-        return result.identifiers.map(obj => obj.id)
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async readAll(options: AdminOptions, sr: ServiceRequest): Promise<[internal.Admin[], number]> {

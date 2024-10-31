@@ -39,6 +39,8 @@ async function hasPermissionToAccessController(role: string, controller: CrudCon
  * @throws UnauthorizedException
  * @constructor
  */
+// TODO: req can be any because user can be attached to request, maybe fixable
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function ProtectedReadCall(controller: CrudController<RequestDto,ResponseDto>, id: number, req: any): Promise<any> {
     const role = req.user.role
     if (!await hasPermissionToAccessController(role, controller)) {

@@ -10,7 +10,7 @@ import {LoggerService} from '~/logger/logger.service'
 export class LoggerMiddleware implements NestMiddleware {
     private readonly log = new LoggerService(LoggerMiddleware.name)
 
-    use(req: Request, _res: Response, next: NextFunction): any {
+    use(req: Request, _res: Response, next: NextFunction): void {
         const ctx = Context.get(req)
         let body = JSON.stringify(req.body, obfuscatePasswordJSON)
 

@@ -10,6 +10,8 @@ const db_pass = process.env.API_DB_PASS || AppService.config.database.pass
 const db_host = process.env.API_DB_HOST || AppService.config.database.host
 const db_port = process.env.API_DB_PORT || AppService.config.database.port
 
+// TODO: Is unknown even possible here? We need an iterator
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getDBEntries = (): any => {
     const entities = []
     Object.entries(db).forEach(([, e]) => {

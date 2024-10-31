@@ -58,7 +58,7 @@ export class ResellerMariadbRepository extends MariaDbRepository implements Rese
         const qb = db.billing.Reseller.createQueryBuilder('reseller')
         const values = resellers.map(reseller => new db.billing.Reseller().fromInternal(reseller))
         const result = await qb.insert().values(values).execute()
-        return result.identifiers.map(obj => obj.id)
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async terminate(id: number, _sr: ServiceRequest): Promise<number> {

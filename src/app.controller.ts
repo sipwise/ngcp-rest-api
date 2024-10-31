@@ -20,7 +20,7 @@ export class AppController {
 
     @ApiTags('Userinfo')
     @Get('userinfo')
-    async userinfo(@Req() req): Promise<any> {
+    async userinfo(@Req() req): Promise<unknown> {
         return req.user
     }
 }

@@ -12,6 +12,11 @@ import {AuthService} from '~/auth/auth.service'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
+type FileSharePost = {
+    file: string
+    ttl: number
+}
+
 describe('Fileshare', () => {
     let app: INestApplication
     let appService: AppService
@@ -72,7 +77,7 @@ describe('Fileshare', () => {
 
     describe('', () => { // main tests block
         describe('POST', () => {
-            const fileshare: any = {
+            const fileshare: FileSharePost = {
                 file: 'testfile.txt',
                 ttl: 3600,
             }

@@ -13,15 +13,15 @@ export class TypeormLoggerService implements TypeormLogger {
         this.logger = winston.createLogger(winstonLoggerConfig)
     }
 
-    log(level: 'log' | 'info' | 'warn', message: any, _queryRunner?: QueryRunner): any {
+    log(level: 'log' | 'info' | 'warn', message: string, _queryRunner?: QueryRunner): void {
         this.logger.log(level, message, {context: this.context})
     }
 
-    logMigration(message: string, _queryRunner?: QueryRunner): any {
+    logMigration(message: string, _queryRunner?: QueryRunner): void {
         this.logger.info(message, {context: this.context})
     }
 
-    logQuery(query: string, parameters?: any[], _queryRunner?: QueryRunner): any {
+    logQuery(query: string, parameters?: unknown[], _queryRunner?: QueryRunner): void {
         if (!(this.options === 'all' ||
             this.options === true ||
             (Array.isArray(this.options) && this.options.indexOf('query') !== -1)))
@@ -34,7 +34,7 @@ export class TypeormLoggerService implements TypeormLogger {
         this.logger.debug(query, {parameters: parameters, context: this.context})
     }
 
-    logQueryError(error: string | Error, query: string, parameters?: any[], _queryRunner?: QueryRunner): any {
+    logQueryError(error: string | Error, query: string, parameters?: unknown, _queryRunner?: QueryRunner): void {
         if (!(this.options === 'all' ||
             this.options === true ||
             (Array.isArray(this.options) && this.options.indexOf('error') !== -1)))
@@ -43,11 +43,11 @@ export class TypeormLoggerService implements TypeormLogger {
         this.logger.error(message, {query: query, parameters: parameters, context: this.context})
     }
 
-    logQuerySlow(time: number, query: string, parameters?: any[], _queryRunner?: QueryRunner): any {
+    logQuerySlow(time: number, query: string, parameters?: unknown, _queryRunner?: QueryRunner): void {
         this.logger.warn(`query is slow (+${time}): ` + query, {parameters: parameters, context: this.context})
     }
 
-    logSchemaBuild(message: string, _queryRunner?: QueryRunner): any {
+    logSchemaBuild(message: string, _queryRunner?: QueryRunner): void {
         if (this.options === 'all' || (Array.isArray(this.options) && this.options.indexOf('schema') !== -1)) {
             this.logger.info(message, {context: this.context})
         }

@@ -21,7 +21,7 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
         const qb = db.billing.Admin.createQueryBuilder('contact')
         const values = contacts.map(contact => new db.billing.Contact().fromInternal(contact))
         const result = await qb.insert().values(values).execute()
-        return result.identifiers.map(obj => obj.id)
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {

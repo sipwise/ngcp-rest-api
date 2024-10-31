@@ -71,7 +71,7 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
         const params = sr.query
         for (const property of searchLogic.searchableFields) {
             if (params[property] != null) {
-                let value: string = params[property]
+                let value: string = params[property].toString()
 
                 const whereComparator = value.includes('*') ? 'like' : '='
                 value = value.replace(/\*/g, '%')
@@ -115,7 +115,7 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
         }
     }
 
-    private rawToInternalPbxGroup(raw: any): internal.PbxGroup {
+    private rawToInternalPbxGroup(raw: unknown): internal.PbxGroup {
         const group = new internal.PbxGroup()
         group.id = raw['group_bsub_id']
         group.extension = raw['sg_pbx_extension']

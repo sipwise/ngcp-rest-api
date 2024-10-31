@@ -159,7 +159,7 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         const result = await qb.getRawOne()
         if (result.max == undefined)
             throw new UnprocessableEntityException(`no billing profile for contract id ${contractId} at ${now} (${epochNow})`)
-        return result['max']
+        return result['max'] as number
     }
 
     async readCurrentBillingProfile(contractId: number): Promise<internal.BillingProfile> {

@@ -21,7 +21,7 @@ export class ContractMariadbRepository extends MariaDbRepository implements Cont
         const qb = db.billing.Contract.createQueryBuilder('contract')
         const values = contracts.map(contract => new db.billing.Contract().fromInternal(contract))
         const result = await qb.insert().values(values).execute()
-        return result.identifiers.map(obj => obj.id)
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async delete(_id: number, _sr: ServiceRequest): Promise<number> {

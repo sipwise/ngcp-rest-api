@@ -10,7 +10,7 @@ export class StateMiddleware implements NestMiddleware {
     ) {
     }
 
-    use(_req: Request, _res: Response, next: NextFunction): any {
+    use(_req: Request, _res: Response, next: NextFunction): void {
         next(this.app.isDbInitialised && this.app.isDbAvailable && this.app.isRedisAvailable
             ? null
             : new ServiceUnavailableException(),

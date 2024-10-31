@@ -14,6 +14,12 @@ import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
+type NcosSetPost = {
+    name: string
+    reseller_id: number
+    description: string
+}
+
 describe('NCOS Set', () => {
     let app: INestApplication
     let appService: AppService
@@ -74,12 +80,12 @@ describe('NCOS Set', () => {
 
     describe('', () => { // main tests block
         describe('POST', () => {
-            const ncosset1: any = {
+            const ncosset1: NcosSetPost = {
                 name: 'test_ncosset1',
                 reseller_id: 1,
                 description: 'test_ncosset1 description',
             }
-            const ncosset2: any = {
+            const ncosset2: NcosSetPost = {
                 name: 'test_ncosset2',
                 reseller_id: 1,
                 description: 'test_ncosset2 description',
@@ -160,12 +166,12 @@ describe('NCOS Set', () => {
         })
 
         describe('PUT', () => {
-            const ncosset3: any = {
+            const ncosset3: NcosSetPost = {
                 name: 'test_ncosset3',
                 reseller_id: 1,
                 description: 'test_ncosset3 description',
             }
-            const ncosset4: any = {
+            const ncosset4: NcosSetPost = {
                 name: 'test_ncosset4',
                 reseller_id: 1,
                 description: 'test_ncosset4 description',

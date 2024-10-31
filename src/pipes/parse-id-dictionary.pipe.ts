@@ -1,3 +1,6 @@
+// TODO: Check if full type safety is possible in pipes
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
     ArgumentMetadata,
     BadRequestException,

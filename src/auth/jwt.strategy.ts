@@ -39,11 +39,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
      * @param payload Extracted JWT
      * @returns token User information contained in the JWT
      */
+    // TODO: Can we use a payload type here?
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async validate(req: ServiceRequest, payload: any): Promise<AuthResponseDto> {
         this.log.debug('got payload in validate ' + JSON.stringify(payload))
         let realm = 'admin'
         if ('x-auth-realm' in req.headers)
-            realm = req.headers['x-auth-realm']
+            realm = req.headers['x-auth-realm'].toString()
         if (realm == 'subscriber') {
             if (!('subscriber_uuid' in payload))
                 return null
@@ -99,7 +101,7 @@ function parseAuthHeader(hdrValue): { scheme: string, value: string } {
 }
 
 function fromAuthHeaderAsBearerToken() {
-    return function (request): any {
+    return function (request): unknown {
         let token = null
         const l = new LoggerService(fromAuthHeaderAsBearerToken.name)
         l.debug('get bearer token from auth header')

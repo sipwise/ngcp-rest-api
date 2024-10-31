@@ -135,7 +135,7 @@ export class ContractMockRepository implements ContractRepository {
 
     readAll(_sr: ServiceRequest): Promise<[internal.Contract[], number]> {
         const contracts: [internal.Contract[], number] =
-            [Object.keys(this.contractDB).map(id => this.contractDB[id]), Object.keys(this.contractDB).length]
+            [Object.keys(this.contractDB).map(id => this.contractDB[id] as internal.Contract), Object.keys(this.contractDB).length]
         return Promise.resolve(contracts)
     }
 
@@ -174,12 +174,12 @@ export class ContractMockRepository implements ContractRepository {
         return Promise.resolve(ids)
     }
 
-    private getNextId(db: any): number {
+    private getNextId(db: unknown): number {
         const keys = Object.keys(db)
         return (+keys[keys.length - 1]) + 1
     }
 
-    private throwErrorIfIdNotExists(db: any, id: number): void {
+    private throwErrorIfIdNotExists(db: unknown, id: number): void {
         if (db[id] == undefined)
             throw new NotFoundException()
     }

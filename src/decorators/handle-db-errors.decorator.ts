@@ -1,21 +1,25 @@
 import {handleTypeORMError} from '~/helpers/errors.helper'
 import {LoggerService} from '~/logger/logger.service'
 
-function applyDecorator(target: any, propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor {
+function applyDecorator(target: unknown, propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor {
     const log = new LoggerService(`${target.constructor.name}/${propertyKey}`)
     const originalMethod = descriptor.value
 
     // TODO: Fix this function type hint
     // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: unknown[]) {
         try {
             const result = await originalMethod.apply(this, args)
             if (result && typeof result.then === 'function' && typeof result.catch === 'function') {
-                return result.catch((err: any) => {
+                // TODO: Fix this mess if fixable
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                return result.catch((err: Error) => {
                     log.error(err, err.stack, `${target.constructor.name}/${propertyKey}`)
                     throw handleTypeORMError(err)
                 })
             }
+            // TODO: Fix this any if fixable
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return result
         } catch (err) {
             log.error(err, err.stack, `${target.constructor.name}/${propertyKey}`)

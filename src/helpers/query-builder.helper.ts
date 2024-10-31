@@ -4,9 +4,9 @@ import {BaseEntity, SelectQueryBuilder} from 'typeorm'
 import {SearchLogic} from './search-logic.helper'
 
 import {reservedQueryParams} from '~/config/constants.config'
-import {ParamsDictionary} from '~/interfaces/service-request.interface'
+import {QueriesDictionary} from '~/interfaces/service-request.interface'
 
-export function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic): void {
+export function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: QueriesDictionary, searchLogic: SearchLogic): void {
     addJoinFilterToQueryBuilder(qb, params, searchLogic)
     addSearchFilterToQueryBuilder(qb, params, searchLogic)
     addOrderByToQueryBuilder(qb, params, searchLogic)
@@ -14,7 +14,7 @@ export function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuild
     qb.andWhere('1 = 1')
 }
 
-function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic): void {
+function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: QueriesDictionary, searchLogic: SearchLogic): void {
     for (const joinCondition in searchLogic.joins) {
         const joinTable = searchLogic.joins[joinCondition].alias
         const joinColumn = searchLogic.joins[joinCondition].property
@@ -27,9 +27,9 @@ function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilde
     }
 }
 
-function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: ParamsDictionary, searchLogic: SearchLogic): void {
+function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: QueriesDictionary, searchLogic: SearchLogic): void {
     const allow_unknown_params = 'allow_unknown_params' in params
-                                    && JSON.parse(params['allow_unknown_params'])
+                                    && JSON.parse(params['allow_unknown_params'].toString())
     Object.keys(params).forEach((searchField: string) => {
         if (reservedQueryParams.indexOf(searchField) >= 0)
             return
@@ -50,7 +50,7 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
             [qb_alias, alias] = propertyAlias.split('.')
         }
 
-        const searchValue = params[searchField]
+        const searchValue = params[searchField].toString()
         const whereComparator = searchValue.includes('*') ? 'like' : '='
         const value = searchValue.replace(/\*/g, '%')
 
@@ -83,7 +83,7 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
     })
 }
 
-export function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, _params: ParamsDictionary, searchLogic: SearchLogic): void {
+export function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, _params: QueriesDictionary, searchLogic: SearchLogic): void {
     if (searchLogic.orderBy != null) {
         qb.addOrderBy(searchLogic.orderBy, searchLogic.orderByDirection)
     }

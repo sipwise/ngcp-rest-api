@@ -1,5 +1,5 @@
 import {Injectable, NestMiddleware} from '@nestjs/common'
-import {NextFunction, Response} from 'express'
+import {NextFunction, Request, Response} from 'express'
 
 import Context from '~/helpers/context.helper'
 
@@ -8,7 +8,7 @@ import Context from '~/helpers/context.helper'
  */
 @Injectable()
 export class ContextMiddleware implements NestMiddleware {
-    use(req: any, _res: Response, next: NextFunction): any {
+    use(req: Request, _res: Response, next: NextFunction): void {
         Context.bind(req)
         next()
     }

@@ -1,3 +1,5 @@
+import {IncomingHttpHeaders} from 'http'
+
 import {Request} from 'express'
 
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
@@ -6,11 +8,19 @@ export interface ParamsDictionary {
     [key: string]: string
 }
 
+export interface QueriesDictionary {
+    [key: string]: undefined | string | string[] | QueriesDictionary | QueriesDictionary[];
+}
+
 export class ServiceRequest {
     params: ParamsDictionary
-    user: AuthResponseDto | any // TODO: fix typing
-    headers: any
-    query?: any
+    // TODO: Fix any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    user: AuthResponseDto | any
+    // TODO: Does this change make sense? Is it breaking anything?
+    headers: IncomingHttpHeaders | [undefined]
+    // TODO: Does this change make sense? Is it breaking anything? Changed from any to QueriesDictionary
+    query?: QueriesDictionary
     req: Request
     returnContent: boolean
 

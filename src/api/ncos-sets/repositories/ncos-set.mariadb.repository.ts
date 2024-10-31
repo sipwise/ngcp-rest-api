@@ -26,7 +26,7 @@ export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSS
         const values = await Promise.all(entities.map(async entity => new db.billing.NCOSSet().fromInternal(entity)))
         const result = await qb.insert().values(values).execute()
 
-        const ids = await Promise.all(result.identifiers.map(async obj => obj.id))
+        const ids = await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
         const created = await qb.andWhereInIds(ids).getMany()
 
         return await Promise.all(created.map(async entity => entity.toInternal()))
@@ -153,7 +153,7 @@ export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSS
         )
         const result = await qb.insert().values(values).execute()
 
-        const ids = await Promise.all(result.identifiers.map(async obj => obj.id))
+        const ids = await Promise.all(result.identifiers.map(async (obj: {id :number}) => obj.id))
         const created = await qb.andWhereInIds(ids).getMany()
 
         return await Promise.all(created.map(async entity => entity.toInternal()))

@@ -1,3 +1,5 @@
+// TODO: All anys seem to be needed here.
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Deep copy function for TypeScript.
  * @param T Generic type of target/copied value.
@@ -10,6 +12,8 @@ export function deepCopy<T>(target: T): T {
         return target
     }
     if (target instanceof Date) {
+        // TODO: Is this cast correct even?
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return new Date(target.getTime()) as any
     }
     // First part is for array and second part is for Realm.Collection

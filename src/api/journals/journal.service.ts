@@ -68,9 +68,11 @@ export class JournalService {
         return
     }
 
-    public async writeJournal(sr: ServiceRequest, id: number, data: any): Promise<boolean> {
+    public async writeJournal(sr: ServiceRequest, id: number, data: unknown): Promise<boolean> {
         // Set content format and default to json
-        let cf = contentFormat[sr.headers['Content-Type']]
+        // TODO: Check if this even worked before as the 'content-type' was wrongly started with a capital letter
+        let cf = contentFormat[sr.headers['content-type']]
+        sr.headers['access-control-allow-credentials'] = 'true'
         if (cf === undefined) {
             cf = 'json'
         }
@@ -98,7 +100,7 @@ export class JournalService {
             content: Object.keys(data).length > 0
                 ? isObject(data) || Array.isArray(data)
                     ? JSON.stringify(data, obfuscatePasswordJSON)
-                    : Buffer.from(data)
+                    : Buffer.from(data as string).toString('base64') // TODO: Check if this is correct
                 : '',
             content_format: cf,
             operation: op,

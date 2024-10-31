@@ -45,17 +45,17 @@ export function IsValidPassword(opts: PasswordOptions): PropertyDecorator {
 }
 
 function ContainsUsername(usernameField: string, validationOptions?: ValidationOptions) {
-    return function (object: any, propertyName: string): void {
+    return function (object: unknown, propertyName: string): void {
         registerDecorator({
             name: 'containsUsername',
             target: object.constructor,
             propertyName: propertyName,
             options: validationOptions || {message: 'password must not contain username'},
             validator: {
-                validate(value: any, args?: ValidationArguments): Promise<boolean> | boolean {
-                    const username = (args?.object as any)[usernameField]
+                validate(value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
+                    const username = (args?.object as unknown)[usernameField]
                     if (isString(username) && username.trim() !== '') {
-                        return isString(value) && !value.includes(username)
+                        return isString(value) && !(value as string).includes(username)
                     }
                     return true
                 },
@@ -65,15 +65,18 @@ function ContainsUsername(usernameField: string, validationOptions?: ValidationO
 }
 
 function IsStrongEnough(validationOptions?: ValidationOptions) {
-    return function (object: any, propertyName: string): void {
+    return function (object: unknown, propertyName: string): void {
         registerDecorator({
             name: 'isStrongEnough',
             target: object.constructor,
             propertyName: propertyName,
             options: validationOptions || {message: 'password is not strong enough'},
             validator: {
-                validate(value: any, _args?: ValidationArguments): Promise<boolean> | boolean {
-                    return isString(value) && zxcvbn(value).score >= 3
+                validate(value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
+                    if (!isString(value))
+                        return false
+                    const str = value as string
+                    return zxcvbn(str).score >= 3
                 },
             },
         })
@@ -81,15 +84,18 @@ function IsStrongEnough(validationOptions?: ValidationOptions) {
 }
 
 function IsValidLength(min: number, max: number, validationOptions?: ValidationOptions) {
-    return function (object: any, propertyName: string): void {
+    return function (object: unknown, propertyName: string): void {
         registerDecorator({
             name: 'isValidLength',
             target: object.constructor,
             propertyName: propertyName,
             options: validationOptions || {message: `password length must be between ${min} and ${max}`},
             validator: {
-                validate(value: any, _args?: ValidationArguments): Promise<boolean> | boolean {
-                    return isString(value) && value.length >= min && value.length <= max
+                validate(value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
+                    if (!isString(value))
+                        return false
+                    const str = value as string
+                    return str.length >= min && str.length <= max
                 },
             },
         })
@@ -97,15 +103,19 @@ function IsValidLength(min: number, max: number, validationOptions?: ValidationO
 }
 
 function ContainsASCII(validationOptions?: ValidationOptions) {
-    return function (object: any, propertyName: string): void {
+    return function (object: unknown, propertyName: string): void {
         registerDecorator({
             name: 'containsASCII',
             target: object.constructor,
             propertyName: propertyName,
             options: validationOptions || {message: 'must contain ascii'},
             validator: {
-                validate(value: any, _args?: ValidationArguments): Promise<boolean> | boolean {
-                    return isString(value) && value.match(/^[\x20-\x7e]+$/)
+                validate(value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
+                    if (!isString(value))
+                        return false
+                    const str = value as string
+                    const regexp = new RegExp(/^[\x20-\x7e]+$/)
+                    return regexp.test(str)
                 },
             },
         })
@@ -113,16 +123,19 @@ function ContainsASCII(validationOptions?: ValidationOptions) {
 }
 
 function ContainsLowerCase(n:number, validationOptions?: ValidationOptions) {
-    return function (object: any, propertyName: string): void {
+    return function (object: unknown, propertyName: string): void {
         registerDecorator({
             name: 'containsLowerCase',
             target: object.constructor,
             propertyName: propertyName,
             options: validationOptions || {message: `must contain at least ${n} lowercase characters`},
             validator: {
-                validate(value: any, _args?: ValidationArguments): Promise<boolean> | boolean {
+                validate(value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
                     const regex = new RegExp(`(?:.*[a-z]){${n}}`)
-                    return isString(value) && regex.test(value)
+                    if (!isString(value))
+                        return false
+                    const str = value as string
+                    return regex.test(str)
                 },
             },
         })
@@ -130,16 +143,19 @@ function ContainsLowerCase(n:number, validationOptions?: ValidationOptions) {
 }
 
 function ContainsUpperCase(n:number, validationOptions?: ValidationOptions) {
-    return function (object: any, propertyName: string): void {
+    return function (object: unknown, propertyName: string): void {
         registerDecorator({
             name: 'containsUpperCase',
             target: object.constructor,
             propertyName: propertyName,
             options: validationOptions || {message: `must contain at least ${n} uppercase characters`},
             validator: {
-                validate(value: any, _args?: ValidationArguments): Promise<boolean> | boolean {
+                validate(value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
                     const regex = new RegExp(`(?:.*[A-Z]){${n}}`)
-                    return isString(value) && regex.test(value)
+                    if (!isString(value))
+                        return false
+                    const str = value as string
+                    return regex.test(str)
                 },
             },
         })
@@ -147,16 +163,19 @@ function ContainsUpperCase(n:number, validationOptions?: ValidationOptions) {
 }
 
 function ContainsSpecialCharacter(n:number, validationOptions?: ValidationOptions) {
-    return function (object: any, propertyName: string): void {
+    return function (object: unknown, propertyName: string): void {
         registerDecorator({
             name: 'containsSpecialCharacter',
             target: object.constructor,
             propertyName: propertyName,
             options: validationOptions || {message: `must contain at least ${n} special characters`},
             validator: {
-                validate(value: any, _args?: ValidationArguments): Promise<boolean> | boolean {
+                validate(value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
                     const regex = new RegExp(`(?:.*[^0-9a-zA-Z]){${n}}`)
-                    return isString(value) && regex.test(value)
+                    if (!isString(value))
+                        return false
+                    const str = value as string
+                    return regex.test(str)
                 },
             },
         })
@@ -164,21 +183,25 @@ function ContainsSpecialCharacter(n:number, validationOptions?: ValidationOption
 }
 
 function ContainsDigit(n:number, validationOptions?: ValidationOptions) {
-    return function (object: any, propertyName: string): void {
+    return function (object: unknown, propertyName: string): void {
         registerDecorator({
             name: 'containsNumber',
             target: object.constructor,
             propertyName: propertyName,
             options: validationOptions || {message: `must contain at least ${n} digits`},
             validator: {
-                validate(value: any, _args?: ValidationArguments): Promise<boolean> | boolean {
-                    return isString(value) && value.match(/.*[0-9].*[0-9].*[0-9].*/)
+                validate(value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
+                    const regex = new RegExp(`(?:.*[0-9]){${n}}`)
+                    if (!isString(value))
+                        return false
+                    const str = value as string
+                    return regex.test(str)
                 },
             },
         })
     }
 }
 
-function isString(value: any): boolean {
+function isString(value: unknown): boolean {
     return typeof value === 'string' || value instanceof String
 }

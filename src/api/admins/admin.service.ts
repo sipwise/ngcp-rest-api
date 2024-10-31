@@ -120,7 +120,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
     }
 
     getAdminOptionsFromServiceRequest(sr: ServiceRequest): AdminOptions {
-        const hasAccessTo = sr.user.role_data.has_access_to.map(role => role.id)
+        const hasAccessTo = sr.user.role_data.has_access_to.map((role: {id: number}) => role.id)
         let resellerId: number
         if (sr.user.role == RbacRole.reseller || sr.user.role == RbacRole.ccare)
             resellerId = sr.user.reseller_id

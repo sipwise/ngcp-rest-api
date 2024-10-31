@@ -88,7 +88,7 @@ export class AuthService {
      *
      * @returns Authenticated `AuthResponseDto` on success else `null`
      */
-    async validateAdminCert(serial: string): Promise<any> {
+    async validateAdminCert(serial: string): Promise<AuthResponseDto | null> {
         this.log.debug({
             message: 'starting admin user certificate authentication',
             method: this.validateAdminCert.name,

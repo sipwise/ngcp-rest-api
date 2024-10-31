@@ -3,6 +3,7 @@ import {PassportStrategy} from '@nestjs/passport'
 import {Strategy} from 'passport-http-header-strategy'
 
 import {AuthService} from './auth.service'
+import {AuthResponseDto} from './dto/auth-response.dto'
 
 /**
  * Implementation of the HTTP header strategy
@@ -21,7 +22,7 @@ export class CertStrategy extends PassportStrategy(Strategy, 'cert-header') {
      * Validates the `Admin` using the certificate serial number
      * @param token Certificate serial number
      */
-    async validate(token: string): Promise<any> {
+    async validate(token: string): Promise<AuthResponseDto> {
         const admin = this.authService.validateAdminCert(token)
         if (!admin) {
             throw new UnauthorizedException()

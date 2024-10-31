@@ -13,6 +13,22 @@ import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
+type RuleSetPost = {
+    name: string
+    reseller_id: number
+    description: string
+}
+
+type RulePost = {
+    set_id: number
+    name: string
+    description: string
+    priority: number
+    direction: string
+    stopper: boolean
+    enabled: boolean
+}
+
 describe('Rule', () => {
     let app: INestApplication
     let appService: AppService
@@ -75,12 +91,12 @@ describe('Rule', () => {
 
     describe('', () => { // main tests block
         describe('POST', () => {
-            const ruleset1: any = {
+            const ruleset1: RuleSetPost = {
                 name: 'test_ruleset1',
                 reseller_id: 1,
                 description: 'test_ruleset1 description',
             }
-            const ruleset2: any = {
+            const ruleset2: RuleSetPost = {
                 name: 'test_ruleset2',
                 reseller_id: 1,
                 description: 'test_ruleset2 description',
@@ -103,7 +119,7 @@ describe('Rule', () => {
             })
 
             it('create rule 1', async () => {
-                const rule1:any = {
+                const rule1: RulePost = {
                     set_id: createdSetIds[0],
                     name: 'test_rule1',
                     description: 'test_rule1 description',
@@ -122,7 +138,7 @@ describe('Rule', () => {
 
             it('create rule 2', async () => {
 
-                const rule2:any = {
+                const rule2: RulePost = {
                     set_id: createdSetIds[1],
                     name: 'test_rule2',
                     description: 'test_rule2 description',
@@ -140,7 +156,7 @@ describe('Rule', () => {
             })
 
             it('create rule 3', async () => {
-                const rule3:any = {
+                const rule3: RulePost = {
                     set_id: createdSetIds[1],
                     name: 'test_rule3',
                     description: 'test_rule3 description',
@@ -197,7 +213,7 @@ describe('Rule', () => {
 
         describe('PUT', () => {
             it('update rule test_rule1 > test_rule_foo', async () => {
-                const rulefoo: any = {
+                const rulefoo: RulePost = {
                     set_id: createdSetIds[0],
                     name: 'test_rule_foo',
                     description: 'test_rule_foo description',
@@ -221,7 +237,7 @@ describe('Rule', () => {
                 expect(ruleset.name).toEqual('test_rule_foo')
             })
             it('update non-existing rule', async () => {
-                const rulefoo: any = {
+                const rulefoo: RulePost = {
                     set_id: createdSetIds[1],
                     name: 'test_rule_foo',
                     description: 'test_rule_foo description',

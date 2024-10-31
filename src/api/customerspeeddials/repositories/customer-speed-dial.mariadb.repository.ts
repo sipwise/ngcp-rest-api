@@ -24,7 +24,7 @@ export class CustomerSpeedDialMariadbRepository extends MariaDbRepository implem
         const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('csd')
         const values = entities.map(csd => new db.provisioning.VoipContractSpeedDial().fromInternal(csd))
         const result = await qb.insert().values(values).execute()
-        return result.identifiers.map(obj => obj.id)
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.CustomerSpeedDial[], number]> {

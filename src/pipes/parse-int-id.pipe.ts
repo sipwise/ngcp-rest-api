@@ -1,3 +1,5 @@
+// TODO: Check if full type safety is possible in pipes
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {ArgumentMetadata, HttpStatus, Optional, ParseIntPipe, ParseIntPipeOptions, PipeTransform} from '@nestjs/common'
 import {HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
 

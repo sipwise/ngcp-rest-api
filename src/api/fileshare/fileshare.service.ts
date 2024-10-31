@@ -148,7 +148,7 @@ export class FileshareService { // implements CrudService<FileshareRequestDto, F
             .andWhere('fileshare.id IN (:...ids)', {ids})
 
         const foundIds = await selectQb.getRawMany()
-        const existingIds = foundIds.map(row => row.fileshare_id)
+        const existingIds = foundIds.map((row: {fileshare_id: string}) => row.fileshare_id)
 
         if (existingIds.length === 0)
             throw new NotFoundException()

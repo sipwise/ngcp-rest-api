@@ -33,8 +33,8 @@ export class ExpandHelper {
             return [false, '']
         }
 
-        const isExpandable = this.reflector.get<boolean>(`${field}:isExpandable`, responselist[0] as any)
-        const controller = this.reflector.get<string>(`${field}:controller`, responselist[0] as any)
+        const isExpandable = this.reflector.get<boolean>(`${field}:isExpandable`, responselist[0] as never)
+        const controller = this.reflector.get<string>(`${field}:controller`, responselist[0] as never)
 
         if (!isExpandable) {
             return [false, '']
@@ -54,7 +54,7 @@ export class ExpandHelper {
      * @param sr
      */
     async handleMultiFieldExpand(responseList: ResponseDto[], parentObject: string[], sr: ServiceRequest): Promise<void> {
-        const fieldsToExpand = sr.query.expand.split(',')
+        const fieldsToExpand = sr.query.expand.toString().split(',')
         for (let i = 0; i < fieldsToExpand.length; i++) {
             const [isExpandable, controller] = this.isFieldExpandable(responseList, fieldsToExpand[i])
             if (!isExpandable || !this.controllersMap[controller] || !parentObject.includes(fieldsToExpand[i])) {
@@ -90,7 +90,7 @@ export class ExpandHelper {
      * @param sr
      */
     async handleNestedExpand(responseList: ResponseDto[], parentObject: string[], sr: ServiceRequest): Promise<void> {
-        const firstFieldToExpand = sr.query.expand.split('.')[0]
+        const firstFieldToExpand = sr.query.expand.toString().split('.')[0]
         const [isExpandable, controller] = this.isFieldExpandable(responseList, firstFieldToExpand)
         if (!isExpandable || !this.controllersMap[controller] || !parentObject.includes(firstFieldToExpand)) {
             if(!this.controllersMap[controller])
@@ -100,8 +100,8 @@ export class ExpandHelper {
         }
 
         let nextFieldsToExpand = null
-        if (sr.query.expand.indexOf('.') !== -1) {
-            nextFieldsToExpand = sr.query.expand.substring(sr.query.expand.indexOf('.') + 1)
+        if (sr.query.expand.toString().indexOf('.') !== -1) {
+            nextFieldsToExpand = sr.query.expand.toString().substring(sr.query.expand.toString().indexOf('.') + 1)
         }
         let i = 0
         do {
@@ -135,8 +135,8 @@ export class ExpandHelper {
      * @param sr
      */
     async expandObjects(responseList: ResponseDto[], parentObject: string[], sr: ServiceRequest): Promise<void> {
-        const multiFieldExpand = sr.query.expand.indexOf(',') != -1 &&
-            (sr.query.expand.indexOf('.') == -1 || sr.query.expand.indexOf(',') < sr.query.expand.indexOf('.'))
+        const multiFieldExpand = sr.query.expand.toString().indexOf(',') != -1 &&
+            (sr.query.expand.toString().indexOf('.') == -1 || sr.query.expand.toString().indexOf(',') < sr.query.expand.toString().indexOf('.'))
         if (multiFieldExpand)
             await this.handleMultiFieldExpand(responseList, parentObject, sr)
         else

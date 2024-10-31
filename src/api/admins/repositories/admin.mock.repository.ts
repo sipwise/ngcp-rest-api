@@ -77,7 +77,7 @@ export class AdminMockRepository implements AdminRepository {
 
     readAll(_options: AdminOptions, _sr: ServiceRequest): Promise<[internal.Admin[], number]> {
         const admins: [internal.Admin[], number] =
-            [Object.keys(this.db).map(id => this.db[id]), Object.keys(this.db).length]
+            [Object.keys(this.db).map(id => this.db[id] as internal.Admin), Object.keys(this.db).length]
         return Promise.resolve(admins)
     }
 

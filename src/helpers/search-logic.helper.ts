@@ -41,7 +41,7 @@ export class SearchLogic {
         this.rows = rows
 
         if (sr.query['order_by'] != null) {
-            this.orderBy = sr.query['order_by']
+            this.orderBy = sr.query['order_by'].toString()
             if (!searchableFields.includes(this.orderBy))
                 throw new BadRequestException()
             if (this.aliases && this.orderBy in this.aliases) {
@@ -53,7 +53,7 @@ export class SearchLogic {
             }
             this.orderByDirection =
                 sr.query['order_by_direction'] != null &&
-                sr.query['order_by_direction'].toUpperCase() === OrderByDirection.DESC
+                sr.query['order_by_direction'].toString().toUpperCase() === OrderByDirection.DESC
                     ? OrderByDirection.DESC
                     : OrderByDirection.ASC
 
@@ -62,11 +62,11 @@ export class SearchLogic {
     }
 
     static getPaginationFromServiceRequest(sr: ServiceRequest): [number, number] {
-        const page: number = sr.query['page'] || 1
+        const page: number = +sr.query['page'] || 1
         if (page <= 0)
             throw new BadRequestException()
 
-        const rows: number = sr.query['rows'] || 10
+        const rows: number = +sr.query['rows'] || 10
         if (rows <= 0)
             throw new BadRequestException()
         return [page, rows]

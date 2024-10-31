@@ -14,6 +14,32 @@ import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
+type RuleSetPost = {
+    name: string,
+    reseller_id: number,
+    description: string,
+}
+
+type RulePost = {
+    set_id: number,
+    name: string,
+    description: string,
+    priority: number,
+    direction: string,
+    stopper: boolean,
+    enabled: boolean,
+}
+
+type RuleActionPost = {
+    rule_id: number,
+    header: string,
+    header_part: string,
+    action_type: string,
+    value_part: string,
+    value: string,
+    enabled: boolean,
+}
+
 describe('Rule Action', () => {
     let app: INestApplication
     let appService: AppService
@@ -78,7 +104,7 @@ describe('Rule Action', () => {
 
     describe('', () => { // main tests block
         describe('POST', () => {
-            const ruleset1: any = {
+            const ruleset1: RuleSetPost = {
                 name: 'test_ruleset1',
                 reseller_id: 1,
                 description: 'test_ruleset1 description',
@@ -93,7 +119,7 @@ describe('Rule Action', () => {
             })
 
             it('create rule 1', async () => {
-                const rule1:any = {
+                const rule1: RulePost = {
                     set_id: createdSetIds[0],
                     name: 'test_rule1',
                     description: 'test_rule1 description',
@@ -111,7 +137,7 @@ describe('Rule Action', () => {
             })
 
             it ('create action 1', async () => {
-                const action1:any = {
+                const action1: RuleActionPost = {
                     rule_id: createdRuleIds[0],
                     header: 'X-Test-Header',
                     header_part: 'full',
@@ -129,7 +155,7 @@ describe('Rule Action', () => {
             })
 
             it ('create action 2', async () => {
-                const action2:any = {
+                const action2: RuleActionPost = {
                     rule_id: createdRuleIds[0],
                     header: 'X-Test-Header2',
                     header_part: 'full',
@@ -168,7 +194,7 @@ describe('Rule Action', () => {
 
         describe('PUT', () => {
             it('update action 1 header', async () => {
-                const action1:any = {
+                const action1: RuleActionPost = {
                     rule_id: createdRuleIds[0],
                     header: 'X-Test-Header-Foo',
                     header_part: 'full',
@@ -194,7 +220,7 @@ describe('Rule Action', () => {
             })
 
             it('update non-existing action', async () => {
-                const action1:any = {
+                const action1: RuleActionPost = {
                     rule_id: createdRuleIds[0],
                     header: 'X-Test-Header-Foo',
                     header_part: 'full',

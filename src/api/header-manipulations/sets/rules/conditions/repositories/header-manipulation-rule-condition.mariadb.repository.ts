@@ -7,7 +7,7 @@ import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
-import {ParamsDictionary, ServiceRequest} from '~/interfaces/service-request.interface'
+import {QueriesDictionary, ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
@@ -241,7 +241,7 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         }))
     }
 
-    private async configureSrQuery(sr: ServiceRequest): Promise<ParamsDictionary> {
+    private async configureSrQuery(sr: ServiceRequest): Promise<QueriesDictionary> {
         const query = {...sr.query}
         if (sr.query.subscriber_id) {
             query.subscriber_id = (await this.billingToProvisioning(+sr.query.subscriber_id)).toString()

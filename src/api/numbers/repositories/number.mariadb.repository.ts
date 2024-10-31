@@ -6,7 +6,7 @@ import {AppService} from '~/app.service'
 import {db, internal} from '~/entities'
 import {addOrderByToQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {QueriesDictionary, ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
@@ -117,7 +117,7 @@ export class NumberMariadbRepository extends MariaDbRepository {
         return qb
     }
 
-    private addSearchFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.VoipNumber>, params: string[], searchLogic: SearchLogic): void {
+    private addSearchFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.VoipNumber>, params: QueriesDictionary, searchLogic: SearchLogic): void {
         const searchFields = [
             {alias: 'billingSubscriber', property: 'subscriber_id', searchParam: 'subscriber_id'},
             {alias: 'contract', property: 'id', searchParam: 'customer_id'},
@@ -130,7 +130,7 @@ export class NumberMariadbRepository extends MariaDbRepository {
         ]
         searchFields.map(field => {
             if (params[field.searchParam] != null) {
-                const parameter: string = params[field.searchParam]
+                const parameter: string = params[field.searchParam].toString()
                 let whereComparator = '='
                 let value: string | number | boolean
 

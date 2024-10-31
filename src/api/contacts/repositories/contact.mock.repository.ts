@@ -109,7 +109,7 @@ export class ContactMockRepository implements ContactRepository {
 
     readAll(_sr: ServiceRequest, _options?: ContactOptions): Promise<[internal.Contact[], number]> {
         const contacts: [internal.Contact[], number] =
-            [Object.keys(this.contactDB).map(id => this.contactDB[id]), Object.keys(this.contactDB).length]
+            [Object.keys(this.contactDB).map(id => this.contactDB[id] as internal.Contact), Object.keys(this.contactDB).length]
         return Promise.resolve(contacts)
     }
 
@@ -162,12 +162,12 @@ export class ContactMockRepository implements ContactRepository {
         return Promise.resolve(ids)
     }
 
-    private getNextId(db: any): number {
+    private getNextId(db: unknown): number {
         const keys = Object.keys(db)
         return (+keys[keys.length - 1]) + 1
     }
 
-    private throwErrorIfIdNotExists(db: any, id: number): void {
+    private throwErrorIfIdNotExists(db: unknown, id: number): void {
         if (db[id] == undefined)
             throw new NotFoundException()
     }

@@ -20,7 +20,7 @@ export class VoicemailMockRepository implements VoicemailRepository {
     }
 
     readAll(_sr: ServiceRequest): Promise<[internal.Voicemail[], number]> {
-        return Promise.resolve([[], 0])
+        return Promise.resolve([[] as internal.Voicemail[], 0])
     }
 
     update(_updates: Dictionary<internal.Voicemail>, _sr: ServiceRequest): Promise<number[]> {

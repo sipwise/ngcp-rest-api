@@ -35,7 +35,7 @@ export class AdminPasswordJournalMockRepository implements AdminPasswordJournalR
 
     async readLastNPasswords(adminId: number, n: number): Promise<internal.AdminPasswordJournal[]> {
         const journals = Object.values(this.db).filter(journal => journal.admin_id === adminId)
-        return journals.slice(-n)
+        return journals.slice(-n) as internal.AdminPasswordJournal[]
     }
 
     private getNextId(): number {

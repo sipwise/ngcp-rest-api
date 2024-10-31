@@ -41,12 +41,12 @@ export class DomainMockRepository implements DomainRepository {
 
     async readAll(_sr: ServiceRequest): Promise<[internal.Domain[], number]> {
         const domains: [internal.Domain[], number] =
-            [Object.keys(this.db).map(id => this.db[id]), Object.keys(this.db).length]
+            [Object.keys(this.db).map(id => this.db[id] as internal.Domain), Object.keys(this.db).length]
         return Promise.resolve(domains)
     }
 
     async readByDomain(_domain: string, _sr: ServiceRequest): Promise<internal.Domain> {
-        return Promise.resolve(undefined)
+        return Promise.resolve(undefined as unknown as internal.Domain)
     }
 
     async readById(id: number, _sr: ServiceRequest): Promise<internal.Domain> {

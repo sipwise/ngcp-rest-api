@@ -58,7 +58,7 @@ export class ResellerMockRepository implements ResellerRepository {
     }
 
     findDefaultEmailTemplates(): Promise<db.billing.EmailTemplate[]> {
-        return Promise.resolve([])
+        return Promise.resolve([] as db.billing.EmailTemplate[])
     }
 
     read(id: number, _sr: ServiceRequest): Promise<internal.Reseller> {
@@ -68,7 +68,7 @@ export class ResellerMockRepository implements ResellerRepository {
 
     readAll(_sr: ServiceRequest): Promise<[internal.Reseller[], number]> {
         const resellers: [internal.Reseller[], number] =
-            [Object.keys(this.resellerDB).map(id => this.resellerDB[id]), Object.keys(this.resellerDB).length]
+            [Object.keys(this.resellerDB).map(id => this.resellerDB[id] as internal.Reseller), Object.keys(this.resellerDB).length]
         return Promise.resolve(resellers)
     }
 
@@ -114,12 +114,12 @@ export class ResellerMockRepository implements ResellerRepository {
         return Promise.resolve(undefined)
     }
 
-    private getNextId(db: any): number {
+    private getNextId(db: unknown): number {
         const keys = Object.keys(db)
         return (+keys[keys.length - 1]) + 1
     }
 
-    private throwErrorIfIdNotExists(db: any, id: number): void {
+    private throwErrorIfIdNotExists(db: unknown, id: number): void {
         if (db[id] == undefined)
             throw new NotFoundException()
     }

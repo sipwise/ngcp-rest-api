@@ -1,3 +1,6 @@
+// TODO: Fix this later in the generic controller approach
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {BadRequestException, Body, Param, Req, UploadedFile} from '@nestjs/common'
 import {Request} from 'express'
 

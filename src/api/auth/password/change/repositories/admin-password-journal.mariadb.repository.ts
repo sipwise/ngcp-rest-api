@@ -21,7 +21,7 @@ export class AdminPasswordJournalMariadbRepository extends MariaDbRepository imp
         const qb = db.billing.AdminPasswordJournal.createQueryBuilder('pass')
         const values = admins.map(admin => new db.billing.AdminPasswordJournal().fromInternal(admin))
         const result = await qb.insert().values(values).execute()
-        return result.identifiers.map(obj => obj.id)
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async readLastNPasswords(adminId: number, n: number, _sr: ServiceRequest): Promise<internal.AdminPasswordJournal[]> {

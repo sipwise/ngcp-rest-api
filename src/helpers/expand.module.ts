@@ -30,7 +30,7 @@ import {ExpandHelper} from '~/helpers/expand.helper'
                 resellerController: ResellerController,
                 contactController: ContactController,
                 contractController: ContractController,
-            ): any => {
+            ): unknown => {
                 return {
                     resellerController: resellerController,
                     contactController: contactController,

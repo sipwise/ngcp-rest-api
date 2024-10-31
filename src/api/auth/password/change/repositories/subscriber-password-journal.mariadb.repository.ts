@@ -19,7 +19,7 @@ export class SubscriberPasswordJournalMariadbRepository extends MariaDbRepositor
         const qb = db.provisioning.VoipSubscriberWebPasswordJournal.createQueryBuilder('pass')
         const values = subscribers.map(subscriber => new db.provisioning.VoipSubscriberWebPasswordJournal().fromInternal(subscriber))
         const result = await qb.insert().values(values).execute()
-        return result.identifiers.map(obj => obj.id)
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async readLastNPasswords(subscriberId: number, n: number, _sr: ServiceRequest): Promise<internal.SubscriberWebPasswordJournal[]> {

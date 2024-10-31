@@ -8,6 +8,8 @@ import {LoggerService} from '~/logger/logger.service'
 export class HttpRequest {
     private readonly log = new LoggerService(HttpRequest.name)
 
+    // TODO: Can this be typesafe?
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public async send(options: http.RequestOptions, data?: any): Promise<any> {
 
         let result = ''

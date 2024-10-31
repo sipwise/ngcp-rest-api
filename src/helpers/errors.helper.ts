@@ -23,6 +23,8 @@ export function handleTypeORMError(err: Error): Error {
     return err
 }
 
+// TODO: What is the correct type here?
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function formatValidationErrors(errors: any[]): any[] {
     if (errors === undefined) {
         return []
