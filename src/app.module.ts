@@ -40,6 +40,8 @@ import {PbxGroupModule} from './api/pbx/groups/pbx-group.module'
 import {PbxModule} from './api/pbx/pbx.module'
 import {ProductModule} from './api/products/product.module'
 import {ResellerModule} from './api/resellers/reseller.module'
+import {RewriteRuleModule} from './api/rewrite-rules/rewrite-rule.module'
+import {RewriteRuleSetModule} from './api/rewrite-rules/sets/rewrite-rule-set.module'
 import {SystemContactModule} from './api/systemcontacts/system-contact.module'
 import {VoicemailModule} from './api/voicemails/voicemail.module'
 import {AppController} from './app.controller'
@@ -59,7 +61,6 @@ import {StateMiddleware} from './middleware/state.middleware'
 import {DbStateSchedule} from './schedules/dbstate.schedule'
 import {FileshareSchedule} from './schedules/fileshare.schedule'
 import {RedisStateSchedule} from './schedules/redisstate.schedule'
-
 
 let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
     ConfigModule.forRoot({
@@ -109,6 +110,8 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     ProductModule,
     RedisModule,
     ResellerModule,
+    RewriteRuleModule,
+    RewriteRuleSetModule,
     SystemContactModule,
     VoicemailModule,
     LicenseModule,
