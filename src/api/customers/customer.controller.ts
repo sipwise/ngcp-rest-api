@@ -75,13 +75,13 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     @Get()
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(CustomerResponseDto)
-    async readAll(req): Promise<[CustomerResponseDto[], number]> {
+    async readAll(@Req() req: Request): Promise<[CustomerResponseDto[], number]> {
         this.log.debug({message: 'fetch all customers', func: this.readAll.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const [customers, totalCount] =
             await this.customerService.readAll(sr)
         const responseList = customers.map(customer => new CustomerResponseDto(customer))
-        if (req.query.expand) {
+        if (sr.query.expand) {
             const customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
             await this.expander.expandObjects(responseList, customerSearchDtoKeys, sr)
         }
@@ -92,13 +92,14 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     @ApiOkResponse({
         type: CustomerResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, req): Promise<CustomerResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<CustomerResponseDto> {
         this.log.debug({message: 'fetch customer by id', func: this.read.name, url: req.url, method: req.method})
+        const sr = new ServiceRequest(req)
         const customer = await this.customerService.read(id, new ServiceRequest(req))
         const response = new CustomerResponseDto(customer)
-        if (req.query.expand && !req.isRedirected) {
+        if (sr.query.expand && !sr.isInternalRedirect) {
             const customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
-            await this.expander.expandObjects([response], customerSearchDtoKeys, req)
+            await this.expander.expandObjects([response], customerSearchDtoKeys, sr)
         }
         return response
     }
@@ -110,7 +111,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     async update(
         @Param('id', ParseIntPipe) id: number,
         @Body() update: CustomerRequestDto,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<CustomerResponseDto> {
         this.log.debug({message: 'update customer by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -127,7 +128,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     @ApiPutBody(CustomerRequestDto)
     async updateMany(
         @Body(new ParseIdDictionary({items: CustomerRequestDto})) updates: Dictionary<CustomerRequestDto>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({message: 'update customers bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -150,7 +151,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-        @Req() req,
+        @Req() req: Request,
     ): Promise<CustomerResponseDto> {
         this.log.debug({message: 'patch customer by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -170,7 +171,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     @ApiPutBody(PatchDto)
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Customer>()

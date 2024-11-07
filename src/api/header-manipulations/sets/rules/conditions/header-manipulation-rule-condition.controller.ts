@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req, ValidationPipe} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, ValidationPipe, forwardRef} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {number} from 'yargs'
@@ -9,6 +9,7 @@ import {HeaderManipulationRuleConditionResponseDto} from './dto/header-manipulat
 import {HeaderManipulationRuleConditionValueResponseDto} from './dto/header-manipulation-rule-condition-value-response.dto'
 import {HeaderManipulationRuleConditionService} from './header-manipulation-rule-condition.service'
 
+import {HeaderManipulationRuleConditionSearchDto} from '~/api/header-manipulations/sets/rules/conditions/dto/header-manipulation-rule-condition-search.dto'
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
 import {License as LicenseType, RbacRole} from '~/config/constants.config'
@@ -22,6 +23,7 @@ import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation} from '~/helpers/patch.helper'
 import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -47,6 +49,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
 
     constructor(
         private readonly ruleConditionService: HeaderManipulationRuleConditionService,
+        @Inject(forwardRef(() => ExpandHelper))private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
         super(resourceName, ruleConditionService)
@@ -90,6 +93,12 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         const [entity, totalCount] =
             await this.ruleConditionService.readAll(sr)
         const responseList = entity.map(e => new HeaderManipulationRuleConditionResponseDto(e))
+
+        if (sr.query.expand && !sr.isInternalRedirect) {
+            const keys = Object.keys(new HeaderManipulationRuleConditionSearchDto())
+            await this.expander.expandObjects(responseList, keys, sr)
+        }
+
         return [responseList, totalCount]
     }
 
@@ -106,9 +115,14 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
             url: req.url,
             method: req.method,
         })
-        return new HeaderManipulationRuleConditionResponseDto(
-            await this.ruleConditionService.read(id, new ServiceRequest(req)),
-        )
+        const sr = new ServiceRequest(req)
+        const response = new HeaderManipulationRuleConditionResponseDto(await this.ruleConditionService.read(id, sr))
+        if (sr.query.expand && !sr.isInternalRedirect) {
+            const keys = Object.keys(new HeaderManipulationRuleConditionSearchDto())
+            await this.expander.expandObjects([response], keys, sr)
+        }
+
+        return response
     }
 
     @Put(':setId?/rules/:ruleId?/conditions/:id')
@@ -141,7 +155,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     @ApiPutBody(HeaderManipulationRuleConditionRequestDto)
     async updateMany(
         @Body(new ParseIdDictionary({items: HeaderManipulationRuleConditionRequestDto})) updates: Dictionary<HeaderManipulationRuleConditionRequestDto>,
-        @Req() req,
+        @Req() req: Request,
         @Param(new ValidationPipe()) _reqParams: HeaderManipulationRuleConditionRequestParamDto,
     ): Promise<number[]> {
         this.log.debug({message: 'update header rule conditions bulk', func: this.updateMany.name, url: req.url, method: req.method})
@@ -191,7 +205,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     @ApiPutBody(PatchDto)
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
-        @Req() req,
+        @Req() req: Request,
         @Param(new ValidationPipe()) _reqParams: HeaderManipulationRuleConditionRequestParamDto,
     ): Promise<number[]> {
         this.log.debug({

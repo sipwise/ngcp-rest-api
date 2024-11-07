@@ -8,6 +8,7 @@ import {HeaderManipulationRuleActionRequestDto} from './dto/header-manipulation-
 import {HeaderManipulationRuleActionResponseDto} from './dto/header-manipulation-rule-action-response.dto'
 import {HeaderManipulationRuleActionService} from './header-manipulation-rule-action.service'
 
+import {HeaderManipulationRuleActionSearchDto} from '~/api/header-manipulations/sets/rules/actions/dto/header-manipulation-rule-action-search.dto'
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
 import {License as LicenseType, RbacRole} from '~/config/constants.config'
@@ -21,6 +22,7 @@ import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation} from '~/helpers/patch.helper'
 import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -46,6 +48,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
 
     constructor(
         private readonly ruleActionService: HeaderManipulationRuleActionService,
+        private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
         super(resourceName, ruleActionService)
@@ -89,6 +92,10 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         const [entity, totalCount] =
             await this.ruleActionService.readAll(sr)
         const responseList = entity.map(e => new HeaderManipulationRuleActionResponseDto(e))
+        if (sr.query.expand) {
+            const setSearchDtoKeys = Object.keys(new HeaderManipulationRuleActionSearchDto())
+            await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
+        }
         return [responseList, totalCount]
     }
 
@@ -105,9 +112,13 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
             url: req.url,
             method: req.method,
         })
-        return new HeaderManipulationRuleActionResponseDto(
-            await this.ruleActionService.read(id, new ServiceRequest(req)),
-        )
+        const sr = new ServiceRequest(req)
+        const response = new HeaderManipulationRuleActionResponseDto(await this.ruleActionService.read(id, sr))
+        if (sr.query.expand && !sr.isInternalRedirect) {
+            const setSearchDtoKeys = Object.keys(new HeaderManipulationRuleActionSearchDto())
+            await this.expander.expandObjects([response], setSearchDtoKeys, sr)
+        }
+        return response
     }
 
     @Put(':setId?/rules/:ruleId?/actions/:id')
@@ -141,7 +152,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     @ApiPutBody(HeaderManipulationRuleActionRequestDto)
     async updateMany(
         @Body(new ParseIdDictionary({items: HeaderManipulationRuleActionRequestDto})) updates: Dictionary<HeaderManipulationRuleActionRequestDto>,
-        @Req() req,
+        @Req() req: Request,
         @Param(new ValidationPipe()) _reqParams: HeaderManipulationRuleActionRequestParamDto = new HeaderManipulationRuleActionRequestParamDto(),
     ): Promise<number[]> {
         this.log.debug({message: 'update header rule actions bulk', func: this.updateMany.name, url: req.url, method: req.method})
@@ -191,7 +202,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     @ApiPutBody(PatchDto)
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
-        @Req() req,
+        @Req() req: Request,
         @Param(new ValidationPipe()) _reqParams: HeaderManipulationRuleActionRequestParamDto = new HeaderManipulationRuleActionRequestParamDto(),
     ): Promise<number[]> {
         this.log.debug({

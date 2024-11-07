@@ -77,13 +77,13 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     @Get()
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(ResellerResponseDto)
-    async readAll(@Req() req): Promise<[ResellerResponseDto[], number]> {
+    async readAll(@Req() req: Request): Promise<[ResellerResponseDto[], number]> {
         this.log.debug({message: 'fetch all resellers', func: this.readAll.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const [resellers, totalCount] =
             await this.resellerService.readAll(sr)
         const responseList = resellers.map(reseller => new ResellerResponseDto(reseller))
-        if (req.query.expand) {
+        if (sr.query.expand) {
             const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
             await this.expander.expandObjects(responseList, resellerSearchDtoKeys, sr)
         }
@@ -94,12 +94,12 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     @ApiOkResponse({
         type: ResellerResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, req): Promise<ResellerResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<ResellerResponseDto> {
         this.log.debug({message: 'fetch reseller by id', func: this.read.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const reseller = await this.resellerService.read(id, sr)
         const responseItem = new ResellerResponseDto(reseller)
-        if (req.query.expand && !req.isRedirected) {
+        if (sr.query.expand && !sr.isInternalRedirect) {
             const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
             await this.expander.expandObjects([responseItem], resellerSearchDtoKeys, sr)
         }
@@ -126,7 +126,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     @ApiPutBody(ResellerRequestDto)
     async updateMany(
         @Body(new ParseIdDictionary({items: ResellerRequestDto})) updates: Dictionary<ResellerRequestDto>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({message: 'update resellers bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -149,7 +149,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req,
+            req: Request,
     ): Promise<ResellerResponseDto> {
         this.log.debug({message: 'patch reseller by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -171,7 +171,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     @ApiPutBody(PatchDto)
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 

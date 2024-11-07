@@ -146,7 +146,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     @ApiPutBody(HeaderManipulationRuleRequestDto)
     async updateMany(
         @Body(new ParseIdDictionary({items: HeaderManipulationRuleRequestDto})) updates: Dictionary<HeaderManipulationRuleRequestDto>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({message: 'update header rule Sets bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -194,7 +194,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     @ApiPutBody(PatchDto)
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 

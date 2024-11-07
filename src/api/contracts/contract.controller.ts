@@ -84,13 +84,13 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     @Get()
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(ContractResponseDto)
-    async readAll(req): Promise<[ContractResponseDto[], number]> {
+    async readAll(@Req() req: Request): Promise<[ContractResponseDto[], number]> {
         this.log.debug({message: 'fetch all contracts', func: this.readAll.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const [contracts, totalCount] =
             await this.contractService.readAll(sr)
         const responseList = contracts.map(contract => new ContractResponseDto(contract))
-        if (req.query.expand) {
+        if (sr.query.expand) {
             const contractSearchDtoKeys = Object.keys(new ContractSearchDto())
             await this.expander.expandObjects(responseList, contractSearchDtoKeys, sr)
         }
@@ -101,13 +101,14 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     @ApiOkResponse({
         type: ContractResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, req): Promise<ContractResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<ContractResponseDto> {
         this.log.debug({message: 'fetch contract by id', func: this.read.name, url: req.url, method: req.method})
+        const sr = new ServiceRequest(req)
         const contract = await this.contractService.read(id, new ServiceRequest(req))
         const response = new ContractResponseDto(contract)
-        if (req.query.expand && !req.isRedirected) {
+        if (sr.query.expand && !sr.isInternalRedirect) {
             const contractSearchDtoKeys = Object.keys(new ContractSearchDto())
-            await this.expander.expandObjects([response], contractSearchDtoKeys, req)
+            await this.expander.expandObjects([response], contractSearchDtoKeys, sr)
         }
         return response
     }
@@ -132,7 +133,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     @ApiPutBody(ContractRequestDto)
     async updateMany(
         @Body(new ParseIdDictionary({items: ContractRequestDto})) updates: Dictionary<ContractRequestDto>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({message: 'update contracts bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -156,7 +157,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req,
+            req: Request,
     ): Promise<ContractResponseDto> {
         this.log.debug({message: 'patch contract by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -177,7 +178,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     @ApiPutBody(PatchDto)
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 

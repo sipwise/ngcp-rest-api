@@ -89,7 +89,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
         const [entity, totalCount] =
             await this.ruleSetService.readAll(sr)
         const responseList = entity.map(e => new HeaderManipulationSetResponseDto(req.url, e))
-        if (req.query.expand) {
+        if (sr.query.expand) {
             const setSearchDtoKeys = Object.keys(new HeaderManipulationSetSearchDto())
             await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
         }
@@ -100,7 +100,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
     @ApiOkResponse({
         type: HeaderManipulationSetResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, req: Request): Promise<HeaderManipulationSetResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<HeaderManipulationSetResponseDto> {
         this.log.debug({
             message: 'read header rule set by id',
             id: id,
@@ -110,7 +110,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
         })
         const sr = new ServiceRequest(req)
         const response = new HeaderManipulationSetResponseDto(req.url, await this.ruleSetService.read(id, sr))
-        if (req.query.expand) {
+        if (sr.query.expand && !sr.isInternalRedirect) {
             const setSearchDtoKeys = Object.keys(new HeaderManipulationSetSearchDto())
             await this.expander.expandObjects([response], setSearchDtoKeys, sr)
         }
@@ -143,7 +143,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
     @ApiPutBody(HeaderManipulationSetRequestDto)
     async updateMany(
         @Body(new ParseIdDictionary({items: HeaderManipulationSetRequestDto})) updates: Dictionary<HeaderManipulationSetRequestDto>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({message: 'update header rule Sets bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -190,7 +190,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
     @ApiPutBody(PatchDto)
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({
             message: 'patch header rule set bulk',

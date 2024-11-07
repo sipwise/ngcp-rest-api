@@ -1,5 +1,6 @@
 import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
 import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {Request} from 'express'
 
 import {ProductResponseDto} from './dto/product-response.dto'
 import {ProductSearchDto} from './dto/product-search.dto'
@@ -40,13 +41,13 @@ export class ProductController extends CrudController<never, ProductResponseDto>
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(ProductResponseDto)
     async readAll(
-        @Req() req,
+        @Req() req: Request,
     ): Promise<[ProductResponseDto[], number]> {
         this.log.debug({message: 'fetch all products', func: this.readAll.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const [products, totalCount] = await this.productService.readAll(sr)
         const responseList = products.map(product => new ProductResponseDto(product))
-        if (req.query.expand) {
+        if (sr.query.expand) {
             const productSearchDtoKeys = Object.keys(new ProductSearchDto())
             await this.expander.expandObjects(responseList, productSearchDtoKeys, sr)
         }
@@ -57,13 +58,14 @@ export class ProductController extends CrudController<never, ProductResponseDto>
     @ApiOkResponse({
         type: ProductResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<ProductResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<ProductResponseDto> {
         this.log.debug({message: 'fetch product by id', func: this.read.name, url: req.url, method: req.method})
-        const product = await this.productService.read(id, req)
+        const sr = new ServiceRequest(req)
+        const product = await this.productService.read(id, sr)
         const response = new ProductResponseDto(product)
-        if (req.query.expand && !req.isRedirected) {
+        if (sr.query.expand && !sr.isInternalRedirect) {
             const productSearchDtoKeys = Object.keys(new ProductSearchDto())
-            await this.expander.expandObjects([response], productSearchDtoKeys, req)
+            await this.expander.expandObjects([response], productSearchDtoKeys, sr)
         }
         return response
     }

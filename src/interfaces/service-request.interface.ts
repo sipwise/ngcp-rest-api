@@ -17,11 +17,10 @@ export class ServiceRequest {
     // TODO: Fix any
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     user: AuthResponseDto | any
-    // TODO: Does this change make sense? Is it breaking anything?
     headers: IncomingHttpHeaders | [undefined]
-    // TODO: Does this change make sense? Is it breaking anything? Changed from any to QueriesDictionary
     query?: QueriesDictionary
     req: Request
+    isInternalRedirect?: boolean
     returnContent: boolean
 
     constructor(req: Request) {
@@ -30,6 +29,7 @@ export class ServiceRequest {
         this.headers = req.headers
         this.user = req.user
         this.req = req
+        this.isInternalRedirect = req['isInternalRedirect']
 
         const prefer = req.headers.prefer || ''
         this.returnContent = prefer == 'return=representation'

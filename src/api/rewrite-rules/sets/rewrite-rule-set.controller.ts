@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, forwardRef} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {number} from 'yargs'
@@ -45,7 +45,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
 
     constructor(
         private readonly ruleSetService: RewriteRuleSetService,
-        private readonly expander: ExpandHelper,
+        @Inject(forwardRef(() => ExpandHelper))private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
         super(resourceName, ruleSetService)
@@ -87,7 +87,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
         const [entity, totalCount] =
             await this.ruleSetService.readAll(sr)
         const responseList = entity.map(e => new RewriteRuleSetResponseDto(req.url, e))
-        if (req.query.expand) {
+        if (sr.query.expand) {
             const setSearchDtoKeys = Object.keys(new RewriteRuleSetSearchDto())
             await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
         }
@@ -98,7 +98,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
     @ApiOkResponse({
         type: RewriteRuleSetResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, req: Request): Promise<RewriteRuleSetResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<RewriteRuleSetResponseDto> {
         this.log.debug({
             message: 'read rewrite rule set by id',
             id: id,
@@ -108,7 +108,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
         })
         const sr = new ServiceRequest(req)
         const response = new RewriteRuleSetResponseDto(req.url, await this.ruleSetService.read(id, sr))
-        if (req.query.expand) {
+        if (sr.query.expand && !sr.isInternalRedirect) {
             const setSearchDtoKeys = Object.keys(new RewriteRuleSetSearchDto())
             await this.expander.expandObjects([response], setSearchDtoKeys, sr)
         }
@@ -141,7 +141,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
     @ApiPutBody(RewriteRuleSetRequestDto)
     async updateMany(
         @Body(new ParseIdDictionary({items: RewriteRuleSetRequestDto})) updates: Dictionary<RewriteRuleSetRequestDto>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({message: 'update rewrite rule Sets bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -188,7 +188,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
     @ApiPutBody(PatchDto)
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({
             message: 'patch rewrite rule set bulk',

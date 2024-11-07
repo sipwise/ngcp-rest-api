@@ -69,12 +69,12 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     @ApiOkResponse({
         type: VoicemailResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<VoicemailResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<VoicemailResponseDto> {
         this.log.debug({message: 'fetch voicemail by id', func: this.read.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const voicemail = await this.voicemailService.read(id, sr)
         const responseItem = new VoicemailResponseDto(voicemail)
-        if (req.query.expand && !req.isRedirected) {
+        if (sr.query.expand && !sr.isInternalRedirect) {
             const voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
             await this.expander.expandObjects([responseItem], voicemailSearchDtoKeys, sr)
         }
@@ -87,7 +87,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     })
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({message: 'delete voicemail by id', func: this.delete.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -131,7 +131,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     @ApiPutBody(PatchDto)
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
@@ -171,7 +171,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     @ApiPutBody(VoicemailRequestDto)
     async updateMany(
         @Body(new ParseIdDictionary({items: VoicemailRequestDto})) updates: Dictionary<VoicemailRequestDto>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({
             message: 'update voicemails bulk',

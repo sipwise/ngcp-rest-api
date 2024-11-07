@@ -72,7 +72,7 @@ export class CrudController<CreateDTO, _ResponseDTO> {
 
     async journal(
         @Param('id') id: number | string,
-        @Req() req,
+        @Req() req: Request,
         @Param() _params?: unknown,
     ): Promise<[JournalResponseDto[], number]>{
         const sr = new ServiceRequest(req)

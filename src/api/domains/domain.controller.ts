@@ -83,13 +83,13 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
     @Roles(RbacRole.ccare, RbacRole.ccareadmin)
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(DomainResponseDto)
-    async readAll(@Req() req): Promise<[DomainResponseDto[], number]> {
+    async readAll(@Req() req: Request): Promise<[DomainResponseDto[], number]> {
         this.log.debug({message: 'fetch all domains', func: this.readAll.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const [domains, totalCount] =
             await this.domainService.readAll(sr)
         const responseList = domains.map(dom => new DomainResponseDto(dom))
-        if (req.query.expand) {
+        if (sr.query.expand) {
             const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
             await this.expander.expandObjects(responseList, domainSearchDtoKeys, sr)
         }
@@ -101,12 +101,12 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
         type: DomainResponseDto,
     })
     @Roles(RbacRole.ccare, RbacRole.ccareadmin)
-    async read(@Param('id', ParseIntPipe) id: number, req): Promise<DomainResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<DomainResponseDto> {
         this.log.debug({message: 'fetch domain by id', func: this.read.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const domain = await this.domainService.read(id, sr)
         const responseItem = new DomainResponseDto(domain)
-        if (req.query.expand && !req.isRedirected) {
+        if (sr.query.expand && !sr.isInternalRedirect) {
             const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
             await this.expander.expandObjects([responseItem], domainSearchDtoKeys, sr)
         }
@@ -119,7 +119,7 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
     })
     async delete(
         @Param('id', new ParseIntIdArrayPipe()) ids: number[],
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({message: 'delete domain by id', func: this.delete.name, url: req.url, method: req.method})
 

@@ -136,7 +136,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req,
+            req: Request,
     ): Promise<CustomerSpeedDialResponseDto> {
         this.log.debug({
             message: 'patch customer speed dial by id',
@@ -164,7 +164,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     @ApiPutBody(PatchDto)
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
@@ -184,7 +184,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     })
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({
             message: 'delete customer speed dial by id',

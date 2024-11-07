@@ -1,6 +1,10 @@
-import {Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
-import {Reflector} from '@nestjs/core'
+import {Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {ModuleRef, Reflector} from '@nestjs/core'
 
+import {ContactController} from '~/api/contacts/contact.controller'
+import {ContractController} from '~/api/contracts/contract.controller'
+import {ResellerController} from '~/api/resellers/reseller.controller'
+import {RewriteRuleSetController} from '~/api/rewrite-rules/sets/rewrite-rule-set.controller'
 import {CrudController} from '~/controllers/crud.controller'
 import {RequestDto} from '~/dto/request.dto'
 import {ResponseDto} from '~/dto/response.dto'
@@ -12,10 +16,28 @@ import {LoggerService} from '~/logger/logger.service'
 export class ExpandHelper {
     private readonly reflector = new Reflector()
     private readonly log = new LoggerService(ExpandHelper.name)
+    private readonly controllersMap:  Record<string, CrudController<RequestDto, ResponseDto>> = {}
 
     constructor(
-        @Inject('BASE_CONTROLLERS_MAP') private readonly controllersMap: Record<string, CrudController<RequestDto,ResponseDto>>,
-    ) {
+        private readonly moduleRef: ModuleRef,
+    ) {}
+
+    async onModuleInit(): Promise<void> {
+        const controllersToRetrieve = [
+            {key: 'resellerController', name: ResellerController},
+            {key: 'contactController', name: ContactController},
+            {key: 'contractController', name: ContractController},
+            {key: 'rewriteRuleSetController', name: RewriteRuleSetController},
+            // Add other controllers here as needed
+        ]
+        for (const {key, name} of controllersToRetrieve) {
+            const controller = this.moduleRef.get<CrudController<RequestDto, ResponseDto>>(name, {strict: false})
+            if (controller) {
+                this.controllersMap[key] = controller
+            } else {
+                this.log.warn(`Controller ${name} could not be found during module initialization.`)
+            }
+        }
     }
 
     /**
@@ -60,11 +82,15 @@ export class ExpandHelper {
             if (!isExpandable || !this.controllersMap[controller] || !parentObject.includes(fieldsToExpand[i])) {
                 if (!this.controllersMap[controller])
                     this.log.error(`Trying to expand ${fieldsToExpand[i]} but provided controller: ${controller} is not found`)
+
                 if (await this.handleSoftExpand(sr, `Expanding ${fieldsToExpand[i]} not allowed or impossible`))
                     return
             }
             let j = 0
             do {
+                if (responseList[j][`${fieldsToExpand[i]}`] == null)
+                    continue
+
                 let returnObject
                 try {
                     returnObject = await ProtectedReadCall(this.controllersMap[controller], responseList[j][`${fieldsToExpand[i]}`], sr)
@@ -95,6 +121,7 @@ export class ExpandHelper {
         if (!isExpandable || !this.controllersMap[controller] || !parentObject.includes(firstFieldToExpand)) {
             if(!this.controllersMap[controller])
                 this.log.error(`Trying to expand ${firstFieldToExpand} but provided controller: ${controller} is not found`)
+
             if (await this.handleSoftExpand(sr, `Expanding ${firstFieldToExpand} not allowed or impossible`))
                 return
         }
@@ -105,10 +132,13 @@ export class ExpandHelper {
         }
         let i = 0
         do {
+            if (responseList[i][`${firstFieldToExpand}`] == null) 
+                continue
+
             let returnObject
             try {
                 returnObject =
-                    await ProtectedReadCall(this.controllersMap[controller], responseList[`${firstFieldToExpand}`], sr)
+                    await ProtectedReadCall(this.controllersMap[controller], responseList[i][`${firstFieldToExpand}`], sr)
             } catch{
                 if (await this.handleSoftExpand(sr, `Cannot expand field ${firstFieldToExpand}`))
                     continue

@@ -258,7 +258,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     @ApiPutBody(NCOSSetRequestDto)
     async updateMany(
         @Body(new ParseIdDictionary({items: NCOSSetRequestDto})) updates: Dictionary<NCOSSetRequestDto>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({message: 'update NCOS Sets bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -306,7 +306,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     @ApiPutBody(PatchDto)
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 

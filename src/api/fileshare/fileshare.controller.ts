@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common'
 import {FileInterceptor} from '@nestjs/platform-express'
 import {ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {Request} from 'express'
 
 import {FileshareRequestDto} from './dto/fileshare-request.dto'
 import {FileshareResponseDto} from './dto/fileshare-response.dto'
@@ -59,7 +60,7 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
     }))
     async createFile(
         @Body() createDto: FileshareRequestDto,
-        @Req() req,
+        @Req() req: Request,
         @UploadedFile() file,
     ): Promise<FileshareResponseDto> {
         if (!file) {
@@ -75,12 +76,12 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
     @Get()
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(FileshareResponseDto)
-    async readAll(@Req() req): Promise<[FileshareResponseDto[], number]> {
+    async readAll(@Req() req: Request): Promise<[FileshareResponseDto[], number]> {
         this.log.debug({message: 'fetch all fileshares', func: this.readAll.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const [responseList, totalCount] =
             await this.fileshareService.readAll(sr)
-        if (req.query.expand) {
+        if (sr.query.expand) {
             const fileshareSearchDtoKeys = Object.keys(new FileshareSearchDto())
             await this.expander.expandObjects(responseList, fileshareSearchDtoKeys, sr)
         }
@@ -94,7 +95,7 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
     })
     async readFile(
         @Param('id') id: string,
-        @Req() req,
+        @Req() req: Request,
         @Response({passthrough: true}) res,
     ): Promise<StreamableFile> {
         this.log.debug({message: 'fetch fileshare by id', func: this.readFile.name, url: req.url, method: req.method})
@@ -120,7 +121,7 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
     @ApiOkResponse({})
     async delete(
         @ParamOrBody('id', new ParseUUIDArrayPipe()) ids: string[],
-        @Req() req,
+        @Req() req: Request,
     ): Promise<string[]>{
         this.log.debug({message: 'delete fileshare by id', func: this.delete.name, url: req.url, method: req.method})
 
@@ -138,7 +139,7 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
     })
     async journal(
         @Param('id') id: number | string,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<[JournalResponseDto[], number]> {
         this.log.debug({message: 'fetch fileshare journal by id', func: this.journal.name, url: req.url, method: req.method})
         return super.journal(id, req)

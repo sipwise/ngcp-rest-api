@@ -1,6 +1,7 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsEnum, IsNotEmpty, IsOptional} from 'class-validator'
 
+import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {RwrDpEnum} from '~/enums/rwr-dp.enum'
@@ -42,6 +43,7 @@ export class HeaderManipulationRuleConditionResponseDto implements ResponseDto {
 
     @IsOptional()
     @ApiPropertyOptional()
+    @Expandable({name: 'rwr_set_id', controller: 'rewriteRuleSetController'})
         rwr_set_id?: number
 
     @IsEnum(RwrDpEnum)

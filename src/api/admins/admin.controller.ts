@@ -112,7 +112,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         const [admins, totalCount] =
             await this.adminService.readAll(sr)
         const responseList = admins.map((adm) => new AdminResponseDto(adm, sr.user.role))
-        if (req.query.expand) {
+        if (sr.query.expand) {
             await this.expander.expandObjects(responseList, adminSearchDtoKeys, sr)
         }
         return [responseList, totalCount]
@@ -129,7 +129,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     @ApiOkResponse({
         type: AdminResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<AdminResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<AdminResponseDto> {
         this.log.debug({
             message: 'fetch admin by id',
             func: this.read.name,
@@ -139,9 +139,9 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         const sr = new ServiceRequest(req)
         const admin = await this.adminService.read(id, sr)
         const responseItem = new AdminResponseDto(admin, sr.user.role)
-        if (req.query.expand && !req.isRedirected) {
+        if (sr.query.expand && !sr.isInternalRedirect) {
             const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
-            await this.expander.expandObjects([responseItem], adminSearchDtoKeys, req)
+            await this.expander.expandObjects([responseItem], adminSearchDtoKeys, sr)
         }
         return responseItem
     }
@@ -175,7 +175,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     @ApiPutBody(AdminRequestDto)
     async updateMany(
         @Body(new ParseIdDictionary({items: AdminRequestDto})) updates: Dictionary<AdminRequestDto>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({message: 'update admin bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -220,7 +220,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     @ApiPutBody(PatchDto)
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
@@ -258,7 +258,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     })
     async journal(
         @Param('id') id: number | string,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<[JournalResponseDto[], number]> {
         const [journals, count] = await this.journalService.readAll(new ServiceRequest(req), 'admins', id)
         const responseList = journals.map(j => new JournalResponseDto(j))

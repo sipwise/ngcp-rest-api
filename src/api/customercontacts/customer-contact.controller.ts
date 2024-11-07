@@ -91,7 +91,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     @Get()
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(CustomerContactResponseDto)
-    async readAll(@Req() req): Promise<[CustomerContactResponseDto[], number]> {
+    async readAll(@Req() req: Request): Promise<[CustomerContactResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all customer contacts',
             func: this.readAll.name,
@@ -103,7 +103,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
             await this.contactService.readAll(sr)
 
         const responseList = contacts.map((con) => new CustomerContactResponseDto(con, sr.user.role))
-        if (req.query.expand) {
+        if (sr.query.expand) {
             const contactSearchDtoKeys = Object.keys(new CustomerContactSearchDto())
             await this.expander.expandObjects(responseList, contactSearchDtoKeys, sr)
         }
@@ -118,7 +118,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
         this.log.debug({message: 'fetch customer contact by id', func: this.read.name, url: sr.url, method: sr.method})
         const contact = await this.contactService.read(id, new ServiceRequest(sr))
         const responseItem = new CustomerContactResponseDto(contact, sr.user.role)
-        if (sr.query.expand && !sr.isRedirected) {
+        if (sr.query.expand && !sr.isInternalRedirect) {
             const contactSearchDtoKeys = Object.keys(new CustomerContactSearchDto())
             await this.expander.expandObjects([responseItem], contactSearchDtoKeys, sr)
         }
@@ -136,7 +136,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req,
+            req: Request,
     ): Promise<CustomerContactResponseDto> {
         this.log.debug({
             message: 'patch customer contact by id',
@@ -163,7 +163,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     @ApiPutBody(PatchDto)
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
@@ -202,7 +202,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     @ApiPutBody(CustomerContactRequestDto)
     async updateMany(
         @Body(new ParseIdDictionary({items: CustomerContactRequestDto})) updates: Dictionary<CustomerContactRequestDto>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({
             message: 'update customer contacts bulk',
@@ -225,7 +225,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     })
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({
             message: 'delete customer contact by ids',

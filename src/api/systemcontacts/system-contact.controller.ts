@@ -74,7 +74,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
     @Get()
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(SystemContactResponseDto)
-    async readAll(@Req() req): Promise<[SystemContactResponseDto[], number]> {
+    async readAll(@Req() req: Request): Promise<[SystemContactResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all system contacts',
             func: this.readAll.name,
@@ -85,7 +85,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
         const [contacts, totalCount] =
             await this.contactService.readAll(sr)
         const responseList = contacts.map(contact => new SystemContactResponseDto(contact))
-        if (req.query.expand) {
+        if (sr.query.expand) {
             const contactSearchDtoKeys = Object.keys(new SystemContactSearchDto())
             await this.expander.expandObjects(responseList, contactSearchDtoKeys, sr)
         }
@@ -96,12 +96,12 @@ export class SystemContactController extends CrudController<SystemContactRequest
     @ApiOkResponse({
         type: SystemContactResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, req): Promise<SystemContactResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<SystemContactResponseDto> {
         this.log.debug({message: 'fetch system contact by id', func: this.read.name, id: id, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const contact = await this.contactService.read(id, sr)
         const response = new SystemContactResponseDto(contact)
-        if (req.query.expand && !req.isRedirected) {
+        if (sr.query.expand && !sr.isInternalRedirect) {
             const contactSearchDtoKeys = Object.keys(new SystemContactSearchDto())
             await this.expander.expandObjects([response], contactSearchDtoKeys, sr)
         }
@@ -134,7 +134,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
     @ApiPutBody(SystemContactRequestDto)
     async updateMany(
         @Body(new ParseIdDictionary({items: SystemContactRequestDto})) updates: Dictionary<SystemContactRequestDto>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({
             message: 'update system contacts bulk',
@@ -159,7 +159,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req,
+            req: Request,
     ): Promise<SystemContactResponseDto> {
         this.log.debug({
             message: 'patch system contact by id',
@@ -186,7 +186,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
     @ApiPutBody(PatchDto)
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
@@ -206,7 +206,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
     })
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
-        @Req() req,
+        @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({
             message: 'delete system contact by id',
