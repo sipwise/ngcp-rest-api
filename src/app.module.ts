@@ -40,8 +40,9 @@ import {PbxGroupModule} from './api/pbx/groups/pbx-group.module'
 import {PbxModule} from './api/pbx/pbx.module'
 import {ProductModule} from './api/products/product.module'
 import {ResellerModule} from './api/resellers/reseller.module'
-import {RewriteRuleModule} from './api/rewrite-rules/rewrite-rule.module'
+import {RewriteRuleModule as RewriteModule} from './api/rewrite-rules/rewrite-rule.module'
 import {RewriteRuleSetModule} from './api/rewrite-rules/sets/rewrite-rule-set.module'
+import {RewriteRuleModule} from './api/rewrite-rules/sets/rules/rewrite-rule.module'
 import {SystemContactModule} from './api/systemcontacts/system-contact.module'
 import {VoicemailModule} from './api/voicemails/voicemail.module'
 import {AppController} from './app.controller'
@@ -110,6 +111,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     ProductModule,
     RedisModule,
     ResellerModule,
+    RewriteModule,
     RewriteRuleModule,
     RewriteRuleSetModule,
     SystemContactModule,

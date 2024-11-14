@@ -57,10 +57,6 @@ export class RewriteRuleSetMockRepository implements RewriteRuleSetRepository {
         return Promise.resolve(sets)
     }
 
-    async readByDomain(_domain: string, _sr: ServiceRequest): Promise<internal.RewriteRuleSet> {
-        return Promise.resolve(undefined as unknown as internal.RewriteRuleSet)
-    }
-
     async readById(id: number, _sr: ServiceRequest): Promise<internal.RewriteRuleSet> {
         this.throwErrorIfIdNotExists(id)
         return Promise.resolve(this.db[id])
