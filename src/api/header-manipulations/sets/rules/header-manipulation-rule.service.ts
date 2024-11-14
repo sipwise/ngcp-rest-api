@@ -41,15 +41,15 @@ export class HeaderManipulationRuleService implements CrudService<internal.Heade
                     newEntity.resellerId = sr.user.reseller_id
                     newEntity.subscriberId = entity.subscriberId
                     newEntity.name = `subscriber_${entity.subscriberId}`
-                    const newSets = await this.ruleSetRepo.create([newEntity])
-                    entity.setId = newSets[0].id
+                    entity.setId = (await this.ruleSetRepo.create([newEntity]))[0]
                 } else {
                     entity.setId = sets[0].id
                 }
             }
         }
 
-        return await this.ruleRepo.create(entities)
+        const createdIds = await this.ruleRepo.create(entities)
+        return await this.ruleRepo.readWhereInIds(createdIds, sr)
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.HeaderRule[], number]> {

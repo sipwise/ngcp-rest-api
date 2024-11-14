@@ -35,7 +35,8 @@ export class HeaderManipulationRuleActionService implements CrudService<internal
             }
         }
 
-        return await this.ruleActionRepo.create(entities)
+        const createdIds = await this.ruleActionRepo.create(entities)
+        return await this.ruleActionRepo.readWhereInIds(createdIds, sr)
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.HeaderRuleAction[], number]> {

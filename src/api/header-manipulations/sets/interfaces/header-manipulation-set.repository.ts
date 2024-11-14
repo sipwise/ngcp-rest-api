@@ -3,7 +3,7 @@ import {Dictionary} from '~/helpers/dictionary.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export interface HeaderManipulationSetRepository {
-    create(sd: internal.HeaderRuleSet[], sr: ServiceRequest): Promise<internal.HeaderRuleSet[]>
+    create(sd: internal.HeaderRuleSet[], sr: ServiceRequest): Promise<number[]>
 
     readAll(sr: ServiceRequest): Promise<[internal.HeaderRuleSet[], number]>
 

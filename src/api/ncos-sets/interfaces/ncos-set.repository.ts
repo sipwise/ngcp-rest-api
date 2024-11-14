@@ -3,7 +3,7 @@ import {Dictionary} from '~/helpers/dictionary.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export interface NCOSSetRepository {
-    create(sd: internal.NCOSSet[], sr: ServiceRequest): Promise<internal.NCOSSet[]>
+    create(sd: internal.NCOSSet[], sr: ServiceRequest): Promise<number[]>
 
     readAll(sr: ServiceRequest): Promise<[internal.NCOSSet[], number]>
 

@@ -21,15 +21,12 @@ interface FilterBy {
 export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSSetRepository {
     private readonly log = new LoggerService(NCOSSetMariadbRepository.name)
 
-    async create(entities: internal.NCOSSet[]): Promise<internal.NCOSSet[]> {
+    async create(entities: internal.NCOSSet[]): Promise<number[]> {
         const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
         const values = await Promise.all(entities.map(async entity => new db.billing.NCOSSet().fromInternal(entity)))
         const result = await qb.insert().values(values).execute()
 
-        const ids = await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
-        const created = await qb.andWhereInIds(ids).getMany()
-
-        return await Promise.all(created.map(async entity => entity.toInternal()))
+        return await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.NCOSSet[], number]> {

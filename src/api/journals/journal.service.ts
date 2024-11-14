@@ -41,8 +41,9 @@ export class JournalService {
      * @param journal Journal to be created
      */
     @HandleDbErrors
-    async create(journal: internal.Journal): Promise<internal.Journal> {
-        return await this.journalRepo.create(journal)
+    async create(journal: internal.Journal, sr: ServiceRequest): Promise<internal.Journal> {
+        const createdId = await this.journalRepo.create(journal)
+        return await this.journalRepo.read(createdId, sr)
     }
 
     /**
@@ -113,7 +114,7 @@ export class JournalService {
         this.log.debug('write journal entry')
 
         // write Journal entry to database
-        await this.create(entry)
+        await this.create(entry, sr)
 
         return true
     }

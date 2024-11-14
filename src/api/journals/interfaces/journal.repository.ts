@@ -2,7 +2,7 @@ import {internal} from '~/entities'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export interface JournalRepository {
-    create(journal: internal.Journal): Promise<internal.Journal>
+    create(journal: internal.Journal): Promise<number>
 
     read(id: number, sr: ServiceRequest): Promise<internal.Journal>
 

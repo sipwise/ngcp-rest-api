@@ -20,20 +20,15 @@ export interface FilterBy {
 export class HeaderManipulationSetMariadbRepository extends MariaDbRepository implements HeaderManipulationSetRepository {
     private readonly log = new LoggerService(HeaderManipulationSetMariadbRepository.name)
 
-    async create(entities: internal.HeaderRuleSet[]): Promise<internal.HeaderRuleSet[]> {
+    async create(entities: internal.HeaderRuleSet[]): Promise<number[]> {
         const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
         const values = await Promise.all(entities.map(async entity => {
             entity.subscriberId = await this.billingToProvisioning(entity.subscriberId)
             return new db.provisioning.VoipHeaderRuleSet().fromInternal(entity)
         }))
         const result = await qb.insert().values(values).execute()
-        const ids = await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
-        const created = await qb.andWhereInIds(ids).getMany()
 
-        return await Promise.all(created.map(async entity => {
-            entity.subscriber_id = await this.provisioningToBilling(entity.subscriber_id)
-            return entity.toInternal()
-        }))
+        return await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRuleSet[], number]> {

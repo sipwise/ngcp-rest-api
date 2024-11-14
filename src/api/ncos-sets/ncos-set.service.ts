@@ -25,7 +25,8 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
                 entity.resellerId = sr.user.reseller_id
             await this.checkPermissions(entity.resellerId, sr)
         }))
-        return await this.ncosSetRepo.create(entities)
+        const createdIds = await this.ncosSetRepo.create(entities)
+        return await this.ncosSetRepo.readWhereInIds(createdIds, sr)
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.NCOSSet[], number]> {

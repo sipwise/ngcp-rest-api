@@ -29,7 +29,7 @@ export class JournalMockRepository implements JournalRepository {
         }
     }
 
-    create(_journal: internal.Journal): Promise<internal.Journal> {
+    create(_journal: internal.Journal): Promise<number> {
         return Promise.resolve(undefined)
     }
 

@@ -31,7 +31,8 @@ export class HeaderManipulationSetService implements CrudService<internal.Header
             if (sr.user.reseller_id_required)
                 await this.checkPermissions(entity.resellerId, sr)
         }))
-        return await this.ruleSetRepo.create(entities)
+        const createdIds = await this.ruleSetRepo.create(entities)
+        return await this.ruleSetRepo.readWhereInIds(createdIds, sr)
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.HeaderRuleSet[], number]> {

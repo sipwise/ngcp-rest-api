@@ -14,12 +14,12 @@ import {MariaDbRepository} from '~/repositories/mariadb.repository'
 export class JournalMariadbRepository extends MariaDbRepository implements JournalRepository {
     private readonly log = new LoggerService(JournalMariadbRepository.name)
 
-    async create(journal: internal.Journal): Promise<internal.Journal> {
+    async create(journal: internal.Journal): Promise<number> {
         const dbJournal = db.billing.Journal.create()
         dbJournal.fromInternal(journal)
 
         await db.billing.Journal.insert(dbJournal)
-        return dbJournal.toInternal()
+        return dbJournal.id
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Journal> {
