@@ -1,5 +1,4 @@
 import {genSalt, hash} from 'bcrypt'
-import {IsDate, IsNotEmpty, IsNumber, IsOptional, IsString} from 'class-validator'
 
 export enum VoipSubscriberStatus {
     Active = 'active',
@@ -8,22 +7,10 @@ export enum VoipSubscriberStatus {
 }
 
 export class VoipSubscriber {
-    @IsNumber()
-    @IsNotEmpty()
-        id: number
-
-    @IsOptional()
-    @IsString()
-    @IsNotEmpty()
-        password?: string
-
-    @IsString()
-    @IsNotEmpty()
-        webPassword: string
-
-    @IsDate()
-    @IsNotEmpty()
-        webPasswordModifyTimestamp: Date
+    id: number
+    password?: string
+    webPassword: string
+    webPasswordModifyTimestamp: Date
 
     async generateSaltedpass(bcrypt_cost: number = 13, salt?: string): Promise<string> {
         const bcrypt_version = 'b'

@@ -1,32 +1,34 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsNotEmpty, IsNumber} from 'class-validator'
+import {IsInt, IsNotEmpty, IsString} from 'class-validator'
 
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 
 export class PbxGroupMemberResponseDto implements ResponseDto {
-    @IsNotEmpty()
+    @IsInt()
     @ApiProperty()
         id: number
 
-    @IsNotEmpty()
+    @IsInt()
     @ApiProperty()
         group_id: number
 
     @IsNotEmpty()
+    @IsString()
     @ApiProperty()
         extension: string
 
-    @IsNotEmpty()
-    @IsNumber()
+    @IsInt()
     @ApiProperty()
         subscriber_id: number
 
     @IsNotEmpty()
+    @IsString()
     @ApiProperty()
         username: string
 
     @IsNotEmpty()
+    @IsString()
     @ApiProperty()
         domain: string
 

@@ -1,6 +1,6 @@
 import {UrlReferenceType} from '~/enums/url-reference-type.enum'
 
-export type UrlReference = {
+export class UrlReference {
     type: UrlReferenceType
     url: string
 }

@@ -12,6 +12,7 @@ import {HttpExceptionFilter} from './helpers/http-exception.filter'
 import {createSwaggerDocument} from './helpers/swagger.helper'
 import {LoggingInterceptor} from './interceptors/logging.interceptor'
 import {TransformInterceptor} from './interceptors/transform.interceptor'
+import {ResponseValidationInterceptor} from './interceptors/validate.interceptor'
 import {ValidateInputPipe} from './pipes/validate.pipe'
 
 async function bootstrap(): Promise<void> {
@@ -48,6 +49,7 @@ async function bootstrap(): Promise<void> {
             disableErrorMessages: true,
         }),
     )
+
     app.useGlobalFilters(new HttpExceptionFilter())
 
     app.useGlobalInterceptors(
@@ -56,6 +58,7 @@ async function bootstrap(): Promise<void> {
             perPageName: config.common.api_default_query_rows_name,
         }),
         new LoggingInterceptor(),
+        new ResponseValidationInterceptor(),
     )
 
     app.use(bodyParser.json({

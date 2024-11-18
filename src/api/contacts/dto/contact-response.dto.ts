@@ -1,76 +1,172 @@
-import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {ApiProperty} from '@nestjs/swagger'
+import {IsBoolean, IsEnum, IsInt, IsString} from 'class-validator'
 
 import {RbacRole} from '~/config/constants.config'
+import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
 
 export class ContactResponseDto implements ResponseDto {
+    @IsInt()
     @ApiProperty()
         id: number
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         bankname?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         bic?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         city?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         company?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         comregnum?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         country?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         email?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         faxnumber?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         firstname?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         gender?: ContactGender
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         gpp0?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         gpp1?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         gpp2?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         gpp3?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         gpp4?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         gpp5?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         gpp6?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         gpp7?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         gpp8?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         gpp9?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         iban?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         lastname?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         mobilenumber?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsBoolean()
+    @ApiProperty()
         newsletter: boolean
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         phonenumber?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         postcode?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsInt()
+    @ApiProperty()
     @Expandable({name: 'reseller_id', controller: 'resellerController'})
         reseller_id?: number
+
+    @CanBeNull()
+    @IsEnum(ContactStatus)
     @ApiProperty()
         status: ContactStatus
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         street?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         timezone?: string
-    @ApiPropertyOptional()
+
+    @CanBeNull()
+    @IsString()
+    @ApiProperty()
         vatnum?: string
 
     constructor(contact: internal.Contact, role: RbacRole) {

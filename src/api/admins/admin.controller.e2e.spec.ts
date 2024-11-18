@@ -64,6 +64,7 @@ describe('AdminController', () => {
         admin.email = 'staticadmin@example.com'
         admin.role_id = 1
         admin.is_master = true
+        admin.login = 'staticadmin'
         admin.saltedpass = strongPassword
 
         await db.billing.Admin.insert(admin)

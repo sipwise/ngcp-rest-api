@@ -1,6 +1,8 @@
-import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsInt, IsNotEmpty, IsOptional, IsPositive, IsString} from 'class-validator'
+import {ApiProperty} from '@nestjs/swagger'
+import {Type} from 'class-transformer'
+import {IsInt, IsNotEmpty, IsString, ValidateNested} from 'class-validator'
 
+import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
@@ -8,29 +10,28 @@ import {UrlReferenceType} from '~/enums/url-reference-type.enum'
 import {UrlReference} from '~/types/url-reference.type'
 
 export class RewriteRuleSetResponseDto implements ResponseDto {
-    @ApiProperty()
     @IsInt()
-    @IsPositive()
+    @ApiProperty()
         id: number
 
-    @ApiProperty()
     @IsInt()
-    @IsPositive()
+    @ApiProperty()
     @Expandable({name: 'reseller_id', controller: 'resellerController'})
         reseller_id: number
 
-    @ApiProperty()
-    @IsNotEmpty()
     @IsString()
+    @IsNotEmpty()
+    @ApiProperty()
         name: string
 
-    @ApiPropertyOptional()
-    @IsOptional()
+    @CanBeNull()
     @IsString()
+    @ApiProperty()
         description?: string
 
+    @ValidateNested()
+    @Type(() => UrlReference)
     @ApiProperty()
-    @IsNotEmpty()
         rules: UrlReference
 
     constructor(prefix: string, entity: internal.RewriteRuleSet) {

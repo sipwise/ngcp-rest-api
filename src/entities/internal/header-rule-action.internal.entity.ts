@@ -1,5 +1,4 @@
 
-import {IsEnum, IsNotEmpty, IsNumber, IsOptional, MaxLength} from 'class-validator'
 
 import {RwrDpEnum} from '~/enums/rwr-dp.enum'
 
@@ -27,50 +26,27 @@ export enum HeaderRuleActionValuePart {
 }
 
 export class HeaderRuleAction {
-    @IsNumber()
-    @IsNotEmpty()
-        id: number
 
-    @IsNumber()
-    @IsNotEmpty()
-        ruleId: number
+    id: number
 
-    @MaxLength(255)
-    @IsNotEmpty()
-        header: string
+    ruleId: number
 
-    @IsEnum(HeaderRuleActionHeaderPart)
-    @IsNotEmpty()
-        headerPart: HeaderRuleActionHeaderPart
+    header: string
 
-    @IsEnum(HeaderRuleActionActionType)
-    @IsNotEmpty()
-        actionType: HeaderRuleActionActionType
+    headerPart: HeaderRuleActionHeaderPart
 
-    @IsEnum(HeaderRuleActionValuePart)
-    @IsNotEmpty()
-        valuePart: HeaderRuleActionValuePart
+    actionType: HeaderRuleActionActionType
 
-    @IsOptional()
-    @MaxLength(255)
-        value?: string
+    valuePart: HeaderRuleActionValuePart
 
-    @IsOptional()
-    @IsNumber()
-        rwrSetId?: number
+    value?: string
+    rwrSetId?: number
 
-    @IsOptional()
-    @IsEnum(RwrDpEnum)
-        rwrDp?: RwrDpEnum
+    rwrDp?: RwrDpEnum
 
-    @IsOptional()
-    @IsNumber()
-        rwrDpId?: number
+    rwrDpId?: number
 
-    @IsOptional()
-    @IsNumber()
-        priority?: number
+    priority?: number
 
-    @IsOptional()
-        enabled?: boolean
+    enabled?: boolean
 }

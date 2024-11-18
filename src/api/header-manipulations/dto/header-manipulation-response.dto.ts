@@ -1,10 +1,10 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsNotEmpty} from 'class-validator'
+import {IsArray} from 'class-validator'
 
 import {ResponseDto} from '~/dto/response.dto'
 
 export class HeaderManipulationResponseDto implements ResponseDto {
-    @IsNotEmpty()
+    @IsArray()
     @ApiProperty()
         links: string[]
 

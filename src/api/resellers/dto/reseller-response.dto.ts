@@ -1,5 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsEnum, IsNotEmpty} from 'class-validator'
+import {IsEnum, IsInt, IsNotEmpty, IsString} from 'class-validator'
 import {Expandable} from 'decorators/expandable.decorator'
 
 import {ResponseDto} from '~/dto/response.dto'
@@ -8,19 +8,22 @@ import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 
 
 export class ResellerResponseDto implements ResponseDto {
+    @IsInt()
     @ApiProperty()
         id: number
 
+    @IsInt()
     @ApiProperty()
-    @IsNotEmpty()
     @Expandable({name: 'contract_id', controller: 'contractController'})
         contract_id: number
 
+    @IsString()
+    @IsNotEmpty()
     @ApiProperty()
         name: string
 
-    @ApiProperty()
     @IsEnum(ResellerStatus)
+    @ApiProperty()
         status: ResellerStatus
 
     constructor(reseller: internal.Reseller) {

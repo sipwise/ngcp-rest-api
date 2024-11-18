@@ -1,4 +1,3 @@
-import {IsEnum, IsNotEmpty, IsNumber, IsOptional, MaxLength} from 'class-validator'
 
 import {RwrDpEnum} from '~/enums/rwr-dp.enum'
 
@@ -29,53 +28,18 @@ export enum HeaderRuleConditionValueType {
 }
 
 export class HeaderRuleCondition {
-    @IsNumber()
-    @IsNotEmpty()
-        id: number
-
-    @IsNumber()
-    @IsNotEmpty()
-        ruleId: number
-
-    @IsEnum(HeaderRuleConditionMatchType)
-    @IsNotEmpty()
-        matchType: HeaderRuleConditionMatchType
-
-    @IsEnum(HeaderRuleConditionMatchPart)
-    @IsNotEmpty()
-        matchPart: HeaderRuleConditionMatchPart
-
-    @IsNotEmpty()
-    @MaxLength(255)
-        matchName: string
-
-    @IsEnum(HeaderRuleConditionExpression)
-    @IsNotEmpty()
-        expression: HeaderRuleConditionExpression
-
-    @IsNotEmpty()
-        expressionNegation: boolean
-
-    @IsEnum(HeaderRuleConditionValueType)
-    @IsNotEmpty()
-        valueType: HeaderRuleConditionValueType
-
-    @IsOptional()
-    @IsNumber()
-        rwrSetId: number
-
-    @IsOptional()
-    @IsNumber()
-        rwrDpId: number
-
-    @IsOptional()
-    @IsEnum(RwrDpEnum)
-        rwrDp?: RwrDpEnum
-
-    @IsNotEmpty()
-        enabled: boolean
-
-    @IsOptional()
-        values?: string[]
+    id: number
+    ruleId: number
+    matchType: HeaderRuleConditionMatchType
+    matchPart: HeaderRuleConditionMatchPart
+    matchName: string
+    expression: HeaderRuleConditionExpression
+    expressionNegation: boolean
+    valueType: HeaderRuleConditionValueType
+    rwrSetId: number
+    rwrDpId: number
+    rwrDp?: RwrDpEnum
+    enabled: boolean
+    values?: string[]
 }
 

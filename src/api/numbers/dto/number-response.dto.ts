@@ -1,17 +1,46 @@
+import {ApiProperty} from '@nestjs/swagger'
+import {IsBoolean, IsInt, IsNumber, IsString} from 'class-validator'
+
 import {RbacRole} from '~/config/constants.config'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 
 export class NumberResponseDto implements ResponseDto {
-    subscriber_id: number
-    id: number
-    customer_id: number
-    cc: number
-    ac: string
-    sn: string
-    is_primary: boolean
-    is_devid: boolean
-    reseller_id: number
+    @IsInt()
+    @ApiProperty()
+        subscriber_id: number
+
+    @IsInt()
+    @ApiProperty()
+        id: number
+
+    @IsInt()
+    @ApiProperty()
+        customer_id: number
+
+    @IsNumber()
+    @ApiProperty()
+        cc: number
+
+    @IsString()
+    @ApiProperty()
+        ac: string
+
+    @IsString()
+    @ApiProperty()
+        sn: string
+
+    @IsBoolean()
+    @ApiProperty()
+        is_primary: boolean
+
+    @IsBoolean()
+    @ApiProperty()
+        is_devid: boolean
+
+    @IsInt()
+    @ApiProperty()
+        reseller_id: number
 
     constructor(data: internal.VoipNumber, role: RbacRole) {
         this.subscriber_id = data.subscriberID

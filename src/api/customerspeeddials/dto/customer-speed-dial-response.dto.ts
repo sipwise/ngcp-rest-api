@@ -1,22 +1,24 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsNotEmpty} from 'class-validator'
+import {IsInt, IsNotEmpty, IsString} from 'class-validator'
 
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 
 export class CustomerSpeedDialResponseDto implements ResponseDto {
-    @IsNotEmpty()
+    @IsInt()
     @ApiProperty()
         id: number
 
-    @IsNotEmpty()
+    @IsInt()
     @ApiProperty()
         customer_id: number
 
+    @IsString()
     @IsNotEmpty()
     @ApiProperty()
         slot: string
 
+    @IsString()
     @IsNotEmpty()
     @ApiProperty()
         destination: string

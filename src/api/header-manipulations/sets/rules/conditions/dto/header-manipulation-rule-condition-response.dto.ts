@@ -1,6 +1,8 @@
-import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsEnum, IsNotEmpty, IsOptional} from 'class-validator'
+import {ApiProperty} from '@nestjs/swagger'
+import {Type} from 'class-transformer'
+import {IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested} from 'class-validator'
 
+import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
@@ -9,52 +11,60 @@ import {UrlReferenceType} from '~/enums/url-reference-type.enum'
 import {UrlReference} from '~/types/url-reference.type'
 
 export class HeaderManipulationRuleConditionResponseDto implements ResponseDto {
-    @IsNotEmpty()
+    @IsInt()
     @ApiProperty()
         id: number
 
-    @IsNotEmpty()
+    @IsInt()
     @ApiProperty()
         rule_id: number
 
+    @IsString()
     @IsNotEmpty()
     @ApiProperty()
         match_type: string
 
+    @IsString()
     @IsNotEmpty()
     @ApiProperty()
         match_part: string
 
+    @IsString()
     @IsNotEmpty()
     @ApiProperty()
         match_name: string
 
+    @IsString()
     @IsNotEmpty()
     @ApiProperty()
         expression: string
 
-    @IsNotEmpty()
+    @IsBoolean()
     @ApiProperty()
         expression_negation: boolean
 
+    @IsString()
     @IsNotEmpty()
     @ApiProperty()
         value_type: string
 
-    @IsOptional()
-    @ApiPropertyOptional()
+    @CanBeNull()
+    @IsInt()
+    @ApiProperty()
     @Expandable({name: 'rwr_set_id', controller: 'rewriteRuleSetController'})
         rwr_set_id?: number
 
-    @IsEnum(RwrDpEnum)
     @IsOptional()
+    @IsEnum(RwrDpEnum)
+    @ApiProperty()
         rwr_dp?: RwrDpEnum
 
-    @IsNotEmpty()
+    @IsBoolean()
     @ApiProperty()
         enabled: boolean
 
-    @IsNotEmpty()
+    @ValidateNested({each: true})
+    @Type(() => UrlReference)
     @ApiProperty()
         values: UrlReference
 

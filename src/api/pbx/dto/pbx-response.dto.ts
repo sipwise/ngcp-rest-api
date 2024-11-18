@@ -1,8 +1,11 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsNotEmpty} from 'class-validator'
+import {Type} from 'class-transformer'
+import {IsArray, ValidateNested} from 'class-validator'
 
 export class PbxResponseDto {
-    @IsNotEmpty()
+    @IsArray()
+    @ValidateNested({each: true})
+    @Type(() => String)
     @ApiProperty()
         links: string[]
 

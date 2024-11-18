@@ -1,6 +1,8 @@
-import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsNotEmpty, IsOptional} from 'class-validator'
+import {ApiProperty} from '@nestjs/swagger'
+import {Type} from 'class-transformer'
+import {IsInt, IsNotEmpty, IsString, ValidateNested} from 'class-validator'
 
+import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
@@ -8,27 +10,32 @@ import {UrlReferenceType} from '~/enums/url-reference-type.enum'
 import {UrlReference} from '~/types/url-reference.type'
 
 export class HeaderManipulationSetResponseDto implements ResponseDto {
-    @IsNotEmpty()
+    @IsInt()
     @ApiProperty()
         id: number
 
-    @IsOptional()
-    @ApiPropertyOptional()
+    @IsInt()
+    @ApiProperty()
     @Expandable({name: 'reseller_id', controller: 'resellerController'})
         reseller_id: number
 
+    @IsString()
     @IsNotEmpty()
     @ApiProperty()
         name: string
 
-    @IsOptional()
-    @ApiPropertyOptional()
+    @CanBeNull()
+    @IsInt()
+    @ApiProperty()
         subscriber_id?: number
 
+    @CanBeNull()
+    @IsString()
     @ApiProperty()
         description: string
 
-    @IsNotEmpty()
+    @ValidateNested()
+    @Type(() => UrlReference)
     @ApiProperty()
         rules: UrlReference
 

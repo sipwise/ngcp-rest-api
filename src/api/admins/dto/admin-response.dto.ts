@@ -1,44 +1,81 @@
-import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {ApiProperty} from '@nestjs/swagger'
+import {IsBoolean, IsEnum, IsInt, IsNotEmpty, IsString} from 'class-validator'
 
 import {RbacRole} from '~/config/constants.config'
+import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 
 export class AdminResponseDto implements ResponseDto {
+    @IsBoolean()
     @ApiProperty()
-        billing_data: boolean
+        billing_data!: boolean
+
+    @IsBoolean()
     @ApiProperty()
-        call_data: boolean
+        call_data!: boolean
+
+    @IsBoolean()
     @ApiProperty()
-        can_reset_password: boolean
+        can_reset_password!: boolean
+
+    @CanBeNull()
+    @IsString()
     @ApiProperty()
-        email: string
+        email!: string
+
+    @IsInt()
     @ApiProperty()
-        id: number
+        id!: number
+
+    @IsBoolean()
     @ApiProperty()
-        is_active: boolean
+        is_active!: boolean
+
+    @IsBoolean()
     @ApiProperty()
-        is_ccare: boolean
+        is_ccare!: boolean
+
+    @IsBoolean()
     @ApiProperty()
-        is_master: boolean
+        is_master!: boolean
+
+    @IsBoolean()
     @ApiProperty()
-        is_superuser: boolean
+        is_superuser!: boolean
+
+    @IsBoolean()
     @ApiProperty()
-        is_system: boolean
+        is_system!: boolean
+
+    @IsBoolean()
     @ApiProperty()
-        lawful_intercept: boolean
+        lawful_intercept!: boolean
+
+    @IsString()
+    @IsNotEmpty()
     @ApiProperty()
-        login: string
+        login!: string
+
+    @IsBoolean()
     @ApiProperty()
-        read_only: boolean
-    @ApiPropertyOptional()
+        read_only!: boolean
+
+    @IsInt()
+    @ApiProperty()
     @Expandable({name: 'reseller_id', controller: 'resellerController'})
         reseller_id?: number
+
+    @IsEnum(RbacRole)
     @ApiProperty()
-        role: RbacRole
+        role!: RbacRole
+
+    @IsBoolean()
     @ApiProperty()
-        show_passwords: boolean
+        show_passwords!: boolean
+
+    @IsString()
     @ApiProperty()
         password_last_modify_time: string
 

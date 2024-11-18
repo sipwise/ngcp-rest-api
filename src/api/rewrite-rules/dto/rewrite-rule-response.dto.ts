@@ -1,10 +1,9 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsArray, IsNotEmpty} from 'class-validator'
+import {IsArray} from 'class-validator'
 
 import {ResponseDto} from '~/dto/response.dto'
 
 export class RewriteRuleResponseDto implements ResponseDto {
-    @IsNotEmpty()
     @IsArray()
     @ApiProperty()
         links: string[]

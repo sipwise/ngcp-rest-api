@@ -1,5 +1,6 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsNotEmpty} from 'class-validator'
+import {Type} from 'class-transformer'
+import {IsBoolean, IsEnum, IsInt, IsNotEmpty, IsString, ValidateNested} from 'class-validator'
 import {UrlReferenceType} from 'enums/url-reference-type.enum'
 import {UrlReference} from 'types/url-reference.type'
 
@@ -9,40 +10,47 @@ import {HeaderRuleDirection} from '~/entities/internal/header-rule.internal.enti
 
 
 export class HeaderManipulationRuleResponseDto implements ResponseDto {
-    @IsNotEmpty()
+    @IsInt()
     @ApiProperty()
         id: number
 
-    @IsNotEmpty()
+    @IsInt()
     @ApiProperty()
         set_id: number
 
+    @IsString()
     @IsNotEmpty()
     @ApiProperty()
         name: string
 
+    @IsString()
+    @IsNotEmpty()
     @ApiProperty()
         description: string
 
-    @IsNotEmpty()
+    @IsInt()
     @ApiProperty()
         priority: number
 
-    @IsNotEmpty()
+    @IsEnum(HeaderRuleDirection)
     @ApiProperty()
         direction: HeaderRuleDirection
 
-    @IsNotEmpty()
+    @IsBoolean()
     @ApiProperty()
         stopper: boolean
 
-    @IsNotEmpty()
+    @IsBoolean()
     @ApiProperty()
         enabled: boolean
 
+    @ValidateNested()
+    @Type(() => UrlReference)
     @ApiProperty()
         actions: UrlReference
 
+    @ValidateNested()
+    @Type(() => UrlReference)
     @ApiProperty()
         conditions: UrlReference
 
