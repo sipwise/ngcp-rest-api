@@ -1,5 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsBoolean, IsEnum, IsInt, IsNotEmpty, IsString} from 'class-validator'
+import {IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString} from 'class-validator'
 
 import {RbacRole} from '~/config/constants.config'
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
@@ -62,6 +62,7 @@ export class AdminResponseDto implements ResponseDto {
     @ApiProperty()
         read_only!: boolean
 
+    @IsOptional()
     @IsInt()
     @ApiProperty()
     @Expandable({name: 'reseller_id', controller: 'resellerController'})

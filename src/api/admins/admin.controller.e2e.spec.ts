@@ -12,6 +12,7 @@ import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 describe('AdminController', () => {
@@ -41,6 +42,7 @@ describe('AdminController', () => {
         // like interceptors, etc.
         app.useGlobalPipes(new ValidateInputPipe({whitelist: true, forbidNonWhitelisted: true}))
         app.useGlobalFilters(new HttpExceptionFilter())
+        app.useGlobalInterceptors(new ResponseValidationInterceptor())
 
         await app.init()
     })

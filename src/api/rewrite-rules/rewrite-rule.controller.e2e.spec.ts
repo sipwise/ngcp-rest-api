@@ -10,6 +10,7 @@ import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 describe('', () => {
@@ -34,6 +35,7 @@ describe('', () => {
         // like interceptors, etc.
         app.useGlobalPipes(new ValidateInputPipe())
         app.useGlobalFilters(new HttpExceptionFilter())
+        app.useGlobalInterceptors(new ResponseValidationInterceptor())
 
         await app.init()
     })
@@ -69,9 +71,9 @@ describe('', () => {
 
     describe('', () => { // main tests block
         describe('GET', () => {
-            it('read header-manipulations', async () => {
+            it('read rewrite rules', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/header-manipulations')
+                    .get('/rewrite-rules')
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const setCollection: RewriteRuleResponseDto = response.body
