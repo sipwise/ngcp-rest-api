@@ -27,7 +27,7 @@ export class ResponseValidationInterceptor implements NestInterceptor {
                         const validationErrors = await validate(item)
                         if (validationErrors.length > 0) {
                             this.log.error({message: 'Response validation failed', validationErrors})
-                            throw new InternalServerErrorException('Response validation failed')
+                            throw new InternalServerErrorException()
                         }
                     }
                     return data
@@ -35,7 +35,7 @@ export class ResponseValidationInterceptor implements NestInterceptor {
                     const validationErrors = await validate(data)
                     if (validationErrors.length > 0) {
                         this.log.error({message: 'Response validation failed', validationErrors})
-                        throw new InternalServerErrorException('Response validation failed')
+                        throw new InternalServerErrorException()
                     }
                     return data
                 }
