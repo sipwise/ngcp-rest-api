@@ -6,10 +6,13 @@ import {HeaderManipulationRuleActionResponseDto} from './dto/header-manipulation
 import {HeaderManipulationRuleActionModule} from './header-manipulation-rule-action.module'
 
 import {HeaderManipulationSetModule} from '~/api/header-manipulations/sets/header-manipulation-set.module'
+import {HeaderManipulationRuleActionRequestDto} from '~/api/header-manipulations/sets/rules/actions/dto/header-manipulation-rule-action-request.dto'
 import {HeaderManipulationRuleModule} from '~/api/header-manipulations/sets/rules/header-manipulation-rule.module'
+import {RewriteRuleSetResponseDto} from '~/api/rewrite-rules/sets/dto/rewrite-rule-set-response.dto'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {RwrDpEnum} from '~/enums/rwr-dp.enum'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
@@ -39,13 +42,18 @@ type RuleActionPost = {
     value_part: string,
     value: string,
     enabled: boolean,
+    rwr_set_id?: number,
+    rwr_dp?: RwrDpEnum,
 }
+
+type RuleActionWithExpand = HeaderManipulationRuleActionRequestDto & {rwr_set_id_expand: RewriteRuleSetResponseDto}
 
 describe('Rule Action', () => {
     let app: INestApplication
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
+    let createdRwrSetIds: number[] = []
     let createdSetIds: number[] = []
     let createdRuleIds: number[] = []
     let createdActionIds: number[] = []
@@ -60,6 +68,7 @@ describe('Rule Action', () => {
         appService = moduleRef.get<AppService>(AppService)
         authService = moduleRef.get<AuthService>(AuthService)
 
+        createdRwrSetIds = []
         createdSetIds = []
         createdRuleIds = []
         createdActionIds = []
@@ -106,6 +115,20 @@ describe('Rule Action', () => {
 
     describe('', () => { // main tests block
         describe('POST', () => {
+            const rwrSetPost = {
+                name: 'foo_rwr_set_1',
+                reseller_id: 1,
+                description: 'foo_rwr_set_1 description',
+            }
+            it('create rwr set foo_rwr_set_1', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .send(rwrSetPost)
+                expect(response.status).toEqual(201)
+                createdRwrSetIds.push(+response.body[0].id)
+            })
+
             const ruleset1: RuleSetPost = {
                 name: 'test_ruleset1',
                 reseller_id: 1,
@@ -138,6 +161,25 @@ describe('Rule Action', () => {
                 createdRuleIds.push(+response.body[0].id)
             })
 
+            it ('fails to create action if only one of rwr_set_id or rwr_dp is provided', async () => {
+                const action1: RuleActionPost = {
+                    rule_id: createdRuleIds[0],
+                    header: 'X-Test-Header',
+                    header_part: 'full',
+                    action_type: 'set',
+                    value_part: 'full',
+                    value: 'test',
+                    enabled: true,
+                    rwr_set_id: createdRwrSetIds[0],
+                    // rwr_dp: RwrDpEnum.caller_in -> missing
+                }
+                const response = await request(app.getHttpServer())
+                    .post('/header-manipulations/sets/rules/actions')
+                    .set(...authHeader)
+                    .send(action1)
+                expect(response.status).toEqual(422)
+            })
+
             it ('create action 1', async () => {
                 const action1: RuleActionPost = {
                     rule_id: createdRuleIds[0],
@@ -147,6 +189,8 @@ describe('Rule Action', () => {
                     value_part: 'full',
                     value: 'test',
                     enabled: true,
+                    rwr_set_id: createdRwrSetIds[0],
+                    rwr_dp: RwrDpEnum.caller_in,
                 }
                 const response = await request(app.getHttpServer())
                     .post('/header-manipulations/sets/rules/actions')
@@ -178,13 +222,14 @@ describe('Rule Action', () => {
         describe('GET', () => {
             it('read created rule action', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/header-manipulations/sets/rules/actions/${createdActionIds[0]}`)
+                    .get(`/header-manipulations/sets/rules/actions/${createdActionIds[0]}?expand=rwr_set_id`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const action: HeaderManipulationRuleActionResponseDto = response.body
                 expect(action.rule_id).toEqual(createdRuleIds[0])
                 expect(action.header).toEqual('X-Test-Header')
                 expect(action.header_part).toEqual('full')
+                expect((action as unknown as RuleActionWithExpand).rwr_set_id_expand).toBeDefined()
             })
             it('read non-existing action', async () => {
                 const response = await request(app.getHttpServer())
@@ -302,6 +347,15 @@ describe('Rule Action', () => {
             for (const id of createdSetIds) {
                 const result = await request(app.getHttpServer())
                     .delete(`/header-manipulations/sets/${id}`)
+                    .set(...authHeader)
+                expect(result.status).toEqual(200)
+            }
+        })
+
+        it('delete created rwr sets', async () => {
+            for (const id of createdRwrSetIds) {
+                const result = await request(app.getHttpServer())
+                    .delete(`/rewrite-rules/sets/${id}`)
                     .set(...authHeader)
                 expect(result.status).toEqual(200)
             }
