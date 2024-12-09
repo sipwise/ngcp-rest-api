@@ -1,3 +1,30 @@
+ngcp-rest-api (13.2.0.0+0~mr13.2.0.0) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [a6f1218] MT#60857 Implement passwordchange for admins and subscribers
+  * [6529e0d] MT#61190 Add password_last_modify_time to AdminResponse
+  * [5fdfcfa] MT#60503 Fix license handling
+  * [87a6c7d] MT#61202 Fix fileshare endpoint
+  * [223f3fe] MT#61247 Add priority as a searchable field for HM/sets/rules
+  * [5d61c4a] MT#61245 Introduce type safe configuration
+  * [11b4694] MT#61199 Migrate eslint to latest
+  * [de2d2b1] MT#61300 Fix subscriber set creation
+  * [9601a63] MT#61300 Fix sr query immutability in HM/sets/rules/actions/conditions
+  * [02edcad] MT#61317 Enable strict linting
+  * [bd4a557] MT#61299 Remove relative imports
+  * [d7e8bd1] MT#61296 Add import sorting to ESlint
+  * [c7c4695] MT#61171 Fix explicit any types and unsafe returns
+  * [035147b] MT#61274 Migrate rewrite rulesets
+  * [4925a8d] MT#61463 fix expand circular dependency issues
+  * [5e73967] MT#61528 Repository creates should return numbers
+  * [dac1347] MT#61275 Migrate rewriterules
+  * [c817e73] MT#61527 Validate response dtos
+  * [d77eb80] MT#61527 Remove custom response validation error message
+  * [ea779c5] MT#61527 Add validation interceptor to tests
+  * [5fde6d8] MT#60536 header rule actions adapt e2e tests to include rwr_dp
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 09 Dec 2024 11:27:47 +0100
+
 ngcp-rest-api (13.1.0.0+0~mr13.1.0.0) unstable; urgency=medium
 
   [ Bertold Vincze ]
