@@ -21,16 +21,15 @@ export class ResponseValidationInterceptor implements NestInterceptor {
 
         return next.handle().pipe(
             switchMap(async (data) => {
-                if (Array.isArray(data)) {
-                    for (const item of data) {
-                        if (typeof item !== 'object') {
-                            continue
-                        }
-                        const validationErrors = await validate(item)
-                        if (validationErrors.length > 0) {
-                            this.log.error({message: 'Response validation failed', validationErrors})
-                            throw new InternalServerErrorException()
-                        }
+                if (Array.isArray(data) && data.length > 0) {
+                    const dto = data[0]
+                    if (typeof dto !== 'object') {
+                        return data
+                    }
+                    const validationErrors = await validate(dto)
+                    if (validationErrors.length > 0) {
+                        this.log.error({message: 'Response validation failed', validationErrors})
+                        throw new InternalServerErrorException()
                     }
                     return data
                 } else {
