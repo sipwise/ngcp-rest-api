@@ -7,9 +7,11 @@ import {HeaderManipulationRuleConditionModule} from './header-manipulation-rule-
 
 import {HeaderManipulationSetModule} from '~/api/header-manipulations/sets/header-manipulation-set.module'
 import {HeaderManipulationRuleModule} from '~/api/header-manipulations/sets/rules/header-manipulation-rule.module'
+import {RewriteRuleSetResponseDto} from '~/api/rewrite-rules/sets/dto/rewrite-rule-set-response.dto'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {RwrDpEnum} from '~/enums/rwr-dp.enum'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
@@ -41,13 +43,18 @@ type RuleConditionPost = {
     value_type: string
     enabled: boolean
     values?: string[]
+    rwr_set_id?: number
+    rwr_dp?: RwrDpEnum
 }
+
+type RuleConditionWithExpand = RuleConditionPost & {rwr_set_id_expand: RewriteRuleSetResponseDto}
 
 describe('Rule Condition', () => {
     let app: INestApplication
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
+    let createdRwrSetIds: number[] = []
     let createdSetIds: number[] = []
     let createdRuleIds: number[] = []
     let createdConditionIds: number[] = []
@@ -62,6 +69,7 @@ describe('Rule Condition', () => {
         appService = moduleRef.get<AppService>(AppService)
         authService = moduleRef.get<AuthService>(AuthService)
 
+        createdRwrSetIds = []
         createdSetIds = []
         createdRuleIds = []
         createdConditionIds = []
@@ -108,6 +116,20 @@ describe('Rule Condition', () => {
 
     describe('', () => { // main tests block
         describe('POST', () => {
+            const rwrSetPost = {
+                name: 'foo_rwr_set_1',
+                reseller_id: 1,
+                description: 'foo_rwr_set_1 description',
+            }
+            it('create rwr set foo_rwr_set_1', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .send(rwrSetPost)
+                expect(response.status).toEqual(201)
+                createdRwrSetIds.push(+response.body[0].id)
+            })
+
             const ruleset1: RuleSetPost = {
                 name: 'test_ruleset1',
                 reseller_id: 1,
@@ -140,6 +162,25 @@ describe('Rule Condition', () => {
                 createdRuleIds.push(+response.body[0].id)
             })
 
+            it ('fails to create condition if only one of rwr_set_id or rwr_dp is provided', async () => {
+                const condition1: RuleConditionPost = {
+                    rule_id: createdRuleIds[0],
+                    match_type: 'header',
+                    match_part: 'full',
+                    match_name: 'Asd',
+                    expression: 'is',
+                    expression_negation: false,
+                    value_type: 'input',
+                    enabled: true,
+                    rwr_set_id: createdRwrSetIds[0],
+                }
+                const response = await request(app.getHttpServer())
+                    .post('/header-manipulations/sets/rules/conditions')
+                    .set(...authHeader)
+                    .send(condition1)
+                expect(response.status).toEqual(422)
+            })
+
             it ('create condition 1', async () => {
                 const condition1: RuleConditionPost = {
                     rule_id: createdRuleIds[0],
@@ -151,6 +192,8 @@ describe('Rule Condition', () => {
                     value_type: 'input',
                     enabled: true,
                     values: ['foo', 'bar', 'baz'],
+                    rwr_dp: RwrDpEnum.callee_in,
+                    rwr_set_id: createdRwrSetIds[0],
                 }
                 const response = await request(app.getHttpServer())
                     .post('/header-manipulations/sets/rules/conditions')
@@ -183,11 +226,12 @@ describe('Rule Condition', () => {
         describe('GET', () => {
             it('read created rule condition', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/header-manipulations/sets/rules/conditions/${createdConditionIds[0]}`)
+                    .get(`/header-manipulations/sets/rules/conditions/${createdConditionIds[0]}?expand=rwr_set_id`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const condition: HeaderManipulationRuleConditionResponseDto = response.body
                 expect(condition.rule_id).toEqual(createdRuleIds[0])
+                expect((condition as unknown as RuleConditionWithExpand).rwr_set_id_expand).toBeDefined()
             })
             it('read created rule condition1 values', async () => {
                 const response = await request(app.getHttpServer())
@@ -340,6 +384,14 @@ describe('Rule Condition', () => {
             for (const id of createdSetIds) {
                 const result = await request(app.getHttpServer())
                     .delete(`/header-manipulations/sets/${id}`)
+                    .set(...authHeader)
+                expect(result.status).toEqual(200)
+            }
+        })
+        it('delete created rwr sets', async () => {
+            for (const id of createdRwrSetIds) {
+                const result = await request(app.getHttpServer())
+                    .delete(`/rewrite-rules/sets/${id}`)
                     .set(...authHeader)
                 expect(result.status).toEqual(200)
             }
