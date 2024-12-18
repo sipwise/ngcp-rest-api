@@ -3,13 +3,14 @@ import {Test} from '@nestjs/testing'
 import {validate} from 'class-validator'
 import request from 'supertest'
 
-import {NCOSSetLevelResponseDto} from './dto/ncos-set-level-response.dto'
 import {NCOSSetResponseDto} from './dto/ncos-set-response.dto'
 import {NCOSSetModule} from './ncos-set.module'
 
+import {NCOSSetLevelResponseDto} from '~/api/ncos-sets/dto/ncos-set-level-response.dto'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
@@ -27,6 +28,8 @@ describe('NCOS Set', () => {
     let authService: AuthService
     let authHeader: [string, string]
     let createdIds: number[] = []
+    let createdSetLevelIds: number[] = []
+    let createdLevelIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
 
     beforeAll(async () => {
@@ -39,6 +42,8 @@ describe('NCOS Set', () => {
         authService = moduleRef.get<AuthService>(AuthService)
 
         createdIds = []
+        createdLevelIds = []
+        createdSetLevelIds = []
 
         app = moduleRef.createNestApplication()
 
@@ -54,6 +59,7 @@ describe('NCOS Set', () => {
     afterAll(async () => {
         if (appService.db.isInitialized)
             await appService.db.destroy()
+
         await app.close()
     })
 
@@ -108,6 +114,26 @@ describe('NCOS Set', () => {
                 expect(response.status).toEqual(201)
                 createdIds.push(+response.body[0].id)
             })
+            it('create ncos level', async () => {
+                const ncosLevel = db.billing.NCOSLevel.create({
+                    level: 'test_level1',
+                    reseller_id: 1,
+                    mode: 'blacklist',
+                })
+                const res = await ncosLevel.save()
+                createdLevelIds.push(ncosLevel.id)
+
+                expect(res.level).toEqual('test_level1')
+            })
+
+            it('create ncos set level', async () => {
+                const response = await request(app.getHttpServer())
+                    .post(`/ncos/sets/${createdIds[0]}/levels`)
+                    .set(...authHeader)
+                    .send({level_id: createdLevelIds[0]})
+                expect(response.status).toEqual(201)
+                createdSetLevelIds.push(+response.body[0].id)
+            })
             it('fail duplicate ncos set', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/ncos/sets')
@@ -130,7 +156,7 @@ describe('NCOS Set', () => {
                     .get('/ncos/sets/?name=test_ncosset1')
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
-                const setCollection: NCOSSetLevelResponseDto = response.body
+                const setCollection: NCOSSetResponseDto = response.body
                 expect(await validate(setCollection)).toEqual([])
                 expect(setCollection).toHaveLength(2)
                 expect(setCollection[1]).toEqual(1)
@@ -147,7 +173,7 @@ describe('NCOS Set', () => {
                     .get('/ncos/sets/?name=test_ncosset2')
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
-                const setCollection: NCOSSetLevelResponseDto = response.body
+                const setCollection: NCOSSetResponseDto = response.body
                 expect(await validate(setCollection)).toEqual([])
                 expect(setCollection).toHaveLength(2)
                 expect(setCollection[1]).toEqual(1)
@@ -259,9 +285,42 @@ describe('NCOS Set', () => {
                 expect(response.status).toEqual(404)
             })
         })
+
+        describe('NCOS Set Level', () => {
+            it('read all levels for set', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/ncos/sets/${createdIds[0]}/levels`)
+                    .set(...authHeader)
+                expect(response.status).toEqual(200)
+                const [levels, count] = response.body
+                expect(count).toEqual(1)
+                expect(levels).toHaveLength(1)
+                const level = levels[0]
+                expect(level.set_id).toEqual(createdIds[0])
+                expect(level.level_id).toEqual(createdLevelIds[0])
+            })
+
+            it('read specific level for set', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/ncos/sets/${createdIds[0]}/levels/${createdSetLevelIds[0]}`)
+                    .set(...authHeader)
+                expect(response.status).toEqual(200)
+                const level: NCOSSetLevelResponseDto = response.body
+                expect(await validate(level)).toEqual([])
+                expect(level.set_id).toEqual(createdIds[0])
+                expect(level.level_id).toEqual(createdLevelIds[0])
+            })
+        })
     })
 
     describe('NCOSSet DELETE', () => {
+        it('delete created ncos set level', async () => {
+            const response = await request(app.getHttpServer())
+                .delete(`/ncos/sets/${createdIds[0]}/levels/${createdSetLevelIds[0]}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
+        })
+
         it('delete created ncos sets', async () => {
             for (const id of createdIds) {
                 const result = await request(app.getHttpServer())
@@ -269,6 +328,11 @@ describe('NCOS Set', () => {
                     .set(...authHeader)
                 expect(result.status).toEqual(200)
             }
+        })
+
+        it('delete created ncos level', async () => {
+            const result = await db.billing.NCOSLevel.delete({id: createdLevelIds[0]})
+            expect(result.affected).toEqual(1)
         })
     })
 })
