@@ -10,6 +10,7 @@ import {RewriteRuleSetService} from './rewrite-rule-set.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
+import {RewriteRuleService} from '~/api/rewrite-rules/sets/rules/rewrite-rule.service'
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
@@ -45,10 +46,11 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
 
     constructor(
         private readonly ruleSetService: RewriteRuleSetService,
+        private readonly ruleService: RewriteRuleService,
         @Inject(forwardRef(() => ExpandHelper))private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
-        super(resourceName, ruleSetService)
+        super(resourceName)
     }
 
     @Post()
@@ -70,6 +72,19 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
         const sr = new ServiceRequest(req)
         const sets = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.ruleSetService.create(sets, sr)
+
+        const createdSets = new Dictionary<internal.RewriteRuleSet>()
+        created.forEach(set => createdSets[set.name] = set)
+        for (const set of createDto) {
+            const createdSet = createdSets[set.name]
+            if (set.rules) {
+                const rules = await Promise.all(set.rules.map(async rule => rule.toInternal({
+                    parentId: createdSet.id,
+                })))
+                await this.ruleService.create(rules, sr)
+            }
+        }
+
         return await Promise.all(created.map(async set => new RewriteRuleSetResponseDto(req.url, set)))
     }
 
@@ -131,6 +146,11 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
         const updates = new Dictionary<internal.HeaderRuleSet>()
         updates[id] = Object.assign(new RewriteRuleSetRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const ids = await this.ruleSetService.update(updates, sr)
+        await this.ruleSetService.deleteAllRules(ids, sr)
+        if (dto.rules) {
+            const rules = await Promise.all(dto.rules.map(async rule => rule.toInternal({parentId: id})))
+            await this.ruleService.create(rules, sr)
+        }
         const entity = await this.ruleSetService.read(ids[0], sr)
         const response = new RewriteRuleSetResponseDto(req.url, entity)
         await this.journalService.writeJournal(sr, id, response)
@@ -150,7 +170,17 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
             const dto: RewriteRuleSetRequestDto = updates[id]
             sets[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
-        return await this.ruleSetService.update(sets, sr)
+        const updated = await this.ruleSetService.update(sets, sr)
+        await this.ruleSetService.deleteAllRules(updated, sr)
+        for (const id of updated) {
+            const dto = updates[id]
+            if (dto.rules) {
+                const rules = await Promise.all(dto.rules.map(async rule => rule.toInternal({parentId: id})))
+                await this.ruleService.create(rules, sr)
+            }
+        }
+
+        return updated
     }
 
     @Patch(':id')

@@ -9,7 +9,7 @@ import {RewriteRuleService} from './rewrite-rule.service'
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
 import {RewriteRuleRequestParamDto} from '~/api/rewrite-rules/sets/rules/dto/rewrite-rule-request-param.dto'
-import {RewriteRuleResponsetDto} from '~/api/rewrite-rules/sets/rules/dto/rewrite-rule-response.dto'
+import {RewriteRuleResponseDto} from '~/api/rewrite-rules/sets/rules/dto/rewrite-rule-response.dto'
 import {RewriteRuleSearchDto} from '~/api/rewrite-rules/sets/rules/dto/rewrite-rule-search.dto'
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
@@ -41,7 +41,7 @@ const resourceName = 'rewrite-rules/sets'
 )
 @ApiTags('Rewrite Rules')
 @Controller(resourceName)
-export class RewriteRuleController extends CrudController<RewriteRuleRequestDto, RewriteRuleResponsetDto> {
+export class RewriteRuleController extends CrudController<RewriteRuleRequestDto, RewriteRuleResponseDto> {
     private readonly log = new LoggerService(RewriteRuleController.name)
 
     constructor(
@@ -53,7 +53,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
     }
 
     @Post(':setId?/rules')
-    @ApiCreatedResponse(RewriteRuleResponsetDto)
+    @ApiCreatedResponse(RewriteRuleResponseDto)
     @ApiBody({
         type: RewriteRuleRequestDto,
         isArray: true,
@@ -61,7 +61,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
     async create(
         @Body(new ParseOneOrManyPipe({items: RewriteRuleRequestDto})) createDto: RewriteRuleRequestDto[],
         @Req() req: Request,
-    ): Promise<RewriteRuleResponsetDto[]> {
+    ): Promise<RewriteRuleResponseDto[]> {
         this.log.debug({
             message: 'create rewrite rule bulk',
             func: this.create.name,
@@ -71,15 +71,15 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         const sr = new ServiceRequest(req)
         const sets = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.ruleService.create(sets, sr)
-        return await Promise.all(created.map(async rule => new RewriteRuleResponsetDto(rule)))
+        return await Promise.all(created.map(async rule => new RewriteRuleResponseDto(rule)))
     }
 
     @Get(':setId?/rules')
     @ApiQuery({type: SearchLogic})
-    @ApiPaginatedResponse(RewriteRuleResponsetDto)
+    @ApiPaginatedResponse(RewriteRuleResponseDto)
     async readAll(
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: RewriteRuleRequestParamDto): Promise<[RewriteRuleResponsetDto[], number]> {
+        @Param(new ValidationPipe()) _reqParams: RewriteRuleRequestParamDto): Promise<[RewriteRuleResponseDto[], number]> {
         this.log.debug({
             message: 'read all rewrite rules across all rule sets',
             func: this.readAll.name,
@@ -89,7 +89,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         const sr = new ServiceRequest(req)
         const [entity, totalCount] =
             await this.ruleService.readAll(sr)
-        const responseList = entity.map(e => new RewriteRuleResponsetDto(e))
+        const responseList = entity.map(e => new RewriteRuleResponseDto(e))
         if (sr.query.expand) {
             await this.expander.expandObjects(responseList, Object.keys(new RewriteRuleSearchDto()), sr)
         }
@@ -98,15 +98,15 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
 
     @Get(':setId?/rules/:id')
     @ApiOkResponse({
-        type: RewriteRuleResponsetDto,
+        type: RewriteRuleResponseDto,
     })
     async read(
-        @Param('id', ParseIntPipe) id: number, 
+        @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
         // TODO: _Prefix does not work here, fix?
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         @Param(new ValidationPipe()) {setId}: RewriteRuleRequestParamDto = new RewriteRuleRequestParamDto(),
-    ): Promise<RewriteRuleResponsetDto> {
+    ): Promise<RewriteRuleResponseDto> {
         this.log.debug({
             message: 'read rewrite rule by id',
             id: id,
@@ -116,7 +116,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         })
         const sr = new ServiceRequest(req)
         const rule = await this.ruleService.read(id, sr)
-        const responseItem = new RewriteRuleResponsetDto(rule)
+        const responseItem = new RewriteRuleResponseDto(rule)
         if (sr.query.expand) {
             await this.expander.expandObjects([responseItem], Object.keys(new RewriteRuleSearchDto()), sr)
         }
@@ -126,7 +126,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
 
     @Put(':setId?/rules/:id')
     @ApiOkResponse({
-        type: RewriteRuleResponsetDto,
+        type: RewriteRuleResponseDto,
     })
     async update(@Param('id', ParseIntPipe) id: number,
         dto: RewriteRuleRequestDto,
@@ -134,7 +134,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         // TODO: _Prefix does not work here, fix?
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         @Param(new ValidationPipe()) {setId}: RewriteRuleRequestParamDto = new RewriteRuleRequestParamDto(),  
-    ): Promise<RewriteRuleResponsetDto> {
+    ): Promise<RewriteRuleResponseDto> {
         this.log.debug({
             message: 'update rewrite rule by id',
             id: id,
@@ -147,7 +147,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         updates[id] = Object.assign(new RewriteRuleRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const ids = await this.ruleService.update(updates, sr)
         const entity = await this.ruleService.read(ids[0], sr)
-        const response = new RewriteRuleResponsetDto(entity)
+        const response = new RewriteRuleResponseDto(entity)
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
@@ -177,7 +177,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
         @Req() req: Request,
-    ): Promise<RewriteRuleResponsetDto> {
+    ): Promise<RewriteRuleResponseDto> {
         this.log.debug({
             message: 'patch rewrite rule set by id',
             id: id,
@@ -193,7 +193,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
 
         const ids = await this.ruleService.update(update, sr)
         const updatedEntity = await this.ruleService.read(ids[0], sr)
-        const response = new RewriteRuleResponsetDto(updatedEntity)
+        const response = new RewriteRuleResponseDto(updatedEntity)
         await this.journalService.writeJournal(sr, id, response)
 
         return response

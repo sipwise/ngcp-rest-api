@@ -2,7 +2,7 @@ import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
 
-import {RewriteRuleResponsetDto} from './dto/rewrite-rule-response.dto'
+import {RewriteRuleResponseDto} from './dto/rewrite-rule-response.dto'
 import {RewriteRuleModule} from './rewrite-rule.module'
 
 import {RewriteRuleSetModule} from '~/api/rewrite-rules/sets/rewrite-rule-set.module'
@@ -187,7 +187,7 @@ describe('Rewrite Rule', () => {
                     .get(`/rewrite-rules/sets/rules/${createdRuleIds[0]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
-                const rule: RewriteRuleResponsetDto = response.body
+                const rule: RewriteRuleResponseDto = response.body
                 expect(rule.set_id).toEqual(createdSetIds[0])
                 expect(rule.description).toEqual('test_rule1 description')
                 expect(rule.priority).toEqual(100)
@@ -198,7 +198,7 @@ describe('Rewrite Rule', () => {
                     .get(`/rewrite-rules/sets/${createdSetIds[1]}/rules/${createdRuleIds[1]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
-                const rule: RewriteRuleResponsetDto = response.body
+                const rule: RewriteRuleResponseDto = response.body
                 expect(rule.set_id).toEqual(createdSetIds[1])
                 expect(rule.description).toEqual('test_rule2 description')
                 expect(rule.priority).toEqual(200)
@@ -235,7 +235,7 @@ describe('Rewrite Rule', () => {
                     .get(`/rewrite-rules/sets/${createdSetIds[0]}/rules/${createdRuleIds[0]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
-                const ruleset: RewriteRuleResponsetDto = response.body
+                const ruleset: RewriteRuleResponseDto = response.body
                 expect(ruleset.description).toEqual('test_rule_foo description')
             })
             it('update non-existing rule', async () => {
@@ -277,7 +277,7 @@ describe('Rewrite Rule', () => {
                     .get(`/rewrite-rules/sets/rules/${createdRuleIds[2]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
-                const ruleset: RewriteRuleResponsetDto = response.body
+                const ruleset: RewriteRuleResponseDto = response.body
                 expect(ruleset.description).toEqual('test_rule5 description')
             })
             it('adjust non-existing rule', async () => {

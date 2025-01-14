@@ -9,15 +9,28 @@ import {RewriteRuleSetModule} from './rewrite-rule-set.module'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
+type EmbeddedRule = {
+    set_id?: number
+    match_pattern: string
+    replace_pattern: string
+    description: string
+    direction: string
+    field: string
+    priority?: number
+    enabled: boolean
+}
+
 type RuleSetPost = {
     name: string
     reseller_id: number
     description: string
+    rules?: EmbeddedRule[]
 }
 
 describe('Rule Set', () => {
@@ -91,6 +104,81 @@ describe('Rule Set', () => {
                 reseller_id: 1,
                 description: 'test_ruleset2 description',
             }
+            const rulesetWithSingleEmbedded: RuleSetPost = {
+                name: 'test_ruleset3',
+                reseller_id: 1,
+                description: 'test_ruleset3_with_embedded_rules description',
+                rules: [
+                    {
+                        match_pattern: 'test',
+                        replace_pattern: 'test',
+                        description: 'test',
+                        direction: 'in',
+                        field: 'caller',
+                        enabled: true,
+                    },
+                ],
+            }
+            const rulesetWithMultipleEmbedded: RuleSetPost = {
+                name: 'test_ruleset4',
+                reseller_id: 1,
+                description: 'test_ruleset4_with_embedded_rules description',
+                rules: [
+                    {
+                        match_pattern: 'test',
+                        replace_pattern: 'test',
+                        description: 'test',
+                        direction: 'in',
+                        field: 'caller',
+                        enabled: true,
+                    },
+                    {
+                        match_pattern: 'test',
+                        replace_pattern: 'test',
+                        description: 'test',
+                        direction: 'in',
+                        field: 'callee',
+                        enabled: true,
+                    },
+                ],
+            }
+            const rulesetWithEmptyEmbedded: RuleSetPost = {
+                name: 'test_ruleset5',
+                reseller_id: 1,
+                description: 'test_ruleset5_with_embedded_rules description',
+                rules: [],
+            }
+            const rulesWithInvalidEmbedded: RuleSetPost = {
+                name: 'test_ruleset6',
+                reseller_id: 1,
+                description: 'test_ruleset6_with_invalid_embedded_rules description',
+                rules: [
+                    {
+                        match_pattern: 'test',
+                        replace_pattern: 'test',
+                        description: 'test',
+                        direction: 'invalid',
+                        field: 'caller',
+                        enabled: true,
+                    },
+                ],
+            }
+            const ruleSetWithMismatchingRuleSetId: RuleSetPost = {
+                name: 'test_ruleset7',
+                reseller_id: 1,
+                description: 'test_ruleset7_with_mismatching_rule_set_id description',
+                rules: [
+                    {
+                        set_id: 999999999999999,
+                        match_pattern: 'test',
+                        replace_pattern: 'test',
+                        description: 'test',
+                        direction: 'in',
+                        field: 'caller',
+                        enabled: true,
+                    },
+                ],
+            }
             it('create set test_ruleset1', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/rewrite-rules/sets')
@@ -120,6 +208,59 @@ describe('Rule Set', () => {
                     .set(...authHeader)
                     .send({unknownField: 'test'})
                 expect(response.status).toEqual(422)
+            })
+            it('create set test_ruleset3 with a single embedded rule', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .send(rulesetWithSingleEmbedded)
+                expect(response.status).toEqual(201)
+                createdIds.push(+response.body[0].id)
+
+                const rules = await db.provisioning.VoipRewriteRule.findBy({set_id: +response.body[0].id})
+                expect(rules).toHaveLength(1)
+                expect(rules[0].set_id).toEqual(+response.body[0].id)
+            })
+            it('create set test_ruleset4 with multiple embedded rules', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .send(rulesetWithMultipleEmbedded)
+                expect(response.status).toEqual(201)
+                createdIds.push(+response.body[0].id)
+
+                const rules = await db.provisioning.VoipRewriteRule.findBy({set_id: +response.body[0].id})
+                expect(rules).toHaveLength(2)
+            })
+            it('create set test_ruleset5 with empty rules array', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .send(rulesetWithEmptyEmbedded)
+                expect(response.status).toEqual(201)
+                createdIds.push(+response.body[0].id)
+
+                const rules = await db.provisioning.VoipRewriteRule.findBy({set_id: +response.body[0].id})
+                expect(rules).toHaveLength(0)
+            })
+            it('validation fail for embedded rule test_ruleset6', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .send(rulesWithInvalidEmbedded)
+                expect(response.status).toEqual(422)
+            })
+            it('create set test_ruleset7 with the correct set_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .send(ruleSetWithMismatchingRuleSetId)
+                expect(response.status).toEqual(201)
+                createdIds.push(+response.body[0].id)
+
+                const rules = await db.provisioning.VoipRewriteRule.findBy({set_id: +response.body[0].id})
+                expect(rules).toHaveLength(1)
+                expect(rules[0].set_id).toEqual(+response.body[0].id)
             })
         })
 
@@ -177,28 +318,28 @@ describe('Rule Set', () => {
         })
 
         describe('PUT', () => {
-            const ruleset3: RuleSetPost = {
-                name: 'test ruleset3',
+            const ruleSet1Update: RuleSetPost = {
+                name: 'renamed_test_ruleset1',
                 reseller_id: 1,
-                description: 'test ruleset3 description',
+                description: 'foo',
             }
-            const ruleset4: RuleSetPost = {
-                name: 'test_ruleset4',
+            const ruleSet2Update: RuleSetPost = {
+                name: 'renamed_test_ruleset2',
                 reseller_id: 1,
-                description: 'test_ruleset4 description',
+                description: 'bar',
             }
-            it('update rule set test_ruleset1 -> test ruleset3', async () => {
+            it('update rule set  test_ruleset1 -> renamed_test_ruleset1', async () => {
                 const response = await request(app.getHttpServer())
                     .put(`/rewrite-rules/sets/${createdIds[0]}`)
                     .set(...authHeader)
-                    .send (ruleset3)
+                    .send (ruleSet1Update)
                 expect(response.status).toEqual(200)
             })
-            it('update rule set test_ruleset2 -> test_ruleset4', async () => {
+            it('update rule set test_ruleset2 -> renamed_test_ruleset2', async () => {
                 const response = await request(app.getHttpServer())
                     .put(`/rewrite-rules/sets/${createdIds[1]}`)
                     .set(...authHeader)
-                    .send(ruleset4)
+                    .send(ruleSet2Update)
                 expect(response.status).toEqual(200)
             })
             it('read updated rule set 3', async () => {
@@ -207,9 +348,9 @@ describe('Rule Set', () => {
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const ruleset: RewriteRuleSetResponseDto = response.body
-                expect(ruleset.name).toEqual('test ruleset3')
+                expect(ruleset.name).toEqual('renamed_test_ruleset1')
                 expect(ruleset.reseller_id).toEqual(1)
-                expect(ruleset.description).toEqual('test ruleset3 description')
+                expect(ruleset.description).toEqual('foo')
             })
             it('read updated rule set 4', async () => {
                 const response = await request(app.getHttpServer())
@@ -217,15 +358,15 @@ describe('Rule Set', () => {
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const ruleset: RewriteRuleSetResponseDto = response.body
-                expect(ruleset.name).toEqual('test_ruleset4')
+                expect(ruleset.name).toEqual('renamed_test_ruleset2')
                 expect(ruleset.reseller_id).toEqual(1)
-                expect(ruleset.description).toEqual('test_ruleset4 description')
+                expect(ruleset.description).toEqual('bar')
             })
             it('update non-existing set', async () => {
                 const response = await request(app.getHttpServer())
                     .put('/rewrite-rules/sets/999911111122')
                     .set(...authHeader)
-                    .send (ruleset3)
+                    .send (ruleSet1Update)
                 expect(response.status).toEqual(404)
             })
         })
@@ -235,30 +376,30 @@ describe('Rule Set', () => {
                 {
                     op: 'replace',
                     path: '/name',
-                    value: 'test_ruleset5',
+                    value: 'patched_test_ruleset1',
                 },
                 {
                     op: 'replace',
                     path: '/description',
-                    value: 'test_ruleset5 description',
+                    value: 'patched_test_ruleset1 description',
                 },
             ]
-            it('adjust rule set 3 -> 5', async () => {
+            it('adjust ruleset1', async () => {
                 const response = await request(app.getHttpServer())
                     .patch(`/rewrite-rules/sets/${createdIds[0]}`)
                     .set(...authHeader)
                     .send(patch)
                 expect(response.status).toEqual(200)
             })
-            it('read updated rule set 5', async () => {
+            it('read updated ruleset1', async () => {
                 const response = await request(app.getHttpServer())
                     .get(`/rewrite-rules/sets/${createdIds[0]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const ruleset: RewriteRuleSetResponseDto = response.body
-                expect(ruleset.name).toEqual('test_ruleset5')
+                expect(ruleset.name).toEqual('patched_test_ruleset1')
                 expect(ruleset.reseller_id).toEqual(1)
-                expect(ruleset.description).toEqual('test_ruleset5 description')
+                expect(ruleset.description).toEqual('patched_test_ruleset1 description')
             })
             it('adjust non-existing set', async () => {
                 const response = await request(app.getHttpServer())

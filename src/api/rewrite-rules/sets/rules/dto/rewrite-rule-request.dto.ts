@@ -46,12 +46,11 @@ export class RewriteRuleRequestDto implements RequestDto {
         if (!entity)
             return
         this.set_id = entity.setId
-
     }
 
     toInternal(options: RequestDtoOptions = {}): internal.RewriteRule {
         const entity = new internal.RewriteRule()
-        entity.setId = this.set_id
+        entity.setId = options.parentId ?? this.set_id
         entity.matchPattern = this.match_pattern
         entity.replacePattern = this.replace_pattern
         entity.description = this.description

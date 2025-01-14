@@ -115,6 +115,13 @@ export class RewriteRuleSetMariadbRepository extends MariaDbRepository implement
         return ids
     }
 
+    async deleteAllRules(id: number, _sr: ServiceRequest): Promise<void> {
+        const rules = await db.provisioning.VoipRewriteRule.findBy({set_id: id})
+        await Promise.all(rules.map(async rule => {
+            await rule.remove()
+        }))
+    }
+
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipRewriteRuleSet>, filterBy: FilterBy): void {
         if (filterBy) {
             if (filterBy.resellerId) {

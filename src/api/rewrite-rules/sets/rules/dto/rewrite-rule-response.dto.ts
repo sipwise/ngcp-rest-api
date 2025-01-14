@@ -6,7 +6,7 @@ import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {RewriteRuleDirection, RewriteRuleField} from '~/entities/internal/rewrite-rule.internal.entity'
 
-export class RewriteRuleResponsetDto implements ResponseDto {
+export class RewriteRuleResponseDto implements ResponseDto {
     @IsInt()
     @ApiProperty()
         id!: number

@@ -90,6 +90,27 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
         return await this.ruleSetRepo.delete(ids, sr)
     }
 
+    async deleteAllRules(ids: number[], sr: ServiceRequest): Promise<void> {
+        let sets: internal.RewriteRuleSet[]
+        if (sr.user.reseller_id_required) {
+            sets = await this.ruleSetRepo.readWhereInIds(ids, sr, {resellerId: sr.user.reseller_id})
+        } else {
+            sets = await this.ruleSetRepo.readWhereInIds(ids, sr)
+        }
+
+        if (sets.length == 0) {
+            throw new NotFoundException()
+        } else if (ids.length != sets.length) {
+            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
+            const message = GenerateErrorMessageArray(ids, error.message)
+            throw new UnprocessableEntityException(message)
+        }
+
+        await Promise.all(
+            ids.map(id => this.ruleSetRepo.deleteAllRules(id, sr)),
+        )
+    }
+
     private async checkPermissions(resellerId: number, sr: ServiceRequest): Promise<void> {
         if (sr.user.resellerId && sr.user.reseller_id != resellerId) {
             throw new NotFoundException()
