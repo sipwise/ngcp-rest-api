@@ -12,9 +12,10 @@ Standards-Version: 4.6.2
 Homepage: https://www.sipwise.com/
 
 Package: ngcp-rest-api
-Architecture: all
+Architecture: any
 Depends:
  nodejs (>= 18),
  ${misc:Depends},
+ ${shlibs:Depends},
 Description: Javascript based REST API for NGCP
  Replacement of old Perl based NGCP REST API.
