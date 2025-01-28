@@ -1,3 +1,16 @@
+ngcp-rest-api (13.2.1.0+0~mr13.2.1.0) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [a51530c] MT#61715 Validate only first item of response array
+  * [3115a48] MT#60537 header rule condition adapt e2e tests to include rwrs
+  * [05304ae] MT#61776 Database access in E2E tests
+  * [f7f5638] MT#61840 Add embedded rules creation for RWR Set
+
+  [ Guillem Jover ]
+  * [89f4521] MT#55524 debian: Switch ngcp-rest-api package from Architecture all to any
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 28 Jan 2025 15:15:33 +0100
+
 ngcp-rest-api (13.2.0.0+0~mr13.2.0.0) unstable; urgency=medium
 
   [ Bertold Vincze ]
