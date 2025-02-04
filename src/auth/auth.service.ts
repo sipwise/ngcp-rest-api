@@ -8,6 +8,7 @@ import {AuthResponseDto} from './dto/auth-response.dto'
 import {AppService} from '~/app.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
+import {keyExists} from '~/helpers/redis.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -258,21 +259,49 @@ export class AuthService {
         const minTime = this.app.config.security.login.ban_min_time || 300
         const maxTime = this.app.config.security.login.ban_max_time || 3600
         const increment = this.app.config.security.login.ban_increment || 300
-        const key = `login:ban:${username}:${domain}:${realm}:${ip}`
+        let key = ''
         let incrementStage = -1
         let expire = 3600
 
         const userRepo = realm === 'subscriber' ? db.provisioning.VoipSubscriber : db.billing.Admin
         const userField = realm === 'subscriber' ? 'webusername' : 'login'
-        const user = await this.app.dbRepo(userRepo).findOne({
-            where: {
-                [userField]: username,
-            },
-            select: ['ban_increment_stage'],
-        })
-        if (user) {
-            incrementStage = user.ban_increment_stage
+        let user: db.billing.Admin | db.provisioning.VoipSubscriber
+        if (realm === 'admin') {
+            const admin = await this.app.dbRepo(db.billing.Admin).findOne({
+                where: {
+                    login: username,
+                },
+                select: [
+                    'id',
+                    'reseller_id',
+                    'ban_increment_stage',
+                ],
+            })
+            key = `login:ban::user:${username}::domain:${domain}::realm:${realm}::ip:${ip}::admin_id:${admin.id}::reseller_id:${admin.reseller_id}`
+            user = admin
+        } else {
+            const subscriber = await this.app.dbRepo(db.provisioning.VoipSubscriber).findOne({
+                where: {
+                    webusername: username,
+                    domain: {domain: domain},
+                },
+                select: [
+                    'id',
+                    'uuid',
+                    'account_id',
+                    'ban_increment_stage',
+                ],
+                relations: ['billing_voip_subscriber'],
+            })
+            const subscriberId = subscriber.billing_voip_subscriber.id
+            const customerId = subscriber.account_id
+            key = `login:ban::user:${username}::domain:${domain}::realm:${realm}::ip:${ip}::subscriber_id:${subscriberId}::customer_id:${customerId}`
+            user = subscriber
         }
+
+        if (user)
+            incrementStage = user.ban_increment_stage
+
         if (incrementStage >= 0) {
             expire = Math.min(maxTime, minTime + incrementStage * increment)
             incrementStage++
@@ -293,13 +322,13 @@ export class AuthService {
         }
     }
 
-    async registerFailedLoginAttempt(username:string, domain:string, realm:string, ip:string): Promise<void> {
+    async registerFailedLoginAttempt(username: string, domain: string, realm: string, ip: string): Promise<void> {
         if (!this.app.config.security.login.ban_enable) {
             return
         }
         const maxAttempts = this.app.config.security.login.max_attempts
         const expire = this.app.config.security.login.ban_max_time || 3600
-        const key = `login:fail:${username}:${domain}:${realm}:${ip}`
+        const key = `login:fail::user:${username}::domain:${domain}::realm:${realm}::ip:${ip}`
         const attempted = +(await (await this.getRedisBanDb()).hget(key, 'attempts') || 0) + 1
 
         if (attempted >= maxAttempts) {
@@ -313,19 +342,19 @@ export class AuthService {
         }
     }
 
-    async isUserBanned(username:string, domain:string, realm:string, ip:string): Promise<boolean> {
+    async isUserBanned(username: string, domain: string, realm: string, ip: string): Promise<boolean> {
         if (!this.app.config.security.login.ban_enable) {
             return false
         }
-        const key = `login:ban:${username}:${domain}:${realm}:${ip}`
-        return await (await this.getRedisBanDb()).exists(key) == 1
+        const key = `login:ban::user:${username}::domain:${domain}::realm:${realm}::ip:${ip}:*`
+        return keyExists(await this.getRedisBanDb(), key)
     }
 
-    async clearFailedLoginAttempts(username:string, domain:string, realm:string, ip:string): Promise<void> {
+    async clearFailedLoginAttempts(username: string, domain: string, realm: string, ip: string): Promise<void> {
         if (!this.app.config.security.login.ban_enable) {
             return
         }
-        const key = `login:fail:${username}:${domain}:${realm}:${ip}`
+        const key = `login:fail::user:${username}::domain:${domain}::realm:${realm}::ip:${ip}`
         await (await this.getRedisBanDb()).del(key)
     }
 
