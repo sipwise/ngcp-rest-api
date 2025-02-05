@@ -5,6 +5,11 @@
   "productName": "NGCP REST API",
   "author": "Sipwise Development Team <support@sipwise.com>",
   "license": "GPL-3.0-or-later",
+  "engines" : {
+    "node" : ">=22.13.1 < 23",
+    "yarn" : ">=1.22.22"
+  },
+  "engineStrict": true,
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "yarnpkg lint && nest build",
