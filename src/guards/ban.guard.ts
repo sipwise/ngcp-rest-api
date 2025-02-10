@@ -1,8 +1,11 @@
-import {Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException} from '@nestjs/common'
+import {Injectable, CanActivate, ExecutionContext, ForbiddenException} from '@nestjs/common'
 import {AuthService} from '../auth/auth.service'
 import {Request} from 'express'
 import {ServiceRequest} from '../interfaces/service-request.interface'
 import {Reflector} from '@nestjs/core'
+
+import {I18nService} from 'nestjs-i18n'
+
 import {PublicGuard} from './public.guard'
 
 @Injectable()
@@ -10,6 +13,7 @@ export class BanGuard implements CanActivate {
     constructor(
         private readonly reflector: Reflector,
         private readonly authService: AuthService,
+        private readonly i18n: I18nService,
     ) {
     }
 
@@ -41,7 +45,7 @@ export class BanGuard implements CanActivate {
         }
 
         if (await this.authService.isUserBanned(username, domain, realm, sr.req.ip)) {
-            throw new UnauthorizedException()
+            throw new ForbiddenException(this.i18n.t('errors.AUTH_BANNED'))
         }
 
         // Allow request to proceed
