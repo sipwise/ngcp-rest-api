@@ -10,6 +10,7 @@ import {AppService} from '~/app.service'
 import {jwtConstants} from '~/config/constants.config'
 import {db} from '~/entities'
 import {LoggerService} from '~/logger/logger.service'
+import {extractUsernameDomain} from '~/helpers/auth.helper'
 
 /**
  * Implementation of the JWT authentication strategy
@@ -41,12 +42,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
      */
     // TODO: Can we use a payload type here?
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async validate(req: ServiceRequest, payload: any): Promise<AuthResponseDto> {
+    async validate(sr: ServiceRequest, payload: any): Promise<AuthResponseDto> {
         this.log.debug('got payload in validate ' + JSON.stringify(payload))
-        let realm = 'admin'
-        if ('x-auth-realm' in req.headers)
-            realm = req.headers['x-auth-realm'].toString()
-        if (realm == 'subscriber') {
+        if (sr.realm == 'subscriber') {
             if (!('subscriber_uuid' in payload))
                 return null
             const subscriber = await this.app.dbRepo(db.provisioning.VoipSubscriber).findOne({

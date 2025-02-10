@@ -9,6 +9,7 @@ import {AuthService} from './auth.service'
 import {AuthResponseDto} from './dto/auth-response.dto'
 
 import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {extractUsernameDomain} from '~/helpers/auth.helper'
 
 
 /**
@@ -24,30 +25,26 @@ interface Authenticator {
  * @param password Login password
  * @param service AuthService that is called to validate the Admin
  */
-async function pwd_auth(req:ServiceRequest, username: string, password: string, realm: string, service: AuthService): Promise<AuthResponseDto> {
+async function pwd_auth(sr: ServiceRequest, userDomain: string, password: string, realm: string, service: AuthService): Promise<AuthResponseDto> {
     if (realm != 'admin' && realm != 'subscriber')
         throw new UnprocessableEntityException()
+    const [username, domain] = extractUsernameDomain(sr, userDomain)
     if (realm == 'subscriber') {
-        const userInfo = username.split('@')
-        if (userInfo.length != 2)
-            throw new UnauthorizedException()
-        const domain = userInfo[1]
-        const subscriber = await service.validateSubscriber(req, userInfo[0], password, domain, realm)
+        const subscriber = await service.validateSubscriber(sr, username, password, domain, realm)
         if (!subscriber) {
-            await service.registerFailedLoginAttempt(userInfo[0], domain, realm, req.req.ip)
+            await service.registerFailedLoginAttempt(username, domain, realm, sr.remote_ip)
             throw new UnauthorizedException()
         }
-        await service.clearFailedLoginAttempts(userInfo[0], domain, realm, req.req.ip)
-        await service.resetBanIncrementStage(userInfo[0], realm)
+        await service.clearFailedLoginAttempts(username, domain, realm, sr.remote_ip)
+        await service.resetBanIncrementStage(username, realm)
         return subscriber
     } else {
-        const domain = req.req.header('host') || 'ngcp-rest-api'
-        const admin = await service.validateAdmin(req, username, password, domain, realm)
+        const admin = await service.validateAdmin(sr, username, password, domain, realm)
         if (!admin) {
-            await service.registerFailedLoginAttempt(username, domain, realm, req.req.ip)
+            await service.registerFailedLoginAttempt(username, domain, realm, sr.remote_ip)
             throw new UnauthorizedException()
         }
-        await service.clearFailedLoginAttempts(username, domain, realm, req.req.ip)
+        await service.clearFailedLoginAttempts(username, domain, realm, sr.remote_ip)
         await service.resetBanIncrementStage(username, realm)
         return admin
     }
@@ -78,10 +75,7 @@ export class BasicHTTPStrategy extends PassportStrategy(BasicStrategy) {
      */
     async validate(req: Request, username: string, password: string): Promise<AuthResponseDto> {
         const sr = new ServiceRequest(req)
-        let realm = 'admin'
-        if ('x-auth-realm' in req.headers)
-            realm = sr.headers['x-auth-realm']
-        return await this.auth(sr, username, password, realm, this.authService)
+        return await this.auth(sr, username, password, sr.realm, this.authService)
     }
 }
 
@@ -110,10 +104,7 @@ export class BasicJSONStrategy extends PassportStrategy(Strategy) {
      */
     async validate(req: Request, username: string, password: string): Promise<AuthResponseDto> {
         const sr = new ServiceRequest(req)
-        let realm = 'admin'
-        if ('x-auth-realm' in req.headers)
-            realm = sr.headers['x-auth-realm']
-        return await this.auth(sr, username, password, realm, this.authService)
+        return await this.auth(sr, username, password, sr.realm, this.authService)
     }
 }
 

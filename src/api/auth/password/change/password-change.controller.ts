@@ -47,10 +47,7 @@ export class PasswordChangeController extends CrudController<PasswordChangeReque
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        let realm = 'admin'
-        if ('x-auth-realm' in req.headers)
-            realm = sr.headers['x-auth-realm']
-        await this.authService.changePassword(sr, sr.user.id, createDto.new_password, realm)
+        await this.authService.changePassword(sr, sr.user.id, createDto.new_password, sr.realm)
         const response = new PasswordChangeResponseDto()
         await this.journalService.writeJournal(sr, sr.user.id, response)
         return response

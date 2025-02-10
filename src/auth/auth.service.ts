@@ -277,7 +277,7 @@ export class AuthService {
                     'ban_increment_stage',
                 ],
             })
-            key = `login:ban::user:${username}::domain:${domain}::realm:${realm}::ip:${ip}::admin_id:${admin.id}::reseller_id:${admin.reseller_id}`
+            key = this.loginBanAdminKey(username, domain, realm, ip, admin.id, admin.reseller_id)
             user = admin
         } else {
             const subscriber = await this.app.dbRepo(db.provisioning.VoipSubscriber).findOne({
@@ -295,7 +295,7 @@ export class AuthService {
             })
             const subscriberId = subscriber.billing_voip_subscriber.id
             const customerId = subscriber.account_id
-            key = `login:ban::user:${username}::domain:${domain}::realm:${realm}::ip:${ip}::subscriber_id:${subscriberId}::customer_id:${customerId}`
+            key = this.loginBanSubscriberKey(username, domain, realm, ip, subscriberId, customerId)
             user = subscriber
         }
 
@@ -315,8 +315,11 @@ export class AuthService {
             ip: ip,
         })
 
+        const failKey = this.loginFailKey(username, domain, realm, ip)
+
         await (await this.getRedisBanDb()).hset(key, 'banned_at', Math.floor(Date.now() / 1000))
         await (await this.getRedisBanDb()).expire(key, expire)
+        await (await this.getRedisBanDb()).del(failKey)
         if (incrementStage >= 0 && user) {
             await this.app.dbRepo(userRepo).update({[userField]: username}, {ban_increment_stage: incrementStage})
         }
@@ -328,7 +331,8 @@ export class AuthService {
         }
         const maxAttempts = this.app.config.security.login.max_attempts
         const expire = this.app.config.security.login.ban_max_time || 3600
-        const key = `login:fail::user:${username}::domain:${domain}::realm:${realm}::ip:${ip}`
+        const key = this.loginFailKey(username, domain, realm, ip)
+
         const attempted = +(await (await this.getRedisBanDb()).hget(key, 'attempts') || 0) + 1
 
         if (attempted >= maxAttempts) {
@@ -346,7 +350,7 @@ export class AuthService {
         if (!this.app.config.security.login.ban_enable) {
             return false
         }
-        const key = `login:ban::user:${username}::domain:${domain}::realm:${realm}::ip:${ip}:*`
+        const key = `${this.loginBanBasicKey(username, domain, realm, ip)}:*`
         return keyExists(await this.getRedisBanDb(), key)
     }
 
@@ -354,7 +358,7 @@ export class AuthService {
         if (!this.app.config.security.login.ban_enable) {
             return
         }
-        const key = `login:fail::user:${username}::domain:${domain}::realm:${realm}::ip:${ip}`
+        const key = this.loginFailKey(username, domain, realm, ip)
         await (await this.getRedisBanDb()).del(key)
     }
 
@@ -389,4 +393,25 @@ export class AuthService {
 
         return false
     }
+
+    loginFailKey(username: string, domain: string, realm: string, ip: string): string {
+        return `login:fail::user:${username}::domain:${domain}::realm:${realm}::ip:${ip}`
+    }
+
+    loginBanBasicKey(username: string, domain: string, realm: string, ip: string): string {
+        return `login:ban::user:${username}::domain:${domain}::realm:${realm}::ip:${ip}`
+    }
+
+    loginBanAdminKey(username: string, domain: string, realm: string, ip: string,
+                     admin_id: number, reseller_id: number): string {
+        const keyBasic = this.loginBanBasicKey(username, domain, realm, ip)
+        return `${keyBasic}::admin_id:${admin_id}::reseller_id:${reseller_id}`
+    }
+
+    loginBanSubscriberKey(username: string, domain: string, realm: string, ip: string,
+                          subscriber_id: number, customer_id: number): string {
+        const keyBasic = this.loginBanBasicKey(username, domain, realm, ip)
+        return `${keyBasic}::subscriber_id:${subscriber_id}::customer_id:${customer_id}`
+    }
+
 }

@@ -22,6 +22,9 @@ export class ServiceRequest {
     req: Request
     isInternalRedirect?: boolean
     returnContent: boolean
+    // TODO: remove optional and adjust unit tests
+    realm?: string | undefined = 'admin'
+    remote_ip?: string | undefined = undefined
 
     constructor(req: Request) {
         this.params = req.params
@@ -33,5 +36,8 @@ export class ServiceRequest {
 
         const prefer = req.headers.prefer || ''
         this.returnContent = prefer == 'return=representation'
+
+        this.realm = req.header('x-auth-realm') ?? 'admin'
+        this.remote_ip = req.header('x-real-ip') ?? req.ip
     }
 }

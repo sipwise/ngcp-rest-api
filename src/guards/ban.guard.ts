@@ -7,8 +7,7 @@ import {PublicGuard} from './public.guard'
 
 import {AuthService} from '~/auth/auth.service'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
-
-
+import {extractUsername, extractUsernameDomain} from '~/helpers/auth.helper'
 
 @Injectable()
 export class BanGuard implements CanActivate {
@@ -27,59 +26,18 @@ export class BanGuard implements CanActivate {
         const request = context.switchToHttp().getRequest<Request>()
         const sr = new ServiceRequest(request)
 
-        let realm = 'admin'
-        if ('x-auth-realm' in sr.headers) {
-            realm = sr.headers['x-auth-realm'].toString()
-        }
-
-        let username = this.extractUsername(sr)
-        if (!username) {
+        let userDomain = extractUsername(sr)
+        if (!userDomain) {
             return true // Didnt find a username, let it pass for other guards to handle
         }
 
-        let domain = sr.req.header('host') || 'ngcp-rest-api'
-        if (realm == 'subscriber') {
-            const userInfo = username.split('@')
-            if (userInfo.length != 2)
-                return true // Invalid username, let it pass for other guards to handle
-            username = userInfo[0]
-            domain = userInfo[1]
-        }
+        const [username, domain] = extractUsernameDomain(sr, userDomain)
 
-        if (await this.authService.isUserBanned(username, domain, realm, sr.req.ip)) {
+        if (await this.authService.isUserBanned(username, domain, sr.realm, sr.remote_ip))
             throw new ForbiddenException(this.i18n.t('errors.AUTH_BANNED'))
-        }
 
         // Allow request to proceed
         return true
     }
 
-    private extractUsername(sr: ServiceRequest): string | null {
-        const authHeader = sr.headers['authorization'] || ''
-
-        // Handle JWT token (Bearer token)
-        if (authHeader.startsWith('Bearer ')) {
-            const token = authHeader.split(' ')[1]
-            return this.extractUsernameFromJwt(token)
-        }
-
-        // Handle Basic Auth
-        if (authHeader.startsWith('Basic ')) {
-            const base64Credentials = authHeader.split(' ')[1]
-            const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii')
-            const [username] = credentials.split(':')
-            return username
-        }
-
-        return null
-    }
-
-    private extractUsernameFromJwt(token: string): string | null {
-        try {
-            const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString('ascii'))
-            return payload.username as string || null
-        } catch {
-            return null
-        }
-    }
 }

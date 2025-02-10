@@ -41,7 +41,7 @@ export class LoggingInterceptor implements NestInterceptor {
                         role: req['user'] !== undefined ? req.user.role : 'unknown',
                         is_master: req['user'] !== undefined ? req.user.is_master : 'unknown',
                     },
-                    ip: req.ip,
+                    ip: req.header('x-real-ip') ?? req.ip,
                     url: `${req.protocol}://${req.header('host')}${req.url}`,
                     query_params: req.query,
                     content_type: req.header('content-type'),
