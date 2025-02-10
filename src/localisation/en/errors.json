@@ -150,5 +150,9 @@
   "PASSWORD_ALREADY_USED": {
     "message": "Password has been used before",
     "code": 10038
+  },
+  "AUTH_BANNED": {
+    "message": "Banned",
+    "code": 10039
   }
 }
