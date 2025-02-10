@@ -1,3 +1,10 @@
+ngcp-rest-api (12.5.1.7+0~mr12.5.1.7) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [607307f] MT#62121 Add message to inform client if a user is locked out
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 10 Feb 2025 12:31:56 +0100
+
 ngcp-rest-api (12.5.1.6+0~mr12.5.1.6) unstable; urgency=medium
 
   [ Bertold Vincze ]
