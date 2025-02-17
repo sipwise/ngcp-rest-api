@@ -8,6 +8,10 @@
     "description": "[/auth] Authentication methods"
 },
 {
+    "name": "Bans",
+    "description": "[/bans] Read and manually release blocked Admins and Subscribers"
+},
+{
     "name": "ClearCallCounter",
     "description": "[/clearcallcounters] (Maintenance endpoint that only 'system' admin users can invoke) Clear call counters"
 },

@@ -8,7 +8,7 @@ import {AuthResponseDto} from './dto/auth-response.dto'
 import {AppService} from '~/app.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
-import {keyExists} from '~/helpers/redis.helper'
+import {findKeys, keyExists} from '~/helpers/redis.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -394,6 +394,47 @@ export class AuthService {
         return false
     }
 
+    async filterNotBannedAdmins(ids: number[]): Promise<number[]> {
+        if (!this.app.config.security.login.ban_enable) {
+            return []
+        }
+        const keys = await findKeys(await this.getRedisBanDb(), 'login:ban:*:admin_id:*')
+        const bannedIds = new Set<number>()
+        for (const key of keys) {
+            const id = parseInt(key.split('::').find((k) => k.startsWith('admin_id:'))?.split(':')[1])
+            if (id) {
+                bannedIds.add(id)
+            }
+        }
+        return ids.filter((id) => bannedIds.has(id))
+    }
+
+    async readBannedAdminIds(): Promise<number[]> {
+        const keys = await findKeys(await this.getRedisBanDb(), 'login:ban:*:realm:admin:*')
+        const ids = new Set<number>()
+        for (const key of keys) {
+            const id = parseInt(key.split('::').find((k) => k.startsWith('admin_id:'))?.split(':')[1])
+            if (id) {
+                ids.add(id)
+            }
+        }
+        return Array.from(ids)
+    }
+
+    async isAdminBanned(id: number): Promise<boolean> {
+        const key = `login:ban:*:admin_id:${id}:*`
+        return keyExists(await this.getRedisBanDb(), key)
+    }
+
+    async removeAdminBan(id: number, sr: ServiceRequest): Promise<void> {
+        this.log.debug({message: 'remove ban for admin', id: id, authority: sr.user.id})
+        const keys = await findKeys(await this.getRedisBanDb(), `login:ban:*:admin_id:${id}:*`)
+        if (keys.length === 0)
+            return
+        await (await this.getRedisBanDb()).del(...keys)
+        await this.app.dbRepo(db.billing.Admin).update({id: id}, {ban_increment_stage: 0})
+    }
+
     loginFailKey(username: string, domain: string, realm: string, ip: string): string {
         return `login:fail::user:${username}::domain:${domain}::realm:${realm}::ip:${ip}`
     }
@@ -403,13 +444,13 @@ export class AuthService {
     }
 
     loginBanAdminKey(username: string, domain: string, realm: string, ip: string,
-                     admin_id: number, reseller_id: number): string {
+        admin_id: number, reseller_id: number): string {
         const keyBasic = this.loginBanBasicKey(username, domain, realm, ip)
         return `${keyBasic}::admin_id:${admin_id}::reseller_id:${reseller_id}`
     }
 
     loginBanSubscriberKey(username: string, domain: string, realm: string, ip: string,
-                          subscriber_id: number, customer_id: number): string {
+        subscriber_id: number, customer_id: number): string {
         const keyBasic = this.loginBanBasicKey(username, domain, realm, ip)
         return `${keyBasic}::subscriber_id:${subscriber_id}::customer_id:${customer_id}`
     }

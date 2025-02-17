@@ -220,4 +220,14 @@ export class Admin extends BaseEntity {
 
         return admin
     }
+
+    toBanAdminInternal(): internal.BanAdmin {
+        const admin = new internal.BanAdmin()
+
+        admin.id = this.id
+        admin.resellerId = this.reseller_id
+        admin.username = this.login
+
+        return admin
+    }
 }

@@ -19,6 +19,8 @@ import {AcceptLanguageResolver, CookieResolver, HeaderResolver, I18nModule, Quer
 import {AdminModule} from './api/admins/admin.module'
 import {PasswordChangeModule} from './api/auth/password/change/password-change.module'
 import {PasswordModule} from './api/auth/password/password.module'
+import {BanAdminModule} from './api/bans/admins/ban-admin.module'
+import {BanModule} from './api/bans/ban.module'
 import {ClearCallCounterModule} from './api/clearcallcounters/clear-call-counter.module'
 import {ContactModule} from './api/contacts/contact.module'
 import {ContractModule} from './api/contracts/contract.module'
@@ -88,6 +90,8 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     }),
     AdminModule,
     AuthModule,
+    BanAdminModule,
+    BanModule,
     ClearCallCounterModule,
     ContactModule,
     ContractModule,

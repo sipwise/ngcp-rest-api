@@ -6,8 +6,8 @@ import {I18nService} from 'nestjs-i18n'
 import {PublicGuard} from './public.guard'
 
 import {AuthService} from '~/auth/auth.service'
-import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {extractUsername, extractUsernameDomain} from '~/helpers/auth.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 @Injectable()
 export class BanGuard implements CanActivate {
@@ -26,7 +26,7 @@ export class BanGuard implements CanActivate {
         const request = context.switchToHttp().getRequest<Request>()
         const sr = new ServiceRequest(request)
 
-        let userDomain = extractUsername(sr)
+        const userDomain = extractUsername(sr)
         if (!userDomain) {
             return true // Didnt find a username, let it pass for other guards to handle
         }
