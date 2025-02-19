@@ -3,10 +3,10 @@ import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {number} from 'yargs'
 
-import {BanAdminService} from './ban-admin.service'
-import {BanAdminResponseDto} from './dto/ban-admin-response.dto'
-import {BanAdminSearchDto} from './dto/ban-admin-search.dto'
+import {BanSubscriberService} from './ban-subscriber.service'
+import {BanSubscriberSearchDto} from './dto/ban-subscriber-search.dto'
 
+import {BanSubscriberResponseDto} from '~/api/bans/subscribers/dto/ban-subscriber-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
@@ -18,21 +18,24 @@ import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
 
-const resourceName = 'bans/admins'
+const resourceName = 'bans/subscribers'
 
 @Auth(
     RbacRole.system,
     RbacRole.admin,
     RbacRole.reseller,
     RbacRole.lintercept,
+    RbacRole.ccareadmin,
+    RbacRole.ccare,
+    RbacRole.subscriberadmin,
 )
 @ApiTags('Bans')
 @Controller(resourceName)
-export class BanAdminController extends CrudController<never, BanAdminResponseDto> {
-    private readonly log = new LoggerService(BanAdminController.name)
+export class BanSubscriberController extends CrudController<never, BanSubscriberResponseDto> {
+    private readonly log = new LoggerService(BanSubscriberController.name)
 
     constructor(
-        private readonly banAdminService: BanAdminService,
+        private readonly banSubscriberService: BanSubscriberService,
         @Inject(forwardRef(() => ExpandHelper)) private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
@@ -40,8 +43,8 @@ export class BanAdminController extends CrudController<never, BanAdminResponseDt
     }
 
     @Get()
-    @ApiPaginatedResponse(BanAdminResponseDto)
-    async readAll(@Req() req): Promise<[BanAdminResponseDto[], number]> {
+    @ApiPaginatedResponse(BanSubscriberResponseDto)
+    async readAll(@Req() req): Promise<[BanSubscriberResponseDto[], number]> {
         this.log.debug({
             message: 'read all banned admins',
             func: this.readAll.name,
@@ -49,10 +52,10 @@ export class BanAdminController extends CrudController<never, BanAdminResponseDt
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const [entity, totalCount] = await this.banAdminService.readAll(sr)
-        const responseList = entity.map(e => new BanAdminResponseDto(e))
+        const [entity, totalCount] = await this.banSubscriberService.readAll(sr)
+        const responseList = entity.map(e => new BanSubscriberResponseDto(e))
         if (sr.query.expand) {
-            const setSearchDtoKeys = Object.keys(new BanAdminSearchDto())
+            const setSearchDtoKeys = Object.keys(new BanSubscriberSearchDto())
             await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
         }
 
@@ -61,9 +64,9 @@ export class BanAdminController extends CrudController<never, BanAdminResponseDt
 
     @Get(':id')
     @ApiOkResponse({
-        type: BanAdminResponseDto,
+        type: BanSubscriberResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<BanAdminResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<BanSubscriberResponseDto> {
         this.log.debug({
             message: 'read banned admin by id',
             id: id,
@@ -72,9 +75,9 @@ export class BanAdminController extends CrudController<never, BanAdminResponseDt
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const response = new BanAdminResponseDto(await this.banAdminService.read(id, sr))
+        const response = new BanSubscriberResponseDto(await this.banSubscriberService.read(id, sr))
         if (sr.query.expand && !sr.isInternalRedirect) {
-            const setSearchDtoKeys = Object.keys(new BanAdminSearchDto())
+            const setSearchDtoKeys = Object.keys(new BanSubscriberSearchDto())
             await this.expander.expandObjects([response], setSearchDtoKeys, sr)
         }
         return response
@@ -89,14 +92,14 @@ export class BanAdminController extends CrudController<never, BanAdminResponseDt
         @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({
-            message: 'remove ban for admin by id',
+            message: 'remove ban for subscriber by id',
             id: ids,
             func: this.delete.name,
             url: req.url,
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const deletedIds = await this.banAdminService.delete(ids, sr)
+        const deletedIds = await this.banSubscriberService.delete(ids, sr)
         for (const deletedId of deletedIds) {
             await this.journalService.writeJournal(sr, deletedId, {})
         }

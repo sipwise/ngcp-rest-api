@@ -242,4 +242,12 @@ export class VoipSubscriber extends BaseEntity {
         groupMember.domain = this.domain.domain
         return groupMember
     }
+
+    toInternalBanSubscriber(): internal.BanSubscriber {
+        const subscriber = new internal.BanSubscriber()
+        subscriber.id = this.id
+        subscriber.resellerId = this.contract.contact.reseller_id
+        subscriber.username = this.webusername
+        return subscriber
+    }
 }

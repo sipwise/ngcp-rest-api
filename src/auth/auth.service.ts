@@ -435,6 +435,51 @@ export class AuthService {
         await this.app.dbRepo(db.billing.Admin).update({id: id}, {ban_increment_stage: 0})
     }
 
+    async filterNotBannedSubscribers(ids: number[]): Promise<number[]> {
+        if (!this.app.config.security.login.ban_enable) {
+            return []
+        }
+        const keys = await findKeys(await this.getRedisBanDb(), 'login:ban:*:subscriber_id:*')
+        const bannedIds = new Set<number>()
+        for (const key of keys) {
+            const id = parseInt(key.split('::').find((k) => k.startsWith('subscriber_id:'))?.split(':')[1])
+            if (id) {
+                bannedIds.add(id)
+            }
+        }
+        return ids.filter((id) => bannedIds.has(id))
+    }
+
+    async readBannedSubscriberIds(customerId?: number): Promise<number[]> {
+        let key = 'login:ban:*:realm:subscriber:*'
+        if (customerId) {
+            key = `login:ban:*:realm:subscriber:*:customer_id:${customerId}:*`
+        }
+        const keys = await findKeys(await this.getRedisBanDb(), key)
+        const ids = new Set<number>()
+        for (const key of keys) {
+            const id = parseInt(key.split('::').find((k) => k.startsWith('subscriber_id:'))?.split(':')[1])
+            if (id) {
+                ids.add(id)
+            }
+        }
+        return Array.from(ids)
+    }
+
+    async isSubscriberBanned(id: number): Promise<boolean> {
+        const key = `login:ban:*:subscriber_id:${id}:*`
+        return keyExists(await this.getRedisBanDb(), key)
+    }
+
+    async removeSubscriberBan(id: number, sr: ServiceRequest): Promise<void> {
+        this.log.debug({message: 'remove ban for subscriber', id: id, authority: sr.user.id})
+        const keys = await findKeys(await this.getRedisBanDb(), `login:ban:*:subscriber_id:${id}:*`)
+        if (keys.length === 0)
+            return
+        await (await this.getRedisBanDb()).del(...keys)
+        await this.app.dbRepo(db.provisioning.VoipSubscriber).update({id: id}, {ban_increment_stage: 0})
+    }
+
     loginFailKey(username: string, domain: string, realm: string, ip: string): string {
         return `login:fail::user:${username}::domain:${domain}::realm:${realm}::ip:${ip}`
     }

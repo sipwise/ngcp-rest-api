@@ -21,6 +21,7 @@ import {PasswordChangeModule} from './api/auth/password/change/password-change.m
 import {PasswordModule} from './api/auth/password/password.module'
 import {BanAdminModule} from './api/bans/admins/ban-admin.module'
 import {BanModule} from './api/bans/ban.module'
+import {BanSubscriberModule} from './api/bans/subscribers/ban-subscriber.module'
 import {ClearCallCounterModule} from './api/clearcallcounters/clear-call-counter.module'
 import {ContactModule} from './api/contacts/contact.module'
 import {ContractModule} from './api/contracts/contract.module'
@@ -91,6 +92,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     AdminModule,
     AuthModule,
     BanAdminModule,
+    BanSubscriberModule,
     BanModule,
     ClearCallCounterModule,
     ContactModule,
