@@ -183,6 +183,19 @@ export class VoipSubscriber extends BaseEntity {
     })
         ban_increment_stage!: number
 
+    @Column({
+        type: 'timestamp',
+        nullable: true,
+    })
+        last_banned_at?: Date
+
+    @Column({
+        type: 'varchar',
+        length: 45,
+        nullable: true,
+    })
+        last_banned_ip?: string
+
     @OneToOne(() => BillingVoipSubscriber)
     @JoinColumn({name: 'uuid', referencedColumnName: 'uuid'})
         billing_voip_subscriber: BillingVoipSubscriber
@@ -248,6 +261,9 @@ export class VoipSubscriber extends BaseEntity {
         subscriber.id = this.id
         subscriber.resellerId = this.contract.contact.reseller_id
         subscriber.username = this.webusername
+        subscriber.banIncrementStage = this.ban_increment_stage
+        subscriber.lastBannedIp = this.last_banned_ip
+        subscriber.lastBannedAt = this.last_banned_at
         return subscriber
     }
 }

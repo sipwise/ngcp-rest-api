@@ -14,7 +14,7 @@ import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
 @Injectable()
-export class BanSubscriberService implements CrudService<internal.BanAdmin> {
+export class BanSubscriberService implements CrudService<internal.BanSubscriber> {
     private readonly log = new LoggerService(BanSubscriberService.name)
 
     constructor(
@@ -24,7 +24,7 @@ export class BanSubscriberService implements CrudService<internal.BanAdmin> {
     ) {
     }
 
-    async readAll(sr: ServiceRequest): Promise<[internal.BanAdmin[], number]> {
+    async readAll(sr: ServiceRequest): Promise<[internal.BanSubscriber[], number]> {
         const redisBans = await this.authService.readBannedSubscriberIds()
         // convert billing ids to provisioning ids
         await Promise.all(redisBans.map(async id => await this.banSubscriberRepo.billingIdToProvisioningId(id)))
@@ -33,7 +33,7 @@ export class BanSubscriberService implements CrudService<internal.BanAdmin> {
         return this.banSubscriberRepo.readAll(options, sr)
     }
 
-    async read(id: number, sr: ServiceRequest): Promise<internal.BanAdmin> {
+    async read(id: number, sr: ServiceRequest): Promise<internal.BanSubscriber> {
         // check if the subscriber is banned by billing id
         if (!await this.authService.isSubscriberBanned(await this.banSubscriberRepo.provisioningIdToBillingId(id)))
             throw new NotFoundException()

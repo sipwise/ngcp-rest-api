@@ -58,7 +58,7 @@ export class AuthService {
      *
      * @returns Authenticated `AuthResponseDto` on success else `null`
      */
-    async validateAdmin(_req:ServiceRequest, username: string, password: string, _domain:string, _realm:string): Promise<AuthResponseDto> {
+    async validateAdmin(_req: ServiceRequest, username: string, password: string, _domain: string, _realm: string): Promise<AuthResponseDto> {
         this.log.debug({message: 'starting user authentication', method: this.validateAdmin.name, username: username})
         const admin = await this.app.dbRepo(db.billing.Admin).findOne({
             where: {login: username},
@@ -74,7 +74,7 @@ export class AuthService {
             relations: ['has_access_to'],
         })
 
-        if (admin && await this.compareBcryptPassword(password, admin.saltedpass)  !== false) {
+        if (admin && await this.compareBcryptPassword(password, admin.saltedpass) !== false) {
             return this.adminAuthToResponse(admin)
         }
         this.log.debug({message: 'user authentication', success: false, username: username})
@@ -163,7 +163,7 @@ export class AuthService {
      *
      * @returns Authenticated `AuthResponseDto` on success else `null`
      */
-    async validateSubscriber(_req: ServiceRequest, username: string, password: string, domain: string, _realm:string): Promise<AuthResponseDto> {
+    async validateSubscriber(_req: ServiceRequest, username: string, password: string, domain: string, _realm: string): Promise<AuthResponseDto> {
         this.log.debug({
             message: 'starting subscriber user authentication',
             method: this.validateAdmin.name,
@@ -243,8 +243,8 @@ export class AuthService {
         const bcrypt_version = '2b'
         const bcrypt_cost = 13
         if (!process.env.NODE_WP_BUNDLE &&
-             process.env.NODE_ENV === 'development' &&
-             process.env.API_DEV_SKIP_PASS_AUTH === 'true') {
+            process.env.NODE_ENV === 'development' &&
+            process.env.API_DEV_SKIP_PASS_AUTH === 'true') {
             this.log.log({message: '"API_DEV_SKIP_PASS_AUTH" MODE!'})
             return true
         }
@@ -321,7 +321,10 @@ export class AuthService {
         await (await this.getRedisBanDb()).expire(key, expire)
         await (await this.getRedisBanDb()).del(failKey)
         if (incrementStage >= 0 && user) {
-            await this.app.dbRepo(userRepo).update({[userField]: username}, {ban_increment_stage: incrementStage})
+            await this.app.dbRepo(userRepo).update(
+                {[userField]: username},
+                {ban_increment_stage: incrementStage, last_banned_at: new Date(), last_banned_ip: ip},
+            )
         }
     }
 

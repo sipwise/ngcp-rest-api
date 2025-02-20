@@ -155,6 +155,19 @@ export class Admin extends BaseEntity {
         ban_increment_stage!: number
 
     @Column({
+        type: 'timestamp',
+        nullable: true,
+    })
+        last_banned_at?: Date
+
+    @Column({
+        type: 'varchar',
+        length: 45,
+        nullable: true,
+    })
+        last_banned_ip?: string
+
+    @Column({
         type: 'int',
         width: 11,
         unsigned: true,
@@ -227,6 +240,9 @@ export class Admin extends BaseEntity {
         admin.id = this.id
         admin.resellerId = this.reseller_id
         admin.username = this.login
+        admin.banIncrementStage = this.ban_increment_stage
+        admin.lastBannedIp = this.last_banned_ip
+        admin.lastBannedAt = this.last_banned_at
 
         return admin
     }
