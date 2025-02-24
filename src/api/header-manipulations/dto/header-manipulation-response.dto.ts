@@ -1,21 +1,26 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsArray} from 'class-validator'
+import {Type} from 'class-transformer'
+import {IsArray, ValidateNested} from 'class-validator'
 
 import {ResponseDto} from '~/dto/response.dto'
+import {UrlReferenceType} from '~/enums/url-reference-type.enum'
+import {UrlReference} from '~/types/url-reference.type'
 
 export class HeaderManipulationResponseDto implements ResponseDto {
     @IsArray()
+    @ValidateNested({each: true})
+    @Type(() => UrlReference)
     @ApiProperty()
-        links: string[]
+        links: UrlReference[]
 
     constructor(prefix: string) {
         const url = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix
         this.links = [
-            url + '/sets',
-            url + '/sets/rules',
-            url + '/sets/rules/actions',
-            url + '/sets/rules/conditions',
-            url + '/sets/rules/conditions/:id/@values',
+            {type: UrlReferenceType.Link, url: `${url}/sets`},
+            {type: UrlReferenceType.Link, url: `${url}/sets/rules`},
+            {type: UrlReferenceType.Link, url: `${url}/sets/rules/actions`},
+            {type: UrlReferenceType.Link, url: `${url}/sets/rules/conditions`},
+            {type: UrlReferenceType.Link, url: `${url}/sets/rules/conditions/:id/@values`},
         ]
     }
 }
