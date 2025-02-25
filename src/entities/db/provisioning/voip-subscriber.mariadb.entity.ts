@@ -276,7 +276,7 @@ export class VoipSubscriber extends BaseEntity {
 
     toInternalBanSubscriber(): internal.BanSubscriber {
         const subscriber = new internal.BanSubscriber()
-        subscriber.id = this.id
+        subscriber.id = this.billing_voip_subscriber.id
         subscriber.resellerId = this.contract.contact.reseller_id
         subscriber.username = this.webusername
         subscriber.banIncrementStage = this.ban_increment_stage

@@ -26,16 +26,13 @@ export class BanSubscriberService implements CrudService<internal.BanSubscriber>
 
     async readAll(sr: ServiceRequest): Promise<[internal.BanSubscriber[], number]> {
         const redisBans = await this.authService.readBannedSubscriberIds()
-        // convert billing ids to provisioning ids
-        await Promise.all(redisBans.map(async id => await this.banSubscriberRepo.billingIdToProvisioningId(id)))
         const options = this.getSubscriberOptionsFromServiceRequest(sr)
         options.filterBy.ids = redisBans
         return this.banSubscriberRepo.readAll(options, sr)
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.BanSubscriber> {
-        // check if the subscriber is banned by billing id
-        if (!await this.authService.isSubscriberBanned(await this.banSubscriberRepo.provisioningIdToBillingId(id)))
+        if (!await this.authService.isSubscriberBanned(id))
             throw new NotFoundException()
 
         return await this.banSubscriberRepo.readById(id, this.getSubscriberOptionsFromServiceRequest(sr), sr)
@@ -66,10 +63,7 @@ export class BanSubscriberService implements CrudService<internal.BanSubscriber>
         }
 
         await Promise.all(idsToDelete.map(async subscriber => {
-            await this.authService.removeSubscriberBan(
-                await this.banSubscriberRepo.provisioningIdToBillingId(subscriber.id),
-                sr,
-            )
+            await this.authService.removeSubscriberBan(subscriber.id,sr)
         }))
 
         return ids

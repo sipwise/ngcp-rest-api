@@ -480,7 +480,18 @@ export class AuthService {
         if (keys.length === 0)
             return
         await (await this.getRedisBanDb()).del(...keys)
-        await this.app.dbRepo(db.provisioning.VoipSubscriber).update({id: id}, {ban_increment_stage: 0})
+        const billingSubscriber = await this.app.dbRepo(db.billing.VoipSubscriber).findOne({
+            where: {id: id},
+            relations:['provisioningVoipSubscriber'],
+        })
+        if (!billingSubscriber) {
+            return
+        }
+
+        await this.app.dbRepo(db.provisioning.VoipSubscriber).update(
+            {id: billingSubscriber.provisioningVoipSubscriber.id},
+            {ban_increment_stage: 0},
+        )
     }
 
     loginFailKey(username: string, domain: string, realm: string, ip: string): string {

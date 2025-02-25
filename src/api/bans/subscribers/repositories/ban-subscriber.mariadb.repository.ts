@@ -21,8 +21,9 @@ export class BanSubscriberMariadbRepository extends MariaDbRepository implements
     }
 
     async readAll(options: BanSubscriberOptions, sr: ServiceRequest): Promise<[internal.BanSubscriber[], number]> {
-        const qb = db.provisioning.VoipSubscriber.createQueryBuilder('subscriber')
+        const qb = db.provisioning.VoipSubscriber.createQueryBuilder('pSubscriber')
         qb.where('ban_increment_stage > 0')
+        qb.leftJoinAndSelect('pSubscriber.billing_voip_subscriber', 'bSubscriber')
         const searchDto = new BanSubscriberSearchDto()
         configureQueryBuilder(
             qb,
@@ -35,15 +36,19 @@ export class BanSubscriberMariadbRepository extends MariaDbRepository implements
     }
 
     async readById(id: number, options: BanSubscriberOptions, _sr: ServiceRequest): Promise<internal.BanSubscriber> {
-        const qb = db.provisioning.VoipSubscriber.createQueryBuilder('subscriber')
+        const qb = db.provisioning.VoipSubscriber.createQueryBuilder('pSubscriber')
         qb.where('ban_increment_stage > 0')
+        qb.leftJoinAndSelect('pSubscriber.billing_voip_subscriber', 'bSubscriber')
+        qb.andWhere('bSubscriber.id = :id', {id: id})
         this.addFilterBy(qb, options.filterBy)
-        const subscriber = await qb.andWhere({id: id}).getOneOrFail()
+        const subscriber = await qb.getOneOrFail()
         return subscriber.toInternalBanSubscriber()
     }
 
     async readWhereInIds(ids: number[], options:BanSubscriberOptions, sr: ServiceRequest): Promise<internal.BanSubscriber[]> {
-        const qb = db.provisioning.VoipSubscriber.createQueryBuilder('subscriber')
+        const qb = db.provisioning.VoipSubscriber.createQueryBuilder('pSubscriber')
+        qb.where('ban_increment_stage > 0')
+        qb.leftJoinAndSelect('pSubscriber.billing_voip_subscriber', 'bSubscriber')
         const searchDto = new BanSubscriberSearchDto()
         configureQueryBuilder(
             qb,
@@ -56,32 +61,16 @@ export class BanSubscriberMariadbRepository extends MariaDbRepository implements
         return await Promise.all(result.map(async (d) => d.toInternalBanSubscriber()))
     }
 
-    async billingIdToProvisioningId(billingSubscriberId: number): Promise<number> {
-        const qb = db.billing.VoipSubscriber.createQueryBuilder('bVoipSubscriber')
-        qb.where({id: billingSubscriberId})
-        qb.leftJoinAndSelect('bVoipSubscriber.provisioningVoipSubscriber', 'provisioningVoipSubscriber')
-        const subscriber = await qb.getOneOrFail()
-        return subscriber.provisioningVoipSubscriber.id
-    }
-
-    async provisioningIdToBillingId(provisioningSubscriberId: number): Promise<number> {
-        const qb = db.provisioning.VoipSubscriber.createQueryBuilder('pVoipSubscriber')
-        qb.leftJoinAndSelect('pVoipSubscriber.billing_voip_subscriber', 'billing_voip_subscriber')
-        qb.where({id: provisioningSubscriberId})
-        const subscriber = await qb.getOneOrFail()
-        return subscriber.billing_voip_subscriber.id
-    }
-
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, filterBy: BanSubscriberOptions['filterBy']): void {
         if (filterBy) {
             if (filterBy.ids && filterBy.ids.length > 0) {
-                qb.andWhereInIds(filterBy.ids)
+                qb.andWhere('bSubscriber.id IN (:ids)', {ids: filterBy.ids})
             }
             if (filterBy.customerId) {
-                qb.andWhere('subscriber.contract_id = :customerId', {customerId: filterBy.customerId})
+                qb.andWhere('pSubscriber.contract_id = :customerId', {customerId: filterBy.customerId})
             }
             if (filterBy.resellerId) {
-                qb.leftJoinAndSelect('subscriber.contract', 'contract')
+                qb.leftJoinAndSelect('pSubscriber.contract', 'contract')
                 qb.leftJoinAndSelect('contract.contact', 'contact')
                 qb.andWhere('contact.reseller_id = :resellerId', {resellerId: filterBy.resellerId})
             }
