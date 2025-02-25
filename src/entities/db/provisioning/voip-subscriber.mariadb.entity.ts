@@ -18,6 +18,7 @@ import {VoipPbxGroup} from './voip-pbx-group.mariadb.entity'
 import {internal} from '~/entities'
 import {Contract} from '~/entities/db/billing/contract.mariadb.entity'
 import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
+import {VoipUsrPreference} from '~/entities/db/provisioning/voip-usr-preference.mariadb.entity'
 
 @Entity({
     name: 'voip_subscribers',
@@ -228,6 +229,9 @@ export class VoipSubscriber extends BaseEntity {
     @OneToMany(() => VoipDBAlias, alias => alias.subscriber)
         dbAliases!: VoipDBAlias[]
 
+    @OneToMany(() => VoipUsrPreference, preference => preference.voipSubscriber)
+        preferences!: VoipUsrPreference[]
+
     toInternal(): internal.VoipSubscriber {
         const subscriber = new internal.VoipSubscriber()
         subscriber.id = this.id
@@ -254,6 +258,20 @@ export class VoipSubscriber extends BaseEntity {
         groupMember.username = this.username
         groupMember.domain = this.domain.domain
         return groupMember
+    }
+
+    toInternalPbxUser(): internal.PbxUser {
+        const pbxUser = new internal.PbxUser()
+        pbxUser.id = this.billing_voip_subscriber.id
+        pbxUser.displayName = this.preferences[0] ? this.preferences[0].value : null
+        pbxUser.pbxExtension = this.pbx_extension
+        pbxUser.primaryNumber = {
+            number_id: this.billing_voip_subscriber.primaryNumber.id,
+            cc: this.billing_voip_subscriber.primaryNumber.cc,
+            ac: +this.billing_voip_subscriber.primaryNumber.ac,
+            sn: this.billing_voip_subscriber.primaryNumber.sn,
+        }
+        return pbxUser
     }
 
     toInternalBanSubscriber(): internal.BanSubscriber {

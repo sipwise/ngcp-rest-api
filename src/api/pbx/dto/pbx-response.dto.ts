@@ -17,6 +17,7 @@ export class PbxResponseDto {
         this.links = [
             {type: UrlReferenceType.Link, url: `${url}/groups`},
             {type: UrlReferenceType.Link, url: `${url}/groups/members`},
+            {type: UrlReferenceType.Link, url: `${url}/users`},
         ]
     }
 }

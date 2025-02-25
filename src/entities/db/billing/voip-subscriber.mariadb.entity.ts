@@ -55,7 +55,7 @@ export class VoipSubscriber extends BaseEntity {
         unsigned: true,
         nullable: true,
     })
-        primary_number_id?: boolean
+        primary_number_id?: number
 
     @Column({
         type: 'varchar',
@@ -78,6 +78,10 @@ export class VoipSubscriber extends BaseEntity {
     @OneToOne(() => ProvisioningVoipSubscriber)
     @JoinColumn({name: 'uuid', referencedColumnName: 'uuid'})
         provisioningVoipSubscriber!: ProvisioningVoipSubscriber
+
+    @OneToOne(() => VoipNumber, number => number.id)
+    @JoinColumn({name: 'primary_number_id'})
+        primaryNumber!: VoipNumber
 
     @OneToMany(() => VoipNumber, number => number.subscriber)
         voipNumbers!: VoipNumber[]

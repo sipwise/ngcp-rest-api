@@ -15,7 +15,6 @@ import {ConfigModule} from '@nestjs/config'
 import {ScheduleModule} from '@nestjs/schedule'
 import {AcceptLanguageResolver, CookieResolver, HeaderResolver, I18nModule, QueryResolver} from 'nestjs-i18n'
 
-
 import {AdminModule} from './api/admins/admin.module'
 import {PasswordChangeModule} from './api/auth/password/change/password-change.module'
 import {PasswordModule} from './api/auth/password/password.module'
@@ -66,6 +65,8 @@ import {DbStateSchedule} from './schedules/dbstate.schedule'
 import {FileshareSchedule} from './schedules/fileshare.schedule'
 import {RedisStateSchedule} from './schedules/redisstate.schedule'
 
+import {PbxUserModule} from '~/api/pbx/users/pbx-user.module'
+
 let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
     ConfigModule.forRoot({
         isGlobal: true,
@@ -111,6 +112,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     HeaderManipulationRuleModule,
     HeaderManipulationSetModule,
     NumberModule,
+    PbxUserModule,
     PbxModule,
     PbxGroupMemberModule,
     PbxGroupModule,

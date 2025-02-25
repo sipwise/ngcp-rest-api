@@ -2,6 +2,8 @@ import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColum
 
 import {VoipPreference} from './voip-preference.mariadb.entity'
 
+import {VoipSubscriber} from '~/entities/db/provisioning/voip-subscriber.mariadb.entity'
+
 @Entity({
     name: 'voip_usr_preferences',
     database: 'provisioning',
@@ -45,4 +47,8 @@ export class VoipUsrPreference extends BaseEntity {
     @ManyToOne(() => VoipPreference, voipPreference => voipPreference.id)
     @JoinColumn({name: 'attribute_id'})
         voipPreference!: VoipPreference
+
+    @ManyToOne(() => VoipSubscriber, voipSubscriber => voipSubscriber.id)
+    @JoinColumn({name: 'subscriber_id'})
+        voipSubscriber!: VoipSubscriber
 }
