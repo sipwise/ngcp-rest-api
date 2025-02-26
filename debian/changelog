@@ -1,3 +1,10 @@
+ngcp-rest-api (13.2.1.2+0~mr13.2.1.2) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [b96cd9b] MT#62257 Fix broken expand caused by wrong request type
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 26 Feb 2025 18:06:36 +0100
+
 ngcp-rest-api (13.2.1.1+0~mr13.2.1.1) unstable; urgency=medium
 
   [ Bertold Vincze ]
