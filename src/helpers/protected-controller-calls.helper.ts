@@ -1,4 +1,5 @@
 import {UnauthorizedException} from '@nestjs/common'
+import {Request} from 'express'
 
 import {CrudController} from '~/controllers/crud.controller'
 import {RequestDto} from '~/dto/request.dto'
@@ -39,14 +40,13 @@ async function hasPermissionToAccessController(role: string, controller: CrudCon
  * @throws UnauthorizedException
  * @constructor
  */
-// TODO: req can be any because user can be attached to request, maybe fixable
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function ProtectedReadCall(controller: CrudController<RequestDto,ResponseDto>, id: number, req: any): Promise<any> {
-    const role = req.user.role
+export async function ProtectedReadCall(controller: CrudController<RequestDto,ResponseDto>, id: number, req: Request): Promise<any> {
+    const role = req.user['role']
     if (!await hasPermissionToAccessController(role, controller)) {
         throw new UnauthorizedException()
     }
-    req.isInternalRedirect = true
+    req['isInternalRedirect'] = true
     return await controller.read(id, req)
 }
 
