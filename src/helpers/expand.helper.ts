@@ -93,7 +93,7 @@ export class ExpandHelper {
 
                 let returnObject
                 try {
-                    returnObject = await ProtectedReadCall(this.controllersMap[controller], responseList[j][`${fieldsToExpand[i]}`], sr)
+                    returnObject = await ProtectedReadCall(this.controllersMap[controller], responseList[j][`${fieldsToExpand[i]}`], sr.req)
                 } catch {
                     if (await this.handleSoftExpand(sr, `Cannot expand field ${fieldsToExpand[i]}`))
                         continue
@@ -138,7 +138,7 @@ export class ExpandHelper {
             let returnObject
             try {
                 returnObject =
-                    await ProtectedReadCall(this.controllersMap[controller], responseList[i][`${firstFieldToExpand}`], sr)
+                    await ProtectedReadCall(this.controllersMap[controller], responseList[i][`${firstFieldToExpand}`], sr.req)
             } catch{
                 if (await this.handleSoftExpand(sr, `Cannot expand field ${firstFieldToExpand}`))
                     continue
@@ -189,7 +189,7 @@ export class ExpandHelper {
         if (parentObject[firstFieldToExpand] && isExpandable && this.controllersMap[controller]) {
             let returnObject
             try {
-                returnObject = await ProtectedReadCall(this?.controllersMap[controller], parentObject[`${firstFieldToExpand}`], sr)
+                returnObject = await ProtectedReadCall(this?.controllersMap[controller], parentObject[`${firstFieldToExpand}`], sr.req)
             } catch {
                 if (await this.handleSoftExpand(sr, `Cannot expand field ${firstFieldToExpand}`))
                     return
