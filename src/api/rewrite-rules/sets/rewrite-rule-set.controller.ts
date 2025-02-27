@@ -39,7 +39,7 @@ const resourceName = 'rewrite-rules/sets'
     RbacRole.admin,
     RbacRole.reseller,
 )
-@ApiTags('Rewrite Rules')
+@ApiTags('RewriteRule')
 @Controller(resourceName)
 export class RewriteRuleSetController extends CrudController<RewriteRuleSetRequestDto, RewriteRuleSetResponseDto> {
     private readonly log = new LoggerService(RewriteRuleSetController.name)

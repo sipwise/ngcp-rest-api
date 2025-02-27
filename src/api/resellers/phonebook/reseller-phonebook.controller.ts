@@ -40,7 +40,7 @@ const resourceName = 'resellers/'
     RbacRole.admin,
     RbacRole.reseller,
 )
-@ApiTags('Resellers')
+@ApiTags('Reseller')
 @Controller(resourceName)
 export class ResellerPhonebookController extends CrudController<ResellerPhonebookRequestDto, ResellerPhonebookResponseDto> {
     private readonly log = new LoggerService(ResellerPhonebookController.name)

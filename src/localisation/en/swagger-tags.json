@@ -69,7 +69,11 @@
 },
 {
     "name": "Reseller",
-    "description": "[/resellers] Define platform resellers"
+    "description": "[/resellers] Define platform resellers and their phonebook."
+},
+{
+    "name": "RewriteRule",
+    "description": "[/rewrite-rules] Available Rewrite Rule related routes including sets, rules."
 },
 {
     "name": "SystemContact",
