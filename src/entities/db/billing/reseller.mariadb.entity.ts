@@ -11,6 +11,7 @@ import {Domain} from './domain.mariadb.entity'
 import {Journal} from './journal.mariadb.entity'
 
 import {internal} from '~/entities'
+import {ResellerPhonebook} from '~/entities/db/billing/reseller-phonebook.mariadb.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 // import {VoipNumber} from './voip-number.entity'
 // import {NcosLevel} from './ncos-level.entity'
@@ -86,6 +87,9 @@ export class Reseller extends BaseEntity {
 
     @OneToMany(() => Domain, domain => domain.reseller)
         domains!: Domain[]
+
+    @OneToMany(()=> ResellerPhonebook, resellerPhonebook => resellerPhonebook.reseller)
+        phonebook!: ResellerPhonebook[]
 
     @OneToMany(() => Journal, journal => journal.reseller)
         journals!: Journal[]

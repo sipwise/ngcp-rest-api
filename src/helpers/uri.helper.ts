@@ -12,3 +12,15 @@ export function extractResourceName(url: string, prefix: string): string {
     }
     return url.split('/')[0]
 }
+
+export function prepareUrlReference(url: string, removeLeadingResourceId?: boolean): string {
+    const strippedUrl = stripQueryParams(url)
+    if (!removeLeadingResourceId) {
+        return strippedUrl
+    }
+    return strippedUrl.split('/').slice(0, -1).join('/')
+}
+
+export function stripQueryParams(url: string): string {
+    return url.split('?')[0]
+}
