@@ -5,8 +5,9 @@ import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {RewriteRuleDirection, RewriteRuleField} from '~/entities/internal/rewrite-rule.internal.entity'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
-export class RewriteRuleResponseDto implements ResponseDto {
+export class RewriteRuleResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         id!: number
@@ -47,7 +48,8 @@ export class RewriteRuleResponseDto implements ResponseDto {
     @ApiProperty()
         enabled!: boolean
 
-    constructor(entity: internal.RewriteRule) {
+    constructor(entity: internal.RewriteRule, options?: ResponseDtoOptions) {
+        super(options)
         this.id = entity.id
         this.set_id = entity.setId
         this.match_pattern = entity.matchPattern

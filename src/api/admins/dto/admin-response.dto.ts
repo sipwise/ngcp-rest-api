@@ -6,8 +6,9 @@ import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
-export class AdminResponseDto implements ResponseDto {
+export class AdminResponseDto extends ResponseDto {
     @IsBoolean()
     @ApiProperty()
         billing_data!: boolean
@@ -80,7 +81,8 @@ export class AdminResponseDto implements ResponseDto {
     @ApiProperty()
         password_last_modify_time: string
 
-    constructor(admin: internal.Admin, role: RbacRole) {
+    constructor(admin: internal.Admin, role: RbacRole, options?: ResponseDtoOptions) {
+        super(options)
         this.billing_data = admin.billing_data
         this.call_data = admin.call_data
         this.can_reset_password = admin.can_reset_password

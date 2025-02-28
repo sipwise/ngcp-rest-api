@@ -1,6 +1,7 @@
 import {readFileSync} from 'fs'
 
-import {NestApplication, NestFactory} from '@nestjs/core'
+import {ClassSerializerInterceptor} from '@nestjs/common'
+import {NestApplication, NestFactory, Reflector} from '@nestjs/core'
 import bodyParser from 'body-parser'
 import {WinstonModule} from 'nest-winston'
 
@@ -58,6 +59,7 @@ async function bootstrap(): Promise<void> {
             perPageName: config.common.api_default_query_rows_name,
         }),
         new LoggingInterceptor(),
+        new ClassSerializerInterceptor(app.get(Reflector)),
         new ResponseValidationInterceptor(),
     )
 

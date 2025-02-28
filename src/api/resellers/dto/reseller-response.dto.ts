@@ -7,10 +7,11 @@ import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {UrlReferenceType} from '~/enums/url-reference-type.enum'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 import {UrlReference} from '~/types/url-reference.type'
 
 
-export class ResellerResponseDto implements ResponseDto {
+export class ResellerResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         id: number
@@ -33,14 +34,15 @@ export class ResellerResponseDto implements ResponseDto {
     @ApiProperty()
         phonebook: UrlReference
 
-    constructor(reseller: internal.Reseller, url: string) {
+    constructor(reseller: internal.Reseller, options?: ResponseDtoOptions) {
+        super(options)
         this.id = reseller.id
         this.contract_id = reseller.contract_id
         this.name = reseller.name
         this.status = reseller.status
         this.phonebook = {
             type: UrlReferenceType.Link,
-            url: `${url}/${this.id}/phonebook`,
+            url: `${this.resourceUrl}/${this.id}/phonebook`,
         }
     }
 }

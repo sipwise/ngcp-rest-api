@@ -6,8 +6,9 @@ import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {PrimaryNumber} from '~/types/primary-number.type'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
-export class PbxUserResponseDto implements ResponseDto {
+export class PbxUserResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         id: number
@@ -26,7 +27,8 @@ export class PbxUserResponseDto implements ResponseDto {
     @ApiProperty()
         primary_number: PrimaryNumber
 
-    constructor(entity: internal.PbxUser) {
+    constructor(entity: internal.PbxUser, options?: ResponseDtoOptions) {
+        super(options)
         this.id = entity.id
         this.display_name = entity.displayName
         this.pbx_extension = entity.pbxExtension

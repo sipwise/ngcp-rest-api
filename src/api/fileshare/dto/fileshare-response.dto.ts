@@ -4,7 +4,7 @@ import {IsDate, IsInt, IsNotEmpty, IsNumber, IsString} from 'class-validator'
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 
-export class FileshareResponseDto implements ResponseDto {
+export class FileshareResponseDto extends ResponseDto {
     @IsString()
     @IsNotEmpty()
     @ApiProperty()

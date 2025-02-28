@@ -4,13 +4,13 @@ import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {PbxGroupResponseDto} from './dto/pbx-group-response.dto'
 import {PbxGroupService} from './pbx-group.service'
 
-import {AdminResponseDto} from '~/api/admins/dto/admin-response.dto'
 import {License as LicenseType, RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {License} from '~/decorators/license.decorator'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {prepareUrlReference} from '~/helpers/uri.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -50,13 +50,13 @@ export class PbxGroupController extends CrudController<never, PbxGroupResponseDt
         const [pbxGroups, totalCount] =
             await this.pbxGroupService.readAll(sr)
 
-        const responseList = pbxGroups.map((group) => new PbxGroupResponseDto(req.url, group))
+        const responseList = pbxGroups.map((group) => new PbxGroupResponseDto(prepareUrlReference(req.url), group))
         return [responseList, totalCount]
     }
 
     @Get(':id')
     @ApiOkResponse({
-        type: AdminResponseDto,
+        type: PbxGroupResponseDto,
     })
     async read(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<PbxGroupResponseDto> {
         this.log.debug({
@@ -68,7 +68,6 @@ export class PbxGroupController extends CrudController<never, PbxGroupResponseDt
         const sr = new ServiceRequest(req)
         const group = await this.pbxGroupService.read(id, sr)
 
-        const url = req.url.split('/').slice(0, -1).join('/')
-        return new PbxGroupResponseDto(url, group)
+        return new PbxGroupResponseDto(prepareUrlReference(req.url, true), group)
     }
 }

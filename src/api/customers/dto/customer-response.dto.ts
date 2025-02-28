@@ -6,14 +6,16 @@ import {BillingMappingResponseDto} from './billing-mapping-response.dto'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {Expandable} from '~/decorators/expandable.decorator'
+import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {BillingMapping} from '~/entities/internal'
 import {
     ContractStatus as CustomerStatus,
 } from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
-export class CustomerResponseDto {
+export class CustomerResponseDto extends ResponseDto {
     @IsBoolean()
     @ApiProperty()
         add_vat: boolean
@@ -101,7 +103,8 @@ export class CustomerResponseDto {
     @ApiProperty()
         vat_rate: number
 
-    constructor(data: internal.Customer) {
+    constructor(data: internal.Customer, options?: ResponseDtoOptions) {
+        super(options)
         this.id = data.id
         this.add_vat = data.addVat
         this.all_billing_profiles = data.allBillingMappings.map(mapping => new BillingMappingResponseDto(mapping))

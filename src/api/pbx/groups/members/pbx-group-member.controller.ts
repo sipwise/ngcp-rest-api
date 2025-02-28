@@ -6,7 +6,6 @@ import {PbxGroupMemberRequestParamDto} from './dto/pbx-group-member-request-para
 import {PbxGroupMemberResponseDto} from './dto/pbx-group-member-response.dto'
 import {PbxGroupMemberService} from './pbx-group-member.service'
 
-import {AdminResponseDto} from '~/api/admins/dto/admin-response.dto'
 import {License as LicenseType, RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
@@ -61,7 +60,7 @@ export class PbxGroupMemberController extends CrudController<never, PbxGroupMemb
 
     @Get(':groupId?/members/:id')
     @ApiOkResponse({
-        type: AdminResponseDto,
+        type: PbxGroupMemberResponseDto,
     })
     async read(
         @Param('id', ParseIntPipe) id: number,

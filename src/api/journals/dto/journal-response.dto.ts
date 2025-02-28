@@ -3,8 +3,9 @@ import {ApiHideProperty, ApiProperty, ApiPropertyOptional} from '@nestjs/swagger
 import {ResellerResponseDto} from '~/api/resellers/dto/reseller-response.dto'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
-export class JournalResponseDto implements ResponseDto {
+export class JournalResponseDto extends ResponseDto {
     @ApiProperty()
         id: number
     @ApiPropertyOptional()
@@ -32,7 +33,8 @@ export class JournalResponseDto implements ResponseDto {
     @ApiProperty()
         user_id: number
 
-    constructor(journal: internal.Journal) {
+    constructor(journal: internal.Journal, options?: ResponseDtoOptions) {
+        super(options)
         try {
             journal.decodeContent()
         } catch {/*TODO: empty*/}

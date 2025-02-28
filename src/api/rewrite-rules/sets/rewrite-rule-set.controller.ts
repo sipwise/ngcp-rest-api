@@ -85,7 +85,12 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
             }
         }
 
-        return await Promise.all(created.map(async set => new RewriteRuleSetResponseDto(req.url, set)))
+        return await Promise.all(created.map(
+            async set => new RewriteRuleSetResponseDto(
+                set,
+                {url: req.url},
+            ),
+        ))
     }
 
     @Get()
@@ -101,7 +106,10 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
         const sr = new ServiceRequest(req)
         const [entity, totalCount] =
             await this.ruleSetService.readAll(sr)
-        const responseList = entity.map(e => new RewriteRuleSetResponseDto(req.url, e))
+        const responseList = entity.map(e => new RewriteRuleSetResponseDto(
+            e,
+            {url: req.url},
+        ))
         if (sr.query.expand) {
             const setSearchDtoKeys = Object.keys(new RewriteRuleSetSearchDto())
             await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
@@ -122,7 +130,10 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const response = new RewriteRuleSetResponseDto(req.url, await this.ruleSetService.read(id, sr))
+        const response = new RewriteRuleSetResponseDto(
+            await this.ruleSetService.read(id, sr),
+            {url: req.url, containsResourceId: true},
+        )
         if (sr.query.expand && !sr.isInternalRedirect) {
             const setSearchDtoKeys = Object.keys(new RewriteRuleSetSearchDto())
             await this.expander.expandObjects([response], setSearchDtoKeys, sr)
@@ -152,7 +163,10 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
             await this.ruleService.create(rules, sr)
         }
         const entity = await this.ruleSetService.read(ids[0], sr)
-        const response = new RewriteRuleSetResponseDto(req.url, entity)
+        const response = new RewriteRuleSetResponseDto(
+            entity,
+            {url: req.url, containsResourceId: true},
+        )
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
@@ -207,7 +221,10 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
 
         const ids = await this.ruleSetService.update(update, sr)
         const updatedEntity = await this.ruleSetService.read(ids[0], sr)
-        const response = new RewriteRuleSetResponseDto(req.url, updatedEntity)
+        const response = new RewriteRuleSetResponseDto(
+            updatedEntity,
+            {url: req.url, containsResourceId: true},
+        )
         await this.journalService.writeJournal(sr, id, response)
 
         return response

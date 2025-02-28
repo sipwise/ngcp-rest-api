@@ -7,9 +7,10 @@ import {UrlReference} from 'types/url-reference.type'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {HeaderRuleDirection} from '~/entities/internal/header-rule.internal.entity'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 
-export class HeaderManipulationRuleResponseDto implements ResponseDto {
+export class HeaderManipulationRuleResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         id: number
@@ -54,7 +55,8 @@ export class HeaderManipulationRuleResponseDto implements ResponseDto {
     @ApiProperty()
         conditions: UrlReference
 
-    constructor(prefix: string, entity: internal.HeaderRule) {
+    constructor(entity: internal.HeaderRule, options?: ResponseDtoOptions) {
+        super(options)
         this.id = entity.id
         this.name = entity.name
         this.set_id = entity.setId
@@ -65,11 +67,11 @@ export class HeaderManipulationRuleResponseDto implements ResponseDto {
         this.enabled = entity.enabled
         this.actions = {
             type: UrlReferenceType.Link,
-            url: prefix + '/' + entity.id + '/actions',
+            url: `${this.resourceUrl}/${entity.id}/actions`,
         }
         this.conditions = {
             type: UrlReferenceType.Link,
-            url: prefix + '/' + entity.id + '/conditions',
+            url: `${this.resourceUrl}/${entity.id}/conditions`,
         }
     }
 }

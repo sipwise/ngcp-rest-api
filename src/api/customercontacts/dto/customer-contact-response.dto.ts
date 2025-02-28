@@ -6,10 +6,11 @@ import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 
 
-export class CustomerContactResponseDto implements ResponseDto {
+export class CustomerContactResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         id!: number
@@ -169,7 +170,8 @@ export class CustomerContactResponseDto implements ResponseDto {
     @ApiProperty()
         vatnum?: string
 
-    constructor(contact: internal.Contact, role: RbacRole) {
+    constructor(contact: internal.Contact, role: RbacRole, options?: ResponseDtoOptions) {
+        super(options)
         Object.keys(contact).map(key => {
             this[key] = contact[key]
         })

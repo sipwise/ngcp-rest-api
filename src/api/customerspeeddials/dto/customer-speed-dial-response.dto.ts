@@ -3,8 +3,9 @@ import {IsInt, IsNotEmpty, IsString} from 'class-validator'
 
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
-export class CustomerSpeedDialResponseDto implements ResponseDto {
+export class CustomerSpeedDialResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         id: number
@@ -23,7 +24,8 @@ export class CustomerSpeedDialResponseDto implements ResponseDto {
     @ApiProperty()
         destination: string
 
-    constructor(csd: internal.CustomerSpeedDial) {
+    constructor(csd: internal.CustomerSpeedDial, options?: ResponseDtoOptions) {
+        super(options)
         this.id = csd.id
         this.customer_id = csd.contractId
         this.slot = csd.slot

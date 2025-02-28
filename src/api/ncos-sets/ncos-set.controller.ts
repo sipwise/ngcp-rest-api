@@ -182,7 +182,10 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         const sr = new ServiceRequest(req)
         const sets = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.ncosSetService.create(sets, sr)
-        return await Promise.all(created.map(async set => new NCOSSetResponseDto(req.url, set)))
+        return await Promise.all(created.map(async set => new NCOSSetResponseDto(
+            set,
+            {url: req.url},
+        )))
     }
 
     @Auth(
@@ -204,7 +207,10 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         const sr = new ServiceRequest(req)
         const [entity, totalCount] =
             await this.ncosSetService.readAll(sr)
-        const responseList = entity.map(e => new NCOSSetResponseDto(req.url, e))
+        const responseList = entity.map(e => new NCOSSetResponseDto(
+            e,
+            {url: req.url},
+        ))
         return [responseList, totalCount]
     }
 
@@ -227,8 +233,8 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
             method: req.method,
         })
         return new NCOSSetResponseDto(
-            req.url,
             await this.ncosSetService.read(id, new ServiceRequest(req)),
+            {url: req.url, containsResourceId: true},
         )
     }
 
@@ -249,7 +255,10 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         updates[id] = Object.assign(new NCOSSetRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const ids = await this.ncosSetService.update(updates, sr)
         const entity = await this.ncosSetService.read(ids[0], sr)
-        const response = new NCOSSetResponseDto(req.url, entity)
+        const response = new NCOSSetResponseDto(
+            entity,
+            {url: req.url, containsResourceId: true},
+        )
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
@@ -295,7 +304,10 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
 
         const ids = await this.ncosSetService.update(update, sr)
         const updatedEntity = await this.ncosSetService.read(ids[0], sr)
-        const response = new NCOSSetResponseDto(req.url, updatedEntity)
+        const response = new NCOSSetResponseDto(
+            updatedEntity,
+            {url: req.url, containsResourceId: true},
+        )
         await this.journalService.writeJournal(sr, id, response)
 
         return response

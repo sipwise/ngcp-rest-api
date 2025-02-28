@@ -6,9 +6,10 @@ import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {UrlReferenceType} from '~/enums/url-reference-type.enum'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 import {UrlReference} from '~/types/url-reference.type'
 
-export class NCOSSetResponseDto implements ResponseDto {
+export class NCOSSetResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         id: number
@@ -38,7 +39,8 @@ export class NCOSSetResponseDto implements ResponseDto {
     @ApiProperty()
         levels: UrlReference
 
-    constructor(prefix: string, entity: internal.NCOSSet) {
+    constructor(entity: internal.NCOSSet, options?: ResponseDtoOptions) {
+        super(options)
         this.id = entity.id
         this.reseller_id = entity.resellerId
         this.name = entity.name
@@ -46,7 +48,7 @@ export class NCOSSetResponseDto implements ResponseDto {
         this.expose_to_customer = entity.exposeToCustomer
         this.levels = {
             type: UrlReferenceType.Link,
-            url: prefix + '/' + entity.id + '/levels',
+            url: `${this.resourceUrl}/${entity.id}/levels`,
         }
     }
 }

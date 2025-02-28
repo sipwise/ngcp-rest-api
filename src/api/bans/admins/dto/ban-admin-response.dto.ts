@@ -4,8 +4,9 @@ import {IsDate, IsInt, IsNotEmpty, IsString} from 'class-validator'
 import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
-export class BanAdminResponseDto implements ResponseDto {
+export class BanAdminResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         id: number
@@ -34,7 +35,8 @@ export class BanAdminResponseDto implements ResponseDto {
     @ApiProperty()
         last_banned_at: Date
 
-    constructor(entity: internal.BanAdmin) {
+    constructor(entity: internal.BanAdmin, options?: ResponseDtoOptions) {
+        super(options)
         this.id = entity.id
         this.reseller_id = entity.resellerId
         this.username = entity.username

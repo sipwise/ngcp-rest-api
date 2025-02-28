@@ -8,9 +8,10 @@ import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {RwrDpEnum} from '~/enums/rwr-dp.enum'
 import {UrlReferenceType} from '~/enums/url-reference-type.enum'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 import {UrlReference} from '~/types/url-reference.type'
 
-export class HeaderManipulationRuleConditionResponseDto implements ResponseDto {
+export class HeaderManipulationRuleConditionResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         id: number
@@ -68,7 +69,8 @@ export class HeaderManipulationRuleConditionResponseDto implements ResponseDto {
     @ApiProperty()
         values: UrlReference
 
-    constructor(entity?: internal.HeaderRuleCondition) {
+    constructor(entity?: internal.HeaderRuleCondition, options?: ResponseDtoOptions) {
+        super(options)
         if (!entity)
             return
         this.id = entity.id
@@ -84,7 +86,7 @@ export class HeaderManipulationRuleConditionResponseDto implements ResponseDto {
         this.enabled = entity.enabled
         this.values = {
             type: UrlReferenceType.Link,
-            url: `/sets/rules/conditions/${entity.id}/@values`,
+            url: `${this.resourceUrl}/${entity.id}/@values`,
         }
     }
 }

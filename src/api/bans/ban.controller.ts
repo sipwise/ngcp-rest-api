@@ -30,7 +30,7 @@ export class BanController extends CrudController<never, BanResponseDto> {
             url: req.url,
             method: req.method,
         })
-        const response = [new BanResponseDto(req.url)]
+        const response = [new BanResponseDto({url: req.url})]
         return [response, 1]
     }
 }

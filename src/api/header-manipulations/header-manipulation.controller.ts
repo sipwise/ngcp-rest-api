@@ -37,7 +37,7 @@ export class HeaderManipulationController extends CrudController<never, HeaderMa
             url: req.url,
             method: req.method,
         })
-        const response = [new HeaderManipulationResponseDto(req.url)]
+        const response = [new HeaderManipulationResponseDto({url: req.url})]
         return [response, 1]
     }
 }

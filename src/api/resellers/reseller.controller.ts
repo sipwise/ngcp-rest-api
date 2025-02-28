@@ -22,7 +22,6 @@ import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation,Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
-import {prepareUrlReference} from '~/helpers/uri.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
@@ -72,7 +71,10 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
         const sr = new ServiceRequest(req)
         const resellers = createDto.map(reseller => reseller.toInternal())
         const created = await this.resellerService.create(resellers, sr)
-        return created.map((reseller) => new ResellerResponseDto(reseller, req.url))
+        return created.map((reseller) => new ResellerResponseDto(
+            reseller,
+            {url: req.url},
+        ))
     }
 
     @Get()
@@ -83,7 +85,10 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
         const sr = new ServiceRequest(req)
         const [resellers, totalCount] =
             await this.resellerService.readAll(sr)
-        const responseList = resellers.map(reseller => new ResellerResponseDto(reseller, prepareUrlReference(req.url)))
+        const responseList = resellers.map(reseller => new ResellerResponseDto(
+            reseller,
+            {url: req.url},
+        ))
         if (sr.query.expand) {
             const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
             await this.expander.expandObjects(responseList, resellerSearchDtoKeys, sr)
@@ -99,7 +104,10 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
         this.log.debug({message: 'fetch reseller by id', func: this.read.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const reseller = await this.resellerService.read(id, sr)
-        const responseItem = new ResellerResponseDto(reseller, prepareUrlReference(req.url, true))
+        const responseItem = new ResellerResponseDto(
+            reseller,
+            {url: req.url, containsResourceId: true},
+        )
         if (sr.query.expand && !sr.isInternalRedirect) {
             const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
             await this.expander.expandObjects([responseItem], resellerSearchDtoKeys, sr)
@@ -118,7 +126,10 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
         updates[id] = entity.toInternal({id: id, assignNulls: true})
         const ids = await this.resellerService.update(updates, sr)
         const reseller = await this.resellerService.read(ids[0], sr)
-        const response = new ResellerResponseDto(reseller, prepareUrlReference(req.url, true))
+        const response = new ResellerResponseDto(
+            reseller,
+            {url: req.url, containsResourceId: true},
+        )
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
@@ -161,7 +172,10 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
 
         const ids = await this.resellerService.update(update, sr)
         const updatedEntity = await this.resellerService.read(ids[0], sr)
-        const response = new ResellerResponseDto(updatedEntity, prepareUrlReference(req.url, true))
+        const response = new ResellerResponseDto(
+            updatedEntity,
+            {url: req.url, containsResourceId: true},
+        )
         await this.journalService.writeJournal(sr, id, response)
 
         return response

@@ -7,9 +7,10 @@ import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {UrlReferenceType} from '~/enums/url-reference-type.enum'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 import {UrlReference} from '~/types/url-reference.type'
 
-export class RewriteRuleSetResponseDto implements ResponseDto {
+export class RewriteRuleSetResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         id: number
@@ -34,14 +35,16 @@ export class RewriteRuleSetResponseDto implements ResponseDto {
     @ApiProperty()
         rules: UrlReference
 
-    constructor(prefix: string, entity: internal.RewriteRuleSet) {
+    constructor(entity: internal.RewriteRuleSet, options?: ResponseDtoOptions) {
+        super(options)
         this.id = entity.id
         this.reseller_id = entity.resellerId
         this.name = entity.name
         this.description = entity.description
         this.rules = {
             type: UrlReferenceType.Link,
-            url: prefix + '/' + entity.id + '/rules',
+            url: `${this.resourceUrl}/${entity.id}/rules`,
+
         }
     }
 }

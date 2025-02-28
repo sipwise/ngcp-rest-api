@@ -4,8 +4,9 @@ import {IsBoolean, IsInt, IsNumber, IsString} from 'class-validator'
 import {RbacRole} from '~/config/constants.config'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
-export class NumberResponseDto implements ResponseDto {
+export class NumberResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         subscriber_id: number
@@ -42,7 +43,8 @@ export class NumberResponseDto implements ResponseDto {
     @ApiProperty()
         reseller_id: number
 
-    constructor(data: internal.VoipNumber, role: RbacRole) {
+    constructor(data: internal.VoipNumber, role: RbacRole, options?: ResponseDtoOptions) {
+        super(options)
         this.subscriber_id = data.subscriberID
         this.id = data.id
         this.customer_id = data.contractID

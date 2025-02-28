@@ -74,7 +74,12 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         const sr = new ServiceRequest(req)
         const conditions = await Promise.all(createDto.map(async condition => condition.toInternal()))
         const created = await this.ruleConditionService.create(conditions, sr)
-        return await Promise.all(created.map(async condition => new HeaderManipulationRuleConditionResponseDto(condition)))
+        return await Promise.all(created.map(
+            async condition => new HeaderManipulationRuleConditionResponseDto(
+                condition,
+                {url: req.url},
+            )),
+        )
     }
 
     @Get(':setId?/rules/:ruleId?/conditions')
@@ -92,7 +97,10 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         const sr = new ServiceRequest(req)
         const [entity, totalCount] =
             await this.ruleConditionService.readAll(sr)
-        const responseList = entity.map(e => new HeaderManipulationRuleConditionResponseDto(e))
+        const responseList = entity.map(e => new HeaderManipulationRuleConditionResponseDto(
+            e,
+            {url: req.url},
+        ))
 
         if (sr.query.expand && !sr.isInternalRedirect) {
             const keys = Object.keys(new HeaderManipulationRuleConditionSearchDto())
@@ -116,7 +124,10 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const response = new HeaderManipulationRuleConditionResponseDto(await this.ruleConditionService.read(id, sr))
+        const response = new HeaderManipulationRuleConditionResponseDto(
+            await this.ruleConditionService.read(id, sr),
+            {url: req.url, containsResourceId: true},
+        )
         if (sr.query.expand && !sr.isInternalRedirect) {
             const keys = Object.keys(new HeaderManipulationRuleConditionSearchDto())
             await this.expander.expandObjects([response], keys, sr)
@@ -146,7 +157,10 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         updates[id] = Object.assign(new HeaderManipulationRuleConditionRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const ids = await this.ruleConditionService.update(updates, sr)
         const entity = await this.ruleConditionService.read(ids[0], sr)
-        const response = new HeaderManipulationRuleConditionResponseDto(entity)
+        const response = new HeaderManipulationRuleConditionResponseDto(
+            entity,
+            {url: req.url, containsResourceId: true},
+        )
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
@@ -194,7 +208,10 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
 
         const ids = await this.ruleConditionService.update(update, sr)
         const updatedEntity = await this.ruleConditionService.read(ids[0], sr)
-        const response = new HeaderManipulationRuleConditionResponseDto(updatedEntity)
+        const response = new HeaderManipulationRuleConditionResponseDto(
+            updatedEntity,
+            {url: req.url, containsResourceId: true},
+        )
         await this.journalService.writeJournal(sr, id, response)
 
         return response

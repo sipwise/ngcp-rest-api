@@ -5,8 +5,9 @@ import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
-export class SystemContactResponseDto implements ResponseDto {
+export class SystemContactResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         id: number
@@ -159,7 +160,8 @@ export class SystemContactResponseDto implements ResponseDto {
     @ApiProperty()
         vatnum?: string
 
-    constructor(contact: internal.Contact) {
+    constructor(contact: internal.Contact, options?: ResponseDtoOptions) {
+        super(options)
         // delete field reseller_id as fields are not assigned individually
         delete contact.reseller_id
 

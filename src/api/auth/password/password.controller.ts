@@ -32,7 +32,7 @@ export class PasswordController extends CrudController<never, PasswordResponseDt
             url: req.url,
             method: req.method,
         })
-        const response = [new PasswordResponseDto(req.url)]
+        const response = [new PasswordResponseDto({url: req.url})]
         return [response, 1]
     }
 }

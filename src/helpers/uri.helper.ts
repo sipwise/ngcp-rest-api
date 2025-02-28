@@ -14,7 +14,8 @@ export function extractResourceName(url: string, prefix: string): string {
 }
 
 export function prepareUrlReference(url: string, removeLeadingResourceId?: boolean): string {
-    const strippedUrl = stripQueryParams(url)
+    const removeLeadingSlash = url.endsWith('/') ? url.slice(0, -1) : url
+    const strippedUrl = stripQueryParams(removeLeadingSlash)
     if (!removeLeadingResourceId) {
         return strippedUrl
     }

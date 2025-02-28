@@ -72,7 +72,10 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
         const sr = new ServiceRequest(req)
         const sets = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.ruleSetService.create(sets, sr)
-        return await Promise.all(created.map(async set => new HeaderManipulationSetResponseDto(req.url, set)))
+        return await Promise.all(created.map(async set => new HeaderManipulationSetResponseDto(
+            set,
+            {url: req.url},
+        )))
     }
 
     @Get()
@@ -88,7 +91,10 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
         const sr = new ServiceRequest(req)
         const [entity, totalCount] =
             await this.ruleSetService.readAll(sr)
-        const responseList = entity.map(e => new HeaderManipulationSetResponseDto(req.url, e))
+        const responseList = entity.map(e => new HeaderManipulationSetResponseDto(
+            e,
+            {url: req.url},
+        ))
         if (sr.query.expand) {
             const setSearchDtoKeys = Object.keys(new HeaderManipulationSetSearchDto())
             await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
@@ -109,7 +115,10 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const response = new HeaderManipulationSetResponseDto(req.url, await this.ruleSetService.read(id, sr))
+        const response = new HeaderManipulationSetResponseDto(
+            await this.ruleSetService.read(id, sr),
+            {url: req.url, containsResourceId: true},
+        )
         if (sr.query.expand && !sr.isInternalRedirect) {
             const setSearchDtoKeys = Object.keys(new HeaderManipulationSetSearchDto())
             await this.expander.expandObjects([response], setSearchDtoKeys, sr)
@@ -134,7 +143,10 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
         updates[id] = Object.assign(new HeaderManipulationSetRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const ids = await this.ruleSetService.update(updates, sr)
         const entity = await this.ruleSetService.read(ids[0], sr)
-        const response = new HeaderManipulationSetResponseDto(req.url, entity)
+        const response = new HeaderManipulationSetResponseDto(
+            entity,
+            {url: req.url, containsResourceId: true},
+        )
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
@@ -179,7 +191,10 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
 
         const ids = await this.ruleSetService.update(update, sr)
         const updatedEntity = await this.ruleSetService.read(ids[0], sr)
-        const response = new HeaderManipulationSetResponseDto(req.url, updatedEntity)
+        const response = new HeaderManipulationSetResponseDto(
+            updatedEntity,
+            {url: req.url, containsResourceId: true},
+        )
         await this.journalService.writeJournal(sr, id, response)
 
         return response

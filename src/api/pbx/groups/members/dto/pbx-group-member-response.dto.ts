@@ -3,8 +3,9 @@ import {IsInt, IsNotEmpty, IsString} from 'class-validator'
 
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
-export class PbxGroupMemberResponseDto implements ResponseDto {
+export class PbxGroupMemberResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         id: number
@@ -32,7 +33,8 @@ export class PbxGroupMemberResponseDto implements ResponseDto {
     @ApiProperty()
         domain: string
 
-    constructor(member: internal.PbxGroupMember) {
+    constructor(member: internal.PbxGroupMember, options?: ResponseDtoOptions) {
+        super(options)
         this.id = member.id
         this.group_id = member.groupId
         this.extension = member.extension

@@ -35,7 +35,7 @@ export class NCOSController extends CrudController<never, NCOSResponseDto> {
             url: req.url,
             method: req.method,
         })
-        const response = [new NCOSResponseDto(req.url)]
+        const response = [new NCOSResponseDto({url: req.url})]
         return [response, 1]
     }
 }

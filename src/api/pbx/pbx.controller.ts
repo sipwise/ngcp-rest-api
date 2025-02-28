@@ -40,7 +40,7 @@ export class PbxController extends CrudController<never, PbxResponseDto> {
             req.method,
         })
 
-        const response = [new PbxResponseDto(req.url)]
+        const response = [new PbxResponseDto({url: req.url})]
         return [response, 1]
     }
 }

@@ -3,8 +3,9 @@ import {IsInt, IsString} from 'class-validator'
 
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
-export class VoicemailResponseDto implements ResponseDto {
+export class VoicemailResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty({description: 'unique identifier of a voicemail'})
         id: number
@@ -33,7 +34,8 @@ export class VoicemailResponseDto implements ResponseDto {
     @ApiProperty({description: 'the subscriber id the message belongs to'})
         subscriber_id: number
 
-    constructor(voicemail: internal.Voicemail) {
+    constructor(voicemail: internal.Voicemail, options?: ResponseDtoOptions) {
+        super(options)
         const date = new Date(parseInt(voicemail.origtime) * 1000)
 
         this.id = voicemail.id

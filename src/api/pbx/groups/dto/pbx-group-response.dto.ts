@@ -39,7 +39,7 @@ export class PbxGroupResponseDto {
     @ApiProperty()
         domain: string
 
-    constructor(prefix:string, pbxGroup: internal.PbxGroup) {
+    constructor(url:string, pbxGroup: internal.PbxGroup) {
         this.customer_id = pbxGroup.customerId
         this.extension = pbxGroup.extension
         this.hunt_policy = pbxGroup.huntPolicy
@@ -48,7 +48,7 @@ export class PbxGroupResponseDto {
         this.domain = pbxGroup.domain
         this.members = {
             type: UrlReferenceType.Link,
-            url: prefix + '/' + pbxGroup.id + '/members',
+            url: `${url}/${pbxGroup.id}/members`,
         }
         this.name = pbxGroup.name
     }

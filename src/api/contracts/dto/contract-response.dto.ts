@@ -10,8 +10,9 @@ import {
     ContractStatus,
     ContractType,
 } from '~/entities/internal/contract.internal.entity'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
-export class ContractResponseDto implements ResponseDto {
+export class ContractResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty({description: 'Unique identifier of the contract'})
         id: number
@@ -43,7 +44,8 @@ export class ContractResponseDto implements ResponseDto {
     @ApiProperty({description: 'The type of contract'})
         type?: ContractType
 
-    constructor(data: internal.Contract) {
+    constructor(data: internal.Contract, options?: ResponseDtoOptions) {
+        super(options)
         this.id = data.id
         this.billing_profile_definition = data.billing_profile_definition
         this.billing_profile_id = data.billing_profile_id

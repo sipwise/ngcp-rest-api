@@ -6,8 +6,9 @@ import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {RwrDpEnum} from '~/enums/rwr-dp.enum'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
-export class HeaderManipulationRuleActionResponseDto implements ResponseDto {
+export class HeaderManipulationRuleActionResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         id: number
@@ -61,7 +62,8 @@ export class HeaderManipulationRuleActionResponseDto implements ResponseDto {
     @ApiProperty()
         enabled?: boolean
 
-    constructor(entity: internal.HeaderRuleAction) {
+    constructor(entity: internal.HeaderRuleAction, options?: ResponseDtoOptions) {
+        super(options)
         this.id = entity.id
         this.rule_id = entity.ruleId
         this.header = entity.header

@@ -4,8 +4,9 @@ import {IsInt, IsNotEmpty, IsString} from 'class-validator'
 import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
+import {ResponseDtoOptions} from '~/types/response-dto-options'
 
-export class ResellerPhonebookResponseDto implements ResponseDto {
+export class ResellerPhonebookResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
         id: number
@@ -25,7 +26,8 @@ export class ResellerPhonebookResponseDto implements ResponseDto {
     @ApiProperty()
         number: string
 
-    constructor(entity: internal.ResellerPhonebook) {
+    constructor(entity: internal.ResellerPhonebook, options?: ResponseDtoOptions) {
+        super(options)
         this.id = entity.id
         this.reseller_id = entity.resellerId
         this.name = entity.name

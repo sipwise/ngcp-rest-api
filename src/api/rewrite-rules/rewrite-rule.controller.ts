@@ -35,7 +35,7 @@ export class RewriteRuleController extends CrudController<never, RewriteRuleResp
             url: req.url,
             method: req.method,
         })
-        const response = [new RewriteRuleResponseDto(req.url)]
+        const response = [new RewriteRuleResponseDto({url: req.url})]
         return [response, 1]
     }
 }
