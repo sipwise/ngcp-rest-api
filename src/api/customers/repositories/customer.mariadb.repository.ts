@@ -24,7 +24,7 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         super()
     }
 
-    async create(customers: internal.Customer[], now: Date, _sr: ServiceRequest): Promise<number[]> {
+    async _create(customers: internal.Customer[], now: Date, _sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.Contract.createQueryBuilder('contract')
         const ids: number[] = []
         for (const customer of customers) {
@@ -32,63 +32,63 @@ export class CustomerMariadbRepository extends MariaDbRepository {
             const result = await qb.insert().values(value).execute()
             const id = result.identifiers[0]['id']
             ids.push(id)
-            await this.appendBillingMappings(id, now, customer.allBillingMappings)
+            await this._appendBillingMappings(id, now, customer.allBillingMappings)
         }
         return ids
     }
 
-    async appendBillingMappings(customerId: number, now: Date, mappings: internal.BillingMapping[]): Promise<void> {
+    async _appendBillingMappings(customerId: number, now: Date, mappings: internal.BillingMapping[]): Promise<void> {
         const mappingsString = mappings.map(mapping => mapping.toCSVString()).join(';')
         const nowString = now.toISOString().slice(0, 19).replace('T', ' ')
         await this.app.db.query('call billing.schedule_contract_billing_profile_network(?,?,?);', [customerId, nowString, mappingsString])
         return
     }
 
-    async delete(_id: number, _sr: ServiceRequest): Promise<number> {
+    async _delete(_id: number, _sr: ServiceRequest): Promise<number> {
         throw new MethodNotAllowedException()
     }
 
-    async read(id: number, sr: ServiceRequest, options: CustomerFindOptions): Promise<internal.Customer> {
+    async _read(id: number, sr: ServiceRequest, options: CustomerFindOptions): Promise<internal.Customer> {
         this.log.debug({
             message: 'read customer by id',
-            func: this.read.name,
+            func: this._read.name,
             user: sr.user.username,
             id: id,
         })
-        const qb = this.createBaseQueryBuilder(options)
+        const qb = this._createBaseQueryBuilder(options)
         qb.andWhere('contract.id = :id', {id: id})
         const result = await qb.getOneOrFail()
         return result.toInternalCustomer()
     }
 
-    async readAll(sr: ServiceRequest, options: CustomerFindOptions): Promise<[internal.Customer[], number]> {
+    async _readAll(sr: ServiceRequest, options: CustomerFindOptions): Promise<[internal.Customer[], number]> {
         this.log.debug({
             message: 'read all contracts',
-            func: this.readAll.name,
+            func: this._readAll.name,
             user: sr.user.username,
         })
-        const qb = this.createBaseQueryBuilder(options)
+        const qb = this._createBaseQueryBuilder(options)
         const contractSearchDtoKeys = Object.keys(new CustomerSearchDto())
         await configureQueryBuilder(qb, sr.query, new SearchLogic(sr, contractSearchDtoKeys))
         const [result, totalCount] = await qb.getManyAndCount()
         return [result.map(r => r.toInternalCustomer()), totalCount]
     }
 
-    async readWhereInIds(ids: number[], options: CustomerFindOptions): Promise<internal.Customer[]> {
-        const qb = this.createBaseQueryBuilder(options)
+    async _readWhereInIds(ids: number[], options: CustomerFindOptions): Promise<internal.Customer[]> {
+        const qb = this._createBaseQueryBuilder(options)
         const customers = await qb.andWhereInIds(ids).getMany()
         return await Promise.all(customers.map(async (contract) => contract.toInternalCustomer()))
     }
 
-    async readCountOfIds(ids: number[], options: CustomerFindOptions): Promise<number> {
-        const qb = this.createBaseQueryBuilder(options)
+    async _readCountOfIds(ids: number[], options: CustomerFindOptions): Promise<number> {
+        const qb = this._createBaseQueryBuilder(options)
         return await qb.andWhereInIds(ids).getCount()
     }
 
-    async readProductByType(type: string, sr: ServiceRequest): Promise<internal.Product> {
+    async _readProductByType(type: string, sr: ServiceRequest): Promise<internal.Product> {
         this.log.debug({
             message: 'read product by type',
-            func: this.readProductByType.name,
+            func: this._readProductByType.name,
             user: sr.user.username,
             type: type,
         })
@@ -96,7 +96,7 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         return product != undefined ? product.toInternal() : undefined
     }
 
-    async update(updates: Dictionary<internal.Customer>, _sr: ServiceRequest): Promise<number[]> {
+    async _update(updates: Dictionary<internal.Customer>, _sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const update = new db.billing.Contract().fromInternalCustomer(updates[id])
@@ -110,17 +110,17 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         return ids
     }
 
-    async readBillingNetworkById(id: number): Promise<internal.BillingNetwork> {
+    async _readBillingNetworkById(id: number): Promise<internal.BillingNetwork> {
         const network = await db.billing.BillingNetwork.findOneByOrFail({id: id})
         return network.toInternal()
     }
 
-    async readBillingProfileById(id: number): Promise<internal.BillingProfile> {
+    async _readBillingProfileById(id: number): Promise<internal.BillingProfile> {
         const profile = await db.billing.BillingProfile.findOneByOrFail({id: id})
         return profile.toInternal()
     }
 
-    async readProfilePackageById(id: number): Promise<internal.ProfilePackage> {
+    async _readProfilePackageById(id: number): Promise<internal.ProfilePackage> {
         const qb = db.billing.ProfilePackage.createQueryBuilder('profilePackage')
         qb.innerJoinAndSelect('profilePackage.packageProfileSets', 'packageProfileSets')
         qb.andWhereInIds(id)
@@ -129,7 +129,7 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         return profilePackage.toInternal()
     }
 
-    async readEmailTemplateIdsByIds(ids: number[], resellerId: number): Promise<[number[], number]> {
+    async _readEmailTemplateIdsByIds(ids: number[], resellerId: number): Promise<[number[], number]> {
         const qb = db.billing.EmailTemplate.createQueryBuilder('emailTemplate')
         qb.andWhere('emailTemplate.reseller_id = :resellerId', {resellerId: resellerId})
         qb.andWhereInIds(ids)
@@ -139,14 +139,14 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         return [readIds, count]
     }
 
-    async readInvoiceTemplateById(id: number, resellerId: number): Promise<void> {
+    async _readInvoiceTemplateById(id: number, resellerId: number): Promise<void> {
         const qb = db.billing.InvoiceTemplate.createQueryBuilder('invoiceTemplate')
         qb.andWhere('invoiceTemplate.reseller_id = :resellerId', {resellerId: resellerId})
         qb.andWhere('invoiceTemplate.id = :id', {id: id})
         await qb.getOneOrFail()
     }
 
-    async readEffectiveStartDate(contractId: number): Promise<number> {
+    async _readEffectiveStartDate(contractId: number): Promise<number> {
         const now = Date.now()
         const epochNow = now.valueOf()
         const qb = db.billing.ContractBillingProfileNetworkSchedule.createQueryBuilder('cbpns')
@@ -162,8 +162,8 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         return result['max'] as number
     }
 
-    async readCurrentBillingProfile(contractId: number): Promise<internal.BillingProfile> {
-        const epoch = await this.readEffectiveStartDate(contractId)
+    async _readCurrentBillingProfile(contractId: number): Promise<internal.BillingProfile> {
+        const epoch = await this._readEffectiveStartDate(contractId)
         const qb = db.billing.ContractBillingProfileNetworkSchedule.createQueryBuilder('cbpns')
         qb.innerJoinAndSelect('cbpns.profileNetwork', 'profile_network')
         qb.innerJoinAndSelect('profile_network.billingProfile', 'billing_profile')
@@ -174,7 +174,7 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         return cbpns.profileNetwork.billingProfile.toInternal()
     }
 
-    async readFutureBillingMappings(contractId: number): Promise<internal.BillingMapping[]> {
+    async _readFutureBillingMappings(contractId: number): Promise<internal.BillingMapping[]> {
         const now = Date.now().valueOf()/1000
         const qb = db.billing.ContractBillingProfileNetworkSchedule.createQueryBuilder('cbpns')
         qb.innerJoinAndSelect('cbpns.profileNetwork', 'profile_network')
@@ -193,7 +193,7 @@ export class CustomerMariadbRepository extends MariaDbRepository {
         }))
     }
 
-    async readAllBillingMappings(contractId: number): Promise<internal.BillingMapping[]> {
+    async _readAllBillingMappings(contractId: number): Promise<internal.BillingMapping[]> {
         const qb = db.billing.ContractBillingProfileNetworkSchedule.createQueryBuilder('cbpns')
         qb.innerJoinAndSelect('cbpns.profileNetwork', 'profile_network')
         qb.innerJoinAndSelect('profile_network.billingProfile', 'billing_profile')
@@ -210,19 +210,19 @@ export class CustomerMariadbRepository extends MariaDbRepository {
             startDate: cbpns.profileNetwork.start_date,
         }))
     }
-    private createBaseQueryBuilder(options: CustomerFindOptions): SelectQueryBuilder<db.billing.Contract> {
+    private _createBaseQueryBuilder(options: CustomerFindOptions): SelectQueryBuilder<db.billing.Contract> {
         const qb = db.billing.Contract.createQueryBuilder('contract')
         qb.leftJoinAndSelect('contract.product', 'product')
         qb.andWhere('contract.contact_id IS NOT NULL')
         qb.andWhere(`product.class IN ('${ProductClass.SipAccount}', '${ProductClass.PbxAccount}')`)
         if (options && options.filterBy) {
             qb.leftJoinAndSelect('contract.contact', 'contact')
-            this.addPermissionFilterToQueryBuilder(qb, options)
+            this._addPermissionFilterToQueryBuilder(qb, options)
         }
         return qb
     }
 
-    private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contract>, options: CustomerFindOptions): void {
+    private _addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contract>, options: CustomerFindOptions): void {
         if (options.filterBy && options.filterBy.resellerId) {
             qb.andWhere('contact.reseller_id = :reseller_id', {reseller_id: options.filterBy.resellerId})
         }

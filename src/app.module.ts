@@ -25,6 +25,7 @@ import {ClearCallCounterModule} from './api/clearcallcounters/clear-call-counter
 import {ContactModule} from './api/contacts/contact.module'
 import {ContractModule} from './api/contracts/contract.module'
 import {CustomerContactModule} from './api/customercontacts/customer-contact.module'
+import {CustomerModule} from './api/customers/customer.module'
 import {CustomerSpeedDialModule} from './api/customerspeeddials/customer-speed-dial.module'
 import {DomainModule} from './api/domains/domain.module'
 import {FileshareModule} from './api/fileshare/fileshare.module'
@@ -40,6 +41,7 @@ import {NumberModule} from './api/numbers/number.module'
 import {PbxGroupMemberModule} from './api/pbx/groups/members/pbx-group-member.module'
 import {PbxGroupModule} from './api/pbx/groups/pbx-group.module'
 import {PbxModule} from './api/pbx/pbx.module'
+import {PbxUserModule} from './api/pbx/users/pbx-user.module'
 import {ProductModule} from './api/products/product.module'
 import {ResellerPhonebookModule} from './api/resellers/phonebook/reseller-phonebook.module'
 import {ResellerModule} from './api/resellers/reseller.module'
@@ -65,8 +67,6 @@ import {StateMiddleware} from './middleware/state.middleware'
 import {DbStateSchedule} from './schedules/dbstate.schedule'
 import {FileshareSchedule} from './schedules/fileshare.schedule'
 import {RedisStateSchedule} from './schedules/redisstate.schedule'
-
-import {PbxUserModule} from '~/api/pbx/users/pbx-user.module'
 
 let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
     ConfigModule.forRoot({
@@ -99,6 +99,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     ClearCallCounterModule,
     ContactModule,
     ContractModule,
+    CustomerModule,
     CustomerContactModule,
     CustomerSpeedDialModule,
     DatabaseModule,

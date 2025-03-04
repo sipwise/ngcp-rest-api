@@ -37,33 +37,33 @@ export class CustomerService implements CrudService<internal.Customer> {
             customer.createTimestamp = now
             customer.modifyTimestamp = now
         }
-        const createdIds = await this.customerRepo.create(customers, now, sr)
-        const createdCustomers =  await this.customerRepo.readWhereInIds(createdIds, this.customerFindOptionsFromServiceRequest(sr))
+        const createdIds = await this.customerRepo._create(customers, now, sr)
+        const createdCustomers =  await this.customerRepo._readWhereInIds(createdIds, this.customerFindOptionsFromServiceRequest(sr))
         for (const customer of createdCustomers) {
-            const currentProfile = await this.customerRepo.readCurrentBillingProfile(customer.id)
-            customer.futureMappings = await this.customerRepo.readFutureBillingMappings(customer.id)
-            customer.allBillingMappings = await this.customerRepo.readAllBillingMappings(customer.id)
+            const currentProfile = await this.customerRepo._readCurrentBillingProfile(customer.id)
+            customer.futureMappings = await this.customerRepo._readFutureBillingMappings(customer.id)
+            customer.allBillingMappings = await this.customerRepo._readAllBillingMappings(customer.id)
             customer.billingProfileId = currentProfile.id
         }
         return createdCustomers
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Customer> {
-        const customer = await this.customerRepo.read(id, sr, this.customerFindOptionsFromServiceRequest(sr))
-        const currentProfile = await this.customerRepo.readCurrentBillingProfile(id)
-        customer.futureMappings = await this.customerRepo.readFutureBillingMappings(id)
-        customer.allBillingMappings = await this.customerRepo.readAllBillingMappings(id)
+        const customer = await this.customerRepo._read(id, sr, this.customerFindOptionsFromServiceRequest(sr))
+        const currentProfile = await this.customerRepo._readCurrentBillingProfile(id)
+        customer.futureMappings = await this.customerRepo._readFutureBillingMappings(id)
+        customer.allBillingMappings = await this.customerRepo._readAllBillingMappings(id)
         customer.billingProfileId = currentProfile.id
         return customer
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Customer[], number]> {
-        const [customers, count] = await this.customerRepo.readAll(sr, this.customerFindOptionsFromServiceRequest(sr))
+        const [customers, count] = await this.customerRepo._readAll(sr, this.customerFindOptionsFromServiceRequest(sr))
         for (const customer of customers) {
             const id = customer.id
-            const currentProfile = await this.customerRepo.readCurrentBillingProfile(id)
-            customer.futureMappings = await this.customerRepo.readFutureBillingMappings(id)
-            customer.allBillingMappings = await this.customerRepo.readAllBillingMappings(id)
+            const currentProfile = await this.customerRepo._readCurrentBillingProfile(id)
+            customer.futureMappings = await this.customerRepo._readFutureBillingMappings(id)
+            customer.allBillingMappings = await this.customerRepo._readAllBillingMappings(id)
             customer.billingProfileId = currentProfile.id
         }
         return [customers, count]
@@ -73,7 +73,7 @@ export class CustomerService implements CrudService<internal.Customer> {
         const now = new Date(Date.now())
         const ids = Object.keys(updates).map(id => parseInt(id))
         const findOptions = this.customerFindOptionsFromServiceRequest(sr)
-        if (await this.customerRepo.readCountOfIds(ids, findOptions) != ids.length)
+        if (await this.customerRepo._readCountOfIds(ids, findOptions) != ids.length)
             throw new UnprocessableEntityException()
 
         const appendBillingMappingsForId = []
@@ -82,7 +82,7 @@ export class CustomerService implements CrudService<internal.Customer> {
             const newEntity = updates[id]
             newEntity.modifyTimestamp = now
 
-            const oldEntity = await this.customerRepo.read(id, sr, findOptions)
+            const oldEntity = await this.customerRepo._read(id, sr, findOptions)
 
             if (oldEntity.status == ContractStatus.Terminated) {
                 throw new UnprocessableEntityException(`customer (id ${id}) is already terminated and cannot be changed`)
@@ -108,9 +108,9 @@ export class CustomerService implements CrudService<internal.Customer> {
                 }
             }
         }
-        const updatedIds = await this.customerRepo.update(updates, sr)
+        const updatedIds = await this.customerRepo._update(updates, sr)
         for (const id of appendBillingMappingsForId) {
-            await this.customerRepo.appendBillingMappings(id, now, updates[id].allBillingMappings)
+            await this.customerRepo._appendBillingMappings(id, now, updates[id].allBillingMappings)
         }
         return updatedIds
     }
@@ -148,7 +148,7 @@ export class CustomerService implements CrudService<internal.Customer> {
      * @private
      */
     private async setProductId(customer: internal.Customer, sr: ServiceRequest): Promise<void> {
-        const product = await this.customerRepo.readProductByType(customer.type, sr)
+        const product = await this.customerRepo._readProductByType(customer.type, sr)
         if (product == undefined) {
             throw new UnprocessableEntityException(this.i18n.t('errors.TYPE_INVALID'))
         }
@@ -188,7 +188,7 @@ export class CustomerService implements CrudService<internal.Customer> {
             emailTemplateIds.push(customer.invoiceEmailTemplateId)
 
         if (emailTemplateIds.length > 0) {
-            const [_ids, count] = await this.customerRepo.readEmailTemplateIdsByIds(emailTemplateIds, resellerId)
+            const [_ids, count] = await this.customerRepo._readEmailTemplateIdsByIds(emailTemplateIds, resellerId)
             if (emailTemplateIds.length != count) {
                 throw new UnprocessableEntityException('customer contact\'s reseller_id does not match email template reseller id')
             }
@@ -198,7 +198,7 @@ export class CustomerService implements CrudService<internal.Customer> {
 
     private async validateInvoiceTemplate(customer: internal.Customer, resellerId: number): Promise<boolean> {
         if (customer.invoiceTemplateId) {
-            await this.customerRepo.readInvoiceTemplateById(customer.invoiceTemplateId, resellerId)
+            await this.customerRepo._readInvoiceTemplateById(customer.invoiceTemplateId, resellerId)
         }
         return true
     }
@@ -248,7 +248,7 @@ export class CustomerService implements CrudService<internal.Customer> {
     private async getMappingsByProfilePackage(customer: internal.Customer, sr: ServiceRequest, now?: Date): Promise<internal.BillingMapping[]> {
         const contact = await this.getContactFromCustomer(customer, sr)
         const mappings: internal.BillingMapping[] = []
-        const profilePackage = await this.customerRepo.readProfilePackageById(customer.profilePackageId)
+        const profilePackage = await this.customerRepo._readProfilePackageById(customer.profilePackageId)
         if (profilePackage.resellerId != contact.reseller_id) {
             throw new UnprocessableEntityException('reseller_id of contact and profile package does not match')
         }
@@ -273,7 +273,7 @@ export class CustomerService implements CrudService<internal.Customer> {
     private async getMappingsByBillingProfile(customer: internal.Customer, sr: ServiceRequest, now?: Date): Promise<internal.BillingMapping[]> {
         const contact = await this.getContactFromCustomer(customer, sr)
         const mappings: internal.BillingMapping[] = []
-        const billingProfile = await this.customerRepo.readBillingProfileById(customer.billingProfileId)
+        const billingProfile = await this.customerRepo._readBillingProfileById(customer.billingProfileId)
         if (billingProfile.resellerId != contact.reseller_id) {
             throw new UnprocessableEntityException('reseller_id of contact and billing profile does not match')
         }
