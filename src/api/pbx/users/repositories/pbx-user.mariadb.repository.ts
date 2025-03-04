@@ -53,6 +53,7 @@ export class PbxUserMariadbRepository extends MariaDbRepository implements PbxUs
 
     private joinBillingSubscriber(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>): void {
         qb.leftJoinAndSelect('pSubscriber.billing_voip_subscriber', 'bSubscriber')
+        qb.andWhere('bSubscriber.status = :status', {status: 'active'})
     }
 
     private async mapPreferences(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>): Promise<void> {
@@ -77,6 +78,10 @@ export class PbxUserMariadbRepository extends MariaDbRepository implements PbxUs
         )
     }
 
+    private joinDomain(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>): void {
+        qb.leftJoinAndSelect('pSubscriber.domain', 'domain')
+    }
+
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, filterBy: PbxUserOptions['filterBy']): void {
         if (filterBy) {
             if (filterBy.id) {
@@ -93,6 +98,7 @@ export class PbxUserMariadbRepository extends MariaDbRepository implements PbxUs
     }
 
     private async addJoinAndWhere(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>): Promise<void> {
+        this.joinDomain(qb)
         this.mapPbxCustomer(qb)
         this.joinBillingSubscriber(qb)
         await this.mapPreferences(qb)

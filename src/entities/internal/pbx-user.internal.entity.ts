@@ -5,4 +5,6 @@ export class PbxUser {
     displayName?: string
     pbxExtension: string
     primaryNumber: PrimaryNumber
+    username: string
+    domain: string
 }

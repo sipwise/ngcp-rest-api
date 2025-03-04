@@ -1,6 +1,6 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {Type} from 'class-transformer'
-import {IsInt, IsString, ValidateNested} from 'class-validator'
+import {IsInt, IsNotEmpty, IsString, ValidateNested} from 'class-validator'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {ResponseDto} from '~/dto/response.dto'
@@ -27,6 +27,16 @@ export class PbxUserResponseDto extends ResponseDto {
     @ApiProperty()
         primary_number: PrimaryNumber
 
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty()
+        username: string
+
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty()
+        domain: string
+
     constructor(entity: internal.PbxUser, options?: ResponseDtoOptions) {
         super(options)
         this.id = entity.id
@@ -38,5 +48,7 @@ export class PbxUserResponseDto extends ResponseDto {
             ac: entity.primaryNumber.ac,
             sn: entity.primaryNumber.sn,
         }
+        this.username = entity.username
+        this.domain = entity.domain
     }
 }

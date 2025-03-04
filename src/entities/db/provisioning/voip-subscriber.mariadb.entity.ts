@@ -271,6 +271,8 @@ export class VoipSubscriber extends BaseEntity {
             ac: +this.billing_voip_subscriber.primaryNumber.ac,
             sn: this.billing_voip_subscriber.primaryNumber.sn,
         }
+        pbxUser.username = this.username
+        pbxUser.domain = this.domain.domain
         return pbxUser
     }
 
