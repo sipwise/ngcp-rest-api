@@ -7,6 +7,8 @@ export abstract class ResponseDto {
     @Exclude()
     protected readonly resourceUrl?: string = ''
     constructor(options?: ResponseDtoOptions) {
+        if (!options)
+            return
         const stripResourceId = options?.containsResourceId ? true : false
         this.resourceUrl = prepareUrlReference(options.url, stripResourceId)
     }
