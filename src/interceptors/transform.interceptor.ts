@@ -74,29 +74,29 @@ export class TransformInterceptor implements NestInterceptor {
             const prefer = req.headers.prefer || ''
 
             switch (prefer) {
-            case 'return=minimal':
-                res.status(204)
-                return
-            case 'return=representation':
-                break
-            case 'return=link':
-                return this.generateDataLinks(req, res, data)
-            case 'return=id':
-                return this.generateDataIds(req, res, data)
-            default:
-                if (['PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+                case 'return=minimal':
                     res.status(204)
                     return
-                }
-                if (req.method == 'POST' && data && data.length > 1) {
-                    if (config.post_return_max_link && data.length <= config.post_return_max_link) {
-                        return this.generateDataLinks(req, res, data)
-                    } else {
+                case 'return=representation':
+                    break
+                case 'return=link':
+                    return this.generateDataLinks(req, res, data)
+                case 'return=id':
+                    return this.generateDataIds(req, res, data)
+                default:
+                    if (['PUT', 'PATCH', 'DELETE'].includes(req.method)) {
                         res.status(204)
                         return
                     }
-                }
-                break
+                    if (req.method == 'POST' && data && data.length > 1) {
+                        if (config.post_return_max_link && data.length <= config.post_return_max_link) {
+                            return this.generateDataLinks(req, res, data)
+                        } else {
+                            res.status(204)
+                            return
+                        }
+                    }
+                    break
             }
 
             if (req.method != 'GET' || !this.expectedHAL(req))

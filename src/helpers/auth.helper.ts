@@ -1,4 +1,4 @@
-import {ServiceRequest} from "~/interfaces/service-request.interface"
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export function extractUsername(sr: ServiceRequest): string | null {
     const authHeader = sr.headers['authorization'] || ''
@@ -21,7 +21,7 @@ export function extractUsername(sr: ServiceRequest): string | null {
 }
 
 export function extractUsernameDomain(sr: ServiceRequest, userDomain: string): string[] {
-    let requestDomain = sr.req.hostname
+    const requestDomain = sr.req.hostname
     const userInfo = userDomain.split('@')
     const username = userInfo[0]
     const domain = userInfo.length >= 2 ? userInfo[1] : requestDomain

@@ -164,12 +164,12 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
 
     private addFilterByType(qb: SelectQueryBuilder<db.billing.Contact>, type: ContactType): void {
         switch (type) {
-        case ContactType.CustomerContact:
-            qb.andWhere('contact.reseller_id IS NOT NULL')
-            break
-        case ContactType.SystemContact:
-            qb.andWhere('contact.reseller_id IS NULL')
-            break
+            case ContactType.CustomerContact:
+                qb.andWhere('contact.reseller_id IS NOT NULL')
+                break
+            case ContactType.SystemContact:
+                qb.andWhere('contact.reseller_id IS NULL')
+                break
         }
     }
 }

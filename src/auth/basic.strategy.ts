@@ -8,8 +8,8 @@ import {Strategy} from 'passport-local'
 import {AuthService} from './auth.service'
 import {AuthResponseDto} from './dto/auth-response.dto'
 
-import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {extractUsernameDomain} from '~/helpers/auth.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 
 /**

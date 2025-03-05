@@ -10,7 +10,6 @@ import {AppService} from '~/app.service'
 import {jwtConstants} from '~/config/constants.config'
 import {db} from '~/entities'
 import {LoggerService} from '~/logger/logger.service'
-import {extractUsernameDomain} from '~/helpers/auth.helper'
 
 /**
  * Implementation of the JWT authentication strategy

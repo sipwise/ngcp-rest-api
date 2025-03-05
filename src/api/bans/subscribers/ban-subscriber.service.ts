@@ -71,28 +71,28 @@ export class BanSubscriberService implements CrudService<internal.BanSubscriber>
 
     getSubscriberOptionsFromServiceRequest(sr: ServiceRequest): BanSubscriberOptions {
         switch(sr.user.role) {
-        case RbacRole.system:
-        case RbacRole.admin:
-        case RbacRole.lintercept:
-        case RbacRole.ccareadmin:
-            return {
-                filterBy: {},
-            }
-        case RbacRole.reseller:
-        case RbacRole.ccare:
-            return {
-                filterBy: {
-                    resellerId: sr.user.reseller_id,
-                },
-            }
-        case RbacRole.subscriberadmin:
-            return {
-                filterBy: {
-                    customerId: sr.user.customer_id,
-                },
-            }
-        default:
-            throw new NotFoundException()
+            case RbacRole.system:
+            case RbacRole.admin:
+            case RbacRole.lintercept:
+            case RbacRole.ccareadmin:
+                return {
+                    filterBy: {},
+                }
+            case RbacRole.reseller:
+            case RbacRole.ccare:
+                return {
+                    filterBy: {
+                        resellerId: sr.user.reseller_id,
+                    },
+                }
+            case RbacRole.subscriberadmin:
+                return {
+                    filterBy: {
+                        customerId: sr.user.customer_id,
+                    },
+                }
+            default:
+                throw new NotFoundException()
         }
     }
 }

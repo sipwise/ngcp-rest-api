@@ -107,21 +107,21 @@ export class PbxGroupMemberMariadbRepository extends MariaDbRepository implement
                 let where: string
 
                 switch (property) {
-                case 'customer_id':
-                    where = 'bg.contract_id'
-                    break
-                case 'extension':
-                    where = 'bg.contract_id'
-                    break
-                case 'hunt_policy':
-                    where = 'sg.pbx_hunt_policy'
-                    break
-                case 'hunt_timeout':
-                    where = 'sg.pbx_hunt_timeout'
-                    break
-                case 'name':
-                    where = 'sg.username'
-                    break
+                    case 'customer_id':
+                        where = 'bg.contract_id'
+                        break
+                    case 'extension':
+                        where = 'bg.contract_id'
+                        break
+                    case 'hunt_policy':
+                        where = 'sg.pbx_hunt_policy'
+                        break
+                    case 'hunt_timeout':
+                        where = 'sg.pbx_hunt_timeout'
+                        break
+                    case 'name':
+                        where = 'sg.username'
+                        break
                 }
                 if (searchLogic.searchOr) {
                     qb.orWhere(`${where} ${whereComparator} :${property}`, {[`${property}`]: value})

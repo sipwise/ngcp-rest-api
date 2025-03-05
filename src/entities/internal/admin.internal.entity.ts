@@ -61,42 +61,42 @@ export class Admin implements AdminInterface {
 
     async setPermissionFlags(): Promise<void> {
         switch (this.role) {
-        case RbacRole.system:
-            this.is_system = true
-            this.is_superuser = false
-            this.is_ccare = false
-            this.lawful_intercept = false
-            break
-        case RbacRole.admin:
-            this.is_system = false
-            this.is_superuser = true
-            this.is_ccare = false
-            this.lawful_intercept = false
-            break
-        case RbacRole.reseller:
-            this.is_system = false
-            this.is_superuser = false
-            this.is_ccare = false
-            this.lawful_intercept = false
-            break
-        case RbacRole.ccareadmin:
-            this.is_system = false
-            this.is_superuser = true
-            this.is_ccare = true
-            this.lawful_intercept = false
-            break
-        case RbacRole.ccare:
-            this.is_system = false
-            this.is_superuser = false
-            this.is_ccare = true
-            this.lawful_intercept = false
-            break
-        case RbacRole.lintercept:
-            this.is_system = false
-            this.is_superuser = false
-            this.is_ccare = false
-            this.lawful_intercept = true
-            break
+            case RbacRole.system:
+                this.is_system = true
+                this.is_superuser = false
+                this.is_ccare = false
+                this.lawful_intercept = false
+                break
+            case RbacRole.admin:
+                this.is_system = false
+                this.is_superuser = true
+                this.is_ccare = false
+                this.lawful_intercept = false
+                break
+            case RbacRole.reseller:
+                this.is_system = false
+                this.is_superuser = false
+                this.is_ccare = false
+                this.lawful_intercept = false
+                break
+            case RbacRole.ccareadmin:
+                this.is_system = false
+                this.is_superuser = true
+                this.is_ccare = true
+                this.lawful_intercept = false
+                break
+            case RbacRole.ccare:
+                this.is_system = false
+                this.is_superuser = false
+                this.is_ccare = true
+                this.lawful_intercept = false
+                break
+            case RbacRole.lintercept:
+                this.is_system = false
+                this.is_superuser = false
+                this.is_ccare = false
+                this.lawful_intercept = true
+                break
         }
     }
 

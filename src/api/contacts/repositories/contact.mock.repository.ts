@@ -118,16 +118,16 @@ export class ContactMockRepository implements ContactRepository {
         const contact = this.contactDB[id]
         if (options) {
             switch (options.type) {
-            case ContactType.SystemContact:
-                if (contact.reseller_id == undefined) {
-                    return Promise.resolve(contact)
-                }
-                throw new NotFoundException()
-            case ContactType.CustomerContact:
-                if (contact.reseller_id != undefined) {
-                    return Promise.resolve(contact)
-                }
-                throw new NotFoundException()
+                case ContactType.SystemContact:
+                    if (contact.reseller_id == undefined) {
+                        return Promise.resolve(contact)
+                    }
+                    throw new NotFoundException()
+                case ContactType.CustomerContact:
+                    if (contact.reseller_id != undefined) {
+                        return Promise.resolve(contact)
+                    }
+                    throw new NotFoundException()
             }
         }
         return Promise.resolve(contact)

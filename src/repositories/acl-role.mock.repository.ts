@@ -15,23 +15,23 @@ export class AclRoleMockRepository {
         const lintercept = internal.AclRole.create({id: 11, role: 'lintercept', is_acl: false})
 
         switch (role) {
-        case system.role:
-            system.has_access_to = [system, admin, reseller, ccareadmin, ccare, lintercept]
-            return system
-        case admin.role:
-            admin.has_access_to = [deepCopy<internal.AclRole>(admin), reseller, ccareadmin, ccare]
-            return admin
-        case reseller.role:
-            reseller.has_access_to = [reseller, ccareadmin, ccare]
-            return reseller
-        case ccareadmin.role:
-            ccareadmin.has_access_to = [ccareadmin, ccare]
-            return ccareadmin
-        case ccare.role:
-            ccare.has_access_to = [ccare]
-            return ccare
-        case lintercept.role:
-            return lintercept
+            case system.role:
+                system.has_access_to = [system, admin, reseller, ccareadmin, ccare, lintercept]
+                return system
+            case admin.role:
+                admin.has_access_to = [deepCopy<internal.AclRole>(admin), reseller, ccareadmin, ccare]
+                return admin
+            case reseller.role:
+                reseller.has_access_to = [reseller, ccareadmin, ccare]
+                return reseller
+            case ccareadmin.role:
+                ccareadmin.has_access_to = [ccareadmin, ccare]
+                return ccareadmin
+            case ccare.role:
+                ccare.has_access_to = [ccare]
+                return ccare
+            case lintercept.role:
+                return lintercept
         }
         throw new NotFoundException()
     }

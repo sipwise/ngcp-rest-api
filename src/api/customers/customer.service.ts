@@ -288,15 +288,15 @@ export class CustomerService implements CrudService<internal.Customer> {
 
     private customerFindOptionsFromServiceRequest(sr: ServiceRequest): CustomerFindOptions {
         switch (sr.user.role) {
-        case RbacRole.reseller:
-        case RbacRole.ccare:
-        case RbacRole.subscriberadmin:
-        case RbacRole.subscriber:
-            return {
-                filterBy: {
-                    resellerId: sr.user.reseller_id,
-                },
-            }
+            case RbacRole.reseller:
+            case RbacRole.ccare:
+            case RbacRole.subscriberadmin:
+            case RbacRole.subscriber:
+                return {
+                    filterBy: {
+                        resellerId: sr.user.reseller_id,
+                    },
+                }
         }
         return undefined
     }

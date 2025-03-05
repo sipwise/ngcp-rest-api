@@ -7,15 +7,15 @@ import errors from '~/localisation/en/errors.json'
 export function handleTypeORMError(err: Error): Error {
     if (err instanceof TypeORMError) {
         switch (err.constructor) {
-        case EntityNotFoundError:
-            return new NotFoundException()
-        case QueryFailedError:
+            case EntityNotFoundError:
+                return new NotFoundException()
+            case QueryFailedError:
             // eslint-disable-next-line no-case-declarations
-            const qErr = <QueryFailedError<QueryError>>err
-            switch (qErr.driverError.code) {
-            case 'ER_DUP_ENTRY':
-                return new UnprocessableEntityException(errors.DUPLICATE_ENTRY)
-            }
+                const qErr = <QueryFailedError<QueryError>>err
+                switch (qErr.driverError.code) {
+                    case 'ER_DUP_ENTRY':
+                        return new UnprocessableEntityException(errors.DUPLICATE_ENTRY)
+                }
         }
         // return new UnprocessableEntityException(err.message)
         return new UnprocessableEntityException()
