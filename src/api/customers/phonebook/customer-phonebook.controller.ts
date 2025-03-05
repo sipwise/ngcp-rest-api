@@ -1,14 +1,15 @@
-import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, ValidationPipe, forwardRef} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Query, Req, ValidationPipe, forwardRef} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'fast-json-patch'
 import {number} from 'yargs'
 
-import {ResellerPhonebookRequestParamDto} from './dto/reseller-phonebook-request-param.dto'
-import {ResellerPhonebookRequestDto} from './dto/reseller-phonebook-request.dto'
-import {ResellerPhonebookResponseDto} from './dto/reseller-phonebook-response.dto'
-import {ResellerPhonebookSearchDto} from './dto/reseller-phonebook-search.dto'
-import {ResellerPhonebookService} from './reseller-phonebook.service'
+import {CustomerPhonebookService} from './customer-phonebook.service'
+import {CustomerPhonebookQueryDto} from './dto/customer-phonebook-query.dto'
+import {CustomerPhonebookRequestParamDto} from './dto/customer-phonebook-request-param.dto'
+import {CustomerPhonebookRequestDto} from './dto/customer-phonebook-request.dto'
+import {CustomerPhonebookResponseDto} from './dto/customer-phonebook-response.dto'
+import {CustomerPhonebookSearchDto} from './dto/customer-phonebook-search.dto'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
@@ -33,22 +34,27 @@ import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
 import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
 import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
+import {ParseRegexPipe} from '~/pipes/parse-regex-id.pipe'
 
-const resourceName = 'resellers/'
+const resourceName = 'customers/'
 
 @Auth(
     RbacRole.system,
     RbacRole.admin,
     RbacRole.reseller,
+    RbacRole.ccareadmin,
+    RbacRole.ccare,
+    RbacRole.subscriberadmin,
+    RbacRole.lintercept,
 )
-@ApiTags('Reseller')
+@ApiTags('Customer')
 @Controller(resourceName)
 @License(LicenseType.phonebook)
-export class ResellerPhonebookController extends CrudController<ResellerPhonebookRequestDto, ResellerPhonebookResponseDto> {
-    private readonly log = new LoggerService(ResellerPhonebookController.name)
+export class CustomerPhonebookController extends CrudController<CustomerPhonebookRequestDto, CustomerPhonebookResponseDto> {
+    private readonly log = new LoggerService(CustomerPhonebookController.name)
 
     constructor(
-        private readonly phonebookService: ResellerPhonebookService,
+        private readonly phonebookService: CustomerPhonebookService,
         @Inject(forwardRef(() => ExpandHelper))
         private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
@@ -56,16 +62,16 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
         super(resourceName, phonebookService)
     }
 
-    @Post(':resellerId?/phonebook')
-    @ApiCreatedResponse(ResellerPhonebookResponseDto)
+    @Post(':customerId?/phonebook')
+    @ApiCreatedResponse(CustomerPhonebookResponseDto)
     @ApiBody({
-        type: ResellerPhonebookRequestDto,
+        type: CustomerPhonebookRequestDto,
         isArray: true,
     })
     async create(
-        @Body(new ParseOneOrManyPipe({items: ResellerPhonebookRequestDto})) createDto: ResellerPhonebookRequestDto[],
+        @Body(new ParseOneOrManyPipe({items: CustomerPhonebookRequestDto})) createDto: CustomerPhonebookRequestDto[],
         @Req() req: Request,
-    ): Promise<ResellerPhonebookResponseDto[]> {
+    ): Promise<CustomerPhonebookResponseDto[]> {
         this.log.debug({
             message: 'create phonebook bulk',
             func: this.create.name,
@@ -75,17 +81,19 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
         const sr = new ServiceRequest(req)
         const phonebook = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.phonebookService.create(phonebook, sr)
-        return await Promise.all(created.map(async phonebook => new ResellerPhonebookResponseDto(phonebook)))
+        return await Promise.all(created.map(async phonebook => new CustomerPhonebookResponseDto(phonebook)))
     }
 
-    @Get(':resellerId?/phonebook')
+    @Get(':customerId?/phonebook')
     @ApiQuery({type: SearchLogic})
-    @ApiPaginatedResponse(ResellerPhonebookResponseDto)
+    @ApiPaginatedResponse(CustomerPhonebookResponseDto)
     async readAll(
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: ResellerPhonebookRequestParamDto): Promise<[ResellerPhonebookResponseDto[], number]> {
+        @Param(new ValidationPipe()) _reqParams: CustomerPhonebookRequestParamDto,
+        @Query(new ValidationPipe()) _query: CustomerPhonebookQueryDto,
+    ): Promise<[CustomerPhonebookResponseDto[], number]> {
         this.log.debug({
-            message: 'read all reseller phonebook',
+            message: 'read all customer phonebook',
             func: this.readAll.name,
             url: req.url,
             method: req.method,
@@ -93,86 +101,87 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
         const sr = new ServiceRequest(req)
         const [entity, totalCount] =
             await this.phonebookService.readAll(sr)
-        const responseList = entity.map(e => new ResellerPhonebookResponseDto(e))
+        const responseList = entity.map(e => new CustomerPhonebookResponseDto(e))
         if (sr.query.expand && !sr.isInternalRedirect) {
-            const setSearchDtoKeys = Object.keys(new ResellerPhonebookSearchDto())
+            const setSearchDtoKeys = Object.keys(new CustomerPhonebookSearchDto())
             await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
         }
         return [responseList, totalCount]
     }
 
-    @Get(':resellerId?/phonebook/:id')
+    @Get(':customerId?/phonebook/:id')
     @ApiOkResponse({
-        type: ResellerPhonebookResponseDto,
+        type: CustomerPhonebookResponseDto,
     })
     async read(
-        @Param('id', ParseIntPipe) id: number,
+        @Param('id', new ParseRegexPipe({pattern: /^[csr\d]+$/})) id: string,
         @Req() req: Request,
         // TODO: _Prefix does not work here, fix?
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {resellerId}: ResellerPhonebookRequestParamDto = new ResellerPhonebookRequestParamDto(),
-    ): Promise<ResellerPhonebookResponseDto> {
+        @Param(new ValidationPipe()) {customerId}: CustomerPhonebookRequestParamDto = new CustomerPhonebookRequestParamDto(),
+        @Query(new ValidationPipe()) _query: CustomerPhonebookQueryDto,
+    ): Promise<CustomerPhonebookResponseDto> {
         this.log.debug({
-            message: 'read reseller phonebook by id',
+            message: 'read customer phonebook by id',
             id: id,
             func: this.read.name,
             url: req.url,
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const response = new ResellerPhonebookResponseDto(await this.phonebookService.read(id, sr))
+        const response = new CustomerPhonebookResponseDto(await this.phonebookService.read(id, sr))
         if (sr.query.expand && !sr.isInternalRedirect) {
-            const setSearchDtoKeys = Object.keys(new ResellerPhonebookSearchDto())
+            const setSearchDtoKeys = Object.keys(new CustomerPhonebookSearchDto())
             await this.expander.expandObjects([response], setSearchDtoKeys, sr)
         }
         return response
     }
 
-    @Put(':resellerId?/phonebook/:id')
+    @Put(':customerId?/phonebook/:id')
     @ApiOkResponse({
-        type: ResellerPhonebookResponseDto,
+        type: CustomerPhonebookResponseDto,
     })
     async update(@Param('id', ParseIntPipe) id: number,
-        dto: ResellerPhonebookRequestDto,
+        dto: CustomerPhonebookRequestDto,
         @Req() req: Request,
         // TODO: _Prefix does not work here, fix?
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {resellerId}: ResellerPhonebookRequestParamDto = new ResellerPhonebookRequestParamDto(),
-    ): Promise<ResellerPhonebookResponseDto> {
+        @Param(new ValidationPipe()) {customerId}: CustomerPhonebookRequestParamDto = new CustomerPhonebookRequestParamDto(),
+    ): Promise<CustomerPhonebookResponseDto> {
         this.log.debug({
-            message: 'update reseller phonebook by id',
+            message: 'update customer phonebook by id',
             id: id,
             func: this.update.name,
             url: req.url,
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const updates = new Dictionary<internal.ResellerPhonebook>()
-        updates[id] = Object.assign(new ResellerPhonebookRequestDto(), dto).toInternal({id: id, assignNulls: true})
+        const updates = new Dictionary<internal.CustomerPhonebook>()
+        updates[id] = Object.assign(new CustomerPhonebookRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const ids = await this.phonebookService.update(updates, sr)
         const entity = await this.phonebookService.read(ids[0], sr)
-        const response = new ResellerPhonebookResponseDto(entity)
+        const response = new CustomerPhonebookResponseDto(entity)
         await this.journalService.writeJournal(sr, id, response)
         return response
     }
 
-    @Put(':resellerId?/phonebook')
-    @ApiPutBody(ResellerPhonebookRequestDto)
+    @Put(':customerId?/phonebook')
+    @ApiPutBody(CustomerPhonebookRequestDto)
     async updateMany(
-        @Body(new ParseIdDictionary({items: ResellerPhonebookRequestDto})) updates: Dictionary<ResellerPhonebookRequestDto>,
+        @Body(new ParseIdDictionary({items: CustomerPhonebookRequestDto})) updates: Dictionary<CustomerPhonebookRequestDto>,
         @Req() req: Request,
     ): Promise<number[]> {
-        this.log.debug({message: 'update reseller phonebook bulk', func: this.updateMany.name, url: req.url, method: req.method})
+        this.log.debug({message: 'update customer phonebook bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const sets = new Dictionary<internal.ResellerPhonebook>()
+        const sets = new Dictionary<internal.CustomerPhonebook>()
         for (const id of Object.keys(updates)) {
-            const dto: ResellerPhonebookRequestDto = updates[id]
+            const dto: CustomerPhonebookRequestDto = updates[id]
             sets[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
         return await this.phonebookService.update(sets, sr)
     }
 
-    @Patch(':resellerId?/phonebook/:id')
+    @Patch(':customerId?/phonebook/:id')
     @ApiConsumes('application/json-patch+json')
     @ApiBody({
         type: [PatchDto],
@@ -181,7 +190,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
         @Req() req: Request,
-    ): Promise<ResellerPhonebookResponseDto> {
+    ): Promise<CustomerPhonebookResponseDto> {
         this.log.debug({
             message: 'patch phonebook set by id',
             id: id,
@@ -192,18 +201,20 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
         const sr = new ServiceRequest(req)
 
         const oldEntity = await this.phonebookService.read(id, sr)
-        const entity = await patchToEntity<internal.ResellerPhonebook, ResellerPhonebookRequestDto>(oldEntity, patch, ResellerPhonebookRequestDto)
-        const update = new Dictionary<internal.ResellerPhonebook>(id.toString(), entity)
+        const entity = await patchToEntity<internal.CustomerPhonebook, CustomerPhonebookRequestDto>(
+            oldEntity as internal.CustomerPhonebook, patch, CustomerPhonebookRequestDto,
+        )
+        const update = new Dictionary<internal.CustomerPhonebook>(id.toString(), entity)
 
         const ids = await this.phonebookService.update(update, sr)
         const updatedEntity = await this.phonebookService.read(ids[0], sr)
-        const response = new ResellerPhonebookResponseDto(updatedEntity)
+        const response = new CustomerPhonebookResponseDto(updatedEntity)
         await this.journalService.writeJournal(sr, id, response)
 
         return response
     }
 
-    @Patch(':resellerId?/phonebook')
+    @Patch(':customerId?/phonebook')
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     async adjustMany(
@@ -212,17 +223,19 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
-        const updates = new Dictionary<internal.ResellerPhonebook>()
+        const updates = new Dictionary<internal.CustomerPhonebook>()
         for (const id of Object.keys(patches)) {
             const oldEntity = await this.phonebookService.read(+id, sr)
-            const entity = await patchToEntity<internal.ResellerPhonebook, ResellerPhonebookRequestDto>(oldEntity, patches[id], ResellerPhonebookRequestDto)
+            const entity = await patchToEntity<internal.CustomerPhonebook, CustomerPhonebookRequestDto>(
+                oldEntity as internal.CustomerPhonebook, patches[id], CustomerPhonebookRequestDto,
+            )
             updates[id] = entity
         }
 
         return await this.phonebookService.update(updates, sr)
     }
 
-    @Delete(':resellerId?/phonebook/:id?')
+    @Delete(':customerId?/phonebook/:id?')
     @ApiOkResponse({
         type: [number],
     })
@@ -231,7 +244,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
         @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({
-            message: 'delete reseller phonebook by id',
+            message: 'delete customer phonebook by id',
             id: ids,
             func: this.delete.name,
             url: req.url,
@@ -245,7 +258,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
         return deletedIds
     }
 
-    @Get(':resellerId?/phonebook/:id/journal')
+    @Get(':customerId?/phonebook/:id/journal')
     @ApiOkResponse({
         type: [JournalResponseDto],
     })

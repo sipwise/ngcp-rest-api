@@ -7,6 +7,7 @@ import {Reseller} from './reseller.mariadb.entity'
 import {VoipSubscriber} from './voip-subscriber.mariadb.entity'
 
 import {internal} from '~/entities'
+import {ContractPhonebook} from '~/entities/db/billing/contract-phonebook.mariadb.entity'
 import {VoipContractSpeedDial} from '~/entities/db/provisioning'
 import {ContractStatus, ContractType} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
@@ -173,6 +174,9 @@ export class Contract extends BaseEntity {
 
     @OneToMany(() => ContractBillingProfileNetwork, billingProfileNetwork => billingProfileNetwork.contract, {eager: true})
         billingMappings!: ContractBillingProfileNetwork[]
+
+    @OneToMany(()=> ContractPhonebook, contractPhonebook => contractPhonebook.contract)
+        phonebook!: ContractPhonebook[]
 
     toInternal(): internal.Contract {
         const contract = internal.Contract.create({

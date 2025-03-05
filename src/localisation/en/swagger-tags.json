@@ -24,6 +24,10 @@
     "description": "[/contracts] Contracts can belong to either a Customer, Reseller, or Peering"
 },
 {
+    "name": "Customer",
+    "description": "[/customers] Customer related routes including customer phonebook"
+},
+{
     "name": "CustomerContact",
     "description": "[/customercontacts] Define Contacts that belong to Customers"
 },
