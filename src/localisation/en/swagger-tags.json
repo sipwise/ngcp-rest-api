@@ -80,6 +80,10 @@
     "description": "[/rewrite-rules] Available Rewrite Rule related routes including sets, rules."
 },
 {
+    "name": "Subscriber",
+    "description": "[/subscribers] Available Subscriber related routes including phonebook"
+},
+{
     "name": "SystemContact",
     "description": "[/systemcontacts] Define Contacts that belong to Resellers or Peering Groups"
 },
