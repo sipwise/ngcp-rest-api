@@ -55,13 +55,15 @@ export class BanSubscriberMariadbRepository extends MariaDbRepository implements
             sr.query,
             new SearchLogic(sr, Object.keys(searchDto), undefined, searchDto._alias),
         )
-        qb.whereInIds(ids)
+        qb.andWhere('bSubscriber.id IN (:ids)', {ids: ids})
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getMany()
         return await Promise.all(result.map(async (d) => d.toInternalBanSubscriber()))
     }
 
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, filterBy: BanSubscriberOptions['filterBy']): void {
+        qb.leftJoinAndSelect('pSubscriber.contract', 'contract')
+        qb.leftJoinAndSelect('contract.contact', 'contact')
         if (filterBy) {
             if (filterBy.ids && filterBy.ids.length > 0) {
                 qb.andWhere('bSubscriber.id IN (:ids)', {ids: filterBy.ids})
@@ -70,8 +72,6 @@ export class BanSubscriberMariadbRepository extends MariaDbRepository implements
                 qb.andWhere('pSubscriber.contract_id = :customerId', {customerId: filterBy.customerId})
             }
             if (filterBy.resellerId) {
-                qb.leftJoinAndSelect('pSubscriber.contract', 'contract')
-                qb.leftJoinAndSelect('contract.contact', 'contact')
                 qb.andWhere('contact.reseller_id = :resellerId', {resellerId: filterBy.resellerId})
             }
         }

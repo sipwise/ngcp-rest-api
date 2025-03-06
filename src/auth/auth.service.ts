@@ -1,4 +1,4 @@
-import {ForbiddenException, Injectable} from '@nestjs/common'
+import {ForbiddenException, Injectable, UnauthorizedException} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
 import {compare} from 'bcrypt'
 import Redis, {Cluster} from 'ioredis'
@@ -277,6 +277,8 @@ export class AuthService {
                     'ban_increment_stage',
                 ],
             })
+            if (!admin)
+                throw new UnauthorizedException()
             key = this.loginBanAdminKey(username, domain, realm, ip, admin.id, admin.reseller_id)
             user = admin
         } else {
@@ -293,6 +295,8 @@ export class AuthService {
                 ],
                 relations: ['billing_voip_subscriber'],
             })
+            if (!subscriber)
+                throw new UnauthorizedException()
             const subscriberId = subscriber.billing_voip_subscriber.id
             const customerId = subscriber.account_id
             key = this.loginBanSubscriberKey(username, domain, realm, ip, subscriberId, customerId)

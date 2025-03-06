@@ -26,6 +26,9 @@ export class BanAdminService implements CrudService<internal.BanAdmin> {
 
     async readAll(sr: ServiceRequest): Promise<[internal.BanAdmin[], number]> {
         const redisBans = await this.authService.readBannedAdminIds()
+        if (redisBans.length == 0) {
+            return [[], 0]
+        }
         return this.banAdminRepo.readAll(this.getAdminOptionsFromServiceRequest(sr), sr, {ids:redisBans})
     }
 
@@ -39,7 +42,7 @@ export class BanAdminService implements CrudService<internal.BanAdmin> {
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         this.log.debug({message: 'delete many ban admins by id', func: this.delete.name, user: sr.user.username, ids: ids})
 
-        // FIXME: For some reaason the ids are string, not number
+        // FIXME: For some reason the ids are string, not number
         const adminIds = await this.authService.filterNotBannedAdmins(ids.map(id => +id))
         if (!adminIds.length) {
             throw new NotFoundException()
