@@ -1,7 +1,7 @@
 // TODO: Fix this later in the generic controller approach
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {BadRequestException, Body, Param, Query, Req, UploadedFile} from '@nestjs/common'
+import {BadRequestException, Body, Param, Query, Req, Res, UploadedFile} from '@nestjs/common'
 import {Request} from 'express'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
@@ -28,6 +28,7 @@ export class CrudController<CreateDTO, _ResponseDTO> {
         @Req() req: Request,
         @Param() _params?: unknown,
         @Query() _query?: unknown,
+        @Res({passthrough: true}) res?,
     ): Promise<any> {
         return await this.repo.readAll(new ServiceRequest(req))
     }

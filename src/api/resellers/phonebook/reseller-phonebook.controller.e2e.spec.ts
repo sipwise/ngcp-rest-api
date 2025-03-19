@@ -1,3 +1,5 @@
+import path from 'path'
+
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
@@ -93,6 +95,33 @@ describe('Reseller Phonebook', () => {
                 expect(response.status).toEqual(201)
                 createdPhonebookIds.push(+response.body[0].id)
             })
+            it('creates phonebook bulk from csv', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/resellers/phonebook')
+                    .set(...authHeader)
+                    .attach('file', path.resolve(__dirname, './fixtures/reseller_phonebook_test.csv'))
+                expect(response.status).toEqual(201)
+                createdPhonebookIds.push(+response.body[0].id)
+                createdPhonebookIds.push(+response.body[1].id)
+            })
+            it('fails to create phonebook bulk because duplicate', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/resellers/phonebook')
+                    .set(...authHeader)
+                    .attach('file', path.resolve(__dirname, './fixtures/reseller_phonebook_test.csv'))
+                expect(response.status).toEqual(422)
+            })
+            it('reate phonebook bulk with purge_existing', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/resellers/phonebook?purge_existing=true')
+                    .set(...authHeader)
+                    .attach('file', path.resolve(__dirname, './fixtures/reseller_phonebook_test.csv'))
+                expect(response.status).toEqual(201)
+                createdPhonebookIds.pop()
+                createdPhonebookIds.pop()
+                createdPhonebookIds.push(+response.body[0].id)
+                createdPhonebookIds.push(+response.body[1].id)
+            })
         })
 
         describe('GET', () => {
@@ -105,6 +134,14 @@ describe('Reseller Phonebook', () => {
                 expect(phonebook.name).toEqual('test_phonebook1')
                 expect(phonebook.number).toEqual('123')
                 expect(phonebook.reseller_id).toEqual(1)
+            })
+            it('read created phonebook from csv', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/resellers/phonebook/${createdPhonebookIds[1]}`)
+                    .set(...authHeader)
+                expect(response.status).toEqual(200)
+                const phonebook: ResellerPhonebookResponseDto = response.body
+                expect(phonebook.name).toEqual('RES_PHONEBOOK_TEST')
             })
             it('read non-existing phonebook', async () => {
                 const response = await request(app.getHttpServer())

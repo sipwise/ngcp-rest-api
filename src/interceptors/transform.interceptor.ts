@@ -118,7 +118,8 @@ export class TransformInterceptor implements NestInterceptor {
                 id = data[0][0]['id']
             length = data[0].length
         } else if (Array.isArray(data)) {
-            if ('id' in data[0])
+            // TODO: Have a good look if this breaks anything
+            if (data.length > 0 && 'id' in data[0])
                 id = data[0]['id']
             length = data.length
         } else if (typeof data === 'object') {

@@ -5,7 +5,7 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export abstract class ResponseDto {
     @Exclude()
-    protected readonly resourceUrl?: string = ''
+    readonly resourceUrl?: string = ''
     constructor(options?: ResponseDtoOptions) {
         if (!options)
             return

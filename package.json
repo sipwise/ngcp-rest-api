@@ -5,9 +5,9 @@
   "productName": "NGCP REST API",
   "author": "Sipwise Development Team <support@sipwise.com>",
   "license": "GPL-3.0-or-later",
-  "engines" : {
-    "node" : ">=22.13.1 < 23",
-    "yarn" : ">=1.22.22"
+  "engines": {
+    "node": ">=22.13.1 < 23",
+    "yarn": ">=1.22.22"
   },
   "engineStrict": true,
   "scripts": {
@@ -48,6 +48,7 @@
     "@types/jsonwebtoken": "9.0.7",
     "@types/multer": "1.4.12",
     "@types/node": "22.5.5",
+    "@types/papaparse": "5.3.15",
     "@types/passport-jwt": "4.0.1",
     "@types/passport-local": "1.0.38",
     "@types/validator": "13.12.2",
@@ -63,6 +64,7 @@
     "nest-winston": "1.9.7",
     "nestjs-i18n": "10.4.9",
     "null-loader": "4.0.1",
+    "papaparse": "5.5.2",
     "passport": "0.7.0",
     "passport-http": "0.3.0",
     "passport-http-header-strategy": "1.1.0",

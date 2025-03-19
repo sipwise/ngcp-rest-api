@@ -80,6 +80,24 @@ export class ResellerPhonebookMariadbRepository extends MariaDbRepository implem
         return ids
     }
 
+    async readWhereInNumbers(number: string[], options: ResellerPhonebookOptions, sr: ServiceRequest): Promise<number[]> {
+        const qb = db.billing.ResellerPhonebook.createQueryBuilder('phonebook')
+        const searchDto  = new ResellerPhonebookSearchDto()
+        configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(sr,
+                Object.keys(searchDto),
+                undefined,
+                undefined,
+            ),
+        )
+        qb.andWhere('phonebook.number IN (:...numbers)', {numbers: number})
+        this.addFilterBy(qb, options.filterBy)
+        const result = await qb.getMany()
+        return await Promise.all(result.map(async (d) => d.id))
+    }
+
     async readWhereInIds(ids: number[], options: ResellerPhonebookOptions, sr: ServiceRequest): Promise<internal.ResellerPhonebook[]> {
         const qb = db.billing.ResellerPhonebook.createQueryBuilder('phonebook')
         const searchDto  = new ResellerPhonebookSearchDto()

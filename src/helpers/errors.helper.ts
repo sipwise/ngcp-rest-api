@@ -3,6 +3,7 @@ import {QueryError} from 'mysql2'
 import {EntityNotFoundError, QueryFailedError, TypeORMError} from 'typeorm'
 
 import errors from '~/localisation/en/errors.json'
+import {CsvValidationError} from '~/types/csv-validation-error.type'
 
 export function handleTypeORMError(err: Error): Error {
     if (err instanceof TypeORMError) {
@@ -49,3 +50,18 @@ export function formatValidationErrors(errors: any[]): any[] {
     }
     return message
 }
+
+export function formatValidationErrorsInCsv(errors: CsvValidationError[]): unknown[] {
+    return errors.map(err => {
+        return err.error.map(validationError => ({
+            target: {
+                ...validationError.target,
+                row: err.row,
+            },
+            property: validationError.property,
+            value: validationError.value,
+            constraints: validationError.constraints,
+        }))
+    }).flat()
+}
+

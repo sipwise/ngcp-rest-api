@@ -154,5 +154,13 @@
   "AUTH_BANNED": {
     "message": "Banned",
     "code": 10039
+  },
+  "FILE_MIME_TYPE_NOT_SUPPORTED": {
+    "message": "File mime type not supported",
+    "code": 10040
+  },
+  "CSV_MALFORMED": {
+    "message": "CSV malformed",
+    "code": 10040
   }
 }
