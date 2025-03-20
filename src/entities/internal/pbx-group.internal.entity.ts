@@ -1,4 +1,4 @@
-import {internal} from 'entities'
+import {PbxGroupMember} from './'
 
 export interface PbxGroupInternalEntity {
     provisioningGroupId?: number
@@ -7,7 +7,7 @@ export interface PbxGroupInternalEntity {
     extension: string
     huntPolicy: string
     huntTimeout: number
-    members: internal.PbxGroupMember[]
+    members: PbxGroupMember[]
     id?: number
     customerId: number
     domain: string
@@ -17,7 +17,7 @@ export class PbxGroup implements PbxGroupInternalEntity {
     extension: string
     huntPolicy: string
     huntTimeout: number
-    members: internal.PbxGroupMember[]
+    members: PbxGroupMember[]
     name: string
     id: number
     customerId: number

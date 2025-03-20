@@ -1,6 +1,5 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
 import {VoipRewriteRuleSet} from './voip-rewrite-rule-set.mariadb.entity'
-import {internal} from 'entities'
 
 @Entity({
     name: 'voip_rewrite_rules',
