@@ -1,3 +1,10 @@
+ngcp-rest-api (12.5.1.9+0~mr12.5.1.9) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [d8d0634] MT#62400 Fix Header Manipulation subscriber rules
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 20 Mar 2025 22:38:46 +0100
+
 ngcp-rest-api (12.5.1.8+0~mr12.5.1.8) unstable; urgency=medium
 
   [ Bertold Vincze ]
