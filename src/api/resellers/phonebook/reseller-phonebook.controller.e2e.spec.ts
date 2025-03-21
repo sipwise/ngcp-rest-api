@@ -111,7 +111,7 @@ describe('Reseller Phonebook', () => {
                     .attach('file', path.resolve(__dirname, './fixtures/reseller_phonebook_test.csv'))
                 expect(response.status).toEqual(422)
             })
-            it('reate phonebook bulk with purge_existing', async () => {
+            it('create phonebook bulk with purge_existing', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/resellers/phonebook?purge_existing=true')
                     .set(...authHeader)

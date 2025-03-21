@@ -56,7 +56,8 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
                 const options = this.getResellerPhonebookOptionsFromServiceRequest(sr)
                 const numbers = new Set(entities.map(entity => entity.number))
                 const ids = await this.phonebookRepo.readWhereInNumbers(Array.from(numbers), options, sr)
-                await this.delete(ids, sr)
+                if (ids.length > 0)
+                    await this.delete(ids, sr)
             }
             else {
                 delete sr.query['purge_existing']
