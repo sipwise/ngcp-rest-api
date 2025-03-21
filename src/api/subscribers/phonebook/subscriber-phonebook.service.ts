@@ -1,12 +1,14 @@
-import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable, NotFoundException, StreamableFile, UnprocessableEntityException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {SubscriberPhonebookView} from './dto/subscriber-phonebook-query.dto'
+import {SubscriberPhonebookResponseDto} from './dto/subscriber-phonebook-response.dto'
 import {SubscriberPhonebookOptions} from './interfaces/subscriber-phonebook-options.interface'
 import {SubscriberPhonebookMariadbRepository} from './repositories/subscriber-phonebook.mariadb.repository'
 
 import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
+import {dtoToCsv} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
@@ -42,6 +44,38 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
         return await this.phonebookRepo.readWhereInIds(createdIds, options, sr)
     }
 
+    async import(entities: internal.SubscriberPhonebook[], sr: ServiceRequest): Promise<internal.SubscriberPhonebook[]> {
+        if (sr.user.role === RbacRole.subscriberadmin || sr.user.role === RbacRole.subscriber) {
+            if (entities.some(entity => entity.subscriberId != sr.user.subscriber_id)) {
+                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
+                throw new UnprocessableEntityException(error.message)
+            }
+        }
+
+        if (sr.query && sr.query['purge_existing']) {
+            if (sr.query['purge_existing'] === 'true') {
+                delete sr.query['purge_existing']
+                const options = this.getSubscriberPhonebookOptionsFromServiceRequest(sr)
+                const numbers = new Set(entities.map(entity => entity.number))
+                const ids = await this.phonebookRepo.readWhereInNumbers(Array.from(numbers), options, sr)
+                if (ids.length > 0)
+                    await this.delete(ids, sr)
+            }
+            else {
+                delete sr.query['purge_existing']
+            }
+        }
+
+        const createdIds = await this.phonebookRepo.create(entities)
+
+        const options = {
+            filterBy: {
+                resellerId: undefined,
+            },
+        }
+        return await this.phonebookRepo.readWhereInIds(createdIds, options, sr)
+    }
+
     async readAll(sr: ServiceRequest): Promise<[internal.SubscriberPhonebook[] | internal.VSubscriberPhonebook[], number]> {
         const options = this.getSubscriberPhonebookOptionsFromServiceRequest(sr)
         if (sr.query && sr.query['include']) {
@@ -57,6 +91,23 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
             default:
                 return await this.phonebookRepo.readAll(options, sr)
         }
+    }
+
+    async export(sr: ServiceRequest): Promise<StreamableFile> {
+        const [entities] = await this.readAll(sr)
+        const dtos = entities.map(entity => {
+            const dto = new SubscriberPhonebookResponseDto(entity)
+            const {resourceUrl, ...rest} = dto
+            return rest
+        })
+
+        const csv = await dtoToCsv<SubscriberPhonebookResponseDto>(dtos)
+
+        const buffer = Buffer.from(csv, 'utf-8')
+        return new StreamableFile(Uint8Array.from(buffer), {
+            type: 'text/csv',
+            disposition: 'attachment; filename="customer_phonebook.csv"',
+        })
     }
 
     async read(id: number | string, sr: ServiceRequest): Promise<internal.SubscriberPhonebook | internal.VSubscriberPhonebook> {
