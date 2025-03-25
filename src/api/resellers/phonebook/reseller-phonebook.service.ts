@@ -150,7 +150,7 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
         const buffer = Buffer.from(csv, 'utf-8')
         return new StreamableFile(Uint8Array.from(buffer), {
             type: 'text/csv',
-            disposition: 'attachment; filename="customer_phonebook.csv"',
+            disposition: 'attachment; filename="reseller_phonebook.csv"',
         })
     }
 }

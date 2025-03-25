@@ -106,7 +106,7 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
         const buffer = Buffer.from(csv, 'utf-8')
         return new StreamableFile(Uint8Array.from(buffer), {
             type: 'text/csv',
-            disposition: 'attachment; filename="customer_phonebook.csv"',
+            disposition: 'attachment; filename="subscriber_phonebook.csv"',
         })
     }
 

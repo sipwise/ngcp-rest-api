@@ -1,0 +1,1 @@
+export const CustomerPhonebookTextCsvExampleResponse = 'id,customer_id,name,number\n1,1,Foo,111111\n2,1,Bar,222222\n3,1,Baz,333333'

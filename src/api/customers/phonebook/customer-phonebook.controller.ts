@@ -13,20 +13,22 @@ import {CustomerPhonebookRequestParamDto} from './dto/customer-phonebook-request
 import {CustomerPhonebookRequestDto} from './dto/customer-phonebook-request.dto'
 import {CustomerPhonebookResponseDto} from './dto/customer-phonebook-response.dto'
 import {CustomerPhonebookSearchDto} from './dto/customer-phonebook-search.dto'
+import {CustomerPhonebookTextCsvExampleResponse} from './dto/customer-phonebook-text-csv-example-response'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
 import {AppService} from '~/app.service'
 import {License as LicenseType, RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
+import {ApiAcceptHeader} from '~/decorators/api-accept-header.decorator'
+import {ApiContentTypeHeader} from '~/decorators/api-content-type-header.decorator'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
-import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {ApiPaginatedMultipleResponse} from '~/decorators/api-paginated-multiple-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {BodyOrEmptyArray} from '~/decorators/body-or-empty-array.decorator'
 import {License} from '~/decorators/license.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
-import {ValidContentTypes} from '~/decorators/valid-content-type.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {csvToDto, handleCsvExport} from '~/helpers/csv.helper'
@@ -82,7 +84,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
             fileSize: AppService.config.fileshare.limits.upload_size || null,
         },
     }))
-    @ValidContentTypes('application/json', 'multipart/form-data')
+    @ApiContentTypeHeader('application/json', 'multipart/form-data')
     async create(
         @BodyOrEmptyArray(new ParseOneOrManyPipe({items: CustomerPhonebookRequestDto})) createDto: CustomerPhonebookRequestDto[],
         @Req() req: Request,
@@ -116,8 +118,24 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
 
     @Get(':customerId?/phonebook')
     @ApiQuery({type: SearchLogic})
-    @ApiPaginatedResponse(CustomerPhonebookResponseDto)
-    @ValidContentTypes('application/json', 'text/csv')
+    @ApiPaginatedMultipleResponse({
+        description: 'List of customer phonebook entries in JSON or CSV',
+        contents: [
+            {
+                type: 'application/json',
+                data: {
+                    item: CustomerPhonebookResponseDto,
+                },
+            },
+            {
+                type: 'text/csv',
+                data: {
+                    example: CustomerPhonebookTextCsvExampleResponse,
+                },
+            },
+        ],
+    })
+    @ApiAcceptHeader('application/json', 'text/csv')
     async readAll(
         @Req() req: Request,
         @Param(new ValidationPipe()) _reqParams: CustomerPhonebookRequestParamDto,
@@ -132,7 +150,8 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
         })
         const sr = new ServiceRequest(req)
 
-        if (sr.headers['content-type'] === 'text/csv') {
+        // if accept header is csv
+        if (sr.headers['accept'] === 'text/csv') {
             return handleCsvExport(await this.phonebookService.export(sr), res)
         }
 
