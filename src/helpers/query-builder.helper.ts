@@ -28,57 +28,68 @@ function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilde
 }
 
 function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: QueriesDictionary, searchLogic: SearchLogic): void {
-    const allow_unknown_params = 'allow_unknown_params' in params
-                                    && JSON.parse(params['allow_unknown_params'].toString())
+    const allowUnknownParams = 'allow_unknown_params' in params && JSON.parse(params['allow_unknown_params'].toString())
+
     Object.keys(params).forEach((searchField: string) => {
-        if (reservedQueryParams.indexOf(searchField) >= 0)
+        if (reservedQueryParams.includes(searchField))
             return
 
-        const param_exists = searchLogic.searchableFields.indexOf(searchField) >= 0
-        if (!allow_unknown_params && !param_exists)
-            throw new BadRequestException(`unknown query parameter: ${searchField}`)
-        if (!param_exists)
+        const paramExists = searchLogic.searchableFields.includes(searchField)
+        if (!allowUnknownParams && !paramExists)
+            throw new BadRequestException(`Unknown query parameter: ${searchField}`)
+
+        if (!paramExists)
             return
 
-        const propertyAlias = searchLogic.aliases && searchLogic.aliases[searchField]
-            ? searchLogic.aliases[searchField]
-            : searchField
-
-        let qb_alias = qb.alias
-        let alias    = propertyAlias
-        if (typeof propertyAlias === 'string' && propertyAlias.indexOf('.') != -1) {
-            [qb_alias, alias] = propertyAlias.split('.')
-        }
+        const propertyAlias = searchLogic.aliases?.[searchField] ?? searchField
+        const [qbAlias, alias] = typeof propertyAlias === 'string' && propertyAlias.includes('.')
+            ? propertyAlias.split('.')
+            : [qb.alias, propertyAlias]
 
         const searchValue = params[searchField].toString()
-        const whereComparator = searchValue.includes('*') ? 'like' : '='
-        const value = searchValue.replace(/\*/g, '%')
+        const values = searchValue.split(',').map(val => val.trim())
 
-        const complexSearch: (args: string[]) => string = typeof propertyAlias === 'object' && propertyAlias['format']
+        const complexSearch = typeof propertyAlias === 'object' && propertyAlias['format']
+        const conditions: string[] = []
+        const parameters: Record<string, unknown> = {}
 
-        let whereBy: string
-        let whereValue: object | null
         if (complexSearch) {
             const field = propertyAlias['field']
             const comparator = propertyAlias['comparator']
             const transform = propertyAlias['transform']
-            const formatValue = complexSearch([value])
-            if (transform) {
-                whereBy = `${transform}(${qb_alias}.${field}) ${comparator} ${transform}('${formatValue}')`
-            } else {
-                whereBy = `${qb_alias}.${alias} ${comparator} :${field}`
-                whereValue = {[`${field}`]: formatValue}
-            }
+
+            values.forEach((value, index) => {
+                const paramKey = `${field}_${index}`
+                const formattedValue = complexSearch([value.replace(/\*/g, '%')])
+
+                if (transform) {
+                    conditions.push(`${transform}(${qbAlias}.${field}) ${comparator} ${transform}(:${paramKey})`)
+                } else {
+                    conditions.push(`${qbAlias}.${field} ${comparator} :${paramKey}`)
+                }
+                parameters[paramKey] = formattedValue
+            })
         } else {
-            whereBy = `${qb_alias}.${alias} ${whereComparator} :${propertyAlias}`
-            whereValue = {[`${propertyAlias}`]: value}
+            const exactValues = values.filter(value => !value.includes('*'))
+            const likeValues = values.filter(value => value.includes('*'))
+
+            if (exactValues.length > 0) {
+                conditions.push(`${qbAlias}.${alias} IN (:...${alias}_in)`)
+                parameters[`${alias}_in`] = exactValues
+            }
+
+            likeValues.forEach((value, index) => {
+                const paramKey = `${alias}_like_${index}`
+                conditions.push(`${qbAlias}.${alias} LIKE :${paramKey}`)
+                parameters[paramKey] = value.replace(/\*/g, '%')
+            })
         }
 
-        // TODO: value should be number | string | boolean and add type casting
+        const whereClause = `(${conditions.join(' OR ')})`
         if (searchLogic.searchOr) {
-            qb.orWhere(whereBy, whereValue)
+            qb.orWhere(whereClause, parameters)
         } else {
-            qb.andWhere(whereBy, whereValue)
+            qb.andWhere(whereClause, parameters)
         }
     })
 }
