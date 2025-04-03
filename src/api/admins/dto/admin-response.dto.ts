@@ -1,4 +1,5 @@
-import {ApiProperty} from '@nestjs/swagger'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {Expose} from 'class-transformer'
 import {IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString} from 'class-validator'
 
 import {RbacRole} from '~/config/constants.config'
@@ -81,6 +82,19 @@ export class AdminResponseDto extends ResponseDto {
     @ApiProperty()
         password_last_modify_time: string
 
+    @IsBoolean()
+    @ApiProperty()
+    @Expose({name: '2fa'})
+        enable_2fa: boolean
+
+    @IsBoolean()
+    @ApiProperty()
+        otp_init: boolean
+
+    @CanBeNull()
+    @ApiPropertyOptional()
+        otp_secret_key?: string
+
     constructor(admin: internal.Admin, role: RbacRole, options?: ResponseDtoOptions) {
         super(options)
         this.billing_data = admin.billing_data
@@ -99,6 +113,9 @@ export class AdminResponseDto extends ResponseDto {
         this.role = admin.role
         this.show_passwords = admin.show_passwords
         this.password_last_modify_time = admin.saltedpass_modify_timestamp.toISOString()
+        this.enable_2fa = admin.enable_2fa
+        this.otp_init = admin.show_otp_registration_info
+        this.otp_secret_key = admin.otp_secret
 
         if ([RbacRole.admin, RbacRole.system, RbacRole.ccareadmin].includes(role)) {
             this.reseller_id = admin.reseller_id

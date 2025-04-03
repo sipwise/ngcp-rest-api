@@ -80,6 +80,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             if (!this.auth.isAdminValid(admin)) {
                 return null
             }
+            await this.auth.handleTwoFactorAuth(admin, sr)
             return this.auth.adminAuthToResponse(admin)
         }
     }

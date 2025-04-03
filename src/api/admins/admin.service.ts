@@ -6,6 +6,7 @@ import {AdminPasswordJournalMariadbRepository} from './repositories/admin-passwo
 import {AdminMariadbRepository} from './repositories/admin.mariadb.repository'
 
 import {AppService} from '~/app.service'
+import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
 import {AdminPasswordJournal} from '~/entities/internal'
@@ -24,6 +25,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
         @Inject(AdminMariadbRepository) private readonly adminRepo: AdminMariadbRepository,
         @Inject(AdminPasswordJournalMariadbRepository) private readonly adminPasswordJournalRepo: AdminPasswordJournalMariadbRepository,
         @Inject(AclRoleRepository) private readonly aclRepo: AclRoleRepository,
+        @Inject(AuthService) private readonly authService: AuthService,
     ) {
     }
 
@@ -31,7 +33,17 @@ export class AdminService { //} implements CrudService<internal.Admin> {
         const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
         for (const admin of admins) {
             await this.populateAdmin(admin, accessorRole, sr)
+            if (admin.enable_2fa) {
+                if (!admin.otp_secret)
+                    admin.otp_secret = this.authService.generateOtpSecretKey()
+
+                admin.show_otp_registration_info = true
+            } else {
+                admin.show_otp_registration_info = false
+                admin.otp_secret = null
+            }
         }
+
         const createdIds = await this.adminRepo.create(admins)
         const created = await this.adminRepo.readWhereInIds(createdIds, this.getAdminOptionsFromServiceRequest(sr))
 
@@ -50,6 +62,13 @@ export class AdminService { //} implements CrudService<internal.Admin> {
                 }
             }
         }
+
+        for (const admin of created) {
+            if (admin.id != sr.user.id) {
+                delete admin.otp_secret
+            }
+        }
+
         return created
     }
 
@@ -59,12 +78,23 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             func: this.readAll.name,
             user: sr.user.username,
         })
-        return await this.adminRepo.readAll(this.getAdminOptionsFromServiceRequest(sr), sr)
+        const result = await this.adminRepo.readAll(this.getAdminOptionsFromServiceRequest(sr), sr)
+        for (const admin of result[0]) {
+            if (admin.id != sr.user.id) {
+                delete admin.otp_secret
+            }
+        }
+        return result
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Admin> {
         this.log.debug({message: 'read admin by id', func: this.read.name, user: sr.user.username, id: id})
-        return await this.adminRepo.readById(id, this.getAdminOptionsFromServiceRequest(sr))
+        const result = await this.adminRepo.readById(id, this.getAdminOptionsFromServiceRequest(sr))
+
+        if (result.id != sr.user.id)
+            delete result.otp_secret
+
+        return result
     }
 
     async update(updates: Dictionary<internal.Admin>, sr: ServiceRequest): Promise<number[]> {
@@ -81,6 +111,18 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             admin.id = id  // TODO: Do we want to set the id here? After validation in controller it should not be possible to receive updates where the id in the update does not equal the key id
             await this.populateAdmin(admin, accessorRole, sr)
             const oldAdmin = await this.adminRepo.readById(id, options)
+            // check for toggle
+            if (oldAdmin.enable_2fa != admin.enable_2fa) {
+                if (admin.enable_2fa) {
+                    if (!admin.otp_secret)
+                        admin.otp_secret = this.authService.generateOtpSecretKey()
+                    admin.show_otp_registration_info = true
+                }
+                else {
+                    admin.show_otp_registration_info = false
+                    admin.otp_secret = null // TODO: This doesnt work right now because the adminRepo.update removes even null values
+                }
+            }
 
             await this.validateUpdate(sr.user.id, oldAdmin, admin)
         }

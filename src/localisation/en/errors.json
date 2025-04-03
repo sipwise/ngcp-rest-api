@@ -161,6 +161,22 @@
   },
   "CSV_MALFORMED": {
     "message": "CSV malformed",
-    "code": 10040
+    "code": 10041
+  },
+  "MISSING_OTP": {
+    "message": "Missing OTP",
+    "code": 10042
+  },
+  "MISSING_OTP_WITH_REFER": {
+    "message": "Missing OTP. Refer: {refer}",
+    "code": 10043
+  },
+  "INVALID_OTP": {
+    "message": "Invalid OTP",
+    "code": 10044
+  },
+  "2FA_IS_DISABLED": {
+    "message": "2FA is disabled",
+    "code": 10045
   }
 }

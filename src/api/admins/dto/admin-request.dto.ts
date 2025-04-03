@@ -1,12 +1,11 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength} from 'class-validator'
+import {IsBase32, IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength} from 'class-validator'
 import {generate as passwordGenerator} from 'generate-password'
 
 import {RbacRole} from '~/config/constants.config'
 import {IsValidPassword} from '~/decorators/is-valid-password.decorator'
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
-import {AdminInterface} from '~/entities/internal/admin.internal.entity'
 
 export class AdminRequestDto implements RequestDto {
     @IsOptional()
@@ -69,27 +68,39 @@ export class AdminRequestDto implements RequestDto {
     @ApiProperty({description: 'Access level of the user', enum: RbacRole})
         role: RbacRole
 
-    static create(data: AdminInterface): AdminRequestDto {
-        const admin = new AdminRequestDto()
+    @IsBoolean()
+    @ApiProperty()
+        enable_2fa: boolean
 
-        Object.keys(data).map(key => {
-            if(data[key] != undefined) {
-                admin[key] = data[key]
-            } else {
-                delete(admin[key])
-            }
-        })
-        return admin
-    }
+    @IsOptional()
+    @IsBoolean()
+    @ApiProperty()
+        otp_init?: boolean
+
+    @IsOptional()
+    @IsBase32()
+    @ApiPropertyOptional()
+        otp_secret_key?: string
 
     constructor(entity?: internal.Admin) {
         if (!entity)
             return
 
-        // TODO rework as the Dto key names are not always equal to the Entity ones
-        Object.keys(entity).map(key => {
-            this[key] = entity[key]
-        })
+        this.email = entity.email
+        this.reseller_id = entity.reseller_id
+        this.login = entity.login
+        this.is_master = entity.is_master
+        this.is_active = entity.is_active
+        this.read_only = entity.read_only
+        this.show_passwords = entity.show_passwords
+        this.call_data = entity.call_data
+        this.billing_data = entity.billing_data
+        this.can_reset_password = entity.can_reset_password
+        this.password = entity.password
+        this.role = entity.role
+        this.enable_2fa = entity.enable_2fa
+        this.otp_init = entity.show_otp_registration_info
+        this.otp_secret_key = entity.otp_secret
     }
 
     toInternal(options: RequestDtoOptions = {}): internal.Admin {
@@ -110,6 +121,9 @@ export class AdminRequestDto implements RequestDto {
         admin.role = this.role
         admin.show_passwords = this.show_passwords
         admin.password = this.password
+        admin.enable_2fa = this.enable_2fa
+        admin.otp_secret = this.otp_secret_key
+        admin.show_otp_registration_info = this.otp_init
 
         if (options.id)
             admin.id = options.id
@@ -131,6 +145,7 @@ export class AdminRequestDto implements RequestDto {
         this.call_data ??= true
         this.billing_data ??= true
         this.can_reset_password ??= true
+        this.otp_secret_key ??= null
         this.password ??= passwordGenerator({
             length: 16,
             lowercase: true,

@@ -1,7 +1,14 @@
-import {ForbiddenException, Injectable, UnauthorizedException} from '@nestjs/common'
+import {Readable} from 'stream'
+
+
+import {ForbiddenException, Inject, Injectable, StreamableFile, UnauthorizedException} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
 import {compare} from 'bcrypt'
+import {Response} from 'express'
 import Redis, {Cluster} from 'ioredis'
+import {I18nService} from 'nestjs-i18n'
+import {authenticator} from 'otplib'
+import * as QRCode from 'qrcode'
 
 import {AuthResponseDto} from './dto/auth-response.dto'
 
@@ -26,7 +33,9 @@ export class AuthService {
     constructor(
         private readonly app: AppService,
         private readonly jwtService: JwtService,
+        @Inject(I18nService) private readonly i18n: I18nService,
     ) {
+        authenticator.options = {step: 30, window: 1}
     }
 
     async getRedisBanDb(): Promise<Redis | Cluster> {
@@ -75,10 +84,40 @@ export class AuthService {
         })
 
         if (admin && await this.compareBcryptPassword(password, admin.saltedpass) !== false) {
+            await this.handleTwoFactorAuth(admin, _req)
             return this.adminAuthToResponse(admin)
         }
         this.log.debug({message: 'user authentication', success: false, username: username})
         return null
+    }
+
+    async handleQrCode(req: ServiceRequest, res: Response): Promise<StreamableFile> {
+        const user = req.user as AuthResponseDto
+        const companyName = this.app.config.general.companyname
+        const username = user.username
+
+        const otpAuthUrl = authenticator.keyuri(
+            `NGCP-${companyName}: ${username}`,
+            `NGCP-${companyName}`,
+            user.otp_secret_key,
+        )
+
+        const qrCodeBuffer = await QRCode.toBuffer(otpAuthUrl)
+
+        const stream = new Readable()
+        stream.push(qrCodeBuffer)
+        stream.push(null)
+
+        res.set({
+            'Content-Type': 'image/png',
+            'Content-Disposition': 'inline',
+        })
+        res['passthrough'] = true
+
+        return new StreamableFile(stream, {
+            type: 'image/png',
+            disposition: 'inline',
+        })
     }
 
     /**
@@ -135,6 +174,9 @@ export class AuthService {
                 admin.role.role == RbacRole.ccare ||
                 admin.role.role == RbacRole.subscriber ||
                 admin.role.role == RbacRole.subscriberadmin,
+            enable_2fa: admin.enable_2fa,
+            otp_init: admin.show_otp_registration_info,
+            otp_secret_key: admin.otp_secret,
         }
         this.log.debug({
             message: 'admin user authentication',
@@ -518,4 +560,55 @@ export class AuthService {
         return `${keyBasic}::subscriber_id:${subscriber_id}::customer_id:${customer_id}`
     }
 
+    generateOtpSecretKey(): string {
+        return authenticator.generateSecret()
+    }
+
+    verifyOtp(secret: string, token: string): boolean {
+        this.log.debug({message: 'verifying otp', secret: secret, token: token})
+        return authenticator.verify({
+            secret: secret,
+            token: token,
+        })
+    }
+
+    async handleTwoFactorAuth(user: db.billing.Admin, req: ServiceRequest): Promise<void> {
+        if (!user.enable_2fa)
+            return
+        this.log.debug({message: 'starting 2fa authentication', method: this.handleTwoFactorAuth.name})
+
+        if (!req.headers['x-totp'] && user.show_otp_registration_info) {
+            this.log.debug({message: 'otp not provided, otp_init: true'})
+            const isOtpAuthUrl = req.req.url.startsWith(`/${this.app.config.common.api_prefix}/auth/otp`)
+            this.log.debug({message: 'is otp auth url', isOtpAuthUrl: isOtpAuthUrl})
+            if (!isOtpAuthUrl) {
+                this.log.debug({message: 'not otp auth url'})
+                throw new ForbiddenException(
+                    this.i18n.t(
+                        'errors.MISSING_OTP_WITH_REFER.message',
+                        {args: {refer: `/${this.app.config.common.api_prefix}/auth/otp`}},
+                    ),
+                )
+            }
+            this.log.debug({message: 'is otp auth url, letting pass'})
+            return
+        }
+
+        if (!req.headers['x-totp'] || typeof req.headers['x-totp'] !== 'string')
+            throw new ForbiddenException(this.i18n.t('errors.MISSING_OTP'))
+
+        if (!this.verifyOtp(user.otp_secret, req.headers['x-totp'])) {
+            this.log.debug({message: 'otp verification failed'})
+            throw new ForbiddenException(this.i18n.t('errors.INVALID_OTP'))
+        }
+
+        if (user.show_otp_registration_info) {
+            this.log.debug({message: 'otp verification succeeded, setting show_otp_registration_info to false'})
+            user.show_otp_registration_info = false
+            await user.save()
+        }
+
+        this.log.debug({message: '2fa authentication successful'})
+        return
+    }
 }

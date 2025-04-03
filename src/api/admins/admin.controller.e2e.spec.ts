@@ -3,7 +3,6 @@ import {Test} from '@nestjs/testing'
 import request from 'supertest'
 
 import {AdminModule} from './admin.module'
-import {AdminRequestDto} from './dto/admin-request.dto'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
@@ -14,6 +13,24 @@ import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
+
+type AdminPost = {
+    email: string
+    reseller_id: number
+    login: string
+    is_master: boolean
+    is_active: boolean
+    read_only: boolean
+    show_passwords: boolean
+    call_data: boolean
+    billing_data: boolean
+    can_reset_password: boolean
+    password: string
+    role: RbacRole
+    enable_2fa: boolean
+    otp_init?: boolean
+    otp_secret_key?: string
+}
 
 describe('AdminController', () => {
     let app: INestApplication
@@ -69,7 +86,9 @@ describe('AdminController', () => {
         admin.login = 'staticadmin'
         admin.saltedpass = strongPassword
 
-        await db.billing.Admin.insert(admin)
+        const result = await db.billing.Admin.insert(admin)
+        expect(result.identifiers.length).toBeGreaterThan(0)
+        createdAdminIds.push(result.identifiers[0].id)
     })
 
     it('mock authService.compareBcryptPassword', async () => {
@@ -88,8 +107,8 @@ describe('AdminController', () => {
 
     describe('', () => { // main tests block
         describe('Create initial admins', () => {
-            const admins: AdminRequestDto[] = [
-                AdminRequestDto.create({
+            const admins: AdminPost[] = [
+                {
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -102,8 +121,9 @@ describe('AdminController', () => {
                     reseller_id: 1,
                     role: RbacRole.admin,
                     show_passwords: true,
-                }),
-                AdminRequestDto.create({
+                    enable_2fa:false,
+                },
+                {
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -116,8 +136,9 @@ describe('AdminController', () => {
                     reseller_id: 1,
                     role: RbacRole.admin,
                     show_passwords: true,
-                }),
-                AdminRequestDto.create({
+                    enable_2fa:false,
+                },
+                {
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -130,8 +151,9 @@ describe('AdminController', () => {
                     reseller_id: 1,
                     role: RbacRole.system,
                     show_passwords: true,
-                }),
-                AdminRequestDto.create({
+                    enable_2fa:false,
+                },
+                {
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -144,8 +166,9 @@ describe('AdminController', () => {
                     reseller_id: 1,
                     role: RbacRole.reseller,
                     show_passwords: true,
-                }),
-                AdminRequestDto.create({
+                    enable_2fa:false,
+                },
+                {
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -158,8 +181,9 @@ describe('AdminController', () => {
                     reseller_id: 1,
                     role: RbacRole.reseller,
                     show_passwords: true,
-                }),
-                AdminRequestDto.create({
+                    enable_2fa:false,
+                },
+                {
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -172,8 +196,9 @@ describe('AdminController', () => {
                     reseller_id: 1,
                     role: RbacRole.ccareadmin,
                     show_passwords: true,
-                }),
-                AdminRequestDto.create({
+                    enable_2fa:false,
+                },
+                {
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -186,8 +211,9 @@ describe('AdminController', () => {
                     reseller_id: 1,
                     role: RbacRole.ccare,
                     show_passwords: true,
-                }),
-                AdminRequestDto.create({
+                    enable_2fa:false,
+                },
+                {
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -200,7 +226,39 @@ describe('AdminController', () => {
                     reseller_id: 1,
                     role: RbacRole.lintercept,
                     show_passwords: true,
-                }),
+                    enable_2fa:false,
+                },
+                {
+                    billing_data: true,
+                    call_data: false,
+                    can_reset_password: true,
+                    is_active: true,
+                    is_master: true,
+                    email: '2faProvidedSecret@example.com',
+                    login: '2faProvidedSecret',
+                    password: strongPassword,
+                    read_only: false,
+                    reseller_id: 1,
+                    role: RbacRole.admin,
+                    show_passwords: true,
+                    enable_2fa:true,
+                    otp_secret_key: '3SLSWZPQQBB7WBRYDAQZ5J77W5D7I6GU',
+                },
+                {
+                    billing_data: true,
+                    call_data: false,
+                    can_reset_password: true,
+                    is_active: true,
+                    is_master: true,
+                    email: '2faGeneratedSecret@example.com',
+                    login: '2faGeneratedSecret',
+                    password: strongPassword,
+                    read_only: false,
+                    reseller_id: 1,
+                    role: RbacRole.admin,
+                    show_passwords: true,
+                    enable_2fa:true,
+                },
             ]
             const single = admins.pop()
             it('should create single admin ' + single.login, async () => {
@@ -277,6 +335,38 @@ describe('AdminController', () => {
                     }
                 })
             }
+            it('throws error because 2fa is enabled but no token is provided', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/admins?login=2faProvidedSecret')
+                    .auth('2faProvidedSecret', strongPassword)
+                expect(response.status).toEqual(403)
+            })
+            it('hides otp_secret from other users', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/admins?login=2faGeneratedSecret')
+                    .auth('adminmaster', strongPassword)
+                expect(response.status).toEqual(200)
+                expect(response.body[0][0].otp_secret_key).toBeUndefined()
+
+                const res = await db.billing.Admin.findOne({where: {login: '2faGeneratedSecret'}})
+                expect(res.otp_secret).toBeDefined()
+            })
+            it('generates otp_secret if enable_2fa is set but otp_secret_key is not set', async () => {
+                const res = await db.billing.Admin.findOne({where: {login: '2faGeneratedSecret'}})
+                expect(res.otp_secret).toBeDefined()
+            })
+            it('uses otp_secret if enable_2fa is set and otp_secret_key is set', async () => {
+                const res = await db.billing.Admin.findOne({where: {login: '2faProvidedSecret'}})
+                expect(res.otp_secret).toBe('3SLSWZPQQBB7WBRYDAQZ5J77W5D7I6GU')
+            })
+            it('makes otp_secret null and otp_ini to false if enable_2fa is not set', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/admins?login=adminmaster')
+                    .auth('adminmaster', strongPassword)
+                expect(response.status).toEqual(200)
+                expect(response.body[0][0].otp_secret_key).toBeNull()
+                expect(response.body[0][0].enable_2fa).toBe(false)
+            })
         })
 
         describe('Admins POST', () => {
@@ -391,7 +481,7 @@ describe('AdminController', () => {
                     const message = roleTest.want == 201 ? 'succeed' : 'fail'
                     it(`${test.username}: should ${message} creating {role: ${roleTest.role}, isMaster: ${roleTest.isMaster}}`, async () => {
                         const rand = getRandomInt(10000, 99999)
-                        const data = AdminRequestDto.create({
+                        const data: AdminPost = {
                             billing_data: true,
                             call_data: false,
                             can_reset_password: true,
@@ -404,7 +494,8 @@ describe('AdminController', () => {
                             reseller_id: 1,
                             role: roleTest.role,
                             show_passwords: true,
-                        })
+                            enable_2fa: false,
+                        }
                         const response = await request(app.getHttpServer())
                             .post('/admins')
                             .set(...preferHeader)
@@ -423,7 +514,7 @@ describe('AdminController', () => {
                 }
             }
             it('should fail if required fields are missing', async () => {
-                const data = AdminRequestDto.create({
+                const data = {
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -433,7 +524,7 @@ describe('AdminController', () => {
                     reseller_id: 1,
                     role: RbacRole.admin,
                     show_passwords: true,
-                })
+                }
                 const want = HttpStatus.UNPROCESSABLE_ENTITY
                 const response = await request(app.getHttpServer())
                     .post('/admins')
@@ -443,7 +534,7 @@ describe('AdminController', () => {
                 expect(response.status).toEqual(want)
             })
             it('should fail if invalid fields are provided', async () => {
-                const data = AdminRequestDto.create({
+                const data = {
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -453,7 +544,8 @@ describe('AdminController', () => {
                     reseller_id: 1,
                     role: RbacRole.admin,
                     show_passwords: true,
-                })
+                    enable_2fa: false,
+                }
                 data['nonWhitelistedField'] = 'invalid'
                 const want = HttpStatus.UNPROCESSABLE_ENTITY
                 const response = await request(app.getHttpServer())
@@ -468,7 +560,7 @@ describe('AdminController', () => {
         describe('Admins PATCH', () => {
             let createdId: number
             it('should create admin', async () => {
-                const data = AdminRequestDto.create({
+                const data: AdminPost = {
                     billing_data: true,
                     call_data: false,
                     can_reset_password: true,
@@ -481,7 +573,8 @@ describe('AdminController', () => {
                     reseller_id: 1,
                     role: RbacRole.admin,
                     show_passwords: true,
-                })
+                    enable_2fa: false,
+                }
                 const response = await request(app.getHttpServer())
                     .post('/admins')
                     .set(...authHeader)
@@ -518,8 +611,21 @@ describe('AdminController', () => {
                     .send(patch)
                 expect(patchResponse.status).toEqual(422)
             })
+            it('should turn on 2fa', async () => {
+                const patch: PatchOperation[] = [
+                    {op: 'replace', path: '/enable_2fa', value: true},
+                ]
+                const patchResponse = await request(app.getHttpServer())
+                    .patch(`/admins/${createdId}`)
+                    .auth('update_self', strongPassword)
+                    .send(patch)
+                expect(patchResponse.status).toEqual(200)
+                expect(patchResponse.body.enable_2fa).toEqual(true)
+                expect(patchResponse.body.otp_secret_key).not.toBeNull()
+                expect(patchResponse.body.otp_secret_key).toBeDefined()
+                expect(patchResponse.body.otp_init).toBe(true)
+            })
         })
-
     })
 
     describe('Admins DELETE', () => {

@@ -14,4 +14,7 @@ export class AuthResponseDto {
     uuid?: string
     customer_id?: number
     password_modified_timestamp?: Date
+    enable_2fa?: boolean
+    otp_init?: boolean
+    otp_secret_key?: string
 }

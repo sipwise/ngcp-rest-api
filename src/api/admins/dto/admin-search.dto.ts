@@ -20,6 +20,9 @@ export class AdminSearchDto implements AdminResponseDto {
     role: RbacRole = undefined
     show_passwords: boolean = undefined
     password_last_modify_time: string = undefined
+    enable_2fa: boolean = undefined
+    otp_init: boolean = undefined
+    otp_secret?: string
     _alias = {
         password_last_modify_time: 'saltedpass_modify_timestamp',
     }

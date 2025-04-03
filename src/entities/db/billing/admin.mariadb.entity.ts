@@ -161,6 +161,28 @@ export class Admin extends BaseEntity {
         last_banned_at?: Date
 
     @Column({
+        type: 'boolean',
+        nullable: false,
+        default: false,
+    })
+        enable_2fa!: boolean
+
+    @Column({
+        type: 'varchar',
+        length: 32,
+        nullable: true,
+        default: null,
+    })
+        otp_secret?: string
+
+    @Column({
+        type: 'boolean',
+        nullable: false,
+        default: false,
+    })
+        show_otp_registration_info: boolean
+
+    @Column({
         type: 'varchar',
         length: 45,
         nullable: true,
@@ -194,6 +216,9 @@ export class Admin extends BaseEntity {
         this.login = admin.login
         this.read_only = admin.read_only
         this.reseller_id = admin.reseller_id
+        this.enable_2fa = admin.enable_2fa
+        this.otp_secret = admin.otp_secret
+        this.show_otp_registration_info = admin.show_otp_registration_info
         if (admin.role_data != undefined)
             this.role = new AclRole().fromInternal(admin.role_data)
         this.role_id = admin.role_id
@@ -224,6 +249,9 @@ export class Admin extends BaseEntity {
         admin.reseller_id = this.reseller_id
         admin.role_id = this.role_id
         admin.saltedpass_modify_timestamp = this.saltedpass_modify_timestamp
+        admin.enable_2fa = this.enable_2fa
+        admin.show_otp_registration_info = this.show_otp_registration_info
+        admin.otp_secret = this.otp_secret
         if (this.role != undefined) {
             admin.role = RbacRole[this.role.role]
             admin.role_data = this.role.toInternal()

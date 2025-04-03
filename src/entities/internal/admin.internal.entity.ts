@@ -25,6 +25,9 @@ export interface AdminInterface {
     saltedpass?: string
     saltedpass_modify_timestamp?: Date
     show_passwords?: boolean
+    enable_2fa?: boolean
+    otp_secret?: string
+    show_otp_registration_info?: boolean
 }
 
 export class Admin implements AdminInterface {
@@ -49,6 +52,9 @@ export class Admin implements AdminInterface {
     saltedpass: string
     saltedpass_modify_timestamp: Date
     show_passwords: boolean
+    enable_2fa: boolean
+    show_otp_registration_info: boolean
+    otp_secret?: string
 
     static create(data: AdminInterface): Admin {
         const admin = new Admin()

@@ -16,6 +16,7 @@ import {ScheduleModule} from '@nestjs/schedule'
 import {AcceptLanguageResolver, CookieResolver, HeaderResolver, I18nModule, QueryResolver} from 'nestjs-i18n'
 
 import {AdminModule} from './api/admins/admin.module'
+import {OtpModule} from './api/auth/otp/otp.module'
 import {PasswordChangeModule} from './api/auth/password/change/password-change.module'
 import {PasswordModule} from './api/auth/password/password.module'
 import {BanAdminModule} from './api/bans/admins/ban-admin.module'
@@ -118,6 +119,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     HeaderManipulationRuleModule,
     HeaderManipulationSetModule,
     NumberModule,
+    OtpModule,
     PbxUserModule,
     PbxModule,
     PbxGroupMemberModule,
