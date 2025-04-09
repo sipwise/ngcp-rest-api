@@ -47,7 +47,7 @@ export class OtpController extends CrudController<never, never> {
     @ApiOkResponse({
         type: OtpResponseDto,
     })
-    @ApiAcceptHeader('application/json', 'image/png')
+    @ApiAcceptHeader('application/json', 'application/hal+json', 'image/png')
     async readAll(
         @Req() req,
         @Param() _reqParams: unknown,

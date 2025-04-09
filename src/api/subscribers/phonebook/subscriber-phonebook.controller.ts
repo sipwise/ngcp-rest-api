@@ -136,7 +136,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
             },
         ],
     })
-    @ApiAcceptHeader('application/json', 'text/csv')
+    @ApiAcceptHeader('application/json', 'application/hal+json', 'text/csv')
     async readAll(
         @Req() req: Request,
         @Param(new ValidationPipe()) _reqParams: SubscriberPhonebookRequestParamDto,

@@ -129,7 +129,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
             },
         ],
     })
-    @ApiAcceptHeader('application/json', 'text/csv')
+    @ApiAcceptHeader('application/json', 'application/hal+json', 'text/csv')
     async readAll(
         @Req() req: Request,
         @Param(new ValidationPipe()) _reqParams: ResellerPhonebookRequestParamDto,
