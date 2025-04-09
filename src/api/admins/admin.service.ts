@@ -33,14 +33,14 @@ export class AdminService { //} implements CrudService<internal.Admin> {
         const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
         for (const admin of admins) {
             await this.populateAdmin(admin, accessorRole, sr)
-            if (admin.enable_2fa) {
-                if (!admin.otp_secret)
-                    admin.otp_secret = this.authService.generateOtpSecretKey()
+            if (admin.enable2fa) {
+                if (!admin.otpSecret)
+                    admin.otpSecret = this.authService.generateOtpSecretKey()
 
-                admin.show_otp_registration_info = true
+                admin.otpInit = true
             } else {
-                admin.show_otp_registration_info = false
-                admin.otp_secret = null
+                admin.otpInit = false
+                admin.otpSecret = null
             }
         }
 
@@ -65,7 +65,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
 
         for (const admin of created) {
             if (admin.id != sr.user.id) {
-                delete admin.otp_secret
+                delete admin.otpSecret
             }
         }
 
@@ -81,7 +81,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
         const result = await this.adminRepo.readAll(this.getAdminOptionsFromServiceRequest(sr), sr)
         for (const admin of result[0]) {
             if (admin.id != sr.user.id) {
-                delete admin.otp_secret
+                delete admin.otpSecret
             }
         }
         return result
@@ -92,7 +92,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
         const result = await this.adminRepo.readById(id, this.getAdminOptionsFromServiceRequest(sr))
 
         if (result.id != sr.user.id)
-            delete result.otp_secret
+            delete result.otpSecret
 
         return result
     }
@@ -112,15 +112,15 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             await this.populateAdmin(admin, accessorRole, sr)
             const oldAdmin = await this.adminRepo.readById(id, options)
             // check for toggle
-            if (oldAdmin.enable_2fa != admin.enable_2fa) {
-                if (admin.enable_2fa) {
-                    if (!admin.otp_secret)
-                        admin.otp_secret = this.authService.generateOtpSecretKey()
-                    admin.show_otp_registration_info = true
+            if (oldAdmin.enable2fa != admin.enable2fa) {
+                if (admin.enable2fa) {
+                    if (!admin.otpSecret)
+                        admin.otpSecret = this.authService.generateOtpSecretKey()
+                    admin.otpInit = true
                 }
                 else {
-                    admin.show_otp_registration_info = false
-                    admin.otp_secret = null // TODO: This doesnt work right now because the adminRepo.update removes even null values
+                    admin.otpInit = false
+                    admin.otpSecret = null // TODO: This doesnt work right now because the adminRepo.update removes even null values
                 }
             }
 
@@ -178,8 +178,8 @@ export class AdminService { //} implements CrudService<internal.Admin> {
     private async populateAdmin(admin: internal.Admin, accessorRole: internal.AclRole, sr: ServiceRequest): Promise<void> {
         const role = await this.aclRepo.readOneByRole(admin.role, sr)
         await admin.setPermissionFlags()
-        admin.role_id = role.id
-        admin.role_data = role
+        admin.roleId = role.id
+        admin.roleData = role
 
         if (!await accessorRole.hasPermission(role.id, sr.user.is_master)) {
             this.log.debug({
@@ -196,7 +196,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
 
         if (admin.password) {
             admin.saltedpass = await admin.generateSaltedpass()
-            admin.saltedpass_modify_timestamp = new Date()
+            admin.saltedpassModifyTimestamp = new Date()
             if (admin.id &&
                 this.app.config.security.password.web_validate &&
                 this.app.config.security.password.web_keep_last_used > 0
@@ -217,8 +217,8 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             }
         }
 
-        if (sr.user.reseller_id_required || admin.reseller_id == undefined) {
-            admin.reseller_id = sr.user.reseller_id
+        if (sr.user.reseller_id_required || admin.resellerId == undefined) {
+            admin.resellerId = sr.user.reseller_id
         }
     }
 
@@ -234,10 +234,10 @@ export class AdminService { //} implements CrudService<internal.Admin> {
      */
     private async validateUpdate(selfId: number, oldAdmin: internal.Admin, admin: internal.Admin): Promise<boolean> {
         if (admin.id == selfId) {
-            ['login', 'role', 'is_master', 'is_active',
-                'is_system', 'is_superuser', 'lawful_intercept',
-                'read_only', 'show_passwords',
-                'call_data', 'billing_data'].map(s => {
+            ['login', 'role', 'isMaster', 'isActive',
+                'isSystem', 'isSuperuser', 'lawfulIntercept',
+                'readOnly', 'showPasswords',
+                'callData', 'billingData'].map(s => {
                 if (admin[s] != undefined && (oldAdmin[s] == undefined || oldAdmin[s] != admin[s])) {
                     this.log.debug({message: 'Cannot change own property', id: selfId, field: s})
                     throw new ForbiddenException(this.i18n.t('errors.ADMIN_CHANGE_PROPERTY_SELF'))

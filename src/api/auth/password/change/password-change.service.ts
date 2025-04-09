@@ -45,7 +45,7 @@ export class PasswordChangeService {
         const internal = await admin.toInternal()
         internal.password = newPassword
         internal.saltedpass = await internal.generateSaltedpass()
-        internal.saltedpass_modify_timestamp = new Date()
+        internal.saltedpassModifyTimestamp = new Date()
         if (this.app.config.security.password.web_validate && this.app.config.security.password.web_keep_last_used > 0) {
             const lastPasswords = await this.adminPasswordJournalRepo.readLastNPasswords(admin.id, this.app.config.security.password.web_keep_last_used, sr)
             for (const pass of lastPasswords) {
@@ -63,7 +63,7 @@ export class PasswordChangeService {
         }
         await this.app.dbRepo(db.billing.Admin).update(
             {id: admin.id},
-            {saltedpass: internal.saltedpass , saltedpass_modify_timestamp: internal.saltedpass_modify_timestamp},
+            {saltedpass: internal.saltedpass , saltedpass_modify_timestamp: internal.saltedpassModifyTimestamp},
         )
     }
 

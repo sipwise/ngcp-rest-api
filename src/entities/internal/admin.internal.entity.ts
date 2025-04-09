@@ -4,57 +4,57 @@ import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
 
 export interface AdminInterface {
-    billing_data?: boolean
-    call_data?: boolean
-    can_reset_password?: boolean
+    billingData?: boolean
+    callData?: boolean
+    canResetPassword?: boolean
     email?: string
     id?: number
-    is_active?: boolean
-    is_ccare?: boolean
-    is_master?: boolean
-    is_superuser?: boolean
-    is_system?: boolean
-    lawful_intercept?: boolean
+    isActive?: boolean
+    isCcare?: boolean
+    isMaster?: boolean
+    isSuperuser?: boolean
+    isSystem?: boolean
+    lawfulIntercept?: boolean
     login?: string
     password?: string
-    read_only?: boolean
-    reseller_id?: number
-    role_data?: internal.AclRole
+    readOnly?: boolean
+    resellerId?: number
+    roleData?: internal.AclRole
     role?: string
-    role_id?: number
+    roleId?: number
     saltedpass?: string
-    saltedpass_modify_timestamp?: Date
-    show_passwords?: boolean
-    enable_2fa?: boolean
-    otp_secret?: string
-    show_otp_registration_info?: boolean
+    saltedpassModifyTimestamp?: Date
+    showPasswords?: boolean
+    enable2fa?: boolean
+    otpSecret?: string
+    otpInit?: boolean
 }
 
 export class Admin implements AdminInterface {
-    billing_data: boolean
-    call_data: boolean
-    can_reset_password: boolean
+    billingData: boolean
+    callData: boolean
+    canResetPassword: boolean
     email?: string
     id: number
-    is_active: boolean
-    is_ccare: boolean
-    is_master: boolean
-    is_superuser: boolean
-    is_system: boolean
-    lawful_intercept: boolean
+    isActive: boolean
+    isCcare: boolean
+    isMaster: boolean
+    isSuperuser: boolean
+    isSystem: boolean
+    lawfulIntercept: boolean
     login: string
     password?: string
-    read_only: boolean
-    reseller_id?: number
-    role_data?: internal.AclRole
+    readOnly: boolean
+    resellerId?: number
+    roleData?: internal.AclRole
     role: RbacRole
-    role_id: number
+    roleId: number
     saltedpass: string
-    saltedpass_modify_timestamp: Date
-    show_passwords: boolean
-    enable_2fa: boolean
-    show_otp_registration_info: boolean
-    otp_secret?: string
+    saltedpassModifyTimestamp: Date
+    showPasswords: boolean
+    enable2fa: boolean
+    otpInit: boolean
+    otpSecret?: string
 
     static create(data: AdminInterface): Admin {
         const admin = new Admin()
@@ -68,40 +68,40 @@ export class Admin implements AdminInterface {
     async setPermissionFlags(): Promise<void> {
         switch (this.role) {
             case RbacRole.system:
-                this.is_system = true
-                this.is_superuser = false
-                this.is_ccare = false
-                this.lawful_intercept = false
+                this.isSystem = true
+                this.isSuperuser = false
+                this.isCcare = false
+                this.lawfulIntercept = false
                 break
             case RbacRole.admin:
-                this.is_system = false
-                this.is_superuser = true
-                this.is_ccare = false
-                this.lawful_intercept = false
+                this.isSystem = false
+                this.isSuperuser = true
+                this.isCcare = false
+                this.lawfulIntercept = false
                 break
             case RbacRole.reseller:
-                this.is_system = false
-                this.is_superuser = false
-                this.is_ccare = false
-                this.lawful_intercept = false
+                this.isSystem = false
+                this.isSuperuser = false
+                this.isCcare = false
+                this.lawfulIntercept = false
                 break
             case RbacRole.ccareadmin:
-                this.is_system = false
-                this.is_superuser = true
-                this.is_ccare = true
-                this.lawful_intercept = false
+                this.isSystem = false
+                this.isSuperuser = true
+                this.isCcare = true
+                this.lawfulIntercept = false
                 break
             case RbacRole.ccare:
-                this.is_system = false
-                this.is_superuser = false
-                this.is_ccare = true
-                this.lawful_intercept = false
+                this.isSystem = false
+                this.isSuperuser = false
+                this.isCcare = true
+                this.lawfulIntercept = false
                 break
             case RbacRole.lintercept:
-                this.is_system = false
-                this.is_superuser = false
-                this.is_ccare = false
-                this.lawful_intercept = true
+                this.isSystem = false
+                this.isSuperuser = false
+                this.isCcare = false
+                this.lawfulIntercept = true
                 break
         }
     }

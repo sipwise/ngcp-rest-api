@@ -97,28 +97,28 @@ export class AdminResponseDto extends ResponseDto {
 
     constructor(admin: internal.Admin, role: RbacRole, options?: ResponseDtoOptions) {
         super(options)
-        this.billing_data = admin.billing_data
-        this.call_data = admin.call_data
-        this.can_reset_password = admin.can_reset_password
+        this.billing_data = admin.billingData
+        this.call_data = admin.callData
+        this.can_reset_password = admin.canResetPassword
         this.email = admin.email
         this.id = admin.id
-        this.is_active = admin.is_active
-        this.is_ccare = admin.is_ccare
-        this.is_master = admin.is_master
-        this.is_superuser = admin.is_superuser
-        this.is_system = admin.is_system
-        this.lawful_intercept = admin.lawful_intercept
+        this.is_active = admin.isActive
+        this.is_ccare = admin.isCcare
+        this.is_master = admin.isMaster
+        this.is_superuser = admin.isSuperuser
+        this.is_system = admin.isSystem
+        this.lawful_intercept = admin.lawfulIntercept
         this.login = admin.login
-        this.read_only = admin.read_only
+        this.read_only = admin.readOnly
         this.role = admin.role
-        this.show_passwords = admin.show_passwords
-        this.password_last_modify_time = admin.saltedpass_modify_timestamp.toISOString()
-        this.enable_2fa = admin.enable_2fa
-        this.otp_init = admin.show_otp_registration_info
-        this.otp_secret_key = admin.otp_secret
+        this.show_passwords = admin.showPasswords
+        this.password_last_modify_time = admin.saltedpassModifyTimestamp.toISOString()
+        this.enable_2fa = admin.enable2fa
+        this.otp_init = admin.otpInit
+        this.otp_secret_key = admin.otpSecret
 
         if ([RbacRole.admin, RbacRole.system, RbacRole.ccareadmin].includes(role)) {
-            this.reseller_id = admin.reseller_id
+            this.reseller_id = admin.resellerId
         }
     }
 }

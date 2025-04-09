@@ -87,20 +87,20 @@ export class AdminRequestDto implements RequestDto {
             return
 
         this.email = entity.email
-        this.reseller_id = entity.reseller_id
+        this.reseller_id = entity.resellerId
         this.login = entity.login
-        this.is_master = entity.is_master
-        this.is_active = entity.is_active
-        this.read_only = entity.read_only
-        this.show_passwords = entity.show_passwords
-        this.call_data = entity.call_data
-        this.billing_data = entity.billing_data
-        this.can_reset_password = entity.can_reset_password
+        this.is_master = entity.isMaster
+        this.is_active = entity.isActive
+        this.read_only = entity.readOnly
+        this.show_passwords = entity.showPasswords
+        this.call_data = entity.callData
+        this.billing_data = entity.billingData
+        this.can_reset_password = entity.canResetPassword
         this.password = entity.password
         this.role = entity.role
-        this.enable_2fa = entity.enable_2fa
-        this.otp_init = entity.show_otp_registration_info
-        this.otp_secret_key = entity.otp_secret
+        this.enable_2fa = entity.enable2fa
+        this.otp_init = entity.otpInit
+        this.otp_secret_key = entity.otpSecret
     }
 
     toInternal(options: RequestDtoOptions = {}): internal.Admin {
@@ -109,21 +109,21 @@ export class AdminRequestDto implements RequestDto {
 
         const admin = new internal.Admin()
 
-        admin.billing_data = this.billing_data
-        admin.call_data = this.call_data
-        admin.can_reset_password = this.can_reset_password
+        admin.billingData = this.billing_data
+        admin.callData = this.call_data
+        admin.canResetPassword = this.can_reset_password
         admin.email = this.email
-        admin.is_active = this.is_active
-        admin.is_master = this.is_master
+        admin.isActive = this.is_active
+        admin.isMaster = this.is_master
         admin.login = this.login
-        admin.read_only = this.read_only
-        admin.reseller_id = this.reseller_id
+        admin.readOnly = this.read_only
+        admin.resellerId = this.reseller_id
         admin.role = this.role
-        admin.show_passwords = this.show_passwords
+        admin.showPasswords = this.show_passwords
         admin.password = this.password
-        admin.enable_2fa = this.enable_2fa
-        admin.otp_secret = this.otp_secret_key
-        admin.show_otp_registration_info = this.otp_init
+        admin.enable2fa = this.enable_2fa
+        admin.otpSecret = this.otp_secret_key
+        admin.otpInit = this.otp_init
 
         if (options.id)
             admin.id = options.id

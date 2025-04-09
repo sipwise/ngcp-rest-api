@@ -202,28 +202,28 @@ export class Admin extends BaseEntity {
         role!: AclRole
 
     fromInternal(admin: internal.Admin): Admin {
-        this.billing_data = admin.billing_data
-        this.call_data = admin.call_data
-        this.can_reset_password = admin.can_reset_password
+        this.billing_data = admin.billingData
+        this.call_data = admin.callData
+        this.can_reset_password = admin.canResetPassword
         this.email = admin.email
         this.id = admin.id
-        this.is_active = admin.is_active
-        this.is_ccare = admin.is_ccare
-        this.is_master = admin.is_master
-        this.is_superuser = admin.is_superuser
-        this.is_system = admin.is_system
-        this.lawful_intercept = admin.lawful_intercept
+        this.is_active = admin.isActive
+        this.is_ccare = admin.isCcare
+        this.is_master = admin.isMaster
+        this.is_superuser = admin.isSuperuser
+        this.is_system = admin.isSystem
+        this.lawful_intercept = admin.lawfulIntercept
         this.login = admin.login
-        this.read_only = admin.read_only
-        this.reseller_id = admin.reseller_id
-        this.enable_2fa = admin.enable_2fa
-        this.otp_secret = admin.otp_secret
-        this.show_otp_registration_info = admin.show_otp_registration_info
-        if (admin.role_data != undefined)
-            this.role = new AclRole().fromInternal(admin.role_data)
-        this.role_id = admin.role_id
-        this.show_passwords = admin.show_passwords
-        this.saltedpass_modify_timestamp = admin.saltedpass_modify_timestamp
+        this.read_only = admin.readOnly
+        this.reseller_id = admin.resellerId
+        this.enable_2fa = admin.enable2fa
+        this.otp_secret = admin.otpSecret
+        this.show_otp_registration_info = admin.otpInit
+        if (admin.roleData != undefined)
+            this.role = new AclRole().fromInternal(admin.roleData)
+        this.role_id = admin.roleId
+        this.show_passwords = admin.showPasswords
+        this.saltedpass_modify_timestamp = admin.saltedpassModifyTimestamp
         if (admin.saltedpass != undefined)
             this.saltedpass = admin.saltedpass
 
@@ -233,31 +233,31 @@ export class Admin extends BaseEntity {
     toInternal(): internal.Admin {
         const admin = new internal.Admin()
 
-        admin.billing_data = this.billing_data
-        admin.call_data = this.call_data
-        admin.can_reset_password = this.can_reset_password
+        admin.billingData = this.billing_data
+        admin.callData = this.call_data
+        admin.canResetPassword = this.can_reset_password
         admin.email = this.email
         admin.id = this.id
-        admin.is_active = this.is_active
-        admin.is_ccare = this.is_ccare
-        admin.is_master = this.is_master
-        admin.is_superuser = this.is_superuser
-        admin.is_system = this.is_system
-        admin.lawful_intercept = this.lawful_intercept
+        admin.isActive = this.is_active
+        admin.isCcare = this.is_ccare
+        admin.isMaster = this.is_master
+        admin.isSuperuser = this.is_superuser
+        admin.isSystem = this.is_system
+        admin.lawfulIntercept = this.lawful_intercept
         admin.login = this.login
-        admin.read_only = this.read_only
-        admin.reseller_id = this.reseller_id
-        admin.role_id = this.role_id
-        admin.saltedpass_modify_timestamp = this.saltedpass_modify_timestamp
-        admin.enable_2fa = this.enable_2fa
-        admin.show_otp_registration_info = this.show_otp_registration_info
-        admin.otp_secret = this.otp_secret
+        admin.readOnly = this.read_only
+        admin.resellerId = this.reseller_id
+        admin.roleId = this.role_id
+        admin.saltedpassModifyTimestamp = this.saltedpass_modify_timestamp
+        admin.enable2fa = this.enable_2fa
+        admin.otpInit = this.show_otp_registration_info
+        admin.otpSecret = this.otp_secret
         if (this.role != undefined) {
             admin.role = RbacRole[this.role.role]
-            admin.role_data = this.role.toInternal()
-            admin.role_id = this.role.id
+            admin.roleData = this.role.toInternal()
+            admin.roleId = this.role.id
         }
-        admin.show_passwords = this.show_passwords
+        admin.showPasswords = this.show_passwords
 
         return admin
     }

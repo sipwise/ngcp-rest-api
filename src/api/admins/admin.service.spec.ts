@@ -115,35 +115,35 @@ describe('AdminService', () => {
             })], localRequest)).rejects.toThrow(ForbiddenException)
         })
 
-        it('should set reseller_id if not set', async () => {
+        it('should set resellerId if not set', async () => {
             const got = (await service.create([internal.Admin.create({login: 'jest', role: 'admin'})], sr))[0]
             const want = await adminMockRepo.readById(got.id, options)
             expect(got.id).toStrictEqual(want.id)
-            expect(got.reseller_id).toStrictEqual(sr.user.reseller_id)
+            expect(got.resellerId).toStrictEqual(sr.user.reseller_id)
         })
 
-        it('should set reseller_id if user is restricted to reseller_id', async () => {
+        it('should set resellerId if user is restricted to resellerId', async () => {
             const localRequest = deepCopy(sr)
             localRequest.user.reseller_id_required = true
 
             const got = (await service.create([internal.Admin.create({
                 login: 'jest',
                 role: 'admin',
-                reseller_id: 100,
+                resellerId: 100,
             })], localRequest))[0]
             const want = await adminMockRepo.readById(got.id, options)
             expect(want).toStrictEqual(got)
-            expect(want.reseller_id).toStrictEqual(sr.user.reseller_id)
+            expect(want.resellerId).toStrictEqual(sr.user.reseller_id)
         })
 
-        it('should allow setting different reseller_id of not restricted', async () => {
+        it('should allow setting different resellerId of not restricted', async () => {
             const localRequest = deepCopy(sr)
             localRequest.user.reseller_id_required = false
 
             const got = (await service.create([internal.Admin.create({
                 login: 'jest',
                 role: 'admin',
-                reseller_id: 100,
+                resellerId: 100,
             })], localRequest))[0]
             const want = await adminMockRepo.readById(got.id, options)
             expect(want).toStrictEqual(got)
@@ -193,16 +193,16 @@ describe('AdminService', () => {
         })
 
         const protectedFields = internal.Admin.create({
-            billing_data: false,
-            call_data: false,
-            is_active: false,
-            is_master: false,
-            is_superuser: false,
-            is_system: false,
-            lawful_intercept: false,
+            billingData: false,
+            callData: false,
+            isActive: false,
+            isMaster: false,
+            isSuperuser: false,
+            isSystem: false,
+            lawfulIntercept: false,
             login: 'protectedJest',
             role: 'reseller',
-            show_passwords: false,
+            showPasswords: false,
         })
         Object.keys(protectedFields).map(s => {
             it(`should throw ForbiddenException when updating ${s} on self`, async () => {
@@ -253,34 +253,34 @@ describe('AdminService', () => {
 
         it('should not replace the whole object if the password is the same', async () => {
             const created = (await service.create([internal.Admin.create({
-                billing_data: true,
-                call_data: true,
-                can_reset_password: true,
+                billingData: true,
+                callData: true,
+                canResetPassword: true,
                 email: 'jester@example.com',
-                is_active: true,
-                is_master: false,
+                isActive: true,
+                isMaster: false,
                 login: 'jester',
-                read_only: false,
-                reseller_id: 4,
+                readOnly: false,
+                resellerId: 4,
                 password: 'supersecret',
                 role: 'reseller',
-                show_passwords: true,
+                showPasswords: true,
             })], sr))[0]
 
             const updates = new Dictionary<internal.Admin>()
 
             updates[created.id] = internal.Admin.create({
-                billing_data: false,
-                call_data: false,
-                can_reset_password: false,
-                is_active: false,
-                is_master: true,
+                billingData: false,
+                callData: false,
+                canResetPassword: false,
+                isActive: false,
+                isMaster: true,
                 login: 'anotherjester',
                 password: 'supersecret',
-                read_only: true,
-                reseller_id: 2,
+                readOnly: true,
+                resellerId: 2,
                 role: 'reseller',
-                show_passwords: false,
+                showPasswords: false,
             })
 
             await expect(service.update(updates, sr)).rejects.toThrow()
@@ -288,51 +288,51 @@ describe('AdminService', () => {
 
         it('should replace the whole object', async () => {
             const created = (await service.create([internal.Admin.create({
-                billing_data: true,
-                call_data: true,
-                can_reset_password: true,
+                billingData: true,
+                callData: true,
+                canResetPassword: true,
                 email: 'jester@example.com',
-                is_active: true,
-                is_master: false,
+                isActive: true,
+                isMaster: false,
                 login: 'jester',
-                read_only: false,
-                reseller_id: 4,
+                readOnly: false,
+                resellerId: 4,
                 password: 'supersecret1',
                 role: 'reseller',
-                show_passwords: true,
+                showPasswords: true,
             })], sr))[0]
 
             const updates = new Dictionary<internal.Admin>()
 
             updates[created.id] = internal.Admin.create({
-                billing_data: false,
-                call_data: false,
-                can_reset_password: false,
-                is_active: false,
-                is_master: true,
+                billingData: false,
+                callData: false,
+                canResetPassword: false,
+                isActive: false,
+                isMaster: true,
                 login: 'anotherjester',
                 password: 'supersecret',
-                read_only: true,
-                reseller_id: 2,
+                readOnly: true,
+                resellerId: 2,
                 role: 'reseller',
-                show_passwords: false,
+                showPasswords: false,
             })
 
             const ids = await service.update(updates, sr)
             const got = await service.read(ids[0], sr)
 
             expect(got.id).toStrictEqual(created.id)
-            expect(got.billing_data).not.toStrictEqual(created.billing_data)
-            expect(got.call_data).not.toStrictEqual(created.call_data)
-            expect(got.can_reset_password).not.toStrictEqual(created.can_reset_password)
+            expect(got.billingData).not.toStrictEqual(created.billingData)
+            expect(got.callData).not.toStrictEqual(created.callData)
+            expect(got.canResetPassword).not.toStrictEqual(created.canResetPassword)
             expect(got.email).not.toStrictEqual(created.email)
-            expect(got.is_active).not.toStrictEqual(created.is_active)
-            expect(got.is_master).not.toStrictEqual(created.is_master)
+            expect(got.isActive).not.toStrictEqual(created.isActive)
+            expect(got.isMaster).not.toStrictEqual(created.isMaster)
             expect(got.login).not.toStrictEqual(created.login)
             expect(got.saltedpass).not.toStrictEqual(created.saltedpass)
-            expect(got.read_only).not.toStrictEqual(created.read_only)
-            expect(got.reseller_id).not.toStrictEqual(created.reseller_id)
-            expect(got.show_passwords).not.toStrictEqual(created.show_passwords)
+            expect(got.readOnly).not.toStrictEqual(created.readOnly)
+            expect(got.resellerId).not.toStrictEqual(created.resellerId)
+            expect(got.showPasswords).not.toStrictEqual(created.showPasswords)
         })
     })
 
@@ -365,16 +365,16 @@ describe('AdminService', () => {
             await expect(service.update(update, localRequest)).rejects.toThrow(ForbiddenException)
         })
         const protectedFields = internal.Admin.create({
-            billing_data: true,
-            call_data: true,
-            is_active: true,
-            is_master: true,
-            is_superuser: false,
-            is_system: true,
-            lawful_intercept: true,
+            billingData: true,
+            callData: true,
+            isActive: true,
+            isMaster: true,
+            isSuperuser: false,
+            isSystem: true,
+            lawfulIntercept: true,
             login: 'protectedJest',
             role: 'reseller',
-            show_passwords: false,
+            showPasswords: false,
         })
         Object.keys(protectedFields).map(s => {
             it(`should throw ForbiddenException when updating ${s} on self`, async () => {
