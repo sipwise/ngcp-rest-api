@@ -1,3 +1,39 @@
+ngcp-rest-api (13.4.0.0+0~mr13.4.0.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [00f29b6] MT#62077 add engine versions dependency for node and yarn
+  * [16f68a7] MT#62116 fix domain for user bans, auth minor improvements
+
+  [ Bertold Vincze ]
+  * [f84b31e] MT#61863 Change key redis fail & ban key structure
+  * [6ebaf25] MT#62121 Add message to inform client if a user is locked out
+  * [0cbbca6] MT#61863 Implement /bans & /bans/admins
+  * [34fb256] MT#61863 Implement /bans/subscribers
+  * [7a24e54] MT#62177 Add new fields to banned admins and subscriber responses
+  * [e9a210a] MT#62230 Change links to UrlReference array
+  * [7dd6421] MT#62208 Migrate v1 /pbxuser to v2 /pbx/users
+  * [4e0ebf7] MT#62177 Fix /bans/subscribers
+  * [87c7246] MT#62257 Fix broken expand caused by wrong request type
+  * [c8d8a90] MT#62250 Migrate /api/resellerphonebookentries
+  * [a2fae5c] MT#62250 Fix swagger doc tags & localization
+  * [9ceac92] MT#62274 Improve ResponseDtos
+  * [ed0ec5a] MT#62274 Early return on not provided response dto options
+  * [36892d5] MT#62288 Enable customer module, disable it internally
+  * [b18b764] MT#62290 Add username & domain to pbx user response
+  * [8600a74] MT#62299 Improve indent of switch cases
+  * [3e27cfb] MT#62269 Migrate /api/customerphonebookentries
+  * [f380b07] MT#62308 Fix user bans
+  * [8f670ce] MT#62298 Migrate /api/subscriberphonebookentries
+  * [ee18711] MT#62375 Implement CSV support for reseller phonebook
+  * [71338a4] MT#62398 Implement CSV support for customer phonebook
+  * [d4b0477] MT#62399 Implement CSV support for subscriber phonebook
+  * [7c62b84] MT#62400 Change header for export, add documentation for phonebook
+  * [5059371] MT#62444 Add OR support for searchable field values
+  * [b12fea0] MT#62477 Implement 2FA support
+  * [63e3f83] MT#62519 Rename admin internal entity props to camelCase
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 10 Apr 2025 08:28:47 +0200
+
 ngcp-rest-api (13.3.0.0+0~mr13.3.0.0) unstable; urgency=medium
 
   [ Bertold Vincze ]
