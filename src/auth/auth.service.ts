@@ -14,7 +14,7 @@ import {AuthResponseDto} from './dto/auth-response.dto'
 
 import {AppService} from '~/app.service'
 import {RbacRole} from '~/config/constants.config'
-import {db} from '~/entities'
+import {db, internal} from '~/entities'
 import {findKeys, keyExists} from '~/helpers/redis.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -157,6 +157,23 @@ export class AuthService {
         return this.adminAuthToResponse(admin)
     }
 
+    private assignAdminRoleData(admin: db.billing.Admin): internal.AclRole {
+        const roleData = new internal.AclRole()
+        roleData.id = admin.role.id
+        roleData.role = admin.role.role
+        roleData.is_acl = admin.role.is_acl
+        roleData.has_access_to = admin.role.has_access_to?.map(r => {
+            const simplifiedRole = new internal.AclRole()
+            simplifiedRole.id = r.id
+            simplifiedRole.role = r.role
+            simplifiedRole.is_acl = r.is_acl
+            simplifiedRole.has_access_to = undefined
+            return simplifiedRole
+        }) ?? []
+
+        return roleData
+    }
+
     adminAuthToResponse(admin: db.billing.Admin): AuthResponseDto {
         const response: AuthResponseDto = {
             active: admin.is_active,
@@ -164,7 +181,7 @@ export class AuthService {
             readOnly: admin.read_only,
             reseller_id: admin.reseller_id,
             role: admin.role.role,
-            role_data: admin.role.toInternal(),
+            role_data: this.assignAdminRoleData(admin),
             showPasswords: admin.show_passwords,
             username: admin.login,
             is_master: admin.is_master,

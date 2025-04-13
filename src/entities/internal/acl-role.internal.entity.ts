@@ -1,5 +1,3 @@
-import {Admin} from './admin.internal.entity'
-
 import {RbacRole} from '~/config/constants.config'
 
 export interface AclRoleInterface {
@@ -7,7 +5,6 @@ export interface AclRoleInterface {
     role?: string,
     is_acl?: boolean,
     has_access_to?: AclRole[]
-    admins?: Admin[]
 }
 
 export class AclRole implements AclRoleInterface {
@@ -18,9 +15,7 @@ export class AclRole implements AclRoleInterface {
 
     is_acl: boolean
 
-    has_access_to: AclRole[]
-
-    admins: Admin[]
+    has_access_to?: AclRole[]
 
     static create(data: AclRoleInterface): AclRole {
         const aclRole = new AclRole()

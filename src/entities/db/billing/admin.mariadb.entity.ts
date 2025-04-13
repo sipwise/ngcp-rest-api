@@ -254,7 +254,7 @@ export class Admin extends BaseEntity {
         admin.otpSecret = this.otp_secret
         if (this.role != undefined) {
             admin.role = RbacRole[this.role.role]
-            admin.roleData = this.role.toInternal()
+            admin.roleData = undefined
             admin.roleId = this.role.id
         }
         admin.showPasswords = this.show_passwords

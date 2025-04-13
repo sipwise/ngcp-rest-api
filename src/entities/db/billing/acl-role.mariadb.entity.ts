@@ -47,8 +47,6 @@ export class AclRole extends BaseEntity {
         let hasAccess: AclRole[]
         if (role == undefined)
             return
-        if (role.admins != undefined)
-            admins = role.admins.map((adm) => new Admin().fromInternal(adm))
         if (role.has_access_to != undefined)
             hasAccess = role.has_access_to.map((r) => new AclRole().fromInternal(r))
 
@@ -62,29 +60,22 @@ export class AclRole extends BaseEntity {
     }
 
     toInternal(): internal.AclRole {
-        const admins: internal.Admin[] = []
-
-        if (this.admins != undefined) {
-            for (const adm of this.admins) {
-                admins.push(adm.toInternal())
-            }
-        }
-
-        const access_to: internal.AclRole[] = []
-        if (this.has_access_to != undefined) {
-            for (const r of this.has_access_to) {
-                access_to.push(r.toInternal())
-            }
-        }
-
-        const role = new internal.AclRole()
-
-        role.role = this.role
-        role.id = this.id
-        role.is_acl = this.is_acl
-        role.admins = admins
-        role.has_access_to = access_to
+        const role = Object.assign(new internal.AclRole(), {
+            ...this,
+            has_access_to: AclRole.assignRoleAccessTo(this),
+        })
 
         return role
+    }
+
+    private static assignRoleAccessTo(role: AclRole): internal.AclRole[] | undefined {
+        if (!role.has_access_to) return undefined
+
+        return role.has_access_to.map((r) =>
+            Object.assign(new internal.AclRole(), {
+                ...r,
+                has_access_to: undefined,
+            }),
+        )
     }
 }
