@@ -1,6 +1,5 @@
 import {Readable} from 'stream'
 
-
 import {ForbiddenException, Inject, Injectable, StreamableFile, UnauthorizedException} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
 import {compare} from 'bcrypt'
@@ -14,6 +13,7 @@ import {AuthResponseDto} from './dto/auth-response.dto'
 
 import {AppService} from '~/app.service'
 import {RbacRole} from '~/config/constants.config'
+import {RedisDatabases} from '~/config/redis.config'
 import {db, internal} from '~/entities'
 import {findKeys, keyExists} from '~/helpers/redis.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -39,9 +39,8 @@ export class AuthService {
     }
 
     async getRedisBanDb(): Promise<Redis | Cluster> {
-        const DB = 19
-        const redis = await this.app.redis
-        await redis.select(DB)
+        const redis = this.app.redis
+        await redis.select(RedisDatabases.session)
         return redis
     }
 
