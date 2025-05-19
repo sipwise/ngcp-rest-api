@@ -10,6 +10,7 @@ import {CustomerPhonebookResponseDto} from './dto/customer-phonebook-response.dt
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
@@ -82,6 +83,24 @@ describe('Customer Phonebook', () => {
 
     describe('', () => { // main tests block
         describe('POST', () => {
+            it('create phonebook bulk with purge_existing', async () => {
+                // test this first so it doesnt affect other tests via purge
+                const purgeTest = await db.billing.ContractPhonebook.create({
+                    contract_id: 1,
+                    name: 'test',
+                    number: '123',
+                }).save()
+                const response = await request(app.getHttpServer())
+                    .post('/customers/phonebook?purge_existing=true')
+                    .set(...authHeader)
+                    .attach('file', path.resolve(__dirname, './fixtures/customer_phonebook_test.csv'))
+                expect(response.status).toEqual(201)
+                const cnt = await db.billing.ContractPhonebook.count()
+                expect(cnt).toEqual(2)
+                await db.billing.ContractPhonebook.delete({id: +response.body[0].id})
+                await db.billing.ContractPhonebook.delete({id: +response.body[1].id})
+                await db.billing.ContractPhonebook.delete({id: purgeTest.id})
+            })
             it('create phonebook', async () => {
                 const phonebook1: PhonebookPost = {
                     name: 'test_phonebook1',
@@ -110,17 +129,6 @@ describe('Customer Phonebook', () => {
                     .set(...authHeader)
                     .attach('file', path.resolve(__dirname, './fixtures/customer_phonebook_test.csv'))
                 expect(response.status).toEqual(422)
-            })
-            it('create phonebook bulk with purge_existing', async () => {
-                const response = await request(app.getHttpServer())
-                    .post('/customers/phonebook?purge_existing=true')
-                    .set(...authHeader)
-                    .attach('file', path.resolve(__dirname, './fixtures/customer_phonebook_test.csv'))
-                expect(response.status).toEqual(201)
-                createdPhonebookIds.pop()
-                createdPhonebookIds.pop()
-                createdPhonebookIds.push(+response.body[0].id)
-                createdPhonebookIds.push(+response.body[1].id)
             })
         })
 

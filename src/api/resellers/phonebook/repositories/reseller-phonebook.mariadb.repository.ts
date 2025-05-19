@@ -1,5 +1,5 @@
 import {Injectable} from '@nestjs/common'
-import {SelectQueryBuilder} from 'typeorm'
+import {EntityManager, SelectQueryBuilder} from 'typeorm'
 
 import {ResellerPhonebookSearchDto} from '~/api/resellers/phonebook/dto/reseller-phonebook-search.dto'
 import {ResellerPhonebookOptions} from '~/api/resellers/phonebook/interfaces/reseller-phonebook-options.interface'
@@ -16,8 +16,9 @@ import {MariaDbRepository} from '~/repositories/mariadb.repository'
 export class ResellerPhonebookMariadbRepository extends MariaDbRepository implements ResellerPhonebookRepository {
     private readonly log = new LoggerService(ResellerPhonebookMariadbRepository.name)
 
-    async create(entities: internal.ResellerPhonebook[]): Promise<number[]> {
-        const qb = db.billing.ResellerPhonebook.createQueryBuilder('phonebook')
+    async create(entities: internal.ResellerPhonebook[], _sr: ServiceRequest, manager?: EntityManager): Promise<number[]> {
+        const qb = manager ? manager.createQueryBuilder(db.billing.ResellerPhonebook, 'phonebook')
+            : db.billing.ResellerPhonebook.createQueryBuilder('phonebook')
         const values = await Promise.all(entities.map(async entity => new db.billing.ResellerPhonebook().fromInternal(entity)))
         const result = await qb.insert().values(values).execute()
 
@@ -73,6 +74,16 @@ export class ResellerPhonebookMariadbRepository extends MariaDbRepository implem
             await db.billing.ResellerPhonebook.update(id, dbEntity)
         }
         return ids
+    }
+
+    async purge(resellerId: number, _sr: ServiceRequest, manager?: EntityManager): Promise<number> {
+        if (!manager) {
+            await db.billing.ResellerPhonebook.delete({reseller_id: resellerId})
+            return resellerId
+        }
+
+        await manager.delete(db.billing.ResellerPhonebook, {reseller_id: resellerId})
+        return resellerId
     }
 
     async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {

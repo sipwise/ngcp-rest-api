@@ -1,5 +1,5 @@
 import {Injectable} from '@nestjs/common'
-import {SelectQueryBuilder} from 'typeorm'
+import {EntityManager, SelectQueryBuilder} from 'typeorm'
 
 import {SubscriberPhonebookSearchDto} from '~/api/subscribers/phonebook/dto/subscriber-phonebook-search.dto'
 import {SubscriberPhonebookOptions} from '~/api/subscribers/phonebook/interfaces/subscriber-phonebook-options.interface'
@@ -15,8 +15,9 @@ import {MariaDbRepository} from '~/repositories/mariadb.repository'
 export class SubscriberPhonebookMariadbRepository extends MariaDbRepository implements SubscriberPhonebookMariadbRepository {
     private readonly log = new LoggerService(SubscriberPhonebookMariadbRepository.name)
 
-    async create(entities: internal.SubscriberPhonebook[]): Promise<number[]> {
-        const qb = db.billing.SubscriberPhonebook.createQueryBuilder('phonebook')
+    async create(entities: internal.SubscriberPhonebook[], _sr: ServiceRequest, manager?: EntityManager): Promise<number[]> {
+        const qb = manager ? manager.createQueryBuilder(db.billing.SubscriberPhonebook, 'phonebook')
+            : db.billing.SubscriberPhonebook.createQueryBuilder('phonebook')
         const values = await Promise.all(entities.map(async entity => new db.billing.SubscriberPhonebook().fromInternal(entity)))
         const result = await qb.insert().values(values).execute()
 
@@ -70,6 +71,16 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
             await db.billing.SubscriberPhonebook.update(id, dbEntity)
         }
         return ids
+    }
+
+    async purge(subscriberId: number, _sr: ServiceRequest, manager?: EntityManager): Promise<number> {
+        if (!manager) {
+            await db.billing.SubscriberPhonebook.delete({subscriber_id: subscriberId})
+            return subscriberId
+        }
+
+        await manager.delete(db.billing.SubscriberPhonebook, {subscriber_id: subscriberId})
+        return subscriberId
     }
 
     async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {

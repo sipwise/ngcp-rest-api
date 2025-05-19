@@ -6,6 +6,7 @@ import {SubscriberPhonebookResponseDto} from './dto/subscriber-phonebook-respons
 import {SubscriberPhonebookOptions} from './interfaces/subscriber-phonebook-options.interface'
 import {SubscriberPhonebookMariadbRepository} from './repositories/subscriber-phonebook.mariadb.repository'
 
+import {AppService} from '~/app.service'
 import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
 import {dtoToCsv} from '~/helpers/csv.helper'
@@ -23,6 +24,7 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
     constructor(
         @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(SubscriberPhonebookMariadbRepository) private readonly phonebookRepo: SubscriberPhonebookMariadbRepository,
+        @Inject(AppService) private readonly app: AppService,
     ) {
     }
 
@@ -34,39 +36,7 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
             }
         }
 
-        const createdIds = await this.phonebookRepo.create(entities)
-
-        const options = {
-            filterBy: {
-                resellerId: undefined,
-            },
-        }
-        return await this.phonebookRepo.readWhereInIds(createdIds, options, sr)
-    }
-
-    async import(entities: internal.SubscriberPhonebook[], sr: ServiceRequest): Promise<internal.SubscriberPhonebook[]> {
-        if (sr.user.role === RbacRole.subscriberadmin || sr.user.role === RbacRole.subscriber) {
-            if (entities.some(entity => entity.subscriberId != sr.user.subscriber_id)) {
-                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-                throw new UnprocessableEntityException(error.message)
-            }
-        }
-
-        if (sr.query && sr.query['purge_existing']) {
-            if (sr.query['purge_existing'] === 'true') {
-                delete sr.query['purge_existing']
-                const options = this.getSubscriberPhonebookOptionsFromServiceRequest(sr)
-                const numbers = new Set(entities.map(entity => entity.number))
-                const ids = await this.phonebookRepo.readWhereInNumbers(Array.from(numbers), options, sr)
-                if (ids.length > 0)
-                    await this.delete(ids, sr)
-            }
-            else {
-                delete sr.query['purge_existing']
-            }
-        }
-
-        const createdIds = await this.phonebookRepo.create(entities)
+        const createdIds = await this.phonebookRepo.create(entities, sr)
 
         const options = {
             filterBy: {
@@ -91,23 +61,6 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
             default:
                 return await this.phonebookRepo.readAll(options, sr)
         }
-    }
-
-    async export(sr: ServiceRequest): Promise<StreamableFile> {
-        const [entities] = await this.readAll(sr)
-        const dtos = entities.map(entity => {
-            const dto = new SubscriberPhonebookResponseDto(entity)
-            const {resourceUrl, ...rest} = dto
-            return rest
-        })
-
-        const csv = await dtoToCsv<SubscriberPhonebookResponseDto>(dtos)
-
-        const buffer = Buffer.from(csv, 'utf-8')
-        return new StreamableFile(Uint8Array.from(buffer), {
-            type: 'text/csv',
-            disposition: 'attachment; filename="subscriber_phonebook.csv"',
-        })
     }
 
     async read(id: number | string, sr: ServiceRequest): Promise<internal.SubscriberPhonebook | internal.VSubscriberPhonebook> {
@@ -193,5 +146,62 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
         }
 
         return options
+    }
+
+    async importCsv(entities: internal.SubscriberPhonebook[], sr: ServiceRequest): Promise<internal.SubscriberPhonebook[]> {
+        await this.validateCsvData(entities)
+        const _options = this.getSubscriberPhonebookOptionsFromServiceRequest(sr)
+        const tx = await this.app.dbConnection().transaction(async manager => {
+            if (sr.user.role === RbacRole.subscriberadmin || sr.user.role === RbacRole.subscriber) {
+                if (entities.some(entity => entity.subscriberId != sr.user.subscriber_id)) {
+                    const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
+                    throw new UnprocessableEntityException(error.message)
+                }
+            }
+            const subscribers = new Set(entities.map(entity => entity.subscriberId))
+            if (sr.query && sr.query['purge_existing']) {
+                if (sr.query['purge_existing'] === 'true') {
+                    delete sr.query['purge_existing']
+                    const promises = Array.from(subscribers).map(async reseller => {
+                        await this.phonebookRepo.purge(reseller, sr, manager)
+                    })
+                    await Promise.all(promises)
+                }
+                else {
+                    delete sr.query['purge_existing']
+                }
+            }
+            return await this.phonebookRepo.create(entities, sr, manager)
+        })
+        return await this.phonebookRepo.readWhereInIds(tx, {filterBy: {}}, sr)
+    }
+
+    async exportCsv(sr: ServiceRequest): Promise<StreamableFile> {
+        const [entities] = await this.readAll(sr)
+        const dtos = entities.map(entity => {
+            const dto = new SubscriberPhonebookResponseDto(entity)
+            const {resourceUrl, ...rest} = dto
+            return rest
+        })
+
+        const csv = await dtoToCsv<SubscriberPhonebookResponseDto>(dtos)
+
+        const buffer = Buffer.from(csv, 'utf-8')
+        return new StreamableFile(Uint8Array.from(buffer), {
+            type: 'text/csv',
+            disposition: 'attachment; filename="subscriber_phonebook.csv"',
+        })
+    }
+
+    private async validateCsvData(entities: internal.SubscriberPhonebook[]): Promise<void> {
+        const seen = new Set<string>()
+        for (const dto of entities) {
+            const key = `${dto.subscriberId}-${dto.number}`
+            if (seen.has(key)) {
+                const error: ErrorMessage = this.i18n.t('errors.DUPLICATE_IN_CSV')
+                throw new UnprocessableEntityException(error.message)
+            }
+            seen.add(key)
+        }
     }
 }

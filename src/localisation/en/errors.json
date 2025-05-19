@@ -178,5 +178,9 @@
   "2FA_IS_DISABLED": {
     "message": "2FA is disabled",
     "code": 10045
+  },
+  "DUPLICATE_IN_CSV": {
+    "message": "Duplicate in CSV",
+    "code": 10046
   }
 }

@@ -109,7 +109,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
                     throw new UnprocessableEntityException(this.i18n.t('errors.FILE_MIME_TYPE_NOT_SUPPORTED'))
             }
             const phonebook = await Promise.all(createDto.map(async set => set.toInternal()))
-            const created = await this.phonebookService.import(phonebook, sr)
+            const created = await this.phonebookService.importCsv(phonebook, sr)
             return await Promise.all(created.map(async phonebook => new SubscriberPhonebookResponseDto(phonebook)))
         }
         const phonebook = await Promise.all(createDto.map(async set => set.toInternal()))
@@ -152,7 +152,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
         const sr = new ServiceRequest(req)
 
         if (sr.headers['accept'] === 'text/csv') {
-            return handleCsvExport(await this.phonebookService.export(sr), res)
+            return handleCsvExport(await this.phonebookService.exportCsv(sr), res)
         }
 
         const [entity, totalCount] =

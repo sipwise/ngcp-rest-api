@@ -5,6 +5,7 @@ import {ResellerPhonebookResponseDto} from './dto/reseller-phonebook-response.dt
 import {ResellerPhonebookOptions} from './interfaces/reseller-phonebook-options.interface'
 import {ResellerPhonebookMariadbRepository} from './repositories/reseller-phonebook.mariadb.repository'
 
+import {AppService} from '~/app.service'
 import {internal} from '~/entities'
 import {dtoToCsv} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
@@ -21,6 +22,7 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
     constructor(
         @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(ResellerPhonebookMariadbRepository) private readonly phonebookRepo: ResellerPhonebookMariadbRepository,
+        @Inject(AppService) private readonly app: AppService,
     ) {
     }
 
@@ -32,39 +34,7 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
             }
         }
 
-        const createdIds = await this.phonebookRepo.create(entities)
-
-        const options = {
-            filterBy: {
-                resellerId: undefined,
-            },
-        }
-        return await this.phonebookRepo.readWhereInIds(createdIds, options, sr)
-    }
-
-    async import(entities: internal.ResellerPhonebook[], sr: ServiceRequest): Promise<internal.ResellerPhonebook[]> {
-        if (sr.user.reseller_id_required) {
-            if (entities.some(entity => entity.resellerId != sr.user.reseller_id)) {
-                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-                throw new UnprocessableEntityException(error.message)
-            }
-        }
-
-        if (sr.query && sr.query['purge_existing']) {
-            if (sr.query['purge_existing'] === 'true') {
-                delete sr.query['purge_existing']
-                const options = this.getResellerPhonebookOptionsFromServiceRequest(sr)
-                const numbers = new Set(entities.map(entity => entity.number))
-                const ids = await this.phonebookRepo.readWhereInNumbers(Array.from(numbers), options, sr)
-                if (ids.length > 0)
-                    await this.delete(ids, sr)
-            }
-            else {
-                delete sr.query['purge_existing']
-            }
-        }
-
-        const createdIds = await this.phonebookRepo.create(entities)
+        const createdIds = await this.phonebookRepo.create(entities, sr)
 
         const options = {
             filterBy: {
@@ -137,7 +107,35 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
         return options
     }
 
-    async export(sr: ServiceRequest): Promise<StreamableFile> {
+    async importCsv(entities: internal.ResellerPhonebook[], sr: ServiceRequest): Promise<internal.ResellerPhonebook[]> {
+        const _options = this.getResellerPhonebookOptionsFromServiceRequest(sr)
+        await this.validateCsvData(entities)
+        const tx = await this.app.dbConnection().transaction(async manager => {
+            if (sr.user.reseller_id_required) {
+                if (entities.some(entity => entity.resellerId != sr.user.reseller_id)) {
+                    const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
+                    throw new UnprocessableEntityException(error.message)
+                }
+            }
+            const resellers = new Set(entities.map(entity => entity.resellerId))
+            if (sr.query && sr.query['purge_existing']) {
+                if (sr.query['purge_existing'] === 'true') {
+                    delete sr.query['purge_existing']
+                    const promises = Array.from(resellers).map(async reseller => {
+                        await this.phonebookRepo.purge(reseller, sr, manager)
+                    })
+                    await Promise.all(promises)
+                }
+                else {
+                    delete sr.query['purge_existing']
+                }
+            }
+            return await this.phonebookRepo.create(entities, sr, manager)
+        })
+        return await this.phonebookRepo.readWhereInIds(tx, {filterBy: {}}, sr)
+    }
+
+    async exportCsv(sr: ServiceRequest): Promise<StreamableFile> {
         const [entities] = await this.readAll(sr)
         const dtos = entities.map(entity => {
             const dto = new ResellerPhonebookResponseDto(entity)
@@ -152,5 +150,17 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
             type: 'text/csv',
             disposition: 'attachment; filename="reseller_phonebook.csv"',
         })
+    }
+
+    private async validateCsvData(entities: internal.ResellerPhonebook[]): Promise<void> {
+        const seen = new Set<string>()
+        for (const dto of entities) {
+            const key = `${dto.resellerId}-${dto.number}`
+            if (seen.has(key)) {
+                const error: ErrorMessage = this.i18n.t('errors.DUPLICATE_IN_CSV')
+                throw new UnprocessableEntityException(error.message)
+            }
+            seen.add(key)
+        }
     }
 }
