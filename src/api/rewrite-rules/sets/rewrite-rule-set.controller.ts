@@ -154,14 +154,11 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const updates = new Dictionary<internal.HeaderRuleSet>()
+        const updates = new Dictionary<internal.RewriteRuleSet>()
         updates[id] = Object.assign(new RewriteRuleSetRequestDto(), dto).toInternal({id: id, assignNulls: true})
-        const ids = await this.ruleSetService.update(updates, sr)
-        await this.ruleSetService.deleteAllRules(ids, sr)
-        if (dto.rules) {
-            const rules = await Promise.all(dto.rules.map(async rule => rule.toInternal({parentId: id})))
-            await this.ruleService.create(rules, sr)
-        }
+        const rewriteRules = dto.rules && dto.rules.length > 0
+            ? await Promise.all(dto.rules.map(async rule => rule.toInternal({parentId: id}))) : []
+        const ids = await this.ruleSetService.updateWithRuleRecreation(updates, rewriteRules, sr)
         const entity = await this.ruleSetService.read(ids[0], sr)
         const response = new RewriteRuleSetResponseDto(
             entity,
@@ -179,20 +176,19 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
     ): Promise<number[]> {
         this.log.debug({message: 'update rewrite rule Sets bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        const sets = new Dictionary<internal.HeaderRuleSet>()
+        const sets = new Dictionary<internal.RewriteRuleSet>()
         for (const id of Object.keys(updates)) {
             const dto: RewriteRuleSetRequestDto = updates[id]
             sets[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
-        const updated = await this.ruleSetService.update(sets, sr)
-        await this.ruleSetService.deleteAllRules(updated, sr)
-        for (const id of updated) {
-            const dto = updates[id]
+        const rewriteRules = []
+        for (const set of Object.values(sets)) {
+            const dto = updates[set.id]
             if (dto.rules) {
-                const rules = await Promise.all(dto.rules.map(async rule => rule.toInternal({parentId: id})))
-                await this.ruleService.create(rules, sr)
+                rewriteRules.push(...dto.rules.map(rule => rule.toInternal({parentId: set.id})))
             }
         }
+        const updated = await this.ruleSetService.updateWithRuleRecreation(sets, rewriteRules, sr)
 
         return updated
     }
@@ -216,8 +212,8 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
         })
         const sr = new ServiceRequest(req)
         const oldEntity = await this.ruleSetService.read(id, sr)
-        const entity = await patchToEntity<internal.HeaderRuleSet, RewriteRuleSetRequestDto>(oldEntity, patch, RewriteRuleSetRequestDto)
-        const update = new Dictionary<internal.HeaderRuleSet>(id.toString(), entity)
+        const entity = await patchToEntity<internal.RewriteRuleSet, RewriteRuleSetRequestDto>(oldEntity, patch, RewriteRuleSetRequestDto)
+        const update = new Dictionary<internal.RewriteRuleSet>(id.toString(), entity)
 
         const ids = await this.ruleSetService.update(update, sr)
         const updatedEntity = await this.ruleSetService.read(ids[0], sr)
@@ -245,10 +241,10 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
         })
         const sr = new ServiceRequest(req)
 
-        const updates = new Dictionary<internal.HeaderRuleSet>()
+        const updates = new Dictionary<internal.RewriteRuleSet>()
         for (const id of Object.keys(patches)) {
             const oldEntity = await this.ruleSetService.read(+id, sr)
-            const entity = await patchToEntity<internal.HeaderRuleSet, RewriteRuleSetRequestDto>(oldEntity, patches[id], RewriteRuleSetRequestDto)
+            const entity = await patchToEntity<internal.RewriteRuleSet, RewriteRuleSetRequestDto>(oldEntity, patches[id], RewriteRuleSetRequestDto)
             updates[id] = entity
         }
 
