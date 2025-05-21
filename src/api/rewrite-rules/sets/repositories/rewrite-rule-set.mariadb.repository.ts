@@ -1,5 +1,5 @@
 import {Injectable} from '@nestjs/common'
-import {SelectQueryBuilder} from 'typeorm'
+import {EntityManager, SelectQueryBuilder} from 'typeorm'
 
 import {RewriteRuleSetSearchDto} from '~/api/rewrite-rules/sets/dto/rewrite-rule-set-search.dto'
 import {RewriteRuleSetRepository} from '~/api/rewrite-rules/sets/interfaces/rewrite-rule-set.repository'
@@ -115,11 +115,27 @@ export class RewriteRuleSetMariadbRepository extends MariaDbRepository implement
         return ids
     }
 
-    async deleteAllRules(id: number, _sr: ServiceRequest): Promise<void> {
+    async cleanSets(id: number, _sr: ServiceRequest, manager?: EntityManager): Promise<void> {
+        if (manager) {
+            const rules = await manager.find(db.provisioning.VoipRewriteRule, {where: {set_id: id}})
+            await Promise.all(rules.map(async rule => {
+                await manager.remove(rule)
+            }))
+            return
+        }
+
         const rules = await db.provisioning.VoipRewriteRule.findBy({set_id: id})
         await Promise.all(rules.map(async rule => {
             await rule.remove()
         }))
+    }
+
+    async createRules(entities: internal.RewriteRule[], manager?: EntityManager): Promise<number[]> {
+        const qb = manager ? manager.createQueryBuilder(db.provisioning.VoipRewriteRule, 'rewriteRule')
+            : db.provisioning.VoipRewriteRule.createQueryBuilder('rewriteRule')
+        const values = await Promise.all(entities.map(async entity => new db.provisioning.VoipRewriteRule().fromInternal(entity)))
+        const result = await qb.insert().values(values).execute()
+        return await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
     }
 
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipRewriteRuleSet>, filterBy: FilterBy): void {

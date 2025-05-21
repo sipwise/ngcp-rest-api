@@ -4,6 +4,7 @@ import {I18nService} from 'nestjs-i18n'
 
 import {FilterBy, RewriteRuleSetMariadbRepository} from './repositories/rewrite-rule-set.mariadb.repository'
 
+import {AppService} from '~/app.service'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
@@ -18,6 +19,7 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
     constructor(
         @Inject (I18nService) private readonly i18n: I18nService,
         @Inject (RewriteRuleSetMariadbRepository) private readonly ruleSetRepo: RewriteRuleSetMariadbRepository,
+        @Inject (AppService) private readonly app: AppService,
     ) {
     }
 
@@ -70,6 +72,36 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
         return await this.ruleSetRepo.update(updates, sr)
     }
 
+    async updateWithRuleRecreation(updates: Dictionary<internal.RewriteRuleSet>, rules: internal.RewriteRule[], sr: ServiceRequest): Promise<number[]> {
+        const tx = await this.app.dbConnection().transaction(async manager => {
+            const ids = Object.keys(updates).map(id => parseInt(id))
+            let sets: internal.RewriteRuleSet[]
+            if (sr.user.reseller_id_required) {
+                sets = await this.ruleSetRepo.readWhereInIds(ids, sr, {resellerId: sr.user.reseller_id})
+            } else {
+                sets = await this.ruleSetRepo.readWhereInIds(ids, sr)
+            }
+
+            if (sets.length == 0) {
+                throw new NotFoundException()
+            } else if (ids.length != sets.length) {
+                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
+                const message = GenerateErrorMessageArray(ids, error.message)
+                throw new UnprocessableEntityException(message)
+            }
+
+            const updatedIds = await this.ruleSetRepo.update(updates, sr)
+            await Promise.all(
+                updatedIds.map(id => this.ruleSetRepo.cleanSets(id, sr, manager)),
+            )
+            if (rules && rules.length > 0) {
+                await this.ruleSetRepo.createRules(rules, manager)
+            }
+            return updatedIds
+        })
+        return tx
+    }
+
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         let sets: internal.RewriteRuleSet[]
 
@@ -90,7 +122,7 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
         return await this.ruleSetRepo.delete(ids, sr)
     }
 
-    async deleteAllRules(ids: number[], sr: ServiceRequest): Promise<void> {
+    async cleanSets(ids: number[], sr: ServiceRequest): Promise<void> {
         let sets: internal.RewriteRuleSet[]
         if (sr.user.reseller_id_required) {
             sets = await this.ruleSetRepo.readWhereInIds(ids, sr, {resellerId: sr.user.reseller_id})
@@ -107,7 +139,7 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
         }
 
         await Promise.all(
-            ids.map(id => this.ruleSetRepo.deleteAllRules(id, sr)),
+            ids.map(id => this.ruleSetRepo.cleanSets(id, sr)),
         )
     }
 
