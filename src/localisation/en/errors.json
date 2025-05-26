@@ -182,5 +182,9 @@
   "DUPLICATE_IN_CSV": {
     "message": "Duplicate in CSV",
     "code": 10046
+  },
+  "TASK_AGENT_COULD_NOT_PROCESS_REQUEST": {
+    "message": "Task agent could not process request",
+    "code": 10047
   }
 }

@@ -3,6 +3,8 @@ import {Test, TestingModule} from '@nestjs/testing'
 import {RewriteRuleSetRequestDto} from './dto/rewrite-rule-set-request.dto'
 import {RewriteRuleSetMariadbRepository} from './repositories/rewrite-rule-set.mariadb.repository'
 import {RewriteRuleSetMockRepository} from './repositories/rewrite-rule-set.mock.repository'
+import {RewriteRuleSetMockRedisRepository} from './repositories/rewrite-rule-set.redis.mock.repository'
+import {RewriteRuleSetRedisRepository} from './repositories/rewrite-rule-set.redis.repository'
 import {RewriteRuleSetModule} from './rewrite-rule-set.module'
 import {RewriteRuleSetService} from './rewrite-rule-set.service'
 
@@ -29,15 +31,18 @@ const user: AuthResponseDto = {
 describe('RewriteRuleSet Service', () => {
     let service: RewriteRuleSetService
     let rwrMockRepo: RewriteRuleSetMockRepository
+    let redisMockRepo: RewriteRuleSetMockRedisRepository
 
     let sr: ServiceRequest
 
     beforeEach(async () => {
         rwrMockRepo = new RewriteRuleSetMockRepository()
+        redisMockRepo = new RewriteRuleSetMockRedisRepository()
         const module: TestingModule = await Test.createTestingModule({
             imports: [AppModule, RewriteRuleSetModule, ExpandModule],
         })
             .overrideProvider(RewriteRuleSetMariadbRepository).useValue(rwrMockRepo)
+            .overrideProvider(RewriteRuleSetRedisRepository).useValue(redisMockRepo)
             .compile()
         service = module.get<RewriteRuleSetService>(RewriteRuleSetService)
         sr = {returnContent: true, headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
