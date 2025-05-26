@@ -3,9 +3,11 @@ import {JournalModule} from 'api/journals/journal.module'
 import {ExpandModule} from 'helpers/expand.module'
 
 import {RewriteRuleSetMariadbRepository} from './repositories/rewrite-rule-set.mariadb.repository'
+import {RewriteRuleSetRedisRepository} from './repositories/rewrite-rule-set.redis.repository'
 import {RewriteRuleSetController} from './rewrite-rule-set.controller'
 import {RewriteRuleSetService} from './rewrite-rule-set.service'
 import {RewriteRuleMariadbRepository} from './rules/repositories/rewrite-rule.mariadb.repository'
+import {RewriteRuleRedisRepository} from './rules/repositories/rewrite-rule.redis.repository'
 import {RewriteRuleService} from './rules/rewrite-rule.service'
 
 @Module({
@@ -18,8 +20,10 @@ import {RewriteRuleService} from './rules/rewrite-rule.service'
         RewriteRuleSetController,
         RewriteRuleSetService,
         RewriteRuleSetMariadbRepository,
+        RewriteRuleSetRedisRepository,
         RewriteRuleService,
         RewriteRuleMariadbRepository,
+        RewriteRuleRedisRepository,
     ],
     exports: [
         RewriteRuleSetController,

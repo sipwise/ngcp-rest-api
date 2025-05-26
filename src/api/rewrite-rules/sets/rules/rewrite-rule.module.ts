@@ -3,6 +3,7 @@ import {JournalModule} from 'api/journals/journal.module'
 import {ExpandModule} from 'helpers/expand.module'
 
 import {RewriteRuleMariadbRepository} from './repositories/rewrite-rule.mariadb.repository'
+import {RewriteRuleRedisRepository} from './repositories/rewrite-rule.redis.repository'
 import {RewriteRuleController} from './rewrite-rule.controller'
 import {RewriteRuleService} from './rewrite-rule.service'
 
@@ -14,7 +15,7 @@ import {RewriteRuleSetMariadbRepository} from '~/api/rewrite-rules/sets/reposito
         forwardRef(() => ExpandModule),
     ],
     controllers: [RewriteRuleController],
-    providers: [RewriteRuleService, RewriteRuleMariadbRepository, RewriteRuleSetMariadbRepository],
+    providers: [RewriteRuleService, RewriteRuleMariadbRepository, RewriteRuleSetMariadbRepository, RewriteRuleRedisRepository],
 })
 export class RewriteRuleModule {
 }
