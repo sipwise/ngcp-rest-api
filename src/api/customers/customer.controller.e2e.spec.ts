@@ -4,19 +4,43 @@ import {validate} from 'class-validator'
 import request from 'supertest'
 
 import {CustomerModule} from './customer.module'
-import {CustomerRequestDto} from './dto/customer-request.dto'
 import {CustomerResponseDto} from './dto/customer-response.dto'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
-import {internal} from '~/entities'
-import {ContractStatus as CustomerStatus} from '~/entities/internal/contract.internal.entity'
+import {db} from '~/entities'
+import {ContractBillingProfileDefinition, ContractStatus, ContractStatus as CustomerStatus} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
-import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
+
+type BillingProfilePost = {
+    profile_id: number | null,
+    network_id: number | null,
+    start: string | null,
+    stop: string | null,
+}
+
+type CustomerPost = {
+    add_vat: boolean
+    contact_id: number
+    profile_package_id?: number
+    billing_profile_id?: number
+    status: CustomerStatus
+    type: CustomerType
+    start_date?: string
+    max_subscribers?: number
+    external_id?: string
+    vat_rate?: number
+    subscriber_email_template_id?: number
+    passreset_email_template_id?: number
+    invoice_email_template_id?: number
+    invoice_template_id?: number
+    billing_profile_definition?: ContractBillingProfileDefinition
+    billing_profiles?: BillingProfilePost[]
+}
 
 describe('CustomerController', () => {
     let app: INestApplication
@@ -25,10 +49,8 @@ describe('CustomerController', () => {
     let authHeader: [string, string]
     const preferHeader: [string, string] = ['prefer', 'return=representation']
     let createdCustomerIds: number[] = []
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let createdContractIds: number[] = []
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let createdResellerIds: number[] = []
+    let _createdContactIds: number[] = []
+    let _createdBillingProfileIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
 
     beforeAll(async () => {
@@ -41,18 +63,23 @@ describe('CustomerController', () => {
         authService = moduleRef.get<AuthService>(AuthService)
 
         createdCustomerIds = []
-        createdContractIds = []
-        createdResellerIds = []
+        _createdContactIds = []
+        _createdBillingProfileIds = []
 
         app = moduleRef.createNestApplication()
 
-        // TODO import other app configuration from bootstrap()
-        // like interceptors, etc.
         app.useGlobalPipes(new ValidateInputPipe({whitelist: true, forbidNonWhitelisted: true, transform: true}))
         app.useGlobalFilters(new HttpExceptionFilter())
         app.useGlobalInterceptors(new ResponseValidationInterceptor())
 
         await app.init()
+    })
+
+    afterAll(async () => {
+        if (appService.db.isInitialized)
+            await appService.db.destroy()
+
+        await app.close()
     })
 
     it('should be defined', () => {
@@ -80,18 +107,30 @@ describe('CustomerController', () => {
 
     describe('', () => { // main tests block
         describe('Customer POST', () => {
-            it('create a single Customer', async () => {
-                const intCustomer = internal.Customer.create({
-                    addVat: true,
-                    contactId: 1,
-                    profilePackageId: 1,
-                    status: CustomerStatus.Active,
-                    type: CustomerType.PbxAccount,
+            it('create a single Customer with billing_profile_definition profiles', async () => {
+                const customer: CustomerPost = {
+                    'type': CustomerType.SipAccount,
+                    'contact_id': 1,
+                    'max_subscribers': null,
+                    'status': CustomerStatus.Active,
+                    'external_id': null,
+                    'vat_rate': 0,
+                    'add_vat': false,
+                    'subscriber_email_template_id': null,
+                    'passreset_email_template_id': null,
+                    'invoice_email_template_id': null,
+                    'invoice_template_id': null,
+                    'billing_profile_definition': ContractBillingProfileDefinition.Profiles,
+                    'billing_profiles': [
+                        {
+                            'profile_id': 1,
+                            'network_id': null,
+                            'start': null,
+                            'stop': null,
+                        },
+                    ],
+                }
 
-                })
-                const customer = new CustomerRequestDto(intCustomer)
-
-                expect.assertions(1)
                 const response = await request(app.getHttpServer())
                     .post('/customers')
                     .set(...authHeader)
@@ -100,42 +139,51 @@ describe('CustomerController', () => {
                 expect(response.status).toEqual(HttpStatus.CREATED)
                 createdCustomerIds.push(+response.body[0].id)
             })
-            it('create a Customer bulk', async () => {
-                const intCustomer = internal.Customer.create({
-                    addVat: true,
-                    contactId: 1,
-                    billingProfileId: 3,
-                    status: CustomerStatus.Active,
-                    type: CustomerType.SipAccount,
 
-                })
-                const customers: CustomerRequestDto[] = []
-                customers.push(new CustomerRequestDto(intCustomer))
+            it('create a single Customer with billing_profile_definition_id', async () => {
+                const customer: CustomerPost = {
+                    type: CustomerType.SipAccount,
+                    contact_id: 1,
+                    max_subscribers: null,
+                    status: CustomerStatus.Active,
+                    external_id: null,
+                    vat_rate: 0,
+                    add_vat: false,
+                    subscriber_email_template_id: null,
+                    passreset_email_template_id: null,
+                    invoice_email_template_id: null,
+                    invoice_template_id: null,
+                    billing_profile_definition: ContractBillingProfileDefinition.ID,
+                    billing_profile_id: 1,
+                }
+
                 const response = await request(app.getHttpServer())
                     .post('/customers')
                     .set(...authHeader)
                     .set(...preferHeader)
-                    .send(customers)
+                    .send(customer)
                 expect(response.status).toEqual(HttpStatus.CREATED)
-                expect(response.body.length).toEqual(customers.length)
-                for (const customer of response.body) {
-                    const customerRes: CustomerResponseDto = customer
-                    // createdCustomerIds.push(+customerRes.id)
-                    expect(await validate(customerRes)).toHaveLength(0)
-                }
+                createdCustomerIds.push(+response.body[0].id)
             })
 
-            it('fail on invalid field name', async () => {
-                const intCustomer = internal.Customer.create({
-                    addVat: true,
-                    contactId: 1,
-                    profilePackageId: 1,
+            it('fail if both billing_profiles and billing_profile_id are set', async () => {
+                const customer: CustomerPost = {
+                    add_vat: true,
+                    contact_id: 1,
+                    billing_profile_id: 1,
                     status: CustomerStatus.Active,
                     type: CustomerType.PbxAccount,
+                    billing_profile_definition: ContractBillingProfileDefinition.ID,
+                    billing_profiles: [
+                        {
+                            'profile_id': 1,
+                            'network_id': null,
+                            'start': null,
+                            'stop': null,
+                        },
+                    ],
+                }
 
-                })
-                const customer = new CustomerRequestDto(intCustomer)
-                customer['invalidFieldName'] = 'invalid field'
                 const response = await request(app.getHttpServer())
                     .post('/customers')
                     .set(...authHeader)
@@ -144,190 +192,63 @@ describe('CustomerController', () => {
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
             })
         })
+
         describe('Customer GET', () => {
             it('read single created customer by id', async () => {
                 const id = createdCustomerIds[0]
-                // const resellerId = createdResellerIds[0]
-
                 const response = await request(app.getHttpServer())
                     .get(`/customers/${id}`)
                     .set(...authHeader)
                     .set(...preferHeader)
                 expect(response.status).toEqual(HttpStatus.OK)
-                // const customerRes: CustomerResponseDto = response.body
-                // expect(await validate(customerRes)).toHaveLength(0)
-                // expect(customerRes.add_vat).toBe(true)
-                // expect(customerRes.contact_id).toEqual(1)
-                // expect(customerRes.profile_package_id).toEqual(1)
-                // expect(customerRes.status).toEqual(CustomerStatus.Active)
-                // expect(customerRes.type).toEqual(CustomerType.PbxAccount)
+                const customerRes: CustomerResponseDto = response.body
+                expect(await validate(customerRes)).toHaveLength(0)
+                expect(customerRes.id).toEqual(id)
             })
+
             it('read collection', async () => {
                 const response = await request(app.getHttpServer())
                     .get('/customers')
                     .set(...authHeader)
                     .set(...preferHeader)
                 expect(response.status).toEqual(HttpStatus.OK)
-            })
-        })
-
-        describe('Customer PATCH', () => {
-            it('patch single customer by id', async () => {
-                const newStatus = CustomerStatus.Terminated
-                const patch: PatchOperation[] = [
-                    {op: 'replace', path: '/status', value: newStatus},
-                ]
-                const id = createdCustomerIds[0]
-                const patchResponse = await request(app.getHttpServer())
-                    .patch(`/customers/${id}`)
-                    .set(...authHeader)
-                    .set(...preferHeader)
-                    .send(patch)
-                //expect(patchResponse.body).toEqual(1)
-                expect(patchResponse.status).toEqual(HttpStatus.OK)
-                // const customer: CustomerResponseDto = patchResponse.body
-                // expect(customer.status).toEqual(newStatus)
-                // expect(customer.id).toEqual(id)
-            })
-
-            it('fails on bad patch operation', async () => {
-                const patch = [
-                    {op: 'replac', path: '/status', value: 'bad operation'},
-                ]
-                const patchResponse = await request(app.getHttpServer())
-                    .patch('/customers')
-                    .set(...authHeader)
-                    .set(...preferHeader)
-                    .send(patch)
-                expect(patchResponse.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
-            })
-
-            // TODO: Currently incorrect path does not throw an error because the RequestDto is transformed to internal
-            //       before patch validation occurs
-            it.skip('fails on bad patch path', async () => {
-                const patch: PatchOperation[] = [
-                    {op: 'replace', path: '/statu', value: 'bad value'},
-                ]
-                const patchResponse = await request(app.getHttpServer())
-                    .patch(`/customers/${createdCustomerIds[0]}`)
-                    .set(...authHeader)
-                    .set(...preferHeader)
-                    .send(patch)
-                expect(patchResponse.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
-            })
-            it('fails on bad patch value', async () => {
-                const patch: PatchOperation[] = [
-                    {op: 'replace', path: '/status', value: 'bad value'},
-                ]
-                const patchResponse = await request(app.getHttpServer())
-                    .patch(`/customers/${createdCustomerIds[0]}`)
-                    .set(...authHeader)
-                    .set(...preferHeader)
-                    .send(patch)
-                expect(patchResponse.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
-            })
-
-            // TODO: currently does not work; see description of single patch
-            it.skip('fails on bad patch path bulk', async () => {
-                const patch = {
-                    1: [
-                        {op: 'replace', path: '/status', value: 'bad path bulk'},
-                    ],
+                const [customers, count] = response.body
+                expect(count).toBeGreaterThan(0)
+                expect(customers.length).toBeGreaterThan(0)
+                for (const customer of customers) {
+                    expect(await validate(customer)).toHaveLength(0)
                 }
-                const patchResponse = await request(app.getHttpServer())
-                    .patch('/customers')
-                    .set(...authHeader)
-                    .set(...preferHeader)
-                    .send(patch)
-                expect(patchResponse.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
             })
-            it('fails on bad patch operation bulk', async () => {
-                const patch = {
-                    1: [
-                        {op: 'replac', path: '/status', value: 'bad operation'},
-                    ],
-                }
-                const patchResponse = await request(app.getHttpServer())
-                    .patch('/customers')
-                    .set(...authHeader)
-                    .set(...preferHeader)
-                    .send(patch)
-                expect(patchResponse.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
-            })
-        })
 
-        describe('Customer PUT', () => {
-            it('put single customer by id', async () => {
-                //expect(createdCustomerIds).toEqual([1])
-                const id = createdCustomerIds[1]
-                const intCustomer = internal.Customer.create({
-                    addVat: true,
-                    contactId: 1,
-                    billingProfileId: 5,
-                    status: CustomerStatus.Active,
-                    type: CustomerType.SipAccount,
-                })
-                const data = new CustomerRequestDto(intCustomer)
-                const putResponse = await request(app.getHttpServer())
-                    .put(`/customers/${id}`)
-                    .set(...authHeader)
-                    .set(...preferHeader)
-                    .send(data)
-                expect(putResponse.status).toEqual(HttpStatus.OK)
-                expect(putResponse.body.billing_profile_id).toEqual(5)
-            })
-            it('terminate customer by id', async () => {
-                const id = createdCustomerIds[1]
-                const intCustomer = internal.Customer.create({
-                    addVat: true,
-                    contactId: 1,
-                    status: CustomerStatus.Terminated,
-                    type: CustomerType.SipAccount,
-                })
-                const data = new CustomerRequestDto(intCustomer)
+            it('read non-existing customer', async () => {
                 const response = await request(app.getHttpServer())
-                    .put(`/customers/${id}`)
+                    .get('/customers/999999')
                     .set(...authHeader)
                     .set(...preferHeader)
-                    .send(data)
-                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.status).toEqual(HttpStatus.NOT_FOUND)
             })
-            it('fail on updateing terminated customer by id', async () => {
-                const id = createdCustomerIds[1]
-                const intCustomer = internal.Customer.create({
-                    addVat: true,
-                    contactId: 1,
-                    status: CustomerStatus.Terminated,
-                    type: CustomerType.SipAccount,
-                })
-                const data = new CustomerRequestDto(intCustomer)
-                const response = await request(app.getHttpServer())
-                    .put(`/customers/${id}`)
-                    .set(...authHeader)
-                    .set(...preferHeader)
-                    .send(data)
-                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
-            })
-            // it('put customer bulk', async () => {
-
-            // })
         })
 
         describe('Customer DELETE', () => {
-            it('delete customer by id', async () => {
-                const deleteResponse = await request(app.getHttpServer())
-                    .delete('/customers/1')
+            it('terminate customer by id', async () => {
+                const id = createdCustomerIds[0]
+                const response = await request(app.getHttpServer())
+                    .delete(`/customers/${id}`)
                     .set(...authHeader)
                     .set(...preferHeader)
-                expect(deleteResponse.status).toEqual(HttpStatus.NOT_FOUND)
-            })
-            it('delete customer bulk', async () => {
-                const deleteResponse = await request(app.getHttpServer())
-                    .delete('/customers')
-                    .set(...authHeader)
-                    .set(...preferHeader)
-                    .send([1, 2, 3])
-                expect(deleteResponse.status).toEqual(HttpStatus.NOT_FOUND)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body).toContain(id)
+                const softDelete = await db.billing.Contract.findOne({
+                    where: {
+                        id,
+                    },
+                })
+                expect(softDelete.status).toEqual(ContractStatus.Terminated)
+
+                // now actually delete all 
+                for (const id of createdCustomerIds) {
+                    await db.billing.Contract.delete(id)
+                }
             })
         })
     })

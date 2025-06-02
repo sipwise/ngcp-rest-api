@@ -1,4 +1,4 @@
-import {Not, SelectQueryBuilder} from 'typeorm'
+import {EntityManager, Not, SelectQueryBuilder} from 'typeorm'
 
 import {ContactSearchDto} from '~/api/contacts/dto/contact-search.dto'
 import {ContactOptions} from '~/api/contacts/interfaces/contact-options.interface'
@@ -46,8 +46,15 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
         return await Promise.all(contacts.map(async (contact) => contact.toInternal()))
     }
 
-    async readById(id: number, options?: ContactOptions): Promise<internal.Contact> {
-        const qb = await this.createBaseQueryBuilder(options)
+    async readActiveContactsInIds(manager: EntityManager, ids: number[], options?: ContactOptions): Promise<internal.Contact[]> {
+        const qb = await this.createBaseQueryBuilder(options, manager)
+        qb.andWhere('contact.status = :status', {status: ContactStatus.Active})
+        const contacts = await qb.andWhereInIds(ids).getMany()
+        return await Promise.all(contacts.map(async (contact) => contact.toInternal()))
+    }
+
+    async readById(id: number, options?: ContactOptions, manager?: EntityManager): Promise<internal.Contact> {
+        const qb = await this.createBaseQueryBuilder(options, manager)
         qb.andWhere('contact.id = :id', {id: id})
         const result = await qb.getOneOrFail()
         return result.toInternal()
@@ -147,8 +154,8 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
         return ids
     }
 
-    private async createBaseQueryBuilder(options: ContactOptions): Promise<SelectQueryBuilder<db.billing.Contact>> {
-        const qb = db.billing.Contact.createQueryBuilder('contact')
+    private async createBaseQueryBuilder(options: ContactOptions, manager?: EntityManager): Promise<SelectQueryBuilder<db.billing.Contact>> {
+        const qb = manager ? manager.createQueryBuilder(db.billing.Contact, 'contact') : db.billing.Contact.createQueryBuilder('contact')
         if (options) {
             this.addPermissionFilterToQueryBuilder(qb, options)
             this.addFilterByType(qb, options.type)

@@ -186,5 +186,45 @@
   "TASK_AGENT_COULD_NOT_PROCESS_REQUEST": {
     "message": "Task agent could not process request",
     "code": 10047
+  },
+  "INVALID_CONTACT_ID": {
+    "message": "Contact not found",
+    "code": 10046
+  },
+  "BILLING_PROFILE_ALREADY_TERMINATED": {
+    "message": "Billing profile already terminated",
+    "code": 10047
+  },
+  "CUSTOMER_CREATION_FAILED": {
+    "message": "Customer creation failed",
+    "code": 10049
+  },
+  "SETTING_PROFILE_PACKAGE_FOR_CUSTOMER_CONTRACTS_ONLY": {
+    "message": "Setting profile package is only allowed for customer contracts",
+    "code": 10050
+  },
+  "CONTACT_AND_BILLING_PROFILE_PACKAGE_RESELLER_ID_MISMATCH": {
+    "message": "Contact and billing profile package reseller ID mismatch",
+    "code": 10051
+  },
+  "INVALID_PROFILE_PACKAGE_ID": {
+    "message": "Invalid profile package ID",
+    "code": 10052
+  },
+  "INVALID_BILLING_NETWORK_ID": {
+    "message": "Invalid billing network ID",
+    "code": 10054
+  },
+  "START_DATE_NOT_IN_FUTURE": {
+    "message": "Start date must be in the future",
+    "code": 10055
+  },
+  "START_AFTER_END_DATE": {
+    "message": "Start date must be before end date",
+    "code": 10056
+  },
+  "NO_START_DATE_WITH_PROVIDED_END_DATE": {
+    "message": "No start date provided with provided end date",
+    "code": 10057
   }
 }

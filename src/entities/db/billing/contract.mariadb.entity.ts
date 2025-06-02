@@ -1,7 +1,6 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
 
 import {Contact} from './contact.mariadb.entity'
-import {ContractBillingProfileNetwork} from './contract-billing-profile-network.mariadb.entity'
 import {Product} from './product.mariadb.entity'
 import {Reseller} from './reseller.mariadb.entity'
 import {VoipSubscriber} from './voip-subscriber.mariadb.entity'
@@ -64,29 +63,29 @@ export class Contract extends BaseEntity {
         external_id?: string
 
     @Column({
-        type: 'date',
-        nullable:false,
+        type: 'datetime',
+        nullable: false,
         default: () => 'CURRENT_TIMESTAMP',
         onUpdate: 'CURRENT_TIMESTAMP',
     })
         modify_timestamp!: Date
 
     @Column({
-        type: 'date',
+        type: 'datetime',
         nullable: false,
-        default: '0000-00-00 00:00:00',
+        default: () => 'CURRENT_TIMESTAMP',
     })
         create_timestamp!: Date
 
     @Column({
-        type: 'date',
+        type: 'datetime',
         nullable: true,
     })
         activate_timestamp?: Date
 
     @Column({
         nullable: true,
-        type: 'date',
+        type: 'datetime',
     })
         terminate_timestamp?: Date
 
@@ -172,9 +171,6 @@ export class Contract extends BaseEntity {
     @OneToMany(() => VoipContractSpeedDial, csd => csd.contract_id)
         voipContractSpeedDials!: VoipContractSpeedDial[]
 
-    @OneToMany(() => ContractBillingProfileNetwork, billingProfileNetwork => billingProfileNetwork.contract, {eager: true})
-        billingMappings!: ContractBillingProfileNetwork[]
-
     @OneToMany(()=> ContractPhonebook, contractPhonebook => contractPhonebook.contract)
         phonebook!: ContractPhonebook[]
 
@@ -230,15 +226,16 @@ export class Contract extends BaseEntity {
 
         return this
     }
+
     toInternalCustomer(): internal.Customer {
         const customer = internal.Customer.create({
+            id: this.id,
             activateTimestamp: this.activate_timestamp,
             addVat: this.add_vat,
             contactId: this.contact_id,
             createTimestamp: this.create_timestamp,
             customerId: this.customer_id,
             externalId: this.external_id,
-            id: this.id,
             invoiceEmailTemplateId: this.invoice_email_template_id,
             invoiceTemplateId: this.invoice_template_id,
             maxSubscribers: this.max_subscribers,
@@ -253,6 +250,8 @@ export class Contract extends BaseEntity {
             terminateTimestamp: this.terminate_timestamp,
             vatRate: this.vat_rate,
         })
+        customer.billingProfiles = []
+        customer.futureMappings = []
         customer.type = this.product != undefined ? this.product.class as unknown as CustomerType : undefined
         return customer
     }
