@@ -173,7 +173,7 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
             uuid: uuidv4(),
             task: 'kam_proxy_dialplan_reload',
             src: os.hostname(),
-            dst: '*|role=proxy',
+            dst: '*|state=active;role=proxy',
             options: {
                 feedback_channel: feedbackChannel,
             },
