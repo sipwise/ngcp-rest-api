@@ -1,3 +1,12 @@
+ngcp-rest-api (13.3.1.2+0~mr13.3.1.2) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [ead50c0] MT#62882 Rewrite rule update should work in a TX
+  * [e82d7cb] MT#62881 Add task-agent notifcation to rwr sets & rules
+  * [1d20bbe] MT#62881 Fix destination on task agent notification
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 05 Jun 2025 12:29:24 +0200
+
 ngcp-rest-api (13.3.1.1+0~mr13.3.1.1) unstable; urgency=medium
 
   * New release.
