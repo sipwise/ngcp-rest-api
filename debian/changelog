@@ -1,3 +1,19 @@
+ngcp-rest-api (13.4.1.0+0~mr13.4.1.0) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [53fce1c] MT#62554 Improve AcceptHeader
+  * [f2b8376] MT#62519 Remove recursive loading of ACLRole and Admins
+  * [d69a26a] MT#62824 Make purge delete all phonebook entry
+  * [392d99f] MT#62882 Rewrite rule update should work in a TX
+  * [e6a4f19] MT#62881 Add task-agent notifcation to rwr sets & rules
+  * [0744e3f] MT#62881 Fix destination on task agent notification
+  * [8f4b737] MT#62586 migrate /customers endpoint (GET, POST, DELETE)
+
+  [ Kirill Solomko ]
+  * [1c60fe1] MT#62825 move redis session db to a constant
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 20 Jun 2025 10:44:19 +0200
+
 ngcp-rest-api (13.4.0.0+0~mr13.4.0.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
