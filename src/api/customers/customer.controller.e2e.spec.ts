@@ -229,6 +229,176 @@ describe('CustomerController', () => {
             })
         })
 
+        describe('Customer PATCH', () => {
+            it('patch single customer name and vat_rate', async () => {
+                const id = createdCustomerIds[0]
+                const patch = [
+                    {op: 'replace', path: '/external_id', value: 'patched-external-id'},
+                    {op: 'replace', path: '/vat_rate', value: 0.27},
+                ]
+                const response = await request(app.getHttpServer())
+                    .patch(`/customers/${id}`)
+                    .set(...authHeader)
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send(patch)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.external_id).toEqual('patched-external-id')
+                expect(Number(response.body.vat_rate)).toBeCloseTo(0.27)
+            })
+
+            it('patch non-existing customer', async () => {
+                const patch = [
+                    {op: 'replace', path: '/external_id', value: 'should-not-exist'},
+                ]
+                const response = await request(app.getHttpServer())
+                    .patch('/customers/999999')
+                    .set(...authHeader)
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send(patch)
+                expect(response.status).toEqual(HttpStatus.NOT_FOUND)
+            })
+
+            it('patch with invalid field', async () => {
+                const id = createdCustomerIds[0]
+                const patch = [
+                    {op: 'replace', path: '/nonexistent_field', value: 'foo'},
+                ]
+                const response = await request(app.getHttpServer())
+                    .patch(`/customers/${id}`)
+                    .set(...authHeader)
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send(patch)
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+            })
+
+            it('patch with business rule error (both billing_profile_id and billing_profiles)', async () => {
+                const id = createdCustomerIds[0]
+                const patch = [
+                    {op: 'replace', path: '/billing_profile_id', value: 1},
+                    {op: 'replace', path: '/billing_profiles', value: [{profile_id: 1, network_id: null, start: null, stop: null}]},
+                    {op: 'replace', path: '/billing_profile_definition', value: 'id'},
+                ]
+                const response = await request(app.getHttpServer())
+                    .patch(`/customers/${id}`)
+                    .set(...authHeader)
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send(patch)
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+            })
+
+            it('patch bulk customers (success)', async () => {
+                if (createdCustomerIds.length < 2) return // skip if not enough
+                const patchDict = {}
+                patchDict[createdCustomerIds[0]] = [
+                    {op: 'replace', path: '/external_id', value: 'bulk-patch-1'},
+                ]
+                patchDict[createdCustomerIds[1]] = [
+                    {op: 'replace', path: '/external_id', value: 'bulk-patch-2'},
+                ]
+                const response = await request(app.getHttpServer())
+                    .patch('/customers')
+                    .set(...authHeader)
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send(patchDict)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(Array.isArray(response.body)).toBe(true)
+                expect(response.body).toContain(createdCustomerIds[0])
+                expect(response.body).toContain(createdCustomerIds[1])
+            })
+        })
+
+        describe('Customer PUT', () => {
+            it('put single customer (success)', async () => {
+                const id = createdCustomerIds[0]
+                const putDto = {
+                    add_vat: true,
+                    contact_id: 1,
+                    status: CustomerStatus.Active,
+                    type: CustomerType.SipAccount,
+                    vat_rate: 0.19,
+                    billing_profile_definition: ContractBillingProfileDefinition.ID,
+                    billing_profile_id: 1,
+                }
+                const response = await request(app.getHttpServer())
+                    .put(`/customers/${id}`)
+                    .set(...authHeader)
+                    .send(putDto)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.id).toEqual(id)
+                expect(response.body.add_vat).toBe(true)
+                expect(Number(response.body.vat_rate)).toBeCloseTo(0.19)
+            })
+
+            it('put non-existing customer', async () => {
+                const putDto = {
+                    add_vat: true,
+                    contact_id: 1,
+                    status: CustomerStatus.Active,
+                    type: CustomerType.SipAccount,
+                    vat_rate: 0.19,
+                    billing_profile_definition: ContractBillingProfileDefinition.ID,
+                    billing_profile_id: 1,
+                }
+                const response = await request(app.getHttpServer())
+                    .put('/customers/999999')
+                    .set(...authHeader)
+                    .send(putDto)
+                expect(response.status).toEqual(HttpStatus.NOT_FOUND)
+            })
+
+            it('put with business rule error (both billing_profile_id and billing_profiles)', async () => {
+                const id = createdCustomerIds[0]
+                const putDto = {
+                    add_vat: true,
+                    contact_id: 1,
+                    status: CustomerStatus.Active,
+                    type: CustomerType.SipAccount,
+                    vat_rate: 0.19,
+                    billing_profile_definition: ContractBillingProfileDefinition.ID,
+                    billing_profile_id: 1,
+                    billing_profiles: [
+                        {profile_id: 1, network_id: null, start: null, stop: null},
+                    ],
+                }
+                const response = await request(app.getHttpServer())
+                    .put(`/customers/${id}`)
+                    .set(...authHeader)
+                    .send(putDto)
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+            })
+
+            it('put bulk customers (success)', async () => {
+                if (createdCustomerIds.length < 2) return // skip if not enough
+                const putDict = {}
+                putDict[createdCustomerIds[0]] = {
+                    add_vat: false,
+                    contact_id: 1,
+                    status: CustomerStatus.Active,
+                    type: CustomerType.SipAccount,
+                    vat_rate: 0.15,
+                    billing_profile_definition: ContractBillingProfileDefinition.ID,
+                    billing_profile_id: 1,
+                }
+                putDict[createdCustomerIds[1]] = {
+                    add_vat: true,
+                    contact_id: 1,
+                    status: CustomerStatus.Active,
+                    type: CustomerType.PbxAccount,
+                    vat_rate: 0.25,
+                    billing_profile_definition: ContractBillingProfileDefinition.ID,
+                    billing_profile_id: 1,
+                }
+                const response = await request(app.getHttpServer())
+                    .put('/customers')
+                    .set(...authHeader)
+                    .send(putDict)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(Array.isArray(response.body)).toBe(true)
+                expect(response.body).toContain(createdCustomerIds[0])
+                expect(response.body).toContain(createdCustomerIds[1])
+            })
+        })
+
         describe('Customer DELETE', () => {
             it('terminate customer by id', async () => {
                 const id = createdCustomerIds[0]

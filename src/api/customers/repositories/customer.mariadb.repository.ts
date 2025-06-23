@@ -40,7 +40,7 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
-    async appendBillingMappings(manager: EntityManager, customerId: number, mappings: internal.BillingMapping[], now?: Date): Promise<void> {
+    async appendBillingMappings(manager: EntityManager, customerId: number, mappings: internal.BillingMapping[], now?: Date, deleteMappings?: boolean): Promise<void> {
         let csvString = ''
         for (const mapping of mappings) {
             csvString += `${mapping.startDate ? mapping.startDate.toISOString() : ''},`
@@ -53,7 +53,11 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
             message: `create contract id ${customerId} billing mappings via proc: ${csvString}`,
             func: this.appendBillingMappings.name,
         })
-        await manager.query('call billing.schedule_contract_billing_profile_network(?,?,?);', [customerId, now ? now.toISOString() : undefined, csvString])
+        await manager.query('call billing.schedule_contract_billing_profile_network(?,?,?);', [
+            customerId,
+            (now && deleteMappings) ? now.toISOString() : undefined,
+            csvString,
+        ])
     }
 
     async createInitialBalance(manager: EntityManager, customerId: number): Promise<void> {
@@ -274,12 +278,16 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         return await qb.getCount()
     }
 
-    async update(updates: Dictionary<internal.Customer>, _sr: ServiceRequest): Promise<number[]> {
+    async update(updates: Dictionary<internal.Customer>, _sr: ServiceRequest, manager?: EntityManager): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const dbEntity = db.billing.Contract.create()
             dbEntity.fromInternalCustomer(updates[id])
-            await db.billing.Contract.update(id, dbEntity)
+            if (manager) {
+                await manager.getRepository(db.billing.Contract).update(id, dbEntity)
+            } else {
+                await db.billing.Contract.update(id, dbEntity)
+            }
         }
         return ids
     }

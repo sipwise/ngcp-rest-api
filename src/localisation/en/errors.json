@@ -226,5 +226,21 @@
   "NO_START_DATE_WITH_PROVIDED_END_DATE": {
     "message": "No start date provided with provided end date",
     "code": 10057
+  },
+  "INVALID_BILLING_PROFILES_ARRAY": {
+    "message": "Invalid field 'billingProfiles'. Must be an array.",
+    "code": 10058
+  },
+  "CONTACT_IS_TERMINATED": {
+    "message": "Contact is terminated",
+    "code": 10059
+  },
+  "OPEN_INTERVAL_MAPPING_NOT_ALLOWED": {
+    "message": "Adding mappings with open start date and open end date is not allowed",
+    "code": 10060
+  },
+  "INVALID_BILLING_PROFILE_DEFINITION": {
+    "message": "Invalid billingProfileDefinition.",
+    "code": 10061
   }
 }

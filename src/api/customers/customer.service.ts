@@ -158,6 +158,80 @@ export class CustomerService implements CrudService<internal.Customer> {
         return await this.customerRepository.delete(ids, sr)
     }
 
+    async update(updates: Dictionary<internal.Customer>, sr: ServiceRequest): Promise<number[]> {
+        return await this.app.dbConnection().transaction(async manager => {
+            const contactIds = [...new Set(Object.values(updates).map(e => e.contactId))]
+            const activeContacts = await this.contactRepository.readActiveContactsInIds(manager, contactIds, {
+                type: ContactType.CustomerContact,
+                filterBy: sr.user.reseller_id_required ? {resellerId: sr.user.reseller_id} : undefined,
+            })
+            const diff = contactIds.filter(id => !activeContacts.find(c => c.id === id))
+            if (activeContacts.length !== contactIds.length) {
+                const error: ErrorMessage = this.i18n.t('errors.INVALID_CONTACT_ID')
+                throw new UnprocessableEntityException(GenerateErrorMessageArray(diff, error.message))
+            }
+
+            const productPromises = Object.keys(updates).map(async id => {
+                const customer = updates[id]
+                customer.productId = await this.readProductId(manager, customer, sr)
+            })
+            await Promise.all(productPromises)
+
+            const appendActions: {id: number, mappings: internal.BillingMapping[], deleteMappings: boolean}[] = []
+            const mappingPromises = Object.keys(updates).map(async id => {
+                const customerId = +id
+                const oldEntity = await this.read(customerId, sr)
+                const resource = updates[id]
+                const contact = activeContacts.find(c => c.id === resource.contactId)
+                const profileDef = resource.billingProfileDefinition || ContractBillingProfileDefinition.ID
+                let mappingsToCreate: internal.BillingMapping[] = []
+                let deleteMappings = false
+                if (profileDef === ContractBillingProfileDefinition.ID) {
+                    if (resource.billingProfileId !== undefined && resource.billingProfileId !== oldEntity.billingProfileId) {
+                        mappingsToCreate = await this.updateBillingMappingsFromProfile(manager, resource, contact, sr, new Date())
+                        deleteMappings = true
+                    }
+                    delete resource.profilePackageId
+                } else if (profileDef === ContractBillingProfileDefinition.Profiles) {
+                    if (!Array.isArray(resource.billingProfiles)) {
+                        throw new UnprocessableEntityException('Invalid field \'billingProfiles\'. Must be an array.')
+                    }
+                    mappingsToCreate = await this.updateBillingMappingsFromProfiles(manager, resource, contact, sr, new Date())
+                    deleteMappings = true
+                    delete resource.profilePackageId
+                } else if (profileDef === ContractBillingProfileDefinition.Package) {
+                    if (!contact.reseller_id) {
+                        throw new UnprocessableEntityException()
+                    }
+                    if (oldEntity.profilePackageId !== resource.profilePackageId) {
+                        mappingsToCreate = await this.updateBillingMappingsFromPackage(manager, resource, contact, sr, new Date())
+                        deleteMappings = true
+                    }
+                } else {
+                    throw new UnprocessableEntityException()
+                }
+                delete resource.billingProfileId
+                delete resource.billingProfiles
+                delete resource.billingProfileDefinition
+                resource.modifyTimestamp = new Date()
+                appendActions.push({id: customerId, mappings: mappingsToCreate, deleteMappings})
+            })
+            await Promise.all(mappingPromises)
+
+            await this.customerRepository.update(updates, sr, manager)
+
+            const appendPromises = appendActions.map(action => {
+                if (action.mappings.length > 0 || action.deleteMappings) {
+                    return this.customerRepository.appendBillingMappings(manager, action.id, action.mappings, new Date(), action.deleteMappings)
+                }
+                return Promise.resolve()
+            })
+            await Promise.all(appendPromises)
+
+            return Object.keys(updates).map(id => +id)
+        })
+    }
+
     private async readProductId(manager: EntityManager, customer: internal.Customer, sr: ServiceRequest): Promise<number> {
         const product = await this.customerRepository.readProductByType(manager, customer.type, sr)
         if (product == undefined) {
@@ -253,7 +327,6 @@ export class CustomerService implements CrudService<internal.Customer> {
     }
 
     private async createBillingMappingsFromPackage(manager: EntityManager, customer: internal.Customer, contact: internal.Contact, sr: ServiceRequest, _now?: Date): Promise<internal.BillingMapping[]> {
-        // If its not a customer contract
         if (!contact.reseller_id) {
             const error:ErrorMessage = this.i18n.t('errors.SETTING_PROFILE_PACKAGE_FOR_CUSTOMER_CONTRACTS_ONLY')
             throw new UnprocessableEntityException(error)
@@ -301,6 +374,82 @@ export class CustomerService implements CrudService<internal.Customer> {
                 endDate: undefined,
             }),
         ]
+    }
+
+    private async updateBillingMappingsFromProfile(manager: EntityManager, customer: internal.Customer, contact: internal.Contact, sr: ServiceRequest, now: Date): Promise<internal.BillingMapping[]> {
+        const billingProfile = await this.customerRepository.readBillingProfile(manager, customer.billingProfileId, sr)
+        if (billingProfile.status === BillingProfileStatus.Terminated) {
+            const error: ErrorMessage = this.i18n.t('errors.BILLING_PROFILE_ALREADY_TERMINATED')
+            throw new UnprocessableEntityException(error)
+        }
+        if (contact.reseller_id != billingProfile.resellerId) {
+            const error: ErrorMessage = this.i18n.t('errors.CONTACT_AND_BILLING_PROFILE_RESELLER_ID_MISMATCH')
+            throw new UnprocessableEntityException(error)
+        }
+        return [
+            internal.BillingMapping.create({
+                billingProfileId: billingProfile.id,
+                networkId: undefined,
+                startDate: now,
+                endDate: undefined,
+            }),
+        ]
+    }
+
+    private async updateBillingMappingsFromPackage(manager: EntityManager, customer: internal.Customer, contact: internal.Contact, sr: ServiceRequest, now: Date): Promise<internal.BillingMapping[]> {
+        if (!contact.reseller_id) {
+            const error: ErrorMessage = this.i18n.t('errors.SETTING_PROFILE_PACKAGE_FOR_CUSTOMER_CONTRACTS_ONLY')
+            throw new UnprocessableEntityException(error)
+        }
+        const pkg = await this.customerRepository.readProfilePackageWithInitialProfiles(manager, customer.profilePackageId, sr)
+        if (pkg.resellerId != contact.reseller_id) {
+            const error: ErrorMessage = this.i18n.t('errors.CONTACT_AND_BILLING_PROFILE_PACKAGE_RESELLER_ID_MISMATCH')
+            throw new UnprocessableEntityException(error)
+        }
+        const mappings: internal.BillingMapping[] = []
+        for (const profile of pkg.profilePackageSets) {
+            mappings.push(internal.BillingMapping.create({
+                billingProfileId: profile.profile_id,
+                networkId: profile.network_id,
+                startDate: now,
+                endDate: undefined,
+            }))
+        }
+        return mappings
+    }
+
+    private async updateBillingMappingsFromProfiles(manager: EntityManager, customer: internal.Customer, contact: internal.Contact, sr: ServiceRequest, now: Date): Promise<internal.BillingMapping[]> {
+        const mappings: internal.BillingMapping[] = []
+        for (const profile of customer.billingProfiles) {
+            const billingProfile = await this.customerRepository.readBillingProfile(manager, profile.id, sr)
+            const network = await this.customerRepository.readBillingNetwork(manager, profile.networkId, sr)
+            if (contact.reseller_id != billingProfile.resellerId) {
+                throw new NotFoundException()
+            }
+            if (network && contact.reseller_id != network.resellerId) {
+                throw new NotFoundException()
+            }
+            const start = profile.startDate || now
+            const end = profile.endDate || undefined
+            // endDate but no startDate is not allowed
+            if (end && !profile.startDate) {
+                throw new UnprocessableEntityException(this.i18n.t('errors.NO_START_DATE_WITH_PROVIDED_END_DATE'))
+            }
+            // open start and end is not allowed on update
+            if (!profile.startDate && !profile.endDate) {
+                throw new UnprocessableEntityException('adding mappings with open start date and open end date is not allowed')
+            }
+            if (start && end && start >= end) {
+                throw new UnprocessableEntityException(this.i18n.t('errors.START_AFTER_END_DATE'))
+            }
+            mappings.push(internal.BillingMapping.create({
+                billingProfileId: billingProfile.id,
+                networkId: network ? network.id : null,
+                startDate: start,
+                endDate: end,
+            }))
+        }
+        return mappings
     }
 
     private async checkPermissions(resellerId: number, sr: ServiceRequest): Promise<void> {

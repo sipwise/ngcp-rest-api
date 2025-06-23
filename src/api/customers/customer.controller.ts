@@ -1,5 +1,5 @@
-import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Post, Query, Req, ValidationPipe, forwardRef} from '@nestjs/common'
-import {ApiBody, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Query, Req, ValidationPipe, forwardRef} from '@nestjs/common'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery,ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {number} from 'yargs'
 
@@ -17,14 +17,21 @@ import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
+import {PatchDto} from '~/dto/patch.dto'
+import {internal} from '~/entities'
+import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
+import {Operation, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
+import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
 import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
+import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
 const resourceName = 'customers'
 
@@ -203,6 +210,90 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
             method: req.method,
         })
         return super.journal(id, req)
+    }
+
+    @Patch(':id')
+    @ApiConsumes('application/json-patch+json')
+    @ApiBody({type: [PatchDto]})
+    async adjust(
+        @Param('id', ParseIntPipe) id: number,
+        @Body(new ParsePatchPipe()) patch: Operation[],
+        @Req() req: Request,
+    ): Promise<CustomerResponseDto> {
+        this.log.debug({
+            message: 'patch customer by id',
+            id: id,
+            func: this.adjust.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const oldEntity = await this.customerService.read(id, sr)
+        const entity = await patchToEntity<internal.Customer, CustomerRequestDto>(oldEntity, patch, CustomerRequestDto)
+        const updates = new Dictionary<internal.Customer>()
+        updates[id] = entity
+        const ids = await this.customerService.update(updates, sr)
+        const updatedEntity = await this.customerService.read(ids[0], sr)
+        const response = new CustomerResponseDto(updatedEntity)
+        await this.journalService.writeJournal(sr, id, response)
+        return response
+    }
+
+    @Patch()
+    @ApiConsumes('application/json-patch+json')
+    @ApiBody({type: PatchDto})
+    async adjustMany(
+        @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<Operation[]>,
+        @Req() req: Request,
+    ): Promise<number[]> {
+        const sr = new ServiceRequest(req)
+        const updates = new Dictionary<internal.Customer>()
+        for (const id of Object.keys(patches)) {
+            const oldEntity = await this.customerService.read(+id, sr)
+            const entity = await patchToEntity<internal.Customer, CustomerRequestDto>(oldEntity, patches[id], CustomerRequestDto)
+            updates[id] = entity
+        }
+        return await this.customerService.update(updates, sr)
+    }
+
+    @Put(':id')
+    @ApiOkResponse({type: CustomerResponseDto})
+    async update(
+        @Param('id', ParseIntPipe) id: number,
+            dto: CustomerRequestDto,
+        @Req() req: Request,
+    ): Promise<CustomerResponseDto> {
+        this.log.debug({
+            message: 'update customer by id',
+            id: id,
+            func: this.update.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const updates = new Dictionary<internal.Customer>()
+        updates[id] = Object.assign(new CustomerRequestDto(), dto).toInternal({id: id, assignNulls: true})
+        const ids = await this.customerService.update(updates, sr)
+        const entity = await this.customerService.read(ids[0], sr)
+        const response = new CustomerResponseDto(entity, {url: req.url, containsResourceId: true})
+        await this.journalService.writeJournal(sr, id, response)
+        return response
+    }
+
+    @Put()
+    @ApiPutBody(CustomerRequestDto)
+    async updateMany(
+        @Body(new ParseIdDictionary({items: CustomerRequestDto})) updates: Dictionary<CustomerRequestDto>,
+        @Req() req: Request,
+    ): Promise<number[]> {
+        this.log.debug({message: 'update customers bulk', func: this.updateMany.name, url: req.url, method: req.method})
+        const sr = new ServiceRequest(req)
+        const sets = new Dictionary<internal.Customer>()
+        for (const id of Object.keys(updates)) {
+            const dto: CustomerRequestDto = updates[id]
+            sets[id] = Object.assign(new CustomerRequestDto(), dto).toInternal({id: parseInt(id), assignNulls: true})
+        }
+        return await this.customerService.update(sets, sr)
     }
 
 }
