@@ -26,6 +26,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
 
     async readAll(options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<[internal.SubscriberPhonebook[], number]> {
         const qb = db.billing.SubscriberPhonebook.createQueryBuilder('phonebook')
+        qb.leftJoinAndSelect('phonebook.subscriber', 'subscriber')
         const searchDto  = new SubscriberPhonebookSearchDto()
         configureQueryBuilder(
             qb,
@@ -34,6 +35,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 sr,
                 Object.keys(searchDto),
                 undefined,
+                searchDto._alias,
             ),
         )
         this.addFilterBy(qb, options.filterBy)
@@ -47,6 +49,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
 
     async readById(id: number, options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<internal.SubscriberPhonebook> {
         const qb = db.billing.SubscriberPhonebook.createQueryBuilder('phonebook')
+        qb.leftJoinAndSelect('phonebook.subscriber', 'subscriber')
         const searchDto  = new SubscriberPhonebookSearchDto()
         configureQueryBuilder(
             qb,
@@ -55,6 +58,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 sr,
                 Object.keys(searchDto),
                 undefined,
+                searchDto._alias,
             ),
         )
         qb.where({id: id})
@@ -90,11 +94,13 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
 
     async readWhereInIds(ids: number[], options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<internal.SubscriberPhonebook[]> {
         const qb = db.billing.SubscriberPhonebook.createQueryBuilder('phonebook')
+        qb.leftJoinAndSelect('phonebook.subscriber', 'subscriber')
         const searchDto  = new SubscriberPhonebookSearchDto()
         configureQueryBuilder(
             qb,
             sr.query,
-            new SearchLogic(sr,
+            new SearchLogic(
+                sr,
                 Object.keys(searchDto),
                 undefined,
                 undefined,
@@ -108,11 +114,13 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
 
     async readWhereInNumbers(number: string[], options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.SubscriberPhonebook.createQueryBuilder('phonebook')
+        qb.leftJoinAndSelect('phonebook.subscriber', 'subscriber')
         const searchDto  = new SubscriberPhonebookSearchDto()
         configureQueryBuilder(
             qb,
             sr.query,
-            new SearchLogic(sr,
+            new SearchLogic(
+                sr,
                 Object.keys(searchDto),
                 undefined,
                 undefined,
@@ -126,6 +134,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
 
     async readCountOfIds(ids: number[], options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<number> {
         const qb = db.billing.SubscriberPhonebook.createQueryBuilder('phonebook')
+        qb.leftJoinAndSelect('phonebook.subscriber', 'subscriber')
         const searchDto = new SubscriberPhonebookSearchDto()
         configureQueryBuilder(
             qb,
@@ -142,6 +151,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
 
     async readAllFromViewAll(options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<[internal.VSubscriberPhonebook[], number]> {
         const qb = db.billing.VSubscriberPhonebook.createQueryBuilder('phonebook')
+        qb.leftJoinAndSelect('phonebook.subscriber', 'subscriber')
         const searchDto  = new SubscriberPhonebookSearchDto()
         configureQueryBuilder(
             qb,
@@ -150,6 +160,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 sr,
                 Object.keys(searchDto),
                 undefined,
+                searchDto._alias,
             ),
         )
         this.addFilterBy(qb, options.filterBy)
@@ -161,8 +172,9 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
         ), totalCount]
     }
 
-    async readAllFromViewShared(options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<[internal.VSubscriberPhonebook[], number]> {
+    async readAllFromViewContract(options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<[internal.VSubscriberPhonebook[], number]> {
         const qb = db.billing.VSubscriberContractPhonebook.createQueryBuilder('phonebook')
+        qb.leftJoinAndSelect('phonebook.subscriber', 'subscriber')
         const searchDto  = new SubscriberPhonebookSearchDto()
         configureQueryBuilder(
             qb,
@@ -171,6 +183,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 sr,
                 Object.keys(searchDto),
                 undefined,
+                searchDto._alias,
             ),
         )
         this.addFilterBy(qb, options.filterBy)
@@ -184,6 +197,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
 
     async readAllFromViewReseller(options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<[internal.VSubscriberPhonebook[], number]> {
         const qb = db.billing.VSubscriberResellerPhonebook.createQueryBuilder('phonebook')
+        qb.leftJoinAndSelect('phonebook.subscriber', 'subscriber')
         const searchDto  = new SubscriberPhonebookSearchDto()
         configureQueryBuilder(
             qb,
@@ -192,6 +206,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 sr,
                 Object.keys(searchDto),
                 undefined,
+                searchDto._alias,
             ),
         )
         this.addFilterBy(qb, options.filterBy)
@@ -205,6 +220,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
 
     async readByIdFromViewAll(id: string, options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<internal.VSubscriberPhonebook> {
         const qb = db.billing.VSubscriberPhonebook.createQueryBuilder('phonebook')
+        qb.leftJoinAndSelect('phonebook.subscriber', 'subscriber')
         const searchDto  = new SubscriberPhonebookSearchDto()
         configureQueryBuilder(
             qb,
@@ -213,6 +229,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 sr,
                 Object.keys(searchDto),
                 undefined,
+                searchDto._alias,
             ),
         )
         qb.where({id: id})
@@ -231,6 +248,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 sr,
                 Object.keys(searchDto),
                 undefined,
+                searchDto._alias,
             ),
         )
         qb.where({id: id})
@@ -241,6 +259,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
 
     async readByIdFromViewReseller(id: string, options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<internal.VSubscriberPhonebook> {
         const qb = db.billing.VSubscriberResellerPhonebook.createQueryBuilder('phonebook')
+        qb.leftJoinAndSelect('phonebook.subscriber', 'subscriber')
         const searchDto  = new SubscriberPhonebookSearchDto()
         configureQueryBuilder(
             qb,
@@ -249,6 +268,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 sr,
                 Object.keys(searchDto),
                 undefined,
+                searchDto._alias,
             ))
         qb.where({id: id})
         this.addFilterBy(qb, options.filterBy)
@@ -259,7 +279,6 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
     private addFilterBy(qb: SelectQueryBuilder<db.billing.SubscriberPhonebook> | SelectQueryBuilder<db.billing.VSubscriberPhonebook>, filterBy: SubscriberPhonebookOptions['filterBy']): void {
         if (filterBy) {
             if (filterBy.resellerId) {
-                qb.leftJoinAndSelect('phonebook.subscriber', 'subscriber')
                 qb.leftJoinAndSelect('subscriber.contract', 'contract')
                 qb.leftJoinAndSelect('contract.contact', 'contact')
                 qb.andWhere('contact.reseller_id = :resellerId', {resellerId: filterBy.resellerId})

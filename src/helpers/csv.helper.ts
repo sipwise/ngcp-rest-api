@@ -10,6 +10,10 @@ import {formatValidationErrorsInCsv} from './errors.helper'
 
 import {CsvValidationError} from '~/types/csv-validation-error.type'
 
+
+export interface CsvOptions {
+    numericBooleans?: boolean
+}
 /**
  * Converts UTF-8CSV file buffer to an array of the provided DTO type.
  *
@@ -68,8 +72,23 @@ export async function csvToDto<T extends object>(file: Express.Multer.File, dtoC
  * Converts an array of the provided DTO type to a UTF-8 CSV string.
  *
  */
-export async function dtoToCsv<T extends object>(dtos: T[]): Promise<string> {
-    const csv = Papa.unparse(dtos, {
+export async function dtoToCsv<T extends object>(dtos: T[], options?: CsvOptions): Promise<string> {
+    const useNumericBooleans = options?.numericBooleans || false
+    const mappedDtos = useNumericBooleans
+        ? dtos.map(dto => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const result: Record<string, any> = {}
+            for (const [key, value] of Object.entries(dto)) {
+                if (typeof value === 'boolean') {
+                    result[key] = value ? '1' : '0'
+                } else {
+                    result[key] = value
+                }
+            }
+            return result
+        })
+        : dtos
+    const csv = Papa.unparse(mappedDtos, {
         delimiter: ',',
         header: true,
     })

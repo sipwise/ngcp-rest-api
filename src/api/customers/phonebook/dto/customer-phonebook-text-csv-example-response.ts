@@ -1,1 +1,1 @@
-export const CustomerPhonebookTextCsvExampleResponse = 'id,customer_id,name,number\n1,1,Foo,111111\n2,1,Bar,222222\n3,1,Baz,333333'
+export const CustomerPhonebookTextCsvExampleResponse = 'id,customer_id,name,number,own\n1,1,Foo,111111,true\n2,1,Bar,222222,true\n3,1,Baz,333333,true'

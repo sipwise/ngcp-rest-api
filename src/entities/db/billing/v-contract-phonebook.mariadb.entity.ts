@@ -27,6 +27,15 @@ export class VContractPhonebook extends BaseEntity {
     })
         number!: string
 
+    @ViewColumn({
+        name: 'own',
+        transformer: {
+            from: (value: number) => value === 1,
+            to: (value: boolean) => value ? 1 : 0,
+        },
+    })
+        own!: boolean
+
     @ManyToOne(() => Contract, contract => contract.phonebook)
     @JoinColumn({name: 'contract_id'})
         contract!: Contract
@@ -37,6 +46,7 @@ export class VContractPhonebook extends BaseEntity {
         entity.contractId = this.contract_id
         entity.name = this.name
         entity.number = this.number
+        entity.own = this.own
         return entity
     }
 }

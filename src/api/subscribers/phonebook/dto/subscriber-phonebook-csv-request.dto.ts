@@ -22,7 +22,16 @@ export class SubscriberPhonebookCsvRequestDto implements RequestDto {
     @ApiProperty()
         subscriber_id: number
 
-    @Transform(({value}) => value !== '0')
+    @Transform(({value}) => {
+        if (typeof value === 'string') {
+            return value.toLowerCase() === 'true' || value === '1'
+        }
+
+        if (typeof value === 'boolean')
+            return value
+
+        return false
+    })
     @IsBoolean()
     @ApiProperty()
         shared: boolean

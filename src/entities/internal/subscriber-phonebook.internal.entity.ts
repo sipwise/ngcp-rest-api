@@ -1,6 +1,7 @@
 export interface SubscriberPhonebookInterface {
     id?: number
     subscriberId?: number
+    customerId?: number
     name?: string
     number?: string
     shared?: boolean
@@ -9,6 +10,7 @@ export interface SubscriberPhonebookInterface {
 export class SubscriberPhonebook implements SubscriberPhonebookInterface{
     id?: number
     subscriberId!: number
+    customerId?: number
     name!: string
     number!: string
     shared!: boolean

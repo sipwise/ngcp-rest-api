@@ -3,6 +3,7 @@ export interface VCustomerPhonebookInterface {
     contractId?: number
     name?: string
     number?: string
+    own?: boolean
 }
 
 export class VCustomerPhonebook implements VCustomerPhonebookInterface{
@@ -10,6 +11,7 @@ export class VCustomerPhonebook implements VCustomerPhonebookInterface{
     contractId!: number
     name!: string
     number!: string
+    own!: boolean
 
     static create(data: VCustomerPhonebookInterface): VCustomerPhonebook {
         const phonebook = new VCustomerPhonebook()

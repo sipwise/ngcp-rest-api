@@ -36,6 +36,15 @@ export class VSubscriberPhonebook extends BaseEntity {
     })
         shared!: boolean
 
+    @ViewColumn({
+        name: 'own',
+        transformer: {
+            from: (value: number) => value === 1,
+            to: (value: boolean) => value ? 1 : 0,
+        },
+    })
+        own!: boolean
+
     @ManyToOne(() => VoipSubscriber, contract => contract.phonebook)
     @JoinColumn({name: 'subscriber_id'})
         subscriber!: VoipSubscriber
@@ -44,9 +53,11 @@ export class VSubscriberPhonebook extends BaseEntity {
         const entity = new internal.VSubscriberPhonebook()
         entity.id = this.id
         entity.subscriberId = this.subscriber_id
+        entity.customerId = this.subscriber.contract_id
         entity.name = this.name
         entity.number = this.number
         entity.shared = this.shared
+        entity.own = this.own
         return entity
     }
 }

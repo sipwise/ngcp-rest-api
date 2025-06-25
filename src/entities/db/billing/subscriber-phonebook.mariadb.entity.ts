@@ -48,6 +48,7 @@ export class SubscriberPhonebook extends BaseEntity {
         const entity = new internal.SubscriberPhonebook()
         entity.id = this.id
         entity.subscriberId = this.subscriber_id
+        entity.customerId = this.subscriber.contract_id
         entity.name = this.name
         entity.number = this.number
         entity.shared = this.shared

@@ -59,6 +59,9 @@ export class CustomerPhonebookService implements CrudService<internal.CustomerPh
             case CustomerPhonebookView.Reseller:
                 return await this.phonebookRepo.readAllFromViewReseller(options, sr)
             default:
+                if (sr.query && sr.query['own']) {
+                    return await this.phonebookRepo.readAllFromViewAll(options, sr)
+                }
                 return await this.phonebookRepo.readAll(options, sr)
         }
     }
@@ -78,6 +81,9 @@ export class CustomerPhonebookService implements CrudService<internal.CustomerPh
             default:
                 if (Number.isNaN(+id)) {
                     throw new NotFoundException()
+                }
+                if (sr.query && sr.query['own']) {
+                    return await this.phonebookRepo.readByIdFromViewAll(id.toString(), options, sr)
                 }
                 return await this.phonebookRepo.readById(+id, options, sr)
         }
@@ -180,7 +186,9 @@ export class CustomerPhonebookService implements CrudService<internal.CustomerPh
             return rest
         })
 
-        const csv = await dtoToCsv<CustomerPhonebookResponseDto>(dtos)
+        const csv = await dtoToCsv<CustomerPhonebookResponseDto>(dtos, {
+            numericBooleans: this.app.config.csv.export_boolean_format === 'numeric',
+        })
 
         const buffer = Buffer.from(csv, 'utf-8')
         return new StreamableFile(Uint8Array.from(buffer), {
