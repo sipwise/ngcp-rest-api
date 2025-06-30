@@ -71,8 +71,17 @@ export class ContractMariadbRepository extends MariaDbRepository implements Cont
             user: sr.user.username,
         })
         const queryBuilder = db.billing.Contract.createQueryBuilder('contract')
-        const constractSearchDtoKeys = Object.keys(new ContractSearchDto())
-        await configureQueryBuilder(queryBuilder, sr.query, new SearchLogic(sr, constractSearchDtoKeys))
+        const searchDto = new ContractSearchDto()
+        await configureQueryBuilder(
+            queryBuilder,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         queryBuilder.leftJoinAndSelect('contract.product', 'product')
         const [result, totalCount] = await queryBuilder.getManyAndCount()
         return [result.map(r => r.toInternal()), totalCount]
@@ -80,8 +89,17 @@ export class ContractMariadbRepository extends MariaDbRepository implements Cont
 
     async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Contract[]> {
         const qb = db.billing.Contract.createQueryBuilder('contract')
-        const constractSearchDtoKeys = Object.keys(new ContractSearchDto())
-        await configureQueryBuilder(qb, sr.query, new SearchLogic(sr, constractSearchDtoKeys))
+        const searchDto = new ContractSearchDto()
+        await configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         qb.leftJoinAndSelect('contract.product', 'product')
         const created = await qb.andWhereInIds(ids).getMany()
         return await Promise.all(created.map(async (contract) => contract.toInternal()))

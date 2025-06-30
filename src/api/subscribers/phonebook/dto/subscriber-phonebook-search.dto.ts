@@ -6,6 +6,7 @@ export class SubscriberPhonebookSearchDto {
     shared: boolean = undefined
     own: boolean = undefined
     _alias = {
+        id: 'phonebook.id',
         customer_id: 'subscriber.contract_id',
     }
 }

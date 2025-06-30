@@ -12,11 +12,11 @@ export class HeaderManipulationRuleActionSearchDto {
     value: string = undefined
     subscriber_id: number = undefined
     _alias = {
+        id: 'headerRuleAction.id',
         action_type: 'headerRuleAction.action_type',
         enabled: 'headerRuleAction.enabled',
         header_part: 'headerRuleAction.header_part',
         header: 'headerRuleAction.header',
-        id: 'headerRuleAction.id',
         priority: 'headerRuleAction.priority',
         rule_id: 'headerRuleAction.rule_id',
         rwr_dp_id: 'headerRuleAction.rwr_dp_id',

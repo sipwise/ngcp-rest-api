@@ -3,4 +3,7 @@ export class PbxGroupMemberSearchDto {
     username: string = undefined
     extension: string = undefined
     domain: string = undefined
+    _alias = {
+        id: 'member_subquery.member_id',
+    }
 }

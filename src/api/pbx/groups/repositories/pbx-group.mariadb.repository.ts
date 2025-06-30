@@ -15,7 +15,13 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
     private readonly log = new LoggerService(PbxGroupMariadbRepository.name)
 
     async readAll(sr: ServiceRequest): Promise<[internal.PbxGroup[], number]> {
-        const searchLogic = new SearchLogic(sr, Object.keys(new PbxGroupSearchDto()))
+        const searchDto = new PbxGroupSearchDto()
+        const searchLogic = new SearchLogic(
+            sr,
+            Object.keys(searchDto),
+            undefined,
+            searchDto._alias,
+        )
         const query = await this.generateBaseQuery(sr, searchLogic)
 
         query.limit(searchLogic.rows).offset(searchLogic.rows * (searchLogic.page - 1))

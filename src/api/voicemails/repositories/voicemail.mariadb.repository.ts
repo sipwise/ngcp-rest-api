@@ -26,11 +26,16 @@ export class VoicemailMariadbRepository extends MariaDbRepository implements Voi
     async readAll(sr: ServiceRequest): Promise<[internal.Voicemail[], number]> {
         const qb = await this.createBaseQueryBuilder(sr)
         const searchDto = new VoicemailSearchDto()
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-            searchDto._alias,
-        ))
+        configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         const [result, count] = await qb.getManyAndCount()
         return [result.map(voicemail => voicemail.toInternal()), count]
     }

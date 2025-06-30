@@ -10,6 +10,7 @@ export class RewriteRuleSearchDto {
     field: RewriteRuleField = undefined
     priority: number = undefined
     _alias = {
+        id: 'rewriteRule.id',
         reseller_id: 'rewriteRuleSet.reseller_id',
     }
 }

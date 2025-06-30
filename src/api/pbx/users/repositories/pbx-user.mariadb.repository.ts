@@ -27,7 +27,12 @@ export class PbxUserMariadbRepository extends MariaDbRepository implements PbxUs
         configureQueryBuilder(
             qb,
             sr.query,
-            new SearchLogic(sr, Object.keys(searchDto), undefined, searchDto._alias),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
         )
         this.addFilterBy(qb, options.filterBy)
         const [result, totalCount] = await qb.getManyAndCount()

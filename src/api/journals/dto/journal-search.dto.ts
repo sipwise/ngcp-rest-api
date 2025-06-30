@@ -1,5 +1,4 @@
 export class JournalSearchDto {
-    id: number = undefined
     content?: string | Buffer = undefined
     content_format: string = undefined
     operation: string = undefined
@@ -11,4 +10,7 @@ export class JournalSearchDto {
     tx_id: string = undefined
     username: string = undefined
     user_id: number = undefined
+    _alias = {
+        id: 'journal.id',
+    }
 }

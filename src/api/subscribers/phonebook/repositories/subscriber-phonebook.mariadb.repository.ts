@@ -103,7 +103,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 sr,
                 Object.keys(searchDto),
                 undefined,
-                undefined,
+                searchDto._alias,
             ),
         )
         qb.whereInIds(ids)
@@ -123,7 +123,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 sr,
                 Object.keys(searchDto),
                 undefined,
-                undefined,
+                searchDto._alias,
             ),
         )
         qb.andWhere('phonebook.number IN (:...numbers)', {numbers: number})
@@ -142,6 +142,8 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         qb.whereInIds(ids)

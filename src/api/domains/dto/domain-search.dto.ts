@@ -1,7 +1,7 @@
-import {DomainResponseDto} from './domain-response.dto'
-
-export class DomainSearchDto implements DomainResponseDto {
+export class DomainSearchDto {
     domain: string = undefined
-    id: number = undefined
     reseller_id: number = undefined
+    _alias = {
+        id: 'domain.id',
+    }
 }

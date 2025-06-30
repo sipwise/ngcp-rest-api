@@ -9,6 +9,7 @@ export class HeaderManipulationRuleSearchDto {
     direction: HeaderRuleDirection = undefined
     priority: number = undefined
     _alias = {
+        id: 'headerRule.id',
         subscriber_id: 'headerRuleSet.subscriber_id',
     }
 }

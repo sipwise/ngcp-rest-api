@@ -28,13 +28,18 @@ export class CustomerSpeedDialMariadbRepository extends MariaDbRepository implem
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.CustomerSpeedDial[], number]> {
-        const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('voipContractSpeedDial')
+        const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('csd')
         const searchDto = new CustomerSpeedDialSearchDto()
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-            searchDto._alias,
-        ))
+        configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(
@@ -45,25 +50,35 @@ export class CustomerSpeedDialMariadbRepository extends MariaDbRepository implem
     }
 
     async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.CustomerSpeedDial[]> {
-        const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('voipContractSpeedDial')
+        const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('csd')
         const searchDto = new CustomerSpeedDialSearchDto()
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-            searchDto._alias,
-        ))
+        configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         const created = await qb.andWhereInIds(ids).getMany()
         return await Promise.all(created.map(async (csd) => csd.toInternal()))
     }
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.CustomerSpeedDial> {
-        const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('voipContractSpeedDial')
+        const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('csd')
         const searchDto = new CustomerSpeedDialSearchDto()
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-            searchDto._alias,
-        ))
+        configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         qb.where({id: id})
         this.addFilterBy(qb, filterBy)
         const result = await qb.getOne()

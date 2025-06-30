@@ -39,7 +39,8 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
         configureQueryBuilder(
             qb,
             await this.configureSrQuery(sr),
-            new SearchLogic(sr,
+            new SearchLogic(
+                sr,
                 Object.keys(searchDto),
                 undefined,
                 searchDto._alias,
@@ -62,7 +63,8 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
         configureQueryBuilder(
             qb,
             await this.configureSrQuery(sr),
-            new SearchLogic(sr,
+            new SearchLogic(
+                sr,
                 Object.keys(searchDto),
                 undefined,
                 searchDto._alias,
@@ -83,7 +85,8 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
         configureQueryBuilder(
             qb,
             await this.configureSrQuery(sr),
-            new SearchLogic(sr,
+            new SearchLogic(
+                sr,
                 Object.keys(searchDto),
                 undefined,
                 searchDto._alias,
@@ -104,7 +107,8 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
         configureQueryBuilder(
             qb,
             await this.configureSrQuery(sr),
-            new SearchLogic(sr,
+            new SearchLogic(
+                sr,
                 Object.keys(searchDto),
                 undefined,
                 searchDto._alias,

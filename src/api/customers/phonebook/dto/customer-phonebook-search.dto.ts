@@ -4,6 +4,7 @@ export class CustomerPhonebookSearchDto {
     number: string = undefined
     own: boolean = undefined
     _alias = {
+        id: 'phonebook.id',
         customer_id: 'phonebook.contract_id',
     }
 }

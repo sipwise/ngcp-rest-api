@@ -37,6 +37,8 @@ export class RewriteRuleSetMariadbRepository extends MariaDbRepository implement
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         this.addFilterBy(qb, filterBy)
@@ -57,6 +59,8 @@ export class RewriteRuleSetMariadbRepository extends MariaDbRepository implement
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         qb.where({id: id})
@@ -74,6 +78,8 @@ export class RewriteRuleSetMariadbRepository extends MariaDbRepository implement
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         qb.whereInIds(ids)
@@ -93,6 +99,8 @@ export class RewriteRuleSetMariadbRepository extends MariaDbRepository implement
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         qb.whereInIds(ids)

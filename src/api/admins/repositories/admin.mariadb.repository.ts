@@ -36,7 +36,12 @@ export class AdminMariadbRepository extends MariaDbRepository implements AdminRe
         configureQueryBuilder(
             qb,
             sr.query,
-            new SearchLogic(sr, Object.keys(searchDto), undefined, searchDto._alias),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
         )
         await this.addPermissionCheckToQueryBuilder(qb, options)
         const [result, totalCount] = await qb.getManyAndCount()

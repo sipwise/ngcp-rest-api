@@ -1,9 +1,6 @@
-import {SystemContactResponseDto} from './system-contact-response.dto'
-
 import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
 
-export class SystemContactSearchDto implements SystemContactResponseDto {
-    id: number = undefined
+export class SystemContactSearchDto {
     bankname?: string = undefined
     bic?: string = undefined
     city?: string = undefined
@@ -37,4 +34,7 @@ export class SystemContactSearchDto implements SystemContactResponseDto {
     terminate_timestamp?: Date = undefined
     timezone?: string = undefined
     vatnum?: string = undefined
+    _alias = {
+        id: 'contact.id',
+    }
 }

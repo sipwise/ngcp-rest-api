@@ -19,4 +19,7 @@ export class CustomerSearchDto {
     subscriber_email_template_id?: number = undefined
     type?: ContractType = undefined
     vat_rate?: number = undefined
+    _alias = {
+        id: 'contract.id',
+    }
 }

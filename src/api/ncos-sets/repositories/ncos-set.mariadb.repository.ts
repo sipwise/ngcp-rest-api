@@ -32,9 +32,16 @@ export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSS
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.NCOSSet[], number]> {
         const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
         const searchDto  = new NCOSSetSearchDto()
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-        ))
+        configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(
@@ -47,10 +54,16 @@ export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSS
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.NCOSSet> {
         const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
         const searchDto  = new NCOSSetSearchDto()
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-        ))
+        configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         qb.where({id: id})
         this.addFilterBy(qb, filterBy)
         const result = await qb.getOneOrFail()
@@ -60,10 +73,16 @@ export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSS
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.NCOSSet[]> {
         const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
         const searchDto  = new NCOSSetSearchDto()
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-        ))
+        configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         qb.whereInIds(ids)
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
@@ -73,10 +92,16 @@ export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSS
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
         const qb = db.billing.NCOSSet.createQueryBuilder('ncosSet')
         const searchDto = new NCOSSetSearchDto()
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-        ))
+        configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         qb.whereInIds(ids)
         this.addFilterBy(qb, filterBy)
         return await qb.getCount()
@@ -173,10 +198,16 @@ export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSS
         const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
         qb.innerJoinAndSelect('ncosSetLevel.level', 'level')
         const searchDto  = new NCOSSetLevelSearchDto()
-        configureQueryBuilder(qb, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-        ))
+        configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         qb.where({id: levelId})
         if (id)
             qb.andWhere({ncos_set_id: id})

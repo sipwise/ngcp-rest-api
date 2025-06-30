@@ -6,8 +6,8 @@ export class HeaderManipulationRuleConditionSearchDto {
     rwr_dp_id: number = undefined
     enabled: boolean = undefined
     subscriber_id: number = undefined
-
     _alias = {
+        id: 'headerRuleCondition.id',
         subscriber_id: 'headerRuleSet.subscriber_id',
     }
 }

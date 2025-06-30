@@ -6,4 +6,7 @@ export class NumberSearchDto {
     cc: number = undefined
     ac: string = undefined
     sn: string = undefined
+    _alias = {
+        id: 'voipNumber.id',
+    }
 }

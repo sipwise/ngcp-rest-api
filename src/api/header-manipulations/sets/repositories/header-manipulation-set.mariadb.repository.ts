@@ -40,6 +40,8 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         this.addFilterBy(qb, filterBy)
@@ -61,6 +63,8 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         qb.where({id: id})
@@ -79,6 +83,8 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         qb.whereInIds(ids)
@@ -99,6 +105,8 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         qb.whereInIds(ids)
@@ -115,6 +123,8 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         qb.andWhere('subscriber_id = :id', {

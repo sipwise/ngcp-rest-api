@@ -41,8 +41,17 @@ export class JournalMariadbRepository extends MariaDbRepository implements Journ
         const user: AuthResponseDto = sr.user
         const qb = db.billing.Journal.createQueryBuilder('journal')
         qb.leftJoinAndSelect('journal.role', 'role')
-        await configureQueryBuilder(qb, sr.query, new SearchLogic(sr, Object.keys(new JournalSearchDto())))
-
+        const searchDto = new JournalSearchDto()
+        await configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         if (resourceName !== undefined) {
             qb.andWhere('journal.resource_name = :resourceName', {resourceName: resourceName})
             if (resourceId !== undefined) {

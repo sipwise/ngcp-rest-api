@@ -41,7 +41,13 @@ export class NumberMariadbRepository extends MariaDbRepository {
 
     async readById(numberID: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.VoipNumber> {
         const qb = this.createBaseQueryBuilder(sr, filterBy)
-        const searchLogic = new SearchLogic(sr, Object.keys(new NumberSearchDto()))
+        const searchDto = new NumberSearchDto()
+        const searchLogic = new SearchLogic(
+            sr,
+            Object.keys(searchDto),
+            undefined,
+            searchDto._alias,
+        )
         await this.addSearchFilterToQueryBuilder(qb, sr.query, searchLogic)
         qb.andWhere('voipNumber.id = :voipNumberID', {voipNumberID: numberID})
         const raw: RawNumberRow = await qb.getRawOne()
@@ -109,7 +115,13 @@ export class NumberMariadbRepository extends MariaDbRepository {
     }
 
     private createReadAllQueryBuilder(sr: ServiceRequest, filterBy: FilterBy): SelectQueryBuilder<db.billing.VoipNumber> {
-        const searchLogic = new SearchLogic(sr, Object.keys(new NumberSearchDto()))
+        const searchDto = new NumberSearchDto()
+        const searchLogic = new SearchLogic(
+            sr,
+            Object.keys(searchDto),
+            undefined,
+            searchDto._alias,
+        )
         const qb = this.createBaseQueryBuilder(sr, filterBy)
         this.addSearchFilterToQueryBuilder(qb, sr.query, searchLogic)
         addOrderByToQueryBuilder(qb, sr.query, searchLogic)

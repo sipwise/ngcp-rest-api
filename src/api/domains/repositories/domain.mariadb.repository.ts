@@ -54,8 +54,17 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
             user: sr.user.username,
         })
         const queryBuilder = db.billing.Domain.createQueryBuilder('domain')
-        const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
-        await configureQueryBuilder(queryBuilder, sr.query, new SearchLogic(sr, domainSearchDtoKeys))
+        const searchDto = new DomainSearchDto()
+        await configureQueryBuilder(
+            queryBuilder,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         const [result, totalCount] = await queryBuilder.getManyAndCount()
         return [result.map(d => d.toInternal()), totalCount]
     }

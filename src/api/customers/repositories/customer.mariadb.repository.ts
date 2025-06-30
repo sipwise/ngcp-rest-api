@@ -182,6 +182,8 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         const [result, totalCount] = await qb.getManyAndCount()
@@ -219,6 +221,8 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         const result = await qb.getOneOrFail()
@@ -252,6 +256,8 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         qb.whereInIds(ids)
@@ -271,6 +277,8 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         qb.whereInIds(ids)

@@ -1,7 +1,6 @@
 import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
 
 export class CustomerContactSearchDto {
-    id: number = undefined
     bankname?: string = undefined
     bic?: string = undefined
     city?: string = undefined
@@ -36,4 +35,7 @@ export class CustomerContactSearchDto {
     terminate_timestamp?: Date = undefined
     timezone?: string = undefined
     vatnum?: string = undefined
+    _alias = {
+        id: 'contact.id',
+    }
 }

@@ -148,7 +148,17 @@ export class ResellerMariadbRepository extends MariaDbRepository implements Rese
 
     private async createReadAllQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Reseller>> {
         const qb = await this.createBaseQueryBuilder(sr)
-        await configureQueryBuilder(qb, sr.query, new SearchLogic(sr, Object.keys(new ResellerSearchDto())))
+        const searchDto = new ResellerSearchDto()
+        await configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         return qb
     }
 }

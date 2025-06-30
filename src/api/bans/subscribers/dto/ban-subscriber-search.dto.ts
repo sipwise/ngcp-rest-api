@@ -1,7 +1,7 @@
 export class BanSubscriberSearchDto {
-    id: number = undefined
     reseller_id: number = undefined
     _alias = {
+        id: 'bSubscriber.id',
         'username': 'webusername',
     }
 }

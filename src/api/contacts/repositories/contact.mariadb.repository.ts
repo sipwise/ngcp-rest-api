@@ -136,7 +136,17 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
             user: sr.user.username,
         })
         const qb = await this.createBaseQueryBuilder(options)
-        await configureQueryBuilder(qb, sr.query, new SearchLogic(sr, Object.keys(new ContactSearchDto())))
+        const searchDto = new ContactSearchDto()
+        await configureQueryBuilder(
+            qb,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         const [result, count] = await qb.getManyAndCount()
         return [result.map(r => r.toInternal()), count]
     }

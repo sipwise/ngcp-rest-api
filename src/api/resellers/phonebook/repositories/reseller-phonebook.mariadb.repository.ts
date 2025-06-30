@@ -35,7 +35,7 @@ export class ResellerPhonebookMariadbRepository extends MariaDbRepository implem
                 sr,
                 Object.keys(searchDto),
                 undefined,
-                undefined,
+                searchDto._alias,
             ),
         )
         this.addFilterBy(qb, options.filterBy)
@@ -57,7 +57,7 @@ export class ResellerPhonebookMariadbRepository extends MariaDbRepository implem
                 sr,
                 Object.keys(searchDto),
                 undefined,
-                undefined,
+                searchDto._alias,
             ),
         )
         qb.where({id: id})
@@ -97,10 +97,11 @@ export class ResellerPhonebookMariadbRepository extends MariaDbRepository implem
         configureQueryBuilder(
             qb,
             sr.query,
-            new SearchLogic(sr,
+            new SearchLogic(
+                sr,
                 Object.keys(searchDto),
                 undefined,
-                undefined,
+                searchDto._alias,
             ),
         )
         qb.andWhere('phonebook.number IN (:...numbers)', {numbers: number})
@@ -115,10 +116,11 @@ export class ResellerPhonebookMariadbRepository extends MariaDbRepository implem
         configureQueryBuilder(
             qb,
             sr.query,
-            new SearchLogic(sr,
+            new SearchLogic(
+                sr,
                 Object.keys(searchDto),
                 undefined,
-                undefined,
+                searchDto._alias,
             ),
         )
         qb.whereInIds(ids)
@@ -136,6 +138,8 @@ export class ResellerPhonebookMariadbRepository extends MariaDbRepository implem
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         qb.whereInIds(ids)

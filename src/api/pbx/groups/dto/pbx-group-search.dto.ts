@@ -4,4 +4,7 @@ export class PbxGroupSearchDto {
     hunt_policy: string = undefined
     hunt_timeout: number = undefined
     name: string = undefined
+    _alias = {
+        id: 'bg.id',
+    }
 }

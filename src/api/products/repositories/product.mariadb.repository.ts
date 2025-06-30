@@ -17,8 +17,17 @@ export class ProductMariadbRepository extends MariaDbRepository implements Produ
     async readAll(sr: ServiceRequest): Promise<[internal.Product[], number]> {
         this.log.debug({message: 'read all products', func: this.readAll.name, user: sr.user.username})
         const queryBuilder = db.billing.Product.createQueryBuilder('product')
-        const productSearchDtoKeys = Object.keys(new ProductSearchDto())
-        await configureQueryBuilder(queryBuilder, sr.query, new SearchLogic(sr, productSearchDtoKeys))
+        const searchDto = new ProductSearchDto()
+        await configureQueryBuilder(
+            queryBuilder,
+            sr.query,
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
+        )
         const [result, totalCount] = await queryBuilder.getManyAndCount()
         return [result.map(product => product.toInternal()), totalCount]
     }

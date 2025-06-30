@@ -9,6 +9,7 @@ export class VoicemailSearchDto implements VoicemailResponseDto {
     time: string = undefined
     subscriber_id: number = undefined
     _alias = {
+        id: 'voicemail.id',
         subscriber_id: 'bSubscriber.id',
         caller: 'callerid',
         folder: {

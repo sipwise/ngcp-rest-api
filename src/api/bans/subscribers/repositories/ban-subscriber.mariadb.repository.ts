@@ -28,7 +28,12 @@ export class BanSubscriberMariadbRepository extends MariaDbRepository implements
         configureQueryBuilder(
             qb,
             sr.query,
-            new SearchLogic(sr, Object.keys(searchDto), undefined, searchDto._alias),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
         )
         this.addFilterBy(qb, options.filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
@@ -53,7 +58,12 @@ export class BanSubscriberMariadbRepository extends MariaDbRepository implements
         configureQueryBuilder(
             qb,
             sr.query,
-            new SearchLogic(sr, Object.keys(searchDto), undefined, searchDto._alias),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
         )
         qb.andWhere('bSubscriber.id IN (:ids)', {ids: ids})
         this.addFilterBy(qb, options.filterBy)

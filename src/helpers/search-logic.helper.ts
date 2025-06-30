@@ -42,7 +42,7 @@ export class SearchLogic {
 
         if (sr.query['order_by'] != null) {
             this.orderBy = sr.query['order_by'].toString()
-            if (!searchableFields.includes(this.orderBy))
+            if (!searchableFields.includes(this.orderBy) && this.orderBy !== 'id')
                 throw new BadRequestException()
             if (this.aliases && this.orderBy in this.aliases) {
                 const propertyAlias = this.aliases[this.orderBy]

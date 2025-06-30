@@ -96,7 +96,8 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
         configureQueryBuilder(
             qb,
             sr.query,
-            new SearchLogic(sr,
+            new SearchLogic(
+                sr,
                 Object.keys(searchDto),
                 undefined,
                 undefined,
@@ -114,7 +115,8 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
         configureQueryBuilder(
             qb,
             sr.query,
-            new SearchLogic(sr,
+            new SearchLogic(
+                sr,
                 Object.keys(searchDto),
                 undefined,
                 undefined,
@@ -135,6 +137,8 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
             new SearchLogic(
                 sr,
                 Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
             ),
         )
         qb.whereInIds(ids)
@@ -257,7 +261,8 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
                 Object.keys(searchDto),
                 undefined,
                 searchDto._alias,
-            ))
+            ),
+        )
         qb.where({id: id})
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getOneOrFail()

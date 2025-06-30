@@ -31,7 +31,12 @@ export class BanAdminMariadbRepository extends MariaDbRepository implements BanA
         configureQueryBuilder(
             qb,
             sr.query,
-            new SearchLogic(sr, Object.keys(searchDto), undefined, searchDto._alias),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
         )
         this.addFilterBy(qb, filterBy)
         await this.addPermissionCheckToQueryBuilder(qb, options)
@@ -53,7 +58,12 @@ export class BanAdminMariadbRepository extends MariaDbRepository implements BanA
         configureQueryBuilder(
             qb,
             sr.query,
-            new SearchLogic(sr, Object.keys(searchDto), undefined, searchDto._alias),
+            new SearchLogic(
+                sr,
+                Object.keys(searchDto),
+                undefined,
+                searchDto._alias,
+            ),
         )
         qb.whereInIds(ids)
         this.addPermissionCheckToQueryBuilder(qb, options)
