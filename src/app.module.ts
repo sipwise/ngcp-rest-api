@@ -26,6 +26,7 @@ import {ClearCallCounterModule} from './api/clearcallcounters/clear-call-counter
 import {ContactModule} from './api/contacts/contact.module'
 import {ContractModule} from './api/contracts/contract.module'
 import {CustomerContactModule} from './api/customercontacts/customer-contact.module'
+import {CustomerBalanceModule} from './api/customers/balances/customer-balance.module'
 import {CustomerModule} from './api/customers/customer.module'
 import {CustomerPhonebookModule} from './api/customers/phonebook/customer-phonebook.module'
 import {CustomerSpeedDialModule} from './api/customerspeeddials/customer-speed-dial.module'
@@ -103,6 +104,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     ClearCallCounterModule,
     ContactModule,
     ContractModule,
+    CustomerBalanceModule,
     CustomerPhonebookModule,
     CustomerModule,
     CustomerContactModule,
