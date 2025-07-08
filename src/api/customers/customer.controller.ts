@@ -10,7 +10,6 @@ import {CustomerResponseDto} from './dto/customer-response.dto'
 
 import {CustomerBillingProfileResponseDto} from '~/api/customers/dto/customer-billing-profile-response.dto'
 import {CustomerSearchDto} from '~/api/customers/dto/customer-search.dto'
-import {HeaderManipulationSetSearchDto} from '~/api/header-manipulations/sets/dto/header-manipulation-set-search.dto'
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
@@ -98,7 +97,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
             await this.customerService.readAll(sr)
         const responseList = entity.map(e => new CustomerResponseDto(e,{url: req.url}))
         if (sr.query.expand) {
-            const setSearchDtoKeys = Object.keys(new HeaderManipulationSetSearchDto())
+            const setSearchDtoKeys = Object.keys(new CustomerSearchDto())
             await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
         }
         return [responseList, totalCount]
