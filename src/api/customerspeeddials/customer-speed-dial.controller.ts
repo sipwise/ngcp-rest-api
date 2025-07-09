@@ -2,6 +2,7 @@ import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Re
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation, patchToEntity} from 'helpers/patch.helper'
+import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {CustomerSpeedDialService} from './customer-speed-dial.service'
@@ -56,6 +57,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         type: CustomerSpeedDialRequestDto,
         isArray: true,
     })
+    @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: CustomerSpeedDialRequestDto})) createDto: CustomerSpeedDialRequestDto[],
         @Req() req: Request,
@@ -110,6 +112,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     @ApiOkResponse({
         type: CustomerSpeedDialResponseDto,
     })
+    @Transactional()
     async update(@Param('id', ParseIntPipe) id: number, entity: CustomerSpeedDialUpdateDto, req): Promise<CustomerSpeedDialResponseDto> {
         this.log.debug({
             message: 'update customer speed dial by id',
@@ -133,6 +136,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     @ApiBody({
         type: [PatchDto],
     })
+    @Transactional()
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
@@ -162,6 +166,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     @Patch()
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
+    @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req: Request,
@@ -182,6 +187,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     @ApiOkResponse({
         type: [number],
     })
+    @Transactional()
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,

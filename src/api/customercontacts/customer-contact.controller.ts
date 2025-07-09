@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {CustomerContactService} from './customer-contact.service'
@@ -72,6 +73,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
         type: CustomerContactRequestDto,
         isArray: true,
     })
+    @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: CustomerContactRequestDto})) createDto: CustomerContactRequestDto[],
         @Req() req: Request,
@@ -133,6 +135,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     @ApiBody({
         type: [PatchDto],
     })
+    @Transactional()
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
@@ -161,6 +164,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     @Patch()
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
+    @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req: Request,
@@ -181,6 +185,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     @ApiOkResponse({
         type: CustomerContactResponseDto,
     })
+    @Transactional()
     async update(@Param('id', ParseIntPipe) id: number, entity: CustomerContactRequestDto, req): Promise<CustomerContactResponseDto> {
         this.log.debug({
             message: 'update customer contact by id',
@@ -200,6 +205,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
 
     @Put()
     @ApiPutBody(CustomerContactRequestDto)
+    @Transactional()
     async updateMany(
         @Body(new ParseIdDictionary({items: CustomerContactRequestDto})) updates: Dictionary<CustomerContactRequestDto>,
         @Req() req: Request,
@@ -223,6 +229,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     @ApiOkResponse({
         type: [number],
     })
+    @Transactional()
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,

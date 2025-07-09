@@ -2,6 +2,7 @@ import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Re
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'helpers/patch.helper'
+import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {NCOSSetLevelRequestDto} from './dto/ncos-set-level-request.dto'
@@ -60,6 +61,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         type: NCOSSetLevelRequestDto,
         isArray: true,
     })
+    @Transactional()
     async createLevel(
         @Param('id') id: number,
         @Body(new ParseOneOrManyPipe({items: NCOSSetLevelRequestDto})) createDto: NCOSSetLevelRequestDto[],
@@ -122,6 +124,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
 
     @Delete(':id?/levels/:levelId')
     @ApiOkResponse({})
+    @Transactional()
     async deleteLevel(
         @Req() req: Request,
         @Param('levelId', ParseIntPipe) levelId: number,
@@ -169,6 +172,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         type: NCOSSetRequestDto,
         isArray: true,
     })
+    @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: NCOSSetRequestDto})) createDto: NCOSSetRequestDto[],
         @Req() req: Request,
@@ -242,6 +246,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     @ApiOkResponse({
         type: NCOSSetResponseDto,
     })
+    @Transactional()
     async update(@Param('id', ParseIntPipe) id: number, dto: NCOSSetRequestDto, req: Request): Promise<NCOSSetResponseDto> {
         this.log.debug({
             message: 'update ncos set by id',
@@ -265,6 +270,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
 
     @Put()
     @ApiPutBody(NCOSSetRequestDto)
+    @Transactional()
     async updateMany(
         @Body(new ParseIdDictionary({items: NCOSSetRequestDto})) updates: Dictionary<NCOSSetRequestDto>,
         @Req() req: Request,
@@ -284,6 +290,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     @ApiBody({
         type: [PatchDto],
     })
+    @Transactional()
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
@@ -316,6 +323,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     @Patch()
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
+    @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req: Request,
@@ -336,6 +344,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     @ApiOkResponse({
         type: [number],
     })
+    @Transactional()
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,

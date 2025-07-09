@@ -1,6 +1,7 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {VoicemailRequestDto} from './dto/voicemail-request.dto'
@@ -85,6 +86,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     @ApiOkResponse({
         type: number,
     })
+    @Transactional()
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,
@@ -106,6 +108,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     @ApiBody({
         type: [PatchDto],
     })
+    @Transactional()
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
@@ -129,6 +132,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     @Patch()
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
+    @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req: Request,
@@ -150,6 +154,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     @ApiOkResponse({
         type: VoicemailResponseDto,
     })
+    @Transactional()
     async update(@Param('id', ParseIntPipe) id: number, @Body() update: VoicemailRequestDto, @Req() req): Promise<VoicemailResponseDto> {
         this.log.debug({
             message: 'update voicemail by id',
@@ -169,6 +174,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
 
     @Put()
     @ApiPutBody(VoicemailRequestDto)
+    @Transactional()
     async updateMany(
         @Body(new ParseIdDictionary({items: VoicemailRequestDto})) updates: Dictionary<VoicemailRequestDto>,
         @Req() req: Request,

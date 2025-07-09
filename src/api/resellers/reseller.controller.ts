@@ -1,6 +1,7 @@
 import {Body, Controller, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, forwardRef} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+import {Transactional} from 'typeorm-transactional'
 
 import {ResellerRequestDto} from './dto/reseller-request.dto'
 import {ResellerResponseDto} from './dto/reseller-response.dto'
@@ -58,6 +59,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
         type: ResellerRequestDto,
         isArray: true,
     })
+    @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: ResellerRequestDto})) createDto: ResellerRequestDto[],
         @Req() req: Request,
@@ -119,6 +121,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     @ApiOkResponse({
         type: ResellerResponseDto,
     })
+    @Transactional()
     async update(@Param('id', ParseIntPipe) id: number, entity: ResellerRequestDto, req): Promise<ResellerResponseDto> {
         this.log.debug({message: 'update reseller by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -136,6 +139,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
 
     @Put()
     @ApiPutBody(ResellerRequestDto)
+    @Transactional()
     async updateMany(
         @Body(new ParseIdDictionary({items: ResellerRequestDto})) updates: Dictionary<ResellerRequestDto>,
         @Req() req: Request,
@@ -158,6 +162,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     @ApiBody({
         type: [PatchDto],
     })
+    @Transactional()
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
@@ -184,6 +189,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     @Patch()
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
+    @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req: Request,

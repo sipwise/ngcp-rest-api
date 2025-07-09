@@ -1,6 +1,7 @@
 import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, ValidationPipe, forwardRef} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {HeaderManipulationRuleConditionRequestParamDto} from './dto/header-manipulation-rule-condition-request-param.dto'
@@ -61,6 +62,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         type: HeaderManipulationRuleConditionRequestDto,
         isArray: true,
     })
+    @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: HeaderManipulationRuleConditionRequestDto})) createDto: HeaderManipulationRuleConditionRequestDto[],
         @Req() req: Request,
@@ -140,6 +142,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     @ApiOkResponse({
         type: HeaderManipulationRuleConditionResponseDto,
     })
+    @Transactional()
     async update(@Param('id', ParseIntPipe) id: number,
         dto: HeaderManipulationRuleConditionRequestDto,
         @Req() req: Request,
@@ -167,6 +170,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
 
     @Put(':setId?/rules/:ruleId?/conditions')
     @ApiPutBody(HeaderManipulationRuleConditionRequestDto)
+    @Transactional()
     async updateMany(
         @Body(new ParseIdDictionary({items: HeaderManipulationRuleConditionRequestDto})) updates: Dictionary<HeaderManipulationRuleConditionRequestDto>,
         @Req() req: Request,
@@ -187,6 +191,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     @ApiBody({
         type: [PatchDto],
     })
+    @Transactional()
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
@@ -220,6 +225,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     @Patch(':setId?/rules/:ruleId?/conditions')
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
+    @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req: Request,
@@ -247,6 +253,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     @ApiOkResponse({
         type: [number],
     })
+    @Transactional()
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,

@@ -1,6 +1,7 @@
 import {Controller, Get, Post, Req} from '@nestjs/common'
 import {ApiCreatedResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+import {Transactional} from 'typeorm-transactional'
 
 import {ClearCallCounterService} from './clear-call-counter.service'
 import {ClearCallCounterResponseDto} from './dto/clear-call-counter-response.dto'
@@ -30,6 +31,7 @@ export class ClearCallCounterController extends CrudController<never, ClearCallC
 
     @Post()
     @ApiCreatedResponse()
+    @Transactional()
     async create(_: never[], @Req() req: Request): Promise<void> {
         this.log.debug({
             message: 'clear call counters',

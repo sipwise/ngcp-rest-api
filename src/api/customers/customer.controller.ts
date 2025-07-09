@@ -1,6 +1,7 @@
 import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Query, Req, ValidationPipe, forwardRef} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery,ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {CustomerService} from './customer.service'
@@ -61,6 +62,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
         type: CustomerRequestDto,
         isArray: true,
     })
+    @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: CustomerRequestDto})) createDto: CustomerRequestDto[],
         @Req() req: Request,
@@ -135,6 +137,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     @ApiOkResponse({
         type: [number],
     })
+    @Transactional()
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,
@@ -214,6 +217,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     @Patch(':id')
     @ApiConsumes('application/json-patch+json')
     @ApiBody({type: [PatchDto]})
+    @Transactional()
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
@@ -241,6 +245,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     @Patch()
     @ApiConsumes('application/json-patch+json')
     @ApiBody({type: PatchDto})
+    @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<Operation[]>,
         @Req() req: Request,
@@ -257,6 +262,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
 
     @Put(':id')
     @ApiOkResponse({type: CustomerResponseDto})
+    @Transactional()
     async update(
         @Param('id', ParseIntPipe) id: number,
             dto: CustomerRequestDto,
@@ -281,6 +287,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
 
     @Put()
     @ApiPutBody(CustomerRequestDto)
+    @Transactional()
     async updateMany(
         @Body(new ParseIdDictionary({items: CustomerRequestDto})) updates: Dictionary<CustomerRequestDto>,
         @Req() req: Request,

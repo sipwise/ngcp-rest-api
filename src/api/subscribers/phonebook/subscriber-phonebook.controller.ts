@@ -4,6 +4,7 @@ import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/sw
 import {Request} from 'express'
 import {Operation} from 'fast-json-patch'
 import {I18nService} from 'nestjs-i18n'
+import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {SubscriberPhonebookCsvRequestDto} from './dto/subscriber-phonebook-csv-request.dto'
@@ -86,6 +87,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
         },
     }))
     @ApiContentTypeHeader('application/json', 'multipart/form-data')
+    @Transactional()
     async create(
         @BodyOrEmptyArray(new ParseOneOrManyPipe({items: SubscriberPhonebookRequestDto})) createDto: SubscriberPhonebookRequestDto[],
         @Req() req: Request,
@@ -197,6 +199,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
     @ApiOkResponse({
         type: SubscriberPhonebookResponseDto,
     })
+    @Transactional()
     async update(@Param('id', ParseIntPipe) id: number,
         dto: SubscriberPhonebookRequestDto,
         @Req() req: Request,
@@ -223,6 +226,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
 
     @Put(':subscriberId?/phonebook')
     @ApiPutBody(SubscriberPhonebookRequestDto)
+    @Transactional()
     async updateMany(
         @Body(new ParseIdDictionary({items: SubscriberPhonebookRequestDto})) updates: Dictionary<SubscriberPhonebookRequestDto>,
         @Req() req: Request,
@@ -242,6 +246,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
     @ApiBody({
         type: [PatchDto],
     })
+    @Transactional()
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
@@ -273,6 +278,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
     @Patch(':subscriberId?/phonebook')
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
+    @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req: Request,
@@ -295,6 +301,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
     @ApiOkResponse({
         type: [number],
     })
+    @Transactional()
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,

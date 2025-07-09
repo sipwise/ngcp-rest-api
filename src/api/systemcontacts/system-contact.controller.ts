@@ -1,6 +1,7 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {SystemContactRequestDto} from './dto/system-contact-request.dto'
@@ -55,6 +56,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
         type: SystemContactRequestDto,
         isArray: true,
     })
+    @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: SystemContactRequestDto})) createDto: SystemContactRequestDto[],
         @Req() req: Request,
@@ -112,6 +114,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
     @ApiOkResponse({
         type: SystemContactResponseDto,
     })
+    @Transactional()
     async update(@Param('id', ParseIntPipe) id: number, entity: SystemContactRequestDto, req): Promise<SystemContactResponseDto> {
         this.log.debug({
             message: 'update system contact by id',
@@ -132,6 +135,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
 
     @Put()
     @ApiPutBody(SystemContactRequestDto)
+    @Transactional()
     async updateMany(
         @Body(new ParseIdDictionary({items: SystemContactRequestDto})) updates: Dictionary<SystemContactRequestDto>,
         @Req() req: Request,
@@ -156,6 +160,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
     @ApiBody({
         type: [PatchDto],
     })
+    @Transactional()
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
@@ -184,6 +189,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
     @Patch()
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
+    @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req: Request,
@@ -204,6 +210,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
     @ApiOkResponse({
         type: [number],
     })
+    @Transactional()
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,

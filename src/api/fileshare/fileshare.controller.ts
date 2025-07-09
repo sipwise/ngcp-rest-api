@@ -15,6 +15,7 @@ import {
 import {FileInterceptor} from '@nestjs/platform-express'
 import {ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+import {Transactional} from 'typeorm-transactional'
 
 import {FileshareRequestDto} from './dto/fileshare-request.dto'
 import {FileshareResponseDto} from './dto/fileshare-response.dto'
@@ -58,6 +59,7 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
             fileSize: AppService.config.fileshare.limits.upload_size || null,
         },
     }))
+    @Transactional()
     async createFile(
         @Body() createDto: FileshareRequestDto,
         @Req() req: Request,
@@ -119,6 +121,7 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
 
     @Delete(':id?')
     @ApiOkResponse({})
+    @Transactional()
     async delete(
         @ParamOrBody('id', new ParseUUIDArrayPipe()) ids: string[],
         @Req() req: Request,

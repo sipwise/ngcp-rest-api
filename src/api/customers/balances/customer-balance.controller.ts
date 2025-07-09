@@ -1,6 +1,7 @@
 import {Body, Controller, Get, Param, ParseIntPipe, Patch, Put, Req, ValidationPipe} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+import {Transactional} from 'typeorm-transactional'
 
 import {CustomerBalanceService} from './customer-balance.service'
 import {CustomerBalanceRequestParamDto} from './dto/customer-balance-request-param.dto'
@@ -105,6 +106,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
     @ApiOkResponse({
         type: CustomerBalanceResponseDto,
     })
+    @Transactional()
     async update(@Param('id', ParseIntPipe) id: number,
         dto: CustomerBalanceRequestDto,
         @Req() req: Request,
@@ -131,6 +133,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
 
     @Put(':customerId?/balances')
     @ApiPutBody(CustomerBalanceRequestDto)
+    @Transactional()
     async updateMany(
         @Body(new ParseIdDictionary({items: CustomerBalanceRequestDto})) updates: Dictionary<CustomerBalanceRequestDto>,
         @Req() req: Request,
@@ -150,6 +153,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
     @ApiBody({
         type: [PatchDto],
     })
+    @Transactional()
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
@@ -179,6 +183,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
     @Patch(':customerId?/balances')
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
+    @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req: Request,

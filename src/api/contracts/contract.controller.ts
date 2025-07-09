@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+import {Transactional} from 'typeorm-transactional'
 
 import {ContractService} from './contract.service'
 import {ContractRequestDto} from './dto/contract-request.dto'
@@ -65,6 +66,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
         type: ContractRequestDto,
         isArray: true,
     })
+    @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: ContractRequestDto})) createDto: ContractRequestDto[],
         @Req() req: Request,
@@ -117,6 +119,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     @ApiOkResponse({
         type: ContractResponseDto,
     })
+    @Transactional()
     async update(@Param('id', ParseIntPipe) id: number, update: ContractRequestDto, req): Promise<ContractResponseDto> {
         this.log.debug({message: 'update contract by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -131,6 +134,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
 
     @Put()
     @ApiPutBody(ContractRequestDto)
+    @Transactional()
     async updateMany(
         @Body(new ParseIdDictionary({items: ContractRequestDto})) updates: Dictionary<ContractRequestDto>,
         @Req() req: Request,
@@ -154,6 +158,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     @ApiBody({
         type: [PatchDto],
     })
+    @Transactional()
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
@@ -176,6 +181,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     @Patch()
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
+    @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req: Request,

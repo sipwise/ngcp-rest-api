@@ -1,6 +1,7 @@
 import {Controller, Delete, Get, Inject, Param, ParseIntPipe, Req, forwardRef} from '@nestjs/common'
 import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {BanSubscriberService} from './ban-subscriber.service'
@@ -87,6 +88,7 @@ export class BanSubscriberController extends CrudController<never, BanSubscriber
     @ApiOkResponse({
         type: [number],
     })
+    @Transactional()
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,

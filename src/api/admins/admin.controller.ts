@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {AdminService} from './admin.service'
@@ -73,6 +74,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         required: true,
     })
     @ApiCreatedResponse(AdminResponseDto)
+    @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: AdminRequestDto})) createDto: AdminRequestDto[],
         @Req() req: Request,
@@ -150,6 +152,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     @ApiOkResponse({
         type: AdminResponseDto,
     })
+    @Transactional()
     async update(
         @Param('id', ParseIntPipe) id: number,
         @Body() update: AdminRequestDto,
@@ -173,6 +176,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
 
     @Put()
     @ApiPutBody(AdminRequestDto)
+    @Transactional()
     async updateMany(
         @Body(new ParseIdDictionary({items: AdminRequestDto})) updates: Dictionary<AdminRequestDto>,
         @Req() req: Request,
@@ -195,6 +199,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     @ApiBody({
         type: [PatchDto],
     })
+    @Transactional()
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: PatchOperation[],
@@ -218,6 +223,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     @Patch()
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
+    @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req: Request,
@@ -238,6 +244,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     @ApiOkResponse({
         type: [number],
     })
+    @Transactional()
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,

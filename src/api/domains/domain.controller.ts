@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common'
 import {ApiBody, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {DomainService} from './domain.service'
@@ -63,6 +64,7 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
         type: DomainRequestDto,
         isArray: true,
     })
+    @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: DomainRequestDto})) createDto: DomainRequestDto[],
         @Req() req: Request,
@@ -117,6 +119,7 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
     @ApiOkResponse({
         type: [number],
     })
+    @Transactional()
     async delete(
         @Param('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,

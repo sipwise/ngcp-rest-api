@@ -1,6 +1,7 @@
 import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, forwardRef} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
+import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {RewriteRuleSetRequestDto} from './dto/rewrite-rule-set-request.dto'
@@ -59,6 +60,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
         type: RewriteRuleSetRequestDto,
         isArray: true,
     })
+    @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: RewriteRuleSetRequestDto})) createDto: RewriteRuleSetRequestDto[],
         @Req() req: Request,
@@ -145,6 +147,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
     @ApiOkResponse({
         type: RewriteRuleSetResponseDto,
     })
+    @Transactional()
     async update(@Param('id', ParseIntPipe) id: number, dto: RewriteRuleSetRequestDto, req: Request): Promise<RewriteRuleSetResponseDto> {
         this.log.debug({
             message: 'update rewrite rule set by id',
@@ -170,6 +173,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
 
     @Put()
     @ApiPutBody(RewriteRuleSetRequestDto)
+    @Transactional()
     async updateMany(
         @Body(new ParseIdDictionary({items: RewriteRuleSetRequestDto})) updates: Dictionary<RewriteRuleSetRequestDto>,
         @Req() req: Request,
@@ -198,6 +202,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
     @ApiBody({
         type: [PatchDto],
     })
+    @Transactional()
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
@@ -229,6 +234,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
     @Patch()
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
+    @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req: Request,
@@ -255,6 +261,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
     @ApiOkResponse({
         type: [number],
     })
+    @Transactional()
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,
