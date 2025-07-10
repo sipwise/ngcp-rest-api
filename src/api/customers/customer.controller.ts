@@ -5,12 +5,12 @@ import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {CustomerService} from './customer.service'
+import {CustomerBillingProfileResponseDto} from './dto/customer-billing-profile-response.dto'
 import {CustomerQueryDto} from './dto/customer-query.dto'
 import {CustomerRequestDto} from './dto/customer-request.dto'
 import {CustomerResponseDto} from './dto/customer-response.dto'
+import {CustomerSearchDto} from './dto/customer-search.dto'
 
-import {CustomerBillingProfileResponseDto} from '~/api/customers/dto/customer-billing-profile-response.dto'
-import {CustomerSearchDto} from '~/api/customers/dto/customer-search.dto'
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
@@ -55,6 +55,52 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     ) {
         super(resourceName, customerService)
     }
+
+    /* Customer billing profiles */
+
+    @Get(':id/@billing-profiles')
+    @ApiQuery({type: SearchLogic})
+    @ApiPaginatedResponse(CustomerBillingProfileResponseDto)
+    async readAllBillingProfiles(
+        @Param('id', ParseIntPipe) id: number,
+        @Req() req: Request,
+    ): Promise<[CustomerBillingProfileResponseDto[], number]> {
+        this.log.debug({
+            message: 'read customer billing profiles by id',
+            id: id,
+            func: this.read.name,
+            url: req.url,
+            method: req.method,
+        })
+
+        const [entity, totalCount] =
+            await this.customerService.readAllBillingProfiles(id, new ServiceRequest(req))
+        const responseList = entity.map(e => new CustomerBillingProfileResponseDto(e))
+        return [responseList, totalCount]
+    }
+
+    @Get(':id/@future-billing-profiles')
+    @ApiQuery({type: SearchLogic})
+    @ApiPaginatedResponse(CustomerBillingProfileResponseDto)
+    async readFutureBillingProfiles(
+        @Param('id', ParseIntPipe) id: number,
+        @Req() req: Request,
+    ): Promise<[CustomerBillingProfileResponseDto[], number]> {
+        this.log.debug({
+            message: 'read customer billing profiles by id',
+            id: id,
+            func: this.read.name,
+            url: req.url,
+            method: req.method,
+        })
+
+        const [entity, totalCount] =
+            await this.customerService.readFutureBillingProfiles(id, new ServiceRequest(req))
+        const responseList = entity.map(e => new CustomerBillingProfileResponseDto(e))
+        return [responseList, totalCount]
+    }
+
+    /* Customers */
 
     @Post()
     @ApiCreatedResponse(CustomerResponseDto)
@@ -133,85 +179,46 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
         return response
     }
 
-    @Delete(':id?')
-    @ApiOkResponse({
-        type: [number],
-    })
+    @Put(':id')
+    @ApiOkResponse({type: CustomerResponseDto})
     @Transactional()
-    async delete(
-        @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
+    async update(
+        @Param('id', ParseIntPipe) id: number,
+            dto: CustomerRequestDto,
         @Req() req: Request,
-    ): Promise<number[]> {
+    ): Promise<CustomerResponseDto> {
         this.log.debug({
-            message: 'delete customer by id',
-            id: ids,
-            func: this.delete.name,
+            message: 'update customer by id',
+            id: id,
+            func: this.update.name,
             url: req.url,
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const deletedIds = await this.customerService.terminate(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
+        const updates = new Dictionary<internal.Customer>()
+        updates[id] = Object.assign(new CustomerRequestDto(), dto).toInternal({id: id, assignNulls: true})
+        const ids = await this.customerService.update(updates, sr)
+        const entity = await this.customerService.read(ids[0], sr)
+        const response = new CustomerResponseDto(entity, {url: req.url, containsResourceId: true})
+        await this.journalService.writeJournal(sr, id, response)
+        return response
+    }
+
+    @Put()
+    @ApiPutBody(CustomerRequestDto)
+    @Transactional()
+    async updateMany(
+        @Body(new ParseIdDictionary({items: CustomerRequestDto})) updates: Dictionary<CustomerRequestDto>,
+        @Req() req: Request,
+    ): Promise<number[]> {
+        this.log.debug({message: 'update customers bulk', func: this.updateMany.name, url: req.url, method: req.method})
+        const sr = new ServiceRequest(req)
+        const sets = new Dictionary<internal.Customer>()
+        for (const id of Object.keys(updates)) {
+            const dto: CustomerRequestDto = updates[id]
+            sets[id] = Object.assign(new CustomerRequestDto(), dto).toInternal({id: parseInt(id), assignNulls: true})
         }
-        return deletedIds
-    }
-
-    @Get(':id/@billing-profiles')
-    @ApiQuery({type: SearchLogic})
-    @ApiPaginatedResponse(CustomerBillingProfileResponseDto)
-    async readAllBillingProfiles(
-        @Param('id', ParseIntPipe) id: number,
-        @Req() req: Request,
-    ): Promise<[CustomerBillingProfileResponseDto[], number]> {
-        this.log.debug({
-            message: 'read customer billing profiles by id',
-            id: id,
-            func: this.read.name,
-            url: req.url,
-            method: req.method,
-        })
-
-        const [entity, totalCount] =
-            await this.customerService.readAllBillingProfiles(id, new ServiceRequest(req))
-        const responseList = entity.map(e => new CustomerBillingProfileResponseDto(e))
-        return [responseList, totalCount]
-    }
-
-    @Get(':id/@future-billing-profiles')
-    @ApiQuery({type: SearchLogic})
-    @ApiPaginatedResponse(CustomerBillingProfileResponseDto)
-    async readFutureBillingProfiles(
-        @Param('id', ParseIntPipe) id: number,
-        @Req() req: Request,
-    ): Promise<[CustomerBillingProfileResponseDto[], number]> {
-        this.log.debug({
-            message: 'read customer billing profiles by id',
-            id: id,
-            func: this.read.name,
-            url: req.url,
-            method: req.method,
-        })
-
-        const [entity, totalCount] =
-            await this.customerService.readFutureBillingProfiles(id, new ServiceRequest(req))
-        const responseList = entity.map(e => new CustomerBillingProfileResponseDto(e))
-        return [responseList, totalCount]
-    }
-
-    @Get(':id/journal')
-    @ApiOkResponse({
-        type: [JournalResponseDto],
-    })
-    async journal(@Param('id') id: number | string, @Req() req: Request): Promise<[JournalResponseDto[], number]> {
-        this.log.debug({
-            message: 'read customer journal by id',
-            id: id,
-            func: this.journal.name,
-            url: req.url,
-            method: req.method,
-        })
-        return super.journal(id, req)
+        return await this.customerService.update(sets, sr)
     }
 
     @Patch(':id')
@@ -260,46 +267,42 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
         return await this.customerService.update(updates, sr)
     }
 
-    @Put(':id')
-    @ApiOkResponse({type: CustomerResponseDto})
+    @Delete(':id?')
+    @ApiOkResponse({
+        type: [number],
+    })
     @Transactional()
-    async update(
-        @Param('id', ParseIntPipe) id: number,
-            dto: CustomerRequestDto,
+    async delete(
+        @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,
-    ): Promise<CustomerResponseDto> {
+    ): Promise<number[]> {
         this.log.debug({
-            message: 'update customer by id',
-            id: id,
-            func: this.update.name,
+            message: 'delete customer by id',
+            id: ids,
+            func: this.delete.name,
             url: req.url,
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const updates = new Dictionary<internal.Customer>()
-        updates[id] = Object.assign(new CustomerRequestDto(), dto).toInternal({id: id, assignNulls: true})
-        const ids = await this.customerService.update(updates, sr)
-        const entity = await this.customerService.read(ids[0], sr)
-        const response = new CustomerResponseDto(entity, {url: req.url, containsResourceId: true})
-        await this.journalService.writeJournal(sr, id, response)
-        return response
-    }
-
-    @Put()
-    @ApiPutBody(CustomerRequestDto)
-    @Transactional()
-    async updateMany(
-        @Body(new ParseIdDictionary({items: CustomerRequestDto})) updates: Dictionary<CustomerRequestDto>,
-        @Req() req: Request,
-    ): Promise<number[]> {
-        this.log.debug({message: 'update customers bulk', func: this.updateMany.name, url: req.url, method: req.method})
-        const sr = new ServiceRequest(req)
-        const sets = new Dictionary<internal.Customer>()
-        for (const id of Object.keys(updates)) {
-            const dto: CustomerRequestDto = updates[id]
-            sets[id] = Object.assign(new CustomerRequestDto(), dto).toInternal({id: parseInt(id), assignNulls: true})
+        const deletedIds = await this.customerService.terminate(ids, sr)
+        for (const deletedId of deletedIds) {
+            await this.journalService.writeJournal(sr, deletedId, {})
         }
-        return await this.customerService.update(sets, sr)
+        return deletedIds
     }
 
+    @Get(':id/journal')
+    @ApiOkResponse({
+        type: [JournalResponseDto],
+    })
+    async journal(@Param('id') id: number | string, @Req() req: Request): Promise<[JournalResponseDto[], number]> {
+        this.log.debug({
+            message: 'read customer journal by id',
+            id: id,
+            func: this.journal.name,
+            url: req.url,
+            method: req.method,
+        })
+        return super.journal(id, req)
+    }
 }
