@@ -82,36 +82,32 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
     }
 
     async updateWithRuleRecreation(updates: Dictionary<internal.RewriteRuleSet>, rules: internal.RewriteRule[], sr: ServiceRequest): Promise<number[]> {
-        const tx = await this.app.dbConnection().transaction(async manager => {
-            const ids = Object.keys(updates).map(id => parseInt(id))
-            let sets: internal.RewriteRuleSet[]
-            if (sr.user.reseller_id_required) {
-                sets = await this.ruleSetRepo.readWhereInIds(ids, sr, {resellerId: sr.user.reseller_id})
-            } else {
-                sets = await this.ruleSetRepo.readWhereInIds(ids, sr)
-            }
+        const ids = Object.keys(updates).map(id => parseInt(id))
+        let sets: internal.RewriteRuleSet[]
+        if (sr.user.reseller_id_required) {
+            sets = await this.ruleSetRepo.readWhereInIds(ids, sr, {resellerId: sr.user.reseller_id})
+        } else {
+            sets = await this.ruleSetRepo.readWhereInIds(ids, sr)
+        }
 
-            if (sets.length == 0) {
-                throw new NotFoundException()
-            } else if (ids.length != sets.length) {
-                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-                const message = GenerateErrorMessageArray(ids, error.message)
-                throw new UnprocessableEntityException(message)
-            }
+        if (sets.length == 0) {
+            throw new NotFoundException()
+        } else if (ids.length != sets.length) {
+            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
+            const message = GenerateErrorMessageArray(ids, error.message)
+            throw new UnprocessableEntityException(message)
+        }
 
-            const updatedIds = await this.ruleSetRepo.update(updates, sr)
-            await Promise.all(
-                updatedIds.map(id => this.ruleSetRepo.cleanSets(id, sr, manager)),
-            )
-            if (rules && rules.length > 0) {
-                await this.ruleSetRepo.createRules(rules, manager)
-                await this.reloadDialPlan(sr)
-            }
-            return updatedIds
-        })
+        const updatedIds = await this.ruleSetRepo.update(updates, sr)
+        await Promise.all(
+            updatedIds.map(id => this.ruleSetRepo.cleanSets(id, sr)),
+        )
+        if (rules && rules.length > 0) {
+            await this.ruleSetRepo.createRules(rules)
+            await this.reloadDialPlan(sr)
+        }
+        return updatedIds
 
-
-        return tx
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {

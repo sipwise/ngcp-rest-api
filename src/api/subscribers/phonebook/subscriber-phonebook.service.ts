@@ -157,29 +157,28 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
     async importCsv(entities: internal.SubscriberPhonebook[], sr: ServiceRequest): Promise<internal.SubscriberPhonebook[]> {
         await this.validateCsvData(entities)
         const _options = this.getSubscriberPhonebookOptionsFromServiceRequest(sr)
-        const tx = await this.app.dbConnection().transaction(async manager => {
-            if (sr.user.role === RbacRole.subscriberadmin || sr.user.role === RbacRole.subscriber) {
-                if (entities.some(entity => entity.subscriberId != sr.user.subscriber_id)) {
-                    const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-                    throw new UnprocessableEntityException(error.message)
-                }
+
+        if (sr.user.role === RbacRole.subscriberadmin || sr.user.role === RbacRole.subscriber) {
+            if (entities.some(entity => entity.subscriberId != sr.user.subscriber_id)) {
+                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
+                throw new UnprocessableEntityException(error.message)
             }
-            const subscribers = new Set(entities.map(entity => entity.subscriberId))
-            if (sr.query && sr.query['purge_existing']) {
-                if (sr.query['purge_existing'] === 'true') {
-                    delete sr.query['purge_existing']
-                    const promises = Array.from(subscribers).map(async reseller => {
-                        await this.phonebookRepo.purge(reseller, sr, manager)
-                    })
-                    await Promise.all(promises)
-                }
-                else {
-                    delete sr.query['purge_existing']
-                }
+        }
+        const subscribers = new Set(entities.map(entity => entity.subscriberId))
+        if (sr.query && sr.query['purge_existing']) {
+            if (sr.query['purge_existing'] === 'true') {
+                delete sr.query['purge_existing']
+                const promises = Array.from(subscribers).map(async reseller => {
+                    await this.phonebookRepo.purge(reseller, sr)
+                })
+                await Promise.all(promises)
             }
-            return await this.phonebookRepo.create(entities, sr, manager)
-        })
-        return await this.phonebookRepo.readWhereInIds(tx, {filterBy: {}}, sr)
+            else {
+                delete sr.query['purge_existing']
+            }
+        }
+        const ids = await this.phonebookRepo.create(entities, sr)
+        return await this.phonebookRepo.readWhereInIds(ids, {filterBy: {}}, sr)
     }
 
     async exportCsv(sr: ServiceRequest): Promise<StreamableFile> {

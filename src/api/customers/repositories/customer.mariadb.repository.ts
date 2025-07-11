@@ -1,6 +1,6 @@
 import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
-import {EntityManager, SelectQueryBuilder} from 'typeorm'
+import {SelectQueryBuilder} from 'typeorm'
 
 import {CustomerSearchDto} from '~/api/customers/dto/customer-search.dto'
 import {CustomerRepository} from '~/api/customers/interfaces/customer.repository'
@@ -33,14 +33,14 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         super()
     }
 
-    async create(customers: internal.Customer[], _sr: ServiceRequest, manager?: EntityManager): Promise<number[]> {
-        const qb = manager ? manager.createQueryBuilder(db.billing.Contract, 'customers') : db.billing.Contract.createQueryBuilder('customers')
+    async create(customers: internal.Customer[], _sr: ServiceRequest): Promise<number[]> {
+        const qb = db.billing.Contract.createQueryBuilder('customers')
         const values = customers.map(customer => new db.billing.Contract().fromInternalCustomer(customer))
         const result = await qb.insert().values(values).execute()
         return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
-    async appendBillingMappings(manager: EntityManager, customerId: number, mappings: internal.BillingMapping[], now?: Date, deleteMappings?: boolean): Promise<void> {
+    async appendBillingMappings(customerId: number, mappings: internal.BillingMapping[], now?: Date, deleteMappings?: boolean): Promise<void> {
         let csvString = ''
         for (const mapping of mappings) {
             csvString += `${mapping.startDate ? mapping.startDate.toISOString() : ''},`
@@ -53,16 +53,18 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
             message: `create contract id ${customerId} billing mappings via proc: ${csvString}`,
             func: this.appendBillingMappings.name,
         })
-        await manager.query('call billing.schedule_contract_billing_profile_network(?,?,?);', [
+        const db = this.app.dbConnection()
+        await db.query('call billing.schedule_contract_billing_profile_network(?,?,?);', [
             customerId,
             (now && deleteMappings) ? now.toISOString() : undefined,
             csvString,
         ])
     }
 
-    async createInitialBalance(manager: EntityManager, customerId: number): Promise<void> {
+    async createInitialBalance(customerId: number): Promise<void> {
         // TODO: When billing is migrated this needs to be adjusted
-        await manager.insert(db.billing.ContractBalance, {contract_id: customerId, cash_balance: 0})
+        const balance = db.billing.ContractBalance.create({contract_id: customerId, cash_balance: 0})
+        await db.billing.ContractBalance.insert(balance)
     }
 
     async readCurrentBillingProfile(customerId: number): Promise<internal.BillingProfile> {
@@ -131,15 +133,14 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         await qb.getOneOrFail()
     }
 
-    async readProductByType(manager: EntityManager, type: string, sr: ServiceRequest): Promise<internal.Product> {
+    async readProductByType(type: string, sr: ServiceRequest): Promise<internal.Product> {
         this.log.debug({
             message: 'read product by type',
             func: this.readProductByType.name,
             user: sr.user.username,
             type: type,
         })
-
-        const product = await manager.findOne(db.billing.Product, {where: {class: <ProductClass>type}})
+        const product = await db.billing.Product.findOneBy({class: <ProductClass>type})
         return product != undefined ? product.toInternal() : undefined
     }
 
@@ -247,8 +248,8 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         return internal
     }
 
-    async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy, manager?: EntityManager): Promise<internal.Customer[]> {
-        const qb = manager ? manager.createQueryBuilder(db.billing.Contract, 'customer') : db.billing.Contract.createQueryBuilder('customer')
+    async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Customer[]> {
+        const qb = db.billing.Contract.createQueryBuilder('customer')
         const searchDto  = new CustomerSearchDto()
         configureQueryBuilder(
             qb,
@@ -286,16 +287,12 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         return await qb.getCount()
     }
 
-    async update(updates: Dictionary<internal.Customer>, _sr: ServiceRequest, manager?: EntityManager): Promise<number[]> {
+    async update(updates: Dictionary<internal.Customer>, _sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const dbEntity = db.billing.Contract.create()
             dbEntity.fromInternalCustomer(updates[id])
-            if (manager) {
-                await manager.getRepository(db.billing.Contract).update(id, dbEntity)
-            } else {
-                await db.billing.Contract.update(id, dbEntity)
-            }
+            await db.billing.Contract.update(id, dbEntity)
         }
         return ids
     }
@@ -317,24 +314,24 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         return [result.map((d) => d.toInternalCustomerBillingProfile()), totalCount]
     }
 
-    async readBillingProfile(manager: EntityManager, profileId: number, _sr: ServiceRequest): Promise<internal.BillingProfile> {
-        const profile = await manager.findOne(db.billing.BillingProfile, {where: {id: profileId}})
+    async readBillingProfile(profileId: number, _sr: ServiceRequest): Promise<internal.BillingProfile> {
+        const profile = await db.billing.BillingProfile.findOne({where: {id: profileId}})
         if (!profile) {
             throw new NotFoundException()
         }
         return profile.toInternal()
     }
 
-    async readBillingNetwork(manager: EntityManager, networkId: number, _sr: ServiceRequest): Promise<internal.BillingNetwork> {
-        const network = await manager.findOne(db.billing.BillingNetwork, {where: {id: networkId}})
+    async readBillingNetwork(networkId: number, _sr: ServiceRequest): Promise<internal.BillingNetwork> {
+        const network = await db.billing.BillingNetwork.findOne({where: {id: networkId}})
         if (!network) {
             return null
         }
         return network.toInternal()
     }
 
-    async readProfilePackageWithInitialProfiles(manager: EntityManager, packageId: number, _sr: ServiceRequest): Promise<internal.ProfilePackage> {
-        const qb = manager.createQueryBuilder(db.billing.ProfilePackage, 'profilePackage')
+    async readProfilePackageWithInitialProfiles(packageId: number, _sr: ServiceRequest): Promise<internal.ProfilePackage> {
+        const qb = db.billing.ProfilePackage.createQueryBuilder('profilePackage')
         qb.where({id: packageId})
         qb.innerJoinAndSelect('profilePackage.packageProfileSets', 'packageProfileSets')
         qb.andWhere('packageProfileSets.discriminator = :discriminator', {discriminator: Discriminator.Initial})

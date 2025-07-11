@@ -1,5 +1,5 @@
 import {Injectable} from '@nestjs/common'
-import {EntityManager, SelectQueryBuilder} from 'typeorm'
+import {SelectQueryBuilder} from 'typeorm'
 
 import {CustomerPhonebookSearchDto} from '~/api/customers/phonebook/dto/customer-phonebook-search.dto'
 import {CustomerPhonebookOptions} from '~/api/customers/phonebook/interfaces/customer-phonebook-options.interface'
@@ -15,9 +15,8 @@ import {MariaDbRepository} from '~/repositories/mariadb.repository'
 export class CustomerPhonebookMariadbRepository extends MariaDbRepository implements CustomerPhonebookMariadbRepository {
     private readonly log = new LoggerService(CustomerPhonebookMariadbRepository.name)
 
-    async create(entities: internal.CustomerPhonebook[], _sr: ServiceRequest, manager?: EntityManager): Promise<number[]> {
-        const qb = manager ? manager.createQueryBuilder(db.billing.ContractPhonebook, 'phonebook')
-            : db.billing.ContractPhonebook.createQueryBuilder('phonebook')
+    async create(entities: internal.CustomerPhonebook[], _sr: ServiceRequest): Promise<number[]> {
+        const qb = db.billing.ContractPhonebook.createQueryBuilder('phonebook')
         const values = await Promise.all(entities.map(async entity => new db.billing.ContractPhonebook().fromInternal(entity)))
         const result = await qb.insert().values(values).execute()
 
@@ -80,13 +79,8 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
         return ids
     }
 
-    async purge(customerId: number, _sr: ServiceRequest, manager?: EntityManager): Promise<number> {
-        if (!manager) {
-            await db.billing.ContractPhonebook.delete({contract_id: customerId})
-            return customerId
-        }
-
-        await manager.delete(db.billing.ContractPhonebook, {contract_id: customerId})
+    async purge(customerId: number, _sr: ServiceRequest): Promise<number> {
+        await db.billing.ContractPhonebook.delete({contract_id: customerId})
         return customerId
     }
 
