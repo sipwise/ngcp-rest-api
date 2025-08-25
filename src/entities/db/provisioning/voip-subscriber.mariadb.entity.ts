@@ -18,6 +18,7 @@ import {VoipPbxGroup} from './voip-pbx-group.mariadb.entity'
 import {internal} from '~/entities'
 import {Contract} from '~/entities/db/billing/contract.mariadb.entity'
 import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
+import {VoipTimeSet} from '~/entities/db/provisioning/voip-time-set.mariadb.entity'
 import {VoipUsrPreference} from '~/entities/db/provisioning/voip-usr-preference.mariadb.entity'
 
 @Entity({
@@ -231,6 +232,9 @@ export class VoipSubscriber extends BaseEntity {
 
     @OneToMany(() => VoipUsrPreference, preference => preference.voipSubscriber)
         preferences!: VoipUsrPreference[]
+
+    @OneToMany(() => VoipTimeSet, timeSets => timeSets.subscriber_id)
+        voip_time_sets!: VoipTimeSet[]
 
     toInternal(): internal.VoipSubscriber {
         const subscriber = new internal.VoipSubscriber()

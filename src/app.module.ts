@@ -45,6 +45,8 @@ import {PbxGroupMemberModule} from './api/pbx/groups/members/pbx-group-member.mo
 import {PbxGroupModule} from './api/pbx/groups/pbx-group.module'
 import {PbxModule} from './api/pbx/pbx.module'
 import {PbxUserModule} from './api/pbx/users/pbx-user.module'
+import {PeeringGroupModule} from './api/peerings/groups/peering-group.module'
+import {PeeringModule} from './api/peerings/peering.module'
 import {ProductModule} from './api/products/product.module'
 import {ResellerPhonebookModule} from './api/resellers/phonebook/reseller-phonebook.module'
 import {ResellerModule} from './api/resellers/reseller.module'
@@ -126,6 +128,8 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     PbxModule,
     PbxGroupMemberModule,
     PbxGroupModule,
+    PeeringModule,
+    PeeringGroupModule,
     ProductModule,
     RedisModule,
     ResellerPhonebookModule,
