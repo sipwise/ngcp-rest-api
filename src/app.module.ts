@@ -38,6 +38,7 @@ import {HeaderManipulationRuleActionModule} from './api/header-manipulations/set
 import {HeaderManipulationRuleConditionModule} from './api/header-manipulations/sets/rules/conditions/header-manipulation-rule-condition.module'
 import {HeaderManipulationRuleModule} from './api/header-manipulations/sets/rules/header-manipulation-rule.module'
 import {JournalModule} from './api/journals/journal.module'
+import {NCOSLevelModule} from './api/ncos/levels/ncos-level.module'
 import {NCOSModule} from './api/ncos/ncos.module'
 import {NCOSSetModule} from './api/ncos-sets/ncos-set.module'
 import {NumberModule} from './api/numbers/number.module'
@@ -115,6 +116,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     DomainModule,
     ExpandModule,
     FileshareModule,
+    NCOSLevelModule,
     NCOSModule,
     NCOSSetModule,
     HeaderManipulationModule,

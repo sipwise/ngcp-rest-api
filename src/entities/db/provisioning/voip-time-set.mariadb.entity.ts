@@ -1,4 +1,6 @@
-import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
+import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
+
+import {Reseller} from '~/entities/db/billing'
 
 @Entity({
     name: 'voip_time_sets',
@@ -41,4 +43,8 @@ export class VoipTimeSet extends BaseEntity {
         default: null,
     })
         subscriber_id?: number
+
+    @ManyToOne(() => Reseller, reseller => reseller.journals)
+    @JoinColumn({name: 'reseller_id'})
+        reseller!: Reseller
 }

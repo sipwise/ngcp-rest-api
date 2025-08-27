@@ -11,6 +11,7 @@ import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {db} from '~/entities'
+import {NCOSLevelMode} from '~/entities/internal/ncos-level.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
@@ -118,7 +119,7 @@ describe('NCOS Set', () => {
                 const ncosLevel = db.billing.NCOSLevel.create({
                     level: 'test_level1',
                     reseller_id: 1,
-                    mode: 'blacklist',
+                    mode: NCOSLevelMode.Blacklist,
                 })
                 const res = await ncosLevel.save()
                 createdLevelIds.push(ncosLevel.id)

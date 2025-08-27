@@ -17,6 +17,7 @@ export class NCOSResponseDto extends ResponseDto {
     constructor(options?: ResponseDtoOptions) {
         super(options)
         this.links = [
+            {type: UrlReferenceType.Link, url: `${this.resourceUrl}/levels`},
             {type: UrlReferenceType.Link, url: `${this.resourceUrl}/sets`},
             {type: UrlReferenceType.Link, url: `${this.resourceUrl}/sets/levels`},
         ]

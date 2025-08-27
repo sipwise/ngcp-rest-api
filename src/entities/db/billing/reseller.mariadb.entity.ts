@@ -12,6 +12,7 @@ import {Journal} from './journal.mariadb.entity'
 
 import {internal} from '~/entities'
 import {ResellerPhonebook} from '~/entities/db/billing/reseller-phonebook.mariadb.entity'
+import {VoipTimeSet} from '~/entities/db/provisioning'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 // import {VoipNumber} from './voip-number.entity'
 // import {NcosLevel} from './ncos-level.entity'
@@ -90,6 +91,9 @@ export class Reseller extends BaseEntity {
 
     @OneToMany(()=> ResellerPhonebook, resellerPhonebook => resellerPhonebook.reseller)
         phonebook!: ResellerPhonebook[]
+
+    @OneToMany(() => VoipTimeSet, voipTimeSet => voipTimeSet.reseller)
+        voipTimeSets!: VoipTimeSet[]
 
     @OneToMany(() => Journal, journal => journal.reseller)
         journals!: Journal[]
