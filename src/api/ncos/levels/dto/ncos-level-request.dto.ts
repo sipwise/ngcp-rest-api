@@ -28,6 +28,10 @@ export class NCOSLevelRequestDto implements RequestDto {
     @IsBoolean()
         intra_pbx: boolean
 
+    @ApiProperty()
+    @IsBoolean()
+        time_set_invert: boolean
+
     @ApiPropertyOptional()
     @IsOptional()
     @IsString()
@@ -55,6 +59,7 @@ export class NCOSLevelRequestDto implements RequestDto {
         this.description = entity.description
         this.time_set_id = entity.timeSetId
         this.expose_to_customer = entity.exposeToCustomer
+        this.time_set_invert = entity.timeSetInvert
     }
 
     toInternal(options: RequestDtoOptions = {}): internal.NCOSLevel {
@@ -67,6 +72,7 @@ export class NCOSLevelRequestDto implements RequestDto {
         entity.description = this.description
         entity.timeSetId = this.time_set_id
         entity.exposeToCustomer = this.expose_to_customer
+        entity.timeSetInvert = this.time_set_invert
         if (options.id)
             entity.id = options.id
 

@@ -72,6 +72,13 @@ export class NCOSLevel extends BaseEntity {
     })
         expose_to_customer!: boolean
 
+    @Column({
+        type: 'boolean',
+        nullable: false,
+        default: false,
+    })
+        time_set_invert!: boolean
+
     @OneToMany(() => NCOSSetLevel, ncosSetLevel => ncosSetLevel.ncos_level_id)
         setLevels!: NCOSSetLevel[]
 
@@ -86,6 +93,7 @@ export class NCOSLevel extends BaseEntity {
         entity.description = this.description
         entity.timeSetId = this.time_set_id
         entity.exposeToCustomer = this.expose_to_customer
+        entity.timeSetInvert = this.time_set_invert
         return entity
     }
 
@@ -99,6 +107,7 @@ export class NCOSLevel extends BaseEntity {
         this.description = entity.description
         this.time_set_id = entity.timeSetId
         this.expose_to_customer = entity.exposeToCustomer
+        this.time_set_invert = entity.timeSetInvert
         return this
     }
 }

@@ -33,6 +33,9 @@ export class NCOSLevelResponseDto extends ResponseDto {
     @ApiProperty()
         expose_to_customer: boolean
 
+    @ApiProperty()
+        time_set_invert: boolean
+
     constructor(entity: internal.NCOSLevel, options?: ResponseDtoOptions) {
         super(options)
         this.id = entity.id
@@ -44,5 +47,6 @@ export class NCOSLevelResponseDto extends ResponseDto {
         this.description = entity.description
         this.time_set_id = entity.timeSetId
         this.expose_to_customer = entity.exposeToCustomer
+        this.time_set_invert = entity.timeSetInvert
     }
 }

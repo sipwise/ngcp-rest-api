@@ -20,6 +20,7 @@ type NCOSLevelPost = {
     mode: string
     local_ac: boolean
     intra_pbx: boolean
+    time_set_invert: boolean
     description: string
     time_set_id?: number | null
     expose_to_customer: boolean
@@ -95,6 +96,7 @@ describe('NCOS Level', () => {
                 local_ac: false,
                 intra_pbx: false,
                 expose_to_customer: false,
+                time_set_invert: false,
             }
             const ncosLevel2: NCOSLevelPost = {
                 reseller_id: 1,
@@ -104,6 +106,7 @@ describe('NCOS Level', () => {
                 local_ac: false,
                 intra_pbx: false,
                 expose_to_customer: false,
+                time_set_invert: false,
             }
             it('create ncos level test_ncosLevel1', async () => {
                 const response = await request(app.getHttpServer())
@@ -189,6 +192,7 @@ describe('NCOS Level', () => {
                 local_ac: false,
                 intra_pbx: false,
                 expose_to_customer: false,
+                time_set_invert: false,
             }
             it('update ncos level test_ncosLevel1 -> test_ncosLevel3', async () => {
                 const response = await request(app.getHttpServer())

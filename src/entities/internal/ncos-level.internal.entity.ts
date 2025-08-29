@@ -14,4 +14,5 @@ export class NCOSLevel {
     description: string
     timeSetId?: number
     exposeToCustomer: boolean
+    timeSetInvert: boolean
 }

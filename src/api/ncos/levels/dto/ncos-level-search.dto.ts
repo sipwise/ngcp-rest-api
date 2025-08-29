@@ -8,6 +8,7 @@ export class NCOSLevelSearchDto {
     intra_pbx: boolean = undefined
     description: string = undefined
     time_set_id: number = undefined
+    time_set_invert: boolean = undefined
     expose_to_customer: boolean = undefined
     _alias = {
         reseller_id: 'ncosLevel.reseller_id',
