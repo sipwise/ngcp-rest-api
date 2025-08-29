@@ -40,6 +40,7 @@ import {HeaderManipulationRuleModule} from './api/header-manipulations/sets/rule
 import {JournalModule} from './api/journals/journal.module'
 import {NCOSLevelModule} from './api/ncos/levels/ncos-level.module'
 import {NCOSModule} from './api/ncos/ncos.module'
+import {NCOSPatternModule} from './api/ncos/patterns/ncos-pattern.module'
 import {NCOSSetModule} from './api/ncos-sets/ncos-set.module'
 import {NumberModule} from './api/numbers/number.module'
 import {PbxGroupMemberModule} from './api/pbx/groups/members/pbx-group-member.module'
@@ -117,6 +118,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     ExpandModule,
     FileshareModule,
     NCOSLevelModule,
+    NCOSPatternModule,
     NCOSModule,
     NCOSSetModule,
     HeaderManipulationModule,
