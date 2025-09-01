@@ -45,6 +45,9 @@ describe('RewriteRuleSet Service', () => {
             .overrideProvider(RewriteRuleSetRedisRepository).useValue(redisMockRepo)
             .compile()
         service = module.get<RewriteRuleSetService>(RewriteRuleSetService)
+
+        jest.spyOn(service, 'reloadDialPlanAfterCommit').mockImplementation(() => Promise.resolve())
+
         sr = {returnContent: true, headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
     })
 

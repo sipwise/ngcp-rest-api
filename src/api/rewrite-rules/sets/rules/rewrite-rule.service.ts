@@ -3,6 +3,7 @@ import {setInterval} from 'timers/promises'
 
 import {Inject, Injectable, InternalServerErrorException, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
+import {runOnTransactionCommit} from 'typeorm-transactional'
 import {v4 as uuidv4} from 'uuid'
 
 import {FilterBy, RewriteRuleMariadbRepository} from './repositories/rewrite-rule.mariadb.repository'
@@ -53,7 +54,7 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
 
         const createdIds = await this.ruleRepo.create(entities)
 
-        await this.reloadDialPlan(sr)
+        await this.reloadDialPlanAfterCommit(sr)
 
         return await this.ruleRepo.readWhereInIds(createdIds, sr)
     }
@@ -94,7 +95,7 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
 
         const updatedIds = await this.ruleRepo.update(updates, sr)
 
-        await this.reloadDialPlan(sr)
+        await this.reloadDialPlanAfterCommit(sr)
 
         return updatedIds
     }
@@ -117,9 +118,15 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
 
         const deletedIds = await this.ruleRepo.delete(ids,sr)
 
-        await this.reloadDialPlan(sr)
+        await this.reloadDialPlanAfterCommit(sr)
 
         return deletedIds
+    }
+
+    // TODO: required for mocking, as esbuild-jest has issues with jest mock"
+    // patterns and will be reviewed after packages upgrade
+    async reloadDialPlanAfterCommit(sr: ServiceRequest): Promise<void> {
+        runOnTransactionCommit(async () => await this.reloadDialPlan(sr))
     }
 
     private getFiltersFromServiceRequest(sr: ServiceRequest): FilterBy {
@@ -129,6 +136,7 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
         }
         return filterBy
     }
+
     private async reloadDialPlan(_sr: ServiceRequest): Promise<void> {
         const publishChannel = 'ngcp-task-agent-redis'
         const feedbackChannel = 'ngcp-rest-api-dialplan-reload-' + uuidv4()

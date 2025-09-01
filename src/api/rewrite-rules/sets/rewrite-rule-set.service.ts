@@ -4,6 +4,7 @@ import {setInterval} from 'timers/promises'
 import {Inject, Injectable, InternalServerErrorException, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {GenerateErrorMessageArray} from 'helpers/http-error.helper'
 import {I18nService} from 'nestjs-i18n'
+import {runOnTransactionCommit} from 'typeorm-transactional'
 import {v4 as uuidv4} from 'uuid'
 
 import {FilterBy, RewriteRuleSetMariadbRepository} from './repositories/rewrite-rule-set.mariadb.repository'
@@ -104,7 +105,7 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
         )
         if (rules && rules.length > 0) {
             await this.ruleSetRepo.createRules(rules)
-            await this.reloadDialPlan(sr)
+            await this.reloadDialPlanAfterCommit(sr)
         }
         return updatedIds
 
@@ -129,7 +130,7 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
 
         const deletedIds = await this.ruleSetRepo.delete(ids, sr)
 
-        await this.reloadDialPlan(sr)
+        await this.reloadDialPlanAfterCommit(sr)
 
         return deletedIds
     }
@@ -153,6 +154,12 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
         await Promise.all(
             ids.map(id => this.ruleSetRepo.cleanSets(id, sr)),
         )
+    }
+
+    // TODO: required for mocking, as esbuild-jest has issues with jest mock
+    // patterns and will be reviewed after packages upgrade
+    async reloadDialPlanAfterCommit(sr: ServiceRequest): Promise<void> {
+        runOnTransactionCommit(async () => await this.reloadDialPlan(sr))
     }
 
     private async checkPermissions(resellerId: number, sr: ServiceRequest): Promise<void> {
