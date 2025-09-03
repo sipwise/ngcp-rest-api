@@ -1,4 +1,6 @@
-import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
+import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
+
+import {VoipPeeringServer} from './voip-peering-server.mariadb.entity'
 
 import {internal} from '~/entities'
 import {Contract} from '~/entities/db/billing'
@@ -55,6 +57,9 @@ export class VoipPeeringGroup extends BaseEntity {
     @ManyToOne(() => Contract, contract => contract.peeringGroups, {nullable: true, onDelete: 'SET NULL'})
     @JoinColumn({name: 'peering_contract_id'})
         contract?: Contract
+
+    @OneToMany(() => VoipPeeringServer, server => server.group)
+        servers!: VoipPeeringServer[]
 
     toInternal(): internal.VoipPeeringGroup {
         const entity = new internal.VoipPeeringGroup()
