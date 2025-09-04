@@ -92,6 +92,14 @@ export class PeeringGroupMariadbRepository extends MariaDbRepository implements 
         return ids
     }
 
+    async hasEnabledOrProbedServerInGroups(groupIds: number[], _sr: ServiceRequest): Promise<boolean> {
+        const qb = db.provisioning.VoipPeeringServer.createQueryBuilder('server')
+        qb.where('group_id IN (:groupIds)', {groupIds: groupIds})
+        qb.andWhere('(server.enabled = :enabled OR server.probe = :probe)', {enabled: 1, probe: 1})
+        const count = await qb.getCount()
+        return count > 0
+    }
+
     async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
         await db.provisioning.VoipPeeringGroup.delete(ids)
         return ids

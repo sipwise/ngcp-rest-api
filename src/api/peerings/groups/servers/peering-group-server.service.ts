@@ -277,13 +277,6 @@ export class PeeringGroupServerService implements CrudService<internal.VoipPeeri
         }
     }
 
-    private mapEntitiesToDictionary(entities: internal.VoipPeeringServer[]): Dictionary<internal.VoipPeeringServer> {
-        return entities.reduce((dict, entity) => {
-            dict[entity.id] = entity
-            return dict
-        }, {} as Dictionary<internal.VoipPeeringServer>)
-    }
-
     private requiresDispatcherReloadOnUpdate(oldServers: internal.VoipPeeringServer[], updates: Dictionary<internal.VoipPeeringServer>): boolean {
         return oldServers.some(server => {
             const updated = updates[server.id]
@@ -292,9 +285,7 @@ export class PeeringGroupServerService implements CrudService<internal.VoipPeeri
         })
     }
 
-    private requiresDispatcherReload(
-        servers: internal.VoipPeeringServer[],
-    ): boolean {
+    private requiresDispatcherReload(servers: internal.VoipPeeringServer[]): boolean {
         return servers.some(server => server.enabled && server.probe)
     }
 
