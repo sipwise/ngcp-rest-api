@@ -1,3 +1,26 @@
+ngcp-rest-api (14.0.0.0+0~mr14.0.0.0) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [932b9b4] MT#63074 Enhance customer & reseller phonebook
+  * [c5f2cb0] MT#62586 migrate /customers endpoint (PUT, PATCH)
+  * [b15a277] MT#63096 Add support for ordering by id
+  * [6f6ab70] MT#62941 Migrate customerbalances to /customers/balances
+  * [f32fe2e] MT#62586 Fix contact_id expand on customer response
+  * [341b50e] MT#62586 Fix controller function order in customer controller
+  * [fbe9b40] MT#63203 Revert temporary custom tx and manager usage
+  * [c6445fc] MT#63461 Migrate peeringgroups to API v2
+  * [1b5a797] MT#63467 Migrate /ncoslevels to API V2
+  * [3efedca] MT#63482 Add new flag invert_time_set to ncos levels
+  * [1641147] MT#63472 Migrate /api/ncospatterns to API V2
+  * [41dc80a] MT#63487 Migrate api/peeringservers to API V2
+  * [18d7a64] MT#63461 Invoke task agents in peering group delete
+
+  [ Kirill Solomko ]
+  * [7b49ac4] MT#63193 add scoped typeorm transactions support
+  * [f43c779] MT#63481 add runOnTransactionCommit for rwr reloadDialPlan()
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 08 Sep 2025 11:45:23 +0200
+
 ngcp-rest-api (13.5.0.0+0~mr13.5.0.0) unstable; urgency=medium
 
   [ Bertold Vincze ]
