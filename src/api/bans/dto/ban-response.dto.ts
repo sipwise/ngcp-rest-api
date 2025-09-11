@@ -20,6 +20,7 @@ export class BanResponseDto extends ResponseDto {
             {type: UrlReferenceType.Link, url: `${this.resourceUrl}/admins`},
             {type: UrlReferenceType.Link, url: `${this.resourceUrl}/subscribers`},
             {type: UrlReferenceType.Link, url: `${this.resourceUrl}/registrations`},
+            {type: UrlReferenceType.Link, url: `${this.resourceUrl}/ips`},
         ]
     }
 }
