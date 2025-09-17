@@ -10,7 +10,7 @@ export class Response {
     chunks: number
     status: string
     reason?: string
-    // TODO: Fix any type, can we use unknown or never here?
+    // TODO: When task agent defines the type change 'any' to the correct type
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data?: { [key: string]:  any }
+    data?: any
 }
