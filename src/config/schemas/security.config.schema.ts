@@ -1,5 +1,5 @@
 import {Type} from 'class-transformer'
-import {IsBoolean, IsNumber, ValidateNested} from 'class-validator'
+import {IsBoolean, IsInt, IsNumber, ValidateNested} from 'class-validator'
 
 class SecurityLoginConfig {
     @IsBoolean()
@@ -64,6 +64,17 @@ class SecurityPasswordConfig {
         web_max_age_days: number
 }
 
+class SecurityKamailioLbConfig {
+    @IsInt()
+        failed_auth_attempts: number
+}
+
+class SecurityKamailioConfig {
+    @ValidateNested()
+    @Type(() => SecurityKamailioLbConfig)
+        lb: SecurityKamailioLbConfig
+}
+
 export class SecurityConfig {
     @ValidateNested()
     @Type(() => SecurityLoginConfig)
@@ -72,4 +83,8 @@ export class SecurityConfig {
     @ValidateNested()
     @Type(() => SecurityPasswordConfig)
         password: SecurityPasswordConfig
+
+    @ValidateNested()
+    @Type(() => SecurityKamailioConfig)
+        kamailio: SecurityKamailioConfig
 }
