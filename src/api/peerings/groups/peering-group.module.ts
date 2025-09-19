@@ -7,10 +7,13 @@ import {PeeringGroupService} from './peering-group.service'
 import {PeeringGroupMariadbRepository} from './repositories/peering-group.mariadb.repository'
 import {PeeringGroupRedisRepository} from './repositories/peering-group.redis.repository'
 
+import {TaskAgentModule} from '~/helpers/task-agent.module'
+
 @Module({
     imports: [
         forwardRef(() => JournalModule),
         forwardRef(() => ExpandModule),
+        forwardRef(() => TaskAgentModule),
     ],
     controllers: [PeeringGroupController],
     providers: [

@@ -14,6 +14,7 @@ import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
+import {TaskAgentMockHelper} from '~/helpers/task-agent-mock.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
@@ -37,7 +38,7 @@ describe('RewriteRuleSet Service', () => {
 
     beforeEach(async () => {
         rwrMockRepo = new RewriteRuleSetMockRepository()
-        redisMockRepo = new RewriteRuleSetMockRedisRepository()
+        redisMockRepo = new RewriteRuleSetMockRedisRepository(new TaskAgentMockHelper())
         const module: TestingModule = await Test.createTestingModule({
             imports: [AppModule, RewriteRuleSetModule, ExpandModule],
         })

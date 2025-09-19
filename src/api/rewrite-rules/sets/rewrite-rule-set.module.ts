@@ -10,10 +10,13 @@ import {RewriteRuleMariadbRepository} from './rules/repositories/rewrite-rule.ma
 import {RewriteRuleRedisRepository} from './rules/repositories/rewrite-rule.redis.repository'
 import {RewriteRuleService} from './rules/rewrite-rule.service'
 
+import {TaskAgentModule} from '~/helpers/task-agent.module'
+
 @Module({
     imports: [
         forwardRef(() => JournalModule),
         forwardRef(() => ExpandModule),
+        forwardRef(() => TaskAgentModule),
     ],
     controllers: [RewriteRuleSetController],
     providers: [
