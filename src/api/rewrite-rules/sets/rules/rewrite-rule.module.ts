@@ -8,11 +8,13 @@ import {RewriteRuleController} from './rewrite-rule.controller'
 import {RewriteRuleService} from './rewrite-rule.service'
 
 import {RewriteRuleSetMariadbRepository} from '~/api/rewrite-rules/sets/repositories/rewrite-rule-set.mariadb.repository'
+import {TaskAgentModule} from '~/helpers/task-agent.module'
 
 @Module({
     imports: [
         JournalModule,
         forwardRef(() => ExpandModule),
+        forwardRef(() => TaskAgentModule),
     ],
     controllers: [RewriteRuleController],
     providers: [RewriteRuleService, RewriteRuleMariadbRepository, RewriteRuleSetMariadbRepository, RewriteRuleRedisRepository],
