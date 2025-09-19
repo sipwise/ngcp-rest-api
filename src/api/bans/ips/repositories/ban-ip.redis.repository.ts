@@ -1,49 +1,60 @@
-import {Injectable} from '@nestjs/common'
+import {Inject, Injectable, InternalServerErrorException} from '@nestjs/common'
 
 import {AppService} from '~/app.service'
-import {HandleRedisErrors} from '~/decorators/handle-redis-errors.decorator'
-import {Request as TaskAgentRequest} from '~/entities/task-agent/request.task-agent.entity'
-import {Response as TaskAgentResponse} from '~/entities/task-agent/response.task-agent.entity'
+import {internal} from '~/entities'
+import {TaskAgentHelper} from '~/helpers/task-agent.helper'
 import {LoggerService} from '~/logger/logger.service'
 
-type MessageCallback = (response: TaskAgentResponse) => Promise<void>
+interface FilterBy {
+    ip: string
+}
 
 @Injectable()
 export class BanIpRedisRepository {
     private readonly log = new LoggerService(BanIpRedisRepository.name)
-    private subs: { [key: string]: MessageCallback } = {}
-    private onMessageInit = true
-
     constructor(
         private readonly app: AppService,
+        @Inject (TaskAgentHelper) private readonly taskAgentHelper: TaskAgentHelper,
     ) {
     }
 
-    @HandleRedisErrors
-    async publishToTaskAgent(publishChannel: string, request: TaskAgentRequest): Promise<void> {
-        request.data = JSON.stringify(request.data)
-        const message = JSON.stringify(request)
-        await this.app.redis.publish(publishChannel, message)
-    }
-
-    @HandleRedisErrors
-    async subscribeToFeedback(feedbackChannel: string, callback: MessageCallback): Promise<void> {
-        await this.app.redisPubSub.subscribe(feedbackChannel)
-        if (this.onMessageInit) {
-            this.app.redisPubSub.on('message', async (channel: string, message: string): Promise<void> => {
-                if (channel in this.subs) {
-                    const response: TaskAgentResponse = JSON.parse(message)
-                    await this.subs[channel](response)
+    async readBannedIps(id?: number, filter?: FilterBy): Promise<internal.BanIp[]> {
+        const {publishChannel, feedbackChannel, request} = this.taskAgentHelper.buildRequest({
+            feedbackChannel: 'ngcp-rest-api-ban-ips-dump',
+            task: 'kam_lb_security_ban_dump',
+            dst: '*|state=active;role=proxy',
+            data: id ? JSON.stringify({extra_args: `ipban ${id}`}) : JSON.stringify({extra_args: 'ipban'}),
+        })
+        const bannedIps = await this.taskAgentHelper.invokeTask<internal.BanIp>(
+            publishChannel,
+            feedbackChannel,
+            request,
+            async (d, result) => {
+                for (const entry of Array.isArray(d) ? d : [d]) {
+                    if (entry.size > 1) {
+                        throw new InternalServerErrorException(`Unexpected entry size: ${entry.size}`)
+                    }
+                    if (filter?.ip && entry.slot.name !== filter.ip) {
+                        continue
+                    }
+                    result.push({
+                        id: entry.entry,
+                        ip: entry.slot.name,
+                    } as internal.BanIp)
                 }
-            })
-            this.onMessageInit = false
-        }
-        this.subs[feedbackChannel] = callback
+            },
+        ) as internal.BanIp[]
+        return bannedIps
     }
 
-    @HandleRedisErrors
-    async unsubscriberFromFeedback(feedbackChannel: string): Promise<void> {
-        await this.app.redisPubSub.unsubscribe(feedbackChannel)
-        delete this.subs[feedbackChannel]
+    async deleteBannedIp(id: number): Promise<void> {
+        const {publishChannel, feedbackChannel, request} = this.taskAgentHelper.buildRequest({
+            feedbackChannel: 'ngcp-rest-api-ban-ip-delete',
+            task: 'kam_lb_security_ban_delete',
+            dst: '*|state=active;role=proxy',
+            data: {extra_args: `ipban ${id}`},
+        })
+
+        await this.taskAgentHelper.invokeTask(publishChannel, feedbackChannel, request)
     }
 }

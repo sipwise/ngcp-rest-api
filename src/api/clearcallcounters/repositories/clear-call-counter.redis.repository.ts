@@ -1,48 +1,55 @@
-import {Injectable} from '@nestjs/common'
+import {Inject, Injectable} from '@nestjs/common'
 
 import {AppService} from '~/app.service'
-import {HandleRedisErrors} from '~/decorators/handle-redis-errors.decorator'
-import {Request as TaskAgentRequest} from '~/entities/task-agent/request.task-agent.entity'
-import {Response as TaskAgentResponse} from '~/entities/task-agent/response.task-agent.entity'
-import {LoggerService} from '~/logger/logger.service'
-
-type MessageCallback = (response: TaskAgentResponse) => Promise<void>
+import {TaskAgentHelper} from '~/helpers/task-agent.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 @Injectable()
 export class ClearCallCounterRedisRepository {
-    private readonly log = new LoggerService(ClearCallCounterRedisRepository.name)
-    private subs: { [key: string]: MessageCallback } = {}
-    private onMessageInit = true
-
     constructor(
         private readonly app: AppService,
+        @Inject (TaskAgentHelper) private readonly taskAgentHelper: TaskAgentHelper,
     ) {
     }
 
-    @HandleRedisErrors
-    async publishToTaskAgent(publishChannel: string, request: TaskAgentRequest): Promise<void> {
-        const message = JSON.stringify(request)
-        await this.app.redis.publish(publishChannel, message)
+    async clearCallCounters(_sr: ServiceRequest): Promise<void> {
+        const {publishChannel, feedbackChannel, request} = this.taskAgentHelper.buildRequest({
+            feedbackChannel: 'ngcp-rest-api-clear-call-counters',
+            task: 'clear_call_counters',
+            dst: '*|state=active;role=proxy',
+        })
+
+        await this.taskAgentHelper.invokeTask(publishChannel, feedbackChannel, request)
     }
 
-    @HandleRedisErrors
-    async subscribeToFeedback(feedbackChannel: string, callback: MessageCallback): Promise<void> {
-        await this.app.redisPubSub.subscribe(feedbackChannel)
-        if (this.onMessageInit) {
-            this.app.redisPubSub.on('message', async (channel: string, message: string): Promise<void> => {
-                if (channel in this.subs) {
-                    const response: TaskAgentResponse = JSON.parse(message)
-                    await this.subs[channel](response)
+    async getStuckCalls(sr: ServiceRequest): Promise<string[]> {
+        const {publishChannel, feedbackChannel, request} = this.taskAgentHelper.buildRequest({
+            feedbackChannel: 'ngcp-rest-api-get-stuck-calls',
+            task: 'get_stuck_calls',
+            dst: '*|state=active;role=proxy',
+            data: JSON.stringify({user: sr.user.username}),
+        })
+
+        const stuckCallIds = await this.taskAgentHelper.invokeTask<string>(
+            publishChannel,
+            feedbackChannel,
+            request,
+            async (d, result) => {
+                if (typeof d === 'string') {
+                    const calls = d.split('\n')
+                    const rx = /^CallID:\[(.+)\]\s+/
+                    for (const call of calls) {
+                        const callId = call.match(rx)
+                        if (callId && callId[1]) {
+                            result.push(callId[1])
+                        }
+                    }
                 }
-            })
-            this.onMessageInit = false
-        }
-        this.subs[feedbackChannel] = callback
-    }
-
-    @HandleRedisErrors
-    async unsubscriberFromFeedback(feedbackChannel: string): Promise<void> {
-        await this.app.redisPubSub.unsubscribe(feedbackChannel)
-        delete this.subs[feedbackChannel]
+                if (typeof d === 'object' && d && 'CallID' in d) {
+                    result.push((d as { CallID: string }).CallID)
+                }
+            },
+        )
+        return stuckCallIds
     }
 }

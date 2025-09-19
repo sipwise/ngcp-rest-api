@@ -69,6 +69,7 @@ import {AppConfig} from './config/schemas/app.config.schema'
 import {DatabaseModule} from './database/database.module'
 import {RedisModule} from './database/redis.module'
 import {ExpandModule} from './helpers/expand.module'
+import {TaskAgentModule} from './helpers/task-agent.module'
 import {InterceptorModule} from './interceptors/interceptor.module'
 import {LicenseModule} from './license/license.module'
 import {LicenseService} from './license/license.service'
@@ -155,6 +156,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     PasswordModule,
     PasswordChangeModule,
     ScheduleModule.forRoot(),
+    TaskAgentModule,
 ]
 if (process.env.NODE_ENV != 'test') {
     modulesImport = [
