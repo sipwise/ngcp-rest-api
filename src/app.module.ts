@@ -61,6 +61,8 @@ import {RewriteRuleModule} from './api/rewrite-rules/sets/rules/rewrite-rule.mod
 import {SubscriberPhonebookModule} from './api/subscribers/phonebook/subscriber-phonebook.module'
 import {SubscriberModule} from './api/subscribers/subscriber.module'
 import {SystemContactModule} from './api/systemcontacts/system-contact.module'
+import {InvoiceTemplateModule} from './api/templates/invoices/invoice-template.module'
+import {TemplateModule} from './api/templates/template.module'
 import {VoicemailModule} from './api/voicemails/voicemail.module'
 import {AppController} from './app.controller'
 import {AppService} from './app.service'
@@ -132,6 +134,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     HeaderManipulationRuleActionModule,
     HeaderManipulationRuleModule,
     HeaderManipulationSetModule,
+    InvoiceTemplateModule,
     NumberModule,
     OtpModule,
     PbxUserModule,
@@ -151,6 +154,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     SubscriberPhonebookModule,
     SubscriberModule,
     SystemContactModule,
+    TemplateModule,
     VoicemailModule,
     LicenseModule,
     PasswordModule,

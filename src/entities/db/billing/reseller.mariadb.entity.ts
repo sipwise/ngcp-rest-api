@@ -11,6 +11,7 @@ import {Domain} from './domain.mariadb.entity'
 import {Journal} from './journal.mariadb.entity'
 
 import {internal} from '~/entities'
+import {InvoiceTemplate} from '~/entities/db/billing/invoice-template.mariadb.entity'
 import {ResellerPhonebook} from '~/entities/db/billing/reseller-phonebook.mariadb.entity'
 import {VoipTimeSet} from '~/entities/db/provisioning'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
@@ -94,6 +95,10 @@ export class Reseller extends BaseEntity {
 
     @OneToMany(() => VoipTimeSet, voipTimeSet => voipTimeSet.reseller)
         voipTimeSets!: VoipTimeSet[]
+
+
+    @OneToMany(() => InvoiceTemplate, invoiceTemplate => invoiceTemplate.reseller)
+        invoiceTemplates!: InvoiceTemplate[]
 
     @OneToMany(() => Journal, journal => journal.reseller)
         journals!: Journal[]
