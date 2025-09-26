@@ -49,7 +49,7 @@ import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
 const resourceName = 'templates/invoices'
 
-@ApiTags('Invoice')
+@ApiTags('Template')
 @Controller(resourceName)
 @License(LicenseType.invoice)
 @Auth(
