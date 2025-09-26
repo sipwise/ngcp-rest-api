@@ -1,98 +1,102 @@
 [
-{
-    "name": "Admin",
-    "description": "[/admins] Administrative users that supervise the platform"
-},
-{
-    "name": "Auth",
-    "description": "[/auth] Authentication methods"
-},
-{
-    "name": "Bans",
-    "description": "[/bans] Read and manually release blocked Admins and Subscribers"
-},
-{
-    "name": "ClearCallCounter",
-    "description": "[/clearcallcounters] (Maintenance endpoint that only 'system' admin users can invoke) Clear call counters"
-},
-{
-    "name": "Contact",
-    "description": "[/contacts] Contacts contain data such as Full Name, Address, Phone and can belong to Resellers, Customers, Peering Groups"
-},
-{
-    "name": "Contract",
-    "description": "[/contracts] Contracts can belong to either a Customer, Reseller, or Peering"
-},
-{
-    "name": "Customer",
-    "description": "[/customers] Customer related routes including customer phonebook"
-},
-{
-    "name": "CustomerContact",
-    "description": "[/customercontacts] Define Contacts that belong to Customers"
-},
-{
-    "name": "CustomerNumber",
-    "description": "[/customernumbers] A list of numbers of all subscribribers that belong to the Customer"
-},
-{
-    "name": "CustomerSpeedDial",
-    "description": "[/customerspeeddials] SpeedDial entries that defined for the Customer and available to all subscribers of the Customer"
-},
-{
-    "name": "Domain",
-    "description": "[/domains] Domain entries that are used by subscribers and in calls"
-},
-{
-    "name": "Fileshare",
-    "description": "[/fileshare] Share files between users of the platform and also the external ones"
-},
-{
-    "name": "Journal",
-    "description": "[/journals] Journal of the API operations performed on the platform"
-},
-{
-    "name": "HeaderManipulation",
-    "description": "[/header-manipulation] Available Header Manipulation related routes including sets, rules, actions and conditions"
-},
-{
-    "name": "NCOS",
-    "description": "[/ncos] Available NCOS related routes including Sets and their levels"
-},
-{
-    "name": "Number",
-    "description": "[/numbers] Available VOIP numbers"
-},
-{
-    "name": "Pbx",
-    "description": "[/pbx] Available PBX related routes including groups and their members"
-},
-{
-    "name": "Product",
-    "description": "[/products] Available products that a Customer can be created with"
-},
-{
-    "name": "Reseller",
-    "description": "[/resellers] Define platform resellers and their phonebook."
-},
-{
-    "name": "RewriteRule",
-    "description": "[/rewrite-rules] Available Rewrite Rule related routes including sets, rules."
-},
-{
-    "name": "Subscriber",
-    "description": "[/subscribers] Available Subscriber related routes including phonebook"
-},
-{
-    "name": "SystemContact",
-    "description": "[/systemcontacts] Define Contacts that belong to Resellers or Peering Groups"
-},
-{
-    "name": "Userinfo",
-    "description": "[/userinfo] Info about the current user, role, permissions"
-},
-{
-    "name": "Voicemail",
-    "description": "[/voicemails] Check available voicemails for a subscriber and also change their status (new/old)"
-}
+    {
+        "name": "Admin",
+        "description": "[/admins] Administrative users that supervise the platform"
+    },
+    {
+        "name": "Auth",
+        "description": "[/auth] Authentication methods"
+    },
+    {
+        "name": "Bans",
+        "description": "[/bans] Read and manually release blocked Admins and Subscribers"
+    },
+    {
+        "name": "ClearCallCounter",
+        "description": "[/clearcallcounters] (Maintenance endpoint that only 'system' admin users can invoke) Clear call counters"
+    },
+    {
+        "name": "Contact",
+        "description": "[/contacts] Contacts contain data such as Full Name, Address, Phone and can belong to Resellers, Customers, Peering Groups"
+    },
+    {
+        "name": "Contract",
+        "description": "[/contracts] Contracts can belong to either a Customer, Reseller, or Peering"
+    },
+    {
+        "name": "Customer",
+        "description": "[/customers] Customer related routes including customer phonebook"
+    },
+    {
+        "name": "CustomerContact",
+        "description": "[/customercontacts] Define Contacts that belong to Customers"
+    },
+    {
+        "name": "CustomerNumber",
+        "description": "[/customernumbers] A list of numbers of all subscribribers that belong to the Customer"
+    },
+    {
+        "name": "CustomerSpeedDial",
+        "description": "[/customerspeeddials] SpeedDial entries that defined for the Customer and available to all subscribers of the Customer"
+    },
+    {
+        "name": "Domain",
+        "description": "[/domains] Domain entries that are used by subscribers and in calls"
+    },
+    {
+        "name": "Fileshare",
+        "description": "[/fileshare] Share files between users of the platform and also the external ones"
+    },
+    {
+        "name": "Journal",
+        "description": "[/journals] Journal of the API operations performed on the platform"
+    },
+    {
+        "name": "HeaderManipulation",
+        "description": "[/header-manipulation] Available Header Manipulation related routes including sets, rules, actions and conditions"
+    },
+    {
+        "name": "NCOS",
+        "description": "[/ncos] Available NCOS related routes including Sets and their levels"
+    },
+    {
+        "name": "Number",
+        "description": "[/numbers] Available VOIP numbers"
+    },
+    {
+        "name": "Pbx",
+        "description": "[/pbx] Available PBX related routes including groups and their members"
+    },
+    {
+        "name": "Product",
+        "description": "[/products] Available products that a Customer can be created with"
+    },
+    {
+        "name": "Reseller",
+        "description": "[/resellers] Define platform resellers and their phonebook."
+    },
+    {
+        "name": "RewriteRule",
+        "description": "[/rewrite-rules] Available Rewrite Rule related routes including sets, rules."
+    },
+    {
+        "name": "Subscriber",
+        "description": "[/subscribers] Available Subscriber related routes including phonebook"
+    },
+    {
+        "name": "SystemContact",
+        "description": "[/systemcontacts] Define Contacts that belong to Resellers or Peering Groups"
+    },
+    {
+        "name": "Template",
+        "description": "[/templates] Available Template related routes including invoices"
+    },
+    {
+        "name": "Userinfo",
+        "description": "[/userinfo] Info about the current user, role, permissions"
+    },
+    {
+        "name": "Voicemail",
+        "description": "[/voicemails] Check available voicemails for a subscriber and also change their status (new/old)"
+    }
 ]
