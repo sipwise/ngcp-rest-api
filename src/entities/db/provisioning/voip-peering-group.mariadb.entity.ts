@@ -4,6 +4,7 @@ import {VoipPeeringServer} from './voip-peering-server.mariadb.entity'
 
 import {internal} from '~/entities'
 import {Contract} from '~/entities/db/billing'
+import {VoipPeeringInboundRule} from '~/entities/db/provisioning/voip-peering-inbound-rule.mariadb.entity'
 
 @Entity({
     name: 'voip_peer_groups',
@@ -60,6 +61,9 @@ export class VoipPeeringGroup extends BaseEntity {
 
     @OneToMany(() => VoipPeeringServer, server => server.group)
         servers!: VoipPeeringServer[]
+
+    @OneToMany(() => VoipPeeringInboundRule, rule => rule.group)
+        inboundRules!: VoipPeeringServer[]
 
     toInternal(): internal.VoipPeeringGroup {
         const entity = new internal.VoipPeeringGroup()
