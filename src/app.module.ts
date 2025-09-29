@@ -51,6 +51,7 @@ import {PbxModule} from './api/pbx/pbx.module'
 import {PbxUserModule} from './api/pbx/users/pbx-user.module'
 import {PeeringInboundRuleModule} from './api/peerings/groups/inbound-rules/peering-group-server.module'
 import {PeeringGroupModule} from './api/peerings/groups/peering-group.module'
+import {PeeringRuleModule} from './api/peerings/groups/rules/peering-rule.module'
 import {PeeringGroupServerModule} from './api/peerings/groups/servers/peering-group-server.module'
 import {PeeringModule} from './api/peerings/peering.module'
 import {ProductModule} from './api/products/product.module'
@@ -145,6 +146,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     PeeringModule,
     PeeringGroupServerModule,
     PeeringInboundRuleModule,
+    PeeringRuleModule,
     PeeringGroupModule,
     ProductModule,
     RedisModule,
