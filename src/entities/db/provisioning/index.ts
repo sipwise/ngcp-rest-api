@@ -11,6 +11,7 @@ export {VoipHeaderRuleConditionValue} from './voip-header-rule-condition-value.m
 export {VoipPbxGroup} from './voip-pbx-group.mariadb.entity'
 export {VoipPeeringGroup} from './voip-peering-group.mariadb.entity'
 export {VoipPeeringInboundRule} from './voip-peering-inbound-rule.mariadb.entity'
+export {VoipPeeringRule} from './voip-peering-rule.mariadb.entity'
 export {VoipPeeringServer} from './voip-peering-server.mariadb.entity'
 export {VoipPreference} from './voip-preference.mariadb.entity'
 export {VoipProfPreference} from './voip-prof-preference.mariadb.entity'
