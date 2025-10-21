@@ -20,6 +20,7 @@ import {LoggerService} from '~/logger/logger.service'
 @Injectable()
 export class CustomerService implements CrudService<internal.Customer> {
     private readonly log = new LoggerService(CustomerService.name)
+    private defaultEmailTemplates: internal.EmailTemplate[]
 
     constructor(
         @Inject(CustomerMariadbRepository) private readonly customerRepository: CustomerMariadbRepository,
@@ -51,6 +52,7 @@ export class CustomerService implements CrudService<internal.Customer> {
             customer.createBillingMappings = await this.prepareCreateBillingMappings(customer, sr, now)
             customer.createTimestamp = now
             customer.modifyTimestamp = now
+            await this.assignDefaultEmailTemplates(customer)
         }))
         const createdIds = await this.customerRepository.create(entities, sr)
         const createdCustomersDictionary = new Dictionary<internal.Customer>()
@@ -449,5 +451,31 @@ export class CustomerService implements CrudService<internal.Customer> {
         if (sr.user.resellerId && sr.user.reseller_id != resellerId) {
             throw new NotFoundException()
         }
+    }
+
+    private async assignDefaultEmailTemplates(customer: internal.Customer): Promise<void> {
+        if (!this.defaultEmailTemplates)
+            this.defaultEmailTemplates = await this.customerRepository.findDefaultEmailTemplates()
+
+        const contact = await this.customerRepository.readContactById(customer.contactId)
+        const resellerTemplates = await this.customerRepository.findResellerEmailTemplates(contact.reseller_id)
+
+
+        const templateNames: {[key: string]: string} = {
+            'subscriber_default_email': 'subscriberEmailTemplateId',
+            'passreset_default_email': 'passresetEmailTemplateId',
+            'invoice_default_email': 'invoiceEmailTemplateId',
+        }
+
+        Object.keys(resellerTemplates).forEach(async templateName => {
+            const resellerTemplate = resellerTemplates.find(resellerTemplate => resellerTemplate.name === templateName)
+            if (resellerTemplate) {
+                customer[templateNames[templateName]] = resellerTemplate.id
+            } else {
+                const defaultTemplate = this.defaultEmailTemplates.find(defaultTemplate => defaultTemplate.name === templateName)
+                await this.customerRepository.createResellerDefaultTemplate(contact.reseller_id, defaultTemplate)
+            }
+        })
+
     }
 }
