@@ -1,6 +1,6 @@
 import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
-import {SelectQueryBuilder} from 'typeorm'
+import {IsNull, SelectQueryBuilder} from 'typeorm'
 
 import {CustomerSearchDto} from '~/api/customers/dto/customer-search.dto'
 import {CustomerRepository} from '~/api/customers/interfaces/customer.repository'
@@ -374,5 +374,39 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
                 qb.andWhere('contract.status != :status', {status: ContractStatus.Terminated})
             }
         }
+    }
+
+    async findDefaultEmailTemplates(): Promise<internal.EmailTemplate[]> {
+        const templates = await db.billing.EmailTemplate.find(
+            {
+                where: {
+                    reseller_id: IsNull(),
+                },
+            },
+        )
+        return templates.map(template => template.toInternal())
+    }
+
+    async findResellerEmailTemplates(resellerId: number): Promise<internal.EmailTemplate[]> {
+        const templates = await db.billing.EmailTemplate.find(
+            {
+                where: {
+                    reseller_id: resellerId,
+                },
+            },
+        )
+        return templates.map(template => template.toInternal())
+    }
+
+    async createResellerDefaultTemplate(resellerId: number, defaultTemplate: internal.EmailTemplate): Promise<void> {
+        const resellerTemplate = Object.assign(new internal.EmailTemplate(), defaultTemplate)
+        resellerTemplate.resellerId = resellerId
+
+        await db.billing.EmailTemplate.insert(resellerTemplate)
+    }
+
+    async readContactById(contactId: number): Promise<internal.Contact> {
+        const contact = await db.billing.Contact.findOneOrFail({where: {id: contactId}})
+        return contact.toInternal()
     }
 }

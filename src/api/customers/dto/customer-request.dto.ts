@@ -60,7 +60,7 @@ export class CustomerRequestDto implements RequestDto {
 
     @IsOptional()
     @IsNumber()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Email template used to notify users about invoices'})
         invoice_email_template_id?: number
 
     @IsOptional()
@@ -75,7 +75,7 @@ export class CustomerRequestDto implements RequestDto {
 
     @IsOptional()
     @IsNumber()
-    @ApiPropertyOptional({description: 'The email template used to notify users about password reset'})
+    @ApiPropertyOptional({description: 'Email template used to notify users about password reset'})
         passreset_email_template_id?: number
 
     @ValidateIf(o => o.billing_profile_definition === ContractBillingProfileDefinition.Package)
@@ -91,7 +91,7 @@ export class CustomerRequestDto implements RequestDto {
 
     @IsOptional()
     @IsNumber()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Email template used to notify users about subscriber creation'})
         subscriber_email_template_id?: number
 
     @IsNotEmpty()

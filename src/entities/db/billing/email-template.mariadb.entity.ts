@@ -1,4 +1,5 @@
 import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm'
+import {internal} from '~/entities'
 
 @Entity({
     name: 'email_templates',
@@ -51,4 +52,14 @@ export class EmailTemplate extends BaseEntity {
     })
         attachment_name!: string
 
+    toInternal(): internal.EmailTemplate {
+        const template = new internal.EmailTemplate()
+        template.id = this.id
+        template.resellerId = this.reseller_id
+        template.name = this.name
+        template.fromEmail = this.from_email
+        template.subject = this.subject
+        template.attachmentName = this.attachment_name
+        return template
+    }
 }
