@@ -1,6 +1,8 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString} from 'class-validator'
 
+import {IsValidRWRMatchPattern} from '~/decorators/is-valid-rwr-match-pattern'
+import {IsValidRWRReplacePattern} from '~/decorators/is-valid-rwr-replace-pattern'
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
 import {RewriteRuleDirection, RewriteRuleField} from '~/entities/internal/rewrite-rule.internal.entity'
@@ -13,11 +15,13 @@ export class RewriteRuleRequestDto implements RequestDto {
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
+    @IsValidRWRMatchPattern()
         match_pattern!: string
 
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
+    @IsValidRWRReplacePattern()
         replace_pattern!: string
 
     @ApiProperty()

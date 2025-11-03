@@ -45,6 +45,8 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
                 }
                 entity.priority = maxPriorities[entity.setId] + 1
             }
+
+            this.deflateMatchReplacePatterns(entity)
         }
 
         const createdIds = await this.ruleRepo.create(entities)
@@ -59,7 +61,13 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
         if (sr.user.reseller_id_required)
             filters.resellerId = sr.user.reseller_id
 
-        return await this.ruleRepo.readAll(sr, filters)
+        const [entities, totalCount] = await this.ruleRepo.readAll(sr, filters)
+
+        entities.forEach(entity => {
+            this.inflateMatchReplacePatterns(entity)
+        })
+
+        return [entities, totalCount]
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.RewriteRule> {
@@ -67,7 +75,11 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
         if (sr.user.reseller_id_required)
             filters.resellerId = sr.user.reseller_id
 
-        return await this.ruleRepo.readById(id, sr, filters)
+        const entity = await this.ruleRepo.readById(id, sr, filters)
+
+        this.inflateMatchReplacePatterns(entity)
+
+        return entity
     }
 
     async update(updates: Dictionary<internal.RewriteRule>, sr: ServiceRequest): Promise<number[]> {
@@ -87,6 +99,10 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
             const message = GenerateErrorMessageArray(ids, error.message)
             throw new UnprocessableEntityException(message)
         }
+
+        Object.values(updates).forEach(entity => {
+            this.deflateMatchReplacePatterns(entity)
+        })
 
         const updatedIds = await this.ruleRepo.update(updates, sr)
 
@@ -131,4 +147,19 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
         }
         return filterBy
     }
+
+    private inflateMatchReplacePatterns(entity: internal.RewriteRule): void {
+        entity.matchPattern = entity.matchPattern.replace(/\$avp\(s:(\w+)\)/g, '${$1}')
+        entity.matchPattern = entity.matchPattern.replace(/\$\(avp\(s:(\w+)\)\[\+\]\)/g, '@{$1}')
+
+        entity.replacePattern = entity.replacePattern.replace(/\$avp\(s:(\w+)\)/g, '${$1}')
+    }
+
+    private deflateMatchReplacePatterns(entity: internal.RewriteRule): void {
+        entity.matchPattern = entity.matchPattern.replace(/\$\{(\w+)\}/g, '$avp(s:$1)')
+        entity.matchPattern = entity.matchPattern.replace(/@\{(\w+)\}/g, '$(avp(s:$1)[+])')
+
+        entity.replacePattern = entity.replacePattern.replace(/\$\{(\w+)\}/g, '$avp(s:$1)')
+    }
+
 }
