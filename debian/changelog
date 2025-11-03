@@ -1,3 +1,10 @@
+ngcp-rest-api (13.5.1.2+0~mr13.5.1.2) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [5a6482a] MT#63829 add rewrite rules pattern validation and inflate
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 03 Nov 2025 17:31:25 +0100
+
 ngcp-rest-api (13.5.1.1+0~mr13.5.1.1) unstable; urgency=medium
 
   * New release.
