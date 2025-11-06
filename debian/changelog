@@ -1,3 +1,10 @@
+ngcp-rest-api (13.5.1.4+0~mr13.5.1.4) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [ab480c7] MT#63880 fix task agent error exceptions
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 06 Nov 2025 20:45:13 +0100
+
 ngcp-rest-api (13.5.1.3+0~mr13.5.1.3) unstable; urgency=medium
 
   [ Kirill Solomko ]
