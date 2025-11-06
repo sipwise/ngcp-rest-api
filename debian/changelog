@@ -1,3 +1,11 @@
+ngcp-rest-api (13.5.1.3+0~mr13.5.1.3) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [35b4da2] MT#63050 auto assign default email templates to customers
+  * [2f53484] MT#63829 fix rewrite rules pattern inflate/deflate for PATCH
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 06 Nov 2025 16:18:43 +0100
+
 ngcp-rest-api (13.5.1.2+0~mr13.5.1.2) unstable; urgency=medium
 
   [ Kirill Solomko ]
