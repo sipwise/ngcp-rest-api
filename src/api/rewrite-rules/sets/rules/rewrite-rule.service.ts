@@ -205,24 +205,24 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
             if (hasError) {
                 await this.ruleRedisRepo.unsubscriberFromFeedback(feedbackChannel)
                 this.log.error(`Task agent error: ${errorReason}`)
-                const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
-                throw new InternalServerErrorException(error)
+                //const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
+                //throw new InternalServerErrorException(error)
             }
 
             // fail fast if no response within initialTimeout
             if (!firstResponseReceived && (now - startTime) > initialTimeout) {
                 await this.ruleRedisRepo.unsubscriberFromFeedback(feedbackChannel)
                 this.log.error('Timeout waiting for initial task agent response')
-                const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
-                throw new InternalServerErrorException(error)
+                //const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
+                //throw new InternalServerErrorException(error)
             }
 
             // fail if total timeout exceeded
             if (firstResponseReceived && (now - startTime) > maxTimeout) {
                 await this.ruleRedisRepo.unsubscriberFromFeedback(feedbackChannel)
                 this.log.error('Timeout waiting for all task agent responses')
-                const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
-                throw new InternalServerErrorException(error)
+                //const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
+                //throw new InternalServerErrorException(error)
             }
 
             const allDone = [...agentStatus.values()].every(status => status === 'done')
