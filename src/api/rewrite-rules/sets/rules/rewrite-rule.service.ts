@@ -149,17 +149,25 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
     }
 
     private inflateMatchReplacePatterns(entity: internal.RewriteRule): void {
-        entity.matchPattern = entity.matchPattern.replace(/\$avp\(s:(\w+)\)/g, '${$1}')
-        entity.matchPattern = entity.matchPattern.replace(/\$\(avp\(s:(\w+)\)\[\+\]\)/g, '@{$1}')
+        if (entity.matchPattern) {
+            entity.matchPattern = entity.matchPattern.replace(/\$avp\(s:(\w+)\)/g, '${$1}')
+            entity.matchPattern = entity.matchPattern.replace(/\$\(avp\(s:(\w+)\)\[\+\]\)/g, '@{$1}')
+        }
 
-        entity.replacePattern = entity.replacePattern.replace(/\$avp\(s:(\w+)\)/g, '${$1}')
+        if (entity.replacePattern) {
+            entity.replacePattern = entity.replacePattern.replace(/\$avp\(s:(\w+)\)/g, '${$1}')
+        }
     }
 
     private deflateMatchReplacePatterns(entity: internal.RewriteRule): void {
-        entity.matchPattern = entity.matchPattern.replace(/\$\{(\w+)\}/g, '$avp(s:$1)')
-        entity.matchPattern = entity.matchPattern.replace(/@\{(\w+)\}/g, '$(avp(s:$1)[+])')
+        if (entity.matchPattern) {
+            entity.matchPattern = entity.matchPattern.replace(/\$\{(\w+)\}/g, '$avp(s:$1)')
+            entity.matchPattern = entity.matchPattern.replace(/@\{(\w+)\}/g, '$(avp(s:$1)[+])')
+        }
 
-        entity.replacePattern = entity.replacePattern.replace(/\$\{(\w+)\}/g, '$avp(s:$1)')
+        if (entity.replacePattern) {
+            entity.replacePattern = entity.replacePattern.replace(/\$\{(\w+)\}/g, '$avp(s:$1)')
+        }
     }
 
 }
