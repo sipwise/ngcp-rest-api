@@ -148,20 +148,25 @@ export class TaskAgentHelper {
             if (hasError) {
                 await this.unsubscriberFromFeedback(feedbackChannel)
                 this.log.error(`Task agent error: ${errorReason}`)
-                const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
-                throw new InternalServerErrorException(error)
+                /*
+                 TODO: this exception is raised after transaction commit + response
+                 and therefore, not intercepted and causes the server to stop with ret code 1
+                 need to find a way to issue transaction commit before response
+                */
+                //const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
+                //throw new InternalServerErrorException(error)
             }
             if (!firstResponseReceived && (now - startTime) > initialTimeout) {
                 await this.unsubscriberFromFeedback(feedbackChannel)
                 this.log.error('Timeout waiting for initial task agent response')
-                const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
-                throw new InternalServerErrorException(error)
+                //const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
+                //throw new InternalServerErrorException(error)
             }
             if (firstResponseReceived && (now - startTime) > maxTimeout) {
                 await this.unsubscriberFromFeedback(feedbackChannel)
                 this.log.error('Timeout waiting for all task agent responses')
-                const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
-                throw new InternalServerErrorException(error)
+                //const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
+                //throw new InternalServerErrorException(error)
             }
             const allDone = [...agentStatus.values()].every(status => status === 'done')
             if (agentStatus.size > 0 && allDone) {
