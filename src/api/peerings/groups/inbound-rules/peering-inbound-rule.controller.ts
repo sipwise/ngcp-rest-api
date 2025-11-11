@@ -6,7 +6,7 @@ import {number} from 'yargs'
 
 import {PeeringInboundRuleRequestDto} from './dto/peering-inbound-rule-request.dto'
 import {PeeringInboundRuleRequestParamDto} from './dto/peering-inbound-rule-request.param.dto'
-import {PeeringInboundRuleResponseDto} from './dto/peering-inbound-rule-server-response.dto'
+import {PeeringInboundRuleResponseDto} from './dto/peering-inbound-rule-response.dto'
 import {PeeringInboundRuleService} from './peering-inbound-rule.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
