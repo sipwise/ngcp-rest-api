@@ -24,6 +24,9 @@ export class PeeringInboundRuleResponseDto extends ResponseDto {
         reject_reason: string
 
     @ApiProperty()
+        priority: number
+
+    @ApiProperty()
         enabled: boolean
 
     constructor(entity: internal.VoipPeeringInboundRule, options?: ResponseDtoOptions) {
@@ -34,6 +37,7 @@ export class PeeringInboundRuleResponseDto extends ResponseDto {
         this.pattern = entity.pattern
         this.reject_code = entity.rejectCode
         this.reject_reason = entity.rejectReason
+        this.priority = entity.priority
         this.enabled = entity.enabled
     }
 }

@@ -5,7 +5,7 @@ import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {PeeringRuleRequestParamDto} from './dto/peering-rule-request.param.dto'
-import {PeeringRuleResponseDto} from './dto/peering-rule-server-response.dto'
+import {PeeringRuleResponseDto} from './dto/peering-rule-response.dto'
 import {PeeringRuleService} from './peering-rule.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
