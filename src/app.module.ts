@@ -49,7 +49,7 @@ import {PbxGroupMemberModule} from './api/pbx/groups/members/pbx-group-member.mo
 import {PbxGroupModule} from './api/pbx/groups/pbx-group.module'
 import {PbxModule} from './api/pbx/pbx.module'
 import {PbxUserModule} from './api/pbx/users/pbx-user.module'
-import {PeeringInboundRuleModule} from './api/peerings/groups/inbound-rules/peering-group-server.module'
+import {PeeringInboundRuleModule} from './api/peerings/groups/inbound-rules/peering-group.module'
 import {PeeringGroupModule} from './api/peerings/groups/peering-group.module'
 import {PeeringRuleModule} from './api/peerings/groups/rules/peering-rule.module'
 import {PeeringGroupServerModule} from './api/peerings/groups/servers/peering-group-server.module'
