@@ -1,3 +1,20 @@
+ngcp-rest-api (13.5.1.5+0~mr13.5.1.5) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [62bb2a5] MT#63520 Migrate /api/bannedusers to api/v2/bans/registrations
+  * [7365025] MT#63519 Migrate /api/bannedips to api/v2/bans/ips
+  * [a537d5d] MT#63521 Consolidate task-agent calls into a helper module
+  * [01651c0] MT#63608 Migrate api/invoicetemplates to api/v2/templates/invoices
+  * [7bca4f5] MT#63608 Fix swagger docs for invoice templates
+  * [5f554ac] MT#63634 Migrate api/peeringinboundrules to api/v2/peerings/groups/inbound-rules
+  * [c63b354] MT#63633 Migrate api/peeringrules to api/v2/peerings/groups/rules
+
+  [ Kirill Solomko ]
+  * [988614a] MT#63880 fix task agent error exceptions
+  * [96bf28e] MT#63793 fix missing peering inbound rule priority field
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 12 Nov 2025 10:32:26 +0100
+
 ngcp-rest-api (13.5.1.4+0~mr13.5.1.4) unstable; urgency=medium
 
   [ Kirill Solomko ]
