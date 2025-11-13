@@ -1,5 +1,6 @@
 import {Injectable} from '@nestjs/common'
 import {PassportStrategy} from '@nestjs/passport'
+import {Request} from 'express'
 import {ServiceRequest} from 'interfaces/service-request.interface'
 import {Strategy} from 'passport-jwt'
 
@@ -41,8 +42,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
      */
     // TODO: Can we use a payload type here?
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async validate(sr: ServiceRequest, payload: any): Promise<AuthResponseDto> {
-        this.log.debug('got payload in validate ' + JSON.stringify(payload))
+    async validate(req: Request, payload: any): Promise<AuthResponseDto> {
+        if (!payload)
+            return null
+        const sr: ServiceRequest = new ServiceRequest(req)
+        this.log.debug('got JWT payload in validate ' + JSON.stringify(payload))
         if (sr.realm == 'subscriber') {
             if (!('subscriber_uuid' in payload))
                 return null
