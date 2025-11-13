@@ -262,7 +262,7 @@ export class AuthService {
             role: role,
             reseller_id_required: true,
             showPasswords: false,
-            username: subscriber.username,
+            username: subscriber.webusername,
             is_master: false,
             uuid: subscriber.uuid,
             customer_id: subscriber.account_id,
@@ -278,16 +278,16 @@ export class AuthService {
     }
 
     /**
-     * Signs a JWT for an authenticated `Admin` user
+     * Signs a JWT for an authenticated user
      *
-     * @param user Authenticated `Admin` user
+     * @param user Authenticated user
      *
      * @returns JSON Web Token
      */
     async signJwt(user: AuthResponseDto): Promise<{
         access_token: string;
     }> {
-        const payload = user.role == 'subscriber'
+        const payload = ['subscriber', 'subscriberadmin'].includes(user.role)
             ? {username: user.username, subscriber_uuid: user.uuid}
             : {username: user.username, id: user.id}
         this.log.debug({message: 'signing JWT token', payload})
