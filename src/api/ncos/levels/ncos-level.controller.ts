@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, forwardRef} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'helpers/patch.helper'
@@ -7,6 +7,7 @@ import {number} from 'yargs'
 
 import {NCOSLevelRequestDto} from './dto/ncos-level-request.dto'
 import {NCOSLevelResponseDto} from './dto/ncos-level-response.dto'
+import {NCOSLevelSearchDto} from './dto/ncos-level-search.dto'
 import {NCOSLevelService} from './ncos-level.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
@@ -21,6 +22,7 @@ import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -44,6 +46,7 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
 
     constructor(
         private readonly ncosLevelService: NCOSLevelService,
+        @Inject(forwardRef(() => ExpandHelper)) private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
         super(resourceName, ncosLevelService, journalService)
@@ -98,6 +101,10 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
             e,
             {url: req.url},
         ))
+        if (sr.query.expand) {
+            const setSearchDtoKeys = Object.keys(new NCOSLevelSearchDto())
+            await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
+        }
         return [responseList, totalCount]
     }
 
@@ -119,10 +126,16 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
             url: req.url,
             method: req.method,
         })
-        return new NCOSLevelResponseDto(
+        const sr = new ServiceRequest(req)
+        const response = new NCOSLevelResponseDto(
             await this.ncosLevelService.read(id, new ServiceRequest(req)),
             {url: req.url, containsResourceId: true},
         )
+        if (sr.query.expand && !sr.isInternalRedirect) {
+            const setSearchDtoKeys = Object.keys(new NCOSLevelSearchDto())
+            await this.expander.expandObjects([response], setSearchDtoKeys, sr)
+        }
+        return response
     }
 
     @Put(':id')
