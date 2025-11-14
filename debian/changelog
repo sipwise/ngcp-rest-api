@@ -1,3 +1,11 @@
+ngcp-rest-api (13.5.1.7+0~mr13.5.1.7) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [c1384e5] MT#63838 ncos/levels add expand by reseller_id
+  * [4b148dc] MT#63838 fix/rebuild jenkins last commit
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 14 Nov 2025 13:30:55 +0100
+
 ngcp-rest-api (13.5.1.6+0~mr13.5.1.6) unstable; urgency=medium
 
   [ Kirill Solomko ]
