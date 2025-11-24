@@ -1,3 +1,26 @@
+ngcp-rest-api (14.1.0.0+0~mr14.1.0.0) unstable; urgency=medium
+
+  [ Bertold Vincze ]
+  * [3a6202e] MT#63520 Migrate /api/bannedusers to api/v2/bans/registrations
+  * [4c358bc] MT#63519 Migrate /api/bannedips to api/v2/bans/ips
+  * [8f6e81e] MT#63521 Consolidate task-agent calls into a helper module
+  * [32ec552] MT#63608 Migrate api/invoicetemplates to api/v2/templates/invoices
+  * [033b284] MT#63608 Fix swagger docs for invoice templates
+  * [ae72616] MT#63634 Migrate api/peeringinboundrules to api/v2/peerings/groups/inbound-rules
+  * [3e59432] MT#63633 Migrate api/peeringrules to api/v2/peerings/groups/rules
+
+  [ Kirill Solomko ]
+  * [8dcf39c] MT#63829 add rewrite rules pattern validation and inflate
+  * [370bc5f] MT#63050 auto assign default email templates to customers
+  * [0a8bacb] MT#63829 fix rewrite rules pattern inflate/deflate for PATCH
+  * [f7001e3] MT#63880 fix task agent error exceptions
+  * [32f42d9] MT#63793 fix missing peering inbound rule priority field
+  * [be60a34] MT#63821 fix 'subscriber' JWT auth
+  * [a0b7043] MT#63838 ncos/levels add expand by reseller_id
+  * [ce1dca3] MT#63838 fix/rebuild jenkins last commit
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 24 Nov 2025 16:56:56 +0100
+
 ngcp-rest-api (14.0.0.0+0~mr14.0.0.0) unstable; urgency=medium
 
   [ Bertold Vincze ]
