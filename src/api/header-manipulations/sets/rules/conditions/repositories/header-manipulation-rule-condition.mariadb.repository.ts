@@ -136,13 +136,14 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         return await qb.getCount()
     }
 
-    async update(updates: Dictionary<internal.HeaderRuleCondition>, sr: ServiceRequest): Promise<number[]> {
+    async update(updates: Dictionary<internal.HeaderRuleCondition>, _sr: ServiceRequest, resetValues: boolean = true): Promise<number[]> {
         await this.addRewruleRuleSetDpidToDict(updates)
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const dbEntity = db.provisioning.VoipHeaderRuleCondition.create().fromInternal(updates[id])
             await db.provisioning.VoipHeaderRuleCondition.update(id, dbEntity)
-            await db.provisioning.VoipHeaderRuleConditionValue.delete({condition_id: id})
+            if (resetValues)
+                await db.provisioning.VoipHeaderRuleConditionValue.delete({condition_id: id})
             if (updates[id].values) {
                 await Promise.all(updates[id].values.map(async value => {
                     const conditionValue = new db.provisioning.VoipHeaderRuleConditionValue()
