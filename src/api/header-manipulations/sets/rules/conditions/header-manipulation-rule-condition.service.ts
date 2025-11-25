@@ -75,8 +75,8 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
             throw new UnprocessableEntityException(message)
         }
 
-
-        return await this.ruleConditionRepo.update(updates, sr)
+        const resetValues: boolean = sr.req.method == 'PUT'
+        return await this.ruleConditionRepo.update(updates, sr, resetValues)
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
