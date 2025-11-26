@@ -1,3 +1,10 @@
+ngcp-rest-api (13.5.1.9+0~mr13.5.1.9) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [a26b3ca] MT#64000 add header manipulations rules invalidation
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 26 Nov 2025 23:41:02 +0100
+
 ngcp-rest-api (13.5.1.8+0~mr13.5.1.8) unstable; urgency=medium
 
   [ Kirill Solomko ]
