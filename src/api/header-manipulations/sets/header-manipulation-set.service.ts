@@ -1,8 +1,10 @@
 import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {GenerateErrorMessageArray} from 'helpers/http-error.helper'
 import {I18nService} from 'nestjs-i18n'
+import {runOnTransactionCommit} from 'typeorm-transactional'
 
 import {FilterBy, HeaderManipulationSetMariadbRepository} from './repositories/header-manipulation-set.mariadb.repository'
+import {HeaderManipulationSetRedisRepository} from './repositories/header-manipulation-set.redis.repository'
 
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
@@ -20,6 +22,7 @@ export class HeaderManipulationSetService implements CrudService<internal.Header
     constructor(
         @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(HeaderManipulationSetMariadbRepository) private readonly ruleSetRepo: HeaderManipulationSetMariadbRepository,
+        @Inject (HeaderManipulationSetRedisRepository) private readonly ruleSetRedisRepo: HeaderManipulationSetRedisRepository,
     ) {
     }
 
@@ -95,6 +98,8 @@ export class HeaderManipulationSetService implements CrudService<internal.Header
             throw new UnprocessableEntityException(message)
         }
 
+        ids.forEach(async setId => await this.invalidateRuleSetAfterCommit(setId, sr))
+
         return await this.ruleSetRepo.delete(ids, sr)
     }
 
@@ -102,5 +107,11 @@ export class HeaderManipulationSetService implements CrudService<internal.Header
         if (sr.user.resellerId && sr.user.reseller_id != resellerId) {
             throw new NotFoundException()
         }
+    }
+
+    // TODO: required for mocking, as esbuild-jest has issues with jest mock
+    // patterns and will be reviewed after packages upgrade
+    async invalidateRuleSetAfterCommit(setId: number, sr: ServiceRequest): Promise<void> {
+        runOnTransactionCommit(async () => await this.ruleSetRedisRepo.invalidateRuleSet(setId, sr))
     }
 }
