@@ -1,9 +1,11 @@
 import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
+import {runOnTransactionCommit} from 'typeorm-transactional'
 
 import {FilterBy, HeaderManipulationRuleConditionMariadbRepository} from './repositories/header-manipulation-rule-condition.mariadb.repository'
 
 import {HeaderManipulationSetMariadbRepository} from '~/api/header-manipulations/sets/repositories/header-manipulation-set.mariadb.repository'
+import {HeaderManipulationSetRedisRepository} from '~/api/header-manipulations/sets/repositories/header-manipulation-set.redis.repository'
 import {HeaderManipulationRuleMariadbRepository} from '~/api/header-manipulations/sets/rules/repositories/header-manipulation-rule.mariadb.repository'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
@@ -22,18 +24,21 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
         @Inject(HeaderManipulationRuleConditionMariadbRepository) private readonly ruleConditionRepo: HeaderManipulationRuleConditionMariadbRepository,
         @Inject(HeaderManipulationRuleMariadbRepository) private readonly ruleRepo: HeaderManipulationRuleMariadbRepository,
         @Inject(HeaderManipulationSetMariadbRepository) private readonly ruleSetRepo: HeaderManipulationSetMariadbRepository,
+        @Inject(HeaderManipulationSetRedisRepository) private readonly ruleSetRedisRepo: HeaderManipulationSetRedisRepository,
     ) {
     }
 
     async create(entities: internal.HeaderRuleCondition[], sr: ServiceRequest): Promise<internal.HeaderRuleCondition[]> {
+        const rules = await this.ruleRepo.readWhereInIds(entities.map(entity => entity.ruleId), sr)
         if (sr.user.reseller_id_required) {
-            const rules = await this.ruleRepo.readWhereInIds(entities.map(entity => entity.ruleId), sr)
             const sets = await this.ruleSetRepo.readWhereInIds(rules.map(rule => rule.setId), sr)
             if (sets.some(set => set.resellerId != sr.user.reseller_id)) {
                 const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
                 throw new UnprocessableEntityException(error.message)
             }
         }
+
+        rules.forEach(async rule => await this.invalidateRuleSetAfterCommit(rule.setId, sr))
 
         const createdIds = await this.ruleConditionRepo.create(entities)
         return await this.ruleConditionRepo.readWhereInIds(createdIds, sr)
@@ -78,6 +83,10 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
             throw new UnprocessableEntityException(message)
         }
 
+        const rules = await this.ruleRepo.readWhereInIds(conditions.map(condition => condition.ruleId), sr)
+
+        rules.forEach(async rule => await this.invalidateRuleSetAfterCommit(rule.setId, sr))
+
         const resetValues: boolean = sr.req.method == 'PUT'
         return await this.ruleConditionRepo.update(updates, sr, resetValues)
     }
@@ -97,6 +106,10 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
             const message = GenerateErrorMessageArray(ids, error.message)
             throw new UnprocessableEntityException(message)
         }
+
+        const rules = await this.ruleRepo.readWhereInIds(conditions.map(condition => condition.ruleId), sr)
+
+        rules.forEach(async rule => await this.invalidateRuleSetAfterCommit(rule.setId, sr))
 
         return await this.ruleConditionRepo.delete(ids,sr)
     }
@@ -122,5 +135,11 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
         }
 
         return filterBy
+    }
+
+    // TODO: required for mocking, as esbuild-jest has issues with jest mock
+    // patterns and will be reviewed after packages upgrade
+    async invalidateRuleSetAfterCommit(setId: number, sr: ServiceRequest): Promise<void> {
+        runOnTransactionCommit(async () => await this.ruleSetRedisRepo.invalidateRuleSet(setId, sr))
     }
 }

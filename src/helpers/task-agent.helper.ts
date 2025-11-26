@@ -148,6 +148,7 @@ export class TaskAgentHelper {
             if (hasError) {
                 await this.unsubscriberFromFeedback(feedbackChannel)
                 this.log.error(`Task agent error: ${errorReason}`)
+                return
                 /*
                  TODO: this exception is raised after transaction commit + response
                  and therefore, not intercepted and causes the server to stop with ret code 1
@@ -159,12 +160,14 @@ export class TaskAgentHelper {
             if (!firstResponseReceived && (now - startTime) > initialTimeout) {
                 await this.unsubscriberFromFeedback(feedbackChannel)
                 this.log.error('Timeout waiting for initial task agent response')
+                return
                 //const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
                 //throw new InternalServerErrorException(error)
             }
             if (firstResponseReceived && (now - startTime) > maxTimeout) {
                 await this.unsubscriberFromFeedback(feedbackChannel)
                 this.log.error('Timeout waiting for all task agent responses')
+                return
                 //const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
                 //throw new InternalServerErrorException(error)
             }
