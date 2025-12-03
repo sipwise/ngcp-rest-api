@@ -6,7 +6,6 @@ import {DomainRepository} from '~/api/domains/interfaces/domain.repository'
 import {db, internal} from '~/entities'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
-import {TelnetDispatcher} from '~/helpers/telnet-dispatcher'
 import {XmlDispatcher} from '~/helpers/xml-dispatcher'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -28,19 +27,9 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
         const valuesProvisioning = domains.map(domain => new db.provisioning.VoipDomain().fromInternal(domain))
         await qbProvisioning.insert().values(valuesProvisioning).execute()
 
-        const telnetDispatcher = new TelnetDispatcher()
         const xmlDispatcher = new XmlDispatcher()
 
         for (const domain of domains) {
-            const errors = await telnetDispatcher.activateDomain(domain.domain)
-
-            // roll back changes if errors occurred
-            if (errors.length > 0) {
-                await telnetDispatcher.deactivateDomain(domain.domain)
-                await db.billing.Domain.remove(new db.billing.Domain().fromInternal(domain))
-                await db.provisioning.VoipDomain.remove(new db.provisioning.VoipDomain().fromInternal(domain))
-                throw new InternalServerErrorException(errors) // TODO: error thrown here prevents following domains from being activated
-            }
             await xmlDispatcher.sipDomainReload(domain.domain)
         }
 
@@ -107,10 +96,8 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
         const provDomain = await db.provisioning.VoipDomain.findOneOrFail({where: {domain: domain.domain}})
         await db.provisioning.VoipDomain.delete(provDomain.id)
 
-        const telnetDispatcher = new TelnetDispatcher()
         const xmlDispatcher = new XmlDispatcher()
 
-        await telnetDispatcher.deactivateDomain(domain.domain)
         await xmlDispatcher.sipDomainReload(domain.domain)
         return domain.id
     }

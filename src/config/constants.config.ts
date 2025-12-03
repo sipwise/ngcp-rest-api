@@ -78,7 +78,6 @@ export enum License {
     voisniffHomer = 'voisniff-homer',
     voisniffMysqlDump = 'voisniff-mysql_dump',
     voisniffX2x3 = 'voisniff-x2x3',
-    xmpp = 'xmpp',
 }
 
 export const procDirLocation = process.env.NODE_ENV == 'development' || process.env.NODE_ENV == 'test'

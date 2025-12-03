@@ -77,7 +77,6 @@
     "sd-notify": "2.8.0",
     "superagent": "10.1.0",
     "swagger-ui-express": "5.0.1",
-    "telnet-client": "2.2.1",
     "typeorm": "0.3.20",
     "typeorm-transactional": "0.5.0",
     "ua-parser-js": "1.0.39",

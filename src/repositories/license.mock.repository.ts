@@ -39,7 +39,6 @@ export class LicenseMockRepository {
             'voisniff-homer': 1,
             'voisniff-mysql_dump': 1,
             'voisniff-x2x3': 1,
-            xmpp: 1,
         }
         this.defaultLicense = Object.assign({}, this.license)
     }

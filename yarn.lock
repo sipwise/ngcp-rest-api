@@ -3203,11 +3203,6 @@ electron-to-chromium@^1.5.4:
   resolved "https://npm-registry.sipwise.com/electron-to-chromium/-/electron-to-chromium-1.5.25.tgz#492ade1cde401332b9b75aa0c55fd5e1550ca66c"
   integrity sha512-kMb204zvK3PsSlgvvwzI3wBIcAw15tRkYk+NQdsjdDtcQWTp2RABbMQ9rUBy8KNEOM+/E6ep+XC3AykiWZld4g==
 
-emitter-component@^1.1.1:
-  version "1.1.2"
-  resolved "https://npm-registry.sipwise.com/emitter-component/-/emitter-component-1.1.2.tgz#d65af5833dc7c682fd0ade35f902d16bc4bad772"
-  integrity sha512-QdXO3nXOzZB4pAjM0n6ZE+R9/+kPpECA/XSELIcc54NeYVnBqIk+4DFiBgK+8QbV3mdvTG6nedl7dTYgO+5wDw==
-
 emitter-listener@^1.0.1:
   version "1.1.2"
   resolved "https://npm-registry.sipwise.com/emitter-listener/-/emitter-listener-1.1.2.tgz#56b140e8f6992375b3d7cb2cab1cc7432d9632e8"
@@ -6019,11 +6014,6 @@ nestjs-i18n@10.4.9:
     js-yaml "^4.1.0"
     string-format "^2.0.0"
 
-net@^1.0.2:
-  version "1.0.2"
-  resolved "https://npm-registry.sipwise.com/net/-/net-1.0.2.tgz#d1757ec9a7fb2371d83cf4755ce3e27e10829388"
-  integrity sha512-kbhcj2SVVR4caaVnGLJKmlk2+f+oLkjqdKeQlmUtz6nGzOpbcobwVIeSURNgraV/v3tlmGIX82OcPCl0K6RbHQ==
-
 nice-try@^1.0.4:
   version "1.0.5"
   resolved "https://npm-registry.sipwise.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
@@ -7265,13 +7255,6 @@ statuses@2.0.1:
   resolved "https://npm-registry.sipwise.com/statuses/-/statuses-2.0.1.tgz#55cb000ccf1d48728bd23c685a063998cf1a1b63"
   integrity sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==
 
-stream@^0.0.2:
-  version "0.0.2"
-  resolved "https://npm-registry.sipwise.com/stream/-/stream-0.0.2.tgz#7f5363f057f6592c5595f00bc80a27f5cec1f0ef"
-  integrity sha512-gCq3NDI2P35B2n6t76YJuOp7d6cN/C7Rt0577l91wllh0sY9ZBuw9KaSGqH/b0hzn3CWWJbpbW0W0WvQ1H/Q7g==
-  dependencies:
-    emitter-component "^1.1.1"
-
 streamsearch@^1.1.0:
   version "1.1.0"
   resolved "https://npm-registry.sipwise.com/streamsearch/-/streamsearch-1.1.0.tgz#404dd1e2247ca94af554e841a8ef0eaa238da764"
@@ -7526,14 +7509,6 @@ tar@^6.1.11, tar@^6.2.1:
     minizlib "^2.1.1"
     mkdirp "^1.0.3"
     yallist "^4.0.0"
-
-telnet-client@2.2.1:
-  version "2.2.1"
-  resolved "https://npm-registry.sipwise.com/telnet-client/-/telnet-client-2.2.1.tgz#a7366b060ba95a7f54c7ffa9a2a17a90c6731dbe"
-  integrity sha512-7LnQG+eohD7GkKi8kwzzuAnGRnfZkvQ6rFoGxQ/WuN47xR9BO+RvbKB8N797zRetP0C4G4CDQUXWguva3cWbVQ==
-  dependencies:
-    net "^1.0.2"
-    stream "^0.0.2"
 
 terser-webpack-plugin@^5.3.10:
   version "5.3.10"
