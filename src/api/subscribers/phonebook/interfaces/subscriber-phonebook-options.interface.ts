@@ -2,7 +2,7 @@ import {SubscriberPhonebookView} from '~/api/subscribers/phonebook/dto/subscribe
 import {FilterBy} from '~/interfaces/filter-by.interface'
 
 interface SubscriberPhonebookFilterBy extends FilterBy {
-   subscriber_id?: number
+   subscriberId?: number
 }
 
 export interface SubscriberPhonebookOptions {

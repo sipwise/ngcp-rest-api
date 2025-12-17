@@ -279,9 +279,29 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 qb.leftJoinAndSelect('contract.contact', 'contact')
                 qb.andWhere('contact.reseller_id = :resellerId', {resellerId: filterBy.resellerId})
             }
-            if (filterBy.subscriber_id) {
-                qb.andWhere('phonebook.subscriber_id = :id', {id: filterBy.subscriber_id})
+            if (filterBy.subscriberId) {
+                qb.andWhere('phonebook.subscriber_id = :id', {id: filterBy.subscriberId})
             }
         }
+    }
+
+    async getAllowedSubscribersCount(ids: number[], filterBy: SubscriberPhonebookOptions['filterBy'], _sr: ServiceRequest): Promise<number> {
+        const qb = db.billing.VoipSubscriber.createQueryBuilder('subscriber')
+        qb.whereInIds(ids)
+        qb.andWhere('subscriber.status != :status', {status: 'terminated'})
+        if (filterBy) {
+            if (filterBy.resellerId) {
+                qb.leftJoinAndSelect('subscriber.contract', 'contract')
+                qb.leftJoinAndSelect('contract.contact', 'contact')
+                qb.andWhere('contact.reseller_id = :resellerId', {resellerId: filterBy.resellerId})
+            }
+            if (filterBy.subscriberId) {
+                qb.andWhere('subscriber.id = :id', {id: filterBy.subscriberId})
+            }
+            if (filterBy.subscriberId) {
+                qb.andWhere('subscriber.contract_id = :contract_id', {contract_id: filterBy.customerId})
+            }
+        }
+        return await qb.getCount()
     }
 }
