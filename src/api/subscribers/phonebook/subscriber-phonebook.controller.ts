@@ -100,6 +100,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        const reqDtoOptions = {parentId: +sr.params['subscriberId']}
         if (file) {
             switch (file.mimetype) {
                 case 'text/csv':
@@ -110,11 +111,11 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
                 default:
                     throw new UnprocessableEntityException(this.i18n.t('errors.FILE_MIME_TYPE_NOT_SUPPORTED'))
             }
-            const phonebook = await Promise.all(createDto.map(async set => set.toInternal()))
+            const phonebook = await Promise.all(createDto.map(async set => set.toInternal(reqDtoOptions)))
             const created = await this.phonebookService.importCsv(phonebook, sr)
             return await Promise.all(created.map(async phonebook => new SubscriberPhonebookResponseDto(phonebook)))
         }
-        const phonebook = await Promise.all(createDto.map(async set => set.toInternal()))
+        const phonebook = await Promise.all(createDto.map(async set => set.toInternal(reqDtoOptions)))
         const created = await this.phonebookService.create(phonebook, sr)
         return await Promise.all(created.map(async phonebook => new SubscriberPhonebookResponseDto(phonebook)))
     }
