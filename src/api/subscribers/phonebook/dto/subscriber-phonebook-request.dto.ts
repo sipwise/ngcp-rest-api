@@ -1,5 +1,5 @@
-import {ApiProperty} from '@nestjs/swagger'
-import {IsBoolean, IsInt, IsNotEmpty, IsString, MaxLength} from 'class-validator'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength} from 'class-validator'
 
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
@@ -18,7 +18,8 @@ export class SubscriberPhonebookRequestDto implements RequestDto {
         number: string
 
     @IsInt()
-    @ApiProperty()
+    @IsOptional()
+    @ApiPropertyOptional()
         subscriber_id: number
 
     @IsBoolean()
@@ -38,7 +39,7 @@ export class SubscriberPhonebookRequestDto implements RequestDto {
     toInternal(options: RequestDtoOptions = {}): internal.SubscriberPhonebook {
         const entity = new internal.SubscriberPhonebook()
         entity.name = this.name
-        entity.subscriberId = this.subscriber_id
+        entity.subscriberId = this.subscriber_id ?? options.parentId
         entity.number = this.number
         entity.shared = this.shared
 
