@@ -1,4 +1,5 @@
 import {Inject, Injectable, NotFoundException, StreamableFile, UnprocessableEntityException} from '@nestjs/common'
+import * as asyncLib from 'async'
 import {I18nService} from 'nestjs-i18n'
 
 import {SubscriberPhonebookView} from './dto/subscriber-phonebook-query.dto'
@@ -29,20 +30,25 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
     }
 
     async create(entities: internal.SubscriberPhonebook[], sr: ServiceRequest): Promise<internal.SubscriberPhonebook[]> {
-        if (sr.user.role === RbacRole.subscriberadmin || sr.user.role === RbacRole.subscriber) {
-            if (entities.some(entity => entity.subscriberId != sr.user.subscriber_id)) {
-                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-                throw new UnprocessableEntityException(error.message)
-            }
-        }
+        const subscriberIds: {[id: number]: number} = {}
 
+        await asyncLib.forEach(entities, async entity => {
+            if (sr.user.role == 'subscriberadmin' || sr.user.role == 'subscriber') {
+                entity.subscriberId = entity.subscriberId ?? sr.user.id
+            }
+            subscriberIds[entity.subscriberId] = entity.subscriberId
+        })
+
+        const options = this.getSubscriberPhonebookOptionsFromServiceRequest(sr)
+        const allowedSusbscribersCount = await this.phonebookRepo.getAllowedSubscribersCount(
+            Object.values(subscriberIds), options['filterBy'], sr)
+
+        if (Object.values(subscriberIds).length != allowedSusbscribersCount) {
+            const error: ErrorMessage = this.i18n.t('errors.SUBSCRIBER_NOT_FOUND')
+            throw new UnprocessableEntityException(error.message)
+        }
         const createdIds = await this.phonebookRepo.create(entities, sr)
 
-        const options = {
-            filterBy: {
-                resellerId: undefined,
-            },
-        }
         return await this.phonebookRepo.readWhereInIds(createdIds, options, sr)
     }
 
@@ -123,18 +129,15 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
     getSubscriberPhonebookOptionsFromServiceRequest(sr: ServiceRequest): SubscriberPhonebookOptions {
         const options: SubscriberPhonebookOptions = {
             filterBy: {
-                subscriber_id: undefined,
+                subscriberId: undefined,
                 resellerId: undefined,
                 customerId: undefined,
             },
         }
         if (sr.params && sr.params['subscriberId']) {
-            options.filterBy.subscriber_id = +sr.params['subscriberId']
+            options.filterBy.subscriberId = +sr.params['subscriberId']
 
-            if (
-                (sr.user.role === RbacRole.subscriberadmin || sr.user.role === RbacRole.subscriber)
-                && sr.user.id != options.filterBy.subscriber_id
-            ) {
+            if (sr.user.role === RbacRole.subscriber && sr.user.id != options.filterBy.subscriberId) {
                 throw new NotFoundException()
             }
         }
@@ -143,8 +146,12 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
             options.filterBy.resellerId = sr.user.reseller_id
         }
 
-        if (sr.user.role === RbacRole.subscriberadmin || sr.user.role === RbacRole.subscriber) {
-            options.filterBy.subscriber_id = sr.user.id
+        if (sr.user.role === RbacRole.subscriber) {
+            options.filterBy.subscriberId = sr.user.id
+        }
+
+        if (sr.user.role === RbacRole.subscriberadmin) {
+            options.filterBy.customerId = sr.user.customer_id
         }
 
         if (sr.query && sr.query.include) {

@@ -252,8 +252,7 @@ export class AuthService {
     }
 
     subscriberAuthToResponse(subscriber: db.provisioning.VoipSubscriber): AuthResponseDto {
-        const role = subscriber.admin ? 'subscriberadmin'
-            : 'subscriber'
+        const role = subscriber.admin ? 'subscriberadmin' : 'subscriber'
         const response: AuthResponseDto = {
             active: true,
             id: subscriber.billing_voip_subscriber.id,

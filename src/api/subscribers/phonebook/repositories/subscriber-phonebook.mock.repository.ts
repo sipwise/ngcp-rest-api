@@ -127,4 +127,8 @@ export class SubscriberPhonebookMockRepository implements SubscriberPhonebookRep
         if (this.db[id] == undefined)
             throw new NotFoundException()
     }
+
+    getAllowedSubscribersCount(_ids: number[], _filterBy: SubscriberPhonebookOptions['filterBy'], _sr: ServiceRequest): Promise<number> {
+        return Promise.resolve(1)
+    }
 }
