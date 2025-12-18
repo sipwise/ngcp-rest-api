@@ -39,7 +39,7 @@ export class SubscriberPhonebookRequestDto implements RequestDto {
     toInternal(options: RequestDtoOptions = {}): internal.SubscriberPhonebook {
         const entity = new internal.SubscriberPhonebook()
         entity.name = this.name
-        entity.subscriberId = this.subscriber_id ?? options.parentId
+        entity.subscriberId = this.subscriber_id || options.parentId
         entity.number = this.number
         entity.shared = this.shared
 
