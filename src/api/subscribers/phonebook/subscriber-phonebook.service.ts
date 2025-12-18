@@ -34,7 +34,7 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
 
         await asyncLib.forEach(entities, async entity => {
             if (sr.user.role == 'subscriberadmin' || sr.user.role == 'subscriber') {
-                entity.subscriberId = entity.subscriberId ?? sr.user.id
+                entity.subscriberId = entity.subscriberId || sr.user.id
             }
             subscriberIds[entity.subscriberId] = entity.subscriberId
         })

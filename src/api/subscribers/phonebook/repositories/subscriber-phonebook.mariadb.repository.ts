@@ -298,7 +298,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
             if (filterBy.subscriberId) {
                 qb.andWhere('subscriber.id = :id', {id: filterBy.subscriberId})
             }
-            if (filterBy.subscriberId) {
+            if (filterBy.customerId) {
                 qb.andWhere('subscriber.contract_id = :contract_id', {contract_id: filterBy.customerId})
             }
         }
