@@ -1,3 +1,10 @@
+ngcp-rest-api (12.5.1.10+0~mr12.5.1.10) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [e7edceb] MT#63977 HM conditions do not reset values on PATCH
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 18 Dec 2025 16:58:19 +0100
+
 ngcp-rest-api (12.5.1.9+0~mr12.5.1.9) unstable; urgency=medium
 
   [ Bertold Vincze ]
