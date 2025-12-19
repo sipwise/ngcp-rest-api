@@ -1,49 +1,101 @@
-import {Injectable} from '@nestjs/common'
+import {Inject, Injectable} from '@nestjs/common'
+import * as asyncLib from 'async'
 
 import {AppService} from '~/app.service'
-import {HandleRedisErrors} from '~/decorators/handle-redis-errors.decorator'
-import {Request as TaskAgentRequest} from '~/entities/task-agent/request.task-agent.entity'
-import {Response as TaskAgentResponse} from '~/entities/task-agent/response.task-agent.entity'
+import {internal} from '~/entities'
+import {TaskAgentHelper} from '~/helpers/task-agent.helper'
 import {LoggerService} from '~/logger/logger.service'
 
-type MessageCallback = (response: TaskAgentResponse) => Promise<void>
+interface FilterBy {
+    username: string
+    domain: string
+}
 
 @Injectable()
 export class BanRegistrationRedisRepository {
     private readonly log = new LoggerService(BanRegistrationRedisRepository.name)
-    private subs: { [key: string]: MessageCallback } = {}
-    private onMessageInit = true
 
     constructor(
         private readonly app: AppService,
+        @Inject(TaskAgentHelper) private readonly taskAgentHelper: TaskAgentHelper,
     ) {
     }
 
-    @HandleRedisErrors
-    async publishToTaskAgent(publishChannel: string, request: TaskAgentRequest): Promise<void> {
-        request.data = JSON.stringify(request.data)
-        const message = JSON.stringify(request)
-        await this.app.redis.publish(publishChannel, message)
-    }
+    async readBannedRegistrations(id?: number, filter?: FilterBy): Promise<internal.BanRegistration[]> {
+        const {publishChannel, feedbackChannel, request} = this.taskAgentHelper.buildRequest({
+            feedbackChannel: 'ngcp-rest-api-ban-user-dump',
+            task: 'kam_lb_security_ban_dump',
+            dst: '*|state=active;role=proxy',
+            data: JSON.stringify({extra_args: 'auth'}),
+        })
+        const data = await this.taskAgentHelper.invokeTask<internal.BanRegistration>(
+            publishChannel,
+            feedbackChannel,
+            request,
+        )
 
-    @HandleRedisErrors
-    async subscribeToFeedback(feedbackChannel: string, callback: MessageCallback): Promise<void> {
-        await this.app.redisPubSub.subscribe(feedbackChannel)
-        if (this.onMessageInit) {
-            this.app.redisPubSub.on('message', async (channel: string, message: string): Promise<void> => {
-                if (channel in this.subs) {
-                    const response: TaskAgentResponse = JSON.parse(message)
-                    await this.subs[channel](response)
+        const lines = (data[0] as string).split('},{')
+
+        const bannedRegs: internal.BanRegistration[] = []
+
+        asyncLib.forEach(lines, async (line) => {
+            let entryId: number
+            let username: string
+            let domain: string
+
+            const entryMatch = line.match(/(entry):\s+(\d+)/)
+            if (entryMatch) {
+                entryId = +entryMatch.at(2)
+            }
+
+            if (id && entryId != id) {
+                return
+            }
+
+            const userDomMatch = line.match(/name:\s+([^\s@]+)@([^:]+)::auth_count/)
+            if (userDomMatch) {
+                username = userDomMatch.at(1)
+                domain = userDomMatch.at(2)
+            }
+
+            if (entryId && domain && username) {
+                if (filter?.username && username !== filter.username) {
+                    return
                 }
-            })
-            this.onMessageInit = false
-        }
-        this.subs[feedbackChannel] = callback
+
+                if (filter?.domain && domain !== filter.domain) {
+                    return
+                }
+
+                bannedRegs.push({
+                    id: entryId,
+                    username: username,
+                    domain: domain,
+                })
+            }
+        })
+
+        return bannedRegs
     }
 
-    @HandleRedisErrors
-    async unsubscriberFromFeedback(feedbackChannel: string): Promise<void> {
-        await this.app.redisPubSub.unsubscribe(feedbackChannel)
-        delete this.subs[feedbackChannel]
+    async deleteBannedRegistration(id: number): Promise<void> {
+        const bannedRegs = await this.readBannedRegistrations(id)
+
+        asyncLib.some(bannedRegs, async entry => {
+            if (entry.id != id) {
+                return false
+            }
+
+            const {publishChannel, feedbackChannel, request} = this.taskAgentHelper.buildRequest({
+                feedbackChannel: 'ngcp-rest-api-ban-regs-delete',
+                task: 'kam_lb_security_ban_delete',
+                dst: '*|state=active;role=proxy',
+                data: JSON.stringify({extra_args: `auth ${entry.username}@${entry.domain}::auth_count`}),
+            })
+
+            await this.taskAgentHelper.invokeTask(publishChannel, feedbackChannel, request)
+
+            return true
+        })
     }
 }

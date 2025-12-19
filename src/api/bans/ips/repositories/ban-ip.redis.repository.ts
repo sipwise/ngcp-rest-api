@@ -1,4 +1,5 @@
-import {Inject, Injectable, InternalServerErrorException} from '@nestjs/common'
+import {Inject, Injectable} from '@nestjs/common'
+import * as asyncLib from 'async'
 
 import {AppService} from '~/app.service'
 import {internal} from '~/entities'
@@ -23,38 +24,68 @@ export class BanIpRedisRepository {
             feedbackChannel: 'ngcp-rest-api-ban-ips-dump',
             task: 'kam_lb_security_ban_dump',
             dst: '*|state=active;role=proxy',
-            data: id ? JSON.stringify({extra_args: `ipban ${id}`}) : JSON.stringify({extra_args: 'ipban'}),
+            data: JSON.stringify({extra_args: 'ipban'}),
         })
-        const bannedIps = await this.taskAgentHelper.invokeTask<internal.BanIp>(
+        const data = await this.taskAgentHelper.invokeTask<internal.BanIp>(
             publishChannel,
             feedbackChannel,
-            request,
-            async (d, result) => {
-                for (const entry of Array.isArray(d) ? d : [d]) {
-                    if (entry.size > 1) {
-                        throw new InternalServerErrorException(`Unexpected entry size: ${entry.size}`)
-                    }
-                    if (filter?.ip && entry.slot.name !== filter.ip) {
-                        continue
-                    }
-                    result.push({
-                        id: entry.entry,
-                        ip: entry.slot.name,
-                    } as internal.BanIp)
+            request)
+
+        const lines = (data[0] as string).split('},{')
+
+        const bannedIps: internal.BanIp[] = []
+
+        asyncLib.forEach(lines, async (line) => {
+            let entryId: number
+            let ip: string
+
+            const entryMatch = line.match(/(entry):\s+(\d+)/)
+            if (entryMatch) {
+                entryId = +entryMatch.at(2)
+            }
+
+            if (id && entryId != id) {
+                return
+            }
+
+            const ipMatch = line.match(/name:\s+([^\s]+)/)
+            if (ipMatch) {
+                ip = ipMatch.at(1)
+            }
+
+            if (entryId && ip) {
+                if (filter?.ip && ip !== filter.ip) {
+                    return
                 }
-            },
-        ) as internal.BanIp[]
+
+                bannedIps.push({
+                    id: entryId,
+                    ip: ip,
+                })
+            }
+        })
+
         return bannedIps
     }
 
     async deleteBannedIp(id: number): Promise<void> {
-        const {publishChannel, feedbackChannel, request} = this.taskAgentHelper.buildRequest({
-            feedbackChannel: 'ngcp-rest-api-ban-ip-delete',
-            task: 'kam_lb_security_ban_delete',
-            dst: '*|state=active;role=proxy',
-            data: {extra_args: `ipban ${id}`},
-        })
+        const bannedIps = await this.readBannedIps(id)
 
-        await this.taskAgentHelper.invokeTask(publishChannel, feedbackChannel, request)
+        asyncLib.some(bannedIps, async (entry) => {
+            if (entry.id != id) {
+                return false
+            }
+
+            const {publishChannel, feedbackChannel, request} = this.taskAgentHelper.buildRequest({
+                feedbackChannel: 'ngcp-rest-api-ban-ip-delete',
+                task: 'kam_lb_security_ban_delete',
+                dst: '*|state=active;role=proxy',
+                data: JSON.stringify({extra_args: `ipban ${entry.ip}`}),
+            })
+
+            await this.taskAgentHelper.invokeTask(publishChannel, feedbackChannel, request)
+
+            return true
+        })
     }
 }
