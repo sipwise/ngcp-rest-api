@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 
 # Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+#export DH_VERBOSE = 1
 
 YARN_BIN := ".yarn/releases/yarn-1.22.22.js"
 
