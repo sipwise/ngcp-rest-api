@@ -13,7 +13,6 @@ import {RbacRole} from '~/config/constants.config'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
-import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
@@ -36,7 +35,6 @@ export class BanRegistrationController {
     }
 
     @Get('')
-    @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(BanRegistrationResponseDto)
     async readAll(
         @Req() req: Request): Promise<[BanRegistrationResponseDto[], number]> {

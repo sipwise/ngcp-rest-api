@@ -24,7 +24,7 @@ export class BanIpService {
         if (sr.query?.ip && typeof sr.query?.ip === 'string') {
             search.ip = sr.query.ip
         }
-        return await this.repository.readBannedIps(undefined, {ip: search.ip})
+        return await this.repository.readBannedIps(undefined, search)
     }
 
     async read(id: number, _sr: ServiceRequest): Promise<internal.BanIp> {
