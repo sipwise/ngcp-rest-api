@@ -34,14 +34,17 @@ export class BanRegistrationRedisRepository {
             request,
         )
 
-        const lines = (data[0] as string).split('},{')
+        const lines = (data[0] as string).split(/}\s*{/)
 
         const bannedRegs: internal.BanRegistration[] = []
 
+        let username: string
+        let domain: string
+        let authCount: number
+        let lastAuth: number
+
         asyncLib.forEach(lines, async (line) => {
             let entryId: number
-            let username: string
-            let domain: string
 
             const entryMatch = line.match(/(entry):\s+(\d+)/)
             if (entryMatch) {
@@ -52,25 +55,42 @@ export class BanRegistrationRedisRepository {
                 return
             }
 
-            const userDomMatch = line.match(/name:\s+([^\s@]+)@([^:]+)::auth_count/)
-            if (userDomMatch) {
-                username = userDomMatch.at(1)
-                domain = userDomMatch.at(2)
+            const userDomMatchCount = line.match(/name:\s+([^\s@]+)@([^:]+)::auth_count/)
+            if (userDomMatchCount) {
+                username = userDomMatchCount.at(1)
+                domain = userDomMatchCount.at(2)
+            }
+
+            const userDomMatchLast = line.match(/name:\s+([^\s@]+)@([^:]+)::last_auth/)
+
+            const valueMatch = line.match(/value:\s+([^\s]+)/)
+
+            if (valueMatch && userDomMatchCount) {
+                authCount = +valueMatch.at(1)
+            }
+
+            if (valueMatch && userDomMatchLast) {
+                lastAuth = +valueMatch.at(1)
             }
 
             if (entryId && domain && username) {
                 if (filter?.username && username !== filter.username) {
-                    return
+                    username = ''
                 }
 
                 if (filter?.domain && domain !== filter.domain) {
-                    return
+                    domain = ''
                 }
 
+            }
+
+            if (userDomMatchLast && username && domain) {
                 bannedRegs.push({
                     id: entryId,
                     username: username,
                     domain: domain,
+                    authCount: authCount,
+                    lastAuth: new Date(lastAuth * 1000),
                 })
             }
         })
