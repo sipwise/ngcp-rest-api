@@ -5,16 +5,17 @@ import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
 
 export class PeeringRuleRequestDto implements RequestDto {
+    @IsOptional()
     @IsInt()
     @IsPositive()
-    @ApiProperty()
+    @ApiPropertyOptional()
         group_id: number
 
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
     @MaxLength(64)
-    @ApiProperty()
-        callee_prefix: string
+    @ApiPropertyOptional()
+        callee_prefix?: string
 
     @IsOptional()
     @IsString()
@@ -28,10 +29,11 @@ export class PeeringRuleRequestDto implements RequestDto {
     @ApiPropertyOptional()
         caller_pattern?: string
 
+    @IsNotEmpty()
     @IsString()
     @MaxLength(255)
     @ApiProperty()
-        description?: string
+        description: string
 
     @IsBoolean()
     @ApiProperty()
@@ -55,7 +57,7 @@ export class PeeringRuleRequestDto implements RequestDto {
 
     toInternal(options: RequestDtoOptions = {}): internal.VoipPeeringRule {
         const entity = new internal.VoipPeeringRule()
-        entity.groupId = this.group_id
+        entity.groupId = this.group_id || options.parentId
         entity.calleePrefix = this.callee_prefix
         entity.calleePattern = this.callee_pattern
         entity.callerPattern = this.caller_pattern
