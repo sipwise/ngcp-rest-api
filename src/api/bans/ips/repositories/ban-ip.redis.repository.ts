@@ -31,7 +31,7 @@ export class BanIpRedisRepository {
             feedbackChannel,
             request)
 
-        const lines = (data[0] as string).split('},{')
+        const lines = (data[0] as string).split(/}\s*{/)
 
         const bannedIps: internal.BanIp[] = []
 
