@@ -67,7 +67,8 @@ export class PeeringRuleController extends CrudController<PeeringRuleRequestDto,
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const rules = await Promise.all(createDto.map(async set => set.toInternal()))
+        const reqDtoOptions = {parentId: +sr.params['groupId']}
+        const rules = await Promise.all(createDto.map(async rule => rule.toInternal(reqDtoOptions)))
         const created = await this.ruleService.create(rules, sr)
         return await Promise.all(created.map(async server => new PeeringRuleResponseDto(
             server,
