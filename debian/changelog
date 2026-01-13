@@ -1,3 +1,17 @@
+ngcp-rest-api (13.5.1.11+0~mr13.5.1.11) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [4445c7e] MT#63993 rework POST /api/subscribers/phonebook
+  * [d00d414] MT#63993 fix getAllowedSubscribersCount() filterBy.subscriberId
+  * [1f3d74d] MT#63959 rework /api/bans/ips /api/bans/registrations
+  * [d5201f1] MT#63959 adjust /api/bans/registrations /api/bans/ips
+  * [c3387f1] MT#64182 peering group rules fixups
+
+  [ Guillem Jover ]
+  * [2972029] MT#62899 Update packaging for Debian trixie
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 13 Jan 2026 16:42:18 +0100
+
 ngcp-rest-api (13.5.1.10+0~mr13.5.1.10) unstable; urgency=medium
 
   * New release.
