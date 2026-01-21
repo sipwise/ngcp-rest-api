@@ -130,6 +130,15 @@ export class VoipPeeringServer extends BaseEntity {
         this.transport = entity.transport
         this.weight = entity.weight
         this.via_route = entity.viaRoute
+        if (entity.viaRoute) {
+            if (entity.viaRoute.match(/^sip:[\d.]+:\d+$/)) {
+                this.via_route = `<${entity.viaRoute};lr>`
+            } else if (entity.viaRoute.match(/^<sip:[\d.]+:\d+>$/)) {
+                this.via_route = entity.viaRoute.replace(/>$/, '') + ';lr>'
+            } else if (entity.viaRoute.match(/^<sip:[\d.]+:\d+;lr>$/)) {
+                this.via_route = entity.viaRoute
+            }
+        }
         this.via_lb = entity.viaLB
         this.enabled = entity.enabled
         this.probe = entity.probe
