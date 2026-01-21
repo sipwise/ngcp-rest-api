@@ -2,6 +2,7 @@ import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, MaxLength} from 'class-validator'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
+import {IsValidViaRouteString} from '~/decorators/is-valid-via-route-string'
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
 
@@ -50,6 +51,7 @@ export class PeeringGroupServerRequestDto implements RequestDto {
     @IsOptional()
     @IsString()
     @MaxLength(255)
+    @IsValidViaRouteString()
     @ApiPropertyOptional()
         via_route?: string | null
 
