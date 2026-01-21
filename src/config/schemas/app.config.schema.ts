@@ -9,6 +9,7 @@ import {GeneralConfig} from './general.config.schema'
 import {LegacyConfig} from './legacy.config.schema'
 import {RedisConfig} from './redis.config.schema'
 import {SecurityConfig} from './security.config.schema'
+import {SipConfig} from './sip.config.schema'
 import {SSLConfig} from './ssl.config.schema'
 
 export class AppConfig {
@@ -47,6 +48,10 @@ export class AppConfig {
     @ValidateNested()
     @Type(() => SecurityConfig)
         security: SecurityConfig
+
+    @ValidateNested()
+    @Type(() => SipConfig)
+        sip: SipConfig
 
     @IsNumber()
     @IsOptional()
