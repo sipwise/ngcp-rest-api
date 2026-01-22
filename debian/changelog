@@ -1,3 +1,10 @@
+ngcp-rest-api (13.5.1.12+0~mr13.5.1.12) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [de3fce3] MT#64296 peerings/groups/servers add via_route validation
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 22 Jan 2026 13:01:11 +0100
+
 ngcp-rest-api (13.5.1.11+0~mr13.5.1.11) unstable; urgency=medium
 
   [ Kirill Solomko ]
