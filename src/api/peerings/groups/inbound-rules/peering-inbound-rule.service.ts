@@ -26,6 +26,9 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
 
     async create(entities: internal.VoipPeeringInboundRule[], sr: ServiceRequest): Promise<internal.VoipPeeringInboundRule[]> {
         const created = await this.ruleRepo.create(entities)
+        await Promise.all(entities.map(async entity => {
+            this.ruleRepo.increaseGroupInboundRulesCount(entity.groupId)
+        }))
         await this.reloadKamProxyLcrAfterCommit(sr)
         if (this.requiresDispatcherReload(entities)) {
             await this.reloadKamProxyDispatcherAfterCommit(sr)
@@ -45,13 +48,13 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
 
     async update(updates: Dictionary<internal.VoipPeeringInboundRule>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
-        const servers = await this.ruleRepo.readWhereInIds(ids, sr)
+        const rules = await this.ruleRepo.readWhereInIds(ids, sr)
 
-        if (servers.length == 0) {
+        if (rules.length == 0) {
             throw new NotFoundException()
         }
 
-        if (ids.length != servers.length) {
+        if (ids.length != rules.length) {
             const error: ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
             const message = GenerateErrorMessageArray(ids, error.message)
             throw new UnprocessableEntityException(message)
@@ -60,7 +63,7 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
         // Always reload LCR
         await this.reloadKamProxyLcrAfterCommit(sr)
 
-        if (this.requiresDispatcherReloadOnUpdate(servers, updates)) {
+        if (this.requiresDispatcherReloadOnUpdate(rules, updates)) {
             await this.reloadKamProxyDispatcherAfterCommit(sr)
         }
 
@@ -68,19 +71,22 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
-        const servers = await this.ruleRepo.readWhereInIds(ids, sr)
-        if (servers.length == 0) {
+        const rules = await this.ruleRepo.readWhereInIds(ids, sr)
+        if (rules.length == 0) {
             throw new NotFoundException()
-        } else if (ids.length != servers.length) {
+        } else if (ids.length != rules.length) {
             const error: ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
             const message = GenerateErrorMessageArray(ids, error.message)
             throw new UnprocessableEntityException(message)
         }
 
         await this.reloadKamProxyLcrAfterCommit(sr)
-        if (this.requiresDispatcherReload(servers)) {
+        if (this.requiresDispatcherReload(rules)) {
             await this.reloadKamProxyDispatcherAfterCommit(sr)
         }
+        await Promise.all(rules.map(async rule => {
+            this.ruleRepo.decreaseGroupInboundRulesCount(rule.groupId)
+        }))
         return await this.ruleRepo.delete(ids, sr)
     }
 

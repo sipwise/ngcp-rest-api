@@ -31,6 +31,10 @@ export class PeeringGroupResponseDto extends ResponseDto {
     @ApiProperty()
         priority: number
 
+    @IsInt()
+    @ApiProperty()
+        has_inbound_rules: number
+
     @CanBeNull()
     @IsInt()
     @ApiProperty()
@@ -43,6 +47,7 @@ export class PeeringGroupResponseDto extends ResponseDto {
         this.name = entity.name
         this.description = entity.description
         this.priority = entity.priority
+        this.has_inbound_rules = entity.hasInboundRules
         this.time_set_id = entity.timeSetId
     }
 }
