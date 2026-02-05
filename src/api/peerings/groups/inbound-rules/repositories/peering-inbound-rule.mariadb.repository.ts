@@ -109,4 +109,26 @@ export class PeeringInboundRuleMariadbRepository extends MariaDbRepository imple
             }
         }
     }
+
+    async increaseGroupInboundRulesCount(groupId: number): Promise<void> {
+        const group = await db.provisioning.VoipPeeringGroup.findOneOrFail({
+            where: {
+                id: groupId,
+            },
+        })
+        group.has_inbound_rules += 1
+        await db.provisioning.VoipPeeringGroup.update(groupId, group)
+    }
+
+    async decreaseGroupInboundRulesCount(groupId: number): Promise<void> {
+        const group = await db.provisioning.VoipPeeringGroup.findOneOrFail({
+            where: {
+                id: groupId,
+            },
+        })
+        group.has_inbound_rules -= 1
+        if (group.has_inbound_rules < 0)
+            group.has_inbound_rules = 0
+        await db.provisioning.VoipPeeringGroup.update(groupId, group)
+    }
 }
