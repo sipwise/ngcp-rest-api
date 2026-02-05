@@ -4,5 +4,6 @@ export class VoipPeeringGroup {
     description?: string | null
     priority: number
     peeringContractId?: number | null
+    hasInboundRules: number
     timeSetId?: number | null
 }

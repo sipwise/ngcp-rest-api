@@ -48,6 +48,14 @@ export class VoipPeeringGroup extends BaseEntity {
         peering_contract_id?: number
 
     @Column({
+        type: 'tinyint',
+        width: 1,
+        unsigned: true,
+        nullable: false,
+    })
+        has_inbound_rules: number
+
+    @Column({
         type: 'int',
         width: 11,
         unsigned: true,
@@ -76,6 +84,7 @@ export class VoipPeeringGroup extends BaseEntity {
         entity.description = this.description
         entity.priority = this.priority
         entity.peeringContractId = this.peering_contract_id
+        entity.hasInboundRules = this.has_inbound_rules
         entity.timeSetId = this.time_set_id
         return entity
     }
@@ -86,6 +95,7 @@ export class VoipPeeringGroup extends BaseEntity {
         this.description = entity.description
         this.priority = entity.priority
         this.peering_contract_id = entity.peeringContractId
+        this.has_inbound_rules = entity.hasInboundRules
         this.time_set_id = entity.timeSetId
         return this
     }

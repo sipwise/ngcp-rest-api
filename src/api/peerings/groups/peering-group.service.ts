@@ -5,8 +5,8 @@ import {I18nService} from 'nestjs-i18n'
 import {In} from 'typeorm'
 import {runOnTransactionCommit} from 'typeorm-transactional'
 
-import {PeeringGroupMariadbRepository} from './repositories/peering-group.mariadb.repository'
-import {PeeringGroupRedisRepository} from './repositories/peering-group.redis.repository'
+import {PeeringGroupMariadbRepository} from './repositories/peering-inbound-rule.mariadb.repository'
+import {PeeringGroupRedisRepository} from './repositories/peering-inbound-rule.redis.repository'
 
 import {db, internal} from '~/entities'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
