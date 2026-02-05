@@ -1,7 +1,7 @@
 import {Injectable} from '@nestjs/common'
 
 import {PeeringGroupSearchDto} from '~/api/peerings/groups/dto/peering-group-search.dto'
-import {PeeringGroupRepository} from '~/api/peerings/groups/interfaces/peering-group.repository'
+import {PeeringGroupRepository} from '~/api/peerings/groups/interfaces/peering-inbound-rule.repository'
 import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
