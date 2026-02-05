@@ -1,3 +1,21 @@
+ngcp-rest-api (14.1.1.0+0~mr14.1.1.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [27646a5] MT#63977 HM conditions do not reset values on PATCH
+  * [6e820d7] MT#64000 add header manipulations rules invalidation
+  * [dea02d7] MT#63993 rework POST /api/subscribers/phonebook
+  * [4de8b12] MT#63993 fix getAllowedSubscribersCount() filterBy.subscriberId
+  * [fff4063] MT#63959 rework /api/bans/ips /api/bans/registrations
+  * [aaa97d4] MT#63959 adjust /api/bans/registrations /api/bans/ips
+  * [4cc851e] MT#64182 peering group rules fixups
+  * [57d6d86] MT#64296 peerings/groups/servers add via_route validation
+
+  [ Guillem Jover ]
+  * [9b5e08f] MT#63479 Remove prosody support
+  * [a1ae33d] MT#62899 Update packaging for Debian trixie
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 05 Feb 2026 10:23:45 +0100
+
 ngcp-rest-api (14.1.0.0+0~mr14.1.0.0) unstable; urgency=medium
 
   [ Bertold Vincze ]
