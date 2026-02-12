@@ -42,6 +42,9 @@ export class PeeringGroupServerResponseDto extends ResponseDto {
     @ApiProperty()
         probe: boolean
 
+    @ApiProperty()
+        site_id?: number | null
+
     constructor(entity: internal.VoipPeeringServer, options?: ResponseDtoOptions) {
         super(options)
         this.id = entity.id
@@ -56,5 +59,6 @@ export class PeeringGroupServerResponseDto extends ResponseDto {
         this.via_lb = entity.viaLB
         this.enabled = entity.enabled
         this.probe = entity.probe
+        this.site_id = entity.siteId
     }
 }

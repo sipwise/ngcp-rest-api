@@ -67,6 +67,12 @@ export class PeeringGroupServerRequestDto implements RequestDto {
     @ApiProperty()
         probe: boolean
 
+    @IsInt()
+    @IsPositive()
+    @IsOptional()
+    @ApiProperty()
+        site_id: number
+
     constructor(entity?: internal.VoipPeeringServer) {
         if (!entity)
             return
@@ -81,6 +87,7 @@ export class PeeringGroupServerRequestDto implements RequestDto {
         this.via_lb = entity.viaLB
         this.enabled = entity.enabled
         this.probe = entity.probe
+        this.site_id = entity.siteId
     }
 
     toInternal(options: RequestDtoOptions = {}): internal.VoipPeeringServer {
@@ -96,6 +103,7 @@ export class PeeringGroupServerRequestDto implements RequestDto {
         entity.viaLB = this.via_lb
         entity.enabled = this.enabled
         entity.probe = this.probe
+        entity.siteId = this.site_id
         if (options.id)
             entity.id = options.id
 

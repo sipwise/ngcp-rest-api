@@ -11,4 +11,5 @@ export class VoipPeeringServer {
     viaLB?: boolean
     enabled: boolean
     probe: boolean
+    siteId?: number | null
 }

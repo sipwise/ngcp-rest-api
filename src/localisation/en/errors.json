@@ -242,5 +242,9 @@
   "INVALID_BILLING_PROFILE_DEFINITION": {
     "message": "Invalid billingProfileDefinition.",
     "code": 10061
+  },
+    "INVALID_SITE_ID": {
+    "message": "Invalid site_id value or multi site is not enabled.",
+    "code": 10062
   }
 }

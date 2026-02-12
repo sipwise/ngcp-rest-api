@@ -99,6 +99,15 @@ export class VoipPeeringServer extends BaseEntity {
     })
         probe!: boolean
 
+    @Column({
+        type: 'tinyint',
+        width: 2,
+        unsigned: true,
+        nullable: true,
+        default: null,
+    })
+        site_id?: number
+
     @ManyToOne(() => VoipPeeringGroup, group => group.servers)
     @JoinColumn({name: 'group_id'})
         group?: VoipPeeringGroup
@@ -117,6 +126,7 @@ export class VoipPeeringServer extends BaseEntity {
         entity.viaLB = this.via_lb
         entity.enabled = this.enabled
         entity.probe = this.probe
+        entity.siteId = this.site_id
         return entity
     }
 
@@ -130,6 +140,8 @@ export class VoipPeeringServer extends BaseEntity {
         this.transport = entity.transport
         this.weight = entity.weight
         this.via_route = entity.viaRoute
+        this.site_id = entity.siteId
+
         if (entity.viaRoute) {
             if (entity.viaRoute.match(/^sip:[\d.]+:\d+$/)) {
                 this.via_route = `<${entity.viaRoute};lr>`
@@ -139,6 +151,7 @@ export class VoipPeeringServer extends BaseEntity {
                 this.via_route = entity.viaRoute
             }
         }
+
         this.via_lb = entity.viaLB
         this.enabled = entity.enabled
         this.probe = entity.probe

@@ -7,6 +7,7 @@ import {DatabaseConfig} from './database.config.schema'
 import {FileShareConfig} from './fileshare.config.schema'
 import {GeneralConfig} from './general.config.schema'
 import {LegacyConfig} from './legacy.config.schema'
+import {MultiSiteConfig} from './multisite.config.schema'
 import {RedisConfig} from './redis.config.schema'
 import {SecurityConfig} from './security.config.schema'
 import {SipConfig} from './sip.config.schema'
@@ -52,6 +53,10 @@ export class AppConfig {
     @ValidateNested()
     @Type(() => SipConfig)
         sip: SipConfig
+
+    @ValidateNested()
+    @Type(() => MultiSiteConfig)
+        multisite: MultiSiteConfig
 
     @IsNumber()
     @IsOptional()
