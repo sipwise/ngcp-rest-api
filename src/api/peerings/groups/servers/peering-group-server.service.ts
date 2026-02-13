@@ -29,16 +29,17 @@ export class PeeringGroupServerService implements CrudService<internal.VoipPeeri
     }
 
     async create(entities: internal.VoipPeeringServer[], sr: ServiceRequest): Promise<internal.VoipPeeringServer[]> {
-        const invalidEntries = await Promise.all(entities.map(async (entity) => {
+        const invalidIds: number[] = []
+        await Promise.all(entities.map(async (entity) => {
             if (!entity.siteId)
                 return
             if (!this.validateSiteId(entity.siteId))
-                return entity.id
+                invalidIds.push(entity.siteId)
         }))
 
-        if (invalidEntries.length) {
+        if (invalidIds.length) {
             const error: ErrorMessage = this.i18n.t('errors.INVALID_SITE_ID')
-            const message = GenerateErrorMessageArray(invalidEntries, error.message)
+            const message = GenerateErrorMessageArray(invalidIds, error.message)
             throw new UnprocessableEntityException(message)
         }
 
