@@ -5,7 +5,9 @@ import {I18nService} from 'nestjs-i18n'
 import {BanIpRedisRepository} from './repositories/ban-ip.redis.repository'
 
 import {BanIpSearchDto} from '~/api/bans/ips/dto/ban-ips-search'
+import {AppService} from '~/app.service'
 import {internal} from '~/entities'
+import {paginate} from '~/helpers/paginate.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -24,7 +26,13 @@ export class BanIpService {
         if (sr.query?.ip && typeof sr.query?.ip === 'string') {
             search.ip = sr.query.ip
         }
-        return await this.repository.readBannedIps(undefined, search)
+
+        const result = await this.repository.readBannedIps(undefined, search)
+
+        const page: string = (sr.req.query?.page as string) ?? `${AppService.config.common.api_default_query_page}`
+        const rows: string = (sr.req.query?.rows as string) ?? `${AppService.config.common.api_default_query_rows}`
+
+        return paginate<internal.BanIp>(result, +rows, +page)
     }
 
     async read(id: number, _sr: ServiceRequest): Promise<internal.BanIp> {

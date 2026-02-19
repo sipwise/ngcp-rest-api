@@ -6,6 +6,7 @@ import {BanRegistrationRedisRepository} from './repositories/ban-registration.re
 import {BanRegistrationSearchDto} from '~/api/bans/registrations/dto/ban-registration-search'
 import {AppService} from '~/app.service'
 import {internal} from '~/entities'
+import {paginate} from '~/helpers/paginate.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -29,7 +30,12 @@ export class BanRegistrationService {
             search.domain = sr.query.domain
         }
 
-        return await this.repository.readBannedRegistrations(undefined, search)
+        const result = await this.repository.readBannedRegistrations(undefined, search)
+
+        const page: string = (sr.req.query?.page as string) ?? `${AppService.config.common.api_default_query_page}`
+        const rows: string = (sr.req.query?.rows as string) ?? `${AppService.config.common.api_default_query_rows}`
+
+        return paginate<internal.BanRegistration>(result, +rows, +page)
     }
 
     async read(id: number, _sr: ServiceRequest): Promise<internal.BanRegistration> {
