@@ -47,9 +47,9 @@ export class BanIpController {
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const entities = await this.banService.readAll(sr)
+        const [entities, total] = await this.banService.readAll(sr)
         const responseList = entities.map(e => new BanIpResponseDto(e))
-        return [responseList, entities.length]
+        return [responseList, total]
     }
 
     @Get(':id')

@@ -21,7 +21,7 @@ export class BanRegistrationService {
     ) {
     }
 
-    async readAll(sr: ServiceRequest): Promise<internal.BanRegistration[]> {
+    async readAll(sr: ServiceRequest): Promise<[internal.BanRegistration[], number]> {
         const search = new BanRegistrationSearchDto()
         if (sr.query?.username && typeof sr.query?.username === 'string') {
             search.username = sr.query.username
@@ -35,7 +35,7 @@ export class BanRegistrationService {
         const page: string = (sr.req.query?.page as string) ?? `${AppService.config.common.api_default_query_page}`
         const rows: string = (sr.req.query?.rows as string) ?? `${AppService.config.common.api_default_query_rows}`
 
-        return paginate<internal.BanRegistration>(result, +rows, +page)
+        return [paginate<internal.BanRegistration>(result, +rows, +page), result.length]
     }
 
     async read(id: number, _sr: ServiceRequest): Promise<internal.BanRegistration> {
