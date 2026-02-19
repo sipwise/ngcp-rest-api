@@ -36,15 +36,15 @@ export class BanRegistrationRedisRepository {
 
         const lines = (data[0] as string).split(/}\s*{/)
 
-        const bannedRegs: internal.BanRegistration[] = []
+        const entries: {[key: string]: internal.BanRegistration} = {}
 
-        let username: string
-        let domain: string
-        let authCount: number
-        let lastAuth: number
-
-        asyncLib.forEach(lines, async (line) => {
+        await asyncLib.forEach(lines, async (line) => {
             let entryId: number
+            let encodedKey: string
+            let username: string
+            let domain: string
+            let authCount: number
+            let lastAuth: number
 
             const entryMatch = line.match(/(entry):\s+(\d+)/)
             if (entryMatch) {
@@ -59,43 +59,64 @@ export class BanRegistrationRedisRepository {
             if (userDomMatchCount) {
                 username = userDomMatchCount.at(1)
                 domain = userDomMatchCount.at(2)
+                encodedKey = btoa(`${username}@${domain}`)
+                if (!entries[encodedKey]) {
+                    entries[encodedKey] = {
+                        id: entryId,
+                        username: username,
+                        domain: domain,
+                        authCount: 0,
+                        lastAuth: new Date(0),
+                    }
+                }
             }
 
             const userDomMatchLast = line.match(/name:\s+([^\s@]+)@([^:]+)::last_auth/)
-
-            const valueMatch = line.match(/value:\s+([^\s]+)/)
-
-            if (valueMatch && userDomMatchCount) {
-                authCount = +valueMatch.at(1)
-            }
-
-            if (valueMatch && userDomMatchLast) {
-                lastAuth = +valueMatch.at(1)
+            if (userDomMatchLast) {
+                username = userDomMatchLast.at(1)
+                domain = userDomMatchLast.at(2)
+                encodedKey = btoa(`${username}@${domain}`)
+                if (!entries[encodedKey]) {
+                    entries[encodedKey] = {
+                        id: entryId,
+                        username: username,
+                        domain: domain,
+                        authCount: 0,
+                        lastAuth: new Date(0),
+                    }
+                }
             }
 
             if (entryId && domain && username) {
                 if (filter?.username && username !== filter.username) {
-                    username = ''
+                    return
                 }
 
                 if (filter?.domain && domain !== filter.domain) {
-                    domain = ''
+                    return
                 }
 
             }
 
-            if (userDomMatchLast && username && domain) {
-                bannedRegs.push({
-                    id: entryId,
-                    username: username,
-                    domain: domain,
-                    authCount: authCount,
-                    lastAuth: new Date(lastAuth * 1000),
-                })
+            const valueMatch = line.match(/value:\s+([^\s]+)/)
+            if (encodedKey && valueMatch && userDomMatchCount) {
+                authCount = +valueMatch.at(1)
+                entries[encodedKey].authCount = authCount
+            }
+            if (encodedKey && valueMatch && userDomMatchLast) {
+                lastAuth = +valueMatch.at(1)
+                entries[encodedKey].lastAuth = new Date(lastAuth * 1000)
             }
         })
 
-        return bannedRegs
+        const parsedEntries: internal.BanRegistration[] = []
+
+        await Promise.all(Object.values(entries).map(async (entry) => {
+            if (entry.username && entry.domain && entry.authCount && entry.lastAuth)
+                parsedEntries.push(entry)
+        }))
+
+        return parsedEntries.sort((a, b) => (a.id < b.id ? -1 : 1))
     }
 
     async deleteBannedRegistration(id: number): Promise<void> {
