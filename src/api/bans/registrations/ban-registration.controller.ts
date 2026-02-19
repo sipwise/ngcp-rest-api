@@ -45,9 +45,9 @@ export class BanRegistrationController {
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const entities = await this.banService.readAll(sr)
+        const [entities, total] = await this.banService.readAll(sr)
         const responseList = entities.map(e => new BanRegistrationResponseDto(e))
-        return [responseList, entities.length]
+        return [responseList, total]
     }
 
     @Get(':id')
