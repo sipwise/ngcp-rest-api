@@ -21,7 +21,7 @@ export class BanIpService {
     ) {
     }
 
-    async readAll(sr: ServiceRequest): Promise<internal.BanIp[]> {
+    async readAll(sr: ServiceRequest): Promise<[internal.BanIp[], number]> {
         const search = new BanIpSearchDto()
         if (sr.query?.ip && typeof sr.query?.ip === 'string') {
             search.ip = sr.query.ip
@@ -32,7 +32,7 @@ export class BanIpService {
         const page: string = (sr.req.query?.page as string) ?? `${AppService.config.common.api_default_query_page}`
         const rows: string = (sr.req.query?.rows as string) ?? `${AppService.config.common.api_default_query_rows}`
 
-        return paginate<internal.BanIp>(result, +rows, +page)
+        return [paginate<internal.BanIp>(result, +rows, +page), result.length]
     }
 
     async read(id: number, _sr: ServiceRequest): Promise<internal.BanIp> {
