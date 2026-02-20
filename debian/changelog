@@ -1,3 +1,13 @@
+ngcp-rest-api (14.1.1.2+0~mr14.1.1.2) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [99eeff7] MT#64429 add bans pagination support
+  * [09e47c4] MT#64429 bans/ips, bans/registrations return correct total count
+  * [8247f45] MT#64429 bans/registrations improve entries handling
+  * [b93a9e1] MT#64429 bans/registrations improve filter by id
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 20 Feb 2026 17:09:04 +0100
+
 ngcp-rest-api (14.1.1.1+0~mr14.1.1.1) unstable; urgency=medium
 
   * New release.
