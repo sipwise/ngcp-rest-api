@@ -38,6 +38,8 @@ export class BanRegistrationRedisRepository {
 
         const entries: {[key: string]: internal.BanRegistration} = {}
 
+        let filterByKey: string
+
         await asyncLib.forEach(lines, async (line) => {
             let entryId: number
             let encodedKey: string
@@ -47,19 +49,21 @@ export class BanRegistrationRedisRepository {
             let lastAuth: number
 
             const entryMatch = line.match(/(entry):\s+(\d+)/)
-            if (entryMatch) {
-                entryId = +entryMatch.at(2)
-            }
-
-            if (id && entryId != id) {
-                return
-            }
 
             const userDomMatchCount = line.match(/name:\s+([^\s@]+)@([^:]+)::auth_count/)
             if (userDomMatchCount) {
+                if (entryMatch) {
+                    entryId = +entryMatch.at(2)
+                }
+
                 username = userDomMatchCount.at(1)
                 domain = userDomMatchCount.at(2)
                 encodedKey = btoa(`${username}@${domain}`)
+
+                if (id && entryId == id) {
+                    filterByKey = encodedKey
+                }
+
                 if (!entries[encodedKey]) {
                     entries[encodedKey] = {
                         id: entryId,
@@ -68,6 +72,8 @@ export class BanRegistrationRedisRepository {
                         authCount: 0,
                         lastAuth: new Date(0),
                     }
+                } else {
+                    entries[encodedKey].id = entryId
                 }
             }
 
@@ -76,15 +82,20 @@ export class BanRegistrationRedisRepository {
                 username = userDomMatchLast.at(1)
                 domain = userDomMatchLast.at(2)
                 encodedKey = btoa(`${username}@${domain}`)
+
                 if (!entries[encodedKey]) {
                     entries[encodedKey] = {
-                        id: entryId,
+                        id: 0,
                         username: username,
                         domain: domain,
                         authCount: 0,
                         lastAuth: new Date(0),
                     }
                 }
+            }
+
+            if (id && filterByKey != encodedKey) {
+                return
             }
 
             if (entryId && domain && username) {
