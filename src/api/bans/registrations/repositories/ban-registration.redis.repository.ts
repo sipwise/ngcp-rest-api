@@ -127,7 +127,7 @@ export class BanRegistrationRedisRepository {
                 parsedEntries.push(entry)
         }))
 
-        return parsedEntries.sort((a, b) => (a.id < b.id ? -1 : 1))
+        return parsedEntries
     }
 
     async deleteBannedRegistration(id: number): Promise<void> {

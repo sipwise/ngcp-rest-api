@@ -4,9 +4,8 @@ import {I18nService} from 'nestjs-i18n'
 import {BanRegistrationRedisRepository} from './repositories/ban-registration.redis.repository'
 
 import {BanRegistrationSearchDto} from '~/api/bans/registrations/dto/ban-registration-search'
-import {AppService} from '~/app.service'
 import {internal} from '~/entities'
-import {paginate} from '~/helpers/paginate.helper'
+import {sortAndPaginate} from '~/helpers/sort-and-paginate'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -17,7 +16,6 @@ export class BanRegistrationService {
     constructor(
         @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(BanRegistrationRedisRepository) private readonly repository: BanRegistrationRedisRepository,
-        @Inject(AppService) private readonly app: AppService,
     ) {
     }
 
@@ -32,10 +30,8 @@ export class BanRegistrationService {
 
         const result = await this.repository.readBannedRegistrations(undefined, search)
 
-        const page: string = (sr.req.query?.page as string) ?? `${AppService.config.common.api_default_query_page}`
-        const rows: string = (sr.req.query?.rows as string) ?? `${AppService.config.common.api_default_query_rows}`
+        return [sortAndPaginate<internal.BanRegistration>(result, sr, 'id'), result.length]
 
-        return [paginate<internal.BanRegistration>(result, +rows, +page), result.length]
     }
 
     async read(id: number, _sr: ServiceRequest): Promise<internal.BanRegistration> {
