@@ -1,3 +1,10 @@
+ngcp-rest-api (13.5.1.16+0~mr13.5.1.16) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [a8dc39e] MT#64429 bans/ips, bans/registrations add sortAndPaginate
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 24 Feb 2026 16:37:25 +0100
+
 ngcp-rest-api (13.5.1.15+0~mr13.5.1.15) unstable; urgency=medium
 
   [ Kirill Solomko ]
