@@ -6,7 +6,6 @@ import {BanIpRedisRepository} from './repositories/ban-ip.redis.repository'
 
 import {BanIpSearchDto} from '~/api/bans/ips/dto/ban-ips-search'
 import {internal} from '~/entities'
-import {sortAndPaginate} from '~/helpers/sort-and-paginate'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -20,15 +19,13 @@ export class BanIpService {
     ) {
     }
 
-    async readAll(sr: ServiceRequest): Promise<[internal.BanIp[], number]> {
+    async readAll(sr: ServiceRequest): Promise<internal.BanIp[]> {
         const search = new BanIpSearchDto()
         if (sr.query?.ip && typeof sr.query?.ip === 'string') {
             search.ip = sr.query.ip
         }
 
-        const result = await this.repository.readBannedIps(undefined, search)
-
-        return [sortAndPaginate<internal.BanIp>(result, sr, 'id'), result.length]
+        return await this.repository.readBannedIps(undefined, search)
     }
 
     async read(id: number, _sr: ServiceRequest): Promise<internal.BanIp> {

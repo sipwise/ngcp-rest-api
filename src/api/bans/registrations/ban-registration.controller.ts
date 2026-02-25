@@ -13,6 +13,7 @@ import {RbacRole} from '~/config/constants.config'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
+import {sortAndPaginate} from '~/helpers/sort-and-paginate'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
@@ -45,9 +46,10 @@ export class BanRegistrationController {
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const [entities, total] = await this.banService.readAll(sr)
+        const entities = await this.banService.readAll(sr)
         const responseList = entities.map(e => new BanRegistrationResponseDto(e))
-        return [responseList, total]
+        const sortedResponseList = sortAndPaginate<BanRegistrationResponseDto>(responseList, sr, 'id')
+        return [sortedResponseList, responseList.length]
     }
 
     @Get(':id')

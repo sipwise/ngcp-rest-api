@@ -14,6 +14,7 @@ import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorato
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {sortAndPaginate} from '~/helpers/sort-and-paginate'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
@@ -47,9 +48,10 @@ export class BanIpController {
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const [entities, total] = await this.banService.readAll(sr)
+        const entities = await this.banService.readAll(sr)
         const responseList = entities.map(e => new BanIpResponseDto(e))
-        return [responseList, total]
+        const sortedResponseList = sortAndPaginate<BanIpResponseDto>(responseList, sr, 'id')
+        return [sortedResponseList, responseList.length]
     }
 
     @Get(':id')
