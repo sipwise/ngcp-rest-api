@@ -1,3 +1,10 @@
+ngcp-rest-api (13.5.1.17+0~mr13.5.1.17) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [d08fe26] MT#64429 bans/registrations add sort by last_auth and auth_count
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 25 Feb 2026 18:24:01 +0100
+
 ngcp-rest-api (13.5.1.16+0~mr13.5.1.16) unstable; urgency=medium
 
   [ Kirill Solomko ]
