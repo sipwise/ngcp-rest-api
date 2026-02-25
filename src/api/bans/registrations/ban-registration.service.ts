@@ -5,7 +5,6 @@ import {BanRegistrationRedisRepository} from './repositories/ban-registration.re
 
 import {BanRegistrationSearchDto} from '~/api/bans/registrations/dto/ban-registration-search'
 import {internal} from '~/entities'
-import {sortAndPaginate} from '~/helpers/sort-and-paginate'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -19,7 +18,7 @@ export class BanRegistrationService {
     ) {
     }
 
-    async readAll(sr: ServiceRequest): Promise<[internal.BanRegistration[], number]> {
+    async readAll(sr: ServiceRequest): Promise<internal.BanRegistration[]> {
         const search = new BanRegistrationSearchDto()
         if (sr.query?.username && typeof sr.query?.username === 'string') {
             search.username = sr.query.username
@@ -28,10 +27,7 @@ export class BanRegistrationService {
             search.domain = sr.query.domain
         }
 
-        const result = await this.repository.readBannedRegistrations(undefined, search)
-
-        return [sortAndPaginate<internal.BanRegistration>(result, sr, 'id'), result.length]
-
+        return await this.repository.readBannedRegistrations(undefined, search)
     }
 
     async read(id: number, _sr: ServiceRequest): Promise<internal.BanRegistration> {
