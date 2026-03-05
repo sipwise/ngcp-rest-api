@@ -1,5 +1,6 @@
 import {Inject, Injectable} from '@nestjs/common'
 import * as asyncLib from 'async'
+import {v5 as uuidv5} from 'uuid'
 
 import {AppService} from '~/app.service'
 import {internal} from '~/entities'
@@ -10,6 +11,8 @@ interface FilterBy {
     ip: string
 }
 
+const uuidNS = '52f79f45-0186-4832-b530-9afff16d85d8'
+
 @Injectable()
 export class BanIpRedisRepository {
     private readonly log = new LoggerService(BanIpRedisRepository.name)
@@ -19,7 +22,7 @@ export class BanIpRedisRepository {
     ) {
     }
 
-    async readBannedIps(id?: number, filter?: FilterBy): Promise<internal.BanIp[]> {
+    async readBannedIps(id?: string, filter?: FilterBy): Promise<internal.BanIp[]> {
         const {publishChannel, feedbackChannel, request} = this.taskAgentHelper.buildRequest({
             feedbackChannel: 'ngcp-rest-api-ban-ips-dump',
             task: 'kam_lb_security_ban_dump',
@@ -33,42 +36,46 @@ export class BanIpRedisRepository {
 
         const lines = (data[0] as string).split(/}\s*{/)
 
-        const bannedIps: internal.BanIp[] = []
+        const entries: {[key: string]: internal.BanIp} = {}
 
-        asyncLib.forEach(lines, async (line) => {
-            let entryId: number
+        let ipMatch: RegExpMatchArray | null
+
+        await asyncLib.forEach(lines, async (line) => {
+            let entryId: string
             let ip: string
 
-            const entryMatch = line.match(/(entry):\s+(\d+)/)
-            if (entryMatch) {
-                entryId = +entryMatch.at(2)
-            }
-
-            if (id && entryId != id) {
-                return
-            }
-
-            const ipMatch = line.match(/name:\s+([^\s]+)/)
+            ipMatch = line.match(/name:\s+([^\s]+)/)
             if (ipMatch) {
                 ip = ipMatch.at(1)
-            }
+                entryId = uuidv5(ip, uuidNS)
 
-            if (entryId && ip) {
+                if (id && entryId != id) {
+                    return
+                }
                 if (filter?.ip && ip !== filter.ip) {
                     return
                 }
 
-                bannedIps.push({
-                    id: entryId,
-                    ip: ip,
-                })
+                if (!entries[entryId]) {
+                    entries[entryId] = {
+                        id: entryId,
+                        ip: ip,
+                    }
+                }
             }
         })
 
-        return bannedIps
+        const parsedEntries: internal.BanIp[] = []
+
+        await Promise.all(Object.values(entries).map(async (entry) => {
+            if (entry.ip)
+                parsedEntries.push(entry)
+        }))
+
+        return parsedEntries
     }
 
-    async deleteBannedIp(id: number): Promise<void> {
+    async deleteBannedIp(id: string): Promise<void> {
         const bannedIps = await this.readBannedIps(id)
 
         asyncLib.some(bannedIps, async (entry) => {

@@ -1,4 +1,4 @@
-import {Controller, Delete, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
+import {Controller, Delete, Get, Param, Req} from '@nestjs/common'
 import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
@@ -17,7 +17,8 @@ import {SearchLogic} from '~/helpers/search-logic.helper'
 import {sortAndPaginate} from '~/helpers/sort-and-paginate'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
-import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
+import {ParseUUIDArrayPipe} from '~/pipes/parse-uuid-array.pipe'
+import {ParseUUIDPipe} from '~/pipes/parse-uuid.pipe'
 
 const resourceName = 'bans/ips'
 
@@ -59,7 +60,7 @@ export class BanIpController {
         type: BanIpResponseDto,
     })
     async read(
-        @Param('id', new ParseIntPipe()) id: number,
+        @Param('id', new ParseUUIDPipe()) id: string,
         @Req() req: Request,
     ): Promise<BanIpResponseDto> {
         this.log.debug({
@@ -81,9 +82,9 @@ export class BanIpController {
     })
     @Transactional()
     async delete(
-        @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
+        @ParamOrBody('id', new ParseUUIDArrayPipe()) ids: string[],
         @Req() req: Request,
-    ): Promise<number[]> {
+    ): Promise<string[]> {
         this.log.debug({
             message: 'delete ban ip by id',
             id: ids,
@@ -93,9 +94,6 @@ export class BanIpController {
         })
         const sr = new ServiceRequest(req)
         const deletedIds = await this.banService.delete(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
-        }
         return deletedIds
     }
 
@@ -103,7 +101,7 @@ export class BanIpController {
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number, @Req() req: Request): Promise<[JournalResponseDto[], number]> {
+    async journal(@Param('id') id: string, @Req() req: Request): Promise<[JournalResponseDto[], number]> {
         this.log.debug({
             message: 'read journal by id',
             id: id,
