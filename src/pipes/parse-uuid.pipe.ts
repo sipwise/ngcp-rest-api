@@ -3,6 +3,7 @@
 import {
     ArgumentMetadata,
     HttpStatus,
+    Injectable,
     Optional,
     ParseUUIDPipe as UUIDPipe,
     ParseUUIDPipeOptions,
@@ -14,18 +15,22 @@ interface ParseUUIDIdPipeOptions extends ParseUUIDPipeOptions {
     allowUndefined?: boolean
 }
 
+@Injectable()
 export class ParseUUIDPipe implements PipeTransform {
+    private readonly version: '3' | '4' | '5' | '7' | undefined
     protected exceptionFactory: (errors: string) => any
-    private readonly options: ParseUUIDIdPipeOptions
 
     constructor(
-        @Optional() options?: ParseUUIDIdPipeOptions,
+        @Optional() protected readonly options?: ParseUUIDIdPipeOptions,
     ) {
-        this.options = options || {}
+        options = options || {}
         const {
+            version,
             exceptionFactory,
             errorHttpStatusCode = HttpStatus.BAD_REQUEST,
         } = options
+
+        this.version = version
         this.exceptionFactory =
             exceptionFactory ||
             // TODO: Fix the return type
