@@ -6,7 +6,7 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class BanRegistrationResponseDto extends ResponseDto {
     @ApiProperty()
-        id!: number
+        id!: string
 
     @ApiProperty()
         username!: string

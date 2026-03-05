@@ -1,4 +1,4 @@
 export class BanIp {
-    id: number
+    id: string
     ip: string
 }

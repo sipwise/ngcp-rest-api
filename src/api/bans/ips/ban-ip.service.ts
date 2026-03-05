@@ -28,7 +28,7 @@ export class BanIpService {
         return await this.repository.readBannedIps(undefined, search)
     }
 
-    async read(id: number, _sr: ServiceRequest): Promise<internal.BanIp> {
+    async read(id: string, _sr: ServiceRequest): Promise<internal.BanIp> {
         const bannedIps = await this.repository.readBannedIps(id)
         if (!bannedIps.length)
             throw new NotFoundException()
@@ -36,7 +36,7 @@ export class BanIpService {
         return bannedIps[0]
     }
 
-    async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
+    async delete(ids: string[], _sr: ServiceRequest): Promise<string[]> {
         for (const id of ids)
             await this.repository.deleteBannedIp(id)
         return ids

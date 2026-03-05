@@ -1,5 +1,5 @@
 export class BanRegistration {
-    id: number
+    id: string
     username:string
     domain: string
     authCount: number
