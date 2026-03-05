@@ -30,7 +30,7 @@ export class BanRegistrationService {
         return await this.repository.readBannedRegistrations(undefined, search)
     }
 
-    async read(id: number, _sr: ServiceRequest): Promise<internal.BanRegistration> {
+    async read(id: string, _sr: ServiceRequest): Promise<internal.BanRegistration> {
         const bannedUsers = await this.repository.readBannedRegistrations(id)
         if (!bannedUsers.length)
             throw new NotFoundException()
@@ -38,7 +38,7 @@ export class BanRegistrationService {
         return bannedUsers[0]
     }
 
-    async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
+    async delete(ids: string[], _sr: ServiceRequest): Promise<string[]> {
         for (const id of ids)
             await this.repository.deleteBannedRegistration(id)
         return ids

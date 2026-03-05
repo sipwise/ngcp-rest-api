@@ -1,5 +1,6 @@
 import {Inject, Injectable} from '@nestjs/common'
 import * as asyncLib from 'async'
+import {v5 as uuidv5} from 'uuid'
 
 import {AppService} from '~/app.service'
 import {internal} from '~/entities'
@@ -11,6 +12,8 @@ interface FilterBy {
     domain: string
 }
 
+const uuidNS = '52f79f45-0186-4832-b530-9afff16d85d7'
+
 @Injectable()
 export class BanRegistrationRedisRepository {
     private readonly log = new LoggerService(BanRegistrationRedisRepository.name)
@@ -21,7 +24,7 @@ export class BanRegistrationRedisRepository {
     ) {
     }
 
-    async readBannedRegistrations(id?: number, filter?: FilterBy): Promise<internal.BanRegistration[]> {
+    async readBannedRegistrations(id?: string, filter?: FilterBy): Promise<internal.BanRegistration[]> {
         const {publishChannel, feedbackChannel, request} = this.taskAgentHelper.buildRequest({
             feedbackChannel: 'ngcp-rest-api-ban-user-dump',
             task: 'kam_lb_security_ban_dump',
@@ -38,54 +41,62 @@ export class BanRegistrationRedisRepository {
 
         const entries: {[key: string]: internal.BanRegistration} = {}
 
-        let filterByKey: string
+        let userDomMatchCount: RegExpMatchArray | null
+        let userDomMatchLast: RegExpMatchArray | null
 
         await asyncLib.forEach(lines, async (line) => {
-            let entryId: number
-            let encodedKey: string
+            let entryId: string
             let username: string
             let domain: string
             let authCount: number
             let lastAuth: number
 
-            const entryMatch = line.match(/(entry):\s+(\d+)/)
-
-            const userDomMatchCount = line.match(/name:\s+([^\s@]+)@([^:]+)::auth_count/)
+            userDomMatchCount = line.match(/name:\s+([^\s@]+)@([^:]+)::auth_count/)
             if (userDomMatchCount) {
-                if (entryMatch) {
-                    entryId = +entryMatch.at(2)
-                }
-
                 username = userDomMatchCount.at(1)
                 domain = userDomMatchCount.at(2)
-                encodedKey = btoa(`${username}@${domain}`)
+                entryId = uuidv5(`${username}:${domain}`, uuidNS)
 
-                if (id && entryId == id) {
-                    filterByKey = encodedKey
+                if (id && entryId != id) {
+                    return
+                }
+                if (filter?.username && username != filter.username) {
+                    return
+                }
+                if (filter?.domain && domain != filter.domain) {
+                    return
                 }
 
-                if (!entries[encodedKey]) {
-                    entries[encodedKey] = {
+                if (!entries[entryId]) {
+                    entries[entryId] = {
                         id: entryId,
                         username: username,
                         domain: domain,
                         authCount: 0,
                         lastAuth: new Date(0),
                     }
-                } else {
-                    entries[encodedKey].id = entryId
                 }
             }
 
-            const userDomMatchLast = line.match(/name:\s+([^\s@]+)@([^:]+)::last_auth/)
+            userDomMatchLast = line.match(/name:\s+([^\s@]+)@([^:]+)::last_auth/)
             if (userDomMatchLast) {
                 username = userDomMatchLast.at(1)
                 domain = userDomMatchLast.at(2)
-                encodedKey = btoa(`${username}@${domain}`)
+                entryId = uuidv5(`${username}:${domain}`, uuidNS)
 
-                if (!entries[encodedKey]) {
-                    entries[encodedKey] = {
-                        id: 0,
+                if (id && entryId != id) {
+                    return
+                }
+                if (filter?.username && username != filter.username) {
+                    return
+                }
+                if (filter?.domain && domain != filter.domain) {
+                    return
+                }
+
+                if (!entries[entryId]) {
+                    entries[entryId] = {
+                        id: entryId,
                         username: username,
                         domain: domain,
                         authCount: 0,
@@ -94,29 +105,41 @@ export class BanRegistrationRedisRepository {
                 }
             }
 
-            if (id && filterByKey != encodedKey) {
-                return
-            }
-
-            if (entryId && domain && username) {
-                if (filter?.username && username !== filter.username) {
-                    return
-                }
-
-                if (filter?.domain && domain !== filter.domain) {
-                    return
-                }
-
-            }
-
             const valueMatch = line.match(/value:\s+([^\s]+)/)
-            if (encodedKey && valueMatch && userDomMatchCount) {
+            if (valueMatch && userDomMatchCount) {
+                username = userDomMatchCount.at(1)
+                domain = userDomMatchCount.at(2)
+                entryId = uuidv5(`${username}:${domain}`, uuidNS)
                 authCount = +valueMatch.at(1)
-                entries[encodedKey].authCount = authCount
-            }
-            if (encodedKey && valueMatch && userDomMatchLast) {
+
+                if (!entries[entryId]) {
+                    entries[entryId] = {
+                        id: entryId,
+                        username: username,
+                        domain: domain,
+                        authCount: authCount,
+                        lastAuth: new Date(0),
+                    }
+                } else {
+                    entries[entryId].authCount = authCount
+                }
+            } else if (valueMatch && userDomMatchLast) {
+                username = userDomMatchLast.at(1)
+                domain = userDomMatchLast.at(2)
+                entryId = uuidv5(`${username}:${domain}`, uuidNS)
                 lastAuth = +valueMatch.at(1)
-                entries[encodedKey].lastAuth = new Date(lastAuth * 1000)
+
+                if (!entries[entryId]) {
+                    entries[entryId] = {
+                        id: entryId,
+                        username: username,
+                        domain: domain,
+                        authCount: +valueMatch.at(1),
+                        lastAuth: new Date(lastAuth * 1000),
+                    }
+                } else {
+                    entries[entryId].lastAuth = new Date(lastAuth * 1000)
+                }
             }
         })
 
@@ -130,7 +153,7 @@ export class BanRegistrationRedisRepository {
         return parsedEntries
     }
 
-    async deleteBannedRegistration(id: number): Promise<void> {
+    async deleteBannedRegistration(id: string): Promise<void> {
         const bannedRegs = await this.readBannedRegistrations(id)
 
         asyncLib.some(bannedRegs, async entry => {
@@ -151,3 +174,4 @@ export class BanRegistrationRedisRepository {
         })
     }
 }
+

@@ -14,18 +14,23 @@ import {HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
 interface ParseUuidArrayPipeOptions extends ParseUUIDPipeOptions {
     allowUndefined?: boolean
 }
+
 @Injectable()
 export class ParseUUIDArrayPipe implements PipeTransform {
+    private readonly version: '3' | '4' | '5' | '7' | undefined
     protected exceptionFactory: (errors: string) => any
-    private readonly options: ParseUuidArrayPipeOptions
+
     constructor(
-        @Optional() options?: ParseUuidArrayPipeOptions,
+        @Optional() protected readonly options?: ParseUuidArrayPipeOptions,
     ) {
         options = options || {}
         const {
+            version,
             exceptionFactory,
             errorHttpStatusCode = HttpStatus.BAD_REQUEST,
         } = options
+
+        this.version = version
         this.options = options
         this.exceptionFactory =
             exceptionFactory ||

@@ -1,8 +1,8 @@
-import {Controller, Delete, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
-import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {Controller, Delete, Get, Param, Req} from '@nestjs/common'
+import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
+import {string} from 'yargs'
 
 import {BanRegistrationService} from './ban-registration.service'
 import {BanRegistrationResponseDto} from './dto/ban-registration-response.dto'
@@ -16,7 +16,8 @@ import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {sortAndPaginate} from '~/helpers/sort-and-paginate'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
-import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
+import {ParseUUIDArrayPipe} from '~/pipes/parse-uuid-array.pipe'
+import {ParseUUIDPipe} from '~/pipes/parse-uuid.pipe'
 
 const resourceName = 'bans/registrations'
 
@@ -57,7 +58,7 @@ export class BanRegistrationController {
         type: BanRegistrationResponseDto,
     })
     async read(
-        @Param('id', new ParseIntPipe()) id: number,
+        @Param('id', new ParseUUIDPipe()) id: string,
         @Req() req: Request,
     ): Promise<BanRegistrationResponseDto> {
         this.log.debug({
@@ -73,15 +74,15 @@ export class BanRegistrationController {
         return responseItem
     }
 
-    @Delete(':id?')
+    @Delete(':id')
     @ApiOkResponse({
-        type: [number],
+        type: [string],
     })
     @Transactional()
     async delete(
-        @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
+        @ParamOrBody('id', new ParseUUIDArrayPipe()) ids: string[],
         @Req() req: Request,
-    ): Promise<number[]> {
+    ): Promise<string[]> {
         this.log.debug({
             message: 'delete ban registration by entry',
             id: ids,
@@ -91,9 +92,6 @@ export class BanRegistrationController {
         })
         const sr = new ServiceRequest(req)
         const deletedIds = await this.banService.delete(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
-        }
         return deletedIds
     }
 
@@ -101,7 +99,7 @@ export class BanRegistrationController {
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number, @Req() req: Request): Promise<[JournalResponseDto[], number]> {
+    async journal(@Param('id') id: string, @Req() req: Request): Promise<[JournalResponseDto[], number]> {
         this.log.debug({
             message: 'read journal by id',
             id: id,
