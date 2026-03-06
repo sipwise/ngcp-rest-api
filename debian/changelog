@@ -1,3 +1,10 @@
+ngcp-rest-api (13.5.1.18+0~mr13.5.1.18) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [f6d2f05] MT#64429 bans/registrations, bans/ips rework result parsing
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 06 Mar 2026 13:17:00 +0100
+
 ngcp-rest-api (13.5.1.17+0~mr13.5.1.17) unstable; urgency=medium
 
   [ Kirill Solomko ]
