@@ -1,8 +1,6 @@
 // TODO: Check if full type safety is possible in pipes
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import {isUndefined} from 'util'
-
 import {
     ArgumentMetadata,
     HttpStatus,
@@ -15,7 +13,7 @@ import {
 import {ClassTransformOptions} from '@nestjs/common/interfaces/external/class-transform-options.interface'
 import {ValidatorOptions} from '@nestjs/common/interfaces/external/validator-options.interface'
 import {ErrorHttpStatusCode} from '@nestjs/common/utils/http-error-by-code.util'
-import {classToPlain, plainToClass} from 'class-transformer'
+import {instanceToPlain, plainToInstance} from 'class-transformer'
 import {validate} from 'class-validator'
 
 import {Dictionary} from '~/helpers/dictionary.helper'
@@ -34,7 +32,7 @@ export interface ValidationPipeOptions extends ValidatorOptions {
 }
 
 export const isNil = (obj: any): obj is null | undefined =>
-    isUndefined(obj) || obj === null
+    obj === null
 
 @Injectable()
 export class ValidateInputPipe implements PipeTransform<any> {
@@ -85,7 +83,7 @@ export class ValidateInputPipe implements PipeTransform<any> {
 
         const isNil = value !== originalValue
         const isPrimitive = this.isPrimitive(value)
-        let entity = plainToClass(
+        let entity = plainToInstance(
             metatype,
             value,
             this.transformOptions,
@@ -122,7 +120,7 @@ export class ValidateInputPipe implements PipeTransform<any> {
             return originalValue
         }
         return Object.keys(this.validatorOptions).length > 0
-            ? classToPlain(entity, this.transformOptions)
+            ? instanceToPlain(entity, this.transformOptions)
             : value
     }
 

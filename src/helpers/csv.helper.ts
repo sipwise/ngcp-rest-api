@@ -1,7 +1,7 @@
 import {Readable} from 'stream'
 
 import {StreamableFile, UnprocessableEntityException} from '@nestjs/common'
-import {plainToClass} from 'class-transformer'
+import {plainToInstance} from 'class-transformer'
 import {validate} from 'class-validator'
 import {Response} from 'express'
 import * as Papa from 'papaparse'
@@ -35,7 +35,7 @@ export async function csvToDto<T extends object>(file: Express.Multer.File, dtoC
                 }
 
                 const dtos = rows.map((row, idx) => {
-                    const dto = {idx, data: plainToClass(dtoClass, row)}
+                    const dto = {idx, data: plainToInstance(dtoClass, row)}
                     return dto
                 })
 

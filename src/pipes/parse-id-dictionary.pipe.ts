@@ -13,7 +13,7 @@ import {
     ValidationPipeOptions,
 } from '@nestjs/common'
 import {HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
-import {isString, isUndefined} from '@nestjs/common/utils/shared.utils'
+import {isString} from '@nestjs/common/utils/shared.utils'
 
 import {PatchDto} from '~/dto/patch.dto'
 import {Dictionary} from '~/helpers/dictionary.helper'
@@ -164,7 +164,7 @@ export class ParseIdDictionary implements PipeTransform {
                 originalValue !== null && originalValue !== '' ? +originalValue : NaN
             if (isNaN(value)) {
                 throw this.exceptionFactory(
-                    `${isUndefined(index) ? '' : `[${index}] `}item must be a number`,
+                    `${index === undefined ? '' : `[${index}] `}item must be a number`,
                 )
             }
             return value
@@ -176,7 +176,7 @@ export class ParseIdDictionary implements PipeTransform {
             if (typeof originalValue !== 'boolean') {
                 throw this.exceptionFactory(
                     `${
-                        isUndefined(index) ? '' : `[${index}] `
+                        index === undefined ? '' : `[${index}] `
                     }item must be a boolean value`,
                 )
             }
