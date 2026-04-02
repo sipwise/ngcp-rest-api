@@ -1,3 +1,10 @@
+ngcp-rest-api (14.1.1.7+0~mr14.1.1.7) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [da7d967] MT#64675 bans/registrations/ips add wildcard search support
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 02 Apr 2026 20:13:25 +0200
+
 ngcp-rest-api (14.1.1.6+0~mr14.1.1.6) unstable; urgency=medium
 
   [ Kirill Solomko ]
