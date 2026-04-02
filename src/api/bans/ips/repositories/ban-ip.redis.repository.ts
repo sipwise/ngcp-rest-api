@@ -4,6 +4,7 @@ import {v5 as uuidv5} from 'uuid'
 
 import {AppService} from '~/app.service'
 import {internal} from '~/entities'
+import {isWildcardString, wildcardStringToRegexp} from '~/helpers/search-wildcard-string'
 import {TaskAgentHelper} from '~/helpers/task-agent.helper'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -52,8 +53,16 @@ export class BanIpRedisRepository {
                 if (id && entryId != id) {
                     return
                 }
-                if (filter?.ip && ip !== filter.ip) {
-                    return
+
+                if (filter?.ip) {
+                    const rx =
+                        isWildcardString(filter.ip)
+                            ? wildcardStringToRegexp(filter.ip)
+                            : undefined
+                    if (rx && !rx.test(ip))
+                        return
+                    if (!rx && ip != filter.ip)
+                        return
                 }
 
                 if (!entries[entryId]) {
