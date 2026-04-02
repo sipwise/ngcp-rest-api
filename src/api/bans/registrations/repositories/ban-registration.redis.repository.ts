@@ -4,6 +4,7 @@ import {v5 as uuidv5} from 'uuid'
 
 import {AppService} from '~/app.service'
 import {internal} from '~/entities'
+import {isWildcardString, wildcardStringToRegexp} from '~/helpers/search-wildcard-string'
 import {TaskAgentHelper} from '~/helpers/task-agent.helper'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -60,11 +61,27 @@ export class BanRegistrationRedisRepository {
                 if (id && entryId != id) {
                     return
                 }
-                if (filter?.username && username != filter.username) {
-                    return
+
+                if (filter?.username) {
+                    const rx =
+                        isWildcardString(filter.username)
+                            ? wildcardStringToRegexp(filter.username)
+                            : undefined
+                    if (rx && !rx.test(username))
+                        return
+                    if (!rx && username != filter.username)
+                        return
                 }
-                if (filter?.domain && domain != filter.domain) {
-                    return
+
+                if (filter?.domain) {
+                    const rx =
+                        isWildcardString(filter.domain)
+                            ? wildcardStringToRegexp(filter.domain)
+                            : undefined
+                    if (rx && !rx.test(domain))
+                        return
+                    if (!rx && domain != filter.domain)
+                        return
                 }
 
                 if (!entries[entryId]) {
@@ -87,11 +104,27 @@ export class BanRegistrationRedisRepository {
                 if (id && entryId != id) {
                     return
                 }
-                if (filter?.username && username != filter.username) {
-                    return
+
+                if (filter?.username) {
+                    const rx =
+                        isWildcardString(filter.username)
+                            ? wildcardStringToRegexp(filter.username)
+                            : undefined
+                    if (rx && !rx.test(username))
+                        return
+                    if (!rx && username != filter.username)
+                        return
                 }
-                if (filter?.domain && domain != filter.domain) {
-                    return
+
+                if (filter?.domain) {
+                    const rx =
+                        isWildcardString(filter.domain)
+                            ? wildcardStringToRegexp(filter.domain)
+                            : undefined
+                    if (rx && !rx.test(domain))
+                        return
+                    if (!rx && domain != filter.domain)
+                        return
                 }
 
                 if (!entries[entryId]) {
