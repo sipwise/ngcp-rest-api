@@ -1,3 +1,25 @@
+ngcp-rest-api (26.1.0.0+0~mr26.1.0.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [7f4fd8b] MT#64340 add peerings/groups has_inbound_rules support
+  * [a3a476b] MT#64433 add peering server site_id suppport
+  * [723e0cb] MT#64433 fix peering servers POST site_id validation
+  * [6890a5a] MT#64429 add bans pagination support
+  * [90cf0a1] MT#64429 bans/ips, bans/registrations return correct total count
+  * [07cd8fb] MT#64429 bans/registrations improve entries handling
+  * [b55f8be] MT#64429 bans/registrations improve filter by id
+  * [318149c] MT#64429 bans/ips, bans/registrations add sortAndPaginate
+  * [46ad15d] MT#64429 bans/registrations add sort by last_auth and auth_count
+  * [cc77bde] MT#64429 bans/registrations, bans/ips rework result parsing
+  * [ee93352] MT#64612 switch to nodejs v24
+  * [b82817e] MT#64612 adapt plainToClass, classToPlain, isUndefined deprecations
+  * [3019cb5] MT#64675 bans/registrations/ips add wildcard search support
+
+  [ Guillem Jover ]
+  * [3b5efe3] MT#62763 Fix shellcheck issues
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 07 Apr 2026 12:57:52 +0200
+
 ngcp-rest-api (14.2.0.0+0~mr14.2.0.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
