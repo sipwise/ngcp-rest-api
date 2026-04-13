@@ -102,7 +102,7 @@ export class PeeringGroupServerService implements CrudService<internal.VoipPeeri
         return oldServers.some(server => {
             const updated = updates[server.id]
             if (!updated) return false
-            return server.enabled !== updated.enabled || server.probe !== updated.probe
+            return server.enabled !== updated.enabled || server.probe !== updated.probe || server.transport !== updated.transport
         })
     }
 
