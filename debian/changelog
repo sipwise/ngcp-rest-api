@@ -1,3 +1,10 @@
+ngcp-rest-api (13.5.1.20+0~mr13.5.1.20) unstable; urgency=medium
+
+  [ Marco Capetta ]
+  * [2a73cca] MT#64627 Call reloadKamProxDispatcher when peer transport is updated
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 14 Apr 2026 11:50:18 +0200
+
 ngcp-rest-api (13.5.1.19+0~mr13.5.1.19) unstable; urgency=medium
 
   [ Kirill Solomko ]
