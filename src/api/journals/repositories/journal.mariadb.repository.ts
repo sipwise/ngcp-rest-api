@@ -43,8 +43,8 @@ export class JournalMariadbRepository implements JournalRepository {
         const user: AuthResponseDto = sr.user
         const qb = db.billing.Journal.createQueryBuilder('journal')
         qb.leftJoinAndSelect('journal.role', 'role')
-        await configureQueryBuilder(qb, sr.query, new SearchLogic(sr, Object.keys(new JournalSearchDto())))
 
+        configureQueryBuilder(qb, sr.query, new SearchLogic(sr, Object.keys(new JournalSearchDto())))
         if (resourceName !== undefined) {
             qb.andWhere('journal.resource_name = :resourceName', {resourceName: resourceName})
             if (resourceId !== undefined) {
@@ -58,19 +58,17 @@ export class JournalMariadbRepository implements JournalRepository {
             qb.andWhere('journal.reseller_id = :resellerId', {resellerId: user.reseller_id})
         }
 
-        this.log.debug({
-            message: 'finding journal entries',
-            resourceName: resourceName,
-            resourceId: resourceId,
-        })
+        const [result, _totalCount] = await qb.getManyAndCount()
+        const hasAccessToContent = (user.role_data.has_access_to).map(role => role.id)
 
-        const [result, totalCount] = await qb.getManyAndCount()
-        const hasAccessToContent = (await user.role_data.has_access_to).map(role => role.id)
+        const parsedEntries: internal.Journal[] = []
 
-        return [result.map(j => {
-            if (!hasAccessToContent.includes(j.role_id))
-                delete j.content
-            return j.toInternal()
-        }), totalCount]
+        await Promise.all(Object.values(result).map(async (e) => {
+            const entry = e.toInternal()
+            if (hasAccessToContent.includes(entry.role_id))
+                parsedEntries.push(entry)
+        }))
+
+        return [parsedEntries, parsedEntries.length]
     }
 }
