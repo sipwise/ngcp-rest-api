@@ -1,3 +1,10 @@
+ngcp-rest-api (12.5.1.11+0~mr12.5.1.11) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [fa57c64] MT#64790 fix journal filtering by the role
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 20 Apr 2026 17:12:22 +0200
+
 ngcp-rest-api (12.5.1.10+0~mr12.5.1.10) unstable; urgency=medium
 
   [ Kirill Solomko ]
