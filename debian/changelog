@@ -1,3 +1,10 @@
+ngcp-rest-api (26.0.1.0+0~mr26.0.1.0) unstable; urgency=medium
+
+  [ Marco Capetta ]
+  * [f812bbb] MT#64627 Call reloadKamProxDispatcher when peer transport is updated
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 20 Apr 2026 10:31:33 +0200
+
 ngcp-rest-api (26.0.0.0+0~mr26.0.0.0) unstable; urgency=medium
 
   * New release.
