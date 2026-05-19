@@ -1,6 +1,6 @@
 import {Readable} from 'stream'
 
-import {ForbiddenException, Inject, Injectable, StreamableFile, UnauthorizedException} from '@nestjs/common'
+import {ForbiddenException, Inject, Injectable, InternalServerErrorException, StreamableFile, UnauthorizedException} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
 import {compare} from 'bcrypt'
 import {Response} from 'express'
@@ -44,7 +44,7 @@ export class AuthService {
         return redis
     }
 
-    isAdminValid(admin: db.billing.Admin): boolean {
+    isAdminValid(admin: db.billing.Admin | null): boolean {
         if (!admin) {
             this.log.debug({message: 'validating admin', success: false, constraint: 'empty object'})
             return false
@@ -66,26 +66,28 @@ export class AuthService {
      *
      * @returns Authenticated `AuthResponseDto` on success else `null`
      */
-    async validateAdmin(_req: ServiceRequest, username: string, password: string, _domain: string, _realm: string): Promise<AuthResponseDto> {
+    async validateAdmin(_req: ServiceRequest, username: string, password: string, _domain: string, _realm: string): Promise<AuthResponseDto | null> {
         this.log.debug({message: 'starting user authentication', method: this.validateAdmin.name, username: username})
         const admin = await this.app.dbRepo(db.billing.Admin).findOne({
             where: {login: username},
             relations: ['role'],
         })
-        if (!this.isAdminValid(admin)) {
+
+        if (!admin || !this.isAdminValid(admin)) {
             return null
         }
-        admin.role = await this.app.dbRepo(db.billing.AclRole).findOne({
+
+        admin.role = await this.app.dbRepo(db.billing.AclRole).findOneOrFail({
             where: {
-                id: admin.role.id,
+                id: admin?.role.id,
             },
             relations: ['has_access_to'],
         })
 
-        if (admin && await this.compareBcryptPassword(password, admin.saltedpass) !== false) {
-            await this.handleTwoFactorAuth(admin, _req)
+        if (admin.saltedpass && await this.compareBcryptPassword(password, admin.saltedpass)) {
             return this.adminAuthToResponse(admin)
         }
+
         this.log.debug({message: 'user authentication', success: false, username: username})
         return null
     }
@@ -94,6 +96,10 @@ export class AuthService {
         const user = req.user as AuthResponseDto
         const companyName = this.app.config.general.companyname
         const username = user.username
+
+        if (!user.otp_secret_key) {
+            throw new InternalServerErrorException()
+        }
 
         const otpAuthUrl = authenticator.keyuri(
             `NGCP-${companyName}: ${username}`,
