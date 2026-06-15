@@ -1,3 +1,15 @@
+ngcp-rest-api (26.2.0.0+0~mr26.2.0.0) unstable; urgency=medium
+
+  [ Marco Capetta ]
+  * [145bac7] MT#64627 Call reloadKamProxDispatcher when peer transport is updated
+
+  [ Kirill Solomko ]
+  * [c5d1593] MT#64790 fix journal filtering by the role
+  * [ca40ec0] MT#65001 bans/registrations bans/ips fix no data behaviour
+  * [a22f30a] MT#65109 change OTP interaction for authenticated users
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 15 Jun 2026 15:32:45 +0200
+
 ngcp-rest-api (26.1.0.0+0~mr26.1.0.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
