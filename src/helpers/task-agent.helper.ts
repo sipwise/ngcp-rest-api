@@ -1,7 +1,6 @@
 import os from 'os'
-import {setInterval} from 'timers/promises'
 
-import {Injectable, InternalServerErrorException} from '@nestjs/common'
+import {Injectable} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 import {v4 as uuidv4} from 'uuid'
 
@@ -9,7 +8,6 @@ import {AppService} from '~/app.service'
 import {HandleRedisErrors} from '~/decorators/handle-redis-errors.decorator'
 import {Request as TaskAgentRequest} from '~/entities/task-agent/request.task-agent.entity'
 import {Response as TaskAgentResponse} from '~/entities/task-agent/response.task-agent.entity'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {LoggerService} from '~/logger/logger.service'
 
 type MessageCallback = (response: TaskAgentResponse) => Promise<void>
@@ -96,31 +94,30 @@ export class TaskAgentHelper {
         request: TaskAgentRequest,
         handleOnData?: (data: unknown, ret: (T | string)[]) => Promise<void>,
     ): Promise<(T | string)[]> {
-        const agentStatus = new Map<string, string>()
+        const agentStatus: {[key: string]: string} = {}
+        const errors: {[key: string]: string} = {}
         const startTime = Date.now()
         const initialTimeout = 2000
-        const maxTimeout = 5000
-        const onDoneWaitTimeout = 500
+        const maxTimeout = 10000
+        const exceptionTimeout = 30000
         const result: (T | string)[] = []
 
-        let onDoneSince: number | null = null
-        let hasError = false
-        let errorReason = ''
-        let firstResponseReceived = false
         await this.subscribeToFeedback(
             feedbackChannel,
             async (feedbackResponse: TaskAgentResponse): Promise<void> => {
                 this.log.debug(`got task agent response: ${JSON.stringify(feedbackResponse)}`)
                 const {src: host, status, reason} = feedbackResponse
-                agentStatus.set(host, status)
+                agentStatus[host] = status
 
-                if (!firstResponseReceived) {
-                    firstResponseReceived = true
-                }
                 if (status === 'error') {
-                    hasError = true
-                    errorReason = reason ?? 'Unknown error'
+                    errors[host] = reason ?? 'Unknown error'
+                    this.log.error(`Task error in feedback=${feedbackChannel} src=${host} error=${errors[host]}`)
                 }
+
+                if (status === 'done') {
+                    this.log.debug(`Task done in feedback=${feedbackChannel} src=${host} reason=${reason || 'ok'}`)
+                }
+
                 if (status === 'done' && feedbackResponse.data != undefined) {
                     let parsed: unknown
                     try {
@@ -140,50 +137,47 @@ export class TaskAgentHelper {
                 }
             },
         )
-        this.log.debug(`publish to task agent '${publishChannel}': ${JSON.stringify(request)}`)
+
+        this.log.debug(`Publish to task agent channel=${publishChannel} feedback=${feedbackChannel}: ${JSON.stringify(request)}`)
         await this.publishToTaskAgent(publishChannel, request)
 
-        for await (const _ of setInterval(100)) {
+        while ((Date.now() - startTime) < exceptionTimeout) {
             const now = Date.now()
-            if (hasError) {
+            const elapsed = now - startTime
+            const agentStatusStr = JSON.stringify(agentStatus)
+            const errorsStr = JSON.stringify(errors)
+            const agentStatusSize = Object.keys(agentStatus).length
+
+            /*
+                TODO: this exception is raised after transaction commit + response
+                and therefore, not intercepted and causes the server to stop with ret code 1
+                need to find a way to issue transaction commit before response
+            */
+            //const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
+            //throw new InternalServerErrorException(error)
+
+            if (agentStatusSize == 0 && elapsed > initialTimeout) {
+                this.log.error(`Task no response timeout feedback=${feedbackChannel} status=${agentStatusStr} errors=${errorsStr}`)
                 await this.unsubscriberFromFeedback(feedbackChannel)
-                this.log.error(`Task agent error: ${errorReason}`)
                 return
-                /*
-                 TODO: this exception is raised after transaction commit + response
-                 and therefore, not intercepted and causes the server to stop with ret code 1
-                 need to find a way to issue transaction commit before response
-                */
-                //const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
-                //throw new InternalServerErrorException(error)
             }
-            if (!firstResponseReceived && (now - startTime) > initialTimeout) {
+
+            if (elapsed > maxTimeout) {
+                this.log.error(`Task max response timeout feedback=${feedbackChannel} status=${agentStatusStr} errors=${errorsStr}`)
                 await this.unsubscriberFromFeedback(feedbackChannel)
-                this.log.error('Timeout waiting for initial task agent response')
                 return
-                //const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
-                //throw new InternalServerErrorException(error)
             }
-            if (firstResponseReceived && (now - startTime) > maxTimeout) {
+
+            const allDoneOrError = Object.values(agentStatus).every(status => ['done','error'].includes(status))
+            if (agentStatusSize > 0 && allDoneOrError) {
                 await this.unsubscriberFromFeedback(feedbackChannel)
-                this.log.error('Timeout waiting for all task agent responses')
-                return
-                //const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
-                //throw new InternalServerErrorException(error)
+                this.log.debug(`Task completed feedback=${feedbackChannel} status=${agentStatusStr} errors=${errorsStr}`)
+                break
             }
-            const allDone = [...agentStatus.values()].every(status => status === 'done')
-            if (agentStatus.size > 0 && allDone) {
-                if (onDoneSince === null) {
-                    onDoneSince = now
-                } else if ((now - onDoneSince) > onDoneWaitTimeout) {
-                    await this.unsubscriberFromFeedback(feedbackChannel)
-                    this.log.debug('All task agents completed successfully')
-                    break
-                }
-            } else {
-                onDoneSince = null
-            }
+
+            await new Promise(resolve => setTimeout(resolve, 100))
         }
+
         return result
     }
 }
