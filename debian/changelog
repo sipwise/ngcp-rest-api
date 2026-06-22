@@ -1,3 +1,10 @@
+ngcp-rest-api (26.0.1.6+0~mr26.0.1.6) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [bce4e1f] MT#65347 task agent and redis connection improvements
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 22 Jun 2026 20:20:14 +0200
+
 ngcp-rest-api (26.0.1.5+0~mr26.0.1.5) unstable; urgency=medium
 
   [ Kirill Solomko ]
