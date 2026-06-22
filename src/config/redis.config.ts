@@ -1,4 +1,4 @@
-import {RedisSingleOptions} from '@nestjs-modules/ioredis'
+import {RedisOptions} from 'ioredis'
 
 import {AppService} from '~/app.service'
 
@@ -9,13 +9,12 @@ export enum RedisDatabases {
     session = 19,
 }
 
-export const redisConfig: RedisSingleOptions = {
-    type: 'single',
-    url: `redis://${redis_host}:${redis_port}`,
-    options: {
-        keepAlive: 60,
-        retryStrategy: function (_) {
-            return
-        },
+export const redisConfig: RedisOptions = {
+    host: redis_host,
+    port: +redis_port,
+    keepAlive: 0,
+    lazyConnect: true,
+    retryStrategy: function (_) {
+        return
     },
 }
