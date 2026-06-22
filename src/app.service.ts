@@ -1,5 +1,5 @@
 import {Inject, Injectable, Logger} from '@nestjs/common'
-import {Cluster,Redis} from 'ioredis'
+import {Redis} from 'ioredis'
 import {DataSource, EntityManager, EntityTarget, Repository} from 'typeorm'
 
 import {config as AppConfig} from './config/main.config'
@@ -15,8 +15,8 @@ export class AppService {
     constructor(
         @Inject(Logger) private readonly defaultLogger: Logger,
         @Inject('DB') private readonly defaultDatabase: DataSource,
-        @Inject('Redis') private readonly redisDatabase: Redis | Cluster,
-        @Inject('RedisPubSub') private readonly redisPubSubDatabase: Redis | Cluster,
+        @Inject('Redis') private readonly redisDatabase: Redis,
+        @Inject('RedisPubSub') private readonly redisPubSubDatabase: Redis,
     ) {
     }
 
@@ -52,11 +52,11 @@ export class AppService {
         this.redisAvailable = redisAvailable
     }
 
-    get redis(): Redis | Cluster {
+    get redis(): Redis {
         return this.redisDatabase
     }
 
-    get redisPubSub(): Redis | Cluster {
+    get redisPubSub(): Redis {
         return this.redisPubSubDatabase
     }
 

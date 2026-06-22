@@ -41,7 +41,10 @@ export class BanRegistrationRedisRepository {
         if (!data)
             return []
 
-        const lines = (data[0] as string).split(/}\s*{/)
+        const lines =
+            data && Array.isArray(data)
+                ? data.map(c => (c as string).split(/}\s*{/)).flat()
+                : []
 
         const entries: {[key: string]: internal.BanRegistration} = {}
 
