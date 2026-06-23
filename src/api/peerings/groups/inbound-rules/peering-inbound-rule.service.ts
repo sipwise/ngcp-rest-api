@@ -27,7 +27,7 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
     async create(entities: internal.VoipPeeringInboundRule[], sr: ServiceRequest): Promise<internal.VoipPeeringInboundRule[]> {
         const created = await this.ruleRepo.create(entities)
         await Promise.all(entities.map(async entity => {
-            this.ruleRepo.increaseGroupInboundRulesCount(entity.groupId)
+            this.ruleRepo.setGroupInboundRulesCount(entity.groupId)
         }))
         await this.reloadKamProxyLcrAfterCommit(sr)
         if (this.requiresDispatcherReload(entities)) {
@@ -80,14 +80,20 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
             throw new UnprocessableEntityException(message)
         }
 
+        // Always reload LCR
         await this.reloadKamProxyLcrAfterCommit(sr)
+
         if (this.requiresDispatcherReload(rules)) {
             await this.reloadKamProxyDispatcherAfterCommit(sr)
         }
+
+        const result = await this.ruleRepo.delete(ids, sr)
+
         await Promise.all(rules.map(async rule => {
-            this.ruleRepo.decreaseGroupInboundRulesCount(rule.groupId)
+            this.ruleRepo.unsetGroupInboundRulesCount(rule.groupId)
         }))
-        return await this.ruleRepo.delete(ids, sr)
+
+        return result
     }
 
     async reloadKamProxyLcrAfterCommit(sr: ServiceRequest): Promise<void> {
