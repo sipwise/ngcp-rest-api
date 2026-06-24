@@ -1,3 +1,10 @@
+ngcp-rest-api (26.0.1.7+0~mr26.0.1.7) unstable; urgency=medium
+
+  [ Marco Capetta ]
+  * [c88ec3c] MT#65367 Fix setting provisioning.voip_peer_groups.has_inbound_rules
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Wed, 24 Jun 2026 09:39:08 +0200
+
 ngcp-rest-api (26.0.1.6+0~mr26.0.1.6) unstable; urgency=medium
 
   [ Kirill Solomko ]
