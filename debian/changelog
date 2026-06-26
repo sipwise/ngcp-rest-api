@@ -1,3 +1,10 @@
+ngcp-rest-api (13.5.1.26+0~mr13.5.1.26) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [d29e7ed] MT#65183 fix customers-phonebook upload customer_id field
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 26 Jun 2026 18:28:35 +0200
+
 ngcp-rest-api (13.5.1.25+0~mr13.5.1.25) unstable; urgency=medium
 
   [ Marco Capetta ]
