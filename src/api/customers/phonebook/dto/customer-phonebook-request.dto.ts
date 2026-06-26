@@ -1,5 +1,5 @@
-import {ApiProperty} from '@nestjs/swagger'
-import {IsInt, IsNotEmpty, IsString, MaxLength} from 'class-validator'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {IsInt, IsNotEmpty, IsOptional, IsString, MaxLength} from 'class-validator'
 
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
@@ -18,8 +18,9 @@ export class CustomerPhonebookRequestDto implements RequestDto {
         number: string
 
     @IsInt()
-    @ApiProperty()
-        customer_id: number
+    @IsOptional()
+    @ApiPropertyOptional()
+        customer_id?: number
 
     constructor(entity?: internal.CustomerPhonebook) {
         if (!entity)
@@ -32,11 +33,17 @@ export class CustomerPhonebookRequestDto implements RequestDto {
 
     toInternal(options: RequestDtoOptions = {}): internal.CustomerPhonebook {
         const entity = new internal.CustomerPhonebook()
+        if (options.id)
+            entity.id = options.id
+        if (options.overrideFields) {
+            for (const [k, v] of Object.entries(options.overrideFields)) {
+                this[k] = v
+            }
+        }
+
         entity.name = this.name
         entity.contractId = this.customer_id
         entity.number = this.number
-        if (options.id)
-            entity.id = options.id
 
         if (options.assignNulls) {
             Object.keys(entity).forEach(k => {
