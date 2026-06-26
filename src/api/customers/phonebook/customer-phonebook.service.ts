@@ -167,8 +167,7 @@ export class CustomerPhonebookService implements CrudService<internal.CustomerPh
                     await this.phonebookRepo.purge(reseller, sr)
                 })
                 await Promise.all(promises)
-            }
-            else {
+            } else {
                 delete sr.query['purge_existing']
             }
         }
