@@ -99,6 +99,14 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        let dtoOptions = {}
+        if (sr.user.role == 'subscriberadmin') {
+            dtoOptions = {
+                overrideFields: {
+                    customer_id: sr.user.customer_id,
+                },
+            }
+        }
         if (file) {
             switch (file.mimetype) {
                 case 'text/csv':
@@ -109,11 +117,11 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
                 default:
                     throw new UnprocessableEntityException(this.i18n.t('errors.FILE_MIME_TYPE_NOT_SUPPORTED'))
             }
-            const phonebook = await Promise.all(createDto.map(async set => set.toInternal()))
+            const phonebook = await Promise.all(createDto.map(async dto => dto.toInternal(dtoOptions)))
             const created = await this.phonebookService.importCsv(phonebook, sr)
             return await Promise.all(created.map(async phonebook => new CustomerPhonebookResponseDto(phonebook)))
         }
-        const phonebook = await Promise.all(createDto.map(async set => set.toInternal()))
+        const phonebook = await Promise.all(createDto.map(async set => set.toInternal(dtoOptions)))
         const created = await this.phonebookService.create(phonebook, sr)
         return await Promise.all(created.map(async phonebook => new CustomerPhonebookResponseDto(phonebook)))
     }
