@@ -3,6 +3,7 @@ export class RequestDtoOptions {
     setDefaults?: boolean
     assignNulls?: boolean
     parentId?: number
+    overrideFields?: {[key: string]: unknown}
 }
 export abstract class RequestDto {
     toInternal?(options?: RequestDtoOptions): void;
