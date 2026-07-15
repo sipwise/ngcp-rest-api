@@ -8,3 +8,4 @@ coverage
 prod
 etc/ssl
 .dev-env
+.yarn/install-state.gz
