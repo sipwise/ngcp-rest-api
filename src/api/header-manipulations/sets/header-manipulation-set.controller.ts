@@ -2,7 +2,6 @@ import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post,
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {HeaderManipulationSetRequestDto} from './dto/header-manipulation-set-request.dto'
 import {HeaderManipulationSetResponseDto} from './dto/header-manipulation-set-response.dto'
@@ -231,9 +230,9 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
         return await this.ruleSetService.update(updates, sr)
     }
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(

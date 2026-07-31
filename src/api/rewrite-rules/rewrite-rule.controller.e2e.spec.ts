@@ -3,7 +3,7 @@ import {Test} from '@nestjs/testing'
 import {validate} from 'class-validator'
 import request from 'supertest'
 
-import {RewriteRuleResponseDto} from './dto/rewrite-rule-response.dto'
+import {RewriteRuleBaseResponseDto} from './dto/rewrite-rule-base-response.dto'
 import {RewriteRuleModule} from './rewrite-rule.module'
 
 import {AppModule} from '~/app.module'
@@ -76,7 +76,7 @@ describe('', () => {
                     .get('/rewrite-rules')
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
-                const setCollection: RewriteRuleResponseDto = response.body
+                const setCollection: RewriteRuleBaseResponseDto = response.body
                 expect(await validate(setCollection)).toEqual([])
             })
         })

@@ -35,7 +35,7 @@ export class PbxGroupMemberController extends CrudController<never, PbxGroupMemb
         super(resourceName, pbxGroupMemberService)
     }
 
-    @Get(':groupId?/members')
+    @Get('{:groupId/}members')
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(PbxGroupMemberResponseDto)
     async readAll(
@@ -58,7 +58,7 @@ export class PbxGroupMemberController extends CrudController<never, PbxGroupMemb
         return [responseList, totalCount]
     }
 
-    @Get(':groupId?/members/:id')
+    @Get('{:groupId/}members/:id')
     @ApiOkResponse({
         type: PbxGroupMemberResponseDto,
     })

@@ -1,15 +1,16 @@
 import {IncomingHttpHeaders} from 'http'
 
 import {Request} from 'express'
+import {ParsedQs} from 'qs'
 
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 
 export interface ParamsDictionary {
-    [key: string]: string
+    [key: string]: string | string[]
 }
 
 export interface QueriesDictionary {
-    [key: string]: undefined | string | string[] | QueriesDictionary | QueriesDictionary[];
+    [key: string]: string | string[] | ParsedQs | ParsedQs[] | (string | ParsedQs)[] | undefined
 }
 
 export class ServiceRequest {
@@ -18,7 +19,7 @@ export class ServiceRequest {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     user: AuthResponseDto | any
     headers: IncomingHttpHeaders | [undefined]
-    query?: QueriesDictionary
+    query?: ParsedQs
     req: Request
     isInternalRedirect?: boolean
     returnContent: boolean

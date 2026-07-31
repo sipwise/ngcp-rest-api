@@ -2,7 +2,6 @@ import {Controller, Delete, Get, Inject, Param, ParseIntPipe, Req, forwardRef} f
 import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {BanSubscriberService} from './ban-subscriber.service'
 import {BanSubscriberSearchDto} from './dto/ban-subscriber-search.dto'
@@ -84,9 +83,9 @@ export class BanSubscriberController extends CrudController<never, BanSubscriber
         return response
     }
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(

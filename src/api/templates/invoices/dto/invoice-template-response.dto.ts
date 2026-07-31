@@ -19,13 +19,13 @@ export class InvoiceTemplateResponseDto extends ResponseDto {
     @Expandable({controller: 'resellerController', name: 'reseller_id'})
         reseller_id?: number
 
-    @ApiProperty({type: 'enum', enum: InvoiceTemplateType, example: InvoiceTemplateType.SVG})
+    @ApiProperty({enum: InvoiceTemplateType, example: InvoiceTemplateType.SVG})
         type: InvoiceTemplateType
 
-    @ApiProperty({type: 'enum', enum: InvoiceTemplateCallDirection, example: InvoiceTemplateCallDirection.In})
+    @ApiProperty({enum: InvoiceTemplateCallDirection, example: InvoiceTemplateCallDirection.In})
         callDirection: InvoiceTemplateCallDirection
 
-    @ApiProperty({type: 'enum', enum: InvoiceTemplateCategory, example: InvoiceTemplateCategory.Customer})
+    @ApiProperty({enum: InvoiceTemplateCategory, example: InvoiceTemplateCategory.Customer})
         category: InvoiceTemplateCategory
 
     @ApiProperty()

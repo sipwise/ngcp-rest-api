@@ -4,7 +4,7 @@
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es2020",
+    "target": "es2022",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./src",
@@ -15,7 +15,7 @@
       "~/*": [
         "./*"
       ]
-    },
+    }
   },
   "exclude": [
     "dist",
@@ -23,6 +23,6 @@
     "node_modules",
     "prod",
     "test",
-    "tools",
+    "tools"
   ]
 }

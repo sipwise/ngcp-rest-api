@@ -12,7 +12,7 @@ export class LoggerMiddleware implements NestMiddleware {
 
     use(req: Request, _res: Response, next: NextFunction): void {
         const ctx = Context.get(req)
-        let body = JSON.stringify(req.body, obfuscatePasswordJSON)
+        let body = JSON.stringify(req.body ?? '', obfuscatePasswordJSON)
 
         /**
          * If the body is longer than 4096 characters, it is truncated to a length of 4096 and only the string

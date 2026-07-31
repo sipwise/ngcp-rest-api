@@ -2,7 +2,6 @@ import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post,
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {RewriteRuleSetRequestDto} from './dto/rewrite-rule-set-request.dto'
 import {RewriteRuleSetResponseDto} from './dto/rewrite-rule-set-response.dto'
@@ -257,9 +256,9 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
         return await this.ruleSetService.update(updates, sr)
     }
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(

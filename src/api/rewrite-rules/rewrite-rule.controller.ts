@@ -1,7 +1,7 @@
 import {Controller, Get, Req} from '@nestjs/common'
 import {ApiTags} from '@nestjs/swagger'
 
-import {RewriteRuleResponseDto} from './dto/rewrite-rule-response.dto'
+import {RewriteRuleBaseResponseDto} from './dto/rewrite-rule-base-response.dto'
 
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
@@ -18,7 +18,7 @@ const resourceName = 'rewrite-rules'
 )
 @ApiTags('RewriteRule')
 @Controller(resourceName)
-export class RewriteRuleController extends CrudController<never, RewriteRuleResponseDto> {
+export class RewriteRuleController extends CrudController<never, RewriteRuleBaseResponseDto> {
     private readonly log = new LoggerService(RewriteRuleController.name)
 
     constructor(
@@ -27,15 +27,15 @@ export class RewriteRuleController extends CrudController<never, RewriteRuleResp
     }
 
     @Get()
-    @ApiPaginatedResponse(RewriteRuleResponseDto)
-    async readAll(@Req() req): Promise<[RewriteRuleResponseDto[], number]> {
+    @ApiPaginatedResponse(RewriteRuleBaseResponseDto)
+    async readAll(@Req() req): Promise<[RewriteRuleBaseResponseDto[], number]> {
         this.log.debug({
-            message: 'read all header manipulations',
+            message: 'read rewrite rules base',
             func: this.readAll.name,
             url: req.url,
             method: req.method,
         })
-        const response = [new RewriteRuleResponseDto({url: req.url})]
+        const response = [new RewriteRuleBaseResponseDto({url: req.url})]
         return [response, 1]
     }
 }

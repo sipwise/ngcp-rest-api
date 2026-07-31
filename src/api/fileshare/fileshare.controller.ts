@@ -103,10 +103,16 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
         this.log.debug({message: 'fetch fileshare by id', func: this.readFile.name, url: req.url, method: req.method})
         const stream = await this.fileshareService.read(id)
         let size = 0
-        stream.options.disposition.split(/;\s*/).map(pair => {
-            const p = pair.split('=')
-            if (p[0] && p[0] == 'size' && p[1])
-                size = Number(p[1])
+
+        const disposition = typeof stream.options.disposition === 'string'
+            ? stream.options.disposition
+            : stream.options.disposition?.[0]
+
+        disposition?.split(/;\s*/).forEach(pair => {
+            const [key, value] = pair.split('=')
+            if (key === 'size' && value) {
+                size = Number(value)
+            }
         })
 
         res.set({
@@ -119,7 +125,7 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
         return stream
     }
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({})
     @Transactional()
     async delete(

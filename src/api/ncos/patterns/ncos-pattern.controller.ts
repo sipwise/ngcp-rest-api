@@ -3,7 +3,6 @@ import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/sw
 import {Request} from 'express'
 import {Operation} from 'helpers/patch.helper'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {NCOSPatternRequestDto} from './dto/ncos-pattern-request.dto'
 import {NCOSPatternResponseDto} from './dto/ncos-pattern-response.dto'
@@ -211,9 +210,9 @@ export class NCOSPatternController extends CrudController<NCOSPatternRequestDto,
         return await this.ncosPatternService.update(updates, sr)
     }
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(

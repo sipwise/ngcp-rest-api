@@ -364,7 +364,7 @@ describe('AdminService', () => {
             const update = new Dictionary<internal.Admin>(id.toString(), entity)
             await expect(service.update(update, localRequest)).rejects.toThrow(ForbiddenException)
         })
-        const protectedFields = internal.Admin.create({
+        const requiredFields = {
             billingData: true,
             callData: true,
             isActive: true,
@@ -375,8 +375,9 @@ describe('AdminService', () => {
             login: 'protectedJest',
             role: 'reseller',
             showPasswords: false,
-        })
-        Object.keys(protectedFields).map(s => {
+        }
+        const protectedFields = internal.Admin.create(requiredFields)
+        Object.keys(requiredFields).map(s => {
             it(`should throw ForbiddenException when updating ${s} on self`, async () => {
                 const id = 1
                 const patch: PatchOperation[] = [

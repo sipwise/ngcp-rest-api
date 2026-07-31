@@ -12,7 +12,7 @@ export class PeeringInboundRuleRequestDto implements RequestDto {
         group_id: number
 
     @IsEnum(VoipPeeringInboundRuleField)
-    @ApiProperty({type: 'enum', enum: VoipPeeringInboundRuleField})
+    @ApiProperty({type: 'string', enumName: 'VoipPeeringInboundRuleField'})
         field: string
 
     @IsString()

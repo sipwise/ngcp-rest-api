@@ -2,7 +2,6 @@ import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Re
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {HeaderManipulationRuleActionRequestParamDto} from './dto/header-manipulation-rule-action-request-param.dto'
 import {HeaderManipulationRuleActionRequestDto} from './dto/header-manipulation-rule-action-request.dto'
@@ -55,7 +54,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         super(resourceName, ruleActionService)
     }
 
-    @Post(':setId?/rules/:ruleId?/actions')
+    @Post('{:setId/}rules{/:ruleId}/actions')
     @ApiCreatedResponse(HeaderManipulationRuleActionResponseDto)
     @ApiBody({
         type: HeaderManipulationRuleActionRequestDto,
@@ -78,7 +77,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         return await Promise.all(created.map(async action => new HeaderManipulationRuleActionResponseDto(action)))
     }
 
-    @Get(':setId?/rules/:ruleId?/actions')
+    @Get('{:setId/}rules{/:ruleId}/actions')
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(HeaderManipulationRuleActionResponseDto)
     async readAll(
@@ -101,7 +100,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         return [responseList, totalCount]
     }
 
-    @Get(':setId?/rules/:ruleId?/actions/:id')
+    @Get('{:setId/}rules{/:ruleId}/actions/:id')
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
@@ -123,7 +122,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         return response
     }
 
-    @Put(':setId?/rules/:ruleId?/actions/:id')
+    @Put('{:setId/}rules{/:ruleId}/actions/:id')
     @ApiOkResponse({
         type: HeaderManipulationRuleActionResponseDto,
     })
@@ -151,7 +150,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         return response
     }
 
-    @Put(':setId?/rules/:ruleId?/actions')
+    @Put('{:setId/}rules{/:ruleId}/actions')
     @ApiPutBody(HeaderManipulationRuleActionRequestDto)
     @Transactional()
     async updateMany(
@@ -169,7 +168,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         return await this.ruleActionService.recreate(actions, sr)
     }
 
-    @Patch(':setId?/rules/:ruleId?/actions/:id')
+    @Patch('{:setId/}rules{/:ruleId}/actions/:id')
     @ApiConsumes('application/json-patch+json')
     @ApiBody({
         type: [PatchDto],
@@ -202,7 +201,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         return response
     }
 
-    @Patch(':setId?/rules/:ruleId?/actions')
+    @Patch('{:setId/}rules{/:ruleId}/actions')
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     @Transactional()
@@ -229,9 +228,9 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         return await this.ruleActionService.update(updates, sr)
     }
 
-    @Delete(':setId?/rules/:ruleId?/actions/:id')
+    @Delete('{:setId/}rules{/:ruleId}/actions/:id')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(
@@ -254,7 +253,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         return deletedIds
     }
 
-    @Get(':setId?/rules/:ruleId?/actions/:id/journal')
+    @Get('{:setId/}rules{/:ruleId}/actions/:id/journal')
     @ApiOkResponse({
         type: [JournalResponseDto],
     })

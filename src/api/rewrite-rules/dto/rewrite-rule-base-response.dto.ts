@@ -7,7 +7,7 @@ import {UrlReferenceType} from '~/enums/url-reference-type.enum'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
 import {UrlReference} from '~/types/url-reference.type'
 
-export class RewriteRuleResponseDto extends ResponseDto {
+export class RewriteRuleBaseResponseDto extends ResponseDto {
     @IsArray()
     @ValidateNested({each: true})
     @Type(() => UrlReference)

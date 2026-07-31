@@ -5,7 +5,6 @@ import {Request} from 'express'
 import {Operation} from 'fast-json-patch'
 import {I18nService} from 'nestjs-i18n'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {CustomerPhonebookService} from './customer-phonebook.service'
 import {CustomerPhonebookCsvRequestDto} from './dto/customer-phonebook-csv.request.dto'
@@ -74,7 +73,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
         super(resourceName, phonebookService)
     }
 
-    @Post(':customerId?/phonebook')
+    @Post('{:customerId/}phonebook')
     @ApiCreatedResponse(CustomerPhonebookResponseDto)
     @ApiBody({
         type: CustomerPhonebookRequestDto,
@@ -126,7 +125,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
         return await Promise.all(created.map(async phonebook => new CustomerPhonebookResponseDto(phonebook)))
     }
 
-    @Get(':customerId?/phonebook')
+    @Get('{:customerId/}phonebook')
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedMultipleResponse({
         description: 'List of customer phonebook entries in JSON or CSV',
@@ -175,7 +174,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
         return [responseList, totalCount]
     }
 
-    @Get(':customerId?/phonebook/:id')
+    @Get('{:customerId/}phonebook/:id')
     @ApiOkResponse({
         type: CustomerPhonebookResponseDto,
     })
@@ -203,7 +202,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
         return response
     }
 
-    @Put(':customerId?/phonebook/:id')
+    @Put('{:customerId/}phonebook/:id')
     @ApiOkResponse({
         type: CustomerPhonebookResponseDto,
     })
@@ -232,7 +231,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
         return response
     }
 
-    @Put(':customerId?/phonebook')
+    @Put('{:customerId/}phonebook')
     @ApiPutBody(CustomerPhonebookRequestDto)
     @Transactional()
     async updateMany(
@@ -249,7 +248,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
         return await this.phonebookService.update(sets, sr)
     }
 
-    @Patch(':customerId?/phonebook/:id')
+    @Patch('{:customerId/}phonebook/:id')
     @ApiConsumes('application/json-patch+json')
     @ApiBody({
         type: [PatchDto],
@@ -283,7 +282,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
         return response
     }
 
-    @Patch(':customerId?/phonebook')
+    @Patch('{:customerId/}phonebook')
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     @Transactional()
@@ -305,9 +304,9 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
         return await this.phonebookService.update(updates, sr)
     }
 
-    @Delete(':customerId?/phonebook/:id?')
+    @Delete('{:customerId/}phonebook{/:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(
@@ -329,7 +328,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
         return deletedIds
     }
 
-    @Get(':customerId?/phonebook/:id/journal')
+    @Get('{:customerId/}phonebook/:id/journal')
     @ApiOkResponse({
         type: [JournalResponseDto],
     })

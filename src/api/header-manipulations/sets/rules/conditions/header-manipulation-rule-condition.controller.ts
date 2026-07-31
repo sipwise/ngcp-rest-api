@@ -2,7 +2,6 @@ import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post,
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {HeaderManipulationRuleConditionRequestParamDto} from './dto/header-manipulation-rule-condition-request-param.dto'
 import {HeaderManipulationRuleConditionRequestDto} from './dto/header-manipulation-rule-condition-request.dto'
@@ -56,7 +55,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         super(resourceName, ruleConditionService)
     }
 
-    @Post(':setId?/rules/:ruleId?/conditions')
+    @Post('{:setId/}rules{/:ruleId}/conditions')
     @ApiCreatedResponse(HeaderManipulationRuleConditionResponseDto)
     @ApiBody({
         type: HeaderManipulationRuleConditionRequestDto,
@@ -84,7 +83,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         )
     }
 
-    @Get(':setId?/rules/:ruleId?/conditions')
+    @Get('{:setId/}rules{/:ruleId}/conditions')
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(HeaderManipulationRuleConditionResponseDto)
     async readAll(
@@ -112,7 +111,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         return [responseList, totalCount]
     }
 
-    @Get(':setId?/rules/:ruleId?/conditions/:id')
+    @Get('{:setId/}rules{/:ruleId}/conditions/:id')
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
@@ -138,7 +137,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         return response
     }
 
-    @Put(':setId?/rules/:ruleId?/conditions/:id')
+    @Put('{:setId/}rules{/:ruleId}/conditions/:id')
     @ApiOkResponse({
         type: HeaderManipulationRuleConditionResponseDto,
     })
@@ -168,7 +167,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         return response
     }
 
-    @Put(':setId?/rules/:ruleId?/conditions')
+    @Put('{:setId/}rules{/:ruleId}/conditions')
     @ApiPutBody(HeaderManipulationRuleConditionRequestDto)
     @Transactional()
     async updateMany(
@@ -186,7 +185,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         return await this.ruleConditionService.update(conditions, sr)
     }
 
-    @Patch(':setId?/rules/:ruleId?/conditions/:id')
+    @Patch('{:setId/}rules{/:ruleId}/conditions/:id')
     @ApiConsumes('application/json-patch+json')
     @ApiBody({
         type: [PatchDto],
@@ -222,7 +221,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         return response
     }
 
-    @Patch(':setId?/rules/:ruleId?/conditions')
+    @Patch('{:setId/}rules{/:ruleId}/conditions')
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     @Transactional()
@@ -249,9 +248,9 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         return await this.ruleConditionService.update(updates, sr)
     }
 
-    @Delete(':setId?/rules/:ruleId?/conditions/:id')
+    @Delete('{:setId/}rules{/:ruleId}/conditions/:id')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(
@@ -274,7 +273,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         return deletedIds
     }
 
-    @Get(':setId?/rules/:ruleId?/conditions/:id/@values')
+    @Get('{:setId/}rules{/:ruleId}/conditions/:id/@values')
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(HeaderManipulationRuleConditionValueResponseDto)
     async readConditionValues(
@@ -296,7 +295,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         return [responseList, totalCount]
     }
 
-    @Get(':setId?/rules/:ruleId?/conditions/:id/journal')
+    @Get('{:setId/}rules{/:ruleId}/conditions/:id/journal')
     @ApiOkResponse({
         type: [JournalResponseDto],
     })

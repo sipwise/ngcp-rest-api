@@ -13,7 +13,6 @@ import {
 import {ApiBody, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {DomainService} from './domain.service'
 import {DomainRequestDto} from './dto/domain-request.dto'
@@ -115,9 +114,9 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
         return responseItem
     }
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(

@@ -23,7 +23,7 @@ module.exports =
         parallel: true,
         extractComments: true,
         terserOptions: {
-          ecma: 2020,
+          ecma: 2022,
           compress: false, // causes issues when compressed and the size difference is only 1-3%
           mangle: false,
           keep_classnames: true,
@@ -70,29 +70,6 @@ module.exports =
         //  https://github.com/nestjs/terminus/issues/1423#issue-1002145070
         test: /@nestjs\/terminus\/dist\/utils\/.*\.(ts|js\.map)$/,
         loader: 'null-loader',
-      },
-      {
-        test: /bcrypt\/bcrypt\.js$/,
-        loader: 'string-replace-loader',
-        options: {
-          multiple: [
-            {
-              search: "var nodePreGyp = require('@mapbox/node-pre-gyp');",
-              replace: "",
-              strict: true,
-            },
-            {
-              search: "var binding_path = nodePreGyp.find(path.resolve(path.join(__dirname, './package.json')));",
-              replace: "",
-              strict: true
-            },
-            {
-              search: "var bindings = require(binding_path);",
-              replace: "var bindings = require('bindings')('bcrypt_lib');",
-              strict: true
-            },
-          ]
-        }
       },
       {
         test: /\.js$/,
@@ -161,6 +138,8 @@ module.exports =
           'cardinal',
           'class-transformer/storage',
           'fsevents',
+          'graphql',
+          'handlebars',
           'hbs',
           'hdb-pool',
           'ioredis',
@@ -211,10 +190,6 @@ module.exports =
     new CopyWebpackPlugin({
       patterns: [
         {
-          from: './node_modules/bcrypt/lib/binding/napi-v3/bcrypt_lib.node',
-          to: './build/bcrypt_lib.node',
-        },
-        {
           from: './node_modules/sd-notify/build/Release/notify.node',
           to: './build/notify.node',
         },
@@ -254,6 +229,10 @@ module.exports =
   ignoreWarnings:
   [
     /the request of a dependency is an expression/,
+    {
+      module: /node_modules\/handlebars\/lib\/index\.js/,
+      message: /require\.extensions is not supported by webpack/,
+    },
   ],
 /*
   performance:

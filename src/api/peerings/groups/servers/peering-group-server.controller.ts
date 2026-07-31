@@ -2,7 +2,6 @@ import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Re
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {PeeringGroupServerRequestDto} from './dto/peering-group-server-request.dto'
 import {PeeringGroupServerRequestParamDto} from './dto/peering-group-server-request.param.dto'
@@ -49,7 +48,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
         super(resourceName, serverService)
     }
 
-    @Post(':groupId?/servers')
+    @Post('{:groupId/}servers')
     @ApiCreatedResponse(PeeringGroupServerResponseDto)
     @ApiBody({
         type: PeeringGroupServerRequestDto,
@@ -75,7 +74,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
         )))
     }
 
-    @Get(':groupId?/servers')
+    @Get('{:groupId/}servers')
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(PeeringGroupServerResponseDto)
     async readAll(
@@ -97,7 +96,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
         return [responseList, totalCount]
     }
 
-    @Get(':groupId?/servers/:id')
+    @Get('{:groupId/}servers/:id')
     @ApiOkResponse({
         type: PeeringGroupServerResponseDto,
     })
@@ -121,7 +120,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
         )
     }
 
-    @Put(':groupId?/servers/:id')
+    @Put('{:groupId/}servers/:id')
     @ApiOkResponse({
         type: PeeringGroupServerResponseDto,
     })
@@ -153,7 +152,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
         return response
     }
 
-    @Put(':groupId?/servers')
+    @Put('{:groupId/}servers')
     @ApiPutBody(PeeringGroupServerRequestDto)
     @Transactional()
     async updateMany(
@@ -170,7 +169,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
         return await this.serverService.update(sets, sr)
     }
 
-    @Patch(':groupId?/servers/:id')
+    @Patch('{:groupId/}servers/:id')
     @ApiConsumes('application/json-patch+json')
     @ApiBody({
         type: [PatchDto],
@@ -205,7 +204,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
         return response
     }
 
-    @Patch(':groupId?/servers')
+    @Patch('{:groupId/}servers')
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     @Transactional()
@@ -225,9 +224,9 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
         return await this.serverService.update(updates, sr)
     }
 
-    @Delete(':groupId?/servers/:id?')
+    @Delete('{:groupId/}servers{/:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(
@@ -249,7 +248,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
         return deletedIds
     }
 
-    @Get(':groupId?/servers/:id/journal')
+    @Get('{:groupId/}servers/:id/journal')
     @ApiOkResponse({
         type: [JournalResponseDto],
     })

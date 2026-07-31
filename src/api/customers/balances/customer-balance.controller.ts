@@ -52,7 +52,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
         super(resourceName, customerBalanceService)
     }
 
-    @Get(':customerId?/balances')
+    @Get('{:customerId/}balances')
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(CustomerBalanceResponseDto)
     async readAll(
@@ -74,7 +74,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
         return [responseList, totalCount]
     }
 
-    @Get(':customerId?/balances/:id')
+    @Get('{:customerId/}balances/:id')
     @ApiOkResponse({
         type: CustomerBalanceResponseDto,
     })
@@ -102,7 +102,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
         return responseItem
     }
 
-    @Put(':customerId?/balances/:id')
+    @Put('{:customerId/}balances/:id')
     @ApiOkResponse({
         type: CustomerBalanceResponseDto,
     })
@@ -131,7 +131,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
         return response
     }
 
-    @Put(':customerId?/balances')
+    @Put('{:customerId/}balances')
     @ApiPutBody(CustomerBalanceRequestDto)
     @Transactional()
     async updateMany(
@@ -148,7 +148,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
         return await this.customerBalanceService.update(sets, sr)
     }
 
-    @Patch(':customerId?/balances/:id')
+    @Patch('{:customerId/}balances/:id')
     @ApiConsumes('application/json-patch+json')
     @ApiBody({
         type: [PatchDto],
@@ -180,7 +180,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
         return response
     }
 
-    @Patch(':customerId?/balances')
+    @Patch('{:customerId/}balances')
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     @Transactional()
@@ -205,7 +205,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
         return await this.customerBalanceService.update(updates, sr)
     }
 
-    @Get(':customerId?/balances/:id/journal')
+    @Get('{:customerId/}balances/:id/journal')
     @ApiOkResponse({
         type: [JournalResponseDto],
     })

@@ -6,7 +6,7 @@ import {compare} from 'bcrypt'
 import {Response} from 'express'
 import Redis, {Cluster} from 'ioredis'
 import {I18nService} from 'nestjs-i18n'
-import {authenticator} from 'otplib'
+import {OTP, VerifyResult} from 'otplib'
 import * as QRCode from 'qrcode'
 
 import {AuthResponseDto} from './dto/auth-response.dto'
@@ -25,6 +25,7 @@ import {LoggerService} from '~/logger/logger.service'
 @Injectable()
 export class AuthService {
     private readonly log = new LoggerService(AuthService.name)
+    private readonly otp = new OTP()
 
     /**
      * Creates a new `AuthService`
@@ -35,7 +36,6 @@ export class AuthService {
         private readonly jwtService: JwtService,
         @Inject(I18nService) private readonly i18n: I18nService,
     ) {
-        authenticator.options = {step: 30, window: 1}
     }
 
     async getRedisBanDb(): Promise<Redis | Cluster> {
@@ -101,11 +101,11 @@ export class AuthService {
             throw new InternalServerErrorException()
         }
 
-        const otpAuthUrl = authenticator.keyuri(
-            `NGCP-${companyName}: ${username}`,
-            `NGCP-${companyName}`,
-            user.otp_secret_key,
-        )
+        const otpAuthUrl = this.otp.generateURI({
+            issuer: `NGCP-${companyName}`,
+            label: `NGCP-${companyName}: ${username}`,
+            secret: user.otp_secret_key,
+        })
 
         const qrCodeBuffer = await QRCode.toBuffer(otpAuthUrl)
 
@@ -582,15 +582,18 @@ export class AuthService {
     }
 
     generateOtpSecretKey(): string {
-        return authenticator.generateSecret()
+        return this.otp.generateSecret()
     }
 
-    verifyOtp(secret: string, token: string): boolean {
+    async verifyOtp(secret: string, token: string): Promise<boolean> {
         this.log.debug({message: 'verifying otp', secret: secret, token: token})
-        return authenticator.verify({
+        const result = await this.otp.verify({
+            epochTolerance: 30,
+            counterTolerance: 1,
             secret: secret,
             token: token,
         })
+        return result.valid
     }
 
     async handleTwoFactorAuth(user: db.billing.Admin, req: ServiceRequest): Promise<void> {
@@ -618,7 +621,7 @@ export class AuthService {
         if (!req.headers['x-totp'] || typeof req.headers['x-totp'] !== 'string')
             throw new ForbiddenException(this.i18n.t('errors.MISSING_OTP'))
 
-        if (!this.verifyOtp(user.otp_secret, req.headers['x-totp'])) {
+        if (!await this.verifyOtp(user.otp_secret, req.headers['x-totp'])) {
             this.log.debug({message: 'otp verification failed'})
             throw new ForbiddenException(this.i18n.t('errors.INVALID_OTP'))
         }

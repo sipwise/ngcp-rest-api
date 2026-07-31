@@ -1,3 +1,5 @@
+const path = require('path')
+
 process.env.NODE_JEST = true
 
 module.exports =
@@ -10,14 +12,11 @@ module.exports =
     rootDir: 'src',
     testRegex: '.*\\.spec\\.ts$',
     transform: {
-        '^.+\\.(t|j)s$': [
-            'esbuild-jest',
-            {
-                sourcemap: true,
-                tsconfig: './tsconfig.jest.json',
-            },
-        ],
+        '^.+\\.(ts|tsx|js|jsx)$': path.resolve(__dirname, 'jest-unit.transformer.js'),
     },
+    transformIgnorePatterns: [
+        'node_modules/(?!(otplib|@otplib|@noble|@scure|uuid)/)',
+    ],
     collectCoverageFrom: [
         '**/*.(t|j)s',
     ],

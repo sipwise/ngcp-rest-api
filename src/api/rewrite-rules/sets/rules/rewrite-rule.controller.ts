@@ -2,7 +2,6 @@ import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Re
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {RewriteRuleRequestDto} from './dto/rewrite-rule-request.dto'
 import {RewriteRuleService} from './rewrite-rule.service'
@@ -53,7 +52,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         super(resourceName, ruleService)
     }
 
-    @Post(':setId?/rules')
+    @Post('{:setId/}rules')
     @ApiCreatedResponse(RewriteRuleResponseDto)
     @ApiBody({
         type: RewriteRuleRequestDto,
@@ -76,7 +75,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         return await Promise.all(created.map(async rule => new RewriteRuleResponseDto(rule)))
     }
 
-    @Get(':setId?/rules')
+    @Get('{:setId/}rules')
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(RewriteRuleResponseDto)
     async readAll(
@@ -98,7 +97,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         return [responseList, totalCount]
     }
 
-    @Get(':setId?/rules/:id')
+    @Get('{:setId/}rules/:id')
     @ApiOkResponse({
         type: RewriteRuleResponseDto,
     })
@@ -126,7 +125,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         return responseItem
     }
 
-    @Put(':setId?/rules/:id')
+    @Put('{:setId/}rules/:id')
     @ApiOkResponse({
         type: RewriteRuleResponseDto,
     })
@@ -155,7 +154,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         return response
     }
 
-    @Put(':setId?/rules')
+    @Put('{:setId/}rules')
     @ApiPutBody(RewriteRuleRequestDto)
     @Transactional()
     async updateMany(
@@ -172,7 +171,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         return await this.ruleService.update(sets, sr)
     }
 
-    @Patch(':setId?/rules/:id')
+    @Patch('{:setId/}rules/:id')
     @ApiConsumes('application/json-patch+json')
     @ApiBody({
         type: [PatchDto],
@@ -204,7 +203,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         return response
     }
 
-    @Patch(':setId?/rules')
+    @Patch('{:setId/}rules')
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     @Transactional()
@@ -224,9 +223,9 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         return await this.ruleService.update(updates, sr)
     }
 
-    @Delete(':setId?/rules/:id?')
+    @Delete('{:setId/}rules{/:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(
@@ -248,7 +247,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         return deletedIds
     }
 
-    @Get(':setId?/rules/:id/journal')
+    @Get('{:setId/}rules/:id/journal')
     @ApiOkResponse({
         type: [JournalResponseDto],
     })

@@ -17,7 +17,7 @@ export class NCOSLevelResponseDto extends ResponseDto {
     @ApiProperty()
         level: string
 
-    @ApiProperty({type: NCOSLevelMode, enum: NCOSLevelMode})
+    @ApiProperty({type: NCOSLevelMode, enumName: 'NCOSLevelMode'})
         mode: NCOSLevelMode
 
     @ApiProperty()

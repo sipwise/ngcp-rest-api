@@ -2,7 +2,6 @@ import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Re
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {PeeringInboundRuleRequestDto} from './dto/peering-inbound-rule-request.dto'
 import {PeeringInboundRuleRequestParamDto} from './dto/peering-inbound-rule-request.param.dto'
@@ -49,7 +48,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
         super(resourceName, ruleService)
     }
 
-    @Post(':groupId?/inbound-rules')
+    @Post('{:groupId/}inbound-rules')
     @ApiCreatedResponse(PeeringInboundRuleResponseDto)
     @ApiBody({
         type: PeeringInboundRuleRequestDto,
@@ -75,7 +74,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
         )))
     }
 
-    @Get(':groupId?/inbound-rules')
+    @Get('{:groupId/}inbound-rules')
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(PeeringInboundRuleResponseDto)
     async readAll(
@@ -97,7 +96,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
         return [responseList, totalCount]
     }
 
-    @Get(':groupId?/inbound-rules/:id')
+    @Get('{:groupId/}inbound-rules/:id')
     @ApiOkResponse({
         type: PeeringInboundRuleResponseDto,
     })
@@ -121,7 +120,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
         )
     }
 
-    @Put(':groupId?/inbound-rules/:id')
+    @Put('{:groupId/}inbound-rules/:id')
     @ApiOkResponse({
         type: PeeringInboundRuleResponseDto,
     })
@@ -153,7 +152,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
         return response
     }
 
-    @Put(':groupId?/inbound-rules')
+    @Put('{:groupId/}inbound-rules')
     @ApiPutBody(PeeringInboundRuleRequestDto)
     @Transactional()
     async updateMany(
@@ -170,7 +169,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
         return await this.ruleService.update(sets, sr)
     }
 
-    @Patch(':groupId?/inbound-rules/:id')
+    @Patch('{:groupId/}inbound-rules/:id')
     @ApiConsumes('application/json-patch+json')
     @ApiBody({
         type: [PatchDto],
@@ -205,7 +204,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
         return response
     }
 
-    @Patch(':groupId?/inbound-rules')
+    @Patch('{:groupId/}inbound-rules')
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     @Transactional()
@@ -225,9 +224,9 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
         return await this.ruleService.update(updates, sr)
     }
 
-    @Delete(':groupId?/inbound-rules/:id?')
+    @Delete('{:groupId/}inbound-rules{/:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(
@@ -249,7 +248,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
         return deletedIds
     }
 
-    @Get(':groupId?/inbound-rules/:id/journal')
+    @Get('{:groupId/}inbound-rules/:id/journal')
     @ApiOkResponse({
         type: [JournalResponseDto],
     })

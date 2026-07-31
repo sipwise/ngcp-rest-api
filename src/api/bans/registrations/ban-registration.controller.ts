@@ -2,7 +2,6 @@ import {Controller, Delete, Get, Param, Req} from '@nestjs/common'
 import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {string} from 'yargs'
 
 import {BanRegistrationService} from './ban-registration.service'
 import {BanRegistrationResponseDto} from './dto/ban-registration-response.dto'
@@ -76,7 +75,7 @@ export class BanRegistrationController {
 
     @Delete(':id')
     @ApiOkResponse({
-        type: [string],
+        type: [String],
     })
     @Transactional()
     async delete(

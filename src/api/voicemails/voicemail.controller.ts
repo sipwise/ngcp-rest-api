@@ -2,7 +2,6 @@ import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Put, Req} fro
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {VoicemailRequestDto} from './dto/voicemail-request.dto'
 import {VoicemailResponseDto} from './dto/voicemail-response.dto'
@@ -82,9 +81,9 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
         return responseItem
     }
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({
-        type: number,
+        type: Number,
     })
     @Transactional()
     async delete(

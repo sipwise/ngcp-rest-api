@@ -3,7 +3,6 @@ import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/sw
 import {Request} from 'express'
 import {Operation} from 'helpers/patch.helper'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {NCOSSetLevelRequestDto} from './dto/ncos-set-level-request.dto'
 import {NCOSSetLevelResponseDto} from './dto/ncos-set-level-response.dto'
@@ -79,7 +78,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         return await Promise.all(created.map(async setLevel => new NCOSSetLevelResponseDto(setLevel)))
     }
 
-    @Get(':id?/levels')
+    @Get('{:id/}levels')
     @ApiOkResponse({
         type: NCOSSetLevelResponseDto,
     })
@@ -102,7 +101,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         return [responseList, totalCount]
     }
 
-    @Get(':id?/levels/:levelId')
+    @Get('{:id/}levels/:levelId')
     @ApiOkResponse({
         type: NCOSSetLevelResponseDto,
     })
@@ -122,7 +121,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         return new NCOSSetLevelResponseDto(response)
     }
 
-    @Delete(':id?/levels/:levelId')
+    @Delete('{:id/}levels/:levelId')
     @ApiOkResponse({})
     @Transactional()
     async deleteLevel(
@@ -143,7 +142,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         return response
     }
 
-    @Get(':id?/levels/:levelId/journal')
+    @Get('{:id/}levels/:levelId/journal')
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
@@ -340,9 +339,9 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         return await this.ncosSetService.update(updates, sr)
     }
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(

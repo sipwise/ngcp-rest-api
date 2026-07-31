@@ -18,7 +18,6 @@ import {FileInterceptor} from '@nestjs/platform-express'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {InvoiceTemplateRequestDto} from './dto/invoice-template-request.dto'
 import {InvoiceTemplateResponseDto} from './dto/invoice-template-response.dto'
@@ -147,10 +146,16 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
         const sr = new ServiceRequest(req)
         const stream = await this.invoiceTemplateService.readFile(id, sr)
         let size = 0
-        stream.options.disposition.split(/;\s*/).map(pair => {
-            const p = pair.split('=')
-            if (p[0] && p[0] == 'size' && p[1])
-                size = Number(p[1])
+
+        const disposition = typeof stream.options.disposition === 'string'
+            ? stream.options.disposition
+            : stream.options.disposition?.[0]
+
+        disposition?.split(/;\s*/).forEach(pair => {
+            const [key, value] = pair.split('=')
+            if (key === 'size' && value) {
+                size = Number(value)
+            }
         })
 
         res.set({
@@ -223,9 +228,9 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
         return response
     }
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(

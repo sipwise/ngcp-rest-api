@@ -2,7 +2,6 @@ import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Re
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {PeeringRuleRequestParamDto} from './dto/peering-rule-request.param.dto'
 import {PeeringRuleResponseDto} from './dto/peering-rule-response.dto'
@@ -49,7 +48,7 @@ export class PeeringRuleController extends CrudController<PeeringRuleRequestDto,
         super(resourceName, ruleService)
     }
 
-    @Post(':groupId?/rules')
+    @Post('{:groupId/}rules')
     @ApiCreatedResponse(PeeringRuleResponseDto)
     @ApiBody({
         type: PeeringRuleRequestDto,
@@ -76,7 +75,7 @@ export class PeeringRuleController extends CrudController<PeeringRuleRequestDto,
         )))
     }
 
-    @Get(':groupId?/rules')
+    @Get('{:groupId/}rules')
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(PeeringRuleResponseDto)
     async readAll(
@@ -98,7 +97,7 @@ export class PeeringRuleController extends CrudController<PeeringRuleRequestDto,
         return [responseList, totalCount]
     }
 
-    @Get(':groupId?/rules/:id')
+    @Get('{:groupId/}rules/:id')
     @ApiOkResponse({
         type: PeeringRuleResponseDto,
     })
@@ -122,7 +121,7 @@ export class PeeringRuleController extends CrudController<PeeringRuleRequestDto,
         )
     }
 
-    @Put(':groupId?/rules/:id')
+    @Put('{:groupId/}rules/:id')
     @ApiOkResponse({
         type: PeeringRuleResponseDto,
     })
@@ -154,7 +153,7 @@ export class PeeringRuleController extends CrudController<PeeringRuleRequestDto,
         return response
     }
 
-    @Put(':groupId?/rules')
+    @Put('{:groupId/}rules')
     @ApiPutBody(PeeringRuleRequestDto)
     @Transactional()
     async updateMany(
@@ -171,7 +170,7 @@ export class PeeringRuleController extends CrudController<PeeringRuleRequestDto,
         return await this.ruleService.update(sets, sr)
     }
 
-    @Patch(':groupId?/rules/:id')
+    @Patch('{:groupId/}rules/:id')
     @ApiConsumes('application/json-patch+json')
     @ApiBody({
         type: [PatchDto],
@@ -206,7 +205,7 @@ export class PeeringRuleController extends CrudController<PeeringRuleRequestDto,
         return response
     }
 
-    @Patch(':groupId?/rules')
+    @Patch('{:groupId/}rules')
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     @Transactional()
@@ -226,9 +225,9 @@ export class PeeringRuleController extends CrudController<PeeringRuleRequestDto,
         return await this.ruleService.update(updates, sr)
     }
 
-    @Delete(':groupId?/rules/:id?')
+    @Delete('{:groupId/}rules{/:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(
@@ -250,7 +249,7 @@ export class PeeringRuleController extends CrudController<PeeringRuleRequestDto,
         return deletedIds
     }
 
-    @Get(':groupId?/rules/:id/journal')
+    @Get('{:groupId/}rules/:id/journal')
     @ApiOkResponse({
         type: [JournalResponseDto],
     })

@@ -2,7 +2,6 @@ import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Re
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {SystemContactRequestDto} from './dto/system-contact-request.dto'
 import {SystemContactResponseDto} from './dto/system-contact-response.dto'
@@ -206,9 +205,9 @@ export class SystemContactController extends CrudController<SystemContactRequest
         return await this.contactService.update(updates, sr)
     }
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(

@@ -7,5 +7,5 @@ export class RewriteRuleEmbeddedRequestDto extends RewriteRuleRequestDto {
     @ApiPropertyOptional()
     @IsOptional()
     @IsInt()
-        set_id: number
+    declare set_id: number
 }

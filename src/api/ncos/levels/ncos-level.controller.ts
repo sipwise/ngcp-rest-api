@@ -3,7 +3,6 @@ import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/sw
 import {Request} from 'express'
 import {Operation} from 'helpers/patch.helper'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {NCOSLevelRequestDto} from './dto/ncos-level-request.dto'
 import {NCOSLevelResponseDto} from './dto/ncos-level-response.dto'
@@ -236,9 +235,9 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
         return await this.ncosLevelService.update(updates, sr)
     }
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(

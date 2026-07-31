@@ -101,7 +101,11 @@ export async function dtoToCsv<T extends object>(dtos: T[], options?: CsvOptions
  *
  */
 export function handleCsvExport(stream: StreamableFile, res: Response): StreamableFile {
-    const size = extractContentSize(stream.options.disposition)
+    const disposition = typeof stream.options.disposition === 'string'
+        ? stream.options.disposition
+        : stream.options.disposition?.[0]
+
+    const size = extractContentSize(disposition)
     res.set({
         ...(size > 0 && {'Content-Length': size}),
         'Content-Type': stream.options.type,

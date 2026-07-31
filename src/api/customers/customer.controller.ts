@@ -2,7 +2,6 @@ import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post,
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery,ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {CustomerService} from './customer.service'
 import {CustomerBillingProfileResponseDto} from './dto/customer-billing-profile-response.dto'
@@ -267,9 +266,9 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
         return await this.customerService.update(updates, sr)
     }
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(

@@ -7,7 +7,7 @@ import {WinstonModule} from 'nest-winston'
 import sdNotify from 'sd-notify'
 
 import {AppService} from './app.service'
-import {winstonLoggerConfig} from './config/logger.config'
+import {winstonLoggerConfig} from './config/winston-logger.config'
 import {LoggerService} from './logger/logger.service'
 
 const workersAmount = AppService.config.common.workers

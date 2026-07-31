@@ -2,7 +2,7 @@ import {Injectable} from '@nestjs/common'
 import {PassportStrategy} from '@nestjs/passport'
 import {Request} from 'express'
 import {ServiceRequest} from 'interfaces/service-request.interface'
-import {Strategy} from 'passport-jwt'
+import {Strategy, StrategyOptionsWithRequest} from 'passport-jwt'
 
 import {AuthService} from './auth.service'
 import {AuthResponseDto} from './dto/auth-response.dto'
@@ -26,12 +26,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         private readonly app: AppService,
         private readonly auth: AuthService,
     ) {
-        super({
+        const opt: StrategyOptionsWithRequest = {
             passReqToCallback: true,
             jwtFromRequest: fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
             secretOrKey: jwtConstants.secret,
-        })
+        }
+        super(opt)
     }
 
     /**
@@ -102,8 +103,8 @@ function parseAuthHeader(hdrValue): { scheme: string, value: string } {
 }
 
 function fromAuthHeaderAsBearerToken() {
-    return function (request): unknown {
-        let token = null
+    return function (request: Request): string | null {
+        let token:  string | null = null
         const l = new LoggerService(fromAuthHeaderAsBearerToken.name)
         l.debug('get bearer token from auth header')
         if (request.headers[AUTH_HEADER]) {

@@ -3,7 +3,6 @@ import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/sw
 import {Request} from 'express'
 import {Operation, patchToEntity} from 'helpers/patch.helper'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {CustomerSpeedDialService} from './customer-speed-dial.service'
 import {CustomerSpeedDialRequestDto} from './dto/customer-speed-dial-request.dto'
@@ -183,9 +182,9 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         return await this.customerSpeedDialService.update(updates, sr)
     }
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(

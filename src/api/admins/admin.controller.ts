@@ -15,7 +15,6 @@ import {
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {AdminService} from './admin.service'
 import {AdminRequestDto} from './dto/admin-request.dto'
@@ -240,9 +239,9 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         return await this.adminService.update(updates, sr)
     }
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(

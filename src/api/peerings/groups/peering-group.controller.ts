@@ -4,7 +4,6 @@ import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/sw
 import {Request} from 'express'
 import {Operation} from 'fast-json-patch'
 import {Transactional} from 'typeorm-transactional'
-import {number} from 'yargs'
 
 import {PeeringGroupRequestDto} from './dto/peering-group-request.dto'
 import {PeeringGroupResponseDto} from './dto/peering-group-response.dto'
@@ -232,9 +231,9 @@ export class PeeringGroupController extends CrudController<PeeringGroupRequestDt
     }
 
 
-    @Delete(':id?')
+    @Delete('{:id}')
     @ApiOkResponse({
-        type: [number],
+        type: [Number],
     })
     @Transactional()
     async delete(
