@@ -194,7 +194,7 @@ module.exports =
           to: './build/notify.node',
         },
         {
-          from: './node_modules/unix-dgram/build/Release/unix_dgram.node',
+          from: './node_modules/winston-syslog/node_modules/unix-dgram/build/Release/unix_dgram.node',
           to: './build/unix_dgram.node',
         },
         {

@@ -2,11 +2,11 @@ import {Readable} from 'stream'
 
 import {ForbiddenException, Inject, Injectable, InternalServerErrorException, StreamableFile, UnauthorizedException} from '@nestjs/common'
 import {JwtService} from '@nestjs/jwt'
-import {compare} from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import {Response} from 'express'
 import Redis, {Cluster} from 'ioredis'
 import {I18nService} from 'nestjs-i18n'
-import {OTP, VerifyResult} from 'otplib'
+import {OTP} from 'otplib'
 import * as QRCode from 'qrcode'
 
 import {AuthResponseDto} from './dto/auth-response.dto'
@@ -311,7 +311,7 @@ export class AuthService {
             this.log.log({message: '"API_DEV_SKIP_PASS_AUTH" MODE!'})
             return true
         }
-        return await compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`)
+        return await bcrypt.compare(password, `$${bcrypt_version}$${bcrypt_cost}$${b64salt}${b64hash}`)
     }
 
     async ban(username: string, domain: string, realm: string, ip: string): Promise<void> {
