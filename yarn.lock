@@ -6458,10 +6458,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globals@npm:17.8.0":
-  version: 17.8.0
-  resolution: "globals@npm:17.8.0"
-  checksum: 10c0/e31b36cef3befd446487674dc6ca7b8f8e62a3b76aadd975dbf80ffa732366b3ac58df8941999eb6b1406d97480103711db85d2a49c955da47ff5ec688bee9b5
+"globals@npm:17.9.0":
+  version: 17.9.0
+  resolution: "globals@npm:17.9.0"
+  checksum: 10c0/776116bffb916e462d548c26a44c9a5d8f4e551935a883991e9f5d68cbcb21b63e4c688e36bbc564f97d3025e304d8b2bb0a611ecf944825aeee164898dcfbdd
   languageName: node
   linkType: hard
 
@@ -7882,14 +7882,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"js-yaml@npm:5.2.2":
-  version: 5.2.2
-  resolution: "js-yaml@npm:5.2.2"
+"js-yaml@npm:5.2.3":
+  version: 5.2.3
+  resolution: "js-yaml@npm:5.2.3"
   dependencies:
     argparse: "npm:^2.0.1"
   bin:
     js-yaml: bin/js-yaml.mjs
-  checksum: 10c0/e8ded203b235b3d562818c67bf362122abbcee89e507b62bddcdd3085b2f2dd866071e5e78f8e617d41d1a0c0baa1cec12a8fdec5859c571bf862adf585e2684
+  checksum: 10c0/55cd6310c8eee88d432ae038d451ac9d6aa0eb9e5d38a94df3d6c4a4015d08c9dad7c18669e0e8854e4173a615d6b6b7448bd0aac408773f8a46122ffd863c69
   languageName: node
   linkType: hard
 
@@ -8824,14 +8824,14 @@ __metadata:
     express: "npm:5.2.1"
     fast-json-patch: "npm:3.1.1"
     generate-password: "npm:1.7.1"
-    globals: "npm:17.8.0"
+    globals: "npm:17.9.0"
     halson: "npm:3.2.0"
     ignore-loader: "npm:0.1.2"
     ioredis: "npm:5.11.1"
     jest: "npm:30.4.2"
     jest-circus: "npm:30.4.2"
     jest-environment-node: "npm:30.4.1"
-    js-yaml: "npm:5.2.2"
+    js-yaml: "npm:5.2.3"
     mysql2: "npm:3.23.2"
     nest-winston: "npm:1.10.2"
     nestjs-i18n: "npm:10.8.5"
