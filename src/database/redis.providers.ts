@@ -16,7 +16,7 @@ export const redisProviders = [
             try {
                 redis = new Redis(redisConfig)
                 redis.on('error', function(err) {
-                    log.error('Redis error:', err)
+                    log.error('Redis error:', err.message)
                 })
                 await redis.connect()
                 log.debug('Connected to Redis')
@@ -38,7 +38,7 @@ export const redisProviders = [
             try {
                 redis = new Redis(redisConfig)
                 redis.on('error', function(err) {
-                    log.error('Redis (PubSub) error:', err)
+                    log.error('Redis (PubSub) error:', err.message)
                 })
                 await redis.connect()
                 log.debug('Connected to Redis (PubSub)')

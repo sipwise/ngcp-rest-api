@@ -185,7 +185,6 @@ if (process.env.NODE_ENV != 'test') {
     exports: [
         AppService,
         Logger,
-        LoggerService,
         LicenseService,
     ],
     providers: [
@@ -194,7 +193,6 @@ if (process.env.NODE_ENV != 'test') {
         FileshareSchedule,
         RedisStateSchedule,
         Logger,
-        LoggerService,
         LicenseService,
     ],
 })

@@ -3,17 +3,16 @@ import {readFileSync} from 'fs'
 import {ClassSerializerInterceptor} from '@nestjs/common'
 import {NestApplication, NestFactory, Reflector} from '@nestjs/core'
 import bodyParser from 'body-parser'
-import {WinstonModule} from 'nest-winston'
 
 import {AppClusterService} from './app-cluster.service'
 import {AppModule} from './app.module'
 import {AppService} from './app.service'
-import {winstonLoggerConfig} from './config/winston-logger.config'
 import {HttpExceptionFilter} from './helpers/http-exception.filter'
 import {createSwaggerDocument} from './helpers/swagger.helper'
 import {LoggingInterceptor} from './interceptors/logging.interceptor'
 import {TransformInterceptor} from './interceptors/transform.interceptor'
 import {ResponseValidationInterceptor} from './interceptors/validate.interceptor'
+import {LoggerService} from './logger/logger.service'
 import {ValidateInputPipe} from './pipes/validate.pipe'
 
 async function bootstrap(): Promise<void> {
@@ -28,7 +27,7 @@ async function bootstrap(): Promise<void> {
                 requestCert: true,
                 rejectUnauthorized: false,
             },
-            logger: WinstonModule.createLogger(winstonLoggerConfig),
+            logger: new LoggerService('main'),
             cors: true,
         },
     )

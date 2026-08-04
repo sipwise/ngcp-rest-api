@@ -27,7 +27,6 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
 
     constructor(
         @Inject(AppService) private readonly app: AppService,
-        @Inject(LoggerService) private readonly logger: LoggerService,
         @Inject(I18nService) private readonly i18n: I18nService,
     ) {
         super()

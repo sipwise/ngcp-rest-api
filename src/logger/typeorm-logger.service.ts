@@ -1,24 +1,27 @@
 import {Injectable} from '@nestjs/common'
 import {Logger as TypeormLogger, LoggerOptions, QueryRunner} from 'typeorm'
-import winston from 'winston'
 
-import {winstonLoggerConfig} from '~/config/winston-logger.config'
+import {winstonLogger} from './logger.service'
 
 @Injectable()
 export class TypeormLoggerService implements TypeormLogger {
-    private readonly logger: winston.Logger
+    private readonly silencedContexts = ['TypeORM']
+    private readonly silencedMessagePrefix = 'All classes found using provided glob pattern'
     private readonly context = 'TypeORM'
 
-    constructor(private readonly options?: LoggerOptions) {
-        this.logger = winston.createLogger(winstonLoggerConfig)
-    }
+    constructor(private readonly options?: LoggerOptions) {}
 
     log(level: 'log' | 'info' | 'warn', message: string, _queryRunner?: QueryRunner): void {
-        this.logger.log(level, message, {context: this.context})
+        const ctx = this.context
+        if (ctx && this.silencedContexts.includes(ctx)) {
+            if (message.startsWith(this.silencedMessagePrefix))
+                return
+        }
+        winstonLogger.log({level: level, message, context: ctx})
     }
 
     logMigration(message: string, _queryRunner?: QueryRunner): void {
-        this.logger.info(message, {context: this.context})
+        winstonLogger.log({level: 'info', message, context: this.context})
     }
 
     logQuery(query: string, parameters?: unknown[], _queryRunner?: QueryRunner): void {
@@ -31,7 +34,7 @@ export class TypeormLoggerService implements TypeormLogger {
             // do not log ping queries and fileshare schedule deletes
             return
         }
-        this.logger.debug(query, {parameters: parameters, context: this.context})
+        winstonLogger.log({level: 'debug', message: query, parameters, context: this.context})
     }
 
     logQueryError(error: string | Error, query: string, parameters?: unknown, _queryRunner?: QueryRunner): void {
@@ -40,17 +43,16 @@ export class TypeormLoggerService implements TypeormLogger {
             (Array.isArray(this.options) && this.options.indexOf('error') !== -1)))
             return
         const message: string = error instanceof Error ? error.message : error
-        this.logger.error(message, {query: query, parameters: parameters, context: this.context})
+        winstonLogger.log({level: 'error', message, query, parameters, context: this.context})
     }
 
     logQuerySlow(time: number, query: string, parameters?: unknown, _queryRunner?: QueryRunner): void {
-        this.logger.warn(`query is slow (+${time}): ` + query, {parameters: parameters, context: this.context})
+        winstonLogger.log({level: 'warn', message: `query is slow (+${time}): ` + query, parameters, context: this.context})
     }
 
     logSchemaBuild(message: string, _queryRunner?: QueryRunner): void {
         if (this.options === 'all' || (Array.isArray(this.options) && this.options.indexOf('schema') !== -1)) {
-            this.logger.info(message, {context: this.context})
+            winstonLogger.log({level: 'info', message, context: this.context})
         }
     }
-
 }

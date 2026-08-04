@@ -1,8 +1,8 @@
 import {utilities} from 'nest-winston'
-import winston, {LoggerOptions} from 'winston'
+import winston, {LoggerOptions as WinstonLoggerOptions} from 'winston'
 import {Syslog} from 'winston-syslog'
 
-export const winstonLoggerConfig: LoggerOptions = {
+export const winstonLoggerConfig: WinstonLoggerOptions = {
     // TODO: Set level when template supports log_level setting
     // level: process.env.NODE_ENV == 'development' ? 'debug' : config.common.log_level,
     level: 'debug',

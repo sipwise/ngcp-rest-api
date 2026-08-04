@@ -3,11 +3,9 @@ import fs from 'fs'
 import {exit} from 'process'
 
 import {Injectable} from '@nestjs/common'
-import {WinstonModule} from 'nest-winston'
 import sdNotify from 'sd-notify'
 
 import {AppService} from './app.service'
-import {winstonLoggerConfig} from './config/winston-logger.config'
 import {LoggerService} from './logger/logger.service'
 
 const workersAmount = AppService.config.common.workers
@@ -26,7 +24,7 @@ export class AppClusterService {
     static clusterize(callback: Function): void {
         let logger: LoggerService
         try {
-            logger = WinstonModule.createLogger(winstonLoggerConfig) as LoggerService
+            logger = new LoggerService('cluster')
             if (cluster.isWorker) {
                 logger.log(`Cluster worker PID: ${process.pid}`)
                 callback()
