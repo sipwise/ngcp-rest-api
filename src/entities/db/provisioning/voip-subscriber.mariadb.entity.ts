@@ -198,8 +198,7 @@ export class VoipSubscriber extends BaseEntity {
     })
         last_banned_ip?: string
 
-    @OneToOne(() => BillingVoipSubscriber)
-    @JoinColumn({name: 'uuid', referencedColumnName: 'uuid'})
+    @OneToOne(() => BillingVoipSubscriber, billingSub => billingSub.provisioningVoipSubscriber)
         billing_voip_subscriber: BillingVoipSubscriber
 
     @ManyToOne(() => VoipDomain, domain => domain.id)

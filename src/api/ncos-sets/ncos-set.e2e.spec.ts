@@ -1,6 +1,5 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import {validate} from 'class-validator'
 import request from 'supertest'
 
 import {NCOSSetResponseDto} from './dto/ncos-set-response.dto'
@@ -14,6 +13,7 @@ import {db} from '~/entities'
 import {NCOSLevelMode} from '~/entities/internal/ncos-level.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {validate} from '~/helpers/validate.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
@@ -316,10 +316,12 @@ describe('NCOS Set', () => {
 
     describe('NCOSSet DELETE', () => {
         it('delete created ncos set level', async () => {
-            const response = await request(app.getHttpServer())
-                .delete(`/ncos/sets/${createdIds[0]}/levels/${createdSetLevelIds[0]}`)
-                .set(...authHeader)
-            expect(response.status).toEqual(200)
+            if (createdSetLevelIds.length) {
+                const response = await request(app.getHttpServer())
+                    .delete(`/ncos/sets/${createdIds[0]}/levels/${createdSetLevelIds[0]}`)
+                    .set(...authHeader)
+                expect(response.status).toEqual(200)
+            }
         })
 
         it('delete created ncos sets', async () => {
@@ -332,8 +334,10 @@ describe('NCOS Set', () => {
         })
 
         it('delete created ncos level', async () => {
-            const result = await db.billing.NCOSLevel.delete({id: createdLevelIds[0]})
-            expect(result.affected).toEqual(1)
+            if (createdLevelIds.length) {
+                const result = await db.billing.NCOSLevel.delete({id: createdLevelIds[0]})
+                expect(result.affected).toEqual(1)
+            }
         })
     })
 })

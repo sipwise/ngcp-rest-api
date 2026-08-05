@@ -18,6 +18,9 @@ module.exports =
             },
         ],
     },
+    transformIgnorePatterns: [
+        'node_modules/(?!(otplib|@otplib|@noble|@scure|uuid)/)',
+    ],
     collectCoverageFrom: [
         '**/*.(t|j)s',
     ],

@@ -1,6 +1,5 @@
-import {INestApplication} from '@nestjs/common'
+import {ConsoleLogger, INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import {validate} from 'class-validator'
 import request from 'supertest'
 
 import {CustomerSpeedDialModule} from './customer-speed-dial.module'
@@ -11,6 +10,7 @@ import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {validate} from '~/helpers/validate.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
@@ -26,7 +26,7 @@ describe('CustomerSpeedDial', () => {
     let authService: AuthService
     let authHeader: [string, string]
     const testCustomerId = 13
-    let createdIds: number[] = []
+    const createdIds: number[] = []
     let createdEntries = []
     const creds = {username: 'administrator', password: 'administrator'}
 
@@ -38,8 +38,6 @@ describe('CustomerSpeedDial', () => {
 
         appService = moduleRef.get<AppService>(AppService)
         authService = moduleRef.get<AuthService>(AuthService)
-
-        createdIds = []
 
         app = moduleRef.createNestApplication()
 
@@ -99,7 +97,7 @@ describe('CustomerSpeedDial', () => {
                     .set(...authHeader)
                     .send(csd1)
                 expect(response.status).toEqual(201)
-                createdIds.push(+response.body.id)
+                createdIds.push(+response.body[0].id)
             })
             it('create customer speed dial *2', async () => {
                 const response = await request(app.getHttpServer())
@@ -107,7 +105,7 @@ describe('CustomerSpeedDial', () => {
                     .set(...authHeader)
                     .send(csd2)
                 expect(response.status).toEqual(201)
-                createdIds.push(+response.body.id)
+                createdIds.push(+response.body[0].id)
             })
             it('fail duplicate customer speed dial', async () => {
                 const response = await request(app.getHttpServer())

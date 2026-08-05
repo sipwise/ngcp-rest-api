@@ -60,8 +60,8 @@ export class BanRegistrationRedisRepository {
 
             userDomMatchCount = line.match(/name:\s+([^\s@]+)@([^:]+)::auth_count/)
             if (userDomMatchCount) {
-                username = userDomMatchCount.at(1)
-                domain = userDomMatchCount.at(2)
+                username = userDomMatchCount[1]
+                domain = userDomMatchCount[2]
                 entryId = uuidv5(`${username}:${domain}`, uuidNS)
 
                 if (id && entryId != id) {
@@ -103,8 +103,8 @@ export class BanRegistrationRedisRepository {
 
             userDomMatchLast = line.match(/name:\s+([^\s@]+)@([^:]+)::last_auth/)
             if (userDomMatchLast) {
-                username = userDomMatchLast.at(1)
-                domain = userDomMatchLast.at(2)
+                username = userDomMatchLast[1]
+                domain = userDomMatchLast[2]
                 entryId = uuidv5(`${username}:${domain}`, uuidNS)
 
                 if (id && entryId != id) {
@@ -146,10 +146,10 @@ export class BanRegistrationRedisRepository {
 
             const valueMatch = line.match(/value:\s+([^\s]+)/)
             if (valueMatch && userDomMatchCount) {
-                username = userDomMatchCount.at(1)
-                domain = userDomMatchCount.at(2)
+                username = userDomMatchCount[1]
+                domain = userDomMatchCount[2]
                 entryId = uuidv5(`${username}:${domain}`, uuidNS)
-                authCount = +valueMatch.at(1)
+                authCount = +valueMatch[1]
 
                 if (!entries[entryId]) {
                     entries[entryId] = {
@@ -163,17 +163,17 @@ export class BanRegistrationRedisRepository {
                     entries[entryId].authCount = authCount
                 }
             } else if (valueMatch && userDomMatchLast) {
-                username = userDomMatchLast.at(1)
-                domain = userDomMatchLast.at(2)
+                username = userDomMatchLast[1]
+                domain = userDomMatchLast[2]
                 entryId = uuidv5(`${username}:${domain}`, uuidNS)
-                lastAuth = +valueMatch.at(1)
+                lastAuth = +valueMatch[1]
 
                 if (!entries[entryId]) {
                     entries[entryId] = {
                         id: entryId,
                         username: username,
                         domain: domain,
-                        authCount: +valueMatch.at(1),
+                        authCount: +valueMatch[1],
                         lastAuth: new Date(lastAuth * 1000),
                     }
                 } else {

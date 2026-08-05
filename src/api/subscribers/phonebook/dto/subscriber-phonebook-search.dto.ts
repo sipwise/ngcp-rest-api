@@ -5,6 +5,7 @@ export class SubscriberPhonebookSearchDto {
     number: string = undefined
     shared: boolean = undefined
     own: boolean = undefined
+    purge_existing: boolean = undefined
     _alias = {
         id: 'phonebook.id',
         customer_id: 'subscriber.contract_id',

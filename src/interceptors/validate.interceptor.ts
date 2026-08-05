@@ -6,10 +6,10 @@ import {
     InternalServerErrorException,
     NestInterceptor,
 } from '@nestjs/common'
-import {validate} from 'class-validator'
 import {Observable} from 'rxjs'
 import {catchError,switchMap} from 'rxjs/operators'
 
+import {validate} from '~/helpers/validate.helper'
 import {LoggerService} from '~/logger/logger.service'
 
 @Injectable()
@@ -26,7 +26,7 @@ export class ResponseValidationInterceptor implements NestInterceptor {
                     if (typeof dto !== 'object') {
                         return data
                     }
-                    const validationErrors = await validate(dto, {forbidUnknownValues: false})
+                    const validationErrors = await validate(dto)
                     if (validationErrors.length > 0) {
                         this.log.error({message: 'Response validation failed', validationErrors})
                         throw new InternalServerErrorException()
@@ -36,7 +36,7 @@ export class ResponseValidationInterceptor implements NestInterceptor {
                     if (typeof data !== 'object') {
                         return data
                     }
-                    const validationErrors = await validate(data, {forbidUnknownValues: false})
+                    const validationErrors = await validate(data)
                     if (validationErrors.length > 0) {
                         this.log.error({message: 'Response validation failed', validationErrors})
                         throw new InternalServerErrorException()

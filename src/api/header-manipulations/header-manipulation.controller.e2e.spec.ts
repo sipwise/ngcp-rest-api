@@ -1,6 +1,5 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import {validate} from 'class-validator'
 import request from 'supertest'
 
 import {HeaderManipulationResponseDto} from './dto/header-manipulation-response.dto'
@@ -10,6 +9,7 @@ import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {validate} from '~/helpers/validate.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 

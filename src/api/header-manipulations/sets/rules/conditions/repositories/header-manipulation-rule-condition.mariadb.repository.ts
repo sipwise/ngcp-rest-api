@@ -141,9 +141,10 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         for (const id of ids) {
             const dbEntity = db.provisioning.VoipHeaderRuleCondition.create().fromInternal(updates[id])
             await db.provisioning.VoipHeaderRuleCondition.update(id, dbEntity)
-            if (resetValues)
+            const values = updates[id].values
+            if (!values || values.length == 0 || resetValues)
                 await db.provisioning.VoipHeaderRuleConditionValue.delete({condition_id: id})
-            if (updates[id].values) {
+            if (values) {
                 await Promise.all(updates[id].values.map(async value => {
                     const conditionValue = new db.provisioning.VoipHeaderRuleConditionValue()
                     conditionValue.condition_id = id

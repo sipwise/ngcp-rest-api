@@ -82,6 +82,7 @@
     "superagent": "10.3.0",
     "swagger-ui-express": "5.0.1",
     "terser-webpack-plugin": "5.6.1",
+    "ts-jest": "^29.4.12",
     "tsconfig-paths-webpack-plugin": "4.2.0",
     "typeorm": "0.3.31",
     "typeorm-transactional": "0.5.0",

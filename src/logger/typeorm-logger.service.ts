@@ -6,7 +6,7 @@ import {winstonLogger} from './logger.service'
 @Injectable()
 export class TypeormLoggerService implements TypeormLogger {
     private readonly silencedContexts = ['TypeORM']
-    private readonly silencedMessagePrefix = 'All classes found using provided glob pattern'
+    private readonly silencedMessagePrefixes = ['All classes found using provided glob pattern']
     private readonly context = 'TypeORM'
 
     constructor(private readonly options?: LoggerOptions) {}
@@ -14,7 +14,7 @@ export class TypeormLoggerService implements TypeormLogger {
     log(level: 'log' | 'info' | 'warn', message: string, _queryRunner?: QueryRunner): void {
         const ctx = this.context
         if (ctx && this.silencedContexts.includes(ctx)) {
-            if (message.startsWith(this.silencedMessagePrefix))
+            if (this.silencedMessagePrefixes.some(prefix => message.startsWith(prefix)))
                 return
         }
         winstonLogger.log({level: level, message, context: ctx})

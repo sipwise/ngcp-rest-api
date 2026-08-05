@@ -1,6 +1,5 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import {validate} from 'class-validator'
 import request from 'supertest'
 
 import {PeeringGroupResponseDto} from './dto/peering-group-response.dto'
@@ -12,6 +11,7 @@ import {AuthService} from '~/auth/auth.service'
 import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {validate} from '~/helpers/validate.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
@@ -28,7 +28,8 @@ describe('Peering Group', () => {
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
-    let createdIds: number[] = []
+    const createdPeeringGroupIds: number[] = []
+    const createdContractIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
 
     beforeAll(async () => {
@@ -39,8 +40,6 @@ describe('Peering Group', () => {
 
         appService = moduleRef.get<AppService>(AppService)
         authService = moduleRef.get<AuthService>(AuthService)
-
-        createdIds = []
 
         app = moduleRef.createNestApplication()
 
@@ -98,8 +97,8 @@ describe('Peering Group', () => {
                     .set(...authHeader)
                     .send(peeringGroup1DefaultPriority)
                 expect(response.status).toEqual(201)
-                createdIds.push(+response.body[0].id)
-                await db.billing.Contract.delete(contract.id)
+                createdPeeringGroupIds.push(+response.body[0].id)
+                createdContractIds.push(contract.id)
             })
             it('create group test_peeringGroup2', async () => {
                 const contract = await db.billing.Contract.create({
@@ -116,8 +115,8 @@ describe('Peering Group', () => {
                     .set(...authHeader)
                     .send(peeringGroup2)
                 expect(response.status).toEqual(201)
-                createdIds.push(+response.body[0].id)
-                await db.billing.Contract.delete(contract.id)
+                createdPeeringGroupIds.push(+response.body[0].id)
+                createdContractIds.push(contract.id)
             })
             it('fail create group with non existing system contract', async () => {
                 const response = await request(app.getHttpServer())
@@ -143,7 +142,8 @@ describe('Peering Group', () => {
                         contract_id: contract.id,
                     })
                 expect(success.status).toEqual(201)
-                createdIds.push(+success.body[0].id)
+                createdPeeringGroupIds.push(+success.body[0].id)
+                createdContractIds.push(contract.id)
                 const fail = await request(app.getHttpServer())
                     .post('/peerings/groups')
                     .set(...authHeader)
@@ -153,7 +153,6 @@ describe('Peering Group', () => {
                         contract_id: contract.id,
                     })
                 expect(fail.status).toEqual(422)
-                await db.billing.Contract.delete(contract.id)
             })
             it('validation fail on group', async () => {
                 const response = await request(app.getHttpServer())
@@ -166,7 +165,7 @@ describe('Peering Group', () => {
         describe('GET', () => {
             it('read created group test_peeringGroup1DefaultPriority by id', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/peerings/groups/${createdIds[0]}`)
+                    .get(`/peerings/groups/${createdPeeringGroupIds[0]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const group: PeeringGroupResponseDto = response.body
@@ -224,7 +223,7 @@ describe('Peering Group', () => {
                     contract_id: contract.id,
                 }
                 const response = await request(app.getHttpServer())
-                    .put(`/peerings/groups/${createdIds[0]}`)
+                    .put(`/peerings/groups/${createdPeeringGroupIds[0]}`)
                     .set(...authHeader)
                     .send (peeringGroup1DefaultPriorityUpdate)
                 expect(response.status).toEqual(200)
@@ -239,28 +238,26 @@ describe('Peering Group', () => {
                     contract_id: contract.id,
                 }
                 const response = await request(app.getHttpServer())
-                    .put(`/peerings/groups/${createdIds[1]}`)
+                    .put(`/peerings/groups/${createdPeeringGroupIds[1]}`)
                     .set(...authHeader)
                     .send(peeringGroup2Update)
                 expect(response.status).toEqual(200)
             })
             it('read updated group 1', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/peerings/groups/${createdIds[0]}`)
+                    .get(`/peerings/groups/${createdPeeringGroupIds[0]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const group: PeeringGroupResponseDto = response.body
                 expect(group.name).toEqual('renamed_test_peeringGroup1DefaultPriority')
-                await db.billing.Contract.delete(group.contract_id)
             })
             it('read updated group 2', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/peerings/groups/${createdIds[1]}`)
+                    .get(`/peerings/groups/${createdPeeringGroupIds[1]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const group: PeeringGroupResponseDto = response.body
                 expect(group.name).toEqual('renamed_test_peeringGroup2')
-                await db.billing.Contract.delete(group.contract_id)
             })
             it('update non-existing group', async () => {
                 const response = await request(app.getHttpServer())
@@ -268,6 +265,7 @@ describe('Peering Group', () => {
                     .set(...authHeader)
                     .send({
                         name: 'renamed_test_peeringGroup1DefaultPriority',
+                        contract_id: createdContractIds[-1],
                     })
                 expect(response.status).toEqual(404)
             })
@@ -282,14 +280,14 @@ describe('Peering Group', () => {
             ]
             it('adjust peeringGroup1DefaultPriority', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch(`/peerings/groups/${createdIds[0]}`)
+                    .patch(`/peerings/groups/${createdPeeringGroupIds[0]}`)
                     .set(...authHeader)
                     .send(patch)
                 expect(response.status).toEqual(200)
             })
             it('read updated peeringGroup1DefaultPriority', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/peerings/groups/${createdIds[0]}`)
+                    .get(`/peerings/groups/${createdPeeringGroupIds[0]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const group: PeeringGroupResponseDto = response.body
@@ -307,12 +305,13 @@ describe('Peering Group', () => {
 
     describe('Peering Groups DELETE', () => {
         it('delete created groups', async () => {
-            for (const id of createdIds) {
+            for (const id of createdPeeringGroupIds) {
                 const result = await request(app.getHttpServer())
                     .delete(`/peerings/groups/${id}`)
                     .set(...authHeader)
                 expect(result.status).toEqual(200)
             }
+            await db.billing.Contract.delete(createdContractIds)
         })
     })
 })

@@ -1,6 +1,5 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import {validate} from 'class-validator'
 import request from 'supertest'
 
 import {NCOSLevelResponseDto} from './dto/ncos-level-response.dto'
@@ -11,6 +10,7 @@ import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {validate} from '~/helpers/validate.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
@@ -31,7 +31,7 @@ describe('NCOS Level', () => {
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
-    let createdIds: number[] = []
+    const createdIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
 
     beforeAll(async () => {
@@ -42,8 +42,6 @@ describe('NCOS Level', () => {
 
         appService = moduleRef.get<AppService>(AppService)
         authService = moduleRef.get<AuthService>(AuthService)
-
-        createdIds = []
 
         app = moduleRef.createNestApplication()
 
@@ -196,14 +194,14 @@ describe('NCOS Level', () => {
             }
             it('update ncos level test_ncosLevel1 -> test_ncosLevel3', async () => {
                 const response = await request(app.getHttpServer())
-                    .put(`/ncos/levels/')/${createdIds[0]}`)
+                    .put(`/ncos/levels/${createdIds[0]}`)
                     .set(...authHeader)
                     .send(ncosLevel3)
                 expect(response.status).toEqual(200)
             })
             it('read updated ncos level 3', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/ncos/levels/')/${createdIds[0]}`)
+                    .get(`/ncos/levels/${createdIds[0]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const ncosLevel: NCOSLevelResponseDto = response.body
@@ -233,14 +231,14 @@ describe('NCOS Level', () => {
             ]
             it('adjust ncos level 3 -> 5', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch(`/ncos/levels/')/${createdIds[0]}`)
+                    .patch(`/ncos/levels/${createdIds[0]}`)
                     .set(...authHeader)
                     .send(patch)
                 expect(response.status).toEqual(200)
             })
             it('read updated ncos level 5', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/ncos/levels/')/${createdIds[0]}`)
+                    .get(`/ncos/levels/${createdIds[0]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const ncosLevel: NCOSLevelResponseDto = response.body

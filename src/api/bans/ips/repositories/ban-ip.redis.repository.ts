@@ -53,7 +53,7 @@ export class BanIpRedisRepository {
 
             ipMatch = line.match(/name:\s+([^\s]+)/)
             if (ipMatch) {
-                ip = ipMatch.at(1)
+                ip = ipMatch[1]
                 entryId = uuidv5(ip, uuidNS)
 
                 if (id && entryId != id) {

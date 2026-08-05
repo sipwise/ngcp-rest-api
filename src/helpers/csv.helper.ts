@@ -2,11 +2,11 @@ import {Readable} from 'stream'
 
 import {StreamableFile, UnprocessableEntityException} from '@nestjs/common'
 import {plainToInstance} from 'class-transformer'
-import {validate} from 'class-validator'
 import {Response} from 'express'
 import * as Papa from 'papaparse'
 
 import {formatValidationErrorsInCsv} from './errors.helper'
+import {validate} from './validate.helper'
 
 import {CsvValidationError} from '~/types/csv-validation-error.type'
 

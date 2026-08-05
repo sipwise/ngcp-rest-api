@@ -1,6 +1,5 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import {validate} from 'class-validator'
 import request from 'supertest'
 
 import {NCOSPatternResponseDto} from './dto/ncos-pattern-response.dto'
@@ -12,6 +11,7 @@ import {AuthService} from '~/auth/auth.service'
 import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {validate} from '~/helpers/validate.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
@@ -26,7 +26,7 @@ describe('NCOS Pattern', () => {
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
-    let createdIds: number[] = []
+    const createdIds: number[] = []
     const createdLevelIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
 
@@ -38,8 +38,6 @@ describe('NCOS Pattern', () => {
 
         appService = moduleRef.get<AppService>(AppService)
         authService = moduleRef.get<AuthService>(AuthService)
-
-        createdIds = []
 
         app = moduleRef.createNestApplication()
 
@@ -178,15 +176,16 @@ describe('NCOS Pattern', () => {
                 ncos_level_id: createdLevelIds[0],
             }
             it('update ncos pattern test_ncosPattern1 -> test_ncosPattern3', async () => {
+                ncosPattern3.ncos_level_id = createdLevelIds[0]
                 const response = await request(app.getHttpServer())
-                    .put(`/ncos/patterns/')/${createdIds[0]}`)
+                    .put(`/ncos/patterns/${createdIds[0]}`)
                     .set(...authHeader)
                     .send(ncosPattern3)
                 expect(response.status).toEqual(200)
             })
             it('read updated ncos pattern 3', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/ncos/patterns/')/${createdIds[0]}`)
+                    .get(`/ncos/patterns/${createdIds[0]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const ncosPattern: NCOSPatternResponseDto = response.body
@@ -211,14 +210,14 @@ describe('NCOS Pattern', () => {
             ]
             it('adjust ncos pattern 3 -> 4', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch(`/ncos/patterns/')/${createdIds[0]}`)
+                    .patch(`/ncos/patterns/${createdIds[0]}`)
                     .set(...authHeader)
                     .send(patch)
                 expect(response.status).toEqual(200)
             })
             it('read updated ncos pattern 4', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/ncos/patterns/')/${createdIds[0]}`)
+                    .get(`/ncos/patterns/${createdIds[0]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const ncosPattern: NCOSPatternResponseDto = response.body

@@ -1,6 +1,5 @@
 import {HttpStatus, INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import {validate} from 'class-validator'
 import request from 'supertest'
 
 import {CustomerModule} from './customer.module'
@@ -13,6 +12,7 @@ import {db} from '~/entities'
 import {ContractBillingProfileDefinition, ContractStatus, ContractStatus as CustomerStatus} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {validate} from '~/helpers/validate.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
@@ -48,9 +48,9 @@ describe('CustomerController', () => {
     let authService: AuthService
     let authHeader: [string, string]
     const preferHeader: [string, string] = ['prefer', 'return=representation']
-    let createdCustomerIds: number[] = []
-    let _createdContactIds: number[] = []
-    let _createdBillingProfileIds: number[] = []
+    const createdCustomerIds: number[] = []
+    const _createdContactIds: number[] = []
+    const _createdBillingProfileIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
 
     beforeAll(async () => {
@@ -61,10 +61,6 @@ describe('CustomerController', () => {
 
         appService = moduleRef.get<AppService>(AppService)
         authService = moduleRef.get<AuthService>(AuthService)
-
-        createdCustomerIds = []
-        _createdContactIds = []
-        _createdBillingProfileIds = []
 
         app = moduleRef.createNestApplication()
 

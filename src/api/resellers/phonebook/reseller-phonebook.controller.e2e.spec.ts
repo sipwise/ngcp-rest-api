@@ -1,5 +1,3 @@
-import path from 'path'
-
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
@@ -27,7 +25,7 @@ describe('Reseller Phonebook', () => {
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
-    let createdPhonebookIds: number[] = []
+    const createdPhonebookIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
 
     beforeAll(async () => {
@@ -38,8 +36,6 @@ describe('Reseller Phonebook', () => {
 
         appService = moduleRef.get<AppService>(AppService)
         authService = moduleRef.get<AuthService>(AuthService)
-
-        createdPhonebookIds = []
 
         app = moduleRef.createNestApplication()
 
@@ -90,16 +86,24 @@ describe('Reseller Phonebook', () => {
                     name: 'test',
                     number: '123',
                 }).save()
+                createdPhonebookIds.push(purgeTest.id)
+
+                const csvContent = [
+                    'reseller_id,name,number',
+                    '1,RES_PHONEBOOK_TEST,999998',
+                    '1,RES_PHONEBOOK_TEST_2,999999',
+                ].join('\n')
                 const response = await request(app.getHttpServer())
                     .post('/resellers/phonebook?purge_existing=true')
                     .set(...authHeader)
-                    .attach('file', path.resolve(__dirname, './fixtures/reseller_phonebook_test.csv'))
+                    .attach('file', Buffer.from(csvContent), 'reseller_phonebook_test.csv')
                 expect(response.status).toEqual(201)
-                const cnt = await db.billing.ResellerPhonebook.count()
+                createdPhonebookIds.pop()
+                createdPhonebookIds.push(+response.body[0].id)
+                createdPhonebookIds.push(+response.body[1].id)
+
+                const cnt = await db.billing.ResellerPhonebook.count({where: {reseller_id: 1}})
                 expect(cnt).toEqual(2)
-                await db.billing.ResellerPhonebook.delete({id: +response.body[0].id})
-                await db.billing.ResellerPhonebook.delete({id: +response.body[1].id})
-                await db.billing.ResellerPhonebook.delete({id: purgeTest.id})
             })
             it('create phonebook', async () => {
                 const phonebook1: PhonebookPost = {
@@ -115,19 +119,29 @@ describe('Reseller Phonebook', () => {
                 createdPhonebookIds.push(+response.body[0].id)
             })
             it('creates phonebook bulk from csv', async () => {
+                const csvContent = [
+                    'reseller_id,name,number',
+                    '1,RES_PHONEBOOK_TEST_3,30003',
+                    '1,RES_PHONEBOOK_TEST_4,30004',
+                ].join('\n')
                 const response = await request(app.getHttpServer())
                     .post('/resellers/phonebook')
                     .set(...authHeader)
-                    .attach('file', path.resolve(__dirname, './fixtures/reseller_phonebook_test.csv'))
+                    .attach('file', Buffer.from(csvContent), 'reseller_phonebook_test.csv')
                 expect(response.status).toEqual(201)
                 createdPhonebookIds.push(+response.body[0].id)
                 createdPhonebookIds.push(+response.body[1].id)
             })
             it('fails to create phonebook bulk because duplicate', async () => {
+                const csvContent = [
+                    'reseller_id,name,number',
+                    '1,RES_PHONEBOOK_TEST_3,30003',
+                    '1,RES_PHONEBOOK_TEST_4,30004',
+                ].join('\n')
                 const response = await request(app.getHttpServer())
                     .post('/resellers/phonebook')
                     .set(...authHeader)
-                    .attach('file', path.resolve(__dirname, './fixtures/reseller_phonebook_test.csv'))
+                    .attach('file', Buffer.from(csvContent), 'reseller_phonebook_test.csv')
                 expect(response.status).toEqual(422)
             })
         })
@@ -135,7 +149,7 @@ describe('Reseller Phonebook', () => {
         describe('GET', () => {
             it('read created phonebook', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/resellers/phonebook/${createdPhonebookIds[0]}`)
+                    .get(`/resellers/phonebook/${createdPhonebookIds[2]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const phonebook: ResellerPhonebookResponseDto = response.body
@@ -145,11 +159,11 @@ describe('Reseller Phonebook', () => {
             })
             it('read created phonebook from csv', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/resellers/phonebook/${createdPhonebookIds[1]}`)
+                    .get(`/resellers/phonebook/${createdPhonebookIds[3]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const phonebook: ResellerPhonebookResponseDto = response.body
-                expect(phonebook.name).toEqual('RES_PHONEBOOK_TEST')
+                expect(phonebook.name).toEqual('RES_PHONEBOOK_TEST_3')
             })
             it('read non-existing phonebook', async () => {
                 const response = await request(app.getHttpServer())
@@ -167,14 +181,14 @@ describe('Reseller Phonebook', () => {
                     reseller_id: 1,
                 }
                 const response = await request(app.getHttpServer())
-                    .put(`/resellers/phonebook/${createdPhonebookIds[0]}`)
+                    .put(`/resellers/phonebook/${createdPhonebookIds[2]}`)
                     .set(...authHeader)
                     .send (phonebookfoo)
                 expect(response.status).toEqual(200)
             })
             it('read updated phonebook', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/resellers/phonebook/${createdPhonebookIds[0]}`)
+                    .get(`/resellers/phonebook/${createdPhonebookIds[2]}`)
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const phonebookset: ResellerPhonebookResponseDto = response.body

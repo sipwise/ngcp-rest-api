@@ -14,11 +14,11 @@ import {ClassTransformOptions} from '@nestjs/common/interfaces/external/class-tr
 import {ValidatorOptions} from '@nestjs/common/interfaces/external/validator-options.interface'
 import {ErrorHttpStatusCode} from '@nestjs/common/utils/http-error-by-code.util'
 import {instanceToPlain, plainToInstance} from 'class-transformer'
-import {validate} from 'class-validator'
 
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {formatValidationErrors} from '~/helpers/errors.helper'
 import {obfuscatePasswordValidationErrors} from '~/helpers/password-obfuscator.helper'
+import {validate} from '~/helpers/validate.helper'
 import {LoggerService} from '~/logger/logger.service'
 
 export interface ValidationPipeOptions extends ValidatorOptions {

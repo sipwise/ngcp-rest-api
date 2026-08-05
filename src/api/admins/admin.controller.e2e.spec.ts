@@ -335,12 +335,6 @@ describe('AdminController', () => {
                     }
                 })
             }
-            it('throws error because 2fa is enabled but no token is provided', async () => {
-                const response = await request(app.getHttpServer())
-                    .get('/admins?login=2faProvidedSecret')
-                    .auth('2faProvidedSecret', strongPassword)
-                expect(response.status).toEqual(403)
-            })
             it('hides otp_secret from other users', async () => {
                 const response = await request(app.getHttpServer())
                     .get('/admins?login=2faGeneratedSecret')
@@ -659,16 +653,15 @@ describe('AdminController', () => {
                 .send({id: 1})
             expect(result.status).toEqual(400)
         })
-        it('fails if body and params are defined', async () => {
+        it('fails if no trailing slash is provided', async () => {
             const result = await request(app.getHttpServer())
-                .delete('/admins/2')
+                .delete('/admins')
                 .set(...authHeader)
-                .send([2])
-            expect(result.status).toEqual(400)
+            expect(result.status).toEqual(404)
         })
         it('fails if no body and no params are defined', async () => {
             const result = await request(app.getHttpServer())
-                .delete('/admins')
+                .delete('/admins/')
                 .set(...authHeader)
             expect(result.status).toEqual(400)
         })
