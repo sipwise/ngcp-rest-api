@@ -56,10 +56,12 @@ export class PeeringGroupRequestDto implements RequestDto {
             entity.id = options.id
 
         if (options.assignNulls) {
-            Object.keys(entity).forEach(k => {
-                if (entity[k] === undefined)
-                    entity[k] = null
-            })
+            if (entity.description === undefined)
+                entity.description = null
+            if (entity.peeringContractId === undefined)
+                entity.peeringContractId = null
+            if (entity.timeSetId === undefined)
+                entity.timeSetId = null
         }
         return entity
     }
