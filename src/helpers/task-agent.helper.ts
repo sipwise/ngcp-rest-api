@@ -94,7 +94,14 @@ export class TaskAgentHelper {
         request: TaskAgentRequest,
         handleOnData?: (data: unknown, ret: (T | string)[]) => Promise<void>,
     ): Promise<(T | string)[]> {
-        const agentStatus: {[key: string]: string} = {}
+        // NOTE: 'src'/'dst' on responses identify the nodename which can be identical
+        // in multi site environments, e.g. sp1 from site1 and sp1 from site2 in 'src',
+        // so multiple task-agent nodes can report the same src. Node count is
+        // therefore tracked by counting distinct 'accepted' vs 'done'/'error'
+        // messages (each carries its own unique uuid, correlated back to this
+        // request via ref === request.uuid) rather than by keying a map on 'src'.
+        let acceptedCount = 0
+        let completedCount = 0
         const errors: {[key: string]: string} = {}
         const startTime = Date.now()
         const initialTimeout = 2000
@@ -105,17 +112,26 @@ export class TaskAgentHelper {
         await this.subscribeToFeedback(
             feedbackChannel,
             async (feedbackResponse: TaskAgentResponse): Promise<void> => {
+                if (feedbackResponse.ref !== request.uuid) {
+                    return
+                }
+
                 this.log.debug(`got task agent response: ${JSON.stringify(feedbackResponse)}`)
-                const {src: host, status, reason} = feedbackResponse
-                agentStatus[host] = status
+                const {uuid, src: host, status, reason} = feedbackResponse
+
+                if (status === 'accepted') {
+                    acceptedCount++
+                }
 
                 if (status === 'error') {
-                    errors[host] = reason ?? 'Unknown error'
-                    this.log.error(`Task error in feedback=${feedbackChannel} src=${host} error=${errors[host]}`)
+                    completedCount++
+                    errors[uuid] = reason ?? 'Unknown error'
+                    this.log.error(`Task error in feedback=${feedbackChannel} host=${host} uuid=${request.uuid} error=${errors[uuid]}`)
                 }
 
                 if (status === 'done') {
-                    this.log.debug(`Task done in feedback=${feedbackChannel} src=${host} reason=${reason || 'ok'}`)
+                    completedCount++
+                    this.log.debug(`Task done in feedback=${feedbackChannel} host=${host} uuid=${request.uuid} reason=${reason || 'ok'}`)
                 }
 
                 if (status === 'done' && feedbackResponse.data != undefined) {
@@ -144,9 +160,7 @@ export class TaskAgentHelper {
         while ((Date.now() - startTime) < exceptionTimeout) {
             const now = Date.now()
             const elapsed = now - startTime
-            const agentStatusStr = JSON.stringify(agentStatus)
             const errorsStr = JSON.stringify(errors)
-            const agentStatusSize = Object.keys(agentStatus).length
 
             /*
                 TODO: this exception is raised after transaction commit + response
@@ -156,22 +170,21 @@ export class TaskAgentHelper {
             //const error: ErrorMessage = this.i18n.t('errors.TASK_AGENT_COULD_NOT_PROCESS_REQUEST')
             //throw new InternalServerErrorException(error)
 
-            if (agentStatusSize == 0 && elapsed > initialTimeout) {
-                this.log.error(`Task no response timeout feedback=${feedbackChannel} status=${agentStatusStr} errors=${errorsStr}`)
+            if (acceptedCount == 0 && elapsed > initialTimeout) {
+                this.log.error(`Task no response timeout feedback=${feedbackChannel} uuid=${request.uuid} accepted=${acceptedCount} completed=${completedCount} errors=${errorsStr}`)
                 await this.unsubscriberFromFeedback(feedbackChannel)
                 return
             }
 
             if (elapsed > maxTimeout) {
-                this.log.error(`Task max response timeout feedback=${feedbackChannel} status=${agentStatusStr} errors=${errorsStr}`)
+                this.log.error(`Task max response timeout feedback=${feedbackChannel} uuid=${request.uuid} accepted=${acceptedCount} completed=${completedCount} errors=${errorsStr}`)
                 await this.unsubscriberFromFeedback(feedbackChannel)
                 return
             }
 
-            const allDoneOrError = Object.values(agentStatus).every(status => ['done','error'].includes(status))
-            if (agentStatusSize > 0 && allDoneOrError) {
+            if (acceptedCount > 0 && completedCount >= acceptedCount) {
                 await this.unsubscriberFromFeedback(feedbackChannel)
-                this.log.debug(`Task completed feedback=${feedbackChannel} status=${agentStatusStr} errors=${errorsStr}`)
+                this.log.debug(`Task completed feedback=${feedbackChannel} uuid=${request.uuid} accepted=${acceptedCount} completed=${completedCount} errors=${errorsStr}`)
                 break
             }
 
