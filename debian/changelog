@@ -1,3 +1,10 @@
+ngcp-rest-api (13.5.1.27+0~mr13.5.1.27) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [4837786] MT#65347 fix task-agent-helper src/uuid uniqness
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 07 Aug 2026 16:47:17 +0200
+
 ngcp-rest-api (13.5.1.26+0~mr13.5.1.26) unstable; urgency=medium
 
   [ Kirill Solomko ]
