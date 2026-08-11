@@ -1,3 +1,22 @@
+ngcp-rest-api (26.3.0.0+0~mr26.3.0.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [e67a5f4] MT#65347 task agent and redis connection improvements
+  * [0b82047] MT#65183 fix customers-phonebook upload customer_id field
+  * [9e1e628] MT#65507 migration to yarn v4 (4.17.1)
+  * [95d75cd] MT#64930 upgrade nestjs from 10 to 11 + modules upgrade
+  * [204388b] MT#64930 js-yaml,globals upgrade and addditional previous changes
+  * [4cb3a00] MT#64930 fix webpack build, switch from bcrypt to bcryptjs
+  * [3dd4708] MT#65655 improve LoggerService, TypeORMLoggerService
+  * [fcd0e5e] MT#65660 fix e2e tests, validate helper, typeorm logs
+  * [ccac5cc] MT#65660 fix has_inbound_rules behaviour on PUT
+  * [d259bd4] MT#65347 fix task-agent-helper src/uuid uniqness
+
+  [ Marco Capetta ]
+  * [1d3c752] MT#65367 Fix setting provisioning.voip_peer_groups.has_inbound_rules
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 11 Aug 2026 14:20:46 +0200
+
 ngcp-rest-api (26.2.0.0+0~mr26.2.0.0) unstable; urgency=medium
 
   [ Marco Capetta ]
