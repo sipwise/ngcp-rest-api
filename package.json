@@ -81,9 +81,6 @@
     "sd-notify": "2.8.0",
     "superagent": "10.3.0",
     "swagger-ui-express": "5.0.1",
-    "terser-webpack-plugin": "5.6.1",
-    "ts-jest": "^29.4.12",
-    "tsconfig-paths-webpack-plugin": "4.2.0",
     "typeorm": "0.3.31",
     "typeorm-transactional": "0.5.0",
     "ua-parser-js": "2.0.10",
@@ -124,13 +121,25 @@
     "selfsigned": "5.5.0",
     "string-replace-loader": "3.3.0",
     "supertest": "7.2.2",
+    "terser-webpack-plugin": "5.6.1",
+    "ts-jest": "^29.4.12",
     "ts-loader": "9.6.2",
     "ts-node": "10.9.2",
     "tsconfig-paths": "4.2.0",
+    "tsconfig-paths-webpack-plugin": "4.2.0",
     "typedoc": "0.28.20",
     "typescript": "5.9.3",
     "webpack": "5.109.2",
     "webpack-cli": "7.2.2"
+  },
+  "resolutions": {
+    "esbuild-jest/braces": "^3.0.3",
+    "esbuild-jest/js-yaml": "^3.15.1",
+    "jest/js-yaml": "^3.15.1",
+    "jest-circus/js-yaml": "^3.15.1",
+    "@eslint/eslintrc/js-yaml": "^4.3.1",
+    "@eslint/cli/js-yaml": "^4.3.1",
+    "eslint/js-yaml": "^4.3.1"
   },
   "packageManager": "yarn@4.17.1"
 }
