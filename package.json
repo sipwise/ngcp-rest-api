@@ -133,7 +133,7 @@
     "webpack-cli": "7.2.2"
   },
   "resolutions": {
-    "esbuild-jest/braces": "^3.0.3",
+    "braces": "^3.0.3",
     "esbuild-jest/js-yaml": "^3.15.1",
     "jest/js-yaml": "^3.15.1",
     "jest-circus/js-yaml": "^3.15.1",
