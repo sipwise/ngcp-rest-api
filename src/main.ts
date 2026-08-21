@@ -43,7 +43,7 @@ async function bootstrap(): Promise<void> {
     app.useGlobalPipes(
         new ValidateInputPipe({
             forbidUnknownValues: false,
-            whitelist: false,
+            whitelist: true,
             forbidNonWhitelisted: true,
             transform: true,
             disableErrorMessages: true,
