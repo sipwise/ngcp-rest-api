@@ -7,6 +7,7 @@ import {Strategy, StrategyOptionsWithRequest} from 'passport-jwt'
 import {AuthService} from './auth.service'
 import {AuthResponseDto} from './dto/auth-response.dto'
 
+import {AuthTokenRedisRepository} from '~/api/auth/tokens/repositories/token.redis.repository'
 import {AppService} from '~/app.service'
 import {jwtConstants} from '~/config/constants.config'
 import {db} from '~/entities'
@@ -25,6 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     constructor(
         private readonly app: AppService,
         private readonly auth: AuthService,
+        private readonly authTokenRepo: AuthTokenRedisRepository,
     ) {
         const opt: StrategyOptionsWithRequest = {
             passReqToCallback: true,
@@ -48,6 +50,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             return null
         const sr: ServiceRequest = new ServiceRequest(req)
         this.log.debug('got JWT payload in validate ' + JSON.stringify(payload))
+        const reqPath = req.path.endsWith('/') ? req.path.slice(0, -1) : req.path
+        if ('auth_token' in payload && !reqPath.endsWith('/auth/jwt')) {
+            this.log.debug('auth token payload is only allowed for /auth/jwt, got ' + req.path)
+            return null
+        }
+        let authResponse: AuthResponseDto
         if (sr.realm == 'subscriber') {
             if (!('subscriber_uuid' in payload))
                 return null
@@ -63,9 +71,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
                 ],
             })
             if (!this.auth.isSubscriberValid(subscriber)) {
+                this.log.debug('subscriber auth failed the token is invalid')
                 return null
             }
-            return this.auth.subscriberAuthToResponse(subscriber)
+            authResponse = this.auth.subscriberAuthToResponse(subscriber)
         } else {
             if (!('id' in payload))
                 return null
@@ -83,10 +92,26 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             })
             admin.role = role
             if (!this.auth.isAdminValid(admin)) {
+                this.log.debug('admin auth failed the token is invalid')
                 return null
             }
-            return this.auth.adminAuthToResponse(admin)
+            authResponse = this.auth.adminAuthToResponse(admin)
         }
+
+        if ('auth_token' in payload) {
+            if (!('token_id' in payload)) {
+                this.log.debug('persistent auth token payload is missing token_id, treating as invalid')
+                return null
+            }
+            sr.user = authResponse
+            const token = await this.authTokenRepo.readById(payload.token_id, sr)
+            if (!token) {
+                this.log.debug('persistent auth token no longer exists in redis, treating as invalid: ' + payload.token_id)
+                return null
+            }
+        }
+
+        return authResponse
     }
 }
 
@@ -105,14 +130,12 @@ function parseAuthHeader(hdrValue): { scheme: string, value: string } {
 function fromAuthHeaderAsBearerToken() {
     return function (request: Request): string | null {
         let token:  string | null = null
-        const l = new LoggerService(fromAuthHeaderAsBearerToken.name)
-        l.debug('get bearer token from auth header')
+        this.log.debug('get bearer token from auth header')
         if (request.headers[AUTH_HEADER]) {
             const auth_params = parseAuthHeader(request.headers[AUTH_HEADER])
             if (auth_params && AUTH_SCHEME.toLowerCase() === auth_params.scheme.toLowerCase()) {
                 token = auth_params.value
-                l.debug('successfully parsed token ' + token)
-                l.debug('if auth failed the token is invalid')
+                this.log.debug('successfully parsed token ' + token)
             }
         }
         return token

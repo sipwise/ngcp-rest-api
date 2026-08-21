@@ -11,8 +11,8 @@ import {LoggerService} from '~/logger/logger.service'
 
 
 @Injectable()
-export class PasswordChangeService {
-    private readonly log = new LoggerService(PasswordChangeService.name)
+export class AuthPasswordChangeService {
+    private readonly log = new LoggerService(AuthPasswordChangeService.name)
 
     constructor(
         private readonly app: AppService,

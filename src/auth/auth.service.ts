@@ -286,18 +286,65 @@ export class AuthService {
      * Signs a JWT for an authenticated user
      *
      * @param user Authenticated user
+     * @param expiresIn Optional custom lifetime for the token in seconds, defaults to the module's configured lifetime
      *
-     * @returns JSON Web Token
+     * @returns JSON Web Token together with its creation and expiry timestamps
      */
-    async signJwt(user: AuthResponseDto): Promise<{
+    async signJwt(user: AuthResponseDto, expiresIn?: number): Promise<{
         access_token: string;
+        created_at: string;
+        expires_at: string;
     }> {
         const payload = ['subscriber', 'subscriberadmin'].includes(user.role)
             ? {username: user.username, subscriber_uuid: user.uuid}
             : {username: user.username, id: user.id}
-        this.log.debug({message: 'signing JWT token', payload})
+        const ttl = expiresIn || this.app.config.common.jwt_default_ttl
+        const createdAt = new Date()
+        const expiresAt = new Date(createdAt.getTime() + ttl * 1000)
+        this.log.debug({message: 'signing JWT token', payload, expiresIn: ttl})
         return {
-            access_token: this.jwtService.sign(payload, {algorithm: 'HS256', noTimestamp: true}),
+            access_token: this.jwtService.sign(payload, {
+                algorithm: 'HS256',
+                noTimestamp: true,
+                expiresIn: ttl,
+            }),
+            created_at: createdAt.toISOString(),
+            expires_at: expiresAt.toISOString(),
+        }
+    }
+
+    /**
+     * Signs an auth JWT for an authenticated user
+     *
+     * @param user Authenticated user
+     *
+     * @returns JSON Web Token
+     */
+    async signAuthJwt(token: internal.AuthToken, user: AuthResponseDto): Promise<{
+        access_token: string;
+    }> {
+        const payload =
+        ['subscriber', 'subscriberadmin'].includes(user.role)
+            ? {
+                username: user.username,
+                subscriber_uuid: user.uuid,
+                identifier: token.identifier,
+                token_id: token.id,
+                auth_token: 'persistent',
+            }
+            : {
+                username: user.username,
+                id: user.id,
+                identifier: token.identifier,
+                token_id: token.id,
+                auth_token: 'persistent',
+            }
+        this.log.debug({message: 'signing JWT auth token', payload})
+        return {
+            access_token: this.jwtService.sign(payload, {
+                algorithm: 'HS256',
+                expiresIn: token.ttl,
+            }),
         }
     }
 

@@ -1,6 +1,7 @@
 export {Admin} from './admin.internal.entity'
 export {AdminPasswordJournal} from './admin-password-journal.internal.entity'
 export {AclRole} from './acl-role.internal.entity'
+export {AuthToken} from './auth-token.internal.entity'
 export {BanAdmin} from './ban-admin.internal.entity'
 export {BanRegistration} from './ban-registration.internal.entity'
 export {BanIp} from './ban-ip.internal.entity'

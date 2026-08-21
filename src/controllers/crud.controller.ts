@@ -20,7 +20,7 @@ export class CrudController<CreateDTO, _ResponseDTO> {
         private readonly journalCrudService?: JournalService) {
     }
 
-    async create(@Body() entity: CreateDTO[], @Req() req: Request, @UploadedFile() file?: Express.Multer.File, @Param() _params?: unknown): Promise<any> {
+    async create(@Body() entity: CreateDTO | CreateDTO[], @Req() req: Request, @UploadedFile() file?: Express.Multer.File, @Param() _params?: unknown): Promise<any> {
         return await this.repo.create(entity, new ServiceRequest(req), file)
     }
 

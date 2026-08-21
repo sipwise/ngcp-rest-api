@@ -32,7 +32,7 @@ export interface ValidationPipeOptions extends ValidatorOptions {
 }
 
 export const isNil = (obj: any): obj is null | undefined =>
-    obj === null
+    obj === null || obj === undefined
 
 @Injectable()
 export class ValidateInputPipe implements PipeTransform<any> {

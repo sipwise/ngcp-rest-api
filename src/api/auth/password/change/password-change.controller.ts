@@ -4,7 +4,7 @@ import {Request} from 'express'
 
 import {PasswordChangeRequestDto} from './dto/password-change-request.dto'
 import {PasswordChangeResponseDto} from './dto/password-change-response.dto'
-import {PasswordChangeService} from './password-change.service'
+import {AuthPasswordChangeService} from './password-change.service'
 
 import {JournalService} from '~/api/journals/journal.service'
 import {CrudController} from '~/controllers/crud.controller'
@@ -20,11 +20,11 @@ const resourceName = 'auth/password/change'
 @Controller(resourceName)
 @AuthOptions({skipMaxAge: true})
 @Auth()
-export class PasswordChangeController extends CrudController<PasswordChangeRequestDto, PasswordChangeResponseDto> {
-    private readonly log = new LoggerService(PasswordChangeController.name)
+export class AuthPasswordChangeController extends CrudController<PasswordChangeRequestDto, PasswordChangeResponseDto> {
+    private readonly log = new LoggerService(AuthPasswordChangeController.name)
 
     constructor(
-        private readonly authService: PasswordChangeService,
+        private readonly authService: AuthPasswordChangeService,
         private readonly journalService: JournalService,
     ) {
         super(resourceName, authService, journalService)

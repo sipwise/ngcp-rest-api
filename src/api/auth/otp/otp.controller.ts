@@ -24,8 +24,8 @@ const resourceName = 'auth/otp'
 )
 @ApiTags('Otp')
 @Controller(resourceName)
-export class OtpController extends CrudController<never, never> {
-    private readonly log = new LoggerService(OtpController.name)
+export class AuthOtpController extends CrudController<never, never> {
+    private readonly log = new LoggerService(AuthOtpController.name)
 
     constructor(
         @Inject(AuthService) private readonly authService: AuthService,

@@ -16,9 +16,12 @@ import {ScheduleModule} from '@nestjs/schedule'
 import {AcceptLanguageResolver, CookieResolver, HeaderResolver, I18nModule, QueryResolver} from 'nestjs-i18n'
 
 import {AdminModule} from './api/admins/admin.module'
-import {OtpModule} from './api/auth/otp/otp.module'
-import {PasswordChangeModule} from './api/auth/password/change/password-change.module'
-import {PasswordModule} from './api/auth/password/password.module'
+import {AuthJwtModule} from './api/auth/jwt/jwt.module'
+import {AuthOtpModule} from './api/auth/otp/otp.module'
+import {AuthPasswordChangeModule} from './api/auth/password/change/password-change.module'
+import {AuthPasswordModule} from './api/auth/password/password.module'
+import {AuthTokenModule} from './api/auth/tokens/token.module'
+import {AuthUserinfoModule} from './api/auth/userinfo/userinfo.module'
 import {BanAdminModule} from './api/bans/admins/ban-admin.module'
 import {BanModule} from './api/bans/ban.module'
 import {BanIpModule} from './api/bans/ips/ban-ip.module'
@@ -66,7 +69,6 @@ import {SystemContactModule} from './api/systemcontacts/system-contact.module'
 import {InvoiceTemplateModule} from './api/templates/invoices/invoice-template.module'
 import {TemplateModule} from './api/templates/template.module'
 import {VoicemailModule} from './api/voicemails/voicemail.module'
-import {AppController} from './app.controller'
 import {AppService} from './app.service'
 import {AuthModule} from './auth/auth.module'
 import {AppConfig} from './config/schemas/app.config.schema'
@@ -77,7 +79,7 @@ import {TaskAgentModule} from './helpers/task-agent.module'
 import {InterceptorModule} from './interceptors/interceptor.module'
 import {LicenseModule} from './license/license.module'
 import {LicenseService} from './license/license.service'
-import {LoggerService} from './logger/logger.service'
+import {ContentTypeMiddleware} from './middleware/content-type.middleware'
 import {ContextMiddleware} from './middleware/context.middleware'
 import {LoggerMiddleware} from './middleware/logger.middleware'
 import {StateMiddleware} from './middleware/state.middleware'
@@ -110,6 +112,9 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     }),
     AdminModule,
     AuthModule,
+    AuthJwtModule,
+    AuthTokenModule,
+    AuthUserinfoModule,
     BanAdminModule,
     BanRegistrationModule,
     BanIpModule,
@@ -138,7 +143,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     HeaderManipulationSetModule,
     InvoiceTemplateModule,
     NumberModule,
-    OtpModule,
+    AuthOtpModule,
     PbxUserModule,
     PbxModule,
     PbxGroupMemberModule,
@@ -161,8 +166,8 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     TemplateModule,
     VoicemailModule,
     LicenseModule,
-    PasswordModule,
-    PasswordChangeModule,
+    AuthPasswordModule,
+    AuthPasswordChangeModule,
     ScheduleModule.forRoot(),
     TaskAgentModule,
 ]
@@ -176,9 +181,6 @@ if (process.env.NODE_ENV != 'test') {
 
 @Global()
 @Module({
-    controllers: [
-        AppController,
-    ],
     imports: [
         ...modulesImport,
     ],
@@ -198,7 +200,7 @@ if (process.env.NODE_ENV != 'test') {
 })
 export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer): void {
-        consumer.apply(ContextMiddleware, LoggerMiddleware, StateMiddleware).forRoutes({
+        consumer.apply(ContentTypeMiddleware, ContextMiddleware, LoggerMiddleware, StateMiddleware).forRoutes({
             path: '*',
             method: RequestMethod.ALL,
         })

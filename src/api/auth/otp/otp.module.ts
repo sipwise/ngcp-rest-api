@@ -1,9 +1,9 @@
 import {Module} from '@nestjs/common'
 
-import {OtpController} from './otp.controller'
+import {AuthOtpController} from './otp.controller'
 
 @Module({
-    controllers: [OtpController],
+    controllers: [AuthOtpController],
 })
-export class OtpModule {
+export class AuthOtpModule {
 }

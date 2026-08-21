@@ -4,7 +4,7 @@ import request from 'supertest'
 import {In} from 'typeorm'
 
 import {AdminModule} from '~/api/admins/admin.module'
-import {OtpModule} from '~/api/auth/otp/otp.module'
+import {AuthOtpModule} from '~/api/auth/otp/otp.module'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
@@ -45,7 +45,7 @@ describe('OTP', () => {
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
-            imports: [OtpModule, AdminModule, AppModule],
+            imports: [AuthOtpModule, AdminModule, AppModule],
         })
             .compile()
 

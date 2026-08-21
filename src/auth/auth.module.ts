@@ -7,7 +7,11 @@ import {BasicHTTPStrategy, BasicJSONStrategy} from './basic.strategy'
 import {CertStrategy} from './cert.strategy'
 import {JwtStrategy} from './jwt.strategy'
 
+import {AuthTokenModule} from '~/api/auth/tokens/token.module'
+import {AppService} from '~/app.service'
 import {jwtConstants} from '~/config/constants.config'
+
+const {jwt_default_ttl: defTtl} = AppService.config.common
 
 @Global()
 @Module({
@@ -15,8 +19,9 @@ import {jwtConstants} from '~/config/constants.config'
         PassportModule,
         JwtModule.register({
             secret: jwtConstants.secret,
-            signOptions: {expiresIn: '1d'},
+            signOptions: {expiresIn: defTtl},
         }),
+        AuthTokenModule,
     ],
     providers: [
         AuthService,

@@ -15,8 +15,8 @@ const resourceName = 'auth/password'
 @AuthOptions({skipMaxAge: true})
 @Auth()
 @ApiTags('Auth')
-export class PasswordController extends CrudController<never, PasswordResponseDto> {
-    private readonly log = new LoggerService(PasswordController.name)
+export class AuthPasswordController extends CrudController<never, PasswordResponseDto> {
+    private readonly log = new LoggerService(AuthPasswordController.name)
 
     constructor(
     ) {

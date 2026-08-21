@@ -33,4 +33,19 @@ export class CommonConfig {
 
     @IsNumber()
         post_many_return_link_max: number
+
+    @IsNumber()
+        jwt_default_ttl: number
+
+    @IsNumber()
+        jwt_min_ttl: number
+
+    @IsNumber()
+        jwt_max_ttl: number
+
+    @IsNumber()
+        auth_token_min_ttl: number
+
+    @IsNumber()
+        auth_token_max_ttl: number
 }
