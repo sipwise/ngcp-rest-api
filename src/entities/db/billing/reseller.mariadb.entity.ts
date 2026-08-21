@@ -134,7 +134,7 @@ export class Reseller extends BaseEntity {
     }
 
     fromInternal(reseller: internal.Reseller): Reseller {
-        this.id = reseller.id
+        this.id = reseller.id ?? 0
         this.contract_id = reseller.contract_id
         this.name = reseller.name
         this.status = reseller.status
