@@ -1,3 +1,10 @@
+ngcp-rest-api (26.0.1.10+0~mr26.0.1.10) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [53f0859] MT#65820 add api.conf file validation on startup
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 24 Aug 2026 13:13:41 +0200
+
 ngcp-rest-api (26.0.1.9+0~mr26.0.1.9) unstable; urgency=medium
 
   [ Kirill Solomko ]
