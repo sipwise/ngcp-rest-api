@@ -3,7 +3,7 @@ import {Test, TestingModule} from '@nestjs/testing'
 import {PbxGroupMemberModule} from './member.module'
 import {PbxGroupMemberService} from './member.service'
 import {PbxGroupMemberMariadbRepository} from './repositories/member.mariadb.repository'
-import {PbxGroupMockRepository} from './repositories/member.mock.repository'
+import {PbxGroupMemberMockRepository} from './repositories/member.mock.repository'
 
 import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
@@ -24,12 +24,12 @@ const user: AuthResponseDto = {
 
 describe('PbxGroupMemberService', () => {
     let service: PbxGroupMemberService
-    let pbxGroupMemberMockRepo: PbxGroupMockRepository
+    let pbxGroupMemberMockRepo: PbxGroupMemberMockRepository
 
     let sr: ServiceRequest
 
     beforeAll(async () => {
-        pbxGroupMemberMockRepo = new PbxGroupMockRepository()
+        pbxGroupMemberMockRepo = new PbxGroupMemberMockRepository()
         const module: TestingModule = await Test.createTestingModule({
             imports: [PbxGroupMemberModule, ExpandModule, AppModule],
         })

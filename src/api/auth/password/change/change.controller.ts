@@ -2,9 +2,9 @@ import {Body, Controller, Post, Req} from '@nestjs/common'
 import {ApiBody, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
+import {AuthPasswordChangeService} from './change.service'
 import {PasswordChangeRequestDto} from './dto/change-request.dto'
 import {PasswordChangeResponseDto} from './dto/change-response.dto'
-import {AuthPasswordChangeService} from './change.service'
 
 import {JournalService} from '~/api/journals/journal.service'
 import {CrudController} from '~/controllers/crud.controller'

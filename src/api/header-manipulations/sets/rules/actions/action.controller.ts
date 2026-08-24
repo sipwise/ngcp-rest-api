@@ -3,10 +3,10 @@ import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/sw
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
 
+import {HeaderManipulationRuleActionService} from './action.service'
 import {HeaderManipulationRuleActionRequestParamDto} from './dto/action-request-param.dto'
 import {HeaderManipulationRuleActionRequestDto} from './dto/action-request.dto'
 import {HeaderManipulationRuleActionResponseDto} from './dto/action-response.dto'
-import {HeaderManipulationRuleActionService} from './action.service'
 
 import {HeaderManipulationRuleActionSearchDto} from '~/api/header-manipulations/sets/rules/actions/dto/action-search.dto'
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'

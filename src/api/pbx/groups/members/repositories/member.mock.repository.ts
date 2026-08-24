@@ -9,7 +9,7 @@ interface PbxGroupMemberMockDB {
     [key: number]: internal.PbxGroupMember
 }
 
-export class PbxGroupMockRepository implements PbxGroupMemberRepository {
+export class PbxGroupMemberMockRepository implements PbxGroupMemberRepository {
 
     private readonly pbxGroupMemberDB: PbxGroupMemberMockDB
 

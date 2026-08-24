@@ -1,11 +1,10 @@
-import path from 'path'
 
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
 
-import {CustomerPhonebookModule} from './phonebook.module'
 import {CustomerPhonebookResponseDto} from './dto/phonebook-response.dto'
+import {CustomerPhonebookModule} from './phonebook.module'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'

@@ -2,7 +2,7 @@ import {Injectable, MethodNotAllowedException} from '@nestjs/common'
 import {IsNull, Not} from 'typeorm'
 
 import {ContractSearchDto} from '~/api/contracts/dto/contract-search.dto'
-import {ContractRepository} from '~/api/contracts/interfaces/contract.respository'
+import {ContractRepository} from '~/api/contracts/interfaces/contract.repository'
 import {db, internal} from '~/entities'
 import {ContactStatus} from '~/entities/internal/contact.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'

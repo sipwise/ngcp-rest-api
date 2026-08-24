@@ -1,4 +1,4 @@
-import {ConsoleLogger, INestApplication} from '@nestjs/common'
+import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
 

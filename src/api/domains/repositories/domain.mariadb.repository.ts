@@ -1,4 +1,4 @@
-import {Injectable, InternalServerErrorException} from '@nestjs/common'
+import {Injectable} from '@nestjs/common'
 import {MariaDbRepository} from 'repositories/mariadb.repository'
 
 import {DomainSearchDto} from '~/api/domains/dto/domain-search.dto'

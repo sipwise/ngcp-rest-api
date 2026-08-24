@@ -2,9 +2,9 @@ import {Module,forwardRef} from '@nestjs/common'
 import {JournalModule} from 'api/journals/journal.module'
 import {ExpandModule} from 'helpers/expand.module'
 
+import {HeaderManipulationRuleMariadbRepository} from './repositories/rule.mariadb.repository'
 import {HeaderManipulationRuleController} from './rule.controller'
 import {HeaderManipulationRuleService} from './rule.service'
-import {HeaderManipulationRuleMariadbRepository} from './repositories/rule.mariadb.repository'
 
 import {HeaderManipulationSetMariadbRepository} from '~/api/header-manipulations/sets/repositories/set.mariadb.repository'
 import {HeaderManipulationSetRedisRepository} from '~/api/header-manipulations/sets/repositories/set.redis.repository'

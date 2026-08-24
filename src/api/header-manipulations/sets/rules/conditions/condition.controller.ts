@@ -3,11 +3,11 @@ import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/sw
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
 
+import {HeaderManipulationRuleConditionService} from './condition.service'
 import {HeaderManipulationRuleConditionRequestParamDto} from './dto/condition-request-param.dto'
 import {HeaderManipulationRuleConditionRequestDto} from './dto/condition-request.dto'
 import {HeaderManipulationRuleConditionResponseDto} from './dto/condition-response.dto'
 import {HeaderManipulationRuleConditionValueResponseDto} from './dto/condition-value-response.dto'
-import {HeaderManipulationRuleConditionService} from './condition.service'
 
 import {HeaderManipulationRuleConditionSearchDto} from '~/api/header-manipulations/sets/rules/conditions/dto/condition-search.dto'
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'

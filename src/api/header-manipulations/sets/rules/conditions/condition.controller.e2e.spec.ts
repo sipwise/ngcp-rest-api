@@ -2,11 +2,11 @@ import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
 
-import {HeaderManipulationRuleConditionResponseDto} from './dto/condition-response.dto'
 import {HeaderManipulationRuleConditionModule} from './condition.module'
+import {HeaderManipulationRuleConditionResponseDto} from './dto/condition-response.dto'
 
-import {HeaderManipulationSetModule} from '~/api/header-manipulations/sets/set.module'
 import {HeaderManipulationRuleModule} from '~/api/header-manipulations/sets/rules/rule.module'
+import {HeaderManipulationSetModule} from '~/api/header-manipulations/sets/set.module'
 import {RewriteRuleSetResponseDto} from '~/api/rewrite-rules/sets/dto/set-response.dto'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'

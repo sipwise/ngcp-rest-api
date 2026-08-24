@@ -2,10 +2,10 @@ import {UnprocessableEntityException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 
 import {SubscriberPhonebookOptions} from './interfaces/phonebook-options.interface'
-import {SubscriberPhonebookMariadbRepository} from './repositories/phonebook.mariadb.repository'
-import {SubscriberPhonebookMockRepository} from './repositories/phonebook.mock.repository'
 import {SubscriberPhonebookModule} from './phonebook.module'
 import {SubscriberPhonebookService} from './phonebook.service'
+import {SubscriberPhonebookMariadbRepository} from './repositories/phonebook.mariadb.repository'
+import {SubscriberPhonebookMockRepository} from './repositories/phonebook.mock.repository'
 
 import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'

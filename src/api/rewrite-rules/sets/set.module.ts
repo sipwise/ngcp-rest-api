@@ -4,11 +4,11 @@ import {ExpandModule} from 'helpers/expand.module'
 
 import {RewriteRuleSetMariadbRepository} from './repositories/set.mariadb.repository'
 import {RewriteRuleSetRedisRepository} from './repositories/set.redis.repository'
-import {RewriteRuleSetController} from './set.controller'
-import {RewriteRuleSetService} from './set.service'
 import {RewriteRuleMariadbRepository} from './rules/repositories/rule.mariadb.repository'
 import {RewriteRuleRedisRepository} from './rules/repositories/rule.redis.repository'
 import {RewriteRuleService} from './rules/rule.service'
+import {RewriteRuleSetController} from './set.controller'
+import {RewriteRuleSetService} from './set.service'
 
 import {TaskAgentModule} from '~/helpers/task-agent.module'
 

@@ -1,6 +1,6 @@
 import {NotFoundException} from '@nestjs/common'
 
-import {ContractRepository} from '~/api/contracts/interfaces/contract.respository'
+import {ContractRepository} from '~/api/contracts/interfaces/contract.repository'
 import {internal} from '~/entities'
 import {ContactStatus} from '~/entities/internal/contact.internal.entity'
 import {ContractBillingProfileDefinition, ContractStatus, ContractType} from '~/entities/internal/contract.internal.entity'

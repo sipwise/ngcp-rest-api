@@ -3,8 +3,8 @@ import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Transactional} from 'typeorm-transactional'
 
-import {BanIpService} from './ip.service'
 import {BanIpResponseDto} from './dto/ip-response.dto'
+import {BanIpService} from './ip.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
