@@ -12,8 +12,9 @@ import {winstonLoggerConfig} from './config/logger.config'
 import {HttpExceptionFilter} from './helpers/http-exception.filter'
 import {createSwaggerDocument} from './helpers/swagger.helper'
 import {LoggingInterceptor} from './interceptors/logging.interceptor'
+import {ResponseValidationInterceptor} from './interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from './interceptors/transaction.interceptor'
 import {TransformInterceptor} from './interceptors/transform.interceptor'
-import {ResponseValidationInterceptor} from './interceptors/validate.interceptor'
 import {ValidateInputPipe} from './pipes/validate.pipe'
 
 async function bootstrap(): Promise<void> {
@@ -60,6 +61,7 @@ async function bootstrap(): Promise<void> {
         }),
         new LoggingInterceptor(),
         new ClassSerializerInterceptor(app.get(Reflector)),
+        new TransactionInterceptor(app.get(Reflector)),
         new ResponseValidationInterceptor(),
     )
 
