@@ -1,8 +1,8 @@
 import {Module,forwardRef} from '@nestjs/common'
 
-import {NCOSSetController} from './ncos-set.controller'
-import {NCOSSetService} from './ncos-set.service'
-import {NCOSSetMariadbRepository} from './repositories/ncos-set.mariadb.repository'
+import {NCOSSetMariadbRepository} from './repositories/set.mariadb.repository'
+import {NCOSSetController} from './set.controller'
+import {NCOSSetService} from './set.service'
 
 import {JournalModule} from '~/api/journals/journal.module'
 import {ExpandModule} from '~/helpers/expand.module'

@@ -13,12 +13,4 @@ export interface NCOSSetRepository {
 
     delete(ids: number[], sr: ServiceRequest): Promise<number[]>
 
-    createLevel(sd: internal.NCOSSetLevel[], sr: ServiceRequest): Promise<internal.NCOSSetLevel[]>
-
-    readLevelAll(sr: ServiceRequest, id?: number): Promise<[internal.NCOSSetLevel[], number]>
-
-    readLevelById(id: number, levelId: number, sr: ServiceRequest): Promise<internal.NCOSSetLevel>
-
-    deleteLevel(id: number, levelId: number, sr: ServiceRequest): Promise<number>
-
 }

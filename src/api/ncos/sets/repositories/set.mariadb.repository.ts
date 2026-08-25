@@ -1,9 +1,8 @@
-import {Injectable, NotFoundException} from '@nestjs/common'
+import {Injectable} from '@nestjs/common'
 import {SelectQueryBuilder} from 'typeorm'
 
-import {NCOSSetLevelSearchDto} from '~/api/ncos-sets/dto/ncos-set-level-search.dto'
-import {NCOSSetSearchDto} from '~/api/ncos-sets/dto/ncos-set-search.dto'
-import {NCOSSetRepository} from '~/api/ncos-sets/interfaces/ncos-set.repository'
+import {NCOSSetSearchDto} from '~/api/ncos/sets/dto/set-search.dto'
+import {NCOSSetRepository} from '~/api/ncos/sets/interfaces/set.repository'
 import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
@@ -12,7 +11,7 @@ import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
-interface FilterBy {
+export interface FilterBy {
     resellerId?: number
     exposeToCustomer?: boolean
 }
@@ -165,65 +164,6 @@ export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSS
             .execute()
     }
 
-    async createLevel(entities: internal.NCOSSetLevel[], _sr: ServiceRequest): Promise<internal.NCOSSetLevel[]> {
-        const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
-        qb.innerJoinAndSelect('ncosSetLevel.level', 'level')
-        const values = await Promise.all(
-            entities.map(
-                async entity => new db.billing.NCOSSetLevel().fromInternal(entity),
-            ),
-        )
-        const result = await qb.insert().values(values).execute()
-
-        const ids = await Promise.all(result.identifiers.map(async (obj: {id :number}) => obj.id))
-        const created = await qb.andWhereInIds(ids).getMany()
-
-        return await Promise.all(created.map(async entity => entity.toInternal()))
-    }
-
-    async readLevelAll(_sr: ServiceRequest, id?: number, _filterBy?: FilterBy): Promise<[internal.NCOSSetLevel[], number]> {
-        const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
-        qb.innerJoinAndSelect('ncosSetLevel.level', 'level')
-        if (id)
-            qb.where({ncos_set_id: id})
-        const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(
-            result.map(async (d) =>
-                d.toInternal(),
-            ),
-        ), totalCount]
-    }
-
-    async readLevelById(id: number, levelId: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.NCOSSetLevel> {
-        const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
-        qb.innerJoinAndSelect('ncosSetLevel.level', 'level')
-        const searchDto  = new NCOSSetLevelSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
-        qb.where({id: levelId})
-        if (id)
-            qb.andWhere({ncos_set_id: id})
-        this.addLevelFilterBy(qb, filterBy)
-        const result = await qb.getOne()
-        if (!result)
-            throw new NotFoundException()
-        return result.toInternal()
-    }
-
-    async deleteLevel(_id: number, levelId: number, _sr: ServiceRequest): Promise<number> {
-        await db.billing.NCOSSetLevel.delete({id: levelId})
-
-        return 1
-    }
-
     private addFilterBy(qb: SelectQueryBuilder<db.billing.NCOSSet>, filterBy: FilterBy): void {
         if (filterBy) {
             if (filterBy.resellerId) {
@@ -231,15 +171,6 @@ export class NCOSSetMariadbRepository extends MariaDbRepository implements NCOSS
             }
             if (filterBy.exposeToCustomer) {
                 qb.andWhere('expose_to_customer = :etc', {etc: filterBy.exposeToCustomer})
-            }
-        }
-    }
-
-    private addLevelFilterBy(qb: SelectQueryBuilder<db.billing.NCOSSetLevel>, filterBy: FilterBy): void {
-        if (filterBy) {
-            if (filterBy.resellerId) {
-                qb.innerJoin('ncosSetLevel.set', 'ncosSet')
-                qb.andWhere('ncosSet.reseller_id = :id', {id: filterBy.resellerId})
             }
         }
     }

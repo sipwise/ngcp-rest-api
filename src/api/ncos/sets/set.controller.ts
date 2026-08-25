@@ -3,11 +3,9 @@ import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/sw
 import {Request} from 'express'
 import {Operation} from 'helpers/patch.helper'
 
-import {NCOSSetLevelRequestDto} from './dto/ncos-set-level-request.dto'
-import {NCOSSetLevelResponseDto} from './dto/ncos-set-level-response.dto'
-import {NCOSSetRequestDto} from './dto/ncos-set-request.dto'
-import {NCOSSetResponseDto} from './dto/ncos-set-response.dto'
-import {NCOSSetService} from './ncos-set.service'
+import {NCOSSetRequestDto} from './dto/set-request.dto'
+import {NCOSSetResponseDto} from './dto/set-response.dto'
+import {NCOSSetService} from './set.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
@@ -49,121 +47,6 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     ) {
         super(resourceName, ncosSetService, journalService)
     }
-
-
-    /* NCOS Set Level */
-
-
-    @Post(':id/levels')
-    @ApiCreatedResponse(NCOSSetLevelRequestDto)
-    @ApiBody({
-        type: NCOSSetLevelRequestDto,
-        isArray: true,
-    })
-    @Transactional()
-    async createLevel(
-        @Param('id') id: number,
-        @Body(new ParseOneOrManyPipe({items: NCOSSetLevelRequestDto})) createDto: NCOSSetLevelRequestDto[],
-        @Req() req: Request,
-    ): Promise<NCOSSetLevelResponseDto[]> {
-        this.log.debug({
-            message: 'create ncos set level bulk',
-            func: this.createLevel.name,
-            url: req.url,
-            method: req.method,
-        })
-        const sr = new ServiceRequest(req)
-        const setLevels = await Promise.all(createDto.map(async setLevel => setLevel.toInternal()))
-        const created = await this.ncosSetService.createLevel(id, setLevels, sr)
-        return await Promise.all(created.map(async setLevel => new NCOSSetLevelResponseDto(setLevel)))
-    }
-
-    @Get('{:id/}levels')
-    @ApiOkResponse({
-        type: NCOSSetLevelResponseDto,
-    })
-    @ApiQuery({type: SearchLogic})
-    @ApiPaginatedResponse(NCOSSetLevelResponseDto)
-    async readLevelAll(
-        @Param('id') id: number,
-        @Req() req: Request,
-    ): Promise<[NCOSSetLevelResponseDto[], number]> {
-        this.log.debug({
-            message: 'read all ncos set level',
-            func: this.readLevelAll.name,
-            url: req.url,
-            method: req.method,
-        })
-        const sr = new ServiceRequest(req)
-        const [entity, totalCount] =
-            await this.ncosSetService.readLevelAll(sr, id)
-        const responseList = entity.map(e => new NCOSSetLevelResponseDto(e))
-        return [responseList, totalCount]
-    }
-
-    @Get('{:id/}levels/:levelId')
-    @ApiOkResponse({
-        type: NCOSSetLevelResponseDto,
-    })
-    async readLevel(
-        @Req() req: Request,
-        @Param('levelId', ParseIntPipe) levelId: number,
-        @Param('id') id?: number,
-    ): Promise<NCOSSetLevelResponseDto> {
-        this.log.debug({
-            message: 'read ncos set level by id',
-            id: levelId,
-            func: this.readLevel.name,
-            url: req.url,
-            method: req.method,
-        })
-        const response = await this.ncosSetService.readLevel(id, levelId, new ServiceRequest(req))
-        return new NCOSSetLevelResponseDto(response)
-    }
-
-    @Delete('{:id/}levels/:levelId')
-    @ApiOkResponse({})
-    @Transactional()
-    async deleteLevel(
-        @Req() req: Request,
-        @Param('levelId', ParseIntPipe) levelId: number,
-        @Param('id') id: number,
-    ): Promise<number> {
-        this.log.debug({
-            message: 'delete ncos set level by id',
-            id: levelId,
-            func: this.deleteLevel.name,
-            url: req.url,
-            method: req.method,
-        })
-        const sr = new ServiceRequest(req)
-        const response = await this.ncosSetService.deleteLevel(id, levelId, sr)
-        await this.journalService.writeJournal(sr, levelId, {})
-        return response
-    }
-
-    @Get('{:id/}levels/:levelId/journal')
-    @ApiOkResponse({
-        type: [JournalResponseDto],
-    })
-    async journalLevel(
-        @Req() req: Request,
-        @Param('id') _id: number,
-        @Param('levelId') levelId: number,
-    ): Promise<[JournalResponseDto[], number]> {
-        this.log.debug({
-            message: 'read ncos set journal level by id',
-            id: levelId,
-            func: this.journalLevel.name,
-            url: req.url,
-            method: req.method,
-        })
-        return super.journal(levelId, req)
-    }
-
-
-    /* NCOS Set */
-
 
     @Post()
     @ApiCreatedResponse(NCOSSetResponseDto)

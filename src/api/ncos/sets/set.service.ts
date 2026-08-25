@@ -1,7 +1,7 @@
 import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
-import {NCOSSetMariadbRepository} from './repositories/ncos-set.mariadb.repository'
+import {NCOSSetMariadbRepository} from './repositories/set.mariadb.repository'
 
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
@@ -69,35 +69,6 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
         }
         await this.ncosSetRepo.deleteNCOSSetPreferences(ids)
         return await this.ncosSetRepo.delete(ids, sr)
-    }
-
-
-    async createLevel(id: number, entities: internal.NCOSSetLevel[], sr: ServiceRequest): Promise<internal.NCOSSetLevel[]> {
-        const ncosSet = await this.read(id, sr)
-        await Promise.all(entities.map(async entity => {
-            entity.ncosSetId = id
-        }))
-        await this.checkPermissions(ncosSet.resellerId, sr)
-        return await this.ncosSetRepo.createLevel(entities, sr)
-    }
-
-    async readLevelAll(sr: ServiceRequest, id?: number): Promise<[internal.NCOSSetLevel[], number]> {
-        if (sr.user.role == 'reseller')
-            return await this.ncosSetRepo.readLevelAll(sr, id, {resellerId: sr.user.reseller_id})
-        return await this.ncosSetRepo.readLevelAll(sr, id)
-    }
-
-    async readLevel(id: number, levelId: number, sr: ServiceRequest): Promise<internal.NCOSSetLevel> {
-        if (sr.user.role == 'reseller')
-            return await this.ncosSetRepo.readLevelById(id, levelId, sr, {resellerId: sr.user.reseller_id})
-        return await this.ncosSetRepo.readLevelById(id, levelId, sr)
-    }
-
-    async deleteLevel(id: number, levelId: number, sr: ServiceRequest): Promise<number> {
-        const entity = await this.ncosSetRepo.readLevelById(id, levelId, sr)
-        const ncosSet = await this.read(entity.ncosSetId, sr)
-        await this.checkPermissions(ncosSet.resellerId, sr)
-        return await this.ncosSetRepo.deleteLevel(id, levelId, sr)
     }
 
     private async checkPermissions(resellerId: number, sr: ServiceRequest): Promise<void> {
