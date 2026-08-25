@@ -16,6 +16,11 @@ import {LoggerService} from '~/logger/logger.service'
 
 const execFileAsync = promisify(execFile)
 
+interface VoicemailFolder {
+    mailboxuser: string
+    dir: string
+}
+
 @Injectable()
 export class VoicemailService implements CrudService<internal.Voicemail> {
     readonly voicemailDir = '/var/spool/asterisk/voicemail/default/'
@@ -81,7 +86,11 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         const voicemails: Array<internal.Voicemail> = await this.voicemailRepo.readWhereInIds(ids, sr)
+        const folders = this.collectFolders(voicemails)
         const deletedIds: number[] = await this.voicemailRepo.delete(ids, sr)
+
+        for (const folder of folders.values())
+            await this.voicemailRepo.renumberDir(folder.mailboxuser, folder.dir, sr)
 
         for (const voicemail of voicemails)
             await this.sendNotification(voicemail, sr, 'd')
@@ -93,7 +102,9 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         if (await this.voicemailRepo.readCountOfIds(ids, sr) != ids.length)
             throw new UnprocessableEntityException()
-        const notifies: Array<[internal.Voicemail, string]> = []
+        const notifies: Array<[number, string]> = []
+        const originFolders = new Map<string, VoicemailFolder>()
+        const nextMsgnums = new Map<string, number>()
         const voicemails: Array<internal.Voicemail> = await this.voicemailRepo.readWhereInIds(ids, sr)
 
         for (const voicemail of voicemails) {
@@ -114,17 +125,51 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
                     throw new BadRequestException(`not a valid value ${update.dir}`)
                 if (update.dir.toLowerCase() == 'inbox')
                     action_type = 'x'
-                update.dir = `${this.voicemailDir}${voicemail.mailboxuser}/${validDir}`
-                notifies.push([voicemail, action_type])
+                const targetDir = `${this.voicemailDir}${voicemail.mailboxuser}/${validDir}`
+                update.dir = targetDir
+
+                // the moved message becomes the last one of the destination folder
+                const targetKey = this.folderKey(voicemail.mailboxuser, targetDir)
+                let msgnum = nextMsgnums.get(targetKey)
+                if (msgnum == undefined)
+                    msgnum = await this.voicemailRepo.readMaxMsgnumByDir(voicemail.mailboxuser, targetDir, sr) + 1
+                update.msgnum = msgnum
+                nextMsgnums.set(targetKey, msgnum + 1)
+
+                // the origin folder has to be renumbered to close the hole left behind
+                originFolders.set(this.folderKey(voicemail.mailboxuser, voicemail.dir), {
+                    dir: voicemail.dir,
+                    mailboxuser: voicemail.mailboxuser,
+                })
+                notifies.push([id, action_type])
             }
         }
 
         const result = await this.voicemailRepo.update(updates, sr)
 
-        for (const [voicemail, action_type] of notifies) {
+        for (const folder of originFolders.values())
+            await this.voicemailRepo.renumberDir(folder.mailboxuser, folder.dir, sr)
+
+        for (const [id, action_type] of notifies) {
+            const voicemail = await this.voicemailRepo.read(id, sr)
             await this.sendNotification(voicemail, sr, action_type)
         }
 
         return result
+    }
+
+    private folderKey(mailboxuser: string, dir: string): string {
+        return `${mailboxuser}|${dir}`
+    }
+
+    private collectFolders(voicemails: internal.Voicemail[]): Map<string, VoicemailFolder> {
+        const folders = new Map<string, VoicemailFolder>()
+        for (const voicemail of voicemails) {
+            folders.set(this.folderKey(voicemail.mailboxuser, voicemail.dir), {
+                dir: voicemail.dir,
+                mailboxuser: voicemail.mailboxuser,
+            })
+        }
+        return folders
     }
 }
