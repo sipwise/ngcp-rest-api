@@ -1,7 +1,6 @@
 import {Controller, Get, Post, Req} from '@nestjs/common'
 import {ApiCreatedResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
-import {Transactional} from 'typeorm-transactional'
 
 import {ClearCallCounterService} from './clear-call-counter.service'
 import {ClearCallCounterResponseDto} from './dto/clear-call-counter-response.dto'
@@ -10,6 +9,7 @@ import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {Auth} from '~/decorators/auth.decorator'
+import {Transactional} from '~/decorators/transactional.decorator'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 

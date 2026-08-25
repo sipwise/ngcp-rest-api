@@ -2,7 +2,6 @@
 
 import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
-import {runOnTransactionCommit} from 'typeorm-transactional'
 
 import {FilterBy, PeeringRuleMariadbRepository} from './repositories/rule.mariadb.repository'
 import {PeeringRuleRedisRepository} from './repositories/rule.redis.repository'
@@ -10,6 +9,7 @@ import {PeeringRuleRedisRepository} from './repositories/rule.redis.repository'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'

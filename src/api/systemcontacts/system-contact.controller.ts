@@ -1,7 +1,6 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
-import {Transactional} from 'typeorm-transactional'
 
 import {SystemContactRequestDto} from './dto/system-contact-request.dto'
 import {SystemContactResponseDto} from './dto/system-contact-response.dto'
@@ -17,6 +16,7 @@ import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorato
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
+import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'

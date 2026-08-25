@@ -3,7 +3,6 @@ import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post,
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'fast-json-patch'
-import {Transactional} from 'typeorm-transactional'
 
 import {PeeringGroupRequestDto} from './dto/group-request.dto'
 import {PeeringGroupResponseDto} from './dto/group-response.dto'
@@ -19,6 +18,7 @@ import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorato
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
+import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'

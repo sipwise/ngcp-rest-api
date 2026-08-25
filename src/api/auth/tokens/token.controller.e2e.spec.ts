@@ -10,7 +10,7 @@ import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
-import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
+import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type AuthTokenPost = {

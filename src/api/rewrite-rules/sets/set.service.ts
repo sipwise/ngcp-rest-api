@@ -2,7 +2,6 @@
 import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {GenerateErrorMessageArray} from 'helpers/http-error.helper'
 import {I18nService} from 'nestjs-i18n'
-import {runOnTransactionCommit} from 'typeorm-transactional'
 
 import {FilterBy, RewriteRuleSetMariadbRepository} from './repositories/set.mariadb.repository'
 import {RewriteRuleSetRedisRepository} from './repositories/set.redis.repository'
@@ -10,6 +9,7 @@ import {RewriteRuleSetRedisRepository} from './repositories/set.redis.repository
 import {AppService} from '~/app.service'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {TaskAgentHelper} from '~/helpers/task-agent.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ErrorMessage} from '~/interfaces/error-message.interface'
@@ -38,6 +38,8 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
                 await this.checkPermissions(entity.resellerId, sr)
         }))
         const created = await this.ruleSetRepo.create(entities)
+
+        await this.reloadDialPlanAfterCommit(sr)
 
         return await this.ruleSetRepo.readWhereInIds(created, sr)
     }

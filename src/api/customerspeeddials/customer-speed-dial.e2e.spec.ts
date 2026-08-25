@@ -11,7 +11,7 @@ import {AuthService} from '~/auth/auth.service'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
-import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
+import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type CustomerSpeedDialPost = {

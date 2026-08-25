@@ -13,7 +13,7 @@ import {db} from '~/entities'
 import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
-import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
+import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 
