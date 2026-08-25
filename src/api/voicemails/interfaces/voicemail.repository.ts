@@ -10,4 +10,8 @@ export interface VoicemailRepository {
     delete(ids: number[], sr: ServiceRequest): Promise<number[]>
 
     update(updates: Dictionary<internal.Voicemail>, sr: ServiceRequest): Promise<number[]>
+
+    readMaxMsgnumByDir(mailboxuser: string, dir: string, sr: ServiceRequest): Promise<number>
+
+    renumberDir(mailboxuser: string, dir: string, sr: ServiceRequest): Promise<void>
 }
