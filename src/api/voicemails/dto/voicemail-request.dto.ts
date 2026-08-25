@@ -1,10 +1,13 @@
 import {ApiProperty} from '@nestjs/swagger'
+import {IsIn} from 'class-validator'
 
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
+import {supportedVoicemailFolders} from '~/enums/supported-voicemail-folders.enum'
 
 export class VoicemailRequestDto implements RequestDto {
-    @ApiProperty({description: 'message folder', example: ['Old', 'Inbox']})
+    @IsIn(supportedVoicemailFolders)
+    @ApiProperty({description: 'message folder', enum: supportedVoicemailFolders, example: 'Old'})
         folder: string
 
     toInternal(options: RequestDtoOptions = {}): internal.Voicemail {

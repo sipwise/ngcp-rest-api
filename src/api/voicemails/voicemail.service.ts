@@ -7,6 +7,7 @@ import {I18nService} from 'nestjs-i18n'
 import {VoicemailMariadbRepository} from './repositories/voicemail.mariadb.repository'
 
 import {internal} from '~/entities'
+import {supportedVoicemailFolders} from '~/enums/supported-voicemail-folders.enum'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -18,7 +19,7 @@ const execFileAsync = promisify(execFile)
 @Injectable()
 export class VoicemailService implements CrudService<internal.Voicemail> {
     readonly voicemailDir = '/var/spool/asterisk/voicemail/default/'
-    readonly supported_dirs = ['Old', 'INBOX', 'Work', 'Friends', 'Family', 'Cust1', 'Cust2', 'Cust3', 'Cust4', 'Cust5', 'Cust6']
+    readonly supported_dirs = supportedVoicemailFolders
     private readonly log = new LoggerService(VoicemailService.name)
 
     constructor(
