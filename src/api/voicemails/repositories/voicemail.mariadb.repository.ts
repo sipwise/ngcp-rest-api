@@ -78,6 +78,39 @@ export class VoicemailMariadbRepository extends MariaDbRepository implements Voi
         return ids
     }
 
+    async readMaxMsgnumByDir(mailboxuser: string, dir: string, _sr: ServiceRequest): Promise<number> {
+        const qb = db.kamailio.VoicemailSpool.createQueryBuilder('voicemail')
+        qb.select('MAX(voicemail.msgnum)', 'max')
+        qb.where('voicemail.mailboxuser = :mailboxuser', {mailboxuser: mailboxuser})
+        qb.andWhere('voicemail.dir = :dir', {dir: dir})
+        const result = await qb.getRawOne()
+        if (result == undefined || result.max == undefined)
+            return -1
+        return +result.max
+    }
+
+    async renumberDir(mailboxuser: string, dir: string, sr: ServiceRequest): Promise<void> {
+        this.log.debug({
+            message: 'renumber voicemail messages of folder',
+            func: this.renumberDir.name,
+            user: sr.user.username,
+            mailboxuser: mailboxuser,
+            dir: dir,
+        })
+        const qb = db.kamailio.VoicemailSpool.createQueryBuilder('voicemail')
+        qb.select(['voicemail.id', 'voicemail.msgnum'])
+        qb.where('voicemail.mailboxuser = :mailboxuser', {mailboxuser: mailboxuser})
+        qb.andWhere('voicemail.dir = :dir', {dir: dir})
+        qb.orderBy('voicemail.msgnum', 'ASC')
+        qb.addOrderBy('voicemail.id', 'ASC')
+        const voicemails = await qb.getMany()
+        for (const [msgnum, voicemail] of voicemails.entries()) {
+            if (voicemail.msgnum == msgnum)
+                continue
+            await db.kamailio.VoicemailSpool.update(voicemail.id, {msgnum: msgnum})
+        }
+    }
+
     async readMessagesCountByUUID(uuid: string, _sr: ServiceRequest): Promise<MessagesCount> {
         const qb = db.kamailio.VoicemailSpool.createQueryBuilder('v')
         qb.select(['v.dir as dir', 'COUNT(v.dir) as dir_count'])
