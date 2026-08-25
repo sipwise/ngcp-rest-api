@@ -13,7 +13,7 @@ import {db} from '~/entities'
 import {ContractBillingProfileDefinition, ContractStatus, ContractStatus as CustomerStatus} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
-import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
+import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type BillingProfilePost = {
