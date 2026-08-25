@@ -17,7 +17,6 @@ import {
 import {FileInterceptor} from '@nestjs/platform-express'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
-import {Transactional} from 'typeorm-transactional'
 import {number} from 'yargs'
 
 import {InvoiceTemplateRequestDto} from './dto/invoice-template-request.dto'
@@ -35,6 +34,7 @@ import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorato
 import {Auth} from '~/decorators/auth.decorator'
 import {License} from '~/decorators/license.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
+import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'

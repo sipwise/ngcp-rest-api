@@ -12,7 +12,7 @@ import {db} from '~/entities'
 import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
-import {ResponseValidationInterceptor} from '~/interceptors/validate.interceptor'
+import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 interface PbxSubscriber {
