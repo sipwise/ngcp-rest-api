@@ -71,6 +71,9 @@ async function bootstrap(): Promise<void> {
     // disable x-powered-by header
     app.getHttpAdapter().getInstance().disable('x-powered-by')
 
+    // return formatted json
+    app.getHttpAdapter().getInstance().set('json spaces', 2)
+
     await app.listen(config.common.api_port, process.env.NODE_ENV == 'development'
         ? '0.0.0.0'
         : '127.0.0.1',
