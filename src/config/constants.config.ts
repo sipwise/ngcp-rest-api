@@ -1,3 +1,5 @@
+import {IsBooleanString, IsNumberString, IsOptional, IsString} from 'class-validator'
+
 import {AppService} from '~/app.service'
 
 export const DATABASES = {
@@ -35,18 +37,49 @@ export interface RbacFlag {
     lawful_intercept: boolean
 }
 
-export const reservedQueryParams = [
-    'page', // page number
-    'rows', // row number
-    'order_by', // order_by field
-    'order_by_direction', // order asc/desc
-    'search_or', // search multiple fields as "or" instead of "and" true/false
-    'expand', // expand logic
-    'soft_expand', // expand logic
-    'allow_unknown_params', // when provided, unknown params are ignored
-    'x_rbw_req_id', // reserved for ALE as their unique request identifier to appear in the logs
-    'x_rbw_correl_id', // reserved for ALE as their unique request identifier to appear in the logs
-]
+export class ReservedQueryParamsDto {
+    @IsOptional()
+    @IsNumberString()
+        page: number = undefined // page number
+
+    @IsOptional()
+    @IsNumberString()
+        rows: number = undefined // row number
+
+    @IsOptional()
+    @IsString()
+        order_by: string = undefined // order_by field
+
+    @IsOptional()
+    @IsString()
+        order_by_direction: string = undefined // order asc/desc
+
+    @IsOptional()
+    @IsBooleanString()
+        search_or: boolean = undefined // search multiple fields as "or" instead of "and" true/false
+
+    @IsOptional()
+    @IsString()
+        expand: string = undefined // expand logic
+
+    @IsOptional()
+    @IsBooleanString()
+        soft_expand: string = undefined // return 200 regardless on an invalid expand
+
+    @IsOptional()
+    @IsBooleanString()
+        allow_unknown_params: boolean = undefined // when provided, unknown params are ignored
+
+    @IsOptional()
+    @IsString()
+        x_rbw_req_id: string = undefined // reserved for ALE as their unique request identifier to appear in the logs
+
+    @IsOptional()
+    @IsString()
+        x_rbw_correl_id: string = undefined // reserved for ALE as their unique request identifier to appear in the logs
+}
+
+export const reservedQueryParamKeys: string[] = Object.keys(new ReservedQueryParamsDto())
 
 export enum License {
     aof = 'aof',

@@ -15,6 +15,7 @@ import {ValidatorOptions} from '@nestjs/common/interfaces/external/validator-opt
 import {ErrorHttpStatusCode} from '@nestjs/common/utils/http-error-by-code.util'
 import {instanceToPlain, plainToInstance} from 'class-transformer'
 
+import {isAllowUnknownParams} from '~/helpers/allow-unknown-params.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {formatValidationErrors} from '~/helpers/errors.helper'
 import {obfuscatePasswordValidationErrors} from '~/helpers/password-obfuscator.helper'
@@ -101,7 +102,7 @@ export class ValidateInputPipe implements PipeTransform<any> {
         if (entity instanceof Dictionary)
             return entity
 
-        const errors = await validate(entity, this.validatorOptions)
+        const errors = await validate(entity, this.getValidatorOptions(value, metadata))
         if (errors.length > 0) {
             obfuscatePasswordValidationErrors(errors)
             this.log.debug({message: 'input validation failed', errors: errors})
@@ -128,6 +129,13 @@ export class ValidateInputPipe implements PipeTransform<any> {
     // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     protected toEmptyIfNil<T = any, R = any>(value: T): R | {} {
         return isNil(value) ? {} : value
+    }
+
+    protected getValidatorOptions(value: any, metadata: ArgumentMetadata): ValidatorOptions {
+        if (metadata.type === 'query' && typeof value === 'object' && !isNil(value) && isAllowUnknownParams(value)) {
+            return {...this.validatorOptions, forbidNonWhitelisted: false}
+        }
+        return this.validatorOptions
     }
 
     protected isPrimitive(value: unknown): boolean {

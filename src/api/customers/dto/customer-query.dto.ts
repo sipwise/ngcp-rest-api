@@ -1,6 +1,8 @@
 import {IsBooleanString, IsOptional} from 'class-validator'
 
-export class CustomerQueryDto {
+import {RequestParamDto} from '~/dto/request-param.dto'
+
+export class CustomerQueryDto extends RequestParamDto {
     @IsOptional()
     @IsBooleanString()
         include_terminated?: string

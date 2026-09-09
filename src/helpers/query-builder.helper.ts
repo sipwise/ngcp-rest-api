@@ -3,7 +3,8 @@ import {BaseEntity, SelectQueryBuilder} from 'typeorm'
 
 import {SearchLogic} from './search-logic.helper'
 
-import {reservedQueryParams} from '~/config/constants.config'
+import {reservedQueryParamKeys as reservedQueryParams} from '~/config/constants.config'
+import {isAllowUnknownParams} from '~/helpers/allow-unknown-params.helper'
 import {QueriesDictionary} from '~/interfaces/service-request.interface'
 
 export function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: QueriesDictionary, searchLogic: SearchLogic): void {
@@ -28,7 +29,7 @@ function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilde
 }
 
 function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: QueriesDictionary, searchLogic: SearchLogic): void {
-    const allowUnknownParams = 'allow_unknown_params' in params && JSON.parse(params['allow_unknown_params'].toString())
+    const allowUnknownParams = isAllowUnknownParams(params)
 
     Object.keys(params).forEach((searchField: string) => {
         if (reservedQueryParams.includes(searchField))
