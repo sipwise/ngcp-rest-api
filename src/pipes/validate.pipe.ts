@@ -15,7 +15,6 @@ import {ValidatorOptions} from '@nestjs/common/interfaces/external/validator-opt
 import {ErrorHttpStatusCode} from '@nestjs/common/utils/http-error-by-code.util'
 import {instanceToPlain, plainToInstance} from 'class-transformer'
 
-import {isAllowUnknownParams} from '~/helpers/allow-unknown-params.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {formatValidationErrors} from '~/helpers/errors.helper'
 import {obfuscatePasswordValidationErrors} from '~/helpers/password-obfuscator.helper'
@@ -132,7 +131,7 @@ export class ValidateInputPipe implements PipeTransform<any> {
     }
 
     protected getValidatorOptions(value: any, metadata: ArgumentMetadata): ValidatorOptions {
-        if (metadata.type === 'query' && typeof value === 'object' && !isNil(value) && isAllowUnknownParams(value)) {
+        if (metadata.type === 'query' && typeof value === 'object' && !isNil(value)) {
             return {...this.validatorOptions, forbidNonWhitelisted: false}
         }
         return this.validatorOptions
@@ -158,6 +157,9 @@ export class ValidateInputPipe implements PipeTransform<any> {
         }
         const {type, metatype} = metadata
         if (type !== 'param' && type !== 'query') {
+            return value
+        }
+        if (isNil(value)) {
             return value
         }
         if (metatype === Boolean) {

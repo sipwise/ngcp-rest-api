@@ -67,7 +67,7 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
                 searchDto._alias,
             ),
         )
-        qb.where({id: id})
+        qb.andWhere({id: id})
         this.addFilterBy(qb, filterBy)
         const result = await qb.getOneOrFail()
         result.subscriber_id = await this.provisioningToBilling(result.subscriber_id)
@@ -87,7 +87,7 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
                 searchDto._alias,
             ),
         )
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
         return await Promise.all(result.map(async (d) => {
@@ -109,7 +109,7 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
                 searchDto._alias,
             ),
         )
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
         return await qb.getCount()
     }

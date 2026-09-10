@@ -1,13 +1,12 @@
 // TODO: Fix this later in the generic controller approach
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {BadRequestException, Body, Param, Query, Req, Res, UploadedFile} from '@nestjs/common'
+import {BadRequestException} from '@nestjs/common'
 import {Request} from 'express'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
 import {Auth} from '~/decorators/auth.decorator'
-import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Operation as PatchOperation, validate} from '~/helpers/patch.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -20,42 +19,42 @@ export class CrudController<CreateDTO, _ResponseDTO> {
         private readonly journalCrudService?: JournalService) {
     }
 
-    async create(@Body() entity: CreateDTO | CreateDTO[], @Req() req: Request, @UploadedFile() file?: Express.Multer.File, @Param() _params?: unknown): Promise<any> {
+    async create(entity: CreateDTO | CreateDTO[], req: Request, file?: Express.Multer.File, ..._params: unknown[]): Promise<any> {
         return await this.repo.create(entity, new ServiceRequest(req), file)
     }
 
     async readAll(
-        @Req() req: Request,
-        @Param() _params?: unknown,
-        @Query() _query?: unknown,
-        @Res({passthrough: true}) res?,
+        req: Request,
+        _query?: unknown,
+        _res?: unknown,
+        ..._params: unknown[]
     ): Promise<any> {
         return await this.repo.readAll(new ServiceRequest(req))
     }
 
     async read(
-        @Param('id') id: number | string,
-        @Req() req: Request,
-        @Param() _params?: unknown,
-        @Query() _query?: unknown,
+        id: number | string,
+        req: Request,
+        _query?: unknown,
+        ..._params: unknown[]
     ): Promise<any> {
         return await this.repo.read(id, new ServiceRequest(req))
     }
 
     async update(
-        @Param('id') id: number | string,
-        @Body() dto: CreateDTO,
-        @Req() req: Request,
-        @Param() _params?: unknown,
+        id: number | string,
+        dto: CreateDTO,
+        req: Request,
+        ..._params: unknown[]
     ): Promise<any> {
         return await this.repo.update(id, dto, new ServiceRequest(req))
     }
 
     async adjust(
-        @Param('id') id: number | string,
-        @Body() patch: PatchOperation[],
-        @Req() req: Request,
-        @Param() _params?: unknown,
+        id: number | string,
+        patch: PatchOperation[],
+        req: Request,
+        ..._params: unknown[]
     ): Promise<any> {
         const err = validate(patch)
         if (err) {
@@ -66,17 +65,17 @@ export class CrudController<CreateDTO, _ResponseDTO> {
     }
 
     async delete(
-        @ParamOrBody('id') id: number[] | string[],
-        @Req() req: Request,
-        @Param() _params?: unknown,
+        id: number[] | string[],
+        req: Request,
+        ..._params: unknown[]
     ): Promise<number[] | string[]> {
         return await this.repo.delete(id, new ServiceRequest(req))
     }
 
     async journal(
-        @Param('id') id: number | string,
-        @Req() req: Request,
-        @Param() _params?: unknown,
+        id: number | string,
+        req: Request,
+        ..._params: unknown[]
     ): Promise<[JournalResponseDto[], number]>{
         const sr = new ServiceRequest(req)
         const [result, count] = await this.journalCrudService.readAll(sr, this.resourceName, id)

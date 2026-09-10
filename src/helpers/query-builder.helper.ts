@@ -22,7 +22,7 @@ function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilde
         if (joinTable != undefined && joinColumn != undefined) {
             qb.leftJoinAndSelect(`${qb.alias}.${joinColumn}`, `${joinColumn}`)
             if (params[joinColumn] != null) {
-                qb.where(`${joinTable}.${joinColumn} = :${joinColumn}`, {[`${joinColumn}`]: params[joinColumn]})
+                qb.andWhere(`${joinTable}.${joinColumn} = :${joinColumn}`, {[`${joinColumn}`]: params[joinColumn]})
             }
         }
     }

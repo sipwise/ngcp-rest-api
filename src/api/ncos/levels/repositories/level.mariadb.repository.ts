@@ -63,7 +63,7 @@ export class NCOSLevelMariadbRepository extends MariaDbRepository implements NCO
                 searchDto._alias,
             ),
         )
-        qb.where({id: id})
+        qb.andWhere({id: id})
         this.addFilterBy(qb, filterBy)
         const result = await qb.getOneOrFail()
         return result.toInternal()
@@ -82,7 +82,7 @@ export class NCOSLevelMariadbRepository extends MariaDbRepository implements NCO
                 searchDto._alias,
             ),
         )
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
         return await Promise.all(result.map(async (d) => d.toInternal()))
@@ -101,7 +101,7 @@ export class NCOSLevelMariadbRepository extends MariaDbRepository implements NCO
                 searchDto._alias,
             ),
         )
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
         return await qb.getCount()
     }

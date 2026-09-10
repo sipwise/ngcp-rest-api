@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req, ValidationPipe} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
@@ -7,7 +7,6 @@ import {RewriteRuleService} from './rule.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
-import {RewriteRuleRequestParamDto} from '~/api/rewrite-rules/sets/rules/dto/rule-request-param.dto'
 import {RewriteRuleResponseDto} from '~/api/rewrite-rules/sets/rules/dto/rule-response.dto'
 import {RewriteRuleSearchDto} from '~/api/rewrite-rules/sets/rules/dto/rule-search.dto'
 import {RbacRole} from '~/config/constants.config'
@@ -29,6 +28,7 @@ import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
+import {ParseIntIdPipe} from '~/pipes/parse-int-id.pipe'
 import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
 import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
@@ -80,7 +80,8 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
     @ApiPaginatedResponse(RewriteRuleResponseDto)
     async readAll(
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: RewriteRuleRequestParamDto): Promise<[RewriteRuleResponseDto[], number]> {
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
+    ): Promise<[RewriteRuleResponseDto[], number]> {
         this.log.debug({
             message: 'read all rewrite rules across all rule sets',
             func: this.readAll.name,
@@ -104,9 +105,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
-        // TODO: _Prefix does not work here, fix?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {setId}: RewriteRuleRequestParamDto = new RewriteRuleRequestParamDto(),
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
     ): Promise<RewriteRuleResponseDto> {
         this.log.debug({
             message: 'read rewrite rule by id',
@@ -133,9 +132,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
     async update(@Param('id', ParseIntPipe) id: number,
         dto: RewriteRuleRequestDto,
         @Req() req: Request,
-        // TODO: _Prefix does not work here, fix?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {setId}: RewriteRuleRequestParamDto = new RewriteRuleRequestParamDto(),  
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
     ): Promise<RewriteRuleResponseDto> {
         this.log.debug({
             message: 'update rewrite rule by id',

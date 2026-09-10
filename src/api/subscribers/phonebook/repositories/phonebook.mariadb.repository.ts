@@ -60,7 +60,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 searchDto._alias,
             ),
         )
-        qb.where({id: id})
+        qb.andWhere({id: id})
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getOneOrFail()
         return result.toInternal()
@@ -100,7 +100,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 searchDto._alias,
             ),
         )
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getMany()
         return await Promise.all(result.map(async (d) => d.toInternal()))
@@ -140,7 +140,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 searchDto._alias,
             ),
         )
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         this.addFilterBy(qb, options.filterBy)
         return await qb.getCount()
     }
@@ -228,7 +228,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 searchDto._alias,
             ),
         )
-        qb.where({id: id})
+        qb.andWhere({id: id})
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getOneOrFail()
         return result.toInternal()
@@ -236,6 +236,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
 
     async readByIdFromViewContract(id: string, options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<internal.VSubscriberPhonebook> {
         const qb = db.billing.VSubscriberContractPhonebook.createQueryBuilder('phonebook')
+        qb.leftJoinAndSelect('phonebook.subscriber', 'subscriber')
         const searchDto  = new SubscriberPhonebookSearchDto()
         configureQueryBuilder(
             qb,
@@ -247,7 +248,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 searchDto._alias,
             ),
         )
-        qb.where({id: id})
+        qb.andWhere({id: id})
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getOneOrFail()
         return result.toInternal()
@@ -266,7 +267,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 undefined,
                 searchDto._alias,
             ))
-        qb.where({id: id})
+        qb.andWhere({id: id})
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getOneOrFail()
         return result.toInternal()
@@ -287,7 +288,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
 
     async getAllowedSubscribersCount(ids: number[], filterBy: SubscriberPhonebookOptions['filterBy'], _sr: ServiceRequest): Promise<number> {
         const qb = db.billing.VoipSubscriber.createQueryBuilder('subscriber')
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         qb.andWhere('subscriber.status != :status', {status: 'terminated'})
         if (filterBy) {
             if (filterBy.resellerId) {

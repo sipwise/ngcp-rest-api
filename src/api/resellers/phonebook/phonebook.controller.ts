@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Query, Req, Res, StreamableFile, UnprocessableEntityException, UploadedFile, UseInterceptors, ValidationPipe, forwardRef} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Query, Req, Res, StreamableFile, UnprocessableEntityException, UploadedFile, UseInterceptors, forwardRef} from '@nestjs/common'
 import {FileInterceptor} from '@nestjs/platform-express'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
@@ -6,7 +6,6 @@ import {Operation} from 'fast-json-patch'
 import {I18nService} from 'nestjs-i18n'
 
 import {ResellerPhonebookCsvRequestDto} from './dto/phonebook-csv-request.dto'
-import {ResellerPhonebookRequestParamDto} from './dto/phonebook-request-param.dto'
 import {ResellerPhonebookRequestDto} from './dto/phonebook-request.dto'
 import {ResellerPhonebookResponseDto} from './dto/phonebook-response.dto'
 import {ResellerPhonebookSearchDto} from './dto/phonebook-search.dto'
@@ -41,6 +40,7 @@ import {LoggerService} from '~/logger/logger.service'
 import {FileMimeTypePipe} from '~/pipes/parse-file-mimetype.pipe'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
+import {ParseIntIdPipe} from '~/pipes/parse-int-id.pipe'
 import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
 import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
@@ -133,7 +133,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
     @ApiAcceptHeader('application/json', 'application/hal+json', 'text/csv')
     async readAll(
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: ResellerPhonebookRequestParamDto,
+        @Param('resellerId', new ParseIntIdPipe({allowUndefined: true})) _resellerId: number,
         @Query() _query: unknown,
         @Res({passthrough: true}) res,
     ): Promise<[ResellerPhonebookResponseDto[], number] | StreamableFile> {
@@ -165,9 +165,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
-        // TODO: _Prefix does not work here, fix?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {resellerId}: ResellerPhonebookRequestParamDto = new ResellerPhonebookRequestParamDto(),
+        @Param('resellerId', new ParseIntIdPipe({allowUndefined: true})) _resellerId: number,
     ): Promise<ResellerPhonebookResponseDto> {
         this.log.debug({
             message: 'read reseller phonebook by id',
@@ -193,9 +191,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
     async update(@Param('id', ParseIntPipe) id: number,
         dto: ResellerPhonebookRequestDto,
         @Req() req: Request,
-        // TODO: _Prefix does not work here, fix?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {resellerId}: ResellerPhonebookRequestParamDto = new ResellerPhonebookRequestParamDto(),
+        @Param('resellerId', new ParseIntIdPipe({allowUndefined: true})) _resellerId: number,
     ): Promise<ResellerPhonebookResponseDto> {
         this.log.debug({
             message: 'update reseller phonebook by id',

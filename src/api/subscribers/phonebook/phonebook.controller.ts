@@ -7,7 +7,6 @@ import {I18nService} from 'nestjs-i18n'
 
 import {SubscriberPhonebookCsvRequestDto} from './dto/phonebook-csv-request.dto'
 import {SubscriberPhonebookQueryDto} from './dto/phonebook-query.dto'
-import {SubscriberPhonebookRequestParamDto} from './dto/phonebook-request-param.dto'
 import {SubscriberPhonebookRequestDto} from './dto/phonebook-request.dto'
 import {SubscriberPhonebookResponseDto} from './dto/phonebook-response.dto'
 import {SubscriberPhonebookSearchDto} from './dto/phonebook-search.dto'
@@ -42,6 +41,7 @@ import {LoggerService} from '~/logger/logger.service'
 import {FileMimeTypePipe} from '~/pipes/parse-file-mimetype.pipe'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
+import {ParseIntIdPipe} from '~/pipes/parse-int-id.pipe'
 import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
 import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 import {ParseRegexPipe} from '~/pipes/parse-regex-id.pipe'
@@ -141,7 +141,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
     @ApiAcceptHeader('application/json', 'application/hal+json', 'text/csv')
     async readAll(
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: SubscriberPhonebookRequestParamDto,
+        @Param('subscriberId', new ParseIntIdPipe({allowUndefined: true})) _subscriberId: number,
         @Query(new ValidationPipe()) _query: SubscriberPhonebookQueryDto,
         @Res({passthrough: true}) res,
     ): Promise<[SubscriberPhonebookResponseDto[], number] | StreamableFile> {
@@ -174,9 +174,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
     async read(
         @Param('id', new ParseRegexPipe({pattern: /^[csr\d]+$/})) id: string,
         @Req() req: Request,
-        // TODO: _Prefix does not work here, fix?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {subscriberId}: SubscriberPhonebookRequestParamDto = new SubscriberPhonebookRequestParamDto(),
+        @Param('subscriberId', new ParseIntIdPipe({allowUndefined: true})) _subscriberId: number,
         @Query(new ValidationPipe()) _query: SubscriberPhonebookQueryDto,
     ): Promise<SubscriberPhonebookResponseDto> {
         this.log.debug({
@@ -203,9 +201,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
     async update(@Param('id', ParseIntPipe) id: number,
         dto: SubscriberPhonebookRequestDto,
         @Req() req: Request,
-        // TODO: _Prefix does not work here, fix?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {subscriberId}: SubscriberPhonebookRequestParamDto = new SubscriberPhonebookRequestParamDto(),
+        @Param('subscriberId', new ParseIntIdPipe({allowUndefined: true})) _subscriberId: number,
     ): Promise<SubscriberPhonebookResponseDto> {
         this.log.debug({
             message: 'update subscriber phonebook by id',

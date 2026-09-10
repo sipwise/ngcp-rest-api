@@ -70,7 +70,7 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
                 searchDto._alias,
             ),
         )
-        qb.where({id: id})
+        qb.andWhere({id: id})
         qb.innerJoin('headerRuleAction.rule', 'headerRule')
         qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
@@ -92,7 +92,7 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
                 searchDto._alias,
             ),
         )
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         qb.innerJoin('headerRuleAction.rule', 'headerRule')
         qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
@@ -116,7 +116,7 @@ export class HeaderManipulationRuleActionMariadbRepository extends MariaDbReposi
         )
         qb.innerJoin('headerRuleAction.rule', 'headerRule')
         qb.innerJoin('headerRule.set', 'headerRuleSet')
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
         return await qb.getCount()
     }

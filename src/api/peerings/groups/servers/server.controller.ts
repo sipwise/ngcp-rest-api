@@ -1,9 +1,8 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req, ValidationPipe} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {PeeringGroupServerRequestDto} from './dto/server-request.dto'
-import {PeeringGroupServerRequestParamDto} from './dto/server-request.param.dto'
 import {PeeringGroupServerResponseDto} from './dto/server-response.dto'
 import {PeeringGroupServerService} from './server.service'
 
@@ -27,6 +26,7 @@ import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
+import {ParseIntIdPipe} from '~/pipes/parse-int-id.pipe'
 import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
 import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
@@ -79,7 +79,8 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
     @ApiPaginatedResponse(PeeringGroupServerResponseDto)
     async readAll(
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: PeeringGroupServerRequestParamDto): Promise<[PeeringGroupServerResponseDto[], number]> {
+        @Param('groupId', new ParseIntIdPipe({allowUndefined: true})) _groupId: number,
+    ): Promise<[PeeringGroupServerResponseDto[], number]> {
         this.log.debug({
             message: 'read all peering servers across all groups',
             func: this.readAll.name,
@@ -103,9 +104,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
-        // TODO: _Prefix does not work here, fix?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {groupId}: PeeringGroupServerRequestParamDto = new PeeringGroupServerRequestParamDto(),
+        @Param('groupId', new ParseIntIdPipe({allowUndefined: true})) _groupId: number,
     ): Promise<PeeringGroupServerResponseDto> {
         this.log.debug({
             message: 'read peering server by id',
@@ -128,9 +127,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
     async update(@Param('id', ParseIntPipe) id: number,
         dto: PeeringGroupServerRequestDto,
         @Req() req: Request,
-        // TODO: _Prefix does not work here, fix?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {groupId}: PeeringGroupServerRequestParamDto = new PeeringGroupServerRequestParamDto(),  
+        @Param('groupId', new ParseIntIdPipe({allowUndefined: true})) _groupId: number,
     ): Promise<PeeringGroupServerResponseDto> {
         this.log.debug({
             message: 'update peering server by id',

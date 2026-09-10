@@ -13,7 +13,6 @@ export const databaseProviders = [
             const ds  = new DataSource(databaseConfig)
             initializeTransactionalContext()
             if (process.env.NODE_ENV == 'test' && process.env.NODE_TEST_E2E !== 'true') {
-                log.debug('test environment detected, skip database connection')
                 return ds
             }
             try {

@@ -65,7 +65,7 @@ export class BanAdminMariadbRepository extends MariaDbRepository implements BanA
                 searchDto._alias,
             ),
         )
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         this.addPermissionCheckToQueryBuilder(qb, options)
         const result = await qb.getMany()
         return await Promise.all(result.map(async (d) => d.toBanAdminInternal()))

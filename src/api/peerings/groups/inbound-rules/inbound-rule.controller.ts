@@ -1,9 +1,8 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req, ValidationPipe} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {PeeringInboundRuleRequestDto} from './dto/inbound-rule-request.dto'
-import {PeeringInboundRuleRequestParamDto} from './dto/inbound-rule-request.param.dto'
 import {PeeringInboundRuleResponseDto} from './dto/inbound-rule-response.dto'
 import {PeeringInboundRuleService} from './inbound-rule.service'
 
@@ -27,6 +26,7 @@ import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
+import {ParseIntIdPipe} from '~/pipes/parse-int-id.pipe'
 import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
 import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
@@ -79,7 +79,8 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
     @ApiPaginatedResponse(PeeringInboundRuleResponseDto)
     async readAll(
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: PeeringInboundRuleRequestParamDto): Promise<[PeeringInboundRuleResponseDto[], number]> {
+        @Param('groupId', new ParseIntIdPipe({allowUndefined: true})) _groupId: number,
+    ): Promise<[PeeringInboundRuleResponseDto[], number]> {
         this.log.debug({
             message: 'read all peering rules across all groups',
             func: this.readAll.name,
@@ -103,9 +104,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
-        // TODO: _Prefix does not work here, fix?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {groupId}: PeeringInboundRuleRequestParamDto = new PeeringInboundRuleRequestParamDto(),
+        @Param('groupId', new ParseIntIdPipe({allowUndefined: true})) _groupId: number,
     ): Promise<PeeringInboundRuleResponseDto> {
         this.log.debug({
             message: 'read peering rule by id',
@@ -128,9 +127,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
     async update(@Param('id', ParseIntPipe) id: number,
         dto: PeeringInboundRuleRequestDto,
         @Req() req: Request,
-        // TODO: _Prefix does not work here, fix?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {groupId}: PeeringInboundRuleRequestParamDto = new PeeringInboundRuleRequestParamDto(),
+        @Param('groupId', new ParseIntIdPipe({allowUndefined: true})) _groupId: number,
     ): Promise<PeeringInboundRuleResponseDto> {
         this.log.debug({
             message: 'update peering rule by id',

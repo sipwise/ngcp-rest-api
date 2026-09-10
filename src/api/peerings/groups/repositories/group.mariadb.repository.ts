@@ -57,7 +57,7 @@ export class PeeringGroupMariadbRepository extends MariaDbRepository implements 
                 searchDto._alias,
             ),
         )
-        qb.where({id: id})
+        qb.andWhere({id: id})
         const result = await qb.getOneOrFail()
         return result.toInternal()
     }
@@ -75,7 +75,7 @@ export class PeeringGroupMariadbRepository extends MariaDbRepository implements 
                 undefined,
             ),
         )
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         const result = await qb.getMany()
         return await Promise.all(result.map(async (d) => {
             return d.toInternal()

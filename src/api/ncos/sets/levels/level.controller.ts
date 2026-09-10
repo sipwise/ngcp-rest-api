@@ -1,8 +1,7 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Req, ValidationPipe} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Req} from '@nestjs/common'
 import {ApiBody, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
-import {NCOSSetLevelRequestParamDto} from './dto/level-request-param.dto'
 import {NCOSSetLevelRequestDto} from './dto/level-request.dto'
 import {NCOSSetLevelResponseDto} from './dto/level-response.dto'
 import {NCOSSetLevelService} from './level.service'
@@ -20,6 +19,7 @@ import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
+import {ParseIntIdPipe} from '~/pipes/parse-int-id.pipe'
 import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
 
 const resourceName = 'ncos/sets'
@@ -70,7 +70,7 @@ export class NCOSSetLevelController extends CrudController<NCOSSetLevelRequestDt
     @ApiPaginatedResponse(NCOSSetLevelResponseDto)
     async readAll(
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: NCOSSetLevelRequestParamDto,
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
     ): Promise<[NCOSSetLevelResponseDto[], number]> {
         this.log.debug({
             message: 'read all ncos set levels',
@@ -92,9 +92,7 @@ export class NCOSSetLevelController extends CrudController<NCOSSetLevelRequestDt
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
-        // TODO: _Prefix does not work here, fix?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {setId}: NCOSSetLevelRequestParamDto = new NCOSSetLevelRequestParamDto(),
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
     ): Promise<NCOSSetLevelResponseDto> {
         this.log.debug({
             message: 'read ncos set level by id',

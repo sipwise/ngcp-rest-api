@@ -79,7 +79,7 @@ export class CustomerSpeedDialMariadbRepository extends MariaDbRepository implem
                 searchDto._alias,
             ),
         )
-        qb.where({id: id})
+        qb.andWhere({id: id})
         this.addFilterBy(qb, filterBy)
         const result = await qb.getOne()
         if (!result)

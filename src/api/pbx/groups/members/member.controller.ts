@@ -1,8 +1,7 @@
-import {Controller, Get, Param, ParseIntPipe, Req, ValidationPipe} from '@nestjs/common'
+import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
 import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
-import {PbxGroupMemberRequestParamDto} from './dto/member-request-param.dto'
 import {PbxGroupMemberResponseDto} from './dto/member-response.dto'
 import {PbxGroupMemberService} from './member.service'
 
@@ -14,6 +13,7 @@ import {License} from '~/decorators/license.decorator'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
+import {ParseIntIdPipe} from '~/pipes/parse-int-id.pipe'
 
 const resourceName = 'pbx/groups'
 
@@ -40,7 +40,7 @@ export class PbxGroupMemberController extends CrudController<never, PbxGroupMemb
     @ApiPaginatedResponse(PbxGroupMemberResponseDto)
     async readAll(
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: PbxGroupMemberRequestParamDto,
+        @Param('groupId', new ParseIntIdPipe({allowUndefined: true})) _groupId: number,
     ): Promise<[PbxGroupMemberResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all pbx group members',
@@ -65,7 +65,7 @@ export class PbxGroupMemberController extends CrudController<never, PbxGroupMemb
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: PbxGroupMemberRequestParamDto,
+        @Param('groupId', new ParseIntIdPipe({allowUndefined: true})) _groupId: number,
     ): Promise<PbxGroupMemberResponseDto> {
         this.log.debug({
             message: 'fetch pbx group member by id',

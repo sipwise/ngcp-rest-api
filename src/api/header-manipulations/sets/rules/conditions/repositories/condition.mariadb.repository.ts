@@ -84,7 +84,7 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
                 searchDto._alias,
             ),
         )
-        qb.where({id: id})
+        qb.andWhere({id: id})
         qb.innerJoin('headerRuleCondition.rule', 'headerRule')
         qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
@@ -106,7 +106,7 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
                 searchDto._alias,
             ),
         )
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         qb.innerJoin('headerRuleCondition.rule', 'headerRule')
         qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
@@ -128,7 +128,7 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
                 searchDto._alias,
             ),
         )
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         qb.innerJoin('headerRuleCondition.rule', 'headerRule')
         qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
@@ -175,7 +175,7 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
             undefined,
             searchDto._alias,
         ))
-        qbValues.where({condition_id: conditionId})
+        qbValues.andWhere({condition_id: conditionId})
 
         const [result, totalCount] = await qbValues.getManyAndCount()
         return [await Promise.all(

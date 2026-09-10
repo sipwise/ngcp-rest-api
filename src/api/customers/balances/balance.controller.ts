@@ -1,9 +1,8 @@
-import {Body, Controller, Get, Param, ParseIntPipe, Patch, Put, Req, ValidationPipe} from '@nestjs/common'
+import {Body, Controller, Get, Param, ParseIntPipe, Patch, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {CustomerBalanceService} from './balance.service'
-import {CustomerBalanceRequestParamDto} from './dto/balance-request-param.dto'
 import {CustomerBalanceRequestDto} from './dto/balance-request.dto'
 import {CustomerBalanceResponseDto} from './dto/balance-response.dto'
 import {CustomerBalanceSearchDto} from './dto/balance-search.dto'
@@ -27,6 +26,7 @@ import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
+import {ParseIntIdPipe} from '~/pipes/parse-int-id.pipe'
 import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
 const resourceName = 'customers/'
@@ -57,7 +57,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
     @ApiPaginatedResponse(CustomerBalanceResponseDto)
     async readAll(
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: CustomerBalanceRequestParamDto): Promise<[CustomerBalanceResponseDto[], number]> {
+        @Param('customerId', new ParseIntIdPipe({allowUndefined: true})) _customerId: number): Promise<[CustomerBalanceResponseDto[], number]> {
         this.log.debug({
             message: 'read all customer balances',
             func: this.readAll.name,
@@ -81,9 +81,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
-        // TODO: _Prefix does not work here, fix?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {customerId}: CustomerBalanceRequestParamDto = new CustomerBalanceRequestParamDto(),
+        @Param('customerId', new ParseIntIdPipe({allowUndefined: true})) _customerId: number,
     ): Promise<CustomerBalanceResponseDto> {
         this.log.debug({
             message: 'read customer balance by id',
@@ -110,9 +108,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
     async update(@Param('id', ParseIntPipe) id: number,
         dto: CustomerBalanceRequestDto,
         @Req() req: Request,
-        // TODO: _Prefix does not work here, fix?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        @Param(new ValidationPipe()) {customerId}: CustomerBalanceRequestParamDto = new CustomerBalanceRequestParamDto(),  
+        @Param('customerId', new ParseIntIdPipe({allowUndefined: true})) _customerId: number,
     ): Promise<CustomerBalanceResponseDto> {
         this.log.debug({
             message: 'update customer balance by id',

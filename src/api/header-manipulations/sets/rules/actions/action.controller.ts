@@ -1,9 +1,8 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req, ValidationPipe} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {HeaderManipulationRuleActionService} from './action.service'
-import {HeaderManipulationRuleActionRequestParamDto} from './dto/action-request-param.dto'
 import {HeaderManipulationRuleActionRequestDto} from './dto/action-request.dto'
 import {HeaderManipulationRuleActionResponseDto} from './dto/action-response.dto'
 
@@ -30,6 +29,7 @@ import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
+import {ParseIntIdPipe} from '~/pipes/parse-int-id.pipe'
 import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
 import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
@@ -82,7 +82,9 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     @ApiPaginatedResponse(HeaderManipulationRuleActionResponseDto)
     async readAll(
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: HeaderManipulationRuleActionRequestParamDto): Promise<[HeaderManipulationRuleActionResponseDto[], number]> {
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
+        @Param('ruleId', new ParseIntIdPipe({allowUndefined: true})) _ruleId: number,
+    ): Promise<[HeaderManipulationRuleActionResponseDto[], number]> {
         this.log.debug({
             message: 'read all header rule actions',
             func: this.readAll.name,
@@ -104,7 +106,8 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: HeaderManipulationRuleActionRequestParamDto = new HeaderManipulationRuleActionRequestParamDto(),
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
+        @Param('ruleId', new ParseIntIdPipe({allowUndefined: true})) _ruleId: number,
     ): Promise<HeaderManipulationRuleActionResponseDto> {
         this.log.debug({
             message: 'read header rule action by id',
@@ -130,7 +133,8 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     async update(@Param('id', ParseIntPipe) id: number,
         dto: HeaderManipulationRuleActionRequestDto,
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: HeaderManipulationRuleActionRequestParamDto = new HeaderManipulationRuleActionRequestParamDto(),
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
+        @Param('ruleId', new ParseIntIdPipe({allowUndefined: true})) _ruleId: number,
     ): Promise<HeaderManipulationRuleActionResponseDto> {
         this.log.debug({
             message: 'update header rule action by id',
@@ -156,7 +160,8 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     async updateMany(
         @Body(new ParseIdDictionary({items: HeaderManipulationRuleActionRequestDto})) updates: Dictionary<HeaderManipulationRuleActionRequestDto>,
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: HeaderManipulationRuleActionRequestParamDto = new HeaderManipulationRuleActionRequestParamDto(),
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
+        @Param('ruleId', new ParseIntIdPipe({allowUndefined: true})) _ruleId: number,
     ): Promise<number[]> {
         this.log.debug({message: 'update header rule actions bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -178,7 +183,8 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: HeaderManipulationRuleActionRequestParamDto = new HeaderManipulationRuleActionRequestParamDto(),
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
+        @Param('ruleId', new ParseIntIdPipe({allowUndefined: true})) _ruleId: number,
     ): Promise<HeaderManipulationRuleActionResponseDto> {
         this.log.debug({
             message: 'patch header rule set by id',
@@ -208,7 +214,8 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<PatchOperation[]>,
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: HeaderManipulationRuleActionRequestParamDto = new HeaderManipulationRuleActionRequestParamDto(),
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
+        @Param('ruleId', new ParseIntIdPipe({allowUndefined: true})) _ruleId: number,
     ): Promise<number[]> {
         this.log.debug({
             message: 'patch header rule actions bulk',
@@ -236,7 +243,8 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     async delete(
         @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,
-        @Param(new ValidationPipe()) _reqParams: HeaderManipulationRuleActionRequestParamDto = new HeaderManipulationRuleActionRequestParamDto(),
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
+        @Param('ruleId', new ParseIntIdPipe({allowUndefined: true})) _ruleId: number,
     ): Promise<number[]> {
         this.log.debug({
             message: 'delete header rule action by id',

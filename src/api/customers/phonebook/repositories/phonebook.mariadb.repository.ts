@@ -58,7 +58,7 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
                 searchDto._alias,
             ),
         )
-        qb.where({id: id})
+        qb.andWhere({id: id})
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getOneOrFail()
         return result.toInternal()
@@ -97,7 +97,7 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
                 undefined,
             ),
         )
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getMany()
         return await Promise.all(result.map(async (d) => d.toInternal()))
@@ -135,7 +135,7 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
                 searchDto._alias,
             ),
         )
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         this.addFilterBy(qb, options.filterBy)
         return await qb.getCount()
     }
@@ -219,7 +219,7 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
                 searchDto._alias,
             ),
         )
-        qb.where({id: id})
+        qb.andWhere({id: id})
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getOneOrFail()
         return result.toInternal()
@@ -238,7 +238,7 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
                 searchDto._alias,
             ),
         )
-        qb.where({id: id})
+        qb.andWhere({id: id})
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getOneOrFail()
         return result.toInternal()
@@ -257,7 +257,7 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
                 searchDto._alias,
             ),
         )
-        qb.where({id: id})
+        qb.andWhere({id: id})
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getOneOrFail()
         return result.toInternal()
