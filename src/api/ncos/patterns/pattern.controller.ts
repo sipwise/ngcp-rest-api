@@ -98,7 +98,7 @@ export class NCOSPatternController extends CrudController<NCOSPatternRequestDto,
     @ApiOkResponse({
         type: NCOSPatternResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, req: Request): Promise<NCOSPatternResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<NCOSPatternResponseDto> {
         this.log.debug({
             message: 'read ncos pattern by id',
             id: id,
@@ -117,7 +117,7 @@ export class NCOSPatternController extends CrudController<NCOSPatternRequestDto,
         type: NCOSPatternResponseDto,
     })
     @Transactional()
-    async update(@Param('id', ParseIntPipe) id: number, dto: NCOSPatternRequestDto, req: Request): Promise<NCOSPatternResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, @Body() dto: NCOSPatternRequestDto, @Req() req: Request): Promise<NCOSPatternResponseDto> {
         this.log.debug({
             message: 'update ncos pattern by id',
             id: id,
@@ -164,7 +164,7 @@ export class NCOSPatternController extends CrudController<NCOSPatternRequestDto,
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
+            @Req() req: Request,
     ): Promise<NCOSPatternResponseDto> {
         this.log.debug({
             message: 'patch ncos pattern by id',

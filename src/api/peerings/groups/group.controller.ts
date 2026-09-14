@@ -132,7 +132,7 @@ export class PeeringGroupController extends CrudController<PeeringGroupRequestDt
         type: PeeringGroupResponseDto,
     })
     @Transactional()
-    async update(@Param('id', ParseIntPipe) id: number, dto: PeeringGroupRequestDto, req: Request): Promise<PeeringGroupResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, @Body() dto: PeeringGroupRequestDto, @Req() req: Request): Promise<PeeringGroupResponseDto> {
         this.log.debug({
             message: 'update peering group by id',
             id: id,
@@ -179,7 +179,7 @@ export class PeeringGroupController extends CrudController<PeeringGroupRequestDt
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
+            @Req() req: Request,
     ): Promise<PeeringGroupResponseDto> {
         this.log.debug({
             message: 'patch peering group by id',

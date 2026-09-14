@@ -111,7 +111,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
+            @Req() req: Request,
     ): Promise<VoicemailResponseDto> {
         this.log.debug({message: 'patch voicemail by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)

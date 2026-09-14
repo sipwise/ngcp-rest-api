@@ -132,7 +132,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
+            @Req() req: Request,
     ): Promise<ContactResponseDto> {
         this.log.debug({message: 'patch contact by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -173,7 +173,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
         type: ContactResponseDto,
     })
     @Transactional()
-    async update(@Param('id', ParseIntPipe) id: number, entity: ContactRequestDto, req): Promise<ContactResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, @Body() entity: ContactRequestDto, @Req() req): Promise<ContactResponseDto> {
         this.log.debug({message: 'update contact by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Contact>()

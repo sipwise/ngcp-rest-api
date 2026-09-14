@@ -147,7 +147,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
         type: RewriteRuleSetResponseDto,
     })
     @Transactional()
-    async update(@Param('id', ParseIntPipe) id: number, dto: RewriteRuleSetRequestDto, req: Request): Promise<RewriteRuleSetResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, @Body() dto: RewriteRuleSetRequestDto, @Req() req: Request): Promise<RewriteRuleSetResponseDto> {
         this.log.debug({
             message: 'update rewrite rule set by id',
             id: id,
@@ -205,7 +205,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
+            @Req() req: Request,
     ): Promise<RewriteRuleSetResponseDto> {
         this.log.debug({
             message: 'patch rewrite rule set by id',

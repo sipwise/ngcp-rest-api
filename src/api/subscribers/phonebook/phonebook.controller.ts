@@ -199,7 +199,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
     })
     @Transactional()
     async update(@Param('id', ParseIntPipe) id: number,
-        dto: SubscriberPhonebookRequestDto,
+        @Body() dto: SubscriberPhonebookRequestDto,
         @Req() req: Request,
         @Param('subscriberId', new ParseIntIdPipe({allowUndefined: true})) _subscriberId: number,
     ): Promise<SubscriberPhonebookResponseDto> {

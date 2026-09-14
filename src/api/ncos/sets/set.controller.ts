@@ -110,7 +110,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     @ApiOkResponse({
         type: NCOSSetResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, req: Request): Promise<NCOSSetResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<NCOSSetResponseDto> {
         this.log.debug({
             message: 'read ncos set by id',
             id: id,
@@ -129,7 +129,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         type: NCOSSetResponseDto,
     })
     @Transactional()
-    async update(@Param('id', ParseIntPipe) id: number, dto: NCOSSetRequestDto, req: Request): Promise<NCOSSetResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, @Body() dto: NCOSSetRequestDto, @Req() req: Request): Promise<NCOSSetResponseDto> {
         this.log.debug({
             message: 'update ncos set by id',
             id: id,
@@ -176,7 +176,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
+            @Req() req: Request,
     ): Promise<NCOSSetResponseDto> {
         this.log.debug({
             message: 'patch ncos set by id',

@@ -117,7 +117,7 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
     @ApiOkResponse({
         type: NCOSLevelResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, req: Request): Promise<NCOSLevelResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<NCOSLevelResponseDto> {
         this.log.debug({
             message: 'read ncos level by id',
             id: id,
@@ -142,7 +142,7 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
         type: NCOSLevelResponseDto,
     })
     @Transactional()
-    async update(@Param('id', ParseIntPipe) id: number, dto: NCOSLevelRequestDto, req: Request): Promise<NCOSLevelResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, @Body() dto: NCOSLevelRequestDto, @Req() req: Request): Promise<NCOSLevelResponseDto> {
         this.log.debug({
             message: 'update ncos level by id',
             id: id,
@@ -189,7 +189,7 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
+            @Req() req: Request,
     ): Promise<NCOSLevelResponseDto> {
         this.log.debug({
             message: 'patch ncos level by id',

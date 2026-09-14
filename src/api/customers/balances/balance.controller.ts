@@ -106,7 +106,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
     })
     @Transactional()
     async update(@Param('id', ParseIntPipe) id: number,
-        dto: CustomerBalanceRequestDto,
+        @Body() dto: CustomerBalanceRequestDto,
         @Req() req: Request,
         @Param('customerId', new ParseIntIdPipe({allowUndefined: true})) _customerId: number,
     ): Promise<CustomerBalanceResponseDto> {

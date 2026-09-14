@@ -122,7 +122,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
         type: ResellerResponseDto,
     })
     @Transactional()
-    async update(@Param('id', ParseIntPipe) id: number, entity: ResellerRequestDto, req): Promise<ResellerResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, @Body() entity: ResellerRequestDto, @Req() req): Promise<ResellerResponseDto> {
         this.log.debug({message: 'update reseller by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Reseller>()
@@ -166,7 +166,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
+            @Req() req: Request,
     ): Promise<ResellerResponseDto> {
         this.log.debug({message: 'patch reseller by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)

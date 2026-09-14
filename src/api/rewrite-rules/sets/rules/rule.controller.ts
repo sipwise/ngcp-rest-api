@@ -130,7 +130,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
     })
     @Transactional()
     async update(@Param('id', ParseIntPipe) id: number,
-        dto: RewriteRuleRequestDto,
+        @Body() dto: RewriteRuleRequestDto,
         @Req() req: Request,
         @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
     ): Promise<RewriteRuleResponseDto> {

@@ -114,7 +114,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
         type: SystemContactResponseDto,
     })
     @Transactional()
-    async update(@Param('id', ParseIntPipe) id: number, entity: SystemContactRequestDto, req): Promise<SystemContactResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, @Body() entity: SystemContactRequestDto, @Req() req): Promise<SystemContactResponseDto> {
         this.log.debug({
             message: 'update system contact by id',
             func: this.update.name,
@@ -163,7 +163,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
+            @Req() req: Request,
     ): Promise<SystemContactResponseDto> {
         this.log.debug({
             message: 'patch system contact by id',

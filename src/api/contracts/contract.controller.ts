@@ -120,7 +120,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
         type: ContractResponseDto,
     })
     @Transactional()
-    async update(@Param('id', ParseIntPipe) id: number, update: ContractRequestDto, req): Promise<ContractResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, @Body() update: ContractRequestDto, @Req() req): Promise<ContractResponseDto> {
         this.log.debug({message: 'update contract by id', func: this.update.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const updates = new Dictionary<internal.Contract>()
@@ -162,7 +162,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
+            @Req() req: Request,
     ): Promise<ContractResponseDto> {
         this.log.debug({message: 'patch contract by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
@@ -202,7 +202,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
-    async journal(@Param('id') id: number | string, req): Promise<[JournalResponseDto[], number]> {
+    async journal(@Param('id') id: number | string, @Req() req): Promise<[JournalResponseDto[], number]> {
         this.log.debug({
             message: 'fetch contract journal by id',
             func: this.journal.name,

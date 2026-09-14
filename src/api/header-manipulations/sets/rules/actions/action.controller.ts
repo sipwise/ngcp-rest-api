@@ -131,7 +131,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     })
     @Transactional()
     async update(@Param('id', ParseIntPipe) id: number,
-        dto: HeaderManipulationRuleActionRequestDto,
+        @Body() dto: HeaderManipulationRuleActionRequestDto,
         @Req() req: Request,
         @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
         @Param('ruleId', new ParseIntIdPipe({allowUndefined: true})) _ruleId: number,

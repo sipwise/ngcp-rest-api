@@ -132,7 +132,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
         type: HeaderManipulationSetResponseDto,
     })
     @Transactional()
-    async update(@Param('id', ParseIntPipe) id: number, dto: HeaderManipulationSetRequestDto, req: Request): Promise<HeaderManipulationSetResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, @Body() dto: HeaderManipulationSetRequestDto, @Req() req: Request): Promise<HeaderManipulationSetResponseDto> {
         this.log.debug({
             message: 'update header rule set by id',
             id: id,
@@ -179,7 +179,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
+            @Req() req: Request,
     ): Promise<HeaderManipulationSetResponseDto> {
         this.log.debug({
             message: 'patch header rule set by id',

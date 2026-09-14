@@ -183,7 +183,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     @Transactional()
     async update(
         @Param('id', ParseIntPipe) id: number,
-            dto: CustomerRequestDto,
+            @Body() dto: CustomerRequestDto,
         @Req() req: Request,
     ): Promise<CustomerResponseDto> {
         this.log.debug({

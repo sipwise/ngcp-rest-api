@@ -94,7 +94,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     @ApiOkResponse({
         type: CustomerSpeedDialResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, req): Promise<CustomerSpeedDialResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<CustomerSpeedDialResponseDto> {
         this.log.debug({
             message: 'read customer speed dial by id',
             id: id,
@@ -112,7 +112,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         type: CustomerSpeedDialResponseDto,
     })
     @Transactional()
-    async update(@Param('id', ParseIntPipe) id: number, entity: CustomerSpeedDialUpdateDto, req): Promise<CustomerSpeedDialResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, @Body() entity: CustomerSpeedDialUpdateDto, @Req() req): Promise<CustomerSpeedDialResponseDto> {
         this.log.debug({
             message: 'update customer speed dial by id',
             id: id,
@@ -139,7 +139,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
+        @Req() req: Request,
     ): Promise<CustomerSpeedDialResponseDto> {
         this.log.debug({
             message: 'patch customer speed dial by id',

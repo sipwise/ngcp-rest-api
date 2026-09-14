@@ -189,7 +189,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
     })
     @Transactional()
     async update(@Param('id', ParseIntPipe) id: number,
-        dto: ResellerPhonebookRequestDto,
+        @Body() dto: ResellerPhonebookRequestDto,
         @Req() req: Request,
         @Param('resellerId', new ParseIntIdPipe({allowUndefined: true})) _resellerId: number,
     ): Promise<ResellerPhonebookResponseDto> {

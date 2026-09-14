@@ -146,7 +146,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     })
     @Transactional()
     async update(@Param('id', ParseIntPipe) id: number,
-        dto: HeaderManipulationRuleConditionRequestDto,
+        @Body() dto: HeaderManipulationRuleConditionRequestDto,
         @Req() req: Request,
         @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
         @Param('ruleId', new ParseIntIdPipe({allowUndefined: true})) _ruleId: number,

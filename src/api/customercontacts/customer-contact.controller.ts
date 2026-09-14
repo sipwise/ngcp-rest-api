@@ -115,7 +115,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     @ApiOkResponse({
         type: CustomerContactResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, sr): Promise<CustomerContactResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() sr): Promise<CustomerContactResponseDto> {
         this.log.debug({message: 'fetch customer contact by id', func: this.read.name, url: sr.url, method: sr.method})
         const contact = await this.contactService.read(id, new ServiceRequest(sr))
         const responseItem = new CustomerContactResponseDto(contact, sr.user.role)
@@ -138,7 +138,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     async adjust(
         @Param('id', ParseIntPipe) id: number,
         @Body(new ParsePatchPipe()) patch: Operation[],
-            req: Request,
+            @Req() req: Request,
     ): Promise<CustomerContactResponseDto> {
         this.log.debug({
             message: 'patch customer contact by id',
@@ -185,7 +185,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
         type: CustomerContactResponseDto,
     })
     @Transactional()
-    async update(@Param('id', ParseIntPipe) id: number, entity: CustomerContactRequestDto, req): Promise<CustomerContactResponseDto> {
+    async update(@Param('id', ParseIntPipe) id: number, @Body() entity: CustomerContactRequestDto, @Req() req): Promise<CustomerContactResponseDto> {
         this.log.debug({
             message: 'update customer contact by id',
             func: this.update.name,

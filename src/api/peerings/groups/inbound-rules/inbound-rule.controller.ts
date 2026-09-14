@@ -125,7 +125,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
     })
     @Transactional()
     async update(@Param('id', ParseIntPipe) id: number,
-        dto: PeeringInboundRuleRequestDto,
+        @Body() dto: PeeringInboundRuleRequestDto,
         @Req() req: Request,
         @Param('groupId', new ParseIntIdPipe({allowUndefined: true})) _groupId: number,
     ): Promise<PeeringInboundRuleResponseDto> {
