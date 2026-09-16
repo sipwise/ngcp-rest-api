@@ -35,7 +35,7 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
         if (reservedQueryParams.includes(searchField))
             return
 
-        const paramExists = searchLogic.searchableFields.includes(searchField)
+        const paramExists = searchLogic.searchableFields.includes(searchField) || searchField === 'id'
         if (!allowUnknownParams && !paramExists)
             throw new BadRequestException(`Unknown query parameter: ${searchField}`)
 
