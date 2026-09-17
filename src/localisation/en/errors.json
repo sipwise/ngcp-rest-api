@@ -160,7 +160,7 @@
     "code": 10040
   },
   "CSV_MALFORMED": {
-    "message": "CSV malformed",
+    "message": "Invalid or malformed CSV content/file",
     "code": 10041
   },
   "MISSING_OTP": {
