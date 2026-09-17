@@ -1,6 +1,6 @@
 import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Query, Req, Res, StreamableFile, UnprocessableEntityException, UploadedFile, UseInterceptors, forwardRef} from '@nestjs/common'
 import {FileInterceptor} from '@nestjs/platform-express'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'fast-json-patch'
 import {I18nService} from 'nestjs-i18n'
@@ -112,6 +112,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
     }
 
     @Get('{:resellerId/}phonebook')
+    @ApiParam({name: 'resellerId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedMultipleResponse({
         description: 'List of reseller phonebook entries in JSON or CSV',
@@ -159,6 +160,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
     }
 
     @Get('{:resellerId/}phonebook/:id')
+    @ApiParam({name: 'resellerId', required: false, type: Number})
     @ApiOkResponse({
         type: ResellerPhonebookResponseDto,
     })
@@ -184,6 +186,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
     }
 
     @Put('{:resellerId/}phonebook/:id')
+    @ApiParam({name: 'resellerId', required: false, type: Number})
     @ApiOkResponse({
         type: ResellerPhonebookResponseDto,
     })

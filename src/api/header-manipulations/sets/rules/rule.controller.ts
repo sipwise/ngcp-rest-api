@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {HeaderManipulationRuleRequestDto} from './dto/rule-request.dto'
@@ -76,6 +76,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     }
 
     @Get('{:setId/}rules')
+    @ApiParam({name: 'setId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(HeaderManipulationRuleResponseDto)
     async readAll(
@@ -99,6 +100,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     }
 
     @Get('{:setId/}rules/:id')
+    @ApiParam({name: 'setId', required: false, type: Number})
     @ApiOkResponse({
         type: HeaderManipulationRuleResponseDto,
     })
@@ -121,6 +123,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     }
 
     @Put('{:setId/}rules/:id')
+    @ApiParam({name: 'setId', required: false, type: Number})
     @ApiOkResponse({
         type: HeaderManipulationRuleResponseDto,
     })

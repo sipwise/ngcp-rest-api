@@ -1,6 +1,6 @@
 import {IsEnum, IsOptional} from 'class-validator'
 
-import {RequestParamDto} from '~/dto/request-param.dto'
+import {QueryDto} from '~/dto/query.dto'
 
 export enum SubscriberPhonebookView {
     All = 'all',
@@ -8,7 +8,7 @@ export enum SubscriberPhonebookView {
     Reseller = 'reseller',
 }
 
-export class SubscriberPhonebookQueryDto extends RequestParamDto {
+export class SubscriberPhonebookQueryDto extends QueryDto {
     @IsOptional()
     @IsEnum(SubscriberPhonebookView)
         include?: SubscriberPhonebookView

@@ -1,9 +1,7 @@
 import {Type} from 'class-transformer'
 import {IsInt, IsOptional} from 'class-validator'
 
-import {ReservedQueryParamsDto} from '~/config/constants.config'
-
-export class RequestParamDto extends ReservedQueryParamsDto {
+export class RequestParamDto {
     @Type(() => Number)
     @IsInt()
     @IsOptional()

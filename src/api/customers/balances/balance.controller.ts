@@ -1,5 +1,5 @@
 import {Body, Controller, Get, Param, ParseIntPipe, Patch, Put, Req} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {CustomerBalanceService} from './balance.service'
@@ -53,6 +53,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
     }
 
     @Get('{:customerId/}balances')
+    @ApiParam({name: 'customerId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(CustomerBalanceResponseDto)
     async readAll(
@@ -75,6 +76,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
     }
 
     @Get('{:customerId/}balances/:id')
+    @ApiParam({name: 'customerId', required: false, type: Number})
     @ApiOkResponse({
         type: CustomerBalanceResponseDto,
     })
@@ -101,6 +103,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
     }
 
     @Put('{:customerId/}balances/:id')
+    @ApiParam({name: 'customerId', required: false, type: Number})
     @ApiOkResponse({
         type: CustomerBalanceResponseDto,
     })

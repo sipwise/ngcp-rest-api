@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {PeeringInboundRuleRequestDto} from './dto/inbound-rule-request.dto'
@@ -75,6 +75,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
     }
 
     @Get('{:groupId/}inbound-rules')
+    @ApiParam({name: 'groupId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(PeeringInboundRuleResponseDto)
     async readAll(
@@ -98,6 +99,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
     }
 
     @Get('{:groupId/}inbound-rules/:id')
+    @ApiParam({name: 'groupId', required: false, type: Number})
     @ApiOkResponse({
         type: PeeringInboundRuleResponseDto,
     })
@@ -120,6 +122,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
     }
 
     @Put('{:groupId/}inbound-rules/:id')
+    @ApiParam({name: 'groupId', required: false, type: Number})
     @ApiOkResponse({
         type: PeeringInboundRuleResponseDto,
     })

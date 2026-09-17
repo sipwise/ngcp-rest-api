@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Req} from '@nestjs/common'
-import {ApiBody, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {NCOSSetLevelRequestDto} from './dto/level-request.dto'
@@ -66,6 +66,7 @@ export class NCOSSetLevelController extends CrudController<NCOSSetLevelRequestDt
     }
 
     @Get('{:setId/}levels')
+    @ApiParam({name: 'setId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(NCOSSetLevelResponseDto)
     async readAll(
@@ -86,6 +87,7 @@ export class NCOSSetLevelController extends CrudController<NCOSSetLevelRequestDt
     }
 
     @Get('{:setId/}levels/:id')
+    @ApiParam({name: 'setId', required: false, type: Number})
     @ApiOkResponse({
         type: NCOSSetLevelResponseDto,
     })

@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {HeaderManipulationRuleActionService} from './action.service'
@@ -78,6 +78,8 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     }
 
     @Get('{:setId/}rules{/:ruleId}/actions')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(HeaderManipulationRuleActionResponseDto)
     async readAll(
@@ -103,6 +105,8 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     }
 
     @Get('{:setId/}rules{/:ruleId}/actions/:id')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
@@ -126,6 +130,8 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     }
 
     @Put('{:setId/}rules{/:ruleId}/actions/:id')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiOkResponse({
         type: HeaderManipulationRuleActionResponseDto,
     })
@@ -155,6 +161,8 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     }
 
     @Put('{:setId/}rules{/:ruleId}/actions')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiPutBody(HeaderManipulationRuleActionRequestDto)
     @Transactional()
     async updateMany(
@@ -174,6 +182,8 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     }
 
     @Patch('{:setId/}rules{/:ruleId}/actions/:id')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiConsumes('application/json-patch+json')
     @ApiBody({
         type: [PatchDto],
@@ -208,6 +218,8 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     }
 
     @Patch('{:setId/}rules{/:ruleId}/actions')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     @Transactional()
@@ -236,6 +248,8 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     }
 
     @Delete('{:setId/}rules{/:ruleId}/actions/:id')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiOkResponse({
         type: [Number],
     })

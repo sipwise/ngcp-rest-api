@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, forwardRef} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {HeaderManipulationRuleConditionService} from './condition.service'
@@ -84,6 +84,8 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     }
 
     @Get('{:setId/}rules{/:ruleId}/conditions')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(HeaderManipulationRuleConditionResponseDto)
     async readAll(
@@ -114,6 +116,8 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     }
 
     @Get('{:setId/}rules{/:ruleId}/conditions/:id')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
@@ -141,6 +145,8 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     }
 
     @Put('{:setId/}rules{/:ruleId}/conditions/:id')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiOkResponse({
         type: HeaderManipulationRuleConditionResponseDto,
     })
@@ -172,6 +178,8 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     }
 
     @Put('{:setId/}rules{/:ruleId}/conditions')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiPutBody(HeaderManipulationRuleConditionRequestDto)
     @Transactional()
     async updateMany(
@@ -191,6 +199,8 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     }
 
     @Patch('{:setId/}rules{/:ruleId}/conditions/:id')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiConsumes('application/json-patch+json')
     @ApiBody({
         type: [PatchDto],
@@ -228,6 +238,8 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     }
 
     @Patch('{:setId/}rules{/:ruleId}/conditions')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiConsumes('application/json-patch+json')
     @ApiPutBody(PatchDto)
     @Transactional()
@@ -256,6 +268,8 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     }
 
     @Delete('{:setId/}rules{/:ruleId}/conditions/:id')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiOkResponse({
         type: [Number],
     })
@@ -282,6 +296,8 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     }
 
     @Get('{:setId/}rules{/:ruleId}/conditions/:id/@values')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(HeaderManipulationRuleConditionValueResponseDto)
     async readConditionValues(

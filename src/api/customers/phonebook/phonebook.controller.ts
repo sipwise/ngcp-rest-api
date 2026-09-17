@@ -1,6 +1,6 @@
 import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Query, Req, Res, StreamableFile, UnprocessableEntityException, UploadedFile, UseInterceptors, ValidationPipe, forwardRef} from '@nestjs/common'
 import {FileInterceptor} from '@nestjs/platform-express'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'fast-json-patch'
 import {I18nService} from 'nestjs-i18n'
@@ -126,6 +126,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
     }
 
     @Get('{:customerId/}phonebook')
+    @ApiParam({name: 'customerId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedMultipleResponse({
         description: 'List of customer phonebook entries in JSON or CSV',
@@ -175,6 +176,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
     }
 
     @Get('{:customerId/}phonebook/:id')
+    @ApiParam({name: 'customerId', required: false, type: Number})
     @ApiOkResponse({
         type: CustomerPhonebookResponseDto,
     })
@@ -201,6 +203,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
     }
 
     @Put('{:customerId/}phonebook/:id')
+    @ApiParam({name: 'customerId', required: false, type: Number})
     @ApiOkResponse({
         type: CustomerPhonebookResponseDto,
     })

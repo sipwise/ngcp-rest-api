@@ -1,5 +1,5 @@
 import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
-import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {PbxGroupMemberResponseDto} from './dto/member-response.dto'
@@ -36,6 +36,7 @@ export class PbxGroupMemberController extends CrudController<never, PbxGroupMemb
     }
 
     @Get('{:groupId/}members')
+    @ApiParam({name: 'groupId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(PbxGroupMemberResponseDto)
     async readAll(
@@ -59,6 +60,7 @@ export class PbxGroupMemberController extends CrudController<never, PbxGroupMemb
     }
 
     @Get('{:groupId/}members/:id')
+    @ApiParam({name: 'groupId', required: false, type: Number})
     @ApiOkResponse({
         type: PbxGroupMemberResponseDto,
     })

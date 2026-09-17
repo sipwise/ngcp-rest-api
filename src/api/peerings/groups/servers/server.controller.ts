@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {PeeringGroupServerRequestDto} from './dto/server-request.dto'
@@ -75,6 +75,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
     }
 
     @Get('{:groupId/}servers')
+    @ApiParam({name: 'groupId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
     @ApiPaginatedResponse(PeeringGroupServerResponseDto)
     async readAll(
@@ -98,6 +99,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
     }
 
     @Get('{:groupId/}servers/:id')
+    @ApiParam({name: 'groupId', required: false, type: Number})
     @ApiOkResponse({
         type: PeeringGroupServerResponseDto,
     })
@@ -120,6 +122,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
     }
 
     @Put('{:groupId/}servers/:id')
+    @ApiParam({name: 'groupId', required: false, type: Number})
     @ApiOkResponse({
         type: PeeringGroupServerResponseDto,
     })
