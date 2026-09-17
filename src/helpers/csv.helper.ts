@@ -22,35 +22,38 @@ export async function csvToDto<T extends object>(file: Express.Multer.File, dtoC
     return new Promise((resolve, reject) => {
         const errors: CsvValidationError[] = []
         const stream = Readable.from(file.buffer.toString('utf-8'))
+        stream.on('error', (error) => {
+            reject(error)
+        })
         Papa.parse(stream, {
             header: true,
             skipEmptyLines: true,
             delimiter: ',',
             encoding: 'utf-8',
             complete: async (result) => {
-                const rows = result.data
-                if (!rows || rows.length === 0) {
-                    resolve(null)
-                    return
-                }
-
-                const dtos = rows.map((row, idx) => {
-                    const dto = {idx, data: plainToInstance(dtoClass, row)}
-                    return dto
-                })
-
-                const validationPromises = dtos.map(async dto => {
-                    const validationErrors = await validate(dto.data)
-                    if (validationErrors.length > 0) {
-                        validationErrors.forEach(error => {
-                            if (!error.target) error.target = {}
-                            error.target['row'] = dto.idx
-                        })
-                        errors.push({row: dto.idx, error: validationErrors})
-                    }
-                })
-
                 try {
+                    const rows = result.data
+                    if (!rows || rows.length === 0) {
+                        resolve(null)
+                        return
+                    }
+
+                    const dtos = rows.map((row, idx) => {
+                        const dto = {idx, data: plainToInstance(dtoClass, row)}
+                        return dto
+                    })
+
+                    const validationPromises = dtos.map(async dto => {
+                        const validationErrors = await validate(dto.data)
+                        if (validationErrors.length > 0) {
+                            validationErrors.forEach(error => {
+                                if (!error.target) error.target = {}
+                                error.target['row'] = dto.idx
+                            })
+                            errors.push({row: dto.idx, error: validationErrors})
+                        }
+                    })
+
                     await Promise.all(validationPromises)
                     if (errors.length > 0) {
                         reject(new UnprocessableEntityException(formatValidationErrorsInCsv(errors)))
@@ -58,7 +61,7 @@ export async function csvToDto<T extends object>(file: Express.Multer.File, dtoC
                         resolve(dtos.map(dto => dto.data))
                     }
                 } catch {
-                    resolve(null)
+                    reject(new UnprocessableEntityException('Invalid or malformed CSV file'))
                 }
             },
             error: (error) => {
