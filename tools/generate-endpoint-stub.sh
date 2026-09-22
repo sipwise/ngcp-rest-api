@@ -10,18 +10,21 @@ if [[ $# -ne 1 ]]; then
     exit 1
 fi
 
-yarn=$(which yarn)
-if [[ -z "$yarn" ]]; then
-    yarn=$(which yarnpkg)
-    if [[ -z "$yarn" ]]; then
-        echo "cannot find yarn installation"
-        exit 2
+for prog in yarn yarnpkg; do
+    if command -v "${prog}" >/dev/null; then
+        yarn="${prog}"
+        break
     fi
+done
+
+if [[ -z "${yarn}" ]]; then
+    echo "Error: cannot find yarn installation" >&2
+    exit 2
 fi
 
-yarn nest generate module "$endpoint_path/$1"
-yarn nest generate service "$endpoint_path/$1"
-yarn nest generate controller "$endpoint_path/$1"
+"${yarn}" nest generate module "$endpoint_path/$1"
+"${yarn}" nest generate service "$endpoint_path/$1"
+"${yarn}" nest generate controller "$endpoint_path/$1"
 
 
 mkdir "${project_path}src/api/$1/dto"
