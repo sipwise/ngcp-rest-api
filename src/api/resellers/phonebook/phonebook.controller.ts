@@ -114,6 +114,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
     @Get('{:resellerId/}phonebook')
     @ApiParam({name: 'resellerId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: ResellerPhonebookSearchDto})
     @ApiPaginatedMultipleResponse({
         description: 'List of reseller phonebook entries in JSON or CSV',
         contents: [

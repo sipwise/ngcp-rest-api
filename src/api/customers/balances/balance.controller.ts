@@ -55,6 +55,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
     @Get('{:customerId/}balances')
     @ApiParam({name: 'customerId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: CustomerBalanceSearchDto})
     @ApiPaginatedResponse(CustomerBalanceResponseDto)
     async readAll(
         @Req() req: Request,

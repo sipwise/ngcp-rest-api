@@ -1,40 +1,79 @@
+import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
+
 import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
 
 export class ContactSearchDto {
-    bankname?: string
-    bic?: string
-    city?: string
-    company?: string
-    comregnum?: string
-    country?: string
-    create_timestamp: Date // TODO: Set fields on creation
-    email?: string
-    faxnumber?: string
-    firstname?: string
-    gender?: ContactGender
-    gpp0?: string
-    gpp1?: string
-    gpp2?: string
-    gpp3?: string
-    gpp4?: string
-    gpp5?: string
-    gpp6?: string
-    gpp7?: string
-    gpp8?: string
-    gpp9?: string
-    iban?: string
-    lastname?: string
-    mobilenumber?: string
-    modify_timestamp: Date
-    newsletter: boolean
-    phonenumber?: string
-    postcode?: string
-    reseller_id?: number
-    status: ContactStatus
-    street?: string
-    terminate_timestamp?: Date
-    timezone?: string
-    vatnum?: string
+    @ApiPropertyOptional()
+        bankname?: string
+    @ApiPropertyOptional()
+        bic?: string
+    @ApiPropertyOptional()
+        city?: string
+    @ApiPropertyOptional()
+        company?: string
+    @ApiPropertyOptional()
+        comregnum?: string
+    @ApiPropertyOptional()
+        country?: string
+    @ApiPropertyOptional()
+        create_timestamp: Date // TODO: Set fields on creation
+    @ApiPropertyOptional()
+        email?: string
+    @ApiPropertyOptional()
+        faxnumber?: string
+    @ApiPropertyOptional()
+        firstname?: string
+    @ApiPropertyOptional()
+        gender?: ContactGender
+    @ApiPropertyOptional()
+        gpp0?: string
+    @ApiPropertyOptional()
+        gpp1?: string
+    @ApiPropertyOptional()
+        gpp2?: string
+    @ApiPropertyOptional()
+        gpp3?: string
+    @ApiPropertyOptional()
+        gpp4?: string
+    @ApiPropertyOptional()
+        gpp5?: string
+    @ApiPropertyOptional()
+        gpp6?: string
+    @ApiPropertyOptional()
+        gpp7?: string
+    @ApiPropertyOptional()
+        gpp8?: string
+    @ApiPropertyOptional()
+        gpp9?: string
+    @ApiPropertyOptional()
+        iban?: string
+    @ApiPropertyOptional()
+        lastname?: string
+    @ApiPropertyOptional()
+        mobilenumber?: string
+    @ApiPropertyOptional()
+        modify_timestamp: Date
+    @ApiPropertyOptional()
+        newsletter: boolean
+    @ApiPropertyOptional()
+        phonenumber?: string
+    @ApiPropertyOptional()
+        postcode?: string
+    @ApiPropertyOptional()
+        reseller_id?: number
+    @ApiPropertyOptional()
+        status: ContactStatus
+    @ApiPropertyOptional()
+        street?: string
+    @ApiPropertyOptional()
+        terminate_timestamp?: Date
+    @ApiPropertyOptional()
+        timezone?: string
+    @ApiPropertyOptional()
+        vatnum?: string
+    @ApiPropertyOptional()
+        id: number = undefined
+    @ApiHideProperty()
     _alias = {
         id: 'contact.id',
     }

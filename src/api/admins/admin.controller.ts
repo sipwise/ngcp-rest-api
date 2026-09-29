@@ -99,6 +99,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         RbacRole.ccare,
     )
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: AdminSearchDto})
     @ApiPaginatedResponse(AdminResponseDto)
     async readAll(@Req() req: Request): Promise<[AdminResponseDto[], number]> {
         this.log.debug({

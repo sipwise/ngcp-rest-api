@@ -87,6 +87,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     @ApiParam({name: 'setId', required: false, type: Number})
     @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: HeaderManipulationRuleConditionSearchDto})
     @ApiPaginatedResponse(HeaderManipulationRuleConditionResponseDto)
     async readAll(
         @Req() req: Request,
@@ -299,6 +300,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     @ApiParam({name: 'setId', required: false, type: Number})
     @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: HeaderManipulationRuleConditionSearchDto})
     @ApiPaginatedResponse(HeaderManipulationRuleConditionValueResponseDto)
     async readConditionValues(
         @Param('id', ParseIntPipe) id: number,

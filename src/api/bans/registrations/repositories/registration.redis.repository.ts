@@ -11,6 +11,7 @@ import {LoggerService} from '~/logger/logger.service'
 interface FilterBy {
     username: string
     domain: string
+    id?: string
 }
 
 const uuidNS = '52f79f45-0186-4832-b530-9afff16d85d7'
@@ -90,6 +91,12 @@ export class BanRegistrationRedisRepository {
                         return
                 }
 
+                if (filter?.id) {
+                    const ids = filter.id.split(',').map(v => v.trim())
+                    if (!ids.includes(entryId))
+                        return
+                }
+
                 if (!entries[entryId]) {
                     entries[entryId] = {
                         id: entryId,
@@ -130,6 +137,12 @@ export class BanRegistrationRedisRepository {
                     if (rx && !rx.test(domain))
                         return
                     if (!rx && domain != filter.domain)
+                        return
+                }
+
+                if (filter?.id) {
+                    const ids = filter.id.split(',').map(v => v.trim())
+                    if (!ids.includes(entryId))
                         return
                 }
 

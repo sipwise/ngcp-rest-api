@@ -81,6 +81,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
 
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: HeaderManipulationSetSearchDto})
     @ApiPaginatedResponse(HeaderManipulationSetResponseDto)
     async readAll(@Req() req: Request): Promise<[HeaderManipulationSetResponseDto[], number]> {
         this.log.debug({

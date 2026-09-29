@@ -24,6 +24,9 @@ export class BanIpService {
         if (sr.query?.ip && typeof sr.query?.ip === 'string') {
             search.ip = sr.query.ip
         }
+        if (sr.query?.id && typeof sr.query?.id === 'string') {
+            search.id = sr.query.id
+        }
 
         return await this.repository.readBannedIps(undefined, search)
     }

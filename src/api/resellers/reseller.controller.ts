@@ -81,6 +81,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
 
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: ResellerSearchDto})
     @ApiPaginatedResponse(ResellerResponseDto)
     async readAll(@Req() req: Request): Promise<[ResellerResponseDto[], number]> {
         this.log.debug({message: 'fetch all resellers', func: this.readAll.name, url: req.url, method: req.method})

@@ -128,6 +128,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
 
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: CustomerSearchDto})
     @ApiPaginatedResponse(CustomerResponseDto)
     async readAll(
         @Req() req: Request,

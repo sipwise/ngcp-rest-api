@@ -85,6 +85,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
 
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: ContractSearchDto})
     @ApiPaginatedResponse(ContractResponseDto)
     async readAll(@Req() req: Request): Promise<[ContractResponseDto[], number]> {
         this.log.debug({message: 'fetch all contracts', func: this.readAll.name, url: req.url, method: req.method})

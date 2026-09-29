@@ -10,6 +10,7 @@ import {LoggerService} from '~/logger/logger.service'
 
 interface FilterBy {
     ip: string
+    id?: string
 }
 
 const uuidNS = '52f79f45-0186-4832-b530-9afff16d85d8'
@@ -68,6 +69,12 @@ export class BanIpRedisRepository {
                     if (rx && !rx.test(ip))
                         return
                     if (!rx && ip != filter.ip)
+                        return
+                }
+
+                if (filter?.id) {
+                    const ids = filter.id.split(',').map(v => v.trim())
+                    if (!ids.includes(entryId))
                         return
                 }
 

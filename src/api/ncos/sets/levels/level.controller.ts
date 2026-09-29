@@ -4,6 +4,7 @@ import {Request} from 'express'
 
 import {NCOSSetLevelRequestDto} from './dto/level-request.dto'
 import {NCOSSetLevelResponseDto} from './dto/level-response.dto'
+import {NCOSSetLevelSearchDto} from './dto/level-search.dto'
 import {NCOSSetLevelService} from './level.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
@@ -68,6 +69,7 @@ export class NCOSSetLevelController extends CrudController<NCOSSetLevelRequestDt
     @Get('{:setId/}levels')
     @ApiParam({name: 'setId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: NCOSSetLevelSearchDto})
     @ApiPaginatedResponse(NCOSSetLevelResponseDto)
     async readAll(
         @Req() req: Request,

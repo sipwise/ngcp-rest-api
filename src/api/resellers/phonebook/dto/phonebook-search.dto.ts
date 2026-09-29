@@ -1,7 +1,15 @@
+import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
+
 export class ResellerPhonebookSearchDto {
-    name: string = undefined
-    reseller_id: number = undefined
-    number: string = undefined
+    @ApiPropertyOptional()
+        name: string = undefined
+    @ApiPropertyOptional()
+        reseller_id: number = undefined
+    @ApiPropertyOptional()
+        number: string = undefined
+    @ApiPropertyOptional()
+        id: number = undefined
+    @ApiHideProperty()
     _alias = {
         id: 'phonebook.id',
     }

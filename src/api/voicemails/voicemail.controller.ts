@@ -51,6 +51,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
 
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: VoicemailSearchDto})
     @ApiPaginatedResponse(VoicemailResponseDto)
     async readAll(@Req() req): Promise<[VoicemailResponseDto[], number]> {
         this.log.debug({message: 'fetch all voicemails', func: this.readAll.name, url: req.url, method: req.method})

@@ -96,6 +96,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
 
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: RewriteRuleSetSearchDto})
     @ApiPaginatedResponse(RewriteRuleSetResponseDto)
     async readAll(@Req() req: Request): Promise<[RewriteRuleSetResponseDto[], number]> {
         this.log.debug({

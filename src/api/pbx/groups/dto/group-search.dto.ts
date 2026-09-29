@@ -1,9 +1,19 @@
+import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
+
 export class PbxGroupSearchDto {
-    customer_id: number = undefined
-    extension: string = undefined
-    hunt_policy: string = undefined
-    hunt_timeout: number = undefined
-    name: string = undefined
+    @ApiPropertyOptional()
+        customer_id: number = undefined
+    @ApiPropertyOptional()
+        extension: string = undefined
+    @ApiPropertyOptional()
+        hunt_policy: string = undefined
+    @ApiPropertyOptional()
+        hunt_timeout: number = undefined
+    @ApiPropertyOptional()
+        name: string = undefined
+    @ApiPropertyOptional()
+        id: number = undefined
+    @ApiHideProperty()
     _alias = {
         id: 'bg.id',
     }

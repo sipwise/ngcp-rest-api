@@ -34,6 +34,7 @@ export class JournalController {
 
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: JournalSearchDto})
     @ApiPaginatedResponse(JournalResponseDto)
     async readAll(
         @Req() req: Request,

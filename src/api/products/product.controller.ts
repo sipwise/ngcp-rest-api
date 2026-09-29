@@ -39,6 +39,7 @@ export class ProductController extends CrudController<never, ProductResponseDto>
 
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: ProductSearchDto})
     @ApiPaginatedResponse(ProductResponseDto)
     async readAll(
         @Req() req: Request,

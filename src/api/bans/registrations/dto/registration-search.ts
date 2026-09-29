@@ -1,6 +1,14 @@
+import {ApiPropertyOptional} from '@nestjs/swagger'
+
 export class BanRegistrationSearchDto {
-    username: string = undefined
-    domain: string = undefined
-    auth_count: string = undefined
-    last_auth: string = undefined
+    @ApiPropertyOptional()
+        username: string = undefined
+    @ApiPropertyOptional()
+        domain: string = undefined
+    @ApiPropertyOptional()
+        auth_count: string = undefined
+    @ApiPropertyOptional()
+        last_auth: string = undefined
+    @ApiPropertyOptional()
+        id: string = undefined
 }

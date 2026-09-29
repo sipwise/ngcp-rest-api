@@ -2,6 +2,7 @@ import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
 import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 
 import {PbxGroupResponseDto} from './dto/group-response.dto'
+import {PbxGroupSearchDto} from './dto/group-search.dto'
 import {PbxGroupService} from './group.service'
 
 import {License as LicenseType, RbacRole} from '~/config/constants.config'
@@ -36,6 +37,7 @@ export class PbxGroupController extends CrudController<never, PbxGroupResponseDt
 
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: PbxGroupSearchDto})
     @ApiPaginatedResponse(PbxGroupResponseDto)
     async readAll(@Req() req): Promise<[PbxGroupResponseDto[], number]> {
         this.log.debug({

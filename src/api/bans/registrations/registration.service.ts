@@ -26,6 +26,9 @@ export class BanRegistrationService {
         if (sr.query?.domain && typeof sr.query?.domain === 'string') {
             search.domain = sr.query.domain
         }
+        if (sr.query?.id && typeof sr.query?.id === 'string') {
+            search.id = sr.query.id
+        }
 
         return await this.repository.readBannedRegistrations(undefined, search)
     }

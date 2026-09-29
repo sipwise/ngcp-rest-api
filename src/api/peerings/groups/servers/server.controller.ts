@@ -4,6 +4,7 @@ import {Request} from 'express'
 
 import {PeeringGroupServerRequestDto} from './dto/server-request.dto'
 import {PeeringGroupServerResponseDto} from './dto/server-response.dto'
+import {PeeringGroupServerSearchDto} from './dto/server-search.dto'
 import {PeeringGroupServerService} from './server.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
@@ -77,6 +78,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
     @Get('{:groupId/}servers')
     @ApiParam({name: 'groupId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: PeeringGroupServerSearchDto})
     @ApiPaginatedResponse(PeeringGroupServerResponseDto)
     async readAll(
         @Req() req: Request,

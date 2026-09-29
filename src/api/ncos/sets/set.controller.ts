@@ -5,6 +5,7 @@ import {Operation} from 'helpers/patch.helper'
 
 import {NCOSSetRequestDto} from './dto/set-request.dto'
 import {NCOSSetResponseDto} from './dto/set-response.dto'
+import {NCOSSetSearchDto} from './dto/set-search.dto'
 import {NCOSSetService} from './set.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
@@ -82,6 +83,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     )
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: NCOSSetSearchDto})
     @ApiPaginatedResponse(NCOSSetResponseDto)
     async readAll(@Req() req: Request): Promise<[NCOSSetResponseDto[], number]> {
         this.log.debug({

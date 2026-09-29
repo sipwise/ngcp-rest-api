@@ -81,6 +81,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     @ApiParam({name: 'setId', required: false, type: Number})
     @ApiParam({name: 'ruleId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: HeaderManipulationRuleActionSearchDto})
     @ApiPaginatedResponse(HeaderManipulationRuleActionResponseDto)
     async readAll(
         @Req() req: Request,

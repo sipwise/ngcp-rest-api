@@ -81,6 +81,7 @@ export class PeeringGroupController extends CrudController<PeeringGroupRequestDt
 
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: PeeringGroupSearchDto})
     @ApiPaginatedResponse(PeeringGroupResponseDto)
     async readAll(@Req() req: Request): Promise<[PeeringGroupResponseDto[], number]> {
         this.log.debug({

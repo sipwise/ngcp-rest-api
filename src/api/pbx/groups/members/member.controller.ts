@@ -3,6 +3,7 @@ import {ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {PbxGroupMemberResponseDto} from './dto/member-response.dto'
+import {PbxGroupMemberSearchDto} from './dto/member-search.dto'
 import {PbxGroupMemberService} from './member.service'
 
 import {License as LicenseType, RbacRole} from '~/config/constants.config'
@@ -38,6 +39,7 @@ export class PbxGroupMemberController extends CrudController<never, PbxGroupMemb
     @Get('{:groupId/}members')
     @ApiParam({name: 'groupId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: PbxGroupMemberSearchDto})
     @ApiPaginatedResponse(PbxGroupMemberResponseDto)
     async readAll(
         @Req() req: Request,

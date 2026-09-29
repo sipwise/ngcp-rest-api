@@ -1,8 +1,9 @@
 import {Controller, Delete, Get, Param, Req} from '@nestjs/common'
-import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {BanRegistrationResponseDto} from './dto/registration-response.dto'
+import {BanRegistrationSearchDto} from './dto/registration-search'
 import {BanRegistrationService} from './registration.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
@@ -12,6 +13,7 @@ import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorato
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
+import {SearchLogic} from '~/helpers/search-logic.helper'
 import {sortAndPaginate} from '~/helpers/sort-and-paginate'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -36,6 +38,8 @@ export class BanRegistrationController {
     }
 
     @Get('')
+    @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: BanRegistrationSearchDto})
     @ApiPaginatedResponse(BanRegistrationResponseDto)
     async readAll(
         @Req() req: Request): Promise<[BanRegistrationResponseDto[], number]> {

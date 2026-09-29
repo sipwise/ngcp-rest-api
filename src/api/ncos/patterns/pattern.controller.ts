@@ -5,6 +5,7 @@ import {Operation} from 'helpers/patch.helper'
 
 import {NCOSPatternRequestDto} from './dto/pattern-request.dto'
 import {NCOSPatternResponseDto} from './dto/pattern-response.dto'
+import {NCOSPatternSearchDto} from './dto/pattern-search.dto'
 import {NCOSPatternService} from './pattern.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
@@ -76,6 +77,7 @@ export class NCOSPatternController extends CrudController<NCOSPatternRequestDto,
 
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: NCOSPatternSearchDto})
     @ApiPaginatedResponse(NCOSPatternResponseDto)
     async readAll(@Req() req: Request): Promise<[NCOSPatternResponseDto[], number]> {
         this.log.debug({

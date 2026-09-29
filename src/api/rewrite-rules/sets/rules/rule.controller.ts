@@ -78,6 +78,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
     @Get('{:setId/}rules')
     @ApiParam({name: 'setId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: RewriteRuleSearchDto})
     @ApiPaginatedResponse(RewriteRuleResponseDto)
     async readAll(
         @Req() req: Request,

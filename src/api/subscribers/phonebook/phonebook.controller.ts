@@ -122,6 +122,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
     @Get('{:subscriberId/}phonebook')
     @ApiParam({name: 'subscriberId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: SubscriberPhonebookSearchDto})
     @ApiPaginatedMultipleResponse({
         description: 'List of subscriber phonebook entries in JSON or CSV',
         contents: [

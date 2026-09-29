@@ -1,3 +1,5 @@
+import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
+
 import {
     ContractBillingProfileDefinition,
     ContractStatus,
@@ -5,12 +7,21 @@ import {
 } from '~/entities/internal/contract.internal.entity'
 
 export class ContractSearchDto {
-    billing_profile_definition: ContractBillingProfileDefinition = undefined
-    billing_profile_id: number = undefined
-    contact_id?: number = undefined
-    external_id: string = undefined
-    status?: ContractStatus = undefined
-    type?: ContractType = undefined
+    @ApiPropertyOptional()
+        billing_profile_definition: ContractBillingProfileDefinition = undefined
+    @ApiPropertyOptional()
+        billing_profile_id: number = undefined
+    @ApiPropertyOptional()
+        contact_id?: number = undefined
+    @ApiPropertyOptional()
+        external_id: string = undefined
+    @ApiPropertyOptional()
+        status?: ContractStatus = undefined
+    @ApiPropertyOptional()
+        type?: ContractType = undefined
+    @ApiPropertyOptional()
+        id: number = undefined
+    @ApiHideProperty()
     _alias = {
         id: 'contract.id',
     }

@@ -4,6 +4,7 @@ import {Request} from 'express'
 
 import {HeaderManipulationRuleRequestDto} from './dto/rule-request.dto'
 import {HeaderManipulationRuleResponseDto} from './dto/rule-response.dto'
+import {HeaderManipulationRuleSearchDto} from './dto/rule-search.dto'
 import {HeaderManipulationRuleService} from './rule.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
@@ -78,6 +79,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
     @Get('{:setId/}rules')
     @ApiParam({name: 'setId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: HeaderManipulationRuleSearchDto})
     @ApiPaginatedResponse(HeaderManipulationRuleResponseDto)
     async readAll(
         @Req() req: Request,

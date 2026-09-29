@@ -85,6 +85,7 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
     )
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: NCOSLevelSearchDto})
     @ApiPaginatedResponse(NCOSLevelResponseDto)
     async readAll(@Req() req: Request): Promise<[NCOSLevelResponseDto[], number]> {
         this.log.debug({

@@ -128,6 +128,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
     @Get('{:customerId/}phonebook')
     @ApiParam({name: 'customerId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: CustomerPhonebookSearchDto})
     @ApiPaginatedMultipleResponse({
         description: 'List of customer phonebook entries in JSON or CSV',
         contents: [

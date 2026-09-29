@@ -4,6 +4,7 @@ import {Request} from 'express'
 
 import {PeeringInboundRuleRequestDto} from './dto/inbound-rule-request.dto'
 import {PeeringInboundRuleResponseDto} from './dto/inbound-rule-response.dto'
+import {PeeringInboundRuleSearchDto} from './dto/inbound-rule-search.dto'
 import {PeeringInboundRuleService} from './inbound-rule.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
@@ -77,6 +78,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
     @Get('{:groupId/}inbound-rules')
     @ApiParam({name: 'groupId', required: false, type: Number})
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: PeeringInboundRuleSearchDto})
     @ApiPaginatedResponse(PeeringInboundRuleResponseDto)
     async readAll(
         @Req() req: Request,

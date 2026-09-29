@@ -1,7 +1,13 @@
+import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
+
 export class PbxUserSearchDto {
-    id: number = undefined
-    display_name: string = undefined
-    pbx_extension: string = undefined
+    @ApiPropertyOptional()
+        id: number = undefined
+    @ApiPropertyOptional()
+        display_name: string = undefined
+    @ApiPropertyOptional()
+        pbx_extension: string = undefined
+    @ApiHideProperty()
     _alias = {
         id: 'bSubscriber.id',
     }

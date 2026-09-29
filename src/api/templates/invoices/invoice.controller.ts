@@ -92,6 +92,7 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
 
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: InvoiceTemplateSearchDto})
     @ApiPaginatedResponse(InvoiceTemplateResponseDto)
     async readAll(@Req() req: Request): Promise<[InvoiceTemplateResponseDto[], number]> {
         this.log.debug({

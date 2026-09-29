@@ -1,3 +1,8 @@
-export class BanIpSearchDto {
-    username: string = undefined
+import {ApiPropertyOptional} from '@nestjs/swagger'
+
+export class AuthTokenSearchDto {
+    @ApiPropertyOptional()
+        username: string = undefined
+    @ApiPropertyOptional()
+        id: string = undefined
 }

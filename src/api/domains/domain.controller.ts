@@ -83,6 +83,7 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
     @Get()
     @Roles(RbacRole.ccare, RbacRole.ccareadmin)
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: DomainSearchDto})
     @ApiPaginatedResponse(DomainResponseDto)
     async readAll(@Req() req: Request): Promise<[DomainResponseDto[], number]> {
         this.log.debug({message: 'fetch all domains', func: this.readAll.name, url: req.url, method: req.method})

@@ -3,6 +3,7 @@ import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {BanIpResponseDto} from './dto/ip-response.dto'
+import {BanIpSearchDto} from './dto/ips-search'
 import {BanIpService} from './ip.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
@@ -38,6 +39,7 @@ export class BanIpController {
 
     @Get('')
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: BanIpSearchDto})
     @ApiPaginatedResponse(BanIpResponseDto)
     async readAll(
         @Req() req: Request): Promise<[BanIpResponseDto[], number]> {

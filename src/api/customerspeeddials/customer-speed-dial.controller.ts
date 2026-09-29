@@ -6,6 +6,7 @@ import {Operation, patchToEntity} from 'helpers/patch.helper'
 import {CustomerSpeedDialService} from './customer-speed-dial.service'
 import {CustomerSpeedDialRequestDto} from './dto/customer-speed-dial-request.dto'
 import {CustomerSpeedDialResponseDto} from './dto/customer-speed-dial-response.dto'
+import {CustomerSpeedDialSearchDto} from './dto/customer-speed-dial-search.dto'
 import {CustomerSpeedDialUpdateDto} from './dto/customer-speed-dial-update.dto'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
@@ -75,6 +76,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
 
     @Get()
     @ApiQuery({type: SearchLogic})
+    @ApiQuery({type: CustomerSpeedDialSearchDto})
     @ApiPaginatedResponse(CustomerSpeedDialResponseDto)
     async readAll(@Req() req): Promise<[CustomerSpeedDialResponseDto[], number]> {
         this.log.debug({
