@@ -5,6 +5,7 @@ import {Request} from 'express'
 import {AuthTokenCreateResponseDto} from './dto/token-create-response'
 import {AuthTokenRequestDto} from './dto/token-request.dto'
 import {AuthTokenResponseDto} from './dto/token-response.dto'
+import {AuthTokenSearchDto} from './dto/token.search'
 import {AuthTokenService} from './token.service'
 
 import {RbacRole} from '~/config/constants.config'
@@ -61,7 +62,7 @@ export class AuthTokenController extends CrudController<AuthTokenRequestDto, Aut
     }
 
     @Get()
-    @ApiSearchQuery(SearchLogic)
+    @ApiSearchQuery(SearchLogic, AuthTokenSearchDto)
     @ApiPaginatedResponse(AuthTokenResponseDto)
     async readAll(@Req() req: Request): Promise<[AuthTokenResponseDto[], number]> {
         this.log.debug({

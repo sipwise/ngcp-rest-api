@@ -111,10 +111,14 @@ export class AuthTokenRedisRepository implements AuthTokenRepository {
         let usernameFilter = '*'
         if (sr.user.role == RbacRole.subscriber || sr.user.role == RbacRole.subscriberadmin) {
             usernameFilter = sr.user.username
+        } else if (sr.req.query?.username) {
+            usernameFilter = sr.req.query.username as string
         }
         let resellerFilter = '*'
         if (sr.user.reseller_id_required) {
             resellerFilter = sr.user.reseller_id
+        } else if (sr.req.query?.reseller_id) {
+            resellerFilter = sr.req.query.reseller_id as string
         }
         return `${keyPrefix}::id:${id}::username:${usernameFilter}::reseller:${resellerFilter}`
     }
