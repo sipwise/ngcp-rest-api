@@ -2,14 +2,17 @@ import {Controller, Get, Inject, Param, ParseIntPipe, Req, forwardRef} from '@ne
 import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
 
 import {NumberResponseDto} from './dto/number-response.dto'
+import {NumberSearchDto} from './dto/number-search.dto'
 import {NumberService} from './number.service'
 
 import {JournalService} from '~/api/journals/journal.service'
 import {AppService} from '~/app.service'
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ExpandHelper} from '~/helpers/expand.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -37,6 +40,7 @@ export class NumberController extends CrudController<never, NumberResponseDto> {
     }
 
     @Get()
+    @ApiSearchQuery(SearchLogic, NumberSearchDto)
     @ApiOkResponse({
         type: [NumberResponseDto],
     })

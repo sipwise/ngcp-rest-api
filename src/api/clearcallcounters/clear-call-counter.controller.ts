@@ -8,8 +8,11 @@ import {ClearCallCounterResponseDto} from './dto/clear-call-counter-response.dto
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {sortAndPaginate} from '~/helpers/sort-and-paginate'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -44,6 +47,7 @@ export class ClearCallCounterController extends CrudController<never, ClearCallC
     }
 
     @Get()
+    @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(ClearCallCounterResponseDto)
     async readAll(@Req() req: Request): Promise<[ClearCallCounterResponseDto[], number]> {
         this.log.debug({
@@ -53,8 +57,9 @@ export class ClearCallCounterController extends CrudController<never, ClearCallC
             method: req.method,
         })
         const sr: ServiceRequest = new ServiceRequest(req)
-        const [callIds, count] = await this.clearCallCounterService.readAll(sr)
+        const [callIds] = await this.clearCallCounterService.readAll(sr)
         const responseList = callIds.map(callId => new ClearCallCounterResponseDto(callId))
-        return [responseList, count]
+        const sortedResponseList = sortAndPaginate<ClearCallCounterResponseDto>(responseList, sr, 'call_id')
+        return [sortedResponseList, responseList.length]
     }
 }

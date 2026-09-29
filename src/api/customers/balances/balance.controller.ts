@@ -1,5 +1,5 @@
 import {Body, Controller, Get, Param, ParseIntPipe, Patch, Put, Req} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {CustomerBalanceService} from './balance.service'
@@ -14,6 +14,7 @@ import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {License} from '~/decorators/license.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
@@ -54,8 +55,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
 
     @Get('{:customerId/}balances')
     @ApiParam({name: 'customerId', required: false, type: Number})
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: CustomerBalanceSearchDto})
+    @ApiSearchQuery(SearchLogic, CustomerBalanceSearchDto)
     @ApiPaginatedResponse(CustomerBalanceResponseDto)
     async readAll(
         @Req() req: Request,

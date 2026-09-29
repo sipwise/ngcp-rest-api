@@ -16,6 +16,7 @@ import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
@@ -127,8 +128,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     }
 
     @Get()
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: CustomerSearchDto})
+    @ApiSearchQuery(SearchLogic, CustomerSearchDto)
     @ApiPaginatedResponse(CustomerResponseDto)
     async readAll(
         @Req() req: Request,

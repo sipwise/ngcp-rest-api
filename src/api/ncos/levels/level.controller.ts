@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, forwardRef} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'helpers/patch.helper'
 
@@ -15,6 +15,7 @@ import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
@@ -84,8 +85,7 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
         RbacRole.subscriberadmin,
     )
     @Get()
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: NCOSLevelSearchDto})
+    @ApiSearchQuery(SearchLogic, NCOSLevelSearchDto)
     @ApiPaginatedResponse(NCOSLevelResponseDto)
     async readAll(@Req() req: Request): Promise<[NCOSLevelResponseDto[], number]> {
         this.log.debug({

@@ -1,6 +1,6 @@
 import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Query, Req, Res, StreamableFile, UnprocessableEntityException, UploadedFile, UseInterceptors, ValidationPipe, forwardRef} from '@nestjs/common'
 import {FileInterceptor} from '@nestjs/platform-express'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'fast-json-patch'
 import {I18nService} from 'nestjs-i18n'
@@ -23,6 +23,7 @@ import {ApiContentTypeHeader} from '~/decorators/api-content-type-header.decorat
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedMultipleResponse} from '~/decorators/api-paginated-multiple-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {BodyOrEmptyArray} from '~/decorators/body-or-empty-array.decorator'
 import {License} from '~/decorators/license.decorator'
@@ -121,8 +122,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
 
     @Get('{:subscriberId/}phonebook')
     @ApiParam({name: 'subscriberId', required: false, type: Number})
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: SubscriberPhonebookSearchDto})
+    @ApiSearchQuery(SearchLogic, SubscriberPhonebookSearchDto)
     @ApiPaginatedMultipleResponse({
         description: 'List of subscriber phonebook entries in JSON or CSV',
         contents: [

@@ -11,8 +11,11 @@ import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
+import {SearchLogic} from '~/helpers/search-logic.helper'
+import {sortAndPaginate} from '~/helpers/sort-and-paginate'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseUUIDArrayPipe} from '~/pipes/parse-uuid-array.pipe'
@@ -58,6 +61,7 @@ export class AuthTokenController extends CrudController<AuthTokenRequestDto, Aut
     }
 
     @Get()
+    @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(AuthTokenResponseDto)
     async readAll(@Req() req: Request): Promise<[AuthTokenResponseDto[], number]> {
         this.log.debug({
@@ -67,9 +71,10 @@ export class AuthTokenController extends CrudController<AuthTokenRequestDto, Aut
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const [tokens, totalCount] = await this.authTokenService.readAll(sr)
+        const [tokens] = await this.authTokenService.readAll(sr)
         const responseList = tokens.map(token => new AuthTokenResponseDto(token))
-        return [responseList, totalCount]
+        const sortedResponseList = sortAndPaginate<AuthTokenResponseDto>(responseList, sr, 'id')
+        return [sortedResponseList, responseList.length]
     }
 
     @Get(':id')

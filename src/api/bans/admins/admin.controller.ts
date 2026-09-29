@@ -10,10 +10,12 @@ import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
 import {ExpandHelper} from '~/helpers/expand.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
@@ -40,6 +42,7 @@ export class BanAdminController extends CrudController<never, BanAdminResponseDt
     }
 
     @Get()
+    @ApiSearchQuery(SearchLogic, BanAdminSearchDto)
     @ApiPaginatedResponse(BanAdminResponseDto)
     async readAll(@Req() req): Promise<[BanAdminResponseDto[], number]> {
         this.log.debug({

@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Req} from '@nestjs/common'
-import {ApiBody, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {NCOSSetLevelRequestDto} from './dto/level-request.dto'
@@ -13,6 +13,7 @@ import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
@@ -68,8 +69,7 @@ export class NCOSSetLevelController extends CrudController<NCOSSetLevelRequestDt
 
     @Get('{:setId/}levels')
     @ApiParam({name: 'setId', required: false, type: Number})
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: NCOSSetLevelSearchDto})
+    @ApiSearchQuery(SearchLogic, NCOSSetLevelSearchDto)
     @ApiPaginatedResponse(NCOSSetLevelResponseDto)
     async readAll(
         @Req() req: Request,

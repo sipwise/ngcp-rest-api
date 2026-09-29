@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, forwardRef} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {HeaderManipulationRuleConditionService} from './condition.service'
@@ -15,6 +15,7 @@ import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {License} from '~/decorators/license.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
@@ -86,8 +87,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     @Get('{:setId/}rules{/:ruleId}/conditions')
     @ApiParam({name: 'setId', required: false, type: Number})
     @ApiParam({name: 'ruleId', required: false, type: Number})
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: HeaderManipulationRuleConditionSearchDto})
+    @ApiSearchQuery(SearchLogic, HeaderManipulationRuleConditionSearchDto)
     @ApiPaginatedResponse(HeaderManipulationRuleConditionResponseDto)
     async readAll(
         @Req() req: Request,
@@ -299,8 +299,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     @Get('{:setId/}rules{/:ruleId}/conditions/:id/@values')
     @ApiParam({name: 'setId', required: false, type: Number})
     @ApiParam({name: 'ruleId', required: false, type: Number})
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: HeaderManipulationRuleConditionSearchDto})
+    @ApiSearchQuery(SearchLogic, HeaderManipulationRuleConditionSearchDto)
     @ApiPaginatedResponse(HeaderManipulationRuleConditionValueResponseDto)
     async readConditionValues(
         @Param('id', ParseIntPipe) id: number,

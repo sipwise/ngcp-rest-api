@@ -1,5 +1,5 @@
 import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
-import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {JournalResponseDto} from './dto/journal-response.dto'
@@ -9,6 +9,7 @@ import {JournalService} from './journal.service'
 import {AppService} from '~/app.service'
 import {RbacRole} from '~/config/constants.config'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -33,8 +34,7 @@ export class JournalController {
     }
 
     @Get()
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: JournalSearchDto})
+    @ApiSearchQuery(SearchLogic, JournalSearchDto)
     @ApiPaginatedResponse(JournalResponseDto)
     async readAll(
         @Req() req: Request,

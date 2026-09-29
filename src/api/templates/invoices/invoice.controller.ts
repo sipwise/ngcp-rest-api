@@ -15,7 +15,7 @@ import {
     UseInterceptors,
 } from '@nestjs/common'
 import {FileInterceptor} from '@nestjs/platform-express'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {InvoiceTemplateRequestDto} from './dto/invoice-request.dto'
@@ -30,6 +30,7 @@ import {License as LicenseType, RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {License} from '~/decorators/license.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
@@ -91,8 +92,7 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
     }
 
     @Get()
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: InvoiceTemplateSearchDto})
+    @ApiSearchQuery(SearchLogic, InvoiceTemplateSearchDto)
     @ApiPaginatedResponse(InvoiceTemplateResponseDto)
     async readAll(@Req() req: Request): Promise<[InvoiceTemplateResponseDto[], number]> {
         this.log.debug({

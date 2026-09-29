@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Put, Req} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {VoicemailRequestDto} from './dto/voicemail-request.dto'
@@ -13,6 +13,7 @@ import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
@@ -50,8 +51,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     }
 
     @Get()
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: VoicemailSearchDto})
+    @ApiSearchQuery(SearchLogic, VoicemailSearchDto)
     @ApiPaginatedResponse(VoicemailResponseDto)
     async readAll(@Req() req): Promise<[VoicemailResponseDto[], number]> {
         this.log.debug({message: 'fetch all voicemails', func: this.readAll.name, url: req.url, method: req.method})

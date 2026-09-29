@@ -1,5 +1,5 @@
 import {Controller, Delete, Get, Param, Req} from '@nestjs/common'
-import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {BanIpResponseDto} from './dto/ip-response.dto'
@@ -10,6 +10,7 @@ import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
@@ -38,8 +39,7 @@ export class BanIpController {
     }
 
     @Get('')
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: BanIpSearchDto})
+    @ApiSearchQuery(SearchLogic, BanIpSearchDto)
     @ApiPaginatedResponse(BanIpResponseDto)
     async readAll(
         @Req() req: Request): Promise<[BanIpResponseDto[], number]> {

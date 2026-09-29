@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {HeaderManipulationRuleActionService} from './action.service'
@@ -14,6 +14,7 @@ import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {License} from '~/decorators/license.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
@@ -80,8 +81,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
     @Get('{:setId/}rules{/:ruleId}/actions')
     @ApiParam({name: 'setId', required: false, type: Number})
     @ApiParam({name: 'ruleId', required: false, type: Number})
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: HeaderManipulationRuleActionSearchDto})
+    @ApiSearchQuery(SearchLogic, HeaderManipulationRuleActionSearchDto)
     @ApiPaginatedResponse(HeaderManipulationRuleActionResponseDto)
     async readAll(
         @Req() req: Request,

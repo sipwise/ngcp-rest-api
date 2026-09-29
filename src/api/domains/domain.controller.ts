@@ -10,7 +10,7 @@ import {
     Req,
     forwardRef,
 } from '@nestjs/common'
-import {ApiBody, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {DomainService} from './domain.service'
@@ -24,6 +24,7 @@ import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {Roles} from '~/decorators/roles.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
@@ -82,8 +83,7 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
 
     @Get()
     @Roles(RbacRole.ccare, RbacRole.ccareadmin)
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: DomainSearchDto})
+    @ApiSearchQuery(SearchLogic, DomainSearchDto)
     @ApiPaginatedResponse(DomainResponseDto)
     async readAll(@Req() req: Request): Promise<[DomainResponseDto[], number]> {
         this.log.debug({message: 'fetch all domains', func: this.readAll.name, url: req.url, method: req.method})

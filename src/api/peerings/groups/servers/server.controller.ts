@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {PeeringGroupServerRequestDto} from './dto/server-request.dto'
@@ -14,6 +14,7 @@ import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
@@ -77,8 +78,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
 
     @Get('{:groupId/}servers')
     @ApiParam({name: 'groupId', required: false, type: Number})
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: PeeringGroupServerSearchDto})
+    @ApiSearchQuery(SearchLogic, PeeringGroupServerSearchDto)
     @ApiPaginatedResponse(PeeringGroupServerResponseDto)
     async readAll(
         @Req() req: Request,

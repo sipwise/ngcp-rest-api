@@ -1,5 +1,5 @@
 import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
-import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {ProductResponseDto} from './dto/product-response.dto'
@@ -10,6 +10,7 @@ import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -38,8 +39,7 @@ export class ProductController extends CrudController<never, ProductResponseDto>
     }
 
     @Get()
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: ProductSearchDto})
+    @ApiSearchQuery(SearchLogic, ProductSearchDto)
     @ApiPaginatedResponse(ProductResponseDto)
     async readAll(
         @Req() req: Request,

@@ -11,7 +11,7 @@ import {
     Req,
     forwardRef,
 } from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {ContractService} from './contract.service'
@@ -26,6 +26,7 @@ import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
@@ -84,8 +85,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     }
 
     @Get()
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: ContractSearchDto})
+    @ApiSearchQuery(SearchLogic, ContractSearchDto)
     @ApiPaginatedResponse(ContractResponseDto)
     async readAll(@Req() req: Request): Promise<[ContractResponseDto[], number]> {
         this.log.debug({message: 'fetch all contracts', func: this.readAll.name, url: req.url, method: req.method})

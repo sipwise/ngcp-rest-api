@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, forwardRef} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {HeaderManipulationSetRequestDto} from './dto/set-request.dto'
@@ -14,6 +14,7 @@ import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {License} from '~/decorators/license.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
@@ -80,8 +81,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
     }
 
     @Get()
-    @ApiQuery({type: SearchLogic})
-    @ApiQuery({type: HeaderManipulationSetSearchDto})
+    @ApiSearchQuery(SearchLogic, HeaderManipulationSetSearchDto)
     @ApiPaginatedResponse(HeaderManipulationSetResponseDto)
     async readAll(@Req() req: Request): Promise<[HeaderManipulationSetResponseDto[], number]> {
         this.log.debug({
