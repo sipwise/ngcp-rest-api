@@ -8,18 +8,18 @@ import {InvoiceTemplateCallDirection, InvoiceTemplateCategory, InvoiceTemplateTy
 
 export class InvoiceTemplateRequestDto implements RequestDto {
     @ApiProperty({
-        description: 'File to upload',
+        description: 'SVG template file (`image/svg+xml`)',
         type: 'string',
         format: 'binary',
     })
         file: string
 
-    @ApiProperty()
+    @ApiProperty({example: 'Default customer invoice'})
     @IsString()
     @IsNotEmpty()
         name: string
 
-    @ApiProperty()
+    @ApiProperty({example: 1})
     @IsInt()
     @IsPositive()
     @Transform(({value}) => {
@@ -30,15 +30,15 @@ export class InvoiceTemplateRequestDto implements RequestDto {
     })
         reseller_id?: number
 
-    @ApiProperty()
+    @ApiProperty({enum: [InvoiceTemplateType.SVG], example: InvoiceTemplateType.SVG})
     @IsEnum(InvoiceTemplateType)
         type: InvoiceTemplateType
 
-    @ApiProperty()
+    @ApiProperty({enum: InvoiceTemplateCallDirection, example: InvoiceTemplateCallDirection.Out})
     @IsEnum(InvoiceTemplateCallDirection)
         call_direction: InvoiceTemplateCallDirection
 
-    @ApiProperty()
+    @ApiProperty({enum: InvoiceTemplateCategory, example: InvoiceTemplateCategory.Customer})
     @IsEnum(InvoiceTemplateCategory)
         category: InvoiceTemplateCategory
 

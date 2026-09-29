@@ -9,7 +9,7 @@ import {ResellerPhonebookCsvRequestDto} from './dto/phonebook-csv-request.dto'
 import {ResellerPhonebookRequestDto} from './dto/phonebook-request.dto'
 import {ResellerPhonebookResponseDto} from './dto/phonebook-response.dto'
 import {ResellerPhonebookSearchDto} from './dto/phonebook-search.dto'
-import {ResellerPhonebookTextCsvExampleResponse} from './dto/phonebook-text-csv-example-request.dto'
+import {ResellerPhonebookTextCsvExampleRequest, ResellerPhonebookTextCsvExampleResponse} from './dto/phonebook-text-csv-example-request.dto'
 import {ResellerPhonebookService} from './phonebook.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
@@ -20,6 +20,7 @@ import {CrudController} from '~/controllers/crud.controller'
 import {ApiAcceptHeader} from '~/decorators/api-accept-header.decorator'
 import {ApiContentTypeHeader} from '~/decorators/api-content-type-header.decorator'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
+import {ApiJsonOrCsvBody} from '~/decorators/api-json-or-csv-body.decorator'
 import {ApiPaginatedMultipleResponse} from '~/decorators/api-paginated-multiple-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
@@ -70,10 +71,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
 
     @Post('{:resellerId/}phonebook')
     @ApiCreatedResponse(ResellerPhonebookResponseDto)
-    @ApiBody({
-        type: ResellerPhonebookRequestDto,
-        isArray: true,
-    })
+    @ApiJsonOrCsvBody(ResellerPhonebookRequestDto, ResellerPhonebookTextCsvExampleRequest)
     @UseInterceptors(FileInterceptor('file', {
         limits: {
             fileSize: AppService.config.fileshare.limits.upload_size || null,

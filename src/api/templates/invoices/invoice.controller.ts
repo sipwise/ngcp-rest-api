@@ -11,6 +11,7 @@ import {
     Req,
     Response,
     StreamableFile,
+    UnprocessableEntityException,
     UploadedFile,
     UseInterceptors,
 } from '@nestjs/common'
@@ -72,6 +73,12 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
 
     @Post()
     @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        type: InvoiceTemplateRequestDto,
+        encoding: {
+            file: {contentType: 'image/svg+xml'},
+        },
+    })
     @ApiCreatedResponse(InvoiceTemplateResponseDto)
     @UseInterceptors(FileInterceptor('file', {
         limits: {
@@ -171,6 +178,12 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
 
     @Put(':id')
     @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        type: InvoiceTemplateRequestDto,
+        encoding: {
+            file: {contentType: 'image/svg+xml'},
+        },
+    })
     @ApiOkResponse({type: InvoiceTemplateResponseDto})
     @UseInterceptors(FileInterceptor('file', {
         limits: {
@@ -184,6 +197,9 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
         @Req() req: Request,
         @UploadedFile() file,
     ): Promise<InvoiceTemplateResponseDto> {
+        if (!file) {
+            throw new UnprocessableEntityException()
+        }
         this.log.debug({
             message: 'update invoice template by id',
             id: id,
