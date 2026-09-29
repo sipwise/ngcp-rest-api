@@ -20,6 +20,7 @@ export function ApiJsonOrCsvBody(model: Type<unknown>, csvExample: string): Meth
                                     type: 'string',
                                     format: 'binary',
                                     description: 'CSV file (`text/csv`), e.g.:\n\n```\n' + csvExample + '\n```',
+                                    example: csvExample,
                                 },
                             },
                         },
