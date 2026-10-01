@@ -1,46 +1,56 @@
-import {ApiProperty} from '@nestjs/swagger'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {Transform} from 'class-transformer'
-import {IsEnum, IsInt, IsNotEmpty, IsPositive, IsString} from 'class-validator'
+import {IsEnum, IsIn, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString} from 'class-validator'
 
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory, InvoiceTemplateType} from '~/entities/internal/invoice-template.internal.entity'
 
 export class InvoiceTemplateRequestDto implements RequestDto {
-    @ApiProperty({
-        description: 'SVG template file (`image/svg+xml`)',
+    @ApiPropertyOptional({
+        description: 'SVG template file (`image/svg+xml`, multipart/form-data only). If omitted on create or update, the default template of the category is stored',
         type: 'string',
         format: 'binary',
     })
-        file: string
+        file?: string
 
     @ApiProperty({example: 'Default customer invoice'})
     @IsString()
     @IsNotEmpty()
         name: string
 
-    @ApiProperty({example: 1})
+    @ApiPropertyOptional({
+        example: 1,
+        nullable: true,
+        description: 'Required for categories `customer` and `did`, must be empty for `peer` and `reseller`. Enforced to own reseller for reseller users',
+    })
+    @IsOptional()
     @IsInt()
     @IsPositive()
-    @Transform(({value}) => {
-        const parsed = parseInt(value)
-        if (isNaN(parsed) || parsed < 0)
-            return 0
-        return parsed
+    @Transform(({value}: {value: unknown}): unknown => {
+        if (value === undefined || value === null)
+            return value
+        if (value === '' || value === 'null')
+            return null
+        const parsed = Number(value)
+        return isNaN(parsed) ? value : parsed
     })
         reseller_id?: number
 
-    @ApiProperty({enum: [InvoiceTemplateType.SVG], example: InvoiceTemplateType.SVG})
-    @IsEnum(InvoiceTemplateType)
-        type: InvoiceTemplateType
+    @ApiPropertyOptional({enum: [InvoiceTemplateType.SVG], default: InvoiceTemplateType.SVG})
+    @IsOptional()
+    @IsIn([InvoiceTemplateType.SVG])
+        type?: InvoiceTemplateType
 
-    @ApiProperty({enum: InvoiceTemplateCallDirection, example: InvoiceTemplateCallDirection.Out})
+    @ApiPropertyOptional({enum: InvoiceTemplateCallDirection, default: InvoiceTemplateCallDirection.Out})
+    @IsOptional()
     @IsEnum(InvoiceTemplateCallDirection)
-        call_direction: InvoiceTemplateCallDirection
+        call_direction?: InvoiceTemplateCallDirection
 
-    @ApiProperty({enum: InvoiceTemplateCategory, example: InvoiceTemplateCategory.Customer})
+    @ApiPropertyOptional({enum: InvoiceTemplateCategory, default: InvoiceTemplateCategory.Customer})
+    @IsOptional()
     @IsEnum(InvoiceTemplateCategory)
-        category: InvoiceTemplateCategory
+        category?: InvoiceTemplateCategory
 
     constructor(entity?: internal.InvoiceTemplate) {
         if (!entity)
@@ -54,11 +64,11 @@ export class InvoiceTemplateRequestDto implements RequestDto {
 
     toInternal(options: RequestDtoOptions = {}): internal.InvoiceTemplate {
         const entity = new internal.InvoiceTemplate()
-        entity.resellerId = this.reseller_id
+        entity.resellerId = this.reseller_id ?? null
         entity.name = this.name
-        entity.type = this.type
-        entity.callDirection = this.call_direction
-        entity.category = this.category
+        entity.type = this.type ?? InvoiceTemplateType.SVG
+        entity.callDirection = this.call_direction ?? InvoiceTemplateCallDirection.Out
+        entity.category = this.category ?? InvoiceTemplateCategory.Customer
         if (options.id)
             entity.id = options.id
 

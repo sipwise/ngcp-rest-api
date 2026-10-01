@@ -246,5 +246,41 @@
     "INVALID_SITE_ID": {
     "message": "Invalid site_id value or multi site is not enabled.",
     "code": 10062
+  },
+  "INVOICE_TEMPLATE_NAME_EXISTS": {
+    "message": "Invoice template with name '{name}' already exists for reseller_id '{reseller_id}'",
+    "code": 10063
+  },
+  "INVOICE_TEMPLATE_RESELLER_REQUIRED": {
+    "message": "reseller_id is required for invoice template category '{category}'",
+    "code": 10064
+  },
+  "INVOICE_TEMPLATE_RESELLER_NOT_ALLOWED": {
+    "message": "reseller_id must be empty for invoice template category '{category}'",
+    "code": 10065
+  },
+  "INVOICE_TEMPLATE_INVALID_CONTENT": {
+    "message": "Invalid invoice template file, a non-empty svg file is expected",
+    "code": 10066
+  },
+  "INVOICE_TEMPLATE_DEFAULT_NOT_FOUND": {
+    "message": "Default invoice template for category '{category}' not found",
+    "code": 10067
+  },
+  "INVOICE_TEMPLATE_READ_ONLY": {
+    "message": "Read-only resource for authenticated role",
+    "code": 10068
+  },
+  "INVOICE_TEMPLATE_INVALID_DIRECTIVES": {
+    "message": "Invalid invoice template directive for category '{category}'",
+    "code": 10069
+  },
+  "INVOICE_TEMPLATE_RENDER_FAILED": {
+    "message": "Failed to render invoice template for category '{category}': {reason}",
+    "code": 10070
+  },
+  "INVOICE_TEMPLATE_CONVERTER_FAILED": {
+    "message": "Failed to convert invoice template to pdf: {reason}",
+    "code": 10071
   }
 }

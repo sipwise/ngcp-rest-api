@@ -85,6 +85,17 @@ module.exports =
         }
       },
       {
+        // pdfkit loads the standard fonts at runtime with a createRequire() that webpack can't follow
+        test: /pdfkit\/js\/pdfkit\.js$/,
+        loader: 'string-replace-loader',
+        options: {
+          search: "require\\$1\\('#standard-fonts/(\\w+)'\\)",
+          replace: "require('pdfkit/standard-fonts/$1')",
+          flags: 'g',
+          strict: true,
+        },
+      },
+      {
         test: /mysql2\/lib\/parsers\/string\.js$/,
         loader: 'string-replace-loader',
         options: {
@@ -212,6 +223,10 @@ module.exports =
         {
           from: './src/localisation',
           to: './localisation',
+        },
+        {
+          from: './src/api/templates/invoices/defaults',
+          to: './invoice-templates',
         },
         'node_modules/swagger-ui-dist/swagger-ui.css',
         'node_modules/swagger-ui-dist/swagger-ui-bundle.js',

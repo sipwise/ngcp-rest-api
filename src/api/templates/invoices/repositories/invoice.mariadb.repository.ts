@@ -13,7 +13,6 @@ import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
 export interface FilterBy {
     resellerId?: number
-    customerId?: number
 }
 
 @Injectable()
@@ -67,7 +66,7 @@ export class InvoiceTemplateMariadbRepository extends MariaDbRepository implemen
         )
         qb.andWhere({id: id})
         this.addFilterBy(qb, filterBy)
-        const result = await qb.getOne()
+        const result = await qb.getOneOrFail()
         return result.toInternal()
     }
 
@@ -91,23 +90,15 @@ export class InvoiceTemplateMariadbRepository extends MariaDbRepository implemen
         return await Promise.all(result.map(async (d) => d.toInternal()))
     }
 
-    async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
+    async readByResellerAndName(resellerId: number | null, name: string): Promise<internal.InvoiceTemplate | undefined> {
         const qb = db.billing.InvoiceTemplate.createQueryBuilder('template')
-        qb.leftJoinAndSelect('template.reseller', 'bReseller')
-        const searchDto = new InvoiceTemplateSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                undefined,
-            ),
-        )
-        qb.andWhereInIds(ids)
-        this.addFilterBy(qb, filterBy)
-        return await qb.getCount()
+        qb.where('template.name = :name', {name: name})
+        if (resellerId)
+            qb.andWhere('template.reseller_id = :resellerId', {resellerId: resellerId})
+        else
+            qb.andWhere('template.reseller_id IS NULL')
+        const result = await qb.getOne()
+        return result?.toInternal()
     }
 
     async update(updates: Dictionary<internal.InvoiceTemplate>, _sr: ServiceRequest): Promise<number[]> {
@@ -125,14 +116,8 @@ export class InvoiceTemplateMariadbRepository extends MariaDbRepository implemen
         return ids
     }
 
-    private addFilterBy(qb: SelectQueryBuilder<db.billing.InvoiceTemplate>, filterBy: FilterBy): void {
-        if (filterBy) {
-            if (filterBy.resellerId) {
-                qb.andWhere('template.reseller_id = :resellerId', {resellerId: filterBy.resellerId})
-            }
-            if (filterBy.customerId) {
-                qb.andWhere('bReseller.contract_id = :customerId', {customerId: filterBy.customerId})
-            }
-        }
+    private addFilterBy(qb: SelectQueryBuilder<db.billing.InvoiceTemplate>, filterBy?: FilterBy): void {
+        if (filterBy?.resellerId)
+            qb.andWhere('template.reseller_id = :resellerId', {resellerId: filterBy.resellerId})
     }
 }
