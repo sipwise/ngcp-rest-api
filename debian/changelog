@@ -1,3 +1,43 @@
+ngcp-rest-api (26.3.1.0+0~mr26.3.1.0) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [fb587b7] MT#65772 module upgrades 2026-08-19
+  * [a26333b] MT#65772 add resolutions for braces and js-yaml
+  * [3428b54] MT#65772 resolutions braces: ^3.0.3
+  * [58730d7] MT#65383 add /auth/tokens support
+  * [be69c0d] MT#65815 set globalPipeValidator() whitelist: true
+  * [eb9a760] MT#65815 rename and aling multi level endpoint filenames
+  * [ac5167a] MT#65817 fix eslint imports, pbx group mock repo class name
+  * [1af93d0] MT#65820 add api.conf file validation on startup
+  * [78bcae8] MT#65828 improve transactional behaviour
+  * [146bd1d] MT#65829 split ncos-sets into sets and levels
+  * [54432a6] MT#65841 format JSON responses with tab space 2
+  * [c6fbc4d] MT#65950 rework query params validation
+  * [991b62d] MT#65950 follow up refactor of request-param.dto+fixes
+  * [0dffc8b] MT#65994 fix missing .controller method decorators
+  * [9cbb756] MT#66012 always allow filtering by id
+  * [47164b3] MT#66026 QueryDto, @APIParam description for optional params
+  * [42c1289] MT#66016 fix csvToDto() parsing validation
+  * [f34e751] MT#66026 make all searchable fields rendered in swagger
+  * [0eae8d7] MT#66154 api-search-query decorator, search improvements
+  * [073cb4a] MT#65383 auth/tokens add filter by username, id, reseller_id support
+  * [b0da7ec] MT#66155 add multipart-formdata swagger examples for endpoints
+  * [8ce7c34] MT#66154 swagger: improve order of search properties
+  * [5f2525f] MT#66155 add csvExample section into swagger multipart-formdata
+  * [5adebf2] MT#63596 migrate invoice templates functionality
+
+  [ Marco Capetta ]
+  * [039c79c] MT#65224 fix voicemail request dto validation
+  * [0d6df4a] MT#65224 fix voicemail msgnum renumbering on move and delete
+
+  [ Michael Prokop ]
+  * [595a981] MT#66104 Update yarn to v4.18.1
+
+  [ Guillem Jover ]
+  * [2375aca] MT#64932 tools/generate-endpoint-stub: Fix which(1) usage
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Mon, 05 Oct 2026 12:35:54 +0200
+
 ngcp-rest-api (26.3.0.0+0~mr26.3.0.0) unstable; urgency=medium
 
   [ Kirill Solomko ]
