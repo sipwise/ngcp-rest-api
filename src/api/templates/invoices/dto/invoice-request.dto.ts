@@ -12,6 +12,7 @@ export class InvoiceTemplateRequestDto implements RequestDto {
         type: 'string',
         format: 'binary',
     })
+    @IsOptional()
         file?: string
 
     @ApiProperty({example: 'Default customer invoice'})
