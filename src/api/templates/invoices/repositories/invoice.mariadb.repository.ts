@@ -38,7 +38,7 @@ export class InvoiceTemplateMariadbRepository extends MariaDbRepository implemen
                 sr,
                 Object.keys(searchDto),
                 undefined,
-                undefined,
+                searchDto._alias,
             ),
         )
         this.addFilterBy(qb, filterBy)
@@ -61,7 +61,7 @@ export class InvoiceTemplateMariadbRepository extends MariaDbRepository implemen
                 sr,
                 Object.keys(searchDto),
                 undefined,
-                undefined,
+                searchDto._alias,
             ),
         )
         qb.andWhere({id: id})
@@ -81,7 +81,7 @@ export class InvoiceTemplateMariadbRepository extends MariaDbRepository implemen
                 sr,
                 Object.keys(searchDto),
                 undefined,
-                undefined,
+                searchDto._alias,
             ),
         )
         qb.andWhereInIds(ids)

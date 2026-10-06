@@ -1,4 +1,4 @@
-import {ApiPropertyOptional} from '@nestjs/swagger'
+import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 import {InvoiceTemplateResponseDto} from './invoice-response.dto'
 
@@ -17,4 +17,13 @@ export class InvoiceTemplateSearchDto implements Partial<InvoiceTemplateResponse
         call_direction: InvoiceTemplateCallDirection = undefined
     @ApiPropertyOptional()
         category: InvoiceTemplateCategory = undefined
+    @ApiHideProperty()
+    _alias = {
+        id: 'template.id',
+        name: 'template.name',
+        reseller_id: 'template.reseller_id',
+        type: 'template.type',
+        call_direction: 'template.call_direction',
+        category: 'template.category',
+    }
 }
