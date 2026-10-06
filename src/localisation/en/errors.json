@@ -282,5 +282,9 @@
   "INVOICE_TEMPLATE_CONVERTER_FAILED": {
     "message": "Failed to convert invoice template to pdf: {reason}",
     "code": 10071
+  },
+  "INVOICE_TEMPLATE_CATEGORY_IMMUTABLE": {
+    "message": "Category of an existing invoice template can not be changed",
+    "code": 10072
   }
 }

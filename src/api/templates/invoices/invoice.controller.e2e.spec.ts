@@ -459,6 +459,14 @@ describe('InvoiceTemplate', () => {
                     .send([{op: 'replace', path: '/category', value: 'invalid'}])
                 expect(response.status).toEqual(422)
             })
+            it('does not change the category of an existing template', async () => {
+                const response = await request(app.getHttpServer())
+                    .patch(`/templates/invoices/${createdIds[0]}`)
+                    .set(...authHeader)
+                    .field('category', InvoiceTemplateCategory.Peer)
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body)).toMatch(/can not be changed/)
+            })
         })
 
         describe('DELETE', () => {

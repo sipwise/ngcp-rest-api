@@ -121,13 +121,14 @@ export class InvoiceTemplateService implements CrudService<internal.InvoiceTempl
         for (const template of templates) {
             const update = updates[template.id]
             update.id = template.id
+            if (update.category != template.category) {
+                throw new UnprocessableEntityException(this.i18n.t('errors.INVOICE_TEMPLATE_CATEGORY_IMMUTABLE'))
+            }
             await this.checkTemplate(update, sr)
             if (file || replace) {
                 update.data = await this.newContent(update.category, file)
             } else {
                 update.data = template.data
-                if (update.category != template.category && template.data?.length)
-                    this.checkDirectives((await this.readContent(template)).toString('utf8'), update.category)
             }
         }
 
