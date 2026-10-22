@@ -27,6 +27,14 @@ export class VoicemailMockRepository implements VoicemailRepository {
         return Promise.resolve(undefined)
     }
 
+    readWhereInIds(_ids: number[], _sr: ServiceRequest): Promise<internal.Voicemail[]> {
+        return Promise.resolve([] as internal.Voicemail[])
+    }
+
+    readCountOfIds(ids: number[], _sr: ServiceRequest): Promise<number> {
+        return Promise.resolve(ids.length)
+    }
+
     readMaxMsgnumByDir(_mailboxuser: string, _dir: string, _sr: ServiceRequest): Promise<number> {
         return Promise.resolve(-1)
     }
