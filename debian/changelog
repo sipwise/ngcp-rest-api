@@ -1,3 +1,10 @@
+ngcp-rest-api (26.3.1.2+0~mr26.3.1.2) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [b824bdd] MT#66274 fix voicemail folder consequitive updates
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 22 Oct 2026 23:31:50 +0200
+
 ngcp-rest-api (26.3.1.1+0~mr26.3.1.1) unstable; urgency=medium
 
   * New release.
