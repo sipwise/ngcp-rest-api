@@ -1,13 +1,13 @@
 import {execFile} from 'child_process'
 import {promisify} from 'util'
 
-import {BadRequestException, Inject, Injectable, InternalServerErrorException, UnprocessableEntityException} from '@nestjs/common'
+import {BadRequestException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {VoicemailMariadbRepository} from './repositories/voicemail.mariadb.repository'
 
 import {internal} from '~/entities'
-import {supportedVoicemailFolders, voicemailSpoolDir} from '~/enums/supported-voicemail-folders.enum'
+import {supportedVoicemailFolders} from '~/enums/supported-voicemail-folders.enum'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -23,7 +23,7 @@ interface VoicemailFolder {
 
 @Injectable()
 export class VoicemailService implements CrudService<internal.Voicemail> {
-    readonly voicemailDir = voicemailSpoolDir
+    readonly voicemailDir = '/var/spool/asterisk/voicemail/default/'
     readonly supported_dirs = supportedVoicemailFolders
     private readonly log = new LoggerService(VoicemailService.name)
 
@@ -110,25 +110,22 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
         for (const voicemail of voicemails) {
             const id = voicemail.id
             const update = updates[id]
+            const dir = voicemail.dir.substring(voicemail.dir.lastIndexOf('/') + 1)
+            const dirDiff: boolean = update.dir && update.dir != dir
             let action_type = 'r'
-            if (update.dir) {
-                const folder = update.dir.substring(update.dir.lastIndexOf('/') + 1)
+            if (dirDiff) {
                 let validDir = undefined
                 this.supported_dirs.forEach((checkDir) => {
-                    if (checkDir.toLowerCase() == folder.toLowerCase()) {
+                    if (checkDir.toLowerCase() == update.dir.toLowerCase()) {
                         validDir = checkDir
                         return
                     }
                 })
                 if (!validDir)
                     throw new BadRequestException(`not a valid value ${update.dir}`)
-                const targetDir = `${this.voicemailDir}${voicemail.mailboxuser}/${validDir}`
-                if (targetDir == voicemail.dir) {
-                    delete update.dir
-                    continue
-                }
-                if (validDir.toLowerCase() == 'inbox')
+                if (update.dir.toLowerCase() == 'inbox')
                     action_type = 'x'
+                const targetDir = `${this.voicemailDir}${voicemail.mailboxuser}/${validDir}`
                 update.dir = targetDir
 
                 // the moved message becomes the last one of the destination folder
@@ -145,19 +142,6 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
                     mailboxuser: voicemail.mailboxuser,
                 })
                 notifies.push([id, action_type])
-            }
-        }
-
-        for (const id of ids) {
-            const dir = updates[id].dir
-            if (dir != undefined && !dir.includes('/')) {
-                this.log.error({
-                    message: 'voicemail folder is not a full path',
-                    func: this.update.name,
-                    id: id,
-                    dir: dir,
-                })
-                throw new InternalServerErrorException(this.i18n.t('errors.REQUEST_PROCESSING_ERROR'))
             }
         }
 
