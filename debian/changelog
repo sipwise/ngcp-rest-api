@@ -1,3 +1,13 @@
+ngcp-rest-api (13.5.1.30+0~mr13.5.1.30) unstable; urgency=medium
+
+  [ Marco Capetta ]
+  * [fb4f778] MT#65224 fix voicemail msgnum renumbering on move and delete
+
+  [ Kirill Solomko ]
+  * [1adfdde] MT#66274 fix voicemail folder consequitive updates
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 22 Oct 2026 23:31:44 +0200
+
 ngcp-rest-api (13.5.1.29+0~mr13.5.1.29) unstable; urgency=medium
 
   [ Marco Capetta ]
