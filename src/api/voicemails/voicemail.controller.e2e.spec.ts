@@ -3,12 +3,14 @@ import {Test} from '@nestjs/testing'
 import request from 'supertest'
 
 import {VoicemailModule} from './voicemail.module'
+import {VoicemailService} from './voicemail.service'
 
 import {VoicemailResponseDto} from '~/api/voicemails/dto/voicemail-response.dto'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {db} from '~/entities'
+import {voicemailSpoolDir} from '~/enums/supported-voicemail-folders.enum'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
@@ -219,6 +221,121 @@ describe('', () => {
                 expect(response.status).toEqual(200)
                 expect(voicemails).toHaveLength(2)
                 expect(voicemails[1]).toBeGreaterThanOrEqual(4)
+            })
+        })
+
+        describe('PUT/PATCH folder', () => {
+            let basePath: string
+            let inboxId: number
+            let oldId: number
+
+            const readDir = async (id: number): Promise<string> =>
+                (await db.kamailio.VoicemailSpool.findOneByOrFail({id: id})).dir
+
+            beforeAll(async () => {
+                jest.spyOn(app.get(VoicemailService), 'sendNotification').mockResolvedValue()
+                const existing = await db.kamailio.VoicemailSpool.findOneByOrFail({id: createdVoicemailIds[0]})
+                basePath = `${voicemailSpoolDir}${existing.mailboxuser}`
+                const create = (msgnum: number, folder: string): db.kamailio.VoicemailSpool => db.kamailio.VoicemailSpool.create({
+                    msgnum: msgnum,
+                    dir: `${basePath}/${folder}`,
+                    context: existing.context,
+                    mailboxcontext: existing.mailboxcontext,
+                    mailboxuser: existing.mailboxuser,
+                    msg_id: `folder-test-${folder}`,
+                    call_id: `folder-test-${folder}`,
+                    flag: '',
+                    origtime: existing.origtime,
+                    duration: existing.duration,
+                })
+                inboxId = (await db.kamailio.VoicemailSpool.save(create(9000, 'INBOX'))).id
+                oldId = (await db.kamailio.VoicemailSpool.save(create(9000, 'Old'))).id
+                createdVoicemailIds.push(inboxId, oldId)
+            })
+
+            it('PUT same folder keeps full path', async () => {
+                const response = await request(app.getHttpServer())
+                    .put(`/voicemails/${oldId}`)
+                    .set(...authHeader)
+                    .send({folder: 'Old'})
+                expect(response.status).toEqual(200)
+                expect(response.body.folder).toEqual('Old')
+                expect(await readDir(oldId)).toEqual(`${basePath}/Old`)
+            })
+
+            it('PUT bulk same folder keeps full path', async () => {
+                const response = await request(app.getHttpServer())
+                    .put('/voicemails')
+                    .set(...authHeader)
+                    .send({[oldId]: {folder: 'Old'}})
+                expect(response.status).toEqual(200)
+                expect(await readDir(oldId)).toEqual(`${basePath}/Old`)
+            })
+
+            it('PATCH same folder keeps full path', async () => {
+                const response = await request(app.getHttpServer())
+                    .patch(`/voicemails/${oldId}`)
+                    .set(...authHeader)
+                    .send([{op: 'replace', path: '/folder', value: 'Old'}])
+                expect(response.status).toEqual(200)
+                expect(await readDir(oldId)).toEqual(`${basePath}/Old`)
+            })
+
+            it('PATCH bulk same folder keeps full path', async () => {
+                const response = await request(app.getHttpServer())
+                    .patch('/voicemails')
+                    .set(...authHeader)
+                    .send({[oldId]: [{op: 'replace', path: '/folder', value: 'Old'}]})
+                expect(response.status).toEqual(200)
+                expect(await readDir(oldId)).toEqual(`${basePath}/Old`)
+            })
+
+            it('PUT move writes full path', async () => {
+                const response = await request(app.getHttpServer())
+                    .put(`/voicemails/${inboxId}`)
+                    .set(...authHeader)
+                    .send({folder: 'Old'})
+                expect(response.status).toEqual(200)
+                expect(response.body.folder).toEqual('Old')
+                expect(await readDir(inboxId)).toEqual(`${basePath}/Old`)
+            })
+
+            it('PATCH move writes full path', async () => {
+                const response = await request(app.getHttpServer())
+                    .patch(`/voicemails/${inboxId}`)
+                    .set(...authHeader)
+                    .send([{op: 'replace', path: '/folder', value: 'INBOX'}])
+                expect(response.status).toEqual(200)
+                expect(response.body.folder).toEqual('INBOX')
+                expect(await readDir(inboxId)).toEqual(`${basePath}/INBOX`)
+            })
+
+            it('PUT repairs a stored dir without full path', async () => {
+                await db.kamailio.VoicemailSpool.update(oldId, {dir: 'Old'})
+                const response = await request(app.getHttpServer())
+                    .put(`/voicemails/${oldId}`)
+                    .set(...authHeader)
+                    .send({folder: 'Old'})
+                expect(response.status).toEqual(200)
+                expect(await readDir(oldId)).toEqual(`${basePath}/Old`)
+            })
+
+            it('PUT folder as full path fails with 422', async () => {
+                const response = await request(app.getHttpServer())
+                    .put(`/voicemails/${oldId}`)
+                    .set(...authHeader)
+                    .send({folder: `${basePath}/INBOX`})
+                expect(response.status).toEqual(422)
+                expect(await readDir(oldId)).toEqual(`${basePath}/Old`)
+            })
+
+            it('PATCH folder in wrong case fails with 422', async () => {
+                const response = await request(app.getHttpServer())
+                    .patch(`/voicemails/${oldId}`)
+                    .set(...authHeader)
+                    .send([{op: 'replace', path: '/folder', value: 'inbox'}])
+                expect(response.status).toEqual(422)
+                expect(await readDir(oldId)).toEqual(`${basePath}/Old`)
             })
         })
     })
