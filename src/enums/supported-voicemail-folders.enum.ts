@@ -1,3 +1,5 @@
+export const voicemailSpoolDir = '/var/spool/asterisk/voicemail/default/'
+
 export const supportedVoicemailFolders = [
     'Old',
     'INBOX',
