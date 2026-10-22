@@ -16,6 +16,7 @@ import {ScheduleModule} from '@nestjs/schedule'
 import {AcceptLanguageResolver, CookieResolver, HeaderResolver, I18nModule, QueryResolver} from 'nestjs-i18n'
 
 import {AdminModule} from './api/admins/admin.module'
+import {AuthGrafanaModule} from './api/auth/grafana/grafana.module'
 import {AuthJwtModule} from './api/auth/jwt/jwt.module'
 import {AuthOtpModule} from './api/auth/otp/otp.module'
 import {AuthPasswordChangeModule} from './api/auth/password/change/change.module'
@@ -113,6 +114,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     }),
     AdminModule,
     AuthModule,
+    AuthGrafanaModule,
     AuthJwtModule,
     AuthTokenModule,
     AuthUserinfoModule,

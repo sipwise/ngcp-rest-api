@@ -5,10 +5,13 @@ import {Request} from 'express'
 import {AuthJwtRequestDto} from './dto/jwt-request.dto'
 
 import {AuthService} from '~/auth/auth.service'
+import {AuthOptions} from '~/decorators/auth-options.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 @Auth()
+// read-only users must be able to obtain a token
+@AuthOptions({skipReadOnly: true})
 @Controller()
 export class AuthJwtController {
     constructor(private readonly authService: AuthService) {
