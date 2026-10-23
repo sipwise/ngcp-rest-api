@@ -1,6 +1,5 @@
 const path = require("path")
 const webpack = require('webpack')
-const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const { TsconfigPathsPlugin } = require('tsconfig-paths-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const TerserPlugin = require("terser-webpack-plugin");
@@ -36,6 +35,7 @@ module.exports =
   {
     path: path.resolve(__dirname, 'prod'),
     filename: '[name].js',
+    clean: true,
   },
   module:
   {
@@ -115,7 +115,6 @@ module.exports =
   },
   plugins:
   [
-    new CleanWebpackPlugin(),
     //new webpack.ProvidePlugin({ 'openapi': '@nestjs/swagger', }),
     new webpack.IgnorePlugin({
       checkResource: function(resource)
