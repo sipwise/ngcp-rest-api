@@ -1,8 +1,6 @@
 // TODO: Check if full type safety is possible in pipes
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import {isUndefined} from 'util'
-
 import {
     ArgumentMetadata,
     HttpStatus,
@@ -34,7 +32,7 @@ export interface ValidationPipeOptions extends ValidatorOptions {
 }
 
 export const isNil = (obj: any): obj is null | undefined =>
-    isUndefined(obj) || obj === null
+    obj === undefined || obj === null
 
 @Injectable()
 export class ValidateInputPipe implements PipeTransform<any> {
