@@ -179,7 +179,7 @@ export class ContactResponseDto extends ResponseDto {
         if ([RbacRole.admin, RbacRole.system, RbacRole.ccareadmin].includes(role)) {
             this.reseller_id = contact.reseller_id
         } else {
-            delete(this.reseller_id)
+            this.reseller_id = null
         }
     }
 }

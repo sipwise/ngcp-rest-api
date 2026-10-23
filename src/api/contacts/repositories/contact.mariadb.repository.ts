@@ -155,6 +155,10 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const update = new db.billing.Contact().fromInternal(updates[id])
+            // let the db keep create_timestamp and set modify_timestamp on update
+            delete update.id
+            delete update.create_timestamp
+            delete update.modify_timestamp
             Object.keys(update).map(key => {
                 if (update[key] == undefined)
                     delete update[key]

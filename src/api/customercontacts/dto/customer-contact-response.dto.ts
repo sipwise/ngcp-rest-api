@@ -1,5 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsEnum, IsInt, IsString} from 'class-validator'
+import {IsBoolean, IsEnum, IsInt, IsString} from 'class-validator'
 
 import {RbacRole} from '~/config/constants.config'
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
@@ -131,7 +131,7 @@ export class CustomerContactResponseDto extends ResponseDto {
         mobilenumber?: string
 
     @CanBeNull()
-    @IsString()
+    @IsBoolean()
     @ApiProperty()
         newsletter: boolean
 
@@ -179,7 +179,7 @@ export class CustomerContactResponseDto extends ResponseDto {
         if ([RbacRole.admin, RbacRole.system, RbacRole.ccareadmin].includes(role)) {
             this.reseller_id = contact.reseller_id
         } else {
-            delete(this.reseller_id)
+            this.reseller_id = null
         }
     }
 }

@@ -1,5 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsEnum, IsInt, IsString} from 'class-validator'
+import {IsBoolean, IsEnum, IsInt, IsString} from 'class-validator'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {ResponseDto} from '~/dto/response.dto'
@@ -127,7 +127,7 @@ export class SystemContactResponseDto extends ResponseDto {
         mobilenumber?: string
 
     @CanBeNull()
-    @IsString()
+    @IsBoolean()
     @ApiProperty()
         newsletter: boolean
 
