@@ -7,10 +7,15 @@ import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
 
 export class RewriteRuleSetRequestDto implements RequestDto {
-    @ApiProperty({description: 'Reseller Id', example: 1})
+    @ApiPropertyOptional({
+        description: 'Reseller Id, mandatory for admin and system roles, must not be provided by reseller roles' +
+            ' as it is automatically set to the reseller_id of the user',
+        example: 1,
+    })
+    @IsOptional()
     @IsPositive()
     @IsInt()
-        reseller_id!: number
+        reseller_id?: number
 
     @ApiProperty({description: 'Rule set name', example: 'Restricted destinations'})
     @IsString()

@@ -8,6 +8,7 @@ import {RewriteRuleSetModule} from './set.module'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
@@ -28,7 +29,7 @@ type EmbeddedRule = {
 
 type RuleSetPost = {
     name: string
-    reseller_id: number
+    reseller_id?: number
     description: string
     rules?: EmbeddedRule[]
 }
@@ -39,7 +40,9 @@ describe('Rule Set', () => {
     let authService: AuthService
     let authHeader: [string, string]
     let createdIds: number[] = []
+    let resellerAdminId: number
     const creds = {username: 'administrator', password: 'administrator'}
+    const resellerCreds = {username: 'rwr_set_reseller', password: 'FFFooobarbaz123!!!'}
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -202,6 +205,14 @@ describe('Rule Set', () => {
                     .send(ruleset1)
                 expect(response.status).toEqual(422)
             })
+            it('fail create set without reseller_id as admin', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .send({name: 'test_ruleset_no_reseller', description: 'no reseller_id'})
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+            })
             it('validation fail rule set', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/rewrite-rules/sets')
@@ -362,6 +373,14 @@ describe('Rule Set', () => {
                 expect(ruleset.reseller_id).toEqual(1)
                 expect(ruleset.description).toEqual('bar')
             })
+            it('fail update rule set without reseller_id as admin', async () => {
+                const response = await request(app.getHttpServer())
+                    .put(`/rewrite-rules/sets/${createdIds[0]}`)
+                    .set(...authHeader)
+                    .send({name: 'renamed_test_ruleset1', description: 'foo'})
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+            })
             it('update non-existing set', async () => {
                 const response = await request(app.getHttpServer())
                     .put('/rewrite-rules/sets/999911111122')
@@ -401,6 +420,31 @@ describe('Rule Set', () => {
                 expect(ruleset.reseller_id).toEqual(1)
                 expect(ruleset.description).toEqual('patched_test_ruleset1 description')
             })
+            it('fail adjust ruleset1 with empty reseller_id as admin', async () => {
+                const tt: PatchOperation[][] = [
+                    [{op: 'replace', path: '/reseller_id', value: null}],
+                    [{op: 'remove', path: '/reseller_id'}],
+                ]
+                for (const emptyPatch of tt) {
+                    const response = await request(app.getHttpServer())
+                        .patch(`/rewrite-rules/sets/${createdIds[0]}`)
+                        .set(...authHeader)
+                        .send(emptyPatch)
+                    expect(response.status).toEqual(422)
+                    expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                }
+            })
+            it('fail bulk adjust with empty reseller_id as admin', async () => {
+                const response = await request(app.getHttpServer())
+                    .patch('/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .send({
+                        [createdIds[0]]: [{op: 'replace', path: '/description', value: 'bulk'}],
+                        [createdIds[1]]: [{op: 'replace', path: '/reseller_id', value: null}],
+                    })
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.message)).toContain(`[${createdIds[1]}] reseller_id should not be empty`)
+            })
             it('adjust non-existing set', async () => {
                 const response = await request(app.getHttpServer())
                     .patch('/rewrite-rules/sets/999991111112')
@@ -408,6 +452,101 @@ describe('Rule Set', () => {
                     .send(patch)
                 expect(response.status).toEqual(404)
             })
+        })
+    })
+
+    describe('Rule Set as reseller', () => {
+        let resellerSetId: number
+        it('create reseller admin', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/admins')
+                .set(...authHeader)
+                .send({
+                    billing_data: true,
+                    call_data: false,
+                    can_reset_password: true,
+                    is_active: true,
+                    is_master: true,
+                    email: 'rwr_set_reseller@example.com',
+                    login: resellerCreds.username,
+                    password: resellerCreds.password,
+                    read_only: false,
+                    reseller_id: 1,
+                    role: RbacRole.reseller,
+                    show_passwords: true,
+                    enable_2fa: false,
+                })
+            expect(response.status).toEqual(201)
+            resellerAdminId = +response.body[0].id
+        })
+        it('fail create set with reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/rewrite-rules/sets')
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({name: 'test_reseller_ruleset', reseller_id: 1, description: 'reseller'})
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+        })
+        it('create set without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/rewrite-rules/sets')
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({name: 'test_reseller_ruleset', description: 'reseller'})
+            expect(response.status).toEqual(201)
+            resellerSetId = +response.body[0].id
+            createdIds.push(resellerSetId)
+        })
+        it('read set created by reseller', async () => {
+            const response = await request(app.getHttpServer())
+                .get(`/rewrite-rules/sets/${resellerSetId}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
+            expect(response.body.reseller_id).toEqual(1)
+        })
+        it('fail update set with reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .put(`/rewrite-rules/sets/${resellerSetId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({name: 'renamed_test_reseller_ruleset', reseller_id: 1, description: 'reseller'})
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+        })
+        it('update set without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .put(`/rewrite-rules/sets/${resellerSetId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({name: 'renamed_test_reseller_ruleset', description: 'reseller'})
+            expect(response.status).toEqual(200)
+            expect(response.body.reseller_id).toEqual(1)
+        })
+        it('fail patch set reseller_id', async () => {
+            const patch: PatchOperation[] = [
+                {op: 'replace', path: '/reseller_id', value: 1},
+            ]
+            const response = await request(app.getHttpServer())
+                .patch(`/rewrite-rules/sets/${resellerSetId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send(patch)
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+        })
+        it('patch set description', async () => {
+            const patch: PatchOperation[] = [
+                {op: 'replace', path: '/description', value: 'patched reseller'},
+            ]
+            const response = await request(app.getHttpServer())
+                .patch(`/rewrite-rules/sets/${resellerSetId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send(patch)
+            expect(response.status).toEqual(200)
+            expect(response.body.reseller_id).toEqual(1)
+            expect(response.body.description).toEqual('patched reseller')
+        })
+        it('delete reseller admin', async () => {
+            const response = await request(app.getHttpServer())
+                .delete(`/admins/${resellerAdminId}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
         })
     })
 

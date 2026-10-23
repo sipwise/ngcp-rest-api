@@ -30,13 +30,7 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
     }
 
     async create(entities: internal.RewriteRuleSet[], sr: ServiceRequest): Promise<internal.RewriteRuleSet[]> {
-        await Promise.all(entities.map(async entity => {
-            if (!entity.resellerId)
-                entity.resellerId = sr.user.reseller_id
-
-            if (sr.user.reseller_id_required)
-                await this.checkPermissions(entity.resellerId, sr)
-        }))
+        this.assignUserResellerId(entities, sr)
         const created = await this.ruleSetRepo.create(entities)
 
         await this.reloadDialPlanAfterCommit(sr)
@@ -78,6 +72,7 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
             throw new UnprocessableEntityException(message)
         }
 
+        this.assignUserResellerId(Object.values(updates), sr)
         return await this.ruleSetRepo.update(updates, sr)
     }
 
@@ -98,6 +93,7 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
             throw new UnprocessableEntityException(message)
         }
 
+        this.assignUserResellerId(Object.values(updates), sr)
         const updatedIds = await this.ruleSetRepo.update(updates, sr)
         await Promise.all(
             updatedIds.map(id => this.ruleSetRepo.cleanSets(id, sr)),
@@ -161,9 +157,10 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
         runOnTransactionCommit(async () => await this.ruleSetRedisRepo.reloadDialPlan(sr))
     }
 
-    private async checkPermissions(resellerId: number, sr: ServiceRequest): Promise<void> {
-        if (sr.user.resellerId && sr.user.reseller_id != resellerId) {
-            throw new NotFoundException()
-        }
+    private assignUserResellerId(entities: internal.RewriteRuleSet[], sr: ServiceRequest): void {
+        if (!sr.user.reseller_id_required)
+            return
+        for (const entity of entities)
+            entity.resellerId = sr.user.reseller_id
     }
 }

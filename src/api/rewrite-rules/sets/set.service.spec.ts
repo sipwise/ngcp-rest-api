@@ -85,6 +85,22 @@ describe('RewriteRuleSet Service', () => {
             const result = await service.create([set5], sr)
             expect(result[0]).toStrictEqual(await rwrMockRepo.readById(result[0].id, sr))
         })
+
+        it('should keep the provided reseller_id for admin roles', async () => {
+            const set = new internal.RewriteRuleSet()
+            set.name = 'rwrset_admin'
+            set.resellerId = 3
+            const result = await service.create([set], sr)
+            expect(result[0].resellerId).toEqual(3)
+        })
+
+        it('should set reseller_id of the user for reseller roles', async () => {
+            sr.user = {...user, role: 'reseller', reseller_id: 1, reseller_id_required: true}
+            const set = new internal.RewriteRuleSet()
+            set.name = 'rwrset_reseller'
+            const result = await service.create([set], sr)
+            expect(result[0].resellerId).toEqual(1)
+        })
     })
 
     describe('update', () => {
@@ -107,6 +123,19 @@ describe('RewriteRuleSet Service', () => {
             const updates = new Dictionary<internal.RewriteRuleSet>()
             updates[id] = new internal.RewriteRuleSet()
             await expect(service.update(updates, sr)).rejects.toThrow()
+        })
+
+        it('should set reseller_id of the user for reseller roles', async () => {
+            sr.user = {...user, role: 'reseller', reseller_id: 1, reseller_id_required: true}
+            const set1 = new internal.RewriteRuleSet()
+            set1.id = 1
+            set1.name = 'foo'
+            set1.resellerId = null
+            const updates = new Dictionary<internal.RewriteRuleSet>()
+            updates[set1.id] = set1
+            const ids = await service.update(updates, sr)
+            const got = await service.read(ids[0], sr)
+            expect(got.resellerId).toEqual(1)
         })
     })
 
