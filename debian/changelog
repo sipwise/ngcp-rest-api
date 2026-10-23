@@ -1,3 +1,10 @@
+ngcp-rest-api (13.5.1.31+0~mr13.5.1.31) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [52325f7] MT#66427 switch to node v26 + security upgrades
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 23 Oct 2026 15:17:25 +0200
+
 ngcp-rest-api (13.5.1.30+0~mr13.5.1.30) unstable; urgency=medium
 
   [ Marco Capetta ]
