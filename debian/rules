@@ -3,7 +3,7 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-YARN_BIN := ".yarn/releases/yarn-1.22.19.js"
+YARN_BIN := ".yarn/releases/yarn-1.22.22.js"
 
 %:
 	dh $@

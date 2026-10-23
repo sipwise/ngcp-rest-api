@@ -9,7 +9,7 @@ export function handleTypeORMError(err: Error) {
             return new NotFoundException()
         case QueryFailedError:
             // eslint-disable-next-line no-case-declarations
-            const qErr = <QueryFailedError>err
+            const qErr = <QueryFailedError<NodeJS.ErrnoException>>err
             switch (qErr.driverError.code) {
             case 'ER_DUP_ENTRY':
                 return new UnprocessableEntityException(errors.DUPLICATE_ENTRY)

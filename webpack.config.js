@@ -71,19 +71,9 @@ module.exports =
         options: {
           multiple: [
             {
-              search: "var nodePreGyp = require('@mapbox/node-pre-gyp');",
-              replace: "",
+              search: "const bindings = require('node-gyp-build')(path.resolve(__dirname));",
+              replace: "const bindings = require('bindings')('bcrypt_lib');",
               strict: true,
-            },
-            {
-              search: "var binding_path = nodePreGyp.find(path.resolve(path.join(__dirname, './package.json')));",
-              replace: "",
-              strict: true
-            },
-            {
-              search: "var bindings = require(binding_path);",
-              replace: "var bindings = require('bindings')('bcrypt_lib');",
-              strict: true
             },
           ]
         }
@@ -107,13 +97,13 @@ module.exports =
         options: {
           multiple: [
             {
-              search: "exports.decode = function(buffer, encoding, start, end, options) {\n  if (Buffer.isEncoding(encoding)) {",
-              replace: "exports.decode = function(buffer, encoding, start, end, options) {\n  if (!encoding || encoding == 'undefined') encoding = 'utf8'\n  if (Buffer.isEncoding(encoding)) {",
+              search: "exports.decode = function (buffer, encoding, start, end, options) {\n",
+              replace: "exports.decode = function (buffer, encoding, start, end, options) {\n  if (!encoding || encoding == 'undefined') encoding = 'utf8'\n",
               strict: true,
             },
             {
-              search: "exports.encode = function(string, encoding, options) {\n  if (Buffer.isEncoding(encoding)) {",
-              replace: "exports.encode = function(string, encoding, options) {\n  if (!encoding || encoding == 'undefined') encoding = 'utf8'\n  if (Buffer.isEncoding(encoding)) {",
+              search: "exports.encode = function (string, encoding, options) {\n",
+              replace: "exports.encode = function (string, encoding, options) {\n  if (!encoding || encoding == 'undefined') encoding = 'utf8'\n",
               strict: true,
             },
           ]
@@ -146,11 +136,13 @@ module.exports =
           '@nestjs/microservices',
           '@nestjs/websockets/socket-module',
           '@sap/hana-client',
+          '@sap/hana-client/extension/Stream',
           'better-sqlite3',
           'cache-manager',
           'cardinal',
           'class-transformer/storage',
           'fsevents',
+          'handlebars',
           'hbs',
           'hdb-pool',
           'ioredis',
@@ -167,13 +159,6 @@ module.exports =
           'sqlite3',
           'typeorm-aurora-data-api-driver',
         ]
-
-        const ignoreImports = [
-            '@mapbox/node-pre-gyp',
-        ]
-
-        if (ignoreImports.includes(resource))
-          return true
 
         if (!lazyImports.includes(resource))
           return false
@@ -201,7 +186,7 @@ module.exports =
     new CopyWebpackPlugin({
       patterns: [
         {
-          from: './node_modules/bcrypt/lib/binding/napi-v3/bcrypt_lib.node',
+          from: `./node_modules/bcrypt/prebuilds/${process.platform}-${process.arch}/bcrypt.glibc.node`,
           to: './build/bcrypt_lib.node',
         },
         {
