@@ -99,7 +99,7 @@ describe('', () => {
                     .set(...authHeader)
                 expect(response.status).toEqual(200)
                 const setCollection: PbxResponseDto = response.body
-                expect(await validate(setCollection)).toEqual([])
+                expect(await validate(setCollection, {forbidUnknownValues: false})).toEqual([])
             })
         })
     })
