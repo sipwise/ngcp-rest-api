@@ -1,3 +1,10 @@
+ngcp-rest-api (12.5.1.13+0~mr12.5.1.13) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [0663ddf] MT#66425 fix ValidateInputPipe crash on node v26
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 27 Oct 2026 14:55:06 +0100
+
 ngcp-rest-api (12.5.1.12+0~mr12.5.1.12) unstable; urgency=medium
 
   [ Kirill Solomko ]
