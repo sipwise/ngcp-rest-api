@@ -12,7 +12,7 @@ export class ProductSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'product_id',
-    }
+        _alias = {
+            id: 'product_id',
+        }
 }

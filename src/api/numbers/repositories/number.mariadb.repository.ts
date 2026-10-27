@@ -48,6 +48,8 @@ export class NumberMariadbRepository extends MariaDbRepository {
             undefined,
             searchDto._alias,
         )
+        // MariaDbRepository wraps all methods into async error handlers
+        // eslint-disable-next-line @typescript-eslint/await-thenable
         await this.addSearchFilterToQueryBuilder(qb, sr.query, searchLogic)
         qb.andWhere('voipNumber.id = :voipNumberID', {voipNumberID: numberID})
         const raw: RawNumberRow = await qb.getRawOne()

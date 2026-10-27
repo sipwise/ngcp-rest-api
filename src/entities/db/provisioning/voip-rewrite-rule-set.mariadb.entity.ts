@@ -15,7 +15,6 @@ export class VoipRewriteRuleSet extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
         default: 1,
@@ -38,7 +37,6 @@ export class VoipRewriteRuleSet extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: true,
         default: null,
@@ -47,7 +45,6 @@ export class VoipRewriteRuleSet extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: true,
         default: null,
@@ -56,7 +53,6 @@ export class VoipRewriteRuleSet extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: true,
         default: null,
@@ -65,7 +61,6 @@ export class VoipRewriteRuleSet extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: true,
         default: null,
@@ -74,7 +69,6 @@ export class VoipRewriteRuleSet extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: true,
         default: null,
@@ -83,7 +77,6 @@ export class VoipRewriteRuleSet extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: true,
         default: null,

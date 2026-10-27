@@ -14,6 +14,7 @@ export const redisConfig: RedisOptions = {
     port: +redis_port,
     keepAlive: 0,
     lazyConnect: true,
+    protocol: 2,
     retryStrategy: function (_) {
         return
     },

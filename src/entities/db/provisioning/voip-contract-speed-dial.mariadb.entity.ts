@@ -14,7 +14,6 @@ export class VoipContractSpeedDial extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })
@@ -23,7 +22,6 @@ export class VoipContractSpeedDial extends BaseEntity {
     @Column({
         type: 'varchar',
         unsigned: true,
-        width: 64,
         nullable: false,
     })
         slot!: string

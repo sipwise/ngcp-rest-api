@@ -9,7 +9,7 @@ export class XmlDispatcher {
     private readonly log = new LoggerService(XmlDispatcher.name)
 
     async dispatch(target: string, all: boolean, sync: boolean, body: string): Promise<void> {
-        const group = await db.provisioning.XmlGroup.findOne({where: {name: target}, relations: ['hosts']})
+        const group = await db.provisioning.XmlGroup.findOne({where: {name: target}, relations: {hosts: true}})
 
         const request = new HttpRequest()
         for (const host of group.hosts) {

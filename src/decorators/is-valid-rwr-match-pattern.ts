@@ -19,7 +19,7 @@ function CanCompileRegex() {
             propertyName: propertyName,
             options: {message: 'invalid regex pattern'},
             validator: {
-                validate(value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
+                validate(_value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
                     // TODO: implement it
                     return true
                 },
@@ -36,7 +36,7 @@ function HasMultiArrayVars() {
             propertyName: propertyName,
             options: {message: 'cannot have more than one array variable'},
             validator: {
-                validate(value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
+                validate(_value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
                     const matchPattern: string = args.object['match_pattern'] || ''
                     return (matchPattern.match(/@\{\w+\}/g) || []).length <= 1
                 },

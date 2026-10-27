@@ -24,8 +24,8 @@ export class RewriteRuleSearchDto {
     @ApiPropertyOptional()
         reseller_id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'rewriteRule.id',
-        reseller_id: 'rewriteRuleSet.reseller_id',
-    }
+        _alias = {
+            id: 'rewriteRule.id',
+            reseller_id: 'rewriteRuleSet.reseller_id',
+        }
 }

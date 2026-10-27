@@ -18,8 +18,8 @@ export class SubscriberPhonebookSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'phonebook.id',
-        customer_id: 'subscriber.contract_id',
-    }
+        _alias = {
+            id: 'phonebook.id',
+            customer_id: 'subscriber.contract_id',
+        }
 }

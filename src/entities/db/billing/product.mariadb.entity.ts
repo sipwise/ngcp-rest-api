@@ -52,7 +52,6 @@ export class Product extends BaseEntity {
 
     @Column({
         type: 'double',
-        width: 22,
         nullable: true,
     })
         price?: number

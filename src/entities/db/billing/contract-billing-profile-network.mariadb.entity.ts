@@ -47,7 +47,6 @@ export class ContractBillingProfileNetwork extends BaseEntity {
 
     @Column({
         type: 'tinyint',
-        width: 3,
         nullable: false,
         default: 0,
     })

@@ -15,7 +15,6 @@ export class VoipPeeringRule extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })

@@ -13,7 +13,6 @@ export class VoipPbxGroup extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })
@@ -21,7 +20,6 @@ export class VoipPbxGroup extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })

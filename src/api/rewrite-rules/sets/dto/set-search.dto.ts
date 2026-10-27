@@ -10,7 +10,7 @@ export class RewriteRuleSetSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'rewriteRuleSet.id',
-    }
+        _alias = {
+            id: 'rewriteRuleSet.id',
+        }
 }

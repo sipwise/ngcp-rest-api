@@ -1,4 +1,4 @@
-import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Timestamp} from 'typeorm'
+import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
 
 import {VoipPreference} from './voip-preference.mariadb.entity'
 
@@ -13,7 +13,6 @@ export class VoipDomPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })
@@ -21,7 +20,6 @@ export class VoipDomPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })
@@ -29,7 +27,6 @@ export class VoipDomPreference extends BaseEntity {
 
     @Column({
         type: 'varchar',
-        width: 128,
         nullable: false,
     })
         value!: string
@@ -40,7 +37,7 @@ export class VoipDomPreference extends BaseEntity {
         default: () => 'CURRENT_TIMESTAMP',
         onUpdate: 'CURRENT_TIMESTAMP',
     })
-        modify_timestamp!: Timestamp
+        modify_timestamp!: Date
 
     @ManyToOne(() => VoipPreference, voipPreference => voipPreference.id)
     @JoinColumn({name: 'attribute_id'})

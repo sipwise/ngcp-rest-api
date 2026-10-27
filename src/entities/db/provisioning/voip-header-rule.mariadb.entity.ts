@@ -18,7 +18,6 @@ export class VoipHeaderRule extends BaseEntity {
 
         @Column({
             type: 'int',
-            width: 11,
             unsigned: true,
             nullable: false,
         })
@@ -40,7 +39,6 @@ export class VoipHeaderRule extends BaseEntity {
 
         @Column({
             type: 'int',
-            width: 11,
             unsigned: true,
             nullable: false,
             default: 100,

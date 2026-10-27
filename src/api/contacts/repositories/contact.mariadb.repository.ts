@@ -137,7 +137,7 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
         })
         const qb = await this.createBaseQueryBuilder(options)
         const searchDto = new ContactSearchDto()
-        await configureQueryBuilder(
+        configureQueryBuilder(
             qb,
             sr.query,
             new SearchLogic(

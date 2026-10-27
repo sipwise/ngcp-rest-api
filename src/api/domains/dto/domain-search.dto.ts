@@ -8,7 +8,7 @@ export class DomainSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'domain.id',
-    }
+        _alias = {
+            id: 'domain.id',
+        }
 }

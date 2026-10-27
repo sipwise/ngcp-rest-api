@@ -1,3 +1,4 @@
+import * as mysql2 from 'mysql2'
 import {DataSourceOptions} from 'typeorm'
 
 import '@nestjs-modules/ioredis'
@@ -29,17 +30,21 @@ const entities = !process.env.NODE_WP_BUNDLE &&
     : [...getDBEntries()]
 
 export const databaseConfig: DataSourceOptions = {
-    name: 'default',
     username: db_user,
     password: db_pass,
     port: +db_port,
     host: db_host,
     type: 'mariadb',
+    driver: mysql2,
     entities: entities,
     connectTimeout: 10000,
     trace: false,
     debug: false,
     supportBigNumbers: true,
+    invalidWhereValuesBehavior: {
+        null: 'ignore',
+        undefined: 'ignore',
+    },
     logger: new TypeormLoggerService(
         process.env.LOG_ORM_QUERY
             ? ['info', 'error', 'query']

@@ -10,7 +10,7 @@ export class HeaderManipulationSetSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'headerRuleSet.id',
-    }
+        _alias = {
+            id: 'headerRuleSet.id',
+        }
 }

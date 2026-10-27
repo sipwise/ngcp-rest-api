@@ -12,8 +12,8 @@ export class CustomerPhonebookSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'phonebook.id',
-        customer_id: 'phonebook.contract_id',
-    }
+        _alias = {
+            id: 'phonebook.id',
+            customer_id: 'phonebook.contract_id',
+        }
 }

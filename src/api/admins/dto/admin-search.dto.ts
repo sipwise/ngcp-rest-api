@@ -46,8 +46,8 @@ export class AdminSearchDto implements AdminResponseDto {
     @ApiPropertyOptional()
         otp_secret?: string
     @ApiHideProperty()
-    _alias = {
-        id: 'admin.id',
-        password_last_modify_time: 'saltedpass_modify_timestamp',
-    }
+        _alias = {
+            id: 'admin.id',
+            password_last_modify_time: 'saltedpass_modify_timestamp',
+        }
 }

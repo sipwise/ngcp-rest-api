@@ -15,7 +15,6 @@ export class PackageProfileSet {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })
@@ -30,7 +29,6 @@ export class PackageProfileSet {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })
@@ -38,7 +36,6 @@ export class PackageProfileSet {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: true,
     })

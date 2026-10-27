@@ -8,7 +8,7 @@ export class PbxUserSearchDto {
     @ApiPropertyOptional()
         pbx_extension: string = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'bSubscriber.id',
-    }
+        _alias = {
+            id: 'bSubscriber.id',
+        }
 }

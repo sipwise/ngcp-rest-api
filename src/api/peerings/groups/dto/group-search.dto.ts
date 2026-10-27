@@ -14,8 +14,8 @@ export class PeeringGroupSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'vpg.id',
-        contract_id: 'vpg.peering_contract_id',
-    }
+        _alias = {
+            id: 'vpg.id',
+            contract_id: 'vpg.peering_contract_id',
+        }
 }

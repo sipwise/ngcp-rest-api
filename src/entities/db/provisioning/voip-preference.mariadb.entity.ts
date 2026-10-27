@@ -1,4 +1,4 @@
-import {BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn, Timestamp} from 'typeorm'
+import {BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn} from 'typeorm'
 
 import {VoipContractPreference} from './voip-contract-preference.mariadb.entity'
 import {VoipDomPreference} from './voip-dom-preference.mariadb.entity'
@@ -24,7 +24,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })
@@ -32,7 +31,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'varchar',
-        width: 31,
         nullable: false,
     })
         attribute!: string
@@ -46,7 +44,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 3,
         nullable: false,
         default: 0,
     })
@@ -54,7 +51,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 3,
         unsigned: true,
         nullable: false,
     })
@@ -62,7 +58,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 1,
         nullable: false,
         default: 0,
     })
@@ -70,7 +65,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 1,
         nullable: false,
         default: 0,
     })
@@ -78,7 +72,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 1,
         nullable: false,
         default: 0,
     })
@@ -86,7 +79,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 1,
         nullable: false,
         default: 0,
     })
@@ -94,7 +86,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 1,
         nullable: false,
         default: 0,
     })
@@ -102,7 +93,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 1,
         nullable: false,
         default: 0,
     })
@@ -110,7 +100,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 1,
         nullable: false,
         default: 0,
     })
@@ -118,7 +107,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 1,
         nullable: false,
         default: 0,
     })
@@ -126,7 +114,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 1,
         nullable: false,
         default: 0,
     })
@@ -138,11 +125,10 @@ export class VoipPreference extends BaseEntity {
         default: () => 'CURRENT_TIMESTAMP',
         onUpdate: 'CURRENT_TIMESTAMP',
     })
-        modify_timestamp!: Timestamp
+        modify_timestamp!: Date
 
     @Column({
         type: 'int',
-        width: 1,
         nullable: false,
         default: 0,
     })
@@ -150,7 +136,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 1,
         nullable: false,
         default: 0,
     })
@@ -165,7 +150,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 1,
         nullable: false,
         default: 0,
     })
@@ -179,7 +163,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 1,
         unsigned: true,
         nullable: false,
         default: 0,
@@ -188,7 +171,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 1,
         unsigned: true,
         nullable: false,
         default: 0,
@@ -197,7 +179,6 @@ export class VoipPreference extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 1,
         unsigned: true,
         nullable: false,
         default: 0,

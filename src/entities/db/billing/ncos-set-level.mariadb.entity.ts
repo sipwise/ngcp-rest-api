@@ -16,7 +16,6 @@ export class NCOSSetLevel extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })
@@ -24,7 +23,6 @@ export class NCOSSetLevel extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })

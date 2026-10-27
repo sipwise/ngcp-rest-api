@@ -30,7 +30,6 @@ export class Journal extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })
@@ -67,7 +66,6 @@ export class Journal extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: true,
     })
@@ -86,7 +84,6 @@ export class Journal extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: true,
     })
@@ -98,7 +95,6 @@ export class Journal extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: true,
     })

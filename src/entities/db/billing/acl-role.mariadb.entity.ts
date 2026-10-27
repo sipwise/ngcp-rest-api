@@ -43,7 +43,6 @@ export class AclRole extends BaseEntity {
         journals!: Journal[]
 
     fromInternal(role: internal.AclRole): AclRole {
-        let admins: Admin[]
         let hasAccess: AclRole[]
         if (role == undefined)
             return
@@ -53,7 +52,7 @@ export class AclRole extends BaseEntity {
         this.role = role.role
         this.id = role.id
         this.is_acl = role.is_acl
-        this.admins = admins
+        this.admins = undefined
         this.has_access_to = hasAccess
 
         return this

@@ -14,7 +14,6 @@ export class VoipHeaderRuleConditionValue extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })

@@ -1,29 +1,17 @@
-import path from 'node:path'
-import {fileURLToPath} from 'node:url'
-
-import {FlatCompat} from '@eslint/eslintrc'
 import js from '@eslint/js'
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
 import tsParser from '@typescript-eslint/parser'
-import importPlugin from 'eslint-plugin-import'
+import importPlugin from 'eslint-plugin-import-x'
 import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths'
 import unusedImports from 'eslint-plugin-unused-imports'
 import globals from 'globals'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const compat = new FlatCompat({
-    baseDirectory: __dirname,
-    recommendedConfig: js.configs.recommended,
-    allConfig: js.configs.all,
-})
 
 const defaultOptions = {
     plugins: {
         '@typescript-eslint': typescriptEslint,
         'unused-imports': unusedImports,
         'no-relative-import-paths': noRelativeImportPaths,
-        'import': importPlugin,
+        'import-x': importPlugin,
     },
     languageOptions: {
         globals: {
@@ -36,7 +24,7 @@ const defaultOptions = {
         parser: tsParser,
         parserOptions: {
             project: './tsconfig.json',
-            tsconfigRootDir: __dirname,
+            tsconfigRootDir: import.meta.dirname,
         },
         ecmaVersion: 2018,
         sourceType: 'module',
@@ -53,9 +41,9 @@ const defaultOptions = {
         'arrow-parens': [0],
         'object-curly-spacing': ['error', 'never'],
         'array-bracket-spacing': ['error', 'never'],
-        'import/prefer-default-export': [0],
+        'import-x/prefer-default-export': [0],
         'unused-imports/no-unused-imports': 'error',
-        'import/order': [
+        'import-x/order': [
             'error',
             {
                 'groups': [
@@ -109,9 +97,7 @@ export default [
     {
         ignores: ['**/node_modules', '**/dist'],
     },
-    ...compat.extends(
-        'eslint:recommended',
-        'plugin:@typescript-eslint/recommended',
-    ),
+    js.configs.recommended,
+    ...typescriptEslint.configs['flat/recommended'],
     defaultOptions,
 ]

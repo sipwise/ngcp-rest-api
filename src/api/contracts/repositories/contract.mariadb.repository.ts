@@ -72,7 +72,7 @@ export class ContractMariadbRepository extends MariaDbRepository implements Cont
         })
         const queryBuilder = db.billing.Contract.createQueryBuilder('contract')
         const searchDto = new ContractSearchDto()
-        await configureQueryBuilder(
+        configureQueryBuilder(
             queryBuilder,
             sr.query,
             new SearchLogic(
@@ -90,7 +90,7 @@ export class ContractMariadbRepository extends MariaDbRepository implements Cont
     async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Contract[]> {
         const qb = db.billing.Contract.createQueryBuilder('contract')
         const searchDto = new ContractSearchDto()
-        await configureQueryBuilder(
+        configureQueryBuilder(
             qb,
             sr.query,
             new SearchLogic(

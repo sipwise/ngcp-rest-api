@@ -11,7 +11,7 @@ interface ParseRegexPipeOptions {
 }
 
 export class ParseRegexPipe implements PipeTransform {
-    protected exceptionFactory: (errors: string) => any
+    protected exceptionFactory: (errors: string) => unknown
     private readonly options: ParseRegexPipeOptions
 
     constructor(@Optional() options?: ParseRegexPipeOptions) {

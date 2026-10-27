@@ -11,7 +11,7 @@ export class AclRoleRepository {
     async readOneByRole(role: string, _req: ServiceRequest): Promise<internal.AclRole> {
         const dbRole = await db.billing.AclRole.findOneOrFail({
             where: {role: role},
-            relations: ['has_access_to', 'admins'],
+            relations: {has_access_to: true, admins: true},
         })
         return dbRole.toInternal()
     }

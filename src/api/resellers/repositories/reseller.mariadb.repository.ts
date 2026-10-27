@@ -64,7 +64,7 @@ export class ResellerMariadbRepository extends MariaDbRepository implements Rese
     async terminate(id: number, _sr: ServiceRequest): Promise<number> {
         this.log.debug({message: 'delete reseller by id', func: this.terminate.name, id: id})
         let reseller = await db.billing.Reseller.findOneByOrFail({id: id})
-        reseller = await db.billing.Reseller.merge(reseller, {status: ResellerStatus.Terminated})
+        reseller = db.billing.Reseller.merge(reseller, {status: ResellerStatus.Terminated})
         await db.billing.Reseller.update(reseller.id, reseller)
         return 1
     }
@@ -132,7 +132,7 @@ export class ResellerMariadbRepository extends MariaDbRepository implements Rese
             where: {
                 id: contractId,
             },
-            relations: ['contact'],
+            relations: {contact: true},
         })
         return contract.contact.reseller_id == undefined
     }
@@ -149,7 +149,7 @@ export class ResellerMariadbRepository extends MariaDbRepository implements Rese
     private async createReadAllQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Reseller>> {
         const qb = await this.createBaseQueryBuilder(sr)
         const searchDto = new ResellerSearchDto()
-        await configureQueryBuilder(
+        configureQueryBuilder(
             qb,
             sr.query,
             new SearchLogic(

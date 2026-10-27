@@ -11,7 +11,6 @@ export class XmlHostgroup extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })
@@ -19,7 +18,6 @@ export class XmlHostgroup extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })

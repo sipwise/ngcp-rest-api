@@ -7,7 +7,7 @@ export const SEARCH_QUERY_ORDER_KEY = 'x-search-order'
 
 type SearchQueryParam = ApiQueryOptions & {name: string}
 
-export const ApiSearchQuery = (...types: Type<any>[]): MethodDecorator => {
+export const ApiSearchQuery = (...types: Type<unknown>[]): MethodDecorator => {
     return (target, propertyKey, descriptor) => {
         let order = 0
         for (const type of types) {

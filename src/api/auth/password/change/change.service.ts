@@ -42,7 +42,7 @@ export class AuthPasswordChangeService {
             throw new NotFoundException()
         }
 
-        const internal = await admin.toInternal()
+        const internal = admin.toInternal()
         internal.password = newPassword
         internal.saltedpass = await internal.generateSaltedpass()
         internal.saltedpassModifyTimestamp = new Date()
@@ -77,7 +77,7 @@ export class AuthPasswordChangeService {
             throw new NotFoundException()
         }
 
-        const internal = await subscriber.toInternal()
+        const internal = subscriber.toInternal()
         internal.password = newPassword
         internal.webPassword = await internal.generateSaltedpass()
         internal.webPasswordModifyTimestamp = new Date()

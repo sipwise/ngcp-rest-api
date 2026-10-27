@@ -24,7 +24,6 @@ export class XmlQueue extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 10,
         unsigned: true,
         nullable: false,
     })
@@ -32,7 +31,6 @@ export class XmlQueue extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 10,
         unsigned: true,
         nullable: false,
     })
@@ -40,7 +38,6 @@ export class XmlQueue extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 10,
         unsigned: true,
         nullable: false,
     })
@@ -48,7 +45,6 @@ export class XmlQueue extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 10,
         unsigned: true,
         nullable: false,
     })

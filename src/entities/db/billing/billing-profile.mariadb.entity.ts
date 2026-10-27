@@ -13,7 +13,6 @@ export class BillingProfile extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: true,
     })
@@ -49,7 +48,6 @@ export class BillingProfile extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 5,
         nullable: false,
         default: 0,
     })
@@ -72,7 +70,6 @@ export class BillingProfile extends BaseEntity {
 
     @Column({
         type: 'tinyint',
-        width: 3,
         unsigned: true,
         nullable: false,
         default: 1,
@@ -81,7 +78,6 @@ export class BillingProfile extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: true,
     })
@@ -89,7 +85,6 @@ export class BillingProfile extends BaseEntity {
 
     @Column({
         type: 'tinyint',
-        width: 3,
         unsigned: true,
         nullable: true,
     })
@@ -104,7 +99,6 @@ export class BillingProfile extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: true,
     })
@@ -113,7 +107,6 @@ export class BillingProfile extends BaseEntity {
     @Column({
         nullable: true,
         type: 'tinyint',
-        width: 3,
         default: null,
     })
         fraud_daily_lock?: number
@@ -128,7 +121,6 @@ export class BillingProfile extends BaseEntity {
 
     @Column({
         type: 'tinyint',
-        width: 3,
         unsigned: true,
         nullable: true,
         default: 0,

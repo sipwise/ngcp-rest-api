@@ -43,6 +43,8 @@ export class AdminMariadbRepository extends MariaDbRepository implements AdminRe
                 searchDto._alias,
             ),
         )
+        // MariaDbRepository wraps all methods into async error handlers
+        // eslint-disable-next-line @typescript-eslint/await-thenable
         await this.addPermissionCheckToQueryBuilder(qb, options)
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(result.map(async (adm) => adm.toInternal())), totalCount]

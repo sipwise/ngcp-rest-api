@@ -47,7 +47,7 @@ describe('AdminService', () => {
     const aclRoleMockRepo: AclRoleMockRepository = new AclRoleMockRepository()
 
     let sr: ServiceRequest
-    let options: AdminOptions
+    const options: AdminOptions = undefined
 
     beforeEach(async () => {
         adminMockRepo = new AdminMockRepository()

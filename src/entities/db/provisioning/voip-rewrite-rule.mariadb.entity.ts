@@ -16,7 +16,6 @@ export class VoipRewriteRule extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })
@@ -64,7 +63,6 @@ export class VoipRewriteRule extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
         default: 50,

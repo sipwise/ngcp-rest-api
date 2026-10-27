@@ -107,9 +107,9 @@ export class CustomerSpeedDialMariadbRepository extends MariaDbRepository implem
             where: {
                 id: customerId,
             },
-            relations: [
-                'contact',
-            ],
+            relations: {
+                contact: true,
+            },
         })
         if (!contract)
             return false
@@ -124,9 +124,9 @@ export class CustomerSpeedDialMariadbRepository extends MariaDbRepository implem
                 account_id: customerId,
                 is_pbx_pilot: options.isPilot,
             },
-            relations: [
-                'domain',
-            ],
+            relations: {
+                domain: true,
+            },
         })
         if (subscriber)
             return subscriber.domain.domain

@@ -8,8 +8,8 @@ export class BanAdminSearchDto {
     @ApiPropertyOptional()
         username: string = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'admin.id',
-        username: 'login',
-    }
+        _alias = {
+            id: 'admin.id',
+            username: 'login',
+        }
 }

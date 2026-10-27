@@ -22,7 +22,7 @@ function CanCompileRegex() {
             propertyName: propertyName,
             options: {message: 'invalid regex pattern'},
             validator: {
-                validate(value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
+                validate(_value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
                     // TODO: implement it
                     return true
                 },
@@ -39,7 +39,7 @@ function EndsWithDollarChar() {
             propertyName: propertyName,
             options: {message: 'cannot end with \'$\''},
             validator: {
-                validate(value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
+                validate(_value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
                     const replacePattern: string = args.object['replace_pattern'] || ''
                     return ! new RegExp(/\$$/).test(replacePattern)
                 },
@@ -56,7 +56,7 @@ function StartsWithQuestionChar() {
             propertyName: propertyName,
             options: {message: 'cannot start with \'?\''},
             validator: {
-                validate(value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
+                validate(_value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
                     const replacePattern: string = args.object['replace_pattern'] || ''
                     return ! new RegExp(/^[?]/).test(replacePattern)
                 },
@@ -73,7 +73,7 @@ function ContainsSpaces() {
             propertyName: propertyName,
             options: {message: 'cannot contain spaces'},
             validator: {
-                validate(value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
+                validate(_value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
                     const replacePattern: string = args.object['replace_pattern'] || ''
                     return ! new RegExp(/\s/).test(replacePattern)
                 },
@@ -90,7 +90,7 @@ function HasArrayVars() {
             propertyName: propertyName,
             options: {message: 'cannot have array variable'},
             validator: {
-                validate(value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
+                validate(_value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
                     const replacePattern: string = args.object['replace_pattern'] || ''
                     return (replacePattern.match(/@\{\w+\}/g) || []).length == 0
                 },

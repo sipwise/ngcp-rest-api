@@ -8,8 +8,8 @@ export class BanSubscriberSearchDto {
     @ApiPropertyOptional()
         username: string = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'bSubscriber.id',
-        'username': 'webusername',
-    }
+        _alias = {
+            id: 'bSubscriber.id',
+            'username': 'webusername',
+        }
 }

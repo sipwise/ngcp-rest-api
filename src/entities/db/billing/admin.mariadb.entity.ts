@@ -147,7 +147,6 @@ export class Admin extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         nullable: false,
         unsigned: true,
         default: 0,
@@ -191,7 +190,6 @@ export class Admin extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })

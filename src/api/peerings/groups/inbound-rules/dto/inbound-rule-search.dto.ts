@@ -20,7 +20,7 @@ export class PeeringInboundRuleSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'rule.id',
-    }
+        _alias = {
+            id: 'rule.id',
+        }
 }

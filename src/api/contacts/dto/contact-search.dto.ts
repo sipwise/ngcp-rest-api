@@ -74,7 +74,7 @@ export class ContactSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'contact.id',
-    }
+        _alias = {
+            id: 'contact.id',
+        }
 }

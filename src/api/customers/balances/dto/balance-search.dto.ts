@@ -14,12 +14,12 @@ export class CustomerBalanceSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'customerBalance.id',
-        customer_id: 'customerBalance.contract_id',
-        external_id: 'contract.external_id',
-        reseller_id: 'contact.reseller_id',
-        contact_id: 'contact.id',
-        status: 'contract.status',
-    }
+        _alias = {
+            id: 'customerBalance.id',
+            customer_id: 'customerBalance.contract_id',
+            external_id: 'contract.external_id',
+            reseller_id: 'contact.reseller_id',
+            contact_id: 'contact.id',
+            status: 'contract.status',
+        }
 }

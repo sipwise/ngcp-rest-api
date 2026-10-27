@@ -178,7 +178,6 @@ export class VoipSubscriber extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         nullable: false,
         unsigned: true,
         default: 0,

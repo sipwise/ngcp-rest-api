@@ -63,12 +63,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
                 where: {
                     uuid: payload.subscriber_uuid,
                 },
-                relations: [
-                    'domain',
-                    'contract',
-                    'contract.contact',
-                    'billing_voip_subscriber',
-                ],
+                relations: {
+                    domain: true,
+                    contract: {
+                        contact: true,
+                    },
+                    billing_voip_subscriber: true,
+                },
             })
             if (!this.auth.isSubscriberValid(subscriber)) {
                 this.log.debug('subscriber auth failed the token is invalid')
@@ -82,13 +83,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
                 where: {
                     id: payload.id,
                 },
-                relations: ['role'],
+                relations: {role: true},
             })
             const role = await this.app.dbRepo(db.billing.AclRole).findOne({
                 where: {
                     id: admin.role.id,
                 },
-                relations: ['has_access_to'],
+                relations: {has_access_to: true},
             })
             admin.role = role
             if (!this.auth.isAdminValid(admin)) {

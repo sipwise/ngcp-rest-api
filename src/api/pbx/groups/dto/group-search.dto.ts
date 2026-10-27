@@ -14,7 +14,7 @@ export class PbxGroupSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'bg.id',
-    }
+        _alias = {
+            id: 'bg.id',
+        }
 }

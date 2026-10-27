@@ -20,7 +20,6 @@ export class XmlHost extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 5,
         unsigned: true,
         nullable: false,
     })
@@ -36,7 +35,6 @@ export class XmlHost extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 5,
         unsigned: true,
         nullable: true,
     })

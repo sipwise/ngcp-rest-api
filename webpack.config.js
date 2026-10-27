@@ -101,8 +101,8 @@ module.exports =
         options: {
           multiple: [
             {
-              search: "exports.decode = function (buffer, encoding, start, end, options) {\n  if (Buffer.isEncoding(encoding)) {",
-              replace: "exports.decode = function (buffer, encoding, start, end, options) {\n  if (!encoding || encoding == 'undefined') encoding = 'utf8'\n  if (Buffer.isEncoding(encoding)) {",
+              search: "exports.decode = function (buffer, encoding, start, end, options) {\n  if (hasFastSlices) {",
+              replace: "exports.decode = function (buffer, encoding, start, end, options) {\n  if (!encoding || encoding == 'undefined') encoding = 'utf8'\n  if (hasFastSlices) {",
               strict: true,
             },
             {
@@ -122,7 +122,7 @@ module.exports =
   },
   node:
   {
-    __dirname: false,
+    __dirname: 'eval-only',
   },
   plugins:
   [
@@ -136,11 +136,13 @@ module.exports =
           '@google-cloud/spanner',
           '@mikro-orm/core',
           '@nestjs/microservices/microservices-module',
+          '@nestjs/microservices/microservices-module.js',
           '@nestjs/microservices',
           '@nestjs/mongoose',
           '@nestjs/sequelize/dist/common/sequelize.utils',
           '@nestjs/terminus',
           '@nestjs/websockets/socket-module',
+          '@nestjs/websockets/socket-module.js',
           '@sap/hana-client',
           '@sap/hana-client/extension/Stream',
           'better-sqlite3',

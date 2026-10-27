@@ -15,7 +15,6 @@ export class ProfilePackage extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: true,
     })
@@ -59,7 +58,6 @@ export class ProfilePackage extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 3,
         unsigned: true,
         nullable: false,
         default: 1,
@@ -91,7 +89,6 @@ export class ProfilePackage extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 3,
         unsigned: true,
         nullable: true,
     })
@@ -99,7 +96,6 @@ export class ProfilePackage extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 3,
         unsigned: true,
         nullable: true,
     })
@@ -113,7 +109,6 @@ export class ProfilePackage extends BaseEntity {
 
     @Column({
         type: 'tinyint',
-        width: 3,
         nullable: true,
     })
         underrun_lock_level?: number
@@ -126,7 +121,6 @@ export class ProfilePackage extends BaseEntity {
 
     @Column({
         type: 'tinyint',
-        width: 3,
         nullable: true,
     })
         topup_lock_level?: number

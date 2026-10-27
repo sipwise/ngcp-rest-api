@@ -24,15 +24,15 @@ export class NCOSLevelSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'ncosLevel.id',
-        reseller_id: 'ncosLevel.reseller_id',
-        level: 'ncosLevel.level',
-        mode: 'ncosLevel.mode',
-        local_ac: 'ncosLevel.local_ac',
-        intra_pbx: 'ncosLevel.intra_pbx',
-        description: 'ncosLevel.description',
-        time_set_id: 'ncosLevel.time_set_id',
-        expose_to_customer: 'ncosLevel.expose_to_customer',
-    }
+        _alias = {
+            id: 'ncosLevel.id',
+            reseller_id: 'ncosLevel.reseller_id',
+            level: 'ncosLevel.level',
+            mode: 'ncosLevel.mode',
+            local_ac: 'ncosLevel.local_ac',
+            intra_pbx: 'ncosLevel.intra_pbx',
+            description: 'ncosLevel.description',
+            time_set_id: 'ncosLevel.time_set_id',
+            expose_to_customer: 'ncosLevel.expose_to_customer',
+        }
 }

@@ -18,12 +18,12 @@ export class InvoiceTemplateSearchDto implements Partial<InvoiceTemplateResponse
     @ApiPropertyOptional()
         category: InvoiceTemplateCategory = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'template.id',
-        name: 'template.name',
-        reseller_id: 'template.reseller_id',
-        type: 'template.type',
-        call_direction: 'template.call_direction',
-        category: 'template.category',
-    }
+        _alias = {
+            id: 'template.id',
+            name: 'template.name',
+            reseller_id: 'template.reseller_id',
+            type: 'template.type',
+            call_direction: 'template.call_direction',
+            category: 'template.category',
+        }
 }

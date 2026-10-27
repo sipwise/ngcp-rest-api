@@ -26,7 +26,7 @@ export class PeeringGroupServerSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'server.id',
-    }
+        _alias = {
+            id: 'server.id',
+        }
 }

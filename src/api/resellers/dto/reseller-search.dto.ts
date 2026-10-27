@@ -12,7 +12,7 @@ export class ResellerSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'reseller.id',
-    }
+        _alias = {
+            id: 'reseller.id',
+        }
 }

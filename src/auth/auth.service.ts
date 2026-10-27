@@ -70,7 +70,7 @@ export class AuthService {
         this.log.debug({message: 'starting user authentication', method: this.validateAdmin.name, username: username})
         const admin = await this.app.dbRepo(db.billing.Admin).findOne({
             where: {login: username},
-            relations: ['role'],
+            relations: {role: true},
         })
 
         if (!admin || !this.isAdminValid(admin)) {
@@ -81,7 +81,7 @@ export class AuthService {
             where: {
                 id: admin?.role.id,
             },
-            relations: ['has_access_to'],
+            relations: {has_access_to: true},
         })
 
         if (admin.saltedpass && await this.compareBcryptPassword(password, admin.saltedpass)) {
@@ -146,13 +146,13 @@ export class AuthService {
         }
         const admin = await this.app.dbRepo(db.billing.Admin).findOne({
             where: {ssl_client_m_serial: sn},
-            relations: ['role'],
+            relations: {role: true},
         })
         const role = await this.app.dbRepo(db.billing.AclRole).findOne({
             where: {
                 id: admin.role.id,
             },
-            relations: ['has_access_to'],
+            relations: {has_access_to: true},
         })
         admin.role = role
         if (!this.isAdminValid(admin)) {
@@ -238,13 +238,14 @@ export class AuthService {
                 webusername: username,
                 domain: {domain: domain},
             },
-            relations: [
-                'billing_voip_subscriber',
-                'contract',
-                'contract.contact',
-                'contract.product',
-                'domain',
-            ],
+            relations: {
+                billing_voip_subscriber: true,
+                contract: {
+                    contact: true,
+                    product: true,
+                },
+                domain: true,
+            },
         })
         if (!this.isSubscriberValid(subscriber)) {
             return null
@@ -369,7 +370,7 @@ export class AuthService {
         const minTime = this.app.config.security.login.ban_min_time || 300
         const maxTime = this.app.config.security.login.ban_max_time || 3600
         const increment = this.app.config.security.login.ban_increment || 300
-        let key = ''
+        let key: string
         let incrementStage = -1
         let expire = 3600
 
@@ -381,11 +382,11 @@ export class AuthService {
                 where: {
                     login: username,
                 },
-                select: [
-                    'id',
-                    'reseller_id',
-                    'ban_increment_stage',
-                ],
+                select: {
+                    id: true,
+                    reseller_id: true,
+                    ban_increment_stage: true,
+                },
             })
             if (!admin)
                 throw new UnauthorizedException()
@@ -397,13 +398,13 @@ export class AuthService {
                     webusername: username,
                     domain: {domain: domain},
                 },
-                select: [
-                    'id',
-                    'uuid',
-                    'account_id',
-                    'ban_increment_stage',
-                ],
-                relations: ['billing_voip_subscriber'],
+                select: {
+                    id: true,
+                    uuid: true,
+                    account_id: true,
+                    ban_increment_stage: true,
+                },
+                relations: {billing_voip_subscriber: true},
             })
             if (!subscriber)
                 throw new UnauthorizedException()
@@ -596,7 +597,7 @@ export class AuthService {
         await (await this.getRedisBanDb()).del(...keys)
         const billingSubscriber = await this.app.dbRepo(db.billing.VoipSubscriber).findOne({
             where: {id: id},
-            relations:['provisioningVoipSubscriber'],
+            relations: {provisioningVoipSubscriber: true},
         })
         if (!billingSubscriber) {
             return

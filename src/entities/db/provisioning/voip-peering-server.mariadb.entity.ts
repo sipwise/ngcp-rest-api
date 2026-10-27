@@ -15,7 +15,6 @@ export class VoipPeeringServer extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })
@@ -45,7 +44,6 @@ export class VoipPeeringServer extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 5,
         unsigned: true,
         nullable: false,
         default: 5060,
@@ -54,7 +52,6 @@ export class VoipPeeringServer extends BaseEntity {
 
     @Column({
         type: 'tinyint',
-        width: 3,
         unsigned: true,
         nullable: true,
         default: null,
@@ -63,7 +60,6 @@ export class VoipPeeringServer extends BaseEntity {
 
     @Column({
         type: 'tinyint',
-        width: 3,
         unsigned: true,
         nullable: false,
         default: 0,
@@ -101,7 +97,6 @@ export class VoipPeeringServer extends BaseEntity {
 
     @Column({
         type: 'tinyint',
-        width: 2,
         unsigned: true,
         nullable: true,
         default: null,

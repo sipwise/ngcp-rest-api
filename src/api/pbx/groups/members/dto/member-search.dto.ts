@@ -12,7 +12,7 @@ export class PbxGroupMemberSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'member_subquery.member_id',
-    }
+        _alias = {
+            id: 'member_subquery.member_id',
+        }
 }

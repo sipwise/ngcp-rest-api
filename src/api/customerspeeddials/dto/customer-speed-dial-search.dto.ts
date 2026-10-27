@@ -10,8 +10,8 @@ export class CustomerSpeedDialSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'csd.id',
-        customer_id: 'contract_id',
-    }
+        _alias = {
+            id: 'csd.id',
+            customer_id: 'contract_id',
+        }
 }

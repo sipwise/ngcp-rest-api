@@ -44,7 +44,7 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
         })
         const queryBuilder = db.billing.Domain.createQueryBuilder('domain')
         const searchDto = new DomainSearchDto()
-        await configureQueryBuilder(
+        configureQueryBuilder(
             queryBuilder,
             sr.query,
             new SearchLogic(

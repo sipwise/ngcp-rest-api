@@ -10,7 +10,7 @@ export class NCOSSetSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'ncosSet.id',
-    }
+        _alias = {
+            id: 'ncosSet.id',
+        }
 }

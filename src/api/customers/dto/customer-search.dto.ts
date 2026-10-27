@@ -38,7 +38,7 @@ export class CustomerSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'contract.id',
-    }
+        _alias = {
+            id: 'contract.id',
+        }
 }

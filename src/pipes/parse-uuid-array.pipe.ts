@@ -8,6 +8,7 @@ import {
     Injectable,
     Optional, ParseUUIDPipe, ParseUUIDPipeOptions,
     PipeTransform,
+    UUIDVersion,
 } from '@nestjs/common'
 import {HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
 
@@ -17,7 +18,7 @@ interface ParseUuidArrayPipeOptions extends ParseUUIDPipeOptions {
 
 @Injectable()
 export class ParseUUIDArrayPipe implements PipeTransform {
-    private readonly version: '3' | '4' | '5' | '7' | undefined
+    private readonly version: UUIDVersion | undefined
     protected exceptionFactory: (errors: string) => any
 
     constructor(

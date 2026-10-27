@@ -8,9 +8,9 @@ export class NCOSSetLevelSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'ncosSetLevel.id',
-        set_id: 'ncos_set_id',
-        level_id: 'level_id',
-    }
+        _alias = {
+            id: 'ncosSetLevel.id',
+            set_id: 'ncos_set_id',
+            level_id: 'level_id',
+        }
 }

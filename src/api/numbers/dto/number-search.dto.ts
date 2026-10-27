@@ -18,7 +18,7 @@ export class NumberSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'voipNumber.id',
-    }
+        _alias = {
+            id: 'voipNumber.id',
+        }
 }

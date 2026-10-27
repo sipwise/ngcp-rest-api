@@ -14,9 +14,6 @@ module.exports =
     transform: {
         '^.+\\.(ts|tsx|js|jsx)$': path.resolve(__dirname, 'jest-unit.transformer.js'),
     },
-    transformIgnorePatterns: [
-        'node_modules/(?!(otplib|@otplib|@noble|@scure|uuid)/)',
-    ],
     collectCoverageFrom: [
         '**/*.(t|j)s',
     ],

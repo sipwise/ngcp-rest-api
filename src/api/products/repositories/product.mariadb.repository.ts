@@ -18,7 +18,7 @@ export class ProductMariadbRepository extends MariaDbRepository implements Produ
         this.log.debug({message: 'read all products', func: this.readAll.name, user: sr.user.username})
         const queryBuilder = db.billing.Product.createQueryBuilder('product')
         const searchDto = new ProductSearchDto()
-        await configureQueryBuilder(
+        configureQueryBuilder(
             queryBuilder,
             sr.query,
             new SearchLogic(

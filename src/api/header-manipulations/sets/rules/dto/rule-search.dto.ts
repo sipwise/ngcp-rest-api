@@ -20,8 +20,8 @@ export class HeaderManipulationRuleSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'headerRule.id',
-        subscriber_id: 'headerRuleSet.subscriber_id',
-    }
+        _alias = {
+            id: 'headerRule.id',
+            subscriber_id: 'headerRuleSet.subscriber_id',
+        }
 }

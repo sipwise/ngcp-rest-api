@@ -15,7 +15,6 @@ export class VoipPeeringInboundRule extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
     })
@@ -37,7 +36,6 @@ export class VoipPeeringInboundRule extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 3,
         nullable: true,
         default: null,
     })
@@ -53,7 +51,6 @@ export class VoipPeeringInboundRule extends BaseEntity {
 
     @Column({
         type: 'int',
-        width: 11,
         unsigned: true,
         nullable: false,
         default: 50,
