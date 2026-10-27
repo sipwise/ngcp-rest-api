@@ -12,7 +12,6 @@ import {ValidatorOptions} from '@nestjs/common/interfaces/external/validator-opt
 import {ErrorHttpStatusCode} from '@nestjs/common/utils/http-error-by-code.util'
 import {classToPlain, plainToClass} from 'class-transformer'
 import {validate} from 'class-validator'
-import {isUndefined} from 'util'
 import {formatValidationErrors} from '../helpers/errors.helper'
 import {obfuscatePasswordValidationErrors} from '../helpers/password-obfuscator.helper'
 import {LoggerService} from '../logger/logger.service'
@@ -29,7 +28,7 @@ export interface ValidationPipeOptions extends ValidatorOptions {
 }
 
 export const isNil = (obj: any): obj is null | undefined =>
-    isUndefined(obj) || obj === null
+    obj === null || obj === undefined
 
 @Injectable()
 export class ValidateInputPipe implements PipeTransform<any> {
