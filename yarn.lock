@@ -4019,6 +4019,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"bytenode@npm:2.1.0":
+  version: 2.1.0
+  resolution: "bytenode@npm:2.1.0"
+  bin:
+    bytenode: lib/cli.js
+  checksum: 10c0/c9dec8ff321326694c8e8bcbdb66e686e1e165d8b608772698faa4e07b8122990c0e6079901dafe729e417089d4cb965514f11ee02edc1349df510ec86398a66
+  languageName: node
+  linkType: hard
+
 "bytes@npm:^3.1.2, bytes@npm:~3.1.2":
   version: 3.1.2
   resolution: "bytes@npm:3.1.2"
@@ -7501,6 +7510,7 @@ __metadata:
     async: "npm:3.2.6"
     bcryptjs: "npm:^3.0.3"
     body-parser: "npm:2.4.0"
+    bytenode: "npm:2.1.0"
     class-transformer: "npm:0.5.1"
     class-validator: "npm:0.15.1"
     copy-webpack-plugin: "npm:14.0.0"

@@ -13,7 +13,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "yarnpkg lint && nest build",
-    "build:prod": "rimraf prod && webpack",
+    "build:prod": "rimraf prod && webpack && node scripts/bytecompile.js",
     "build:dev-prod": "rimraf prod && NODE_ENV=development webpack",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -103,6 +103,7 @@
     "@types/supertest": "7.2.1",
     "@typescript-eslint/eslint-plugin": "8.72.0",
     "@typescript-eslint/parser": "8.72.0",
+    "bytenode": "2.1.0",
     "copy-webpack-plugin": "14.0.0",
     "esbuild": "0.28.2",
     "eslint": "10.13.0",

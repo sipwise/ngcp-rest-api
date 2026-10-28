@@ -113,6 +113,19 @@ module.exports =
           ]
         }
       },
+      {
+        // bytecode (bytenode) strips source, so Function.prototype.toString() no longer
+        // returns "class ...". Nest's isMiddlewareClass source-sniffs for that, misdetects
+        // class middleware as functional and calls it without 'new'. Detect via prototype.use
+        // instead (the same signal Nest's own fallback uses), keeping toString as fallback.
+        test: /@nestjs\/core\/middleware\/utils\.js$/,
+        loader: 'string-replace-loader',
+        options: {
+          search: "export function isMiddlewareClass(middleware) {\n    const middlewareStr = middleware.toString();",
+          replace: "export function isMiddlewareClass(middleware) {\n    if (typeof middleware === 'function' && middleware.prototype && typeof middleware.prototype.use === 'function') {\n        return true;\n    }\n    const middlewareStr = middleware.toString();",
+          strict: true,
+        },
+      },
     ],
   },
   resolve:
@@ -127,6 +140,9 @@ module.exports =
   plugins:
   [
     //new webpack.ProvidePlugin({ 'openapi': '@nestjs/swagger', }),
+    // fold async chunks into the single server.js so nothing ships as readable
+    // .js alongside the bytecode (the loaded .jsc)
+    new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 }),
     new webpack.IgnorePlugin({
       checkResource: function(resource)
       {
@@ -201,6 +217,12 @@ module.exports =
     ),
     new CopyWebpackPlugin({
       patterns: [
+        {
+          // bytenode runtime vendored next to the bytecode; prod/ ships without
+          // node_modules, so the loader stub requires it from here at runtime
+          from: './node_modules/bytenode/lib',
+          to: './bytenode',
+        },
         {
           from: './node_modules/sd-notify/build/Release/notify.node',
           to: './build/notify.node',
