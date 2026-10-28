@@ -1,5 +1,5 @@
-import {ApiProperty} from '@nestjs/swagger'
-import {IsNotEmpty, IsNumber} from 'class-validator'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {IsInt, IsNotEmpty, IsOptional, IsPositive} from 'class-validator'
 
 import {RequestDto} from '~/dto/request.dto'
 import {internal} from '~/entities'
@@ -9,10 +9,15 @@ export class DomainRequestDto implements RequestDto {
     @ApiProperty({description: 'The fully qualified domain name', example: 'sip.example.org'})
         domain: string
 
-    @IsNotEmpty()
-    @IsNumber()
-    @ApiProperty({description: 'The reseller id to assign this domain to', type: 'integer'})
-        reseller_id: number
+    @ApiPropertyOptional({
+        description: 'The reseller id to assign this domain to, mandatory for admin and system roles, must not be' +
+            ' provided by reseller roles as it is automatically set to the reseller_id of the user',
+        type: 'integer',
+    })
+    @IsOptional()
+    @IsPositive()
+    @IsInt()
+        reseller_id?: number
 
     constructor(entity?: internal.Domain) {
         if (!entity)

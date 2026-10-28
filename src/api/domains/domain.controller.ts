@@ -29,6 +29,7 @@ import {Auth} from '~/decorators/auth.decorator'
 import {Roles} from '~/decorators/roles.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
 import {ExpandHelper} from '~/helpers/expand.helper'
+import {validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -76,6 +77,7 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validateResellerId(createDto, sr)
         const domains = createDto.map(domain => domain.toInternal())
         const created = await this.domainService.create(domains, sr)
         return created.map((domain) => new DomainResponseDto(domain))

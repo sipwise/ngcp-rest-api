@@ -6,10 +6,15 @@ import {internal} from '~/entities'
 import {NCOSLevelMode} from '~/entities/internal/ncos-level.internal.entity'
 
 export class NCOSLevelRequestDto implements RequestDto {
-    @ApiProperty()
-    @IsInt()
+    @ApiPropertyOptional({
+        description: 'Reseller Id, mandatory for admin and system roles, must not be provided by reseller roles' +
+            ' as it is automatically set to the reseller_id of the user',
+        example: 1,
+    })
+    @IsOptional()
     @IsPositive()
-        reseller_id: number
+    @IsInt()
+        reseller_id?: number
 
     @ApiProperty()
     @IsString()

@@ -88,6 +88,14 @@ describe('phonebookService', () => {
                 resellerId: 100,
             })], sr)).rejects.toThrow(UnprocessableEntityException)
         })
+        it('should set reseller_id of the user for reseller roles', async () => {
+            const resellerSr = {...sr, user: {...user, role: 'reseller', reseller_id: 1, reseller_id_required: true}}
+            const result = await service.create([internal.ResellerPhonebook.create({
+                name: 'test_98',
+                number: '981',
+            })], resellerSr)
+            expect(result[0].resellerId).toEqual(1)
+        })
     })
 
     describe('update', () => {
@@ -115,6 +123,20 @@ describe('phonebookService', () => {
                 number: '111',
             })
             await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
+        })
+        it('should set reseller_id of the user for reseller roles', async () => {
+            const resellerSr = {...sr, user: {...user, role: 'reseller', reseller_id: 1, reseller_id_required: true}}
+            const id = 3
+            const updates = new Dictionary<internal.ResellerPhonebook>()
+            updates[id] = internal.ResellerPhonebook.create({
+                id: 3,
+                resellerId: null,
+                name: 'foo',
+                number: '333',
+            })
+            const ids = await service.update(updates, resellerSr)
+            const got = await service.read(ids[0], resellerSr)
+            expect(got.resellerId).toEqual(1)
         })
     })
 

@@ -8,6 +8,7 @@ import {CustomerContactResponseDto} from './dto/customer-contact-response.dto'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {RbacRole} from '~/config/constants.config'
 import {ContactStatus} from '~/entities/internal/contact.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
@@ -16,7 +17,7 @@ import {ResponseValidationInterceptor} from '~/interceptors/response-validation.
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type CustomerContactPost = {
-    reseller_id: number
+    reseller_id?: number
     firstname?: string
     lastname?: string
     email?: string
@@ -30,7 +31,9 @@ describe('CustomerContact', () => {
     let authService: AuthService
     let authHeader: [string, string]
     const createdIds: number[] = []
+    let resellerAdminId: number
     const creds = {username: 'administrator', password: 'administrator'}
+    const resellerCreds = {username: 'cc_reseller', password: 'FFFooobarbaz123!!!'}
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -247,6 +250,173 @@ describe('CustomerContact', () => {
                     .send(patch)
                 expect(response.status).toEqual(404)
             })
+        })
+    })
+
+    describe('CustomerContact reseller_id as admin', () => {
+        it('fail create without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/customercontacts')
+                .set(...authHeader)
+                .send({
+                    firstname: 'test_cc_no_reseller',
+                    status: 'active',
+                })
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+        })
+        it('fail update without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .put(`/customercontacts/${createdIds[0]}`)
+                .set(...authHeader)
+                .send({
+                    firstname: 'test_cc_no_reseller',
+                    status: 'active',
+                })
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+        })
+        it('fail adjust with empty reseller_id', async () => {
+            const tt: PatchOperation[][] = [
+                [{op: 'replace', path: '/reseller_id', value: null}],
+                [{op: 'remove', path: '/reseller_id'}],
+            ]
+            for (const emptyPatch of tt) {
+                const response = await request(app.getHttpServer())
+                    .patch(`/customercontacts/${createdIds[0]}`)
+                    .set(...authHeader)
+                    .send(emptyPatch)
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+            }
+        })
+        it('fail bulk adjust with empty reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .patch('/customercontacts')
+                .set(...authHeader)
+                .send({
+                    [createdIds[0]]: [{op: 'replace', path: '/firstname', value: 'bulk'}],
+                    [createdIds[1]]: [{op: 'replace', path: '/reseller_id', value: null}],
+                })
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain(`[${createdIds[1]}] reseller_id should not be empty`)
+        })
+    })
+
+    describe('CustomerContact as reseller', () => {
+        let resellerEntityId: number
+        it('create reseller admin', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/admins')
+                .set(...authHeader)
+                .send({
+                    billing_data: true,
+                    call_data: false,
+                    can_reset_password: true,
+                    is_active: true,
+                    is_master: true,
+                    email: `${resellerCreds.username}@example.com`,
+                    login: resellerCreds.username,
+                    password: resellerCreds.password,
+                    read_only: false,
+                    reseller_id: 1,
+                    role: RbacRole.reseller,
+                    show_passwords: true,
+                    enable_2fa: false,
+                })
+            expect(response.status).toEqual(201)
+            resellerAdminId = +response.body[0].id
+        })
+        it('fail create with reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/customercontacts')
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({...{
+                    firstname: 'test_cc_reseller',
+                    email: 'test_cc_reseller@example.com',
+                    status: 'active',
+                }, reseller_id: 1})
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+        })
+        it('create without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/customercontacts')
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({
+                    firstname: 'test_cc_reseller',
+                    email: 'test_cc_reseller@example.com',
+                    status: 'active',
+                })
+            expect(response.status).toEqual(201)
+            resellerEntityId = +response.body[0].id
+            createdIds.push(resellerEntityId)
+        })
+        it('read created by reseller', async () => {
+            const response = await request(app.getHttpServer())
+                .get(`/customercontacts/${resellerEntityId}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
+            expect(response.body.reseller_id).toEqual(1)
+        })
+        it('fail update with reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .put(`/customercontacts/${resellerEntityId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({...{
+                    firstname: 'renamed_test_cc_reseller',
+                    email: 'test_cc_reseller@example.com',
+                    status: 'active',
+                }, reseller_id: 1})
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+        })
+        it('update without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .put(`/customercontacts/${resellerEntityId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({
+                    firstname: 'renamed_test_cc_reseller',
+                    email: 'test_cc_reseller@example.com',
+                    status: 'active',
+                })
+            expect(response.status).toEqual(200)
+        })
+        it('read updated by reseller', async () => {
+            const response = await request(app.getHttpServer())
+                .get(`/customercontacts/${resellerEntityId}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
+            expect(response.body.reseller_id).toEqual(1)
+        })
+        it('fail patch reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .patch(`/customercontacts/${resellerEntityId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send([{op: 'replace', path: '/reseller_id', value: 1}])
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+        })
+        it('patch without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .patch(`/customercontacts/${resellerEntityId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send([{op: 'replace', path: '/firstname', value: 'patched reseller'}])
+            expect(response.status).toEqual(200)
+            expect(response.body.firstname).toEqual('patched reseller')
+        })
+        it('read patched by reseller', async () => {
+            const response = await request(app.getHttpServer())
+                .get(`/customercontacts/${resellerEntityId}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
+            expect(response.body.reseller_id).toEqual(1)
+        })
+        it('delete reseller admin', async () => {
+            const response = await request(app.getHttpServer())
+                .delete(`/admins/${resellerAdminId}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
         })
     })
 

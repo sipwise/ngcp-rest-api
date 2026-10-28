@@ -1,5 +1,6 @@
-import {ApiProperty} from '@nestjs/swagger'
-import {IsNotEmpty, IsNumberString, IsString, MaxLength} from 'class-validator'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {Transform} from 'class-transformer'
+import {IsNotEmpty, IsNumberString, IsOptional, IsString, MaxLength} from 'class-validator'
 
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
@@ -17,9 +18,15 @@ export class ResellerPhonebookCsvRequestDto implements RequestDto {
     @ApiProperty()
         number: string
 
+    @ApiPropertyOptional({
+        description: 'Reseller Id, mandatory for admin and system roles, must be empty for reseller roles' +
+            ' as it is automatically set to the reseller_id of the user',
+        example: 1,
+    })
+    @IsOptional()
     @IsNumberString()
-    @ApiProperty()
-        reseller_id: number
+    @Transform(({value}: {value: unknown}): unknown => value === '' ? undefined : value)
+        reseller_id?: number
 
     constructor(entity?: internal.ResellerPhonebook) {
         if (!entity)

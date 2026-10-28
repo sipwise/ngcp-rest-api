@@ -35,6 +35,7 @@ import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation,Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
+import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -84,6 +85,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validateResellerId(createDto, sr)
         const customers = createDto.map(customer => customer.toInternal())
         const created = await this.contactService.create(customers, sr)
         return created.map((contact) => new CustomerContactResponseDto(contact, sr.user.role))
@@ -148,6 +150,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
         })
 
         const sr = new ServiceRequest(req)
+        validatePatchResellerId(new Dictionary(id.toString(), patch), sr)
 
         const oldEntity = await this.contactService.read(id, sr)
         const entity = await patchToEntity<internal.Contact, CustomerContactRequestDto>(oldEntity, patch, CustomerContactRequestDto)
@@ -169,6 +172,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
         @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
+        validatePatchResellerId(patches, sr)
 
         const updates = new Dictionary<internal.Contact>()
         for (const id of Object.keys(patches)) {
@@ -193,6 +197,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validateResellerId(new Dictionary(id.toString(), entity), sr)
         const updates = new Dictionary<internal.Contact>()
         updates[id] = entity.toInternal({id: id, assignNulls: true})
         const ids = await this.contactService.update(updates, sr)
@@ -216,6 +221,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validateResellerId(updates, sr)
         const contacts = new Dictionary<internal.Contact>()
         for (const id of Object.keys(updates)) {
             const dto: CustomerContactRequestDto = updates[id]

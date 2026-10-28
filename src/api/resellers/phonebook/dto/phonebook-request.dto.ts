@@ -1,5 +1,5 @@
-import {ApiProperty} from '@nestjs/swagger'
-import {IsInt, IsNotEmpty, IsString, MaxLength} from 'class-validator'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, MaxLength} from 'class-validator'
 
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
@@ -17,9 +17,15 @@ export class ResellerPhonebookRequestDto implements RequestDto {
     @ApiProperty()
         number: string
 
+    @ApiPropertyOptional({
+        description: 'Reseller Id, mandatory for admin and system roles, must not be provided by reseller roles' +
+            ' as it is automatically set to the reseller_id of the user',
+        example: 1,
+    })
+    @IsOptional()
+    @IsPositive()
     @IsInt()
-    @ApiProperty()
-        reseller_id: number
+        reseller_id?: number
 
     constructor(entity?: internal.ResellerPhonebook) {
         if (!entity)

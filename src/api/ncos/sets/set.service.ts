@@ -20,11 +20,7 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
     }
 
     async create(entities: internal.NCOSSet[], sr: ServiceRequest): Promise<internal.NCOSSet[]> {
-        await Promise.all(entities.map(async entity => {
-            if (!entity.resellerId)
-                entity.resellerId = sr.user.reseller_id
-            await this.checkPermissions(entity.resellerId, sr)
-        }))
+        this.assignUserResellerId(entities, sr)
         const createdIds = await this.ncosSetRepo.create(entities)
         return await this.ncosSetRepo.readWhereInIds(createdIds, sr)
     }
@@ -50,13 +46,14 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
         const revokes: number[] = []
         for (const id of ids) {
             const entity = updates[id]
-            await this.checkPermissions(entity.resellerId, sr)
             const oldEntity = await this.ncosSetRepo.readById(id, sr)
+            await this.checkPermissions(oldEntity.resellerId, sr)
             if (oldEntity.exposeToCustomer && !entity.exposeToCustomer)
                 revokes.push(id)
         }
         if (revokes.length)
             await this.ncosSetRepo.revokeNCOSSetPreferences(revokes)
+        this.assignUserResellerId(Object.values(updates), sr)
         return await this.ncosSetRepo.update(updates, sr)
     }
 
@@ -72,9 +69,16 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
     }
 
     private async checkPermissions(resellerId: number, sr: ServiceRequest): Promise<void> {
-        if (sr.user.resellerId && sr.user.reseller_id != resellerId) {
+        if (sr.user.reseller_id_required && sr.user.reseller_id != resellerId) {
             throw new NotFoundException()
         }
+    }
+
+    private assignUserResellerId(entities: internal.NCOSSet[], sr: ServiceRequest): void {
+        if (!sr.user.reseller_id_required)
+            return
+        for (const entity of entities)
+            entity.resellerId = sr.user.reseller_id
     }
 
     private async revokeNCOSSetPreferences(setIds: number[]): Promise<void> {

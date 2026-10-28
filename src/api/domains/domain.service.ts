@@ -21,7 +21,7 @@ export class DomainService implements CrudService<internal.Domain> {
     }
 
     async create(domains: internal.Domain[], sr: ServiceRequest): Promise<internal.Domain[]> {
-        if (RbacRole.reseller == sr.user.role) {
+        if (sr.user.reseller_id_required) {
             await this.resellerIdExists(sr.user.reseller_id, sr)
             for (const domain of domains) {
                 domain.reseller_id = sr.user.reseller_id

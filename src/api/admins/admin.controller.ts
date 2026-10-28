@@ -37,6 +37,7 @@ import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
+import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -86,6 +87,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validateResellerId(createDto, sr)
         const admins = createDto.map(admin => admin.toInternal())
         const created = await this.adminService.create(admins, sr)
         return created.map((adm) => new AdminResponseDto(adm, sr.user.role))
@@ -165,8 +167,9 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validateResellerId(new Dictionary(id.toString(), update), sr)
         const updates = new Dictionary<internal.Admin>()
-        update[id] = Object.assign(new AdminRequestDto(), update).toInternal({setDefaults: false, id: id, assignNulls: true})
+        updates[id] = Object.assign(new AdminRequestDto(), update).toInternal({setDefaults: false, id: id, assignNulls: true})
         const ids = await this.adminService.update(updates, sr)
         const updateAdmin = await this.adminService.read(ids[0], sr)
         const response = new AdminResponseDto(updateAdmin, sr.user.role)
@@ -183,6 +186,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     ): Promise<number[]> {
         this.log.debug({message: 'update admin bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
+        validateResellerId(updates, sr)
         const admins = new Dictionary<internal.Admin>()
         for (const id of Object.keys(updates)) {
             const dto: AdminRequestDto = updates[id]
@@ -207,6 +211,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     ): Promise<AdminResponseDto> {
         this.log.debug({message: 'patch admin by id', func: this.adjust.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
+        validatePatchResellerId(new Dictionary(id.toString(), patch), sr)
 
         const oldEntity = await this.adminService.read(id, sr)
         const entity = await patchToEntity<internal.Admin, AdminRequestDto>(oldEntity, patch, AdminRequestDto)
@@ -229,6 +234,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
+        validatePatchResellerId(patches, sr)
 
         const updates = new Dictionary<internal.Admin>()
         for (const id of Object.keys(patches)) {

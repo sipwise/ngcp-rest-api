@@ -27,12 +27,7 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
     }
 
     async create(entities: internal.ResellerPhonebook[], sr: ServiceRequest): Promise<internal.ResellerPhonebook[]> {
-        if (sr.user.reseller_id_required) {
-            if (entities.some(entity => entity.resellerId != sr.user.reseller_id)) {
-                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-                throw new UnprocessableEntityException(error.message)
-            }
-        }
+        this.assignUserResellerId(entities, sr)
 
         const createdIds = await this.phonebookRepo.create(entities, sr)
 
@@ -67,6 +62,7 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
             throw new UnprocessableEntityException(message)
         }
 
+        this.assignUserResellerId(Object.values(updates), sr)
         return await this.phonebookRepo.update(updates, sr)
     }
 
@@ -109,14 +105,9 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
 
     async importCsv(entities: internal.ResellerPhonebook[], sr: ServiceRequest): Promise<internal.ResellerPhonebook[]> {
         const _options = this.getResellerPhonebookOptionsFromServiceRequest(sr)
+        this.assignUserResellerId(entities, sr)
         await this.validateCsvData(entities)
 
-        if (sr.user.reseller_id_required) {
-            if (entities.some(entity => entity.resellerId != sr.user.reseller_id)) {
-                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-                throw new UnprocessableEntityException(error.message)
-            }
-        }
         const resellers = new Set(entities.map(entity => entity.resellerId))
         if (sr.query && sr.query['purge_existing']) {
             if (sr.query['purge_existing'] === 'true') {
@@ -149,6 +140,13 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
             type: 'text/csv',
             disposition: 'attachment; filename="reseller_phonebook.csv"',
         })
+    }
+
+    private assignUserResellerId(entities: internal.ResellerPhonebook[], sr: ServiceRequest): void {
+        if (!sr.user.reseller_id_required)
+            return
+        for (const entity of entities)
+            entity.resellerId = sr.user.reseller_id
     }
 
     private async validateCsvData(entities: internal.ResellerPhonebook[]): Promise<void> {

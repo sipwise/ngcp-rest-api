@@ -115,11 +115,11 @@ describe('AdminService', () => {
             })], localRequest)).rejects.toThrow(ForbiddenException)
         })
 
-        it('should set resellerId if not set', async () => {
+        it('should not set resellerId of the user if not set and not restricted', async () => {
             const got = (await service.create([internal.Admin.create({login: 'jest', role: 'admin'})], sr))[0]
             const want = await adminMockRepo.readById(got.id, options)
             expect(got.id).toStrictEqual(want.id)
-            expect(got.resellerId).toStrictEqual(sr.user.reseller_id)
+            expect(got.resellerId).toBeUndefined()
         })
 
         it('should set resellerId if user is restricted to resellerId', async () => {

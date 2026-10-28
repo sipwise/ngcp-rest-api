@@ -1,12 +1,18 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsNotEmpty, IsOptional} from 'class-validator'
+import {IsInt, IsNotEmpty, IsOptional, IsPositive} from 'class-validator'
 
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
 
 export class HeaderManipulationSetRequestDto implements RequestDto {
+    @ApiPropertyOptional({
+        description: 'Reseller Id, mandatory for admin and system roles, must not be provided by reseller roles' +
+            ' as it is automatically set to the reseller_id of the user',
+        example: 1,
+    })
     @IsOptional()
-    @ApiPropertyOptional({description: 'Reseller Id', example: 1})
+    @IsPositive()
+    @IsInt()
         reseller_id?: number
 
     @IsNotEmpty()

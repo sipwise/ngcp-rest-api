@@ -36,6 +36,7 @@ import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {patchToEntity} from '~/helpers/patch.helper'
+import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -101,10 +102,12 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
                 default:
                     throw new UnprocessableEntityException(this.i18n.t('errors.FILE_MIME_TYPE_NOT_SUPPORTED'))
             }
+            validateResellerId(createDto, sr)
             const phonebook = await Promise.all(createDto.map(async set => set.toInternal()))
             const created = await this.phonebookService.importCsv(phonebook, sr)
             return await Promise.all(created.map(async phonebook => new ResellerPhonebookResponseDto(phonebook)))
         }
+        validateResellerId(createDto, sr)
         const phonebook = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.phonebookService.create(phonebook, sr)
         return await Promise.all(created.map(async phonebook => new ResellerPhonebookResponseDto(phonebook)))
@@ -203,6 +206,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validateResellerId(new Dictionary(id.toString(), dto), sr)
         const updates = new Dictionary<internal.ResellerPhonebook>()
         updates[id] = Object.assign(new ResellerPhonebookRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const ids = await this.phonebookService.update(updates, sr)
@@ -221,6 +225,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
     ): Promise<number[]> {
         this.log.debug({message: 'update reseller phonebook bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
+        validateResellerId(updates, sr)
         const sets = new Dictionary<internal.ResellerPhonebook>()
         for (const id of Object.keys(updates)) {
             const dto: ResellerPhonebookRequestDto = updates[id]
@@ -248,6 +253,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validatePatchResellerId(new Dictionary(id.toString(), patch), sr)
 
         const oldEntity = await this.phonebookService.read(id, sr)
         const entity = await patchToEntity<internal.ResellerPhonebook, ResellerPhonebookRequestDto>(oldEntity, patch, ResellerPhonebookRequestDto)
@@ -270,6 +276,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
         @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
+        validatePatchResellerId(patches, sr)
 
         const updates = new Dictionary<internal.ResellerPhonebook>()
         for (const id of Object.keys(patches)) {

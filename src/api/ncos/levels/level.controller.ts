@@ -24,6 +24,7 @@ import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
+import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -70,6 +71,7 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validateResellerId(createDto, sr)
         const sets = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.ncosLevelService.create(sets, sr)
         return await Promise.all(created.map(async set => new NCOSLevelResponseDto(
@@ -152,6 +154,7 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validateResellerId(new Dictionary(id.toString(), dto), sr)
         const updates = new Dictionary<internal.NCOSLevel>()
         updates[id] = Object.assign(new NCOSLevelRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const ids = await this.ncosLevelService.update(updates, sr)
@@ -173,6 +176,7 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
     ): Promise<number[]> {
         this.log.debug({message: 'update NCOS levels bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
+        validateResellerId(updates, sr)
         const sets = new Dictionary<internal.NCOSLevel>()
         for (const id of Object.keys(updates)) {
             const dto: NCOSLevelRequestDto = updates[id]
@@ -200,6 +204,7 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validatePatchResellerId(new Dictionary(id.toString(), patch), sr)
 
         const oldEntity = await this.ncosLevelService.read(id, sr)
         const entity = await patchToEntity<internal.NCOSLevel, NCOSLevelRequestDto>(oldEntity, patch, NCOSLevelRequestDto)
@@ -225,6 +230,7 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
         @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
+        validatePatchResellerId(patches, sr)
 
         const updates = new Dictionary<internal.NCOSLevel>()
         for (const id of Object.keys(patches)) {

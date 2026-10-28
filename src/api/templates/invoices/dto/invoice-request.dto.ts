@@ -23,7 +23,8 @@ export class InvoiceTemplateRequestDto implements RequestDto {
     @ApiPropertyOptional({
         example: 1,
         nullable: true,
-        description: 'Required for categories `customer` and `did`, must be empty for `peer` and `reseller`. Enforced to own reseller for reseller users',
+        description: 'Required for categories `customer` and `did`, must be empty for `peer` and `reseller`.' +
+            ' Must not be provided by reseller roles as it is automatically set to the reseller_id of the user',
     })
     @IsOptional()
     @IsInt()

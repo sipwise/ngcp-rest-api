@@ -11,6 +11,7 @@ import {InvoiceTemplateModule} from './invoice.module'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {RbacRole} from '~/config/constants.config'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory, InvoiceTemplateType} from '~/entities/internal/invoice-template.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
@@ -43,7 +44,9 @@ describe('InvoiceTemplate', () => {
     const licenseMockRepo = new LicenseMockRepository()
     let authHeader: [string, string]
     let createdIds: number[] = []
+    let resellerAdminId: number
     const creds = {username: 'administrator', password: 'administrator'}
+    const resellerCreds = {username: 'inv_tpl_reseller', password: 'FFFooobarbaz123!!!'}
     const resellerId = 1
     const templateName = `e2e-invoice-template-${Date.now()}`
     const svgType = {filename: 'template.svg', contentType: 'image/svg+xml'}
@@ -466,6 +469,110 @@ describe('InvoiceTemplate', () => {
                     .field('category', InvoiceTemplateCategory.Peer)
                 expect(response.status).toEqual(422)
                 expect(JSON.stringify(response.body)).toMatch(/can not be changed/)
+            })
+        })
+
+        describe('as reseller', () => {
+            let resellerTemplateId: number
+            it('create reseller admin', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/admins')
+                    .set(...authHeader)
+                    .send({
+                        billing_data: true,
+                        call_data: false,
+                        can_reset_password: true,
+                        is_active: true,
+                        is_master: true,
+                        email: `${resellerCreds.username}@example.com`,
+                        login: resellerCreds.username,
+                        password: resellerCreds.password,
+                        read_only: false,
+                        reseller_id: resellerId,
+                        role: RbacRole.reseller,
+                        show_passwords: true,
+                        enable_2fa: false,
+                    })
+                expect(response.status).toEqual(201)
+                resellerAdminId = +response.body[0].id
+            })
+            it('does not create invoice template with reseller_id', async () => {
+                const tt = [
+                    request(app.getHttpServer())
+                        .post('/templates/invoices')
+                        .auth(resellerCreds.username, resellerCreds.password)
+                        .send({name: `${templateName}-reseller`, category: InvoiceTemplateCategory.Customer, reseller_id: resellerId}),
+                    request(app.getHttpServer())
+                        .post('/templates/invoices')
+                        .auth(resellerCreds.username, resellerCreds.password)
+                        .field('name', `${templateName}-reseller`)
+                        .field('category', InvoiceTemplateCategory.Customer)
+                        .field('reseller_id', resellerId),
+                ]
+                for (const req of tt) {
+                    const response = await req
+                    expect(response.status).toEqual(422)
+                    expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                }
+            })
+            it('creates invoice template without reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/templates/invoices')
+                    .auth(resellerCreds.username, resellerCreds.password)
+                    .send({name: `${templateName}-reseller`, category: InvoiceTemplateCategory.Customer})
+                expect(response.status).toEqual(201)
+                expect(response.body[0].reseller_id).toEqual(resellerId)
+                resellerTemplateId = +response.body[0].id
+                createdIds.push(resellerTemplateId)
+            })
+            it('does not update invoice template with reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .put(`/templates/invoices/${resellerTemplateId}`)
+                    .auth(resellerCreds.username, resellerCreds.password)
+                    .send({name: `${templateName}-reseller-put`, reseller_id: resellerId})
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+            })
+            it('updates invoice template without reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .put(`/templates/invoices/${resellerTemplateId}`)
+                    .auth(resellerCreds.username, resellerCreds.password)
+                    .send({name: `${templateName}-reseller-put`})
+                expect(response.status).toEqual(200)
+                expect(response.body.reseller_id).toEqual(resellerId)
+            })
+            it('does not patch reseller_id', async () => {
+                const tt = [
+                    request(app.getHttpServer())
+                        .patch(`/templates/invoices/${resellerTemplateId}`)
+                        .auth(resellerCreds.username, resellerCreds.password)
+                        .set('Content-Type', 'application/json-patch+json')
+                        .send([{op: 'replace', path: '/reseller_id', value: resellerId}]),
+                    request(app.getHttpServer())
+                        .patch(`/templates/invoices/${resellerTemplateId}`)
+                        .auth(resellerCreds.username, resellerCreds.password)
+                        .field('reseller_id', resellerId),
+                ]
+                for (const req of tt) {
+                    const response = await req
+                    expect(response.status).toEqual(422)
+                    expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                }
+            })
+            it('patches invoice template without reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .patch(`/templates/invoices/${resellerTemplateId}`)
+                    .auth(resellerCreds.username, resellerCreds.password)
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send([{op: 'replace', path: '/name', value: `${templateName}-reseller-patch`}])
+                expect(response.status).toEqual(200)
+                expect(response.body.reseller_id).toEqual(resellerId)
+            })
+            it('delete reseller admin', async () => {
+                const response = await request(app.getHttpServer())
+                    .delete(`/admins/${resellerAdminId}`)
+                    .set(...authHeader)
+                expect(response.status).toEqual(200)
             })
         })
 

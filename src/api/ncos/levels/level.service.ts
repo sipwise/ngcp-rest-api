@@ -24,11 +24,9 @@ export class NCOSLevelService implements CrudService<internal.NCOSLevel> {
     }
 
     async create(entities: internal.NCOSLevel[], sr: ServiceRequest): Promise<internal.NCOSLevel[]> {
+        this.assignUserResellerId(entities, sr)
         const timeSetIds = new Set<number>()
         await Promise.all(entities.map(async entity => {
-            if (!entity.resellerId)
-                entity.resellerId = sr.user.reseller_id
-            await this.checkPermissions(entity.resellerId, sr)
             timeSetIds.add(entity.timeSetId)
         }))
 
@@ -84,6 +82,7 @@ export class NCOSLevelService implements CrudService<internal.NCOSLevel> {
         }
         await this.hasAccessToTimeSets(timeSetIds, sr)
 
+        this.assignUserResellerId(Object.values(updates), sr)
         return await this.ncosLevelRepo.update(updates, sr)
     }
 
@@ -112,23 +111,27 @@ export class NCOSLevelService implements CrudService<internal.NCOSLevel> {
         return await this.ncosLevelRepo.delete(ids, sr)
     }
 
-    private async checkPermissions(resellerId: number, sr: ServiceRequest): Promise<void> {
-        if (sr.user.resellerId && sr.user.reseller_id != resellerId) {
-            throw new NotFoundException()
-        }
+    private assignUserResellerId(entities: internal.NCOSLevel[], sr: ServiceRequest): void {
+        if (!sr.user.reseller_id_required)
+            return
+        for (const entity of entities)
+            entity.resellerId = sr.user.reseller_id
     }
 
     private async hasAccessToTimeSets(timeSetIds: Set<number>, sr: ServiceRequest): Promise<void> {
+        const ids = Array.from(timeSetIds).filter(id => id != null)
+        if (!ids.length)
+            return
         if (sr.user.role == RbacRole.reseller || sr.user.role == RbacRole.subscriberadmin) {
             const timeSets = await db.provisioning.VoipTimeSet.findBy({
-                id: In(Array.from(timeSetIds)),
+                id: In(ids),
                 reseller: {
                     id: sr.user.reseller_id,
                 },
             })
-            if (timeSets.length != timeSetIds.size) {
+            if (timeSets.length != ids.length) {
                 const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-                const message = GenerateErrorMessageArray(Array.from(timeSetIds), error.message)
+                const message = GenerateErrorMessageArray(ids, error.message)
                 throw new UnprocessableEntityException(message)
             }
         }

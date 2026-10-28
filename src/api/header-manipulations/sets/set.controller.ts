@@ -25,6 +25,7 @@ import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
 import {Operation} from '~/helpers/patch.helper'
+import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -72,6 +73,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validateResellerId(createDto, sr)
         const sets = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.ruleSetService.create(sets, sr)
         return await Promise.all(created.map(async set => new HeaderManipulationSetResponseDto(
@@ -142,6 +144,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validateResellerId(new Dictionary(id.toString(), dto), sr)
         const updates = new Dictionary<internal.HeaderRuleSet>()
         updates[id] = Object.assign(new HeaderManipulationSetRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const ids = await this.ruleSetService.update(updates, sr)
@@ -163,6 +166,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
     ): Promise<number[]> {
         this.log.debug({message: 'update header rule Sets bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
+        validateResellerId(updates, sr)
         const sets = new Dictionary<internal.HeaderRuleSet>()
         for (const id of Object.keys(updates)) {
             const dto: HeaderManipulationSetRequestDto = updates[id]
@@ -190,6 +194,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validatePatchResellerId(new Dictionary(id.toString(), patch), sr)
         const oldEntity = await this.ruleSetService.read(id, sr)
         const entity = await patchToEntity<internal.HeaderRuleSet, HeaderManipulationSetRequestDto>(oldEntity, patch, HeaderManipulationSetRequestDto)
         const update = new Dictionary<internal.HeaderRuleSet>(id.toString(), entity)
@@ -220,6 +225,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validatePatchResellerId(patches, sr)
 
         const updates = new Dictionary<internal.HeaderRuleSet>()
         for (const id of Object.keys(patches)) {

@@ -45,6 +45,7 @@ import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {patchToEntity} from '~/helpers/patch.helper'
+import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -101,6 +102,7 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
     ): Promise<InvoiceTemplateResponseDto[]> {
         this.log.debug({message: 'create invoice template', func: this.createWithFile.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
+        validateResellerId([createDto], sr, {required: false})
         const created = await this.invoiceTemplateService.create([createDto.toInternal()], sr, file)
         const response = created.map((e) => new InvoiceTemplateResponseDto(e, {url: req.url}))
         await this.journalService.writeJournal(sr, 0, response)
@@ -224,6 +226,7 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validateResellerId(new Dictionary(id.toString(), dto), sr, {required: false})
         const updates = new Dictionary<internal.InvoiceTemplate>()
         updates[id] = Object.assign(new InvoiceTemplateRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const ids = await this.invoiceTemplateService.update(updates, sr, file, true)
@@ -259,6 +262,7 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
         const patch = req.is('multipart/form-data')
             ? this.multipartToPatch(body, file)
             : await new ParsePatchPipe().transform(body, {type: 'body'})
+        validatePatchResellerId(new Dictionary(id.toString(), patch), sr, {required: false})
         const oldEntity = await this.invoiceTemplateService.read(id, sr)
         const entity = patch.length
             ? await patchToEntity<internal.InvoiceTemplate, InvoiceTemplateRequestDto>(oldEntity, patch, InvoiceTemplateRequestDto)

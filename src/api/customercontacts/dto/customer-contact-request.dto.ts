@@ -1,5 +1,5 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsEnum, IsNotEmpty, IsOptional} from 'class-validator'
+import {IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive} from 'class-validator'
 
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
@@ -110,8 +110,14 @@ export class CustomerContactRequestDto implements RequestDto {
     @ApiPropertyOptional()
         postcode?: string
 
+    @ApiPropertyOptional({
+        description: 'Reseller Id, mandatory for admin and system roles, must not be provided by reseller roles' +
+            ' as it is automatically set to the reseller_id of the user',
+        example: 1,
+    })
     @IsOptional()
-    @ApiPropertyOptional()
+    @IsPositive()
+    @IsInt()
         reseller_id?: number
 
     @IsNotEmpty()

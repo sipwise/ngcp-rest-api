@@ -8,6 +8,7 @@ import {ResellerPhonebookModule} from './phonebook.module'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
@@ -17,7 +18,7 @@ import {ValidateInputPipe} from '~/pipes/validate.pipe'
 type PhonebookPost = {
     name: string
     number: string
-    reseller_id: number
+    reseller_id?: number
 }
 
 describe('Reseller Phonebook', () => {
@@ -26,7 +27,9 @@ describe('Reseller Phonebook', () => {
     let authService: AuthService
     let authHeader: [string, string]
     const createdPhonebookIds: number[] = []
+    let resellerAdminId: number
     const creds = {username: 'administrator', password: 'administrator'}
+    const resellerCreds = {username: 'pb_reseller', password: 'FFFooobarbaz123!!!'}
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -244,6 +247,208 @@ describe('Reseller Phonebook', () => {
                     .send(patch)
                 expect(response.status).toEqual(404)
             })
+        })
+    })
+
+    describe('Reseller Phonebook reseller_id as admin', () => {
+        it('fail create without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/resellers/phonebook')
+                .set(...authHeader)
+                .send({
+                    name: 'test_phonebook_no_reseller',
+                    number: '8881',
+                })
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+        })
+        it('fail update without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .put(`/resellers/phonebook/${createdPhonebookIds[0]}`)
+                .set(...authHeader)
+                .send({
+                    name: 'test_phonebook_no_reseller',
+                    number: '8881',
+                })
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+        })
+        it('fail adjust with empty reseller_id', async () => {
+            const tt: PatchOperation[][] = [
+                [{op: 'replace', path: '/reseller_id', value: null}],
+                [{op: 'remove', path: '/reseller_id'}],
+            ]
+            for (const emptyPatch of tt) {
+                const response = await request(app.getHttpServer())
+                    .patch(`/resellers/phonebook/${createdPhonebookIds[0]}`)
+                    .set(...authHeader)
+                    .send(emptyPatch)
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+            }
+        })
+        it('fail bulk adjust with empty reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .patch('/resellers/phonebook')
+                .set(...authHeader)
+                .send({
+                    [createdPhonebookIds[0]]: [{op: 'replace', path: '/name', value: 'bulk'}],
+                    [createdPhonebookIds[1]]: [{op: 'replace', path: '/reseller_id', value: null}],
+                })
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain(`[${createdPhonebookIds[1]}] reseller_id should not be empty`)
+        })
+        it('fail csv import without reseller_id', async () => {
+            const csvContent = [
+                'name,number',
+                'RES_PHONEBOOK_NO_RESELLER,40001',
+            ].join('\n')
+            const response = await request(app.getHttpServer())
+                .post('/resellers/phonebook')
+                .set(...authHeader)
+                .attach('file', Buffer.from(csvContent), 'reseller_phonebook_test.csv')
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('[0] reseller_id should not be empty')
+        })
+    })
+
+    describe('Reseller Phonebook as reseller', () => {
+        let resellerEntityId: number
+        it('create reseller admin', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/admins')
+                .set(...authHeader)
+                .send({
+                    billing_data: true,
+                    call_data: false,
+                    can_reset_password: true,
+                    is_active: true,
+                    is_master: true,
+                    email: `${resellerCreds.username}@example.com`,
+                    login: resellerCreds.username,
+                    password: resellerCreds.password,
+                    read_only: false,
+                    reseller_id: 1,
+                    role: RbacRole.reseller,
+                    show_passwords: true,
+                    enable_2fa: false,
+                })
+            expect(response.status).toEqual(201)
+            resellerAdminId = +response.body[0].id
+        })
+        it('fail create with reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/resellers/phonebook')
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({...{
+                    name: 'test_phonebook_reseller',
+                    number: '8882',
+                }, reseller_id: 1})
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+        })
+        it('create without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/resellers/phonebook')
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({
+                    name: 'test_phonebook_reseller',
+                    number: '8882',
+                })
+            expect(response.status).toEqual(201)
+            resellerEntityId = +response.body[0].id
+            createdPhonebookIds.push(resellerEntityId)
+        })
+        it('read created by reseller', async () => {
+            const response = await request(app.getHttpServer())
+                .get(`/resellers/phonebook/${resellerEntityId}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
+            expect(response.body.reseller_id).toEqual(1)
+        })
+        it('fail update with reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .put(`/resellers/phonebook/${resellerEntityId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({...{
+                    name: 'renamed_test_phonebook_reseller',
+                    number: '8882',
+                }, reseller_id: 1})
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+        })
+        it('update without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .put(`/resellers/phonebook/${resellerEntityId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({
+                    name: 'renamed_test_phonebook_reseller',
+                    number: '8882',
+                })
+            expect(response.status).toEqual(200)
+        })
+        it('read updated by reseller', async () => {
+            const response = await request(app.getHttpServer())
+                .get(`/resellers/phonebook/${resellerEntityId}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
+            expect(response.body.reseller_id).toEqual(1)
+        })
+        it('fail patch reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .patch(`/resellers/phonebook/${resellerEntityId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send([{op: 'replace', path: '/reseller_id', value: 1}])
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+        })
+        it('patch without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .patch(`/resellers/phonebook/${resellerEntityId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send([{op: 'replace', path: '/name', value: 'patched reseller'}])
+            expect(response.status).toEqual(200)
+            expect(response.body.name).toEqual('patched reseller')
+        })
+        it('read patched by reseller', async () => {
+            const response = await request(app.getHttpServer())
+                .get(`/resellers/phonebook/${resellerEntityId}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
+            expect(response.body.reseller_id).toEqual(1)
+        })
+        it('fail csv import with reseller_id', async () => {
+            const csvContent = [
+                'reseller_id,name,number',
+                '1,RES_PHONEBOOK_RESELLER_1,40002',
+            ].join('\n')
+            const response = await request(app.getHttpServer())
+                .post('/resellers/phonebook')
+                .auth(resellerCreds.username, resellerCreds.password)
+                .attach('file', Buffer.from(csvContent), 'reseller_phonebook_test.csv')
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('[0] property reseller_id should not exist')
+        })
+        it('csv import without reseller_id', async () => {
+            const tt = [
+                ['name,number', 'RES_PHONEBOOK_RESELLER_2,40003'],
+                ['reseller_id,name,number', ',RES_PHONEBOOK_RESELLER_3,40004'],
+            ]
+            for (const rows of tt) {
+                const response = await request(app.getHttpServer())
+                    .post('/resellers/phonebook')
+                    .auth(resellerCreds.username, resellerCreds.password)
+                    .attach('file', Buffer.from(rows.join('\n')), 'reseller_phonebook_test.csv')
+                expect(response.status).toEqual(201)
+                expect(response.body[0].reseller_id).toEqual(1)
+                createdPhonebookIds.push(+response.body[0].id)
+            }
+        })
+        it('delete reseller admin', async () => {
+            const response = await request(app.getHttpServer())
+                .delete(`/admins/${resellerAdminId}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
         })
     })
 

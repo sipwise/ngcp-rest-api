@@ -23,6 +23,7 @@ import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
+import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -68,6 +69,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validateResellerId(createDto, sr)
         const sets = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.ncosSetService.create(sets, sr)
         return await Promise.all(created.map(async set => new NCOSSetResponseDto(
@@ -140,6 +142,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validateResellerId(new Dictionary(id.toString(), dto), sr)
         const updates = new Dictionary<internal.NCOSSet>()
         updates[id] = Object.assign(new NCOSSetRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const ids = await this.ncosSetService.update(updates, sr)
@@ -161,6 +164,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
     ): Promise<number[]> {
         this.log.debug({message: 'update NCOS Sets bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
+        validateResellerId(updates, sr)
         const sets = new Dictionary<internal.NCOSSet>()
         for (const id of Object.keys(updates)) {
             const dto: NCOSSetRequestDto = updates[id]
@@ -188,6 +192,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
             method: req.method,
         })
         const sr = new ServiceRequest(req)
+        validatePatchResellerId(new Dictionary(id.toString(), patch), sr)
 
         const oldEntity = await this.ncosSetService.read(id, sr)
         const entity = await patchToEntity<internal.NCOSSet, NCOSSetRequestDto>(oldEntity, patch, NCOSSetRequestDto)
@@ -213,6 +218,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
+        validatePatchResellerId(patches, sr)
 
         const updates = new Dictionary<internal.NCOSSet>()
         for (const id of Object.keys(patches)) {

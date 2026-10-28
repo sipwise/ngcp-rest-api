@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, UnprocessableEntityException, forwardRef} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, forwardRef} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
@@ -25,6 +25,7 @@ import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
 import {Operation} from '~/helpers/patch.helper'
+import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -72,7 +73,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        this.validateResellerId(createDto, sr)
+        validateResellerId(createDto, sr)
         const sets = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.ruleSetService.create(sets, sr)
 
@@ -158,7 +159,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        this.validateResellerId(new Dictionary(id.toString(), dto), sr)
+        validateResellerId(new Dictionary(id.toString(), dto), sr)
         const updates = new Dictionary<internal.RewriteRuleSet>()
         updates[id] = Object.assign(new RewriteRuleSetRequestDto(), dto).toInternal({id: id, assignNulls: true})
         const rewriteRules = dto.rules && dto.rules.length > 0
@@ -182,7 +183,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
     ): Promise<number[]> {
         this.log.debug({message: 'update rewrite rule Sets bulk', func: this.updateMany.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
-        this.validateResellerId(updates, sr)
+        validateResellerId(updates, sr)
         const sets = new Dictionary<internal.RewriteRuleSet>()
         for (const id of Object.keys(updates)) {
             const dto: RewriteRuleSetRequestDto = updates[id]
@@ -219,7 +220,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        this.validatePatchResellerId(new Dictionary(id.toString(), patch), sr)
+        validatePatchResellerId(new Dictionary(id.toString(), patch), sr)
         const oldEntity = await this.ruleSetService.read(id, sr)
         const entity = await patchToEntity<internal.RewriteRuleSet, RewriteRuleSetRequestDto>(oldEntity, patch, RewriteRuleSetRequestDto)
         const update = new Dictionary<internal.RewriteRuleSet>(id.toString(), entity)
@@ -250,7 +251,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        this.validatePatchResellerId(patches, sr)
+        validatePatchResellerId(patches, sr)
 
         const updates = new Dictionary<internal.RewriteRuleSet>()
         for (const id of Object.keys(patches)) {
@@ -299,32 +300,5 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
             method: req.method,
         })
         return super.journal(id, req)
-    }
-
-    private validateResellerId(dtos: RewriteRuleSetRequestDto[] | Dictionary<RewriteRuleSetRequestDto>, sr: ServiceRequest): void {
-        const errors: string[] = []
-        for (const [key, dto] of Object.entries(dtos)) {
-            if (sr.user.reseller_id_required && dto.reseller_id !== undefined)
-                errors.push(`[${key}] property reseller_id should not exist`)
-            else if (!sr.user.reseller_id_required && dto.reseller_id == null)
-                errors.push(`[${key}] reseller_id should not be empty`)
-        }
-        if (errors.length)
-            throw new UnprocessableEntityException(errors)
-    }
-
-    private validatePatchResellerId(patches: Dictionary<PatchOperation[]>, sr: ServiceRequest): void {
-        const errors: string[] = []
-        for (const [id, patch] of Object.entries(patches)) {
-            const ops = patch.filter(op => op.path.split('/')[1] == 'reseller_id')
-            if (!ops.length)
-                continue
-            if (sr.user.reseller_id_required)
-                errors.push(`[${id}] property reseller_id should not exist`)
-            else if (ops.some(op => op.op == 'remove' || ('value' in op && op.value == null)))
-                errors.push(`[${id}] reseller_id should not be empty`)
-        }
-        if (errors.length)
-            throw new UnprocessableEntityException(errors)
     }
 }

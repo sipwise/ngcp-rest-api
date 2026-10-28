@@ -8,6 +8,7 @@ import {NCOSSetModule} from './set.module'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {RbacRole} from '~/config/constants.config'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
@@ -16,7 +17,7 @@ import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type NcosSetPost = {
     name: string
-    reseller_id: number
+    reseller_id?: number
     description: string
 }
 
@@ -26,7 +27,9 @@ describe('NCOS Set', () => {
     let authService: AuthService
     let authHeader: [string, string]
     let createdIds: number[] = []
+    let resellerAdminId: number
     const creds = {username: 'administrator', password: 'administrator'}
+    const resellerCreds = {username: 'ncos_set_reseller', password: 'FFFooobarbaz123!!!'}
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -258,6 +261,169 @@ describe('NCOS Set', () => {
                     .send(patch)
                 expect(response.status).toEqual(404)
             })
+        })
+    })
+
+    describe('NCOS Set reseller_id as admin', () => {
+        it('fail create without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/ncos/sets')
+                .set(...authHeader)
+                .send({
+                    name: 'test_ncosset_no_reseller',
+                    description: 'no reseller_id',
+                })
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+        })
+        it('fail update without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .put(`/ncos/sets/${createdIds[0]}`)
+                .set(...authHeader)
+                .send({
+                    name: 'test_ncosset_no_reseller',
+                    description: 'no reseller_id',
+                })
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+        })
+        it('fail adjust with empty reseller_id', async () => {
+            const tt: PatchOperation[][] = [
+                [{op: 'replace', path: '/reseller_id', value: null}],
+                [{op: 'remove', path: '/reseller_id'}],
+            ]
+            for (const emptyPatch of tt) {
+                const response = await request(app.getHttpServer())
+                    .patch(`/ncos/sets/${createdIds[0]}`)
+                    .set(...authHeader)
+                    .send(emptyPatch)
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+            }
+        })
+        it('fail bulk adjust with empty reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .patch('/ncos/sets')
+                .set(...authHeader)
+                .send({
+                    [createdIds[0]]: [{op: 'replace', path: '/description', value: 'bulk'}],
+                    [createdIds[1]]: [{op: 'replace', path: '/reseller_id', value: null}],
+                })
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain(`[${createdIds[1]}] reseller_id should not be empty`)
+        })
+    })
+
+    describe('NCOS Set as reseller', () => {
+        let resellerEntityId: number
+        it('create reseller admin', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/admins')
+                .set(...authHeader)
+                .send({
+                    billing_data: true,
+                    call_data: false,
+                    can_reset_password: true,
+                    is_active: true,
+                    is_master: true,
+                    email: `${resellerCreds.username}@example.com`,
+                    login: resellerCreds.username,
+                    password: resellerCreds.password,
+                    read_only: false,
+                    reseller_id: 1,
+                    role: RbacRole.reseller,
+                    show_passwords: true,
+                    enable_2fa: false,
+                })
+            expect(response.status).toEqual(201)
+            resellerAdminId = +response.body[0].id
+        })
+        it('fail create with reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/ncos/sets')
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({...{
+                    name: 'test_reseller_ncosset',
+                    description: 'reseller',
+                }, reseller_id: 1})
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+        })
+        it('create without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .post('/ncos/sets')
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({
+                    name: 'test_reseller_ncosset',
+                    description: 'reseller',
+                })
+            expect(response.status).toEqual(201)
+            resellerEntityId = +response.body[0].id
+            createdIds.push(resellerEntityId)
+        })
+        it('read created by reseller', async () => {
+            const response = await request(app.getHttpServer())
+                .get(`/ncos/sets/${resellerEntityId}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
+            expect(response.body.reseller_id).toEqual(1)
+        })
+        it('fail update with reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .put(`/ncos/sets/${resellerEntityId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({...{
+                    name: 'renamed_test_reseller_ncosset',
+                    description: 'reseller',
+                }, reseller_id: 1})
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+        })
+        it('update without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .put(`/ncos/sets/${resellerEntityId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send({
+                    name: 'renamed_test_reseller_ncosset',
+                    description: 'reseller',
+                })
+            expect(response.status).toEqual(200)
+        })
+        it('read updated by reseller', async () => {
+            const response = await request(app.getHttpServer())
+                .get(`/ncos/sets/${resellerEntityId}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
+            expect(response.body.reseller_id).toEqual(1)
+        })
+        it('fail patch reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .patch(`/ncos/sets/${resellerEntityId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send([{op: 'replace', path: '/reseller_id', value: 1}])
+            expect(response.status).toEqual(422)
+            expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+        })
+        it('patch without reseller_id', async () => {
+            const response = await request(app.getHttpServer())
+                .patch(`/ncos/sets/${resellerEntityId}`)
+                .auth(resellerCreds.username, resellerCreds.password)
+                .send([{op: 'replace', path: '/description', value: 'patched reseller'}])
+            expect(response.status).toEqual(200)
+            expect(response.body.description).toEqual('patched reseller')
+        })
+        it('read patched by reseller', async () => {
+            const response = await request(app.getHttpServer())
+                .get(`/ncos/sets/${resellerEntityId}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
+            expect(response.body.reseller_id).toEqual(1)
+        })
+        it('delete reseller admin', async () => {
+            const response = await request(app.getHttpServer())
+                .delete(`/admins/${resellerAdminId}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
         })
     })
 

@@ -217,7 +217,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             }
         }
 
-        if (sr.user.reseller_id_required || admin.resellerId == undefined) {
+        if (sr.user.reseller_id_required) {
             admin.resellerId = sr.user.reseller_id
         }
     }

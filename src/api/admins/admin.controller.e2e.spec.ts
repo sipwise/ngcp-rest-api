@@ -16,7 +16,7 @@ import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type AdminPost = {
     email: string
-    reseller_id: number
+    reseller_id?: number
     login: string
     is_master: boolean
     is_active: boolean
@@ -485,7 +485,7 @@ describe('AdminController', () => {
                             login: `${test.username}_create_${rand}`,
                             password: `${strongPassword}_create${rand}`,
                             read_only: false,
-                            reseller_id: 1,
+                            ...(test.canSeeResellerId ? {reseller_id: 1} : {}),
                             role: roleTest.role,
                             show_passwords: true,
                             enable_2fa: false,
@@ -548,6 +548,124 @@ describe('AdminController', () => {
                     .set(...preferHeader)
                     .send(data)
                 expect(response.status).toEqual(want)
+            })
+        })
+
+        describe('Admins reseller_id', () => {
+            let adminCreatedId: number
+            let resellerCreatedId: number
+            const newAdmin = (login: string, role: RbacRole, password = strongPassword): Omit<AdminPost, 'reseller_id'> => ({
+                billing_data: true,
+                call_data: false,
+                can_reset_password: true,
+                is_active: true,
+                is_master: false,
+                email: `${login}@example.com`,
+                login: login,
+                password: password,
+                read_only: false,
+                role: role,
+                show_passwords: true,
+                enable_2fa: false,
+            })
+            it('admin: should fail creating admin without reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/admins')
+                    .set(...authHeader)
+                    .send(newAdmin('rid_admin_none', RbacRole.admin))
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+            })
+            it('admin: should create admin with reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/admins')
+                    .set(...authHeader)
+                    .set(...preferHeader)
+                    .send({...newAdmin('rid_admin', RbacRole.admin), reseller_id: 1})
+                expect(response.status).toEqual(201)
+                adminCreatedId = +response.body[0].id
+                createdAdminIds.push(adminCreatedId)
+            })
+            it('admin: should fail updating admin without reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .put(`/admins/${adminCreatedId}`)
+                    .set(...authHeader)
+                    .send(newAdmin('rid_admin', RbacRole.admin))
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+            })
+            it('admin: should fail emptying reseller_id with patch', async () => {
+                const tt: PatchOperation[][] = [
+                    [{op: 'replace', path: '/reseller_id', value: null}],
+                    [{op: 'remove', path: '/reseller_id'}],
+                ]
+                for (const emptyPatch of tt) {
+                    const response = await request(app.getHttpServer())
+                        .patch(`/admins/${adminCreatedId}`)
+                        .set(...authHeader)
+                        .send(emptyPatch)
+                    expect(response.status).toEqual(422)
+                    expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                }
+            })
+            it('admin: should update admin with reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .put(`/admins/${adminCreatedId}`)
+                    .set(...authHeader)
+                    .set(...preferHeader)
+                    .send({...newAdmin('rid_admin', RbacRole.admin, `${strongPassword}_put`), reseller_id: 1})
+                expect(response.status).toEqual(200)
+                expect(response.body.reseller_id).toEqual(1)
+            })
+            it('resellermaster: should fail creating admin with reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/admins')
+                    .auth('resellermaster', strongPassword)
+                    .send({...newAdmin('rid_reseller', RbacRole.reseller), reseller_id: 1})
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+            })
+            it('resellermaster: should create admin without reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/admins')
+                    .auth('resellermaster', strongPassword)
+                    .set(...preferHeader)
+                    .send(newAdmin('rid_reseller', RbacRole.reseller))
+                expect(response.status).toEqual(201)
+                resellerCreatedId = +response.body[0].id
+                createdAdminIds.push(resellerCreatedId)
+            })
+            it('resellermaster: should fail updating admin with reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .put(`/admins/${resellerCreatedId}`)
+                    .auth('resellermaster', strongPassword)
+                    .send({...newAdmin('rid_reseller', RbacRole.reseller), reseller_id: 1})
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+            })
+            it('resellermaster: should fail patching reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .patch(`/admins/${resellerCreatedId}`)
+                    .auth('resellermaster', strongPassword)
+                    .send([{op: 'replace', path: '/reseller_id', value: 1}])
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+            })
+            it('resellermaster: should patch admin without reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .patch(`/admins/${resellerCreatedId}`)
+                    .auth('resellermaster', strongPassword)
+                    .set(...preferHeader)
+                    .send([{op: 'replace', path: '/email', value: 'rid_reseller_patched@example.com'}])
+                expect(response.status).toEqual(200)
+                expect(response.body.email).toEqual('rid_reseller_patched@example.com')
+            })
+            it('admin: should read the reseller_id of the user on admin created by resellermaster', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/admins/${resellerCreatedId}`)
+                    .set(...authHeader)
+                expect(response.status).toEqual(200)
+                expect(response.body.reseller_id).toEqual(1)
             })
         })
 

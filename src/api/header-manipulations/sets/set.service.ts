@@ -27,13 +27,7 @@ export class HeaderManipulationSetService implements CrudService<internal.Header
     }
 
     async create(entities: internal.HeaderRuleSet[], sr: ServiceRequest): Promise<internal.HeaderRuleSet[]> {
-        await Promise.all(entities.map(async entity => {
-            if (!entity.resellerId)
-                entity.resellerId = sr.user.reseller_id
-
-            if (sr.user.reseller_id_required)
-                await this.checkPermissions(entity.resellerId, sr)
-        }))
+        this.assignUserResellerId(entities, sr)
         const createdIds = await this.ruleSetRepo.create(entities)
         return await this.ruleSetRepo.readWhereInIds(createdIds, sr)
     }
@@ -78,6 +72,7 @@ export class HeaderManipulationSetService implements CrudService<internal.Header
             throw new UnprocessableEntityException(message)
         }
 
+        this.assignUserResellerId(Object.values(updates), sr)
         return await this.ruleSetRepo.update(updates, sr)
     }
 
@@ -103,10 +98,11 @@ export class HeaderManipulationSetService implements CrudService<internal.Header
         return await this.ruleSetRepo.delete(ids, sr)
     }
 
-    private async checkPermissions(resellerId: number, sr: ServiceRequest): Promise<void> {
-        if (sr.user.resellerId && sr.user.reseller_id != resellerId) {
-            throw new NotFoundException()
-        }
+    private assignUserResellerId(entities: internal.HeaderRuleSet[], sr: ServiceRequest): void {
+        if (!sr.user.reseller_id_required)
+            return
+        for (const entity of entities)
+            entity.resellerId = sr.user.reseller_id
     }
 
     // TODO: required for mocking, as esbuild-jest has issues with jest mock

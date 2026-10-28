@@ -1,5 +1,5 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsBase32, IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength} from 'class-validator'
+import {IsBase32, IsBoolean, IsEmail, IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, MaxLength, MinLength} from 'class-validator'
 import {generate as passwordGenerator} from 'generate-password'
 
 import {RbacRole} from '~/config/constants.config'
@@ -14,9 +14,15 @@ export class AdminRequestDto implements RequestDto {
     @ApiPropertyOptional({description: 'Email address', example: 'admin@example.com'})
         email?: string
 
+    @ApiPropertyOptional({
+        example: 1,
+        description: 'Unique identifier of a reseller, mandatory for admin and system roles, must not be provided by' +
+            ' reseller roles as it is automatically set to the reseller_id of the user',
+        type: 'integer',
+    })
     @IsOptional()
-    @IsNotEmpty()
-    @ApiPropertyOptional({example: 1, description: 'Unique identifier of a reseller', type: 'integer'})
+    @IsPositive()
+    @IsInt()
         reseller_id?: number
 
     @IsNotEmpty()
