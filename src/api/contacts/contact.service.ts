@@ -26,7 +26,7 @@ export class ContactService implements CrudService<internal.Contact>{
             user: sr.user.username,
         })
         for (const contact of contacts) {
-            if (contact.reseller_id !== undefined) {
+            if (contact.reseller_id != null) {
                 if (sr.user.reseller_id_required) {
                     contact.reseller_id = sr.user.reseller_id
                 }
@@ -53,7 +53,7 @@ export class ContactService implements CrudService<internal.Contact>{
 
         // TODO: should exceptions be HttpException? I think this should be determined by the controller
         for (const contact of contacts) {
-            if (contact.reseller_id !== undefined) {  // check for active contracts and subscribers when deleting customercontact
+            if (contact.reseller_id != null) {  // check for active contracts and subscribers when deleting customercontact
                 if (await this.contactRepo.hasContactActiveContract(contact.id, sr)) {
                     throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_CONTRACT'), 423) // 423 HTTP LOCKED
                 }
@@ -95,7 +95,10 @@ export class ContactService implements CrudService<internal.Contact>{
         for (const id of ids) {
             const contact = updates[id]
             const oldContact = await this.contactRepo.readById(id)
-            if (oldContact.reseller_id !== undefined) {
+            if ((oldContact.reseller_id == null) != (contact.reseller_id == null)) {
+                throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_TYPE_IMMUTABLE'))
+            }
+            if (oldContact.reseller_id != null) {
                 if (oldContact.reseller_id != contact.reseller_id) {
                     const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
                     if (!reseller) {

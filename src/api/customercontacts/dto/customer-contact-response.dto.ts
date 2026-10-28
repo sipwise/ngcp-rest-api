@@ -1,8 +1,9 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsBoolean, IsEnum, IsInt, IsString} from 'class-validator'
+import {IsBoolean, IsDate, IsEnum, IsInt, IsString} from 'class-validator'
 
 import {RbacRole} from '~/config/constants.config'
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
+import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
@@ -13,7 +14,7 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 export class CustomerContactResponseDto extends ResponseDto {
     @IsInt()
     @ApiProperty()
-        id!: number
+        id: number
 
     @CanBeNull()
     @IsString()
@@ -44,6 +45,11 @@ export class CustomerContactResponseDto extends ResponseDto {
     @IsString()
     @ApiProperty()
         country?: string
+
+    @CanBeNull()
+    @IsDate()
+    @ApiProperty({type: Date, nullable: true, description: 'Time of creation, null if unknown'})
+        create_timestamp?: Date
 
     @CanBeNull()
     @IsString()
@@ -131,6 +137,10 @@ export class CustomerContactResponseDto extends ResponseDto {
         mobilenumber?: string
 
     @CanBeNull()
+    @IsDate()
+    @ApiProperty({type: Date, nullable: true, description: 'Time of the last modification'})
+        modify_timestamp?: Date
+
     @IsBoolean()
     @ApiProperty()
         newsletter: boolean
@@ -148,9 +158,9 @@ export class CustomerContactResponseDto extends ResponseDto {
     @CanBeNull()
     @IsInt()
     @ApiProperty()
+    @Expandable({name: 'reseller_id', controller: 'resellerController'})
         reseller_id?: number
 
-    @CanBeNull()
     @IsEnum(ContactStatus)
     @ApiProperty()
         status: ContactStatus
@@ -159,6 +169,11 @@ export class CustomerContactResponseDto extends ResponseDto {
     @IsString()
     @ApiProperty()
         street?: string
+
+    @CanBeNull()
+    @IsDate()
+    @ApiProperty({type: Date, nullable: true, description: 'Time of termination'})
+        terminate_timestamp?: Date
 
     @CanBeNull()
     @IsString()

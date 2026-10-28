@@ -5,6 +5,7 @@ import {Reseller} from './reseller.mariadb.entity'
 
 import {internal} from '~/entities'
 import {ContactGender, ContactInternalEntity, ContactStatus} from '~/entities/internal/contact.internal.entity'
+import {validDateOrNull} from '~/helpers/date.helper'
 
 @Entity({
     name: 'contacts',
@@ -114,7 +115,7 @@ export class Contact extends BaseEntity {
         newsletter!: boolean
 
     @Column({
-        type: 'date',
+        type: 'timestamp',
         nullable: false,
         default: () => 'CURRENT_TIMESTAMP',
         onUpdate: 'CURRENT_TIMESTAMP',
@@ -122,7 +123,7 @@ export class Contact extends BaseEntity {
         modify_timestamp!: Date
 
     @Column({
-        type: 'date',
+        type: 'timestamp',
         nullable: false,
         default: '0000-00-00 00:00:00',
     })
@@ -242,7 +243,7 @@ export class Contact extends BaseEntity {
         status!: ContactStatus
 
     @Column({
-        type: 'date',
+        type: 'timestamp',
         nullable: true,
     })
         terminate_timestamp?: Date
@@ -277,7 +278,7 @@ export class Contact extends BaseEntity {
             company: this.company,
             comregnum: this.comregnum,
             country: this.country,
-            create_timestamp: this.create_timestamp,
+            create_timestamp: validDateOrNull(this.create_timestamp),
             email: this.email,
             faxnumber: this.faxnumber,
             firstname: this.firstname,
@@ -296,14 +297,14 @@ export class Contact extends BaseEntity {
             id: this.id,
             lastname: this.lastname,
             mobilenumber: this.mobilenumber,
-            modify_timestamp: this.modify_timestamp,
+            modify_timestamp: validDateOrNull(this.modify_timestamp),
             newsletter: this.newsletter,
             phonenumber: this.phonenumber,
             postcode: this.postcode,
             reseller_id: this.reseller_id,
             status: this.status,
             street: this.street,
-            terminate_timestamp: this.terminate_timestamp,
+            terminate_timestamp: validDateOrNull(this.terminate_timestamp),
             timezone: this.timezone,
             vatnum: this.vatnum,
         }

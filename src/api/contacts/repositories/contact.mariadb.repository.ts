@@ -1,8 +1,11 @@
+import {UnprocessableEntityException} from '@nestjs/common'
 import {Not, SelectQueryBuilder} from 'typeorm'
 
 import {ContactSearchDto} from '~/api/contacts/dto/contact-search.dto'
 import {ContactOptions} from '~/api/contacts/interfaces/contact-options.interface'
 import {ContactRepository} from '~/api/contacts/interfaces/contact.repository'
+import {CustomerContactSearchDto} from '~/api/customercontacts/dto/customer-contact-search.dto'
+import {SystemContactSearchDto} from '~/api/systemcontacts/dto/system-contact-search.dto'
 import {db, internal} from '~/entities'
 import {ContactStatus, ContactType} from '~/entities/internal/contact.internal.entity'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
@@ -136,7 +139,7 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
             user: sr.user.username,
         })
         const qb = await this.createBaseQueryBuilder(options)
-        const searchDto = new ContactSearchDto()
+        const searchDto = this.getSearchDto(options?.type)
         configureQueryBuilder(
             qb,
             sr.query,
@@ -155,17 +158,32 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const update = new db.billing.Contact().fromInternal(updates[id])
-            // let the db keep create_timestamp and set modify_timestamp on update
+            if (update.status == null)
+                throw new UnprocessableEntityException([`[${id}] status should not be empty`])
+            // timestamps are not client writable, the db keeps create_timestamp and sets modify_timestamp on update
             delete update.id
             delete update.create_timestamp
             delete update.modify_timestamp
+            delete update.terminate_timestamp
+            update.newsletter ??= false
             Object.keys(update).map(key => {
-                if (update[key] == undefined)
+                if (update[key] === undefined)
                     delete update[key]
             })
             await db.billing.Contact.update(id, update)
         }
         return ids
+    }
+
+    private getSearchDto(type?: ContactType): ContactSearchDto | CustomerContactSearchDto | SystemContactSearchDto {
+        switch (type) {
+            case ContactType.CustomerContact:
+                return new CustomerContactSearchDto()
+            case ContactType.SystemContact:
+                return new SystemContactSearchDto()
+            default:
+                return new ContactSearchDto()
+        }
     }
 
     private async createBaseQueryBuilder(options: ContactOptions): Promise<SelectQueryBuilder<db.billing.Contact>> {

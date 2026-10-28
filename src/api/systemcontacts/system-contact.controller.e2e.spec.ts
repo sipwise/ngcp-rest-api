@@ -141,6 +141,7 @@ describe('SystemContact', () => {
                 expect(await validate(contact)).toEqual([])
                 expect(contact.firstname).toEqual('test_sc1_first')
                 expect(contact.newsletter).toEqual(false)
+                expect(contact.gender).toBeNull()
             })
             it('read system contact 2', async () => {
                 const response = await request(app.getHttpServer())
@@ -235,6 +236,95 @@ describe('SystemContact', () => {
                     .send(patch)
                 expect(response.status).toEqual(404)
             })
+        })
+    })
+
+    describe('SystemContact field types', () => {
+        it('read timestamps', async () => {
+            const response = await request(app.getHttpServer())
+                .get(`/systemcontacts/${createdIds[0]}`)
+                .set(...authHeader)
+            expect(response.status).toEqual(200)
+            expect(new Date(response.body.create_timestamp).getTime()).not.toBeNaN()
+            expect(new Date(response.body.modify_timestamp).getTime()).not.toBeNaN()
+            expect(response.body.create_timestamp).not.toMatch(/^\d{4}-\d{2}-\d{2}$/)
+            expect(response.body.terminate_timestamp).toBeNull()
+        })
+        it('fail create with invalid field types', async () => {
+            const tt = [
+                {gender: 'unknown'},
+                {newsletter: 'yes'},
+                {country: 'Germany'},
+                {postcode: '12345678901234567'},
+                {firstname: 'x'.repeat(128)},
+                {email: 123},
+            ]
+            for (const fields of tt) {
+                const response = await request(app.getHttpServer())
+                    .post('/systemcontacts')
+                    .set(...authHeader)
+                    .send({...{status: 'active'}, ...fields})
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.message)).toContain(Object.keys(fields)[0])
+            }
+        })
+        it('fail adjust with invalid field types', async () => {
+            const response = await request(app.getHttpServer())
+                .patch(`/systemcontacts/${createdIds[0]}`)
+                .set(...authHeader)
+                .send([{op: 'replace', path: '/gender', value: 'unknown'}])
+            expect(response.status).toEqual(422)
+        })
+        it('fail adjust with empty status', async () => {
+            const tt: PatchOperation[][] = [
+                [{op: 'replace', path: '/status', value: null}],
+                [{op: 'remove', path: '/status'}],
+            ]
+            for (const emptyPatch of tt) {
+                const response = await request(app.getHttpServer())
+                    .patch(`/systemcontacts/${createdIds[0]}`)
+                    .set(...authHeader)
+                    .send(emptyPatch)
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.message)).toContain('status should not be empty')
+            }
+        })
+        it('clear fields with adjust', async () => {
+            const response = await request(app.getHttpServer())
+                .patch(`/systemcontacts/${createdIds[0]}`)
+                .set(...authHeader)
+                .send([
+                    {op: 'replace', path: '/gender', value: 'female'},
+                    {op: 'replace', path: '/country', value: 'AT'},
+                ])
+            expect(response.status).toEqual(200)
+            expect(response.body.gender).toEqual('female')
+            expect(response.body.country).toEqual('AT')
+            const cleared = await request(app.getHttpServer())
+                .patch(`/systemcontacts/${createdIds[0]}`)
+                .set(...authHeader)
+                .send([
+                    {op: 'remove', path: '/gender'},
+                    {op: 'replace', path: '/country', value: null},
+                    {op: 'replace', path: '/newsletter', value: null},
+                ])
+            expect(cleared.status).toEqual(200)
+            expect(cleared.body.gender).toBeNull()
+            expect(cleared.body.country).toBeNull()
+            expect(cleared.body.newsletter).toEqual(false)
+            expect(cleared.body.create_timestamp).toEqual(response.body.create_timestamp)
+        })
+        it('ignore timestamps in adjust', async () => {
+            const before = await request(app.getHttpServer())
+                .get(`/systemcontacts/${createdIds[0]}`)
+                .set(...authHeader)
+            const response = await request(app.getHttpServer())
+                .patch(`/systemcontacts/${createdIds[0]}`)
+                .set(...authHeader)
+                .send([{op: 'replace', path: '/terminate_timestamp', value: '2000-01-01 00:00:00'}])
+            expect(response.status).toEqual(200)
+            expect(response.body.terminate_timestamp).toBeNull()
+            expect(response.body.create_timestamp).toEqual(before.body.create_timestamp)
         })
     })
 

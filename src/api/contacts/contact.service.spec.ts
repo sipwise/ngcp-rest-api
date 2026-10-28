@@ -116,6 +116,18 @@ describe('ContactService', () => {
             updates[id] = internal.Contact.create({reseller_id: 100})
             await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
         })
+        it('should throw an error if a system contact is changed to a customer contact', async () => {
+            const id = 1
+            const updates = new Dictionary<internal.Contact>()
+            updates[id] = internal.Contact.create({reseller_id: 1})
+            await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
+        })
+        it('should throw an error if a customer contact is changed to a system contact', async () => {
+            const id = 2
+            const updates = new Dictionary<internal.Contact>()
+            updates[id] = internal.Contact.create({reseller_id: null})
+            await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
+        })
     })
 
     describe('delete', () => {

@@ -1,5 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsBoolean, IsEnum, IsInt, IsString} from 'class-validator'
+import {IsBoolean, IsDate, IsEnum, IsInt, IsString} from 'class-validator'
 
 import {RbacRole} from '~/config/constants.config'
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
@@ -45,6 +45,11 @@ export class ContactResponseDto extends ResponseDto {
         country?: string
 
     @CanBeNull()
+    @IsDate()
+    @ApiProperty({type: Date, nullable: true, description: 'Time of creation, null if unknown'})
+        create_timestamp?: Date
+
+    @CanBeNull()
     @IsString()
     @ApiProperty()
         email?: string
@@ -60,7 +65,7 @@ export class ContactResponseDto extends ResponseDto {
         firstname?: string
 
     @CanBeNull()
-    @IsString()
+    @IsEnum(ContactGender)
     @ApiProperty()
         gender?: ContactGender
 
@@ -130,6 +135,10 @@ export class ContactResponseDto extends ResponseDto {
         mobilenumber?: string
 
     @CanBeNull()
+    @IsDate()
+    @ApiProperty({type: Date, nullable: true, description: 'Time of the last modification'})
+        modify_timestamp?: Date
+
     @IsBoolean()
     @ApiProperty()
         newsletter: boolean
@@ -150,7 +159,6 @@ export class ContactResponseDto extends ResponseDto {
     @Expandable({name: 'reseller_id', controller: 'resellerController'})
         reseller_id?: number
 
-    @CanBeNull()
     @IsEnum(ContactStatus)
     @ApiProperty()
         status: ContactStatus
@@ -159,6 +167,11 @@ export class ContactResponseDto extends ResponseDto {
     @IsString()
     @ApiProperty()
         street?: string
+
+    @CanBeNull()
+    @IsDate()
+    @ApiProperty({type: Date, nullable: true, description: 'Time of termination'})
+        terminate_timestamp?: Date
 
     @CanBeNull()
     @IsString()

@@ -12,7 +12,7 @@ import {
     Req,
     forwardRef,
 } from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {CustomerContactService} from './customer-contact.service'
@@ -27,6 +27,7 @@ import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
+import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
@@ -92,7 +93,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     }
 
     @Get()
-    @ApiQuery({type: SearchLogic})
+    @ApiSearchQuery(SearchLogic, CustomerContactSearchDto)
     @ApiPaginatedResponse(CustomerContactResponseDto)
     async readAll(@Req() req: Request): Promise<[CustomerContactResponseDto[], number]> {
         this.log.debug({

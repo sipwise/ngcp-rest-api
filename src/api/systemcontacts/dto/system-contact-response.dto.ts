@@ -1,5 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsBoolean, IsEnum, IsInt, IsString} from 'class-validator'
+import {IsBoolean, IsDate, IsEnum, IsInt, IsString} from 'class-validator'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {ResponseDto} from '~/dto/response.dto'
@@ -43,6 +43,11 @@ export class SystemContactResponseDto extends ResponseDto {
         country?: string
 
     @CanBeNull()
+    @IsDate()
+    @ApiProperty({type: Date, nullable: true, description: 'Time of creation, null if unknown'})
+        create_timestamp?: Date
+
+    @CanBeNull()
     @IsString()
     @ApiProperty()
         email?: string
@@ -57,6 +62,7 @@ export class SystemContactResponseDto extends ResponseDto {
     @ApiProperty()
         firstname?: string
 
+    @CanBeNull()
     @IsEnum(ContactGender)
     @ApiProperty()
         gender?: ContactGender
@@ -127,6 +133,10 @@ export class SystemContactResponseDto extends ResponseDto {
         mobilenumber?: string
 
     @CanBeNull()
+    @IsDate()
+    @ApiProperty({type: Date, nullable: true, description: 'Time of the last modification'})
+        modify_timestamp?: Date
+
     @IsBoolean()
     @ApiProperty()
         newsletter: boolean
@@ -149,6 +159,11 @@ export class SystemContactResponseDto extends ResponseDto {
     @IsString()
     @ApiProperty()
         street?: string
+
+    @CanBeNull()
+    @IsDate()
+    @ApiProperty({type: Date, nullable: true, description: 'Time of termination'})
+        terminate_timestamp?: Date
 
     @CanBeNull()
     @IsString()
