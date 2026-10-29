@@ -17,18 +17,6 @@ import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
-// not a class method, as MariaDbRepository wraps all methods with HandleDbErrors making them async
-function searchDtoByType(type?: ContactType): ContactSearchDto | CustomerContactSearchDto | SystemContactSearchDto {
-    switch (type) {
-        case ContactType.CustomerContact:
-            return new CustomerContactSearchDto()
-        case ContactType.SystemContact:
-            return new SystemContactSearchDto()
-        default:
-            return new ContactSearchDto()
-    }
-}
-
 export class ContactMariadbRepository extends MariaDbRepository implements ContactRepository {
     private readonly log = new LoggerService(ContactMariadbRepository.name)
 
@@ -151,7 +139,7 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
             user: sr.user.username,
         })
         const qb = await this.createBaseQueryBuilder(options)
-        const searchDto = searchDtoByType(options?.type)
+        const searchDto = this.getSearchDto(options?.type)
         configureQueryBuilder(
             qb,
             sr.query,
@@ -185,6 +173,17 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
             await db.billing.Contact.update(id, update)
         }
         return ids
+    }
+
+    private getSearchDto(type?: ContactType): ContactSearchDto | CustomerContactSearchDto | SystemContactSearchDto {
+        switch (type) {
+            case ContactType.CustomerContact:
+                return new CustomerContactSearchDto()
+            case ContactType.SystemContact:
+                return new SystemContactSearchDto()
+            default:
+                return new ContactSearchDto()
+        }
     }
 
     private async createBaseQueryBuilder(options: ContactOptions): Promise<SelectQueryBuilder<db.billing.Contact>> {
