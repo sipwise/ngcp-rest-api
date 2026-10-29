@@ -4,20 +4,6 @@ import {DocumentBuilder, OpenAPIObject, ParameterObject, ReferenceObject, Swagge
 import {SEARCH_QUERY_ORDER_KEY} from '~/decorators/api-search-query.decorator'
 import swaggerTags from '~/localisation/en/swagger-tags.json'
 
-// reset auth that might come with the browser
-const resetAuthOnCompleteJs = `
-(function () {
-    const swaggerUIBundle = window.SwaggerUIBundle
-    window.SwaggerUIBundle = Object.assign(function (options) {
-        options.onComplete = function () {
-            window.ui.preauthorizeBasic('basicAuth', '123', '123')
-            window.ui.preauthorizeApiKey('bearerAuth', '123')
-        }
-        return swaggerUIBundle(options)
-    }, swaggerUIBundle)
-})()
-`
-
 // TODO: only en localisation for now as swagger cannot switch languages dynamically
 export function createSwaggerDocument(app: NestApplication, api_prefix: string): void {
     const docBuilder = new DocumentBuilder()
@@ -63,10 +49,11 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string):
             tagsSorter: 'alpha',
             tryItOutEnabled: true,
             supportedSubmitMethods: ['get', 'patch', 'put', 'post', 'delete', 'options', 'head'], // 'trace' is disabled
+            onComplete: () => { // reset auth that might come with the browser
+                this.ui.preauthorizeBasic('basicAuth', '123', '123')
+                this.ui.preauthorizeApiKey('bearerAuth', '123')
+            },
         },
-        // functions in swaggerOptions are serialized with toString(), which returns no source in the
-        // bytecode compiled prod bundle, so onComplete is injected as a plain js string instead
-        customJsStr: resetAuthOnCompleteJs,
         jsonDocumentUrl: api_prefix + '/swagger.json',
         yamlDocumentUrl: api_prefix + '/swagger.yaml',
     })
