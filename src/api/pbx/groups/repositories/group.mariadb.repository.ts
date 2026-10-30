@@ -89,7 +89,7 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
                         where = 'bg.contract_id'
                         break
                     case 'extension':
-                        where = 'bg.contract_id'
+                        where = 'sg.pbx_extension'
                         break
                     case 'hunt_policy':
                         where = 'sg.pbx_hunt_policy'
@@ -99,6 +99,9 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
                         break
                     case 'name':
                         where = 'sg.username'
+                        break
+                    case 'id':
+                        where = 'bg.id'
                         break
                 }
                 if (searchLogic.searchOr) {
@@ -111,13 +114,29 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
     }
 
     private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, sr: ServiceRequest): void {
-        if (sr.user.role == RbacRole.reseller) {
-            qb
-                .innerJoin('bg.contract', 'contract')
-                .innerJoin('contract.contact', 'contact')
-                .where('contact.reseller_id = :reseller_id', {reseller_id: sr.user.reseller_id})
-        } else if (sr.user.role == RbacRole.subscriber) {
-            qb.where('bg.id = :subscriber_id', {subscriber_id: sr.user.id})
+        switch (sr.user.role) {
+            case RbacRole.reseller:
+                qb
+                    .innerJoin('bg.contract', 'contract')
+                    .innerJoin('contract.contact', 'contact')
+                    .andWhere('contact.reseller_id = :reseller_id', {reseller_id: sr.user.reseller_id})
+                break
+            case RbacRole.subscriberadmin:
+                qb.andWhere('bg.contract_id = :customer_id', {customer_id: sr.user.customer_id})
+                break
+            case RbacRole.subscriber:
+                qb.andWhere(subQb => {
+                    const membership = subQb.subQuery()
+                        .select('1')
+                        .from(db.provisioning.VoipPbxGroup, 'pbx_member')
+                        .innerJoin(db.provisioning.VoipSubscriber, 'pbx_member_sub', 'pbx_member_sub.id = pbx_member.subscriber_id')
+                        .innerJoin('pbx_member_sub.billing_voip_subscriber', 'pbx_member_bsub')
+                        .where('pbx_member.group_id = sg.id')
+                        .andWhere('pbx_member_bsub.id = :subscriber_id')
+                        .getQuery()
+                    return `EXISTS ${membership}`
+                }, {subscriber_id: sr.user.id})
+                break
         }
     }
 
