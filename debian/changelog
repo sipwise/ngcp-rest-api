@@ -1,3 +1,10 @@
+ngcp-rest-api (26.3.1.4+0~mr26.3.1.4) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [ed3549a] MT#66156 fix pbx/groups access for pilot and subscriber
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 30 Oct 2026 15:18:10 +0100
+
 ngcp-rest-api (26.3.1.3+0~mr26.3.1.3) unstable; urgency=medium
 
   [ Kirill Solomko ]
