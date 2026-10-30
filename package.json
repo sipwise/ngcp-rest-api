@@ -25,9 +25,9 @@
     "test:watch": "jest --clearCache && NODE_OPTIONS='--experimental-vm-modules --no-warnings=ExperimentalWarning' jest --config jest-unit.config.js --watch",
     "test:cov": "jest --clearCache && NODE_OPTIONS='--experimental-vm-modules --no-warnings=ExperimentalWarning' jest --config jest-unit.config.js --coverage",
     "test:debug": "node --experimental-vm-modules --config jest-unit.config.js --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --clearCache && NODE_OPTIONS='--experimental-vm-modules --no-warnings=ExperimentalWarning' jest --forceExit --config jest-e2e.config.js",
-    "test:e2e:watch": "jest --clearCache && NODE_OPTIONS='--experimental-vm-modules --no-warnings=ExperimentalWarning' jest --config jest-e2e.config.js --watch",
-    "test:e2e:cov": "jest --clearCache && NODE_OPTIONS='--experimental-vm-modules --no-warnings=ExperimentalWarning' jest --config jest-e2e.config.js --coverage",
+    "test:e2e": "jest --clearCache && NODE_OPTIONS='--experimental-vm-modules --no-warnings=ExperimentalWarning' jest --runInBand --forceExit --config jest-e2e.config.js",
+    "test:e2e:watch": "jest --clearCache && NODE_OPTIONS='--experimental-vm-modules --no-warnings=ExperimentalWarning' jest --runInBand --config jest-e2e.config.js --watch",
+    "test:e2e:cov": "jest --clearCache && NODE_OPTIONS='--experimental-vm-modules --no-warnings=ExperimentalWarning' jest --runInBand --config jest-e2e.config.js --coverage",
     "test:e2e:debug": "node --experimental-vm-modules --config jest-e2e.config.js --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
   },
   "dependencies": {
