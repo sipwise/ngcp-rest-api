@@ -42,7 +42,7 @@ export class PbxUserMariadbRepository extends MariaDbRepository implements PbxUs
     async readById(id: number, options: PbxUserOptions, _sr: ServiceRequest): Promise<internal.PbxUser> {
         const qb = db.provisioning.VoipSubscriber.createQueryBuilder('pSubscriber')
         await this.addJoinAndWhere(qb)
-        qb.where('bSubscriber.id = :id', {id})
+        qb.andWhere('bSubscriber.id = :id', {id})
         this.addFilterBy(qb, options.filterBy)
         const pbxUser = await qb.getOneOrFail()
         return pbxUser.toInternalPbxUser()
@@ -90,7 +90,7 @@ export class PbxUserMariadbRepository extends MariaDbRepository implements PbxUs
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, filterBy: PbxUserOptions['filterBy']): void {
         if (filterBy) {
             if (filterBy.id) {
-                qb.andWhere('bSubscriber.id = :id', {id: filterBy.id})
+                qb.andWhere('bSubscriber.id = :subscriberId', {subscriberId: filterBy.id})
             }
             if (filterBy.customerId) {
                 qb.andWhere('bSubscriber.contract_id = :customerId', {customerId: filterBy.customerId})
