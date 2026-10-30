@@ -23,6 +23,7 @@ const resourceName = 'pbx/groups'
     RbacRole.admin,
     RbacRole.system,
     RbacRole.reseller,
+    RbacRole.subscriberadmin,
     RbacRole.subscriber,
 )
 @ApiTags('Pbx')
