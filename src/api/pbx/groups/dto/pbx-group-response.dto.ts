@@ -1,6 +1,6 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {Type} from 'class-transformer'
-import {IsInt, IsNumber, IsString} from 'class-validator'
+import {IsInt, IsNumber, IsOptional, IsString} from 'class-validator'
 
 import {internal} from '~/entities'
 import {UrlReferenceType} from '~/enums/url-reference-type.enum'
@@ -11,16 +11,19 @@ export class PbxGroupResponseDto {
     @ApiProperty()
         customer_id: number
 
+    @IsOptional()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({nullable: true})
         extension: string
 
+    @IsOptional()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({nullable: true})
         hunt_policy: string
 
+    @IsOptional()
     @IsNumber()
-    @ApiProperty()
+    @ApiProperty({nullable: true})
         hunt_timeout: number
 
     @IsInt()

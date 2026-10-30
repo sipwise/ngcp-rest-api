@@ -166,7 +166,7 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
         const _options = this.getSubscriberPhonebookOptionsFromServiceRequest(sr)
 
         if (sr.user.role === RbacRole.subscriberadmin || sr.user.role === RbacRole.subscriber) {
-            if (entities.some(entity => entity.subscriberId != sr.user.subscriber_id)) {
+            if (entities.some(entity => entity.subscriberId != sr.user.id)) {
                 const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
                 throw new UnprocessableEntityException(error.message)
             }
