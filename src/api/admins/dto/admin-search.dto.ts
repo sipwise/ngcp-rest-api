@@ -6,43 +6,43 @@ import {RbacRole} from '~/config/constants.config'
 
 export class AdminSearchDto implements AdminResponseDto {
     @ApiPropertyOptional()
-        billing_data: boolean = undefined
+        billing_data: boolean
     @ApiPropertyOptional()
-        call_data: boolean = undefined
+        call_data: boolean
     @ApiPropertyOptional()
-        can_reset_password: boolean = undefined
+        can_reset_password: boolean
     @ApiPropertyOptional()
-        email: string = undefined
+        email: string
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiPropertyOptional()
-        is_active: boolean = undefined
+        is_active: boolean
     @ApiPropertyOptional()
-        is_ccare: boolean = undefined
+        is_ccare: boolean
     @ApiPropertyOptional()
-        is_master: boolean = undefined
+        is_master: boolean
     @ApiPropertyOptional()
-        is_superuser: boolean = undefined
+        is_superuser: boolean
     @ApiPropertyOptional()
-        is_system: boolean = undefined
+        is_system: boolean
     @ApiPropertyOptional()
-        lawful_intercept: boolean = undefined
+        lawful_intercept: boolean
     @ApiPropertyOptional()
-        login: string = undefined
+        login: string
     @ApiPropertyOptional()
-        read_only: boolean = undefined
+        read_only: boolean
     @ApiPropertyOptional()
-        reseller_id?: number = undefined
+        reseller_id?: number
     @ApiPropertyOptional()
-        role: RbacRole = undefined
+        role: RbacRole
     @ApiPropertyOptional()
-        show_passwords: boolean = undefined
+        show_passwords: boolean
     @ApiPropertyOptional()
-        password_last_modify_time: string = undefined
+        password_last_modify_time: string
     @ApiPropertyOptional()
-        enable_2fa: boolean = undefined
+        enable_2fa: boolean
     @ApiPropertyOptional()
-        otp_init: boolean = undefined
+        otp_init: boolean
     @ApiPropertyOptional()
         otp_secret?: string
     @ApiHideProperty()

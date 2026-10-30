@@ -2,29 +2,29 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class JournalSearchDto {
     @ApiPropertyOptional()
-        content?: string | Buffer = undefined
+        content?: string | Buffer
     @ApiPropertyOptional()
-        content_format: string = undefined
+        content_format: string
     @ApiPropertyOptional()
-        operation: string = undefined
+        operation: string
     @ApiPropertyOptional()
-        reseller_id: number = undefined
+        reseller_id: number
     @ApiPropertyOptional()
-        resource_id: number = undefined
+        resource_id: number
     @ApiPropertyOptional()
-        resource_name: string = undefined
+        resource_name: string
     @ApiPropertyOptional()
-        role: string | null = undefined
+        role: string | null
     @ApiPropertyOptional()
-        timestamp: number = undefined
+        timestamp: number
     @ApiPropertyOptional()
-        tx_id: string = undefined
+        tx_id: string
     @ApiPropertyOptional()
-        username: string = undefined
+        username: string
     @ApiPropertyOptional()
-        user_id: number = undefined
+        user_id: number
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'journal.id',

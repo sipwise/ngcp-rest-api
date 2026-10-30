@@ -2,13 +2,13 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class RewriteRuleSetSearchDto {
     @ApiPropertyOptional()
-        reseller_id: number = undefined
+        reseller_id: number
     @ApiPropertyOptional()
-        description: number = undefined
+        description: number
     @ApiPropertyOptional()
-        name: string = undefined
+        name: string
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'rewriteRuleSet.id',

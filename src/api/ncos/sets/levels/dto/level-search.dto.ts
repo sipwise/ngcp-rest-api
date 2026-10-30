@@ -2,11 +2,11 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class NCOSSetLevelSearchDto {
     @ApiPropertyOptional()
-        set_id: number = undefined
+        set_id: number
     @ApiPropertyOptional()
-        level_id: number = undefined
+        level_id: number
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'ncosSetLevel.id',

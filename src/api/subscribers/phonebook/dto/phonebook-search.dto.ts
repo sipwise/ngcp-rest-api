@@ -2,21 +2,21 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class SubscriberPhonebookSearchDto {
     @ApiPropertyOptional()
-        name: string = undefined
+        name: string
     @ApiPropertyOptional()
-        subscriber_id: number = undefined
+        subscriber_id: number
     @ApiPropertyOptional()
-        customer_id: number = undefined
+        customer_id: number
     @ApiPropertyOptional()
-        number: string = undefined
+        number: string
     @ApiPropertyOptional()
-        shared: boolean = undefined
+        shared: boolean
     @ApiPropertyOptional()
-        own: boolean = undefined
+        own: boolean
     @ApiPropertyOptional()
-        purge_existing: boolean = undefined
+        purge_existing: boolean
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'phonebook.id',

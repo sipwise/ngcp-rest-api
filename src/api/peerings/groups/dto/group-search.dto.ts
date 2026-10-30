@@ -2,17 +2,17 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class PeeringGroupSearchDto {
     @ApiPropertyOptional()
-        contract_id: number = undefined
+        contract_id: number
     @ApiPropertyOptional()
-        name: string = undefined
+        name: string
     @ApiPropertyOptional()
-        description: number = undefined
+        description: number
     @ApiPropertyOptional()
-        time_set_id: number = undefined
+        time_set_id: number
     @ApiPropertyOptional()
-        priority: number = undefined
+        priority: number
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'vpg.id',

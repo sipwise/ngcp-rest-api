@@ -4,19 +4,19 @@ import {VoicemailResponseDto} from './voicemail-response.dto'
 
 export class VoicemailSearchDto implements VoicemailResponseDto {
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiPropertyOptional()
-        call_id: string = undefined
+        call_id: string
     @ApiPropertyOptional()
-        caller: string = undefined
+        caller: string
     @ApiPropertyOptional()
-        duration: string = undefined
+        duration: string
     @ApiPropertyOptional()
-        folder: string = undefined
+        folder: string
     @ApiPropertyOptional()
-        time: string = undefined
+        time: string
     @ApiPropertyOptional()
-        subscriber_id: number = undefined
+        subscriber_id: number
     @ApiHideProperty()
         _alias = {
             id: 'voicemail.id',

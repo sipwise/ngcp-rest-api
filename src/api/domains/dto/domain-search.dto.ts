@@ -2,11 +2,11 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class DomainSearchDto {
     @ApiPropertyOptional()
-        domain: string = undefined
+        domain: string
     @ApiPropertyOptional()
-        reseller_id: number = undefined
+        reseller_id: number
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'domain.id',

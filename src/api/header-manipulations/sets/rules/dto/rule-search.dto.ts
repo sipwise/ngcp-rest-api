@@ -4,21 +4,21 @@ import {HeaderRuleDirection} from '~/entities/internal/header-rule.internal.enti
 
 export class HeaderManipulationRuleSearchDto {
     @ApiPropertyOptional()
-        name: string = undefined
+        name: string
     @ApiPropertyOptional()
-        set_id: number = undefined
+        set_id: number
     @ApiPropertyOptional()
-        subscriber_id: number = undefined
+        subscriber_id: number
     @ApiPropertyOptional()
-        stopper: boolean = undefined
+        stopper: boolean
     @ApiPropertyOptional()
-        enabled: boolean = undefined
+        enabled: boolean
     @ApiPropertyOptional()
-        direction: HeaderRuleDirection = undefined
+        direction: HeaderRuleDirection
     @ApiPropertyOptional()
-        priority: number = undefined
+        priority: number
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'headerRule.id',

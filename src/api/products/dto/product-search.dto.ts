@@ -4,13 +4,13 @@ import {ProductClass} from '~/entities/internal/product.internal.entity'
 
 export class ProductSearchDto {
     @ApiPropertyOptional()
-        class: ProductClass = undefined
+        class: ProductClass
     @ApiPropertyOptional()
-        handle: string = undefined
+        handle: string
     @ApiPropertyOptional()
-        name: string = undefined
+        name: string
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'product_id',

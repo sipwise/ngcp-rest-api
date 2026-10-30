@@ -4,25 +4,25 @@ import {RewriteRuleDirection, RewriteRuleField} from '~/entities/internal/rewrit
 
 export class RewriteRuleSearchDto {
     @ApiPropertyOptional()
-        set_id: number = undefined
+        set_id: number
     @ApiPropertyOptional()
-        description: string = undefined
+        description: string
     @ApiPropertyOptional()
-        enabled: boolean = undefined
+        enabled: boolean
     @ApiPropertyOptional()
-        match_pattern: string = undefined
+        match_pattern: string
     @ApiPropertyOptional()
-        replace_pattern: string = undefined
+        replace_pattern: string
     @ApiPropertyOptional()
-        direction: RewriteRuleDirection = undefined
+        direction: RewriteRuleDirection
     @ApiPropertyOptional()
-        field: RewriteRuleField = undefined
+        field: RewriteRuleField
     @ApiPropertyOptional()
-        priority: number = undefined
+        priority: number
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiPropertyOptional()
-        reseller_id: number = undefined
+        reseller_id: number
     @ApiHideProperty()
         _alias = {
             id: 'rewriteRule.id',

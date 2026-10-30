@@ -6,17 +6,17 @@ import {InvoiceTemplateCallDirection, InvoiceTemplateCategory, InvoiceTemplateTy
 
 export class InvoiceTemplateSearchDto implements Partial<InvoiceTemplateResponseDto> {
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiPropertyOptional()
-        name: string = undefined
+        name: string
     @ApiPropertyOptional()
-        reseller_id: number = undefined
+        reseller_id: number
     @ApiPropertyOptional()
-        type: InvoiceTemplateType = undefined
+        type: InvoiceTemplateType
     @ApiPropertyOptional()
-        call_direction: InvoiceTemplateCallDirection = undefined
+        call_direction: InvoiceTemplateCallDirection
     @ApiPropertyOptional()
-        category: InvoiceTemplateCategory = undefined
+        category: InvoiceTemplateCategory
     @ApiHideProperty()
         _alias = {
             id: 'template.id',

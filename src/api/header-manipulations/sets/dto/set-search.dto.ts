@@ -2,13 +2,13 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class HeaderManipulationSetSearchDto {
     @ApiPropertyOptional()
-        reseller_id: number = undefined
+        reseller_id: number
     @ApiPropertyOptional()
-        subscriber_id: number = undefined
+        subscriber_id: number
     @ApiPropertyOptional()
-        name: string = undefined
+        name: string
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'headerRuleSet.id',

@@ -4,25 +4,25 @@ import {NCOSLevelMode} from '~/entities/internal/ncos-level.internal.entity'
 
 export class NCOSLevelSearchDto {
     @ApiPropertyOptional()
-        reseller_id: number = undefined
+        reseller_id: number
     @ApiPropertyOptional()
-        level: number = undefined
+        level: number
     @ApiPropertyOptional()
-        mode: NCOSLevelMode = undefined
+        mode: NCOSLevelMode
     @ApiPropertyOptional()
-        local_ac: boolean = undefined
+        local_ac: boolean
     @ApiPropertyOptional()
-        intra_pbx: boolean = undefined
+        intra_pbx: boolean
     @ApiPropertyOptional()
-        description: string = undefined
+        description: string
     @ApiPropertyOptional()
-        time_set_id: number = undefined
+        time_set_id: number
     @ApiPropertyOptional()
-        time_set_invert: boolean = undefined
+        time_set_invert: boolean
     @ApiPropertyOptional()
-        expose_to_customer: boolean = undefined
+        expose_to_customer: boolean
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'ncosLevel.id',

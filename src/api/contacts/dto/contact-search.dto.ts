@@ -72,7 +72,7 @@ export class ContactSearchDto {
     @ApiPropertyOptional()
         vatnum?: string
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'contact.id',

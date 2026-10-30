@@ -2,29 +2,29 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class HeaderManipulationRuleActionSearchDto {
     @ApiPropertyOptional()
-        action_type: string = undefined
+        action_type: string
     @ApiPropertyOptional()
-        enabled: boolean = undefined
+        enabled: boolean
     @ApiPropertyOptional()
-        header_part: string = undefined
+        header_part: string
     @ApiPropertyOptional()
-        header: string = undefined
+        header: string
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiPropertyOptional()
-        priority: number = undefined
+        priority: number
     @ApiPropertyOptional()
-        rule_id: number = undefined
+        rule_id: number
     @ApiPropertyOptional()
-        rwr_dp_id: number = undefined
+        rwr_dp_id: number
     @ApiPropertyOptional()
-        rwr_set_id: number = undefined
+        rwr_set_id: number
     @ApiPropertyOptional()
-        value_part: string = undefined
+        value_part: string
     @ApiPropertyOptional()
-        value: string = undefined
+        value: string
     @ApiPropertyOptional()
-        subscriber_id: number = undefined
+        subscriber_id: number
     @ApiHideProperty()
         _alias = {
             id: 'headerRuleAction.id',

@@ -2,21 +2,21 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class NumberSearchDto {
     @ApiPropertyOptional()
-        subscriber_id: number = undefined
+        subscriber_id: number
     @ApiPropertyOptional()
-        is_primary: boolean = undefined
+        is_primary: boolean
     @ApiPropertyOptional()
-        is_devid: boolean = undefined
+        is_devid: boolean
     @ApiPropertyOptional()
-        number_id: number = undefined
+        number_id: number
     @ApiPropertyOptional()
-        cc: number = undefined
+        cc: number
     @ApiPropertyOptional()
-        ac: string = undefined
+        ac: string
     @ApiPropertyOptional()
-        sn: string = undefined
+        sn: string
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'voipNumber.id',

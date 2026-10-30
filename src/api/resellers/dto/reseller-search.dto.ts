@@ -4,13 +4,13 @@ import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 
 export class ResellerSearchDto {
     @ApiPropertyOptional()
-        contract_id: number = undefined
+        contract_id: number
     @ApiPropertyOptional()
-        name?: string = undefined
+        name?: string
     @ApiPropertyOptional()
-        status?: ResellerStatus = undefined
+        status?: ResellerStatus
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'reseller.id',

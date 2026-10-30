@@ -8,19 +8,19 @@ import {
 
 export class ContractSearchDto {
     @ApiPropertyOptional()
-        billing_profile_definition: ContractBillingProfileDefinition = undefined
+        billing_profile_definition: ContractBillingProfileDefinition
     @ApiPropertyOptional()
-        billing_profile_id: number = undefined
+        billing_profile_id: number
     @ApiPropertyOptional()
-        contact_id?: number = undefined
+        contact_id?: number
     @ApiPropertyOptional()
-        external_id: string = undefined
+        external_id: string
     @ApiPropertyOptional()
-        status?: ContractStatus = undefined
+        status?: ContractStatus
     @ApiPropertyOptional()
-        type?: ContractType = undefined
+        type?: ContractType
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'contract.id',

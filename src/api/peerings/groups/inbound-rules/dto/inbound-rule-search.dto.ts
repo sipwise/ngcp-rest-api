@@ -2,23 +2,23 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class PeeringInboundRuleSearchDto {
     @ApiPropertyOptional()
-        name: string = undefined
+        name: string
     @ApiPropertyOptional()
-        group_id: number = undefined
+        group_id: number
     @ApiPropertyOptional()
-        field: string = undefined
+        field: string
     @ApiPropertyOptional()
-        pattern: string = undefined
+        pattern: string
     @ApiPropertyOptional()
-        priority: number = undefined
+        priority: number
     @ApiPropertyOptional()
-        reject_code: number = undefined
+        reject_code: number
     @ApiPropertyOptional()
-        reject_reason: string = undefined
+        reject_reason: string
     @ApiPropertyOptional()
-        enabled: boolean = undefined
+        enabled: boolean
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'rule.id',

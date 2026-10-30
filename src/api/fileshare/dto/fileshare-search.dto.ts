@@ -4,21 +4,21 @@ import {FileshareResponseDto} from './fileshare-response.dto'
 
 export class FileshareSearchDto implements FileshareResponseDto {
     @ApiPropertyOptional()
-        id: string = undefined
+        id: string
     @ApiPropertyOptional()
-        name: string = undefined
+        name: string
     @ApiPropertyOptional()
-        mime_type: string = undefined
+        mime_type: string
     @ApiPropertyOptional()
-        ttl: number = undefined
+        ttl: number
     @ApiPropertyOptional()
-        size: number = undefined
+        size: number
     @ApiPropertyOptional()
-        created_at: Date = undefined
+        created_at: Date
     @ApiPropertyOptional()
-        expires_at: Date = undefined
+        expires_at: Date
     @ApiPropertyOptional()
-        subscriber_id?: number = undefined
+        subscriber_id?: number
     @ApiPropertyOptional()
-        reseller_id?: number = undefined
+        reseller_id?: number
 }

@@ -2,11 +2,11 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class BanSubscriberSearchDto {
     @ApiPropertyOptional()
-        reseller_id: number = undefined
+        reseller_id: number
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiPropertyOptional()
-        username: string = undefined
+        username: string
     @ApiHideProperty()
         _alias = {
             id: 'bSubscriber.id',

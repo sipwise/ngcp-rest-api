@@ -2,15 +2,15 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class NCOSPatternSearchDto {
     @ApiPropertyOptional()
-        ncos_level_id: number = undefined
+        ncos_level_id: number
     @ApiPropertyOptional()
-        pattern: string = undefined
+        pattern: string
     @ApiPropertyOptional()
-        description: string = undefined
+        description: string
     @ApiPropertyOptional()
-        reseller_id: number = undefined
+        reseller_id: number
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'pattern.id',

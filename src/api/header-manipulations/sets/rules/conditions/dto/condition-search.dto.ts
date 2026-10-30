@@ -2,21 +2,21 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class HeaderManipulationRuleConditionSearchDto {
     @ApiPropertyOptional()
-        rule_id: number = undefined
+        rule_id: number
     @ApiPropertyOptional()
-        match_name: string = undefined
+        match_name: string
     @ApiPropertyOptional()
-        expression_negation: boolean = undefined
+        expression_negation: boolean
     @ApiPropertyOptional()
-        rwr_set_id: number = undefined
+        rwr_set_id: number
     @ApiPropertyOptional()
-        rwr_dp_id: number = undefined
+        rwr_dp_id: number
     @ApiPropertyOptional()
-        enabled: boolean = undefined
+        enabled: boolean
     @ApiPropertyOptional()
-        subscriber_id: number = undefined
+        subscriber_id: number
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'headerRuleCondition.id',

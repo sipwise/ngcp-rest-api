@@ -2,29 +2,29 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class PeeringGroupServerSearchDto {
     @ApiPropertyOptional()
-        name: string = undefined
+        name: string
     @ApiPropertyOptional()
-        group_id: number = undefined
+        group_id: number
     @ApiPropertyOptional()
-        ip: string = undefined
+        ip: string
     @ApiPropertyOptional()
-        host?: string | null = undefined
+        host?: string | null
     @ApiPropertyOptional()
-        port: number = undefined
+        port: number
     @ApiPropertyOptional()
-        transport: number = undefined
+        transport: number
     @ApiPropertyOptional()
-        weight: number = undefined
+        weight: number
     @ApiPropertyOptional()
-        via_route: string | null = undefined
+        via_route: string | null
     @ApiPropertyOptional()
-        via_lb: boolean = undefined
+        via_lb: boolean
     @ApiPropertyOptional()
-        enabled: boolean = undefined
+        enabled: boolean
     @ApiPropertyOptional()
-        probe: boolean = undefined
+        probe: boolean
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'server.id',

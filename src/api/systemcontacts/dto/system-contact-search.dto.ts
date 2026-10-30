@@ -4,73 +4,73 @@ import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal
 
 export class SystemContactSearchDto {
     @ApiPropertyOptional()
-        bankname?: string = undefined
+        bankname?: string
     @ApiPropertyOptional()
-        bic?: string = undefined
+        bic?: string
     @ApiPropertyOptional()
-        city?: string = undefined
+        city?: string
     @ApiPropertyOptional()
-        company?: string = undefined
+        company?: string
     @ApiPropertyOptional()
-        comregnum?: string = undefined
+        comregnum?: string
     @ApiPropertyOptional()
-        country?: string = undefined
+        country?: string
     @ApiPropertyOptional()
-        create_timestamp: Date = undefined
+        create_timestamp: Date
     @ApiPropertyOptional()
-        email?: string = undefined
+        email?: string
     @ApiPropertyOptional()
-        faxnumber?: string = undefined
+        faxnumber?: string
     @ApiPropertyOptional()
-        firstname?: string = undefined
+        firstname?: string
     @ApiPropertyOptional()
-        gender?: ContactGender = undefined
+        gender?: ContactGender
     @ApiPropertyOptional()
-        gpp0?: string = undefined
+        gpp0?: string
     @ApiPropertyOptional()
-        gpp1?: string = undefined
+        gpp1?: string
     @ApiPropertyOptional()
-        gpp2?: string = undefined
+        gpp2?: string
     @ApiPropertyOptional()
-        gpp3?: string = undefined
+        gpp3?: string
     @ApiPropertyOptional()
-        gpp4?: string = undefined
+        gpp4?: string
     @ApiPropertyOptional()
-        gpp5?: string = undefined
+        gpp5?: string
     @ApiPropertyOptional()
-        gpp6?: string = undefined
+        gpp6?: string
     @ApiPropertyOptional()
-        gpp7?: string = undefined
+        gpp7?: string
     @ApiPropertyOptional()
-        gpp8?: string = undefined
+        gpp8?: string
     @ApiPropertyOptional()
-        gpp9?: string = undefined
+        gpp9?: string
     @ApiPropertyOptional()
-        iban?: string = undefined
+        iban?: string
     @ApiPropertyOptional()
-        lastname?: string = undefined
+        lastname?: string
     @ApiPropertyOptional()
-        mobilenumber?: string = undefined
+        mobilenumber?: string
     @ApiPropertyOptional()
-        modify_timestamp: Date = undefined
+        modify_timestamp: Date
     @ApiPropertyOptional()
-        newsletter: boolean = undefined
+        newsletter: boolean
     @ApiPropertyOptional()
-        phonenumber?: string = undefined
+        phonenumber?: string
     @ApiPropertyOptional()
-        postcode?: string = undefined
+        postcode?: string
     @ApiPropertyOptional()
-        status: ContactStatus = undefined
+        status: ContactStatus
     @ApiPropertyOptional()
-        street?: string = undefined
+        street?: string
     @ApiPropertyOptional()
-        terminate_timestamp?: Date = undefined
+        terminate_timestamp?: Date
     @ApiPropertyOptional()
-        timezone?: string = undefined
+        timezone?: string
     @ApiPropertyOptional()
-        vatnum?: string = undefined
+        vatnum?: string
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'contact.id',

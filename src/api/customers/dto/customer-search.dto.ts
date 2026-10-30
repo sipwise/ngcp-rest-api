@@ -8,35 +8,35 @@ import {
 
 export class CustomerSearchDto {
     @ApiPropertyOptional()
-        add_vat: boolean = undefined
+        add_vat: boolean
     @ApiPropertyOptional()
-        billing_profile_definition: ContractBillingProfileDefinition = undefined
+        billing_profile_definition: ContractBillingProfileDefinition
     @ApiPropertyOptional()
-        billing_profile_id: number = undefined
+        billing_profile_id: number
     @ApiPropertyOptional()
-        contact_id?: number = undefined
+        contact_id?: number
     @ApiPropertyOptional()
-        external_id: string = undefined
+        external_id: string
     @ApiPropertyOptional()
-        invoice_email_template_id?: number = undefined
+        invoice_email_template_id?: number
     @ApiPropertyOptional()
-        invoice_template_id?: number = undefined
+        invoice_template_id?: number
     @ApiPropertyOptional()
-        max_subscribers?: number = undefined
+        max_subscribers?: number
     @ApiPropertyOptional()
-        passreset_email_template_id?: number = undefined
+        passreset_email_template_id?: number
     @ApiPropertyOptional()
-        profile_package_id?: number = undefined
+        profile_package_id?: number
     @ApiPropertyOptional()
-        status?: ContractStatus = undefined
+        status?: ContractStatus
     @ApiPropertyOptional()
-        subscriber_email_template_id?: number = undefined
+        subscriber_email_template_id?: number
     @ApiPropertyOptional()
-        type?: ContractType = undefined
+        type?: ContractType
     @ApiPropertyOptional()
-        vat_rate?: number = undefined
+        vat_rate?: number
     @ApiPropertyOptional()
-        id: number = undefined
+        id: number
     @ApiHideProperty()
         _alias = {
             id: 'contract.id',
