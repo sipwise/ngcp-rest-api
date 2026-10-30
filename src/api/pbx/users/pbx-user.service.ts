@@ -44,7 +44,7 @@ export class PbxUserService implements CrudService<internal.PbxUser> {
         }
 
         if (sr.user.role === RbacRole.subscriber) {
-            options.filterBy.id = sr.user.subscriber_id
+            options.filterBy.id = sr.user.id
         }
 
         return options
