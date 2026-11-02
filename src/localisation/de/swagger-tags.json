@@ -1,0 +1,122 @@
+[
+    {
+        "name": "Admin",
+        "description": "[/admins] Administrative Benutzer, die die Plattform verwalten"
+    },
+    {
+        "name": "Auth",
+        "description": "[/auth] Authentifizierungsmethoden"
+    },
+    {
+        "name": "AuthJwt",
+        "description": "[/auth/jwt] Ein Access Token (JWT) mit den Zugangsdaten des Benutzers oder einem Auth Token anfordern"
+    },
+    {
+        "name": "AuthToken",
+        "description": "[/auth/tokens] Benannte Auth Tokens für unbeaufsichtigte Jobs anlegen, auflisten und widerrufen"
+    },
+    {
+        "name": "Ban",
+        "description": "[/bans/ips, /bans/registrations] Gesperrte IP-Adressen und SIP-Registrierungen anzeigen und manuell freigeben"
+    },
+    {
+        "name": "Bans",
+        "description": "[/bans] Gesperrte Admins und Subscriber anzeigen und manuell freigeben"
+    },
+    {
+        "name": "ClearCallCounter",
+        "description": "[/clearcallcounters] (Wartungs-Endpoint, den nur Admin-Benutzer vom Typ 'system' aufrufen können) Anrufzähler zurücksetzen"
+    },
+    {
+        "name": "Contact",
+        "description": "[/contacts] Kontakte enthalten Daten wie vollständigen Namen, Adresse und Telefon und können zu Resellern, Customers und Peering-Gruppen gehören"
+    },
+    {
+        "name": "Contract",
+        "description": "[/contracts] Verträge können zu einem Customer, Reseller oder Peering gehören"
+    },
+    {
+        "name": "Customer",
+        "description": "[/customers] Routen für Customers, einschließlich des Customer-Telefonbuchs"
+    },
+    {
+        "name": "CustomerContact",
+        "description": "[/customercontacts] Kontakte festlegen, die zu Customers gehören"
+    },
+    {
+        "name": "CustomerNumber",
+        "description": "[/customernumbers] Liste der Nummern aller Subscriber, die zum Customer gehören"
+    },
+    {
+        "name": "CustomerSpeedDial",
+        "description": "[/customerspeeddials] Kurzwahleinträge, die für den Customer definiert sind und allen Subscribern des Customers zur Verfügung stehen"
+    },
+    {
+        "name": "Domain",
+        "description": "[/domains] Domain-Einträge, die von Subscribern und in Anrufen verwendet werden"
+    },
+    {
+        "name": "Fileshare",
+        "description": "[/fileshare] Dateien zwischen Benutzern der Plattform und auch mit externen Benutzern teilen"
+    },
+    {
+        "name": "Journal",
+        "description": "[/journals] Journal der auf der Plattform ausgeführten API-Operationen"
+    },
+    {
+        "name": "HeaderManipulation",
+        "description": "[/header-manipulation] Verfügbare Routen für Header Manipulation, einschließlich Sets, Regeln, Aktionen und Bedingungen"
+    },
+    {
+        "name": "NCOS",
+        "description": "[/ncos] Verfügbare Routen für NCOS, einschließlich Sets und ihrer Levels"
+    },
+    {
+        "name": "Number",
+        "description": "[/numbers] Verfügbare VoIP-Nummern"
+    },
+    {
+        "name": "Otp",
+        "description": "[/auth/otp] Das TOTP-Secret oder einen QR-Code zum Einrichten der Zwei-Faktor-Authentifizierung abrufen"
+    },
+    {
+        "name": "Pbx",
+        "description": "[/pbx] Verfügbare Routen für PBX, einschließlich Gruppen und ihrer Mitglieder"
+    },
+    {
+        "name": "Peering",
+        "description": "[/peerings] Verfügbare Routen für Peering, einschließlich Gruppenregeln, Inbound-Regeln und Servern"
+    },
+    {
+        "name": "Product",
+        "description": "[/products] Verfügbare Produkte, mit denen ein Customer angelegt werden kann"
+    },
+    {
+        "name": "Reseller",
+        "description": "[/resellers] Reseller der Plattform und ihr Telefonbuch festlegen."
+    },
+    {
+        "name": "RewriteRule",
+        "description": "[/rewrite-rules] Verfügbare Routen für Rewrite Rules, einschließlich Sets und Regeln."
+    },
+    {
+        "name": "Subscriber",
+        "description": "[/subscribers] Verfügbare Routen für Subscriber, einschließlich Telefonbuch"
+    },
+    {
+        "name": "SystemContact",
+        "description": "[/systemcontacts] Kontakte festlegen, die zu Resellern oder Peering-Gruppen gehören"
+    },
+    {
+        "name": "Template",
+        "description": "[/templates] Verfügbare Routen für Templates, einschließlich Rechnungen"
+    },
+    {
+        "name": "Userinfo",
+        "description": "[/userinfo] Informationen über den aktuellen Benutzer, seine Rolle und Berechtigungen"
+    },
+    {
+        "name": "Voicemail",
+        "description": "[/voicemails] Verfügbare Voicemails eines Subscribers prüfen und ihren Status ändern (new/old)"
+    }
+]

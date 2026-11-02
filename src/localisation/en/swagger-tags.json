@@ -8,6 +8,18 @@
         "description": "[/auth] Authentication methods"
     },
     {
+        "name": "AuthJwt",
+        "description": "[/auth/jwt] Obtain an Access Token (JWT) with the user credentials or an Auth Token"
+    },
+    {
+        "name": "AuthToken",
+        "description": "[/auth/tokens] Create, list and revoke named Auth Tokens for unattended jobs"
+    },
+    {
+        "name": "Ban",
+        "description": "[/bans/ips, /bans/registrations] Read and manually release banned IP addresses and SIP registrations"
+    },
+    {
         "name": "Bans",
         "description": "[/bans] Read and manually release blocked Admins and Subscribers"
     },
@@ -64,8 +76,16 @@
         "description": "[/numbers] Available VOIP numbers"
     },
     {
+        "name": "Otp",
+        "description": "[/auth/otp] Get the TOTP secret or QR code to set up two-factor authentication"
+    },
+    {
         "name": "Pbx",
         "description": "[/pbx] Available PBX related routes including groups and their members"
+    },
+    {
+        "name": "Peering",
+        "description": "[/peerings] Available Peering related routes including group rules, inbound rules and servers"
     },
     {
         "name": "Product",

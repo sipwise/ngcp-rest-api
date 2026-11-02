@@ -2785,10 +2785,34 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/linkify-it@npm:^5":
+  version: 5.0.0
+  resolution: "@types/linkify-it@npm:5.0.0"
+  checksum: 10c0/7bbbf45b9dde17bf3f184fee585aef0e7342f6954f0377a24e4ff42ab5a85d5b806aaa5c8d16e2faf2a6b87b2d94467a196b7d2b85c9c7de2f0eaac5487aaab8
+  languageName: node
+  linkType: hard
+
 "@types/luxon@npm:~3.7.0":
   version: 3.7.2
   resolution: "@types/luxon@npm:3.7.2"
   checksum: 10c0/c29fd286d0804221b14b3380dd9b290390c188a0df67fa770ced16994e637ab62de89425daf4de82150ea44b9bbbbb9537e4c85677d381d98bec5afcf53f0b5a
+  languageName: node
+  linkType: hard
+
+"@types/markdown-it@npm:14.2.0":
+  version: 14.2.0
+  resolution: "@types/markdown-it@npm:14.2.0"
+  dependencies:
+    "@types/linkify-it": "npm:^5"
+    "@types/mdurl": "npm:^2"
+  checksum: 10c0/60ff1a0495ef303310744566342c49b4b3e76fbdca82c5ec28d88731fc934b0c63335d25bca6133903c877f2c41c59cdfddefb3626c6ee0780b9573ddf6aefe4
+  languageName: node
+  linkType: hard
+
+"@types/mdurl@npm:^2":
+  version: 2.0.0
+  resolution: "@types/mdurl@npm:2.0.0"
+  checksum: 10c0/cde7bb571630ed1ceb3b92a28f7b59890bb38b8f34cd35326e2df43eebfc74985e6aa6fd4184e307393bad8a9e0783a519a3f9d13c8e03788c0f98e5ec869c5e
   languageName: node
   linkType: hard
 
@@ -5889,6 +5913,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"highlight.js@npm:11.12.0":
+  version: 11.12.0
+  resolution: "highlight.js@npm:11.12.0"
+  checksum: 10c0/c62ebfad125b541790412374a15ae1ca15a45fdfac0fae2b5c96b6a10dc8d5d15380adf748584fb08cfeb4db2b3a749a170e2afd0b640e9fad86445b1c435777
+  languageName: node
+  linkType: hard
+
 "hookified@npm:^1.15.0, hookified@npm:^1.15.1":
   version: 1.15.1
   resolution: "hookified@npm:1.15.1"
@@ -7131,7 +7162,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"markdown-it@npm:^14.3.0":
+"markdown-it@npm:14.3.3, markdown-it@npm:^14.3.0":
   version: 14.3.3
   resolution: "markdown-it@npm:14.3.3"
   dependencies:
@@ -7495,6 +7526,7 @@ __metadata:
     "@types/express": "npm:5.0.6"
     "@types/jest": "npm:30.0.0"
     "@types/jsonwebtoken": "npm:9.0.10"
+    "@types/markdown-it": "npm:14.2.0"
     "@types/multer": "npm:2.3.0"
     "@types/node": "npm:26.6.5"
     "@types/papaparse": "npm:5.5.2"
@@ -7526,12 +7558,14 @@ __metadata:
     generate-password: "npm:1.7.1"
     globals: "npm:17.13.0"
     halson: "npm:3.2.0"
+    highlight.js: "npm:11.12.0"
     ignore-loader: "npm:0.1.2"
     ioredis: "npm:6.0.0"
     jest: "npm:30.5.2"
     jest-circus: "npm:30.5.2"
     jest-environment-node: "npm:30.5.2"
     js-yaml: "npm:5.5.0"
+    markdown-it: "npm:14.3.3"
     mysql2: "npm:3.24.6"
     nest-winston: "npm:2.0.0"
     nestjs-i18n: "npm:10.8.5"

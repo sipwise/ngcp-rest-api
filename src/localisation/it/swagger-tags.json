@@ -1,0 +1,122 @@
+[
+    {
+        "name": "Admin",
+        "description": "[/admins] Utenti amministrativi che supervisionano la piattaforma"
+    },
+    {
+        "name": "Auth",
+        "description": "[/auth] Metodi di autenticazione"
+    },
+    {
+        "name": "AuthJwt",
+        "description": "[/auth/jwt] Ottenere un Access Token (JWT) con le credenziali dell'utente o un Auth Token"
+    },
+    {
+        "name": "AuthToken",
+        "description": "[/auth/tokens] Creare, elencare e revocare Auth Token con nome per job non presidiati"
+    },
+    {
+        "name": "Ban",
+        "description": "[/bans/ips, /bans/registrations] Consultare e sbloccare manualmente indirizzi IP e registrazioni SIP bloccati"
+    },
+    {
+        "name": "Bans",
+        "description": "[/bans] Consultare e sbloccare manualmente amministratori e abbonati bloccati"
+    },
+    {
+        "name": "ClearCallCounter",
+        "description": "[/clearcallcounters] (Endpoint di manutenzione richiamabile solo dagli amministratori 'system') Azzerare i contatori delle chiamate"
+    },
+    {
+        "name": "Contact",
+        "description": "[/contacts] I contatti contengono dati come nome completo, indirizzo e telefono e possono appartenere a reseller, clienti e gruppi di peering"
+    },
+    {
+        "name": "Contract",
+        "description": "[/contracts] I contratti possono appartenere a un cliente, a un reseller o a un peering"
+    },
+    {
+        "name": "Customer",
+        "description": "[/customers] Route relative ai clienti, inclusa la rubrica del cliente"
+    },
+    {
+        "name": "CustomerContact",
+        "description": "[/customercontacts] Definire i contatti che appartengono ai clienti"
+    },
+    {
+        "name": "CustomerNumber",
+        "description": "[/customernumbers] Elenco dei numeri di tutti gli abbonati che appartengono al cliente"
+    },
+    {
+        "name": "CustomerSpeedDial",
+        "description": "[/customerspeeddials] Voci di selezione rapida definite per il cliente e disponibili per tutti i suoi abbonati"
+    },
+    {
+        "name": "Domain",
+        "description": "[/domains] Domini usati dagli abbonati e nelle chiamate"
+    },
+    {
+        "name": "Fileshare",
+        "description": "[/fileshare] Condividere file tra gli utenti della piattaforma e anche con utenti esterni"
+    },
+    {
+        "name": "Journal",
+        "description": "[/journals] Registro delle operazioni API eseguite sulla piattaforma"
+    },
+    {
+        "name": "HeaderManipulation",
+        "description": "[/header-manipulation] Route disponibili per la manipolazione degli header, inclusi set, regole, azioni e condizioni"
+    },
+    {
+        "name": "NCOS",
+        "description": "[/ncos] Route disponibili relative a NCOS, inclusi i set e i relativi livelli"
+    },
+    {
+        "name": "Number",
+        "description": "[/numbers] Numeri VoIP disponibili"
+    },
+    {
+        "name": "Otp",
+        "description": "[/auth/otp] Ottenere il segreto TOTP o il codice QR per configurare l'autenticazione a due fattori"
+    },
+    {
+        "name": "Pbx",
+        "description": "[/pbx] Route disponibili relative al PBX, inclusi i gruppi e i relativi membri"
+    },
+    {
+        "name": "Peering",
+        "description": "[/peerings] Route disponibili relative al peering, incluse regole dei gruppi, regole in ingresso e server"
+    },
+    {
+        "name": "Product",
+        "description": "[/products] Prodotti disponibili con cui è possibile creare un cliente"
+    },
+    {
+        "name": "Reseller",
+        "description": "[/resellers] Definire i reseller della piattaforma e la relativa rubrica."
+    },
+    {
+        "name": "RewriteRule",
+        "description": "[/rewrite-rules] Route disponibili relative alle regole di riscrittura, inclusi set e regole."
+    },
+    {
+        "name": "Subscriber",
+        "description": "[/subscribers] Route disponibili relative agli abbonati, inclusa la rubrica"
+    },
+    {
+        "name": "SystemContact",
+        "description": "[/systemcontacts] Definire i contatti che appartengono a reseller o gruppi di peering"
+    },
+    {
+        "name": "Template",
+        "description": "[/templates] Route disponibili relative ai modelli, incluse le fatture"
+    },
+    {
+        "name": "Userinfo",
+        "description": "[/userinfo] Informazioni sull'utente corrente, ruolo e autorizzazioni"
+    },
+    {
+        "name": "Voicemail",
+        "description": "[/voicemails] Consultare i messaggi vocali disponibili di un abbonato e modificarne lo stato (nuovo/letto)"
+    }
+]

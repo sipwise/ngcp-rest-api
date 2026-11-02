@@ -3,6 +3,10 @@ const webpack = require('webpack')
 const { TsconfigPathsPlugin } = require('tsconfig-paths-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const TerserPlugin = require("terser-webpack-plugin");
+const fs = require('fs')
+
+// the package version of the build, the top entry of debian/changelog (the ci adds the snapshot entry before it builds)
+const packageVersion = (fs.readFileSync('./debian/changelog', 'utf8').match(/^\S+ \(([^)]+)\)/) || [])[1] || ''
 
 module.exports =
 {
@@ -261,6 +265,7 @@ module.exports =
     new webpack.DefinePlugin({
       'process.env': {
         NODE_WP_BUNDLE: JSON.stringify(true),
+        NGCP_REST_API_VERSION: JSON.stringify(packageVersion),
       }
     }),
   ],
