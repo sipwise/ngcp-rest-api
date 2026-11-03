@@ -1,6 +1,7 @@
 import {HttpStatus, INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
+import {In} from 'typeorm'
 
 import {CustomerModule} from './customer.module'
 import {CustomerResponseDto} from './dto/customer-response.dto'
@@ -13,6 +14,7 @@ import {db} from '~/entities'
 import {BillingProfileStatus} from '~/entities/internal/billing-profile.internal.entity'
 import {ContractBillingProfileDefinition, ContractStatus, ContractStatus as CustomerStatus} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
+import {Discriminator} from '~/entities/internal/profile-package-set.internal.entity'
 import {toLocalDateTime} from '~/helpers/date.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {validate} from '~/helpers/validate.helper'
@@ -56,6 +58,7 @@ const DAY = 24 * 3600 * 1000
 const CONTACT_ID = 1
 const RESELLER_ID = 1
 const SIPACCOUNT_PRODUCT_ID = 4
+const RESELLER_PRODUCT_ID = 3
 
 // whole seconds, as stored in DATETIME columns
 const at = (offset: number): Date => new Date(Math.floor((Date.now() + offset) / 1000) * 1000)
@@ -74,8 +77,19 @@ describe('CustomerController', () => {
     const suffix = `${Date.now()}`
     const fixtureContractIds: number[] = []
     const profileIds: number[] = []
+    const networkIds: number[] = []
+    const packageIds: number[] = []
+    let otherResellerContractId: number
+    let otherResellerId: number
     let profileA: number
     let profileB: number
+    let profileC: number
+    let profileTerminated: number
+    let profileNoReseller: number
+    let profileOtherReseller: number
+    let networkA: number
+    let packageA: number
+    let packageB: number
 
     const createProfile = async (name: string, resellerId: number | null, status = BillingProfileStatus.Active): Promise<number> => {
         const profile = await db.billing.BillingProfile.create({
@@ -86,6 +100,21 @@ describe('CustomerController', () => {
         }).save()
         profileIds.push(profile.id)
         return profile.id
+    }
+
+    const createPackage = async (name: string, profileId: number): Promise<number> => {
+        const pkg = await db.billing.ProfilePackage.create({
+            reseller_id: RESELLER_ID,
+            name: `e2e ${name} ${suffix}`,
+            description: 'e2e',
+        }).save()
+        packageIds.push(pkg.id)
+        await appService.db.getRepository(db.billing.PackageProfileSet).insert({
+            package_id: pkg.id,
+            discriminator: Discriminator.Initial,
+            profile_id: profileId,
+        })
+        return pkg.id
     }
 
     const createContract = async (mappings: Mapping[], createdAt = at(0), profilePackageId?: number): Promise<number> => {
@@ -111,6 +140,22 @@ describe('CustomerController', () => {
         return contract.id
     }
 
+    const readMappings = (contractId: number): Promise<db.billing.ContractBillingProfileNetwork[]> =>
+        db.billing.ContractBillingProfileNetwork.find({where: {contract_id: contractId}, order: {id: 'ASC'}})
+
+    const putProfiles = (contractId: number, billingProfiles: object[]): request.Test =>
+        request(app.getHttpServer())
+            .put(`/customers/${contractId}`)
+            .set(...authHeader)
+            .send({
+                contact_id: CONTACT_ID,
+                status: ContractStatus.Active,
+                type: CustomerType.SipAccount,
+                billing_profile_definition: ContractBillingProfileDefinition.Profiles,
+                billing_profiles: billingProfiles,
+            })
+
+
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
             imports: [CustomerModule, AppModule],
@@ -129,8 +174,34 @@ describe('CustomerController', () => {
 
         await app.init()
 
+        const resellerContract = await db.billing.Contract.create({
+            product_id: RESELLER_PRODUCT_ID,
+            status: ContractStatus.Active,
+        }).save()
+        otherResellerContractId = resellerContract.id
+        const reseller = await db.billing.Reseller.create({
+            contract_id: resellerContract.id,
+            name: `e2e billing ${suffix}`,
+        }).save()
+        otherResellerId = reseller.id
+
         profileA = await createProfile('A', RESELLER_ID)
         profileB = await createProfile('B', RESELLER_ID)
+        profileC = await createProfile('C', RESELLER_ID)
+        profileTerminated = await createProfile('terminated', RESELLER_ID, BillingProfileStatus.Terminated)
+        profileNoReseller = await createProfile('no reseller', null)
+        profileOtherReseller = await createProfile('other reseller', otherResellerId)
+
+        const network = await db.billing.BillingNetwork.create({
+            reseller_id: RESELLER_ID,
+            name: `e2e network ${suffix}`,
+            description: 'e2e',
+        }).save()
+        networkIds.push(network.id)
+        networkA = network.id
+
+        packageA = await createPackage('package A', profileA)
+        packageB = await createPackage('package B', profileB)
     })
 
     afterAll(async () => {
@@ -199,6 +270,155 @@ describe('CustomerController', () => {
                 // a customer without mappings breaks GET /customers
                 await db.billing.Contract.delete(id)
                 fixtureContractIds.splice(fixtureContractIds.indexOf(id), 1)
+            })
+        })
+
+        describe('Customer PUT billing mappings, id mode', () => {
+            it('keeps future mappings and starts the new profile now (local time)', async () => {
+                const future = at(10 * DAY)
+                const contractId = await createContract([
+                    {profileId: profileA},
+                    {profileId: profileC, start: future},
+                ])
+                const before = at(0)
+                const response = await request(app.getHttpServer())
+                    .put(`/customers/${contractId}`)
+                    .set(...authHeader)
+                    .send({
+                        contact_id: CONTACT_ID,
+                        status: ContractStatus.Active,
+                        type: CustomerType.SipAccount,
+                        billing_profile_definition: ContractBillingProfileDefinition.ID,
+                        billing_profile_id: profileB,
+                    })
+                expect(response.status).toEqual(HttpStatus.OK)
+
+                const mappings = await readMappings(contractId)
+                const futureMapping = mappings.find(m => m.billing_profile_id == profileC)
+                expect(futureMapping?.start_date?.getTime()).toEqual(future.getTime())
+                const newMapping = mappings.find(m => m.billing_profile_id == profileB)
+                expect(newMapping).toBeDefined()
+                expect(Math.abs(newMapping.start_date.getTime() - before.getTime())).toBeLessThan(60 * 1000)
+            })
+
+            it('rejects a terminated billing profile with 422', async () => {
+                const contractId = await createContract([{profileId: profileA}])
+                const response = await request(app.getHttpServer())
+                    .put(`/customers/${contractId}`)
+                    .set(...authHeader)
+                    .send({
+                        contact_id: CONTACT_ID,
+                        status: ContractStatus.Active,
+                        type: CustomerType.SipAccount,
+                        billing_profile_definition: ContractBillingProfileDefinition.ID,
+                        billing_profile_id: profileTerminated,
+                    })
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+            })
+        })
+
+        describe('Customer PUT billing mappings, package mode', () => {
+            const putPackage = (contractId: number, packageId?: number): request.Test =>
+                request(app.getHttpServer())
+                    .put(`/customers/${contractId}`)
+                    .set(...authHeader)
+                    .send({
+                        contact_id: CONTACT_ID,
+                        status: ContractStatus.Active,
+                        type: CustomerType.SipAccount,
+                        billing_profile_definition: ContractBillingProfileDefinition.Package,
+                        profile_package_id: packageId,
+                    })
+
+            it('keeps future mappings when the package changes', async () => {
+                const future = at(10 * DAY)
+                const contractId = await createContract([
+                    {profileId: profileA},
+                    {profileId: profileC, start: future},
+                ], at(0), packageA)
+                const response = await putPackage(contractId, packageB)
+                expect(response.status).toEqual(HttpStatus.OK)
+
+                const mappings = await readMappings(contractId)
+                expect(mappings.find(m => m.billing_profile_id == profileC)?.start_date?.getTime()).toEqual(future.getTime())
+                expect(mappings.find(m => m.billing_profile_id == profileB)).toBeDefined()
+            })
+        })
+
+        describe('Customer PUT billing mappings, profiles mode', () => {
+            let contractId: number
+
+            beforeAll(async () => {
+                contractId = await createContract([{profileId: profileA}])
+            })
+
+            it('stores dated intervals in local time', async () => {
+                const start = at(5 * DAY)
+                const stop = at(6 * DAY)
+                const response = await putProfiles(contractId, [
+                    {profile_id: profileB, start: toLocalDateTime(start), stop: toLocalDateTime(stop)},
+                ])
+                expect(response.status).toEqual(HttpStatus.OK)
+
+                const mapping = (await readMappings(contractId)).find(m => m.billing_profile_id == profileB)
+                expect(mapping?.start_date?.getTime()).toEqual(start.getTime())
+                expect(mapping?.end_date?.getTime()).toEqual(stop.getTime())
+            })
+
+            it('stores no network for network_id null', async () => {
+                const response = await putProfiles(contractId, [
+                    {profile_id: profileB, network_id: null, start: toLocalDateTime(at(5 * DAY)), stop: null},
+                ])
+                expect(response.status).toEqual(HttpStatus.OK)
+
+                const mapping = (await readMappings(contractId)).find(m => m.billing_profile_id == profileB)
+                expect(mapping).toBeDefined()
+                expect(mapping.billing_network_id).toBeNull()
+            })
+
+            it('accepts a billing profile without reseller', async () => {
+                const response = await putProfiles(contractId, [
+                    {profile_id: profileNoReseller, start: toLocalDateTime(at(5 * DAY))},
+                ])
+                expect(response.status).toEqual(HttpStatus.OK)
+            })
+
+            it('accepts a network of the reseller', async () => {
+                const response = await putProfiles(contractId, [
+                    {profile_id: profileB, network_id: networkA, start: toLocalDateTime(at(5 * DAY))},
+                ])
+                expect(response.status).toEqual(HttpStatus.OK)
+            })
+
+            it.each([
+                ['a start in the past', (): object[] => [{profile_id: profileB, start: toLocalDateTime(at(-DAY))}]],
+                ['an open interval', (): object[] => [{profile_id: profileB}]],
+                ['a stop without start', (): object[] => [{profile_id: profileB, stop: toLocalDateTime(at(5 * DAY))}]],
+                ['a terminated billing profile', (): object[] => [{profile_id: profileTerminated, start: toLocalDateTime(at(5 * DAY))}]],
+                ['a billing profile of another reseller', (): object[] => [{profile_id: profileOtherReseller, start: toLocalDateTime(at(5 * DAY))}]],
+                ['an unknown billing profile', (): object[] => [{profile_id: 999999999, start: toLocalDateTime(at(5 * DAY))}]],
+                ['an unknown network', (): object[] => [{profile_id: profileB, network_id: 999999999, start: toLocalDateTime(at(5 * DAY))}]],
+            ])('rejects %s with 422', async (_name, profiles) => {
+                const response = await putProfiles(contractId, profiles())
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+            })
+        })
+
+        describe('Customer POST billing mappings, profiles mode', () => {
+            it('requires an open interval without network', async () => {
+                const contractsBefore = await db.billing.Contract.count()
+                const response = await request(app.getHttpServer())
+                    .post('/customers')
+                    .set(...authHeader)
+                    .send({
+                        contact_id: CONTACT_ID,
+                        status: ContractStatus.Active,
+                        type: CustomerType.SipAccount,
+                        billing_profile_definition: ContractBillingProfileDefinition.Profiles,
+                        billing_profiles: [{profile_id: profileA, network_id: networkA, start: null, stop: null}],
+                    })
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(await db.billing.Contract.count()).toEqual(contractsBefore)
             })
         })
 
@@ -520,8 +740,18 @@ describe('CustomerController', () => {
                 await db.billing.Contract.delete(createdCustomerIds)
             if (fixtureContractIds.length)
                 await db.billing.Contract.delete(fixtureContractIds)
+            if (packageIds.length) {
+                await appService.db.getRepository(db.billing.PackageProfileSet).delete({package_id: In(packageIds)})
+                await db.billing.ProfilePackage.delete(packageIds)
+            }
+            if (networkIds.length)
+                await db.billing.BillingNetwork.delete(networkIds)
             if (profileIds.length)
                 await db.billing.BillingProfile.delete(profileIds)
+            if (otherResellerId)
+                await db.billing.Reseller.delete(otherResellerId)
+            if (otherResellerContractId)
+                await db.billing.Contract.delete(otherResellerContractId)
         })
     })
 })

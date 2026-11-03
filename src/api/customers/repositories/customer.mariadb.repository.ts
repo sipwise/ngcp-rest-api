@@ -9,6 +9,7 @@ import {db, internal} from '~/entities'
 import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {Discriminator} from '~/entities/internal/profile-package-set.internal.entity'
+import {toLocalDateTime} from '~/helpers/date.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -42,8 +43,8 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
     async appendBillingMappings(customerId: number, mappings: internal.BillingMapping[], now?: Date, deleteMappings?: boolean): Promise<void> {
         let csvString = ''
         for (const mapping of mappings) {
-            csvString += `${mapping.startDate ? mapping.startDate.toISOString() : ''},`
-            csvString += `${mapping.endDate ? mapping.endDate.toISOString() : ''},`
+            csvString += `${mapping.startDate ? toLocalDateTime(mapping.startDate) : ''},`
+            csvString += `${mapping.endDate ? toLocalDateTime(mapping.endDate) : ''},`
             csvString += `${mapping.billingProfileId || ''},`
             csvString += `${mapping.networkId || ''},`
             csvString += ';'
@@ -55,7 +56,7 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         const db = this.app.dbConnection()
         await db.query('call billing.schedule_contract_billing_profile_network(?,?,?);', [
             customerId,
-            (now && deleteMappings) ? now.toISOString() : undefined,
+            (now && deleteMappings) ? toLocalDateTime(now) : undefined,
             csvString,
         ])
     }
@@ -309,14 +310,19 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
     }
 
     async readBillingProfile(profileId: number, _sr: ServiceRequest): Promise<internal.BillingProfile> {
+        // a null id would be ignored in the where clause and return the first row
+        if (profileId == undefined)
+            return null
         const profile = await db.billing.BillingProfile.findOne({where: {id: profileId}})
         if (!profile) {
-            throw new NotFoundException()
+            return null
         }
         return profile.toInternal()
     }
 
     async readBillingNetwork(networkId: number, _sr: ServiceRequest): Promise<internal.BillingNetwork> {
+        if (networkId == undefined)
+            return null
         const network = await db.billing.BillingNetwork.findOne({where: {id: networkId}})
         if (!network) {
             return null

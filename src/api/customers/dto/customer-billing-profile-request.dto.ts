@@ -1,7 +1,7 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsDate, IsNumber} from 'class-validator'
+import {Type} from 'class-transformer'
+import {IsDate, IsNumber, IsOptional} from 'class-validator'
 
-import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
@@ -12,18 +12,20 @@ export class CustomerBillingProfileRequestDto {
         profile_id: number
 
     @ApiPropertyOptional()
-    @CanBeNull()
+    @IsOptional()
     @IsNumber()
         network_id?: number
 
     @ApiPropertyOptional()
-    @CanBeNull()
+    @IsOptional()
+    @Type(() => Date)
     @IsDate()
         start?: Date
 
     @ApiPropertyOptional()
+    @IsOptional()
+    @Type(() => Date)
     @IsDate()
-    @CanBeNull()
         stop?: Date
 
     constructor(entity: internal.CustomerBillingProfile, _options?: ResponseDtoOptions) {

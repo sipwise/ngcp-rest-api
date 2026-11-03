@@ -138,7 +138,7 @@ export class CustomerRequestDto implements RequestDto {
     }
 
     toInternal(options: RequestDtoOptions = {}): internal.Customer {
-        const customer = internal.Customer.create({
+        const data = {
             addVat: this.add_vat ?? false,
             billingProfileId: this.billing_profile_id,
             billingProfiles: this.billing_profiles?.map(b => b.toInternal()),
@@ -154,14 +154,16 @@ export class CustomerRequestDto implements RequestDto {
             type: this.type,
             vatRate: this.vat_rate ?? 0,
             billingProfileDefinition: this.billing_profile_definition,
-        })
+        }
+        const customer = internal.Customer.create(data)
 
         if (options.id) {
             customer.id = options.id
         }
 
+        // only the fields of the request, the others (create_timestamp, send_invoice, ...) are kept
         if (options.assignNulls) {
-            Object.keys(customer).forEach(k => {
+            Object.keys(data).forEach(k => {
                 if (customer[k] === undefined) customer[k] = null
             })
         }
