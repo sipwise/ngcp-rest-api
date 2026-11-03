@@ -6,6 +6,7 @@ import {CustomerSearchDto} from '~/api/customers/dto/customer-search.dto'
 import {CustomerRepository} from '~/api/customers/interfaces/customer.repository'
 import {AppService} from '~/app.service'
 import {db, internal} from '~/entities'
+import {BillingProfileStatus} from '~/entities/internal/billing-profile.internal.entity'
 import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {Discriminator} from '~/entities/internal/profile-package-set.internal.entity'
@@ -191,9 +192,7 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
                 const actualBillingProfile = await actualBillingProfileQb.getOneOrFail()
                 internal.billingProfileId = actualBillingProfile.billing_profile_id
                 if (!internal.profilePackageId) {
-                    const profileCountQb = db.billing.VContractBillingProfileNetworkSchedule.createQueryBuilder('profile_count')
-                    profileCountQb.where({contract_id: d.id})
-                    const profileCount = await profileCountQb.getCount()
+                    const profileCount = await (await this.billingProfilesQueryBuilder(d.id)).getCount()
                     if (profileCount === 1) {
                         internal.billingProfileDefinition = ContractBillingProfileDefinition.ID
                     } else {
@@ -229,9 +228,7 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         const actualBillingProfile = await actualBillingProfileQb.getOneOrFail()
         internal.billingProfileId = actualBillingProfile.billing_profile_id
         if (!internal.profilePackageId) {
-            const profileCountQb = db.billing.VContractBillingProfileNetworkSchedule.createQueryBuilder('profile_count')
-            profileCountQb.where({contract_id: result.id})
-            const profileCount = await profileCountQb.getCount()
+            const profileCount = await (await this.billingProfilesQueryBuilder(result.id)).getCount()
             if (profileCount === 1) {
                 internal.billingProfileDefinition = ContractBillingProfileDefinition.ID
             } else {
@@ -303,8 +300,7 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         this.addFilterBy(customerQb, filterBy)
         await customerQb.getOneOrFail()
 
-        const qb = db.billing.VContractBillingProfileNetworkSchedule.createQueryBuilder('billingProfiles')
-        qb.where({contract_id: customerId})
+        const qb = await this.billingProfilesQueryBuilder(customerId)
         const [result, totalCount] = await qb.getManyAndCount()
         return [result.map((d) => d.toInternalCustomerBillingProfile()), totalCount]
     }
@@ -348,11 +344,25 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         this.addFilterBy(customerQb, filterBy)
         await customerQb.getOneOrFail()
 
-        const qb = db.billing.VContractBillingProfileNetworkSchedule.createQueryBuilder('billingProfiles')
-        qb.where({contract_id: customerId})
-        qb.andWhere('start_date <= :now', {now: new Date()})
+        const qb = await this.billingProfilesQueryBuilder(customerId)
+        qb.andWhere('billingProfiles.start_date > :now', {now: new Date()})
         const [result, totalCount] = await qb.getManyAndCount()
         return [result.map((d) => d.toInternalCustomerBillingProfile()), totalCount]
+    }
+
+    // as v1 resource_from_mappings: no end markers (+0.001), no terminated profiles/networks
+    private billingProfilesQueryBuilder(customerId: number): Promise<SelectQueryBuilder<db.billing.VContractBillingProfileNetworkSchedule>> {
+        const qb = db.billing.VContractBillingProfileNetworkSchedule.createQueryBuilder('billingProfiles')
+        // no joins: the view has no primary column for getCount()
+        qb.where('billingProfiles.contract_id = :customerId', {customerId: customerId})
+        qb.andWhere('FLOOR(billingProfiles.effective_start_time) = billingProfiles.effective_start_time')
+        qb.andWhere('billingProfiles.billing_profile_id NOT IN (SELECT id FROM billing.billing_profiles WHERE status = :terminated)',
+            {terminated: BillingProfileStatus.Terminated})
+        qb.andWhere('(billingProfiles.network_id IS NULL OR billingProfiles.network_id NOT IN ' +
+            '(SELECT id FROM billing.billing_networks WHERE status = :terminated))')
+        qb.orderBy('billingProfiles.effective_start_time', 'ASC')
+        qb.addOrderBy('billingProfiles.id', 'ASC')
+        return Promise.resolve(qb)
     }
 
     private createQueryBuilder(filters: CustomerFilterBy): Promise<SelectQueryBuilder<db.billing.Contract>> {

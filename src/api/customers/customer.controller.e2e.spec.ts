@@ -11,6 +11,7 @@ import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {db} from '~/entities'
+import {BillingNetworkStatus} from '~/entities/internal/billing-network.internal.entity'
 import {BillingProfileStatus} from '~/entities/internal/billing-profile.internal.entity'
 import {ContractBillingProfileDefinition, ContractStatus, ContractStatus as CustomerStatus} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
@@ -88,6 +89,7 @@ describe('CustomerController', () => {
     let profileNoReseller: number
     let profileOtherReseller: number
     let networkA: number
+    let networkTerminated: number
     let packageA: number
     let packageB: number
 
@@ -199,6 +201,14 @@ describe('CustomerController', () => {
         }).save()
         networkIds.push(network.id)
         networkA = network.id
+        const terminatedNetwork = await db.billing.BillingNetwork.create({
+            reseller_id: RESELLER_ID,
+            name: `e2e terminated network ${suffix}`,
+            description: 'e2e',
+            status: BillingNetworkStatus.Terminated,
+        }).save()
+        networkIds.push(terminatedNetwork.id)
+        networkTerminated = terminatedNetwork.id
 
         packageA = await createPackage('package A', profileA)
         packageB = await createPackage('package B', profileB)
@@ -404,6 +414,80 @@ describe('CustomerController', () => {
             })
         })
 
+        describe('Customer billing profile lists', () => {
+            let contractId: number
+
+            const getList = (path: string): request.Test =>
+                request(app.getHttpServer())
+                    .get(`/customers/${contractId}/${path}`)
+                    .set(...authHeader)
+                    .set(...preferHeader)
+
+            beforeAll(async () => {
+                contractId = await createContract([
+                    {profileId: profileA},
+                    {profileId: profileB, start: at(5 * DAY), end: at(6 * DAY)},
+                    {profileId: profileTerminated, start: at(8 * DAY)},
+                    {profileId: profileC, networkId: networkTerminated, start: at(9 * DAY)},
+                ])
+            })
+
+            it('lists whole-second schedules ordered by effective start time, without terminated profiles/networks', async () => {
+                const response = await getList('@billing-profiles')
+                expect(response.status).toEqual(HttpStatus.OK)
+                const [profiles, count] = response.body
+                expect(count).toEqual(profiles.length)
+                const ids = profiles.map((p: {profile_id: number}) => p.profile_id)
+                expect(ids).toEqual(expect.arrayContaining([profileA, profileB]))
+                expect(ids).not.toContain(profileTerminated)
+                expect(ids).not.toContain(profileC)
+                const times = profiles.map((p: {effective_start_time: string}) => new Date(p.effective_start_time).getTime())
+                expect(times.every((t: number) => t % 1000 == 0)).toBe(true)
+                expect(times).toEqual([...times].sort((a, b) => a - b))
+            })
+
+            it('lists only future billing profiles', async () => {
+                const response = await getList('@future-billing-profiles')
+                expect(response.status).toEqual(HttpStatus.OK)
+                const [profiles, count] = response.body
+                expect(count).toEqual(profiles.length)
+                expect(profiles.map((p: {profile_id: number}) => p.profile_id)).toEqual([profileB])
+            })
+
+            it('derives billing_profile_definition id without terminated profiles', async () => {
+                const id = await createContract([
+                    {profileId: profileA},
+                    {profileId: profileTerminated, start: at(8 * DAY)},
+                ])
+                const response = await request(app.getHttpServer())
+                    .get(`/customers/${id}`)
+                    .set(...authHeader)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.billing_profile_definition).toEqual(ContractBillingProfileDefinition.ID)
+            })
+        })
+
+        describe('Customer PATCH billing mappings, profiles mode', () => {
+            it('patches billing_profiles with dated intervals', async () => {
+                const contractId = await createContract([{profileId: profileA}])
+                const start = at(5 * DAY)
+                const response = await request(app.getHttpServer())
+                    .patch(`/customers/${contractId}`)
+                    .set(...authHeader)
+                    .send([
+                        {op: 'replace', path: '/billing_profile_definition', value: ContractBillingProfileDefinition.Profiles},
+                        {op: 'remove', path: '/billing_profile_id'},
+                        {op: 'add', path: '/billing_profiles', value: [
+                            {profile_id: profileB, network_id: null, start: toLocalDateTime(start), stop: null},
+                        ]},
+                    ])
+                expect(response.status).toEqual(HttpStatus.OK)
+
+                const mapping = (await readMappings(contractId)).find(m => m.billing_profile_id == profileB)
+                expect(mapping?.start_date?.getTime()).toEqual(start.getTime())
+            })
+        })
+
         describe('Customer POST billing mappings, profiles mode', () => {
             it('requires an open interval without network', async () => {
                 const contractsBefore = await db.billing.Contract.count()
@@ -555,7 +639,6 @@ describe('CustomerController', () => {
                 const response = await request(app.getHttpServer())
                     .patch(`/customers/${id}`)
                     .set(...authHeader)
-                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(response.body.external_id).toEqual('patched-external-id')
@@ -569,7 +652,6 @@ describe('CustomerController', () => {
                 const response = await request(app.getHttpServer())
                     .patch('/customers/999999')
                     .set(...authHeader)
-                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(HttpStatus.NOT_FOUND)
             })
@@ -582,7 +664,6 @@ describe('CustomerController', () => {
                 const response = await request(app.getHttpServer())
                     .patch(`/customers/${id}`)
                     .set(...authHeader)
-                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
             })
@@ -597,7 +678,6 @@ describe('CustomerController', () => {
                 const response = await request(app.getHttpServer())
                     .patch(`/customers/${id}`)
                     .set(...authHeader)
-                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
             })
@@ -614,7 +694,6 @@ describe('CustomerController', () => {
                 const response = await request(app.getHttpServer())
                     .patch('/customers')
                     .set(...authHeader)
-                    .set('Content-Type', 'application/json-patch+json')
                     .send(patchDict)
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(Array.isArray(response.body)).toBe(true)

@@ -32,8 +32,8 @@ export class CustomerBalanceMariadbRepository extends MariaDbRepository implemen
         qb.innerJoinAndSelect('customerBalance.contract', 'contract')
         qb.innerJoinAndSelect('contract.contact', 'contact')
         this.addFilterBy(qb, filterBy)
-        qb.orderBy('customerBalance.id', 'DESC')
-        qb.groupBy('customerBalance.contract_id')
+        // the latest balance per contract
+        qb.andWhere('customerBalance.id IN (SELECT MAX(latest.id) FROM billing.contract_balances latest GROUP BY latest.contract_id)')
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(
             result.map(async (d) =>
@@ -59,8 +59,6 @@ export class CustomerBalanceMariadbRepository extends MariaDbRepository implemen
         qb.innerJoinAndSelect('contract.contact', 'contact')
         qb.andWhere({id: id})
         this.addFilterBy(qb, filterBy)
-        qb.orderBy('customerBalance.id', 'DESC')
-        qb.groupBy('customerBalance.contract_id')
         const result = await qb.getOneOrFail()
         return result.toInternal()
     }
@@ -88,10 +86,16 @@ export class CustomerBalanceMariadbRepository extends MariaDbRepository implemen
 
     async update(updates: Dictionary<internal.ContractBalance>, _sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
+        // as v1: only the balances are writable, an omitted one is kept
         for (const id of ids) {
-            const dbEntity = db.billing.ContractBalance.create()
-            dbEntity.fromInternal(updates[id])
-            await db.billing.ContractBalance.update(id, dbEntity)
+            const balance = updates[id]
+            const values: Partial<db.billing.ContractBalance> = {}
+            if (balance.cashBalance != null)
+                values.cash_balance = balance.cashBalance
+            if (balance.freeTimeBalance != null)
+                values.free_time_balance = balance.freeTimeBalance
+            if (Object.keys(values).length)
+                await db.billing.ContractBalance.update(id, values)
         }
         return ids
     }

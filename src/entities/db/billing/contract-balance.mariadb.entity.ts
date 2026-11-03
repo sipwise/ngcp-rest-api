@@ -133,7 +133,7 @@ export class ContractBalance extends BaseEntity {
             (isInfiniteFuture(this.end) || this.end >= contractCreatedAt))
             ? getFreeRatio(contractCreatedAt, this.start, this.end)
             : 1.0
-        entity.debit = Math.round(entity.cashBalanceInterval / 100)
+        entity.debit = entity.cashBalanceInterval
         entity.ratio = ratio
         return entity
     }

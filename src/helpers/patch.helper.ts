@@ -1,4 +1,5 @@
 import {BadRequestException, UnprocessableEntityException} from '@nestjs/common'
+import {plainToInstance} from 'class-transformer'
 import {validate as classValidate} from 'class-validator'
 import * as core from 'fast-json-patch'
 
@@ -27,12 +28,17 @@ export async function patchToEntity<T extends {id?: number}, D extends RequestDt
         throw new BadRequestException(message)
     }
     const patchEntity = Object.assign(Object.create(oldEntity), oldEntity)
-    const reqDto = applyPatch(new requestDto(null), patch).newDocument
+    // the patch values are transformed as a request body (nested dtos, dates)
+    const reqDto = plainToInstance(requestDto, applyPatch(new requestDto(null), patch).newDocument)
     const errors = await classValidate(reqDto, {skipMissingProperties: true})
     if (errors && errors.length) {
         throw new UnprocessableEntityException(formatValidationErrors(errors))
     }
     const dto = applyPatch(new requestDto(patchEntity), patch).newDocument
+    for (const key of new Set(patch.map(op => op.path.split('/')[1]))) {
+        if (reqDto[key] !== undefined)
+            dto[key] = reqDto[key]
+    }
     const entity: T = Object.assign(patchEntity, dto.toInternal({id: +oldEntity.id}))
     return entity
 }
