@@ -9,3 +9,9 @@ export function truncateToDay(date: Date): Date {
 export function validDateOrNull(date?: Date | null): Date | null {
     return date instanceof Date && !isNaN(date.getTime()) ? date : null
 }
+
+export function toLocalDateTime(date: Date): string {
+    const pad = (n: number): string => String(n).padStart(2, '0')
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+        `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}

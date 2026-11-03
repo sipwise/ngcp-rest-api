@@ -67,14 +67,25 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
     }
 
     async readCurrentBillingProfile(customerId: number): Promise<internal.BillingProfile> {
-        const epoch = await this.readEffectiveStartDate(customerId)
+        return this.readActualBillingProfile(customerId)
+    }
+
+    async readActualBillingProfile(contractId: number, at: Date = new Date()): Promise<internal.BillingProfile> {
+        const contract = await db.billing.Contract.findOneByOrFail({id: contractId})
+        const contractCreatedAt = contract.create_timestamp ?? contract.modify_timestamp
+        if (at < contractCreatedAt)
+            at = contractCreatedAt
+        const epoch = Math.floor(at.getTime() / 1000)
         const qb = db.billing.ContractBillingProfileNetworkSchedule.createQueryBuilder('cbpns')
         qb.innerJoinAndSelect('cbpns.profileNetwork', 'profile_network')
         qb.innerJoinAndSelect('profile_network.billingProfile', 'billing_profile')
-        qb.andWhere('profile_network.contract_id = :contract_id', {contract_id: customerId})
+        qb.andWhere('profile_network.contract_id = :contract_id', {contract_id: contractId})
         qb.andWhere('profile_network.base = 1')
-        qb.andWhere('cbpns.effective_start_time = :epoch', {epoch: epoch})
-        const cbpns = await qb.getOneOrFail()
+        qb.andWhere('cbpns.effective_start_time <= :epoch', {epoch: epoch})
+        qb.orderBy('cbpns.effective_start_time', 'DESC')
+        const cbpns = await qb.getOne()
+        if (!cbpns)
+            throw new UnprocessableEntityException(`no billing profile for contract id ${contractId} at ${at.toISOString()} (${epoch})`)
         return cbpns.profileNetwork.billingProfile.toInternal()
     }
 
@@ -155,22 +166,6 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
     async readBillingProfileById(id: number): Promise<internal.BillingProfile> {
         const profile = await db.billing.BillingProfile.findOneByOrFail({id: id})
         return profile.toInternal()
-    }
-
-    private async readEffectiveStartDate(contractId: number): Promise<number> {
-        const now = Date.now()
-        const epochNow = now.valueOf()
-        const qb = db.billing.ContractBillingProfileNetworkSchedule.createQueryBuilder('cbpns')
-        qb.innerJoinAndSelect('cbpns.profileNetwork', 'profile_network')
-        qb.andWhere('profile_network.contract_id = :contract_id', {contract_id: contractId})
-        qb.andWhere('profile_network.base = 1')
-        qb.andWhere('cbpns.effective_start_time <= :now', {now: epochNow})
-        qb.select('MAX(cbpns.effective_start_time)', 'max')
-
-        const result = await qb.getRawOne()
-        if (result.max == undefined)
-            throw new UnprocessableEntityException(`no billing profile for contract id ${contractId} at ${now} (${epochNow})`)
-        return result['max'] as number
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.Customer[], number]> {

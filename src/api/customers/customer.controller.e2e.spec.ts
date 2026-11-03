@@ -4,13 +4,16 @@ import request from 'supertest'
 
 import {CustomerModule} from './customer.module'
 import {CustomerResponseDto} from './dto/customer-response.dto'
+import {CustomerMariadbRepository} from './repositories/customer.mariadb.repository'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {db} from '~/entities'
+import {BillingProfileStatus} from '~/entities/internal/billing-profile.internal.entity'
 import {ContractBillingProfileDefinition, ContractStatus, ContractStatus as CustomerStatus} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
+import {toLocalDateTime} from '~/helpers/date.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {validate} from '~/helpers/validate.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
@@ -42,6 +45,21 @@ type CustomerPost = {
     billing_profiles?: BillingProfilePost[]
 }
 
+type Mapping = {
+    profileId: number
+    networkId?: number
+    start?: Date
+    end?: Date
+}
+
+const DAY = 24 * 3600 * 1000
+const CONTACT_ID = 1
+const RESELLER_ID = 1
+const SIPACCOUNT_PRODUCT_ID = 4
+
+// whole seconds, as stored in DATETIME columns
+const at = (offset: number): Date => new Date(Math.floor((Date.now() + offset) / 1000) * 1000)
+
 describe('CustomerController', () => {
     let app: INestApplication
     let appService: AppService
@@ -52,6 +70,46 @@ describe('CustomerController', () => {
     const _createdContactIds: number[] = []
     const _createdBillingProfileIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
+    let repo: CustomerMariadbRepository
+    const suffix = `${Date.now()}`
+    const fixtureContractIds: number[] = []
+    const profileIds: number[] = []
+    let profileA: number
+    let profileB: number
+
+    const createProfile = async (name: string, resellerId: number | null, status = BillingProfileStatus.Active): Promise<number> => {
+        const profile = await db.billing.BillingProfile.create({
+            reseller_id: resellerId,
+            handle: `e2e_${name}_${suffix}`,
+            name: `e2e ${name} ${suffix}`.substring(0, 31),
+            status: status,
+        }).save()
+        profileIds.push(profile.id)
+        return profile.id
+    }
+
+    const createContract = async (mappings: Mapping[], createdAt = at(0), profilePackageId?: number): Promise<number> => {
+        const contract = await db.billing.Contract.create({
+            contact_id: CONTACT_ID,
+            product_id: SIPACCOUNT_PRODUCT_ID,
+            status: ContractStatus.Active,
+            profile_package_id: profilePackageId,
+            create_timestamp: createdAt,
+            modify_timestamp: createdAt,
+        }).save()
+        fixtureContractIds.push(contract.id)
+        if (mappings.length) {
+            const csv = mappings.map(m => [
+                m.start ? toLocalDateTime(m.start) : '',
+                m.end ? toLocalDateTime(m.end) : '',
+                m.profileId,
+                m.networkId ?? '',
+                ';',
+            ].join(',')).join('')
+            await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [contract.id, null, csv])
+        }
+        return contract.id
+    }
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -61,6 +119,7 @@ describe('CustomerController', () => {
 
         appService = moduleRef.get<AppService>(AppService)
         authService = moduleRef.get<AuthService>(AuthService)
+        repo = moduleRef.get<CustomerMariadbRepository>(CustomerMariadbRepository)
 
         app = moduleRef.createNestApplication()
 
@@ -69,6 +128,9 @@ describe('CustomerController', () => {
         app.useGlobalInterceptors(new ResponseValidationInterceptor())
 
         await app.init()
+
+        profileA = await createProfile('A', RESELLER_ID)
+        profileB = await createProfile('B', RESELLER_ID)
     })
 
     afterAll(async () => {
@@ -95,13 +157,51 @@ describe('CustomerController', () => {
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
             .post('/auth/jwt')
-            .send(creds)
+            .auth(creds.username, creds.password)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
         authHeader = ['Authorization', 'Bearer ' + response.body['access_token']]
     })
 
     describe('', () => { // main tests block
+        describe('Customer billing profile at a given time', () => {
+            let contractId: number
+
+            beforeAll(async () => {
+                contractId = await createContract([
+                    {profileId: profileA},
+                    {profileId: profileB, start: at(10 * DAY)},
+                ])
+            })
+
+            it('returns the current profile, not a future one', async () => {
+                const profile = await repo.readCurrentBillingProfile(contractId)
+                expect(profile.id).toEqual(profileA)
+            })
+
+            it('returns the profile active at the given time', async () => {
+                const profile = await repo.readActualBillingProfile(contractId, at(11 * DAY))
+                expect(profile.id).toEqual(profileB)
+            })
+
+            it('clamps the time to the contract creation', async () => {
+                const id = await createContract([
+                    {profileId: profileA},
+                    {profileId: profileB, start: at(-2 * DAY)},
+                ], at(-DAY))
+                const profile = await repo.readActualBillingProfile(id, at(-5 * DAY))
+                expect(profile.id).toEqual(profileB)
+            })
+
+            it('throws 422 without billing mappings', async () => {
+                const id = await createContract([])
+                await expect(repo.readActualBillingProfile(id)).rejects.toMatchObject({status: HttpStatus.UNPROCESSABLE_ENTITY})
+                // a customer without mappings breaks GET /customers
+                await db.billing.Contract.delete(id)
+                fixtureContractIds.splice(fixtureContractIds.indexOf(id), 1)
+            })
+        })
+
         describe('Customer POST', () => {
             it('create a single Customer with billing_profile_definition profiles', async () => {
                 const customer: CustomerPost = {
@@ -410,12 +510,18 @@ describe('CustomerController', () => {
                     },
                 })
                 expect(softDelete.status).toEqual(ContractStatus.Terminated)
-
-                // now actually delete all 
-                for (const id of createdCustomerIds) {
-                    await db.billing.Contract.delete(id)
-                }
             })
+        })
+    })
+
+    describe('CustomerController DELETE', () => {
+        it('delete created customers and fixtures', async () => {
+            if (createdCustomerIds.length)
+                await db.billing.Contract.delete(createdCustomerIds)
+            if (fixtureContractIds.length)
+                await db.billing.Contract.delete(fixtureContractIds)
+            if (profileIds.length)
+                await db.billing.BillingProfile.delete(profileIds)
         })
     })
 })
