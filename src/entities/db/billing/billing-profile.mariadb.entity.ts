@@ -202,6 +202,13 @@ export class BillingProfile extends BaseEntity {
             id: this.id,
             resellerId: this.reseller_id,
             name: this.name,
+            prepaid: this.prepaid,
+            intervalCharge: this.interval_charge,
+            intervalFreeTime: this.interval_free_time,
+            intervalFreeCash: this.interval_free_cash,
+            intervalUnit: this.interval_unit,
+            intervalCount: this.interval_count,
+            currency: this.currency,
             prepaidLibrary: this.prepaid_library,
             status: this.status,
         })

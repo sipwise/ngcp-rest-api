@@ -12,6 +12,7 @@ import {ExpandModule} from '~/helpers/expand.module'
     imports: [JournalModule, ExpandModule],
     providers: [CustomerService, CustomerMariadbRepository, ContactMariadbRepository],
     controllers: [CustomerController],
+    exports: [CustomerService],
 })
 export class CustomerModule {
 }

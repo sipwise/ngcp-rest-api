@@ -68,6 +68,10 @@
         "description": "[/header-manipulation] Route disponibili per la manipolazione degli header, inclusi set, regole, azioni e condizioni"
     },
     {
+        "name": "Invoice",
+        "description": "[/invoices] Fatture dei contratti di clienti, peering e rivenditori"
+    },
+    {
         "name": "NCOS",
         "description": "[/ncos] Route disponibili relative a NCOS, inclusi i set e i relativi livelli"
     },

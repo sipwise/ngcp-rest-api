@@ -68,6 +68,10 @@
         "description": "[/header-manipulation] Routes relatives à la manipulation d'en-têtes, y compris les ensembles, règles, actions et conditions"
     },
     {
+        "name": "Invoice",
+        "description": "[/invoices] Factures des contrats clients, de peering et de revendeurs"
+    },
+    {
         "name": "NCOS",
         "description": "[/ncos] Routes relatives aux NCOS, y compris les ensembles et leurs niveaux"
     },

@@ -37,7 +37,7 @@ export interface InvoiceTemplateVars extends InvoiceTemplateSubstitutionVars {
     did_zones?: InvoiceTemplateDidZoneVars[]
 }
 
-const callDirectionLabel: Record<InvoiceTemplateCallDirection, string> = {
+export const callDirectionLabel: Record<InvoiceTemplateCallDirection, string> = {
     [InvoiceTemplateCallDirection.In]: 'from',
     [InvoiceTemplateCallDirection.Out]: 'to',
     [InvoiceTemplateCallDirection.InOut]: 'from/to',
@@ -83,7 +83,10 @@ function zones(count: number, role: string): InvoiceTemplateZoneVars[] {
     })
 }
 
-function zonesTotal(data: InvoiceTemplateZoneVars[], category: InvoiceTemplateCategory): InvoiceTemplateZonesVars {
+/**
+ * Totals of the zones, the cost field depends on the category
+ */
+export function zonesTotal(data: InvoiceTemplateZoneVars[], category: InvoiceTemplateCategory): InvoiceTemplateZonesVars {
     const costField = category == InvoiceTemplateCategory.Reseller
         ? 'resellercost'
         : category == InvoiceTemplateCategory.Peer ? 'carriercost' : 'customercost'

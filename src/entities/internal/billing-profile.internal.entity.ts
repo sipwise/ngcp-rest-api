@@ -21,7 +21,7 @@ interface BillingProfileInterface {
     intervalFreeTime?: number
     intervalFreeCash?: number
     intervalUnit?: IntervalUnit
-    intervalCount?: boolean
+    intervalCount?: number
     fraudIntervalLimit?: number
     fraudIntervalLock?: boolean
     fraudIntervalNotify?: string
@@ -49,7 +49,7 @@ export class BillingProfile implements BillingProfileInterface {
     intervalFreeTime?: number
     intervalFreeCash?: number
     intervalUnit?: IntervalUnit
-    intervalCount?: boolean
+    intervalCount?: number
     fraudIntervalLimit?: number
     fraudIntervalLock?: boolean
     fraudIntervalNotify?: string

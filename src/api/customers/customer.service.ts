@@ -102,6 +102,10 @@ export class CustomerService implements CrudService<internal.Customer> {
         return await this.customerRepository.readAllBillingProfiles(customerId, sr, CustomerFilterBy)
     }
 
+    async readActualBillingProfile(contractId: number, at: Date): Promise<internal.BillingProfile> {
+        return await this.customerRepository.readActualBillingProfile(contractId, at)
+    }
+
     async readFutureBillingProfiles(customerId: number, sr: ServiceRequest): Promise<[internal.CustomerBillingProfile[], number]> {
         const CustomerFilterBy: CustomerFilterBy = {customerId}
         if (sr.user.reseller_id_required)

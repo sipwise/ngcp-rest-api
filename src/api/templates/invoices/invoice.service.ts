@@ -84,13 +84,19 @@ export class InvoiceTemplateService implements CrudService<internal.InvoiceTempl
 
     async renderPreview(id: number, sr: ServiceRequest): Promise<StreamableFile> {
         const template = await this.read(id, sr)
-        const content = await this.readContent(template)
         const vars = getInvoiceTemplateVars(template.category, template.callDirection, sr.user.role)
+        const pdf = await this.render(template, vars)
+        return this.toFile(pdf, 'application/pdf', 'inline', `${template.name}.pdf`)
+    }
 
-        let pdf: Buffer
+    /**
+     * Renders the template with the given variables to a pdf
+     */
+    async render(template: internal.InvoiceTemplate, vars: InvoiceTemplateVars): Promise<Buffer> {
+        const content = await this.readContent(template)
         try {
             const svg = renderInvoiceTemplate(content.toString('utf8'), toTemplateVars(vars), template.category)
-            pdf = await svgToPdf(svg)
+            return await svgToPdf(svg)
         } catch (err) {
             if (err instanceof InvoiceTemplateRenderError) {
                 throw new UnprocessableEntityException(this.i18n.t('errors.INVOICE_TEMPLATE_RENDER_FAILED', {
@@ -98,14 +104,13 @@ export class InvoiceTemplateService implements CrudService<internal.InvoiceTempl
                 }))
             }
             if (err instanceof InvoiceTemplatePdfError) {
-                this.log.error({message: 'failed to convert invoice template to pdf', id: id, err: err})
+                this.log.error({message: 'failed to convert invoice template to pdf', id: template.id, err: err})
                 throw new InternalServerErrorException(this.i18n.t('errors.INVOICE_TEMPLATE_CONVERTER_FAILED', {
                     args: {reason: err.message},
                 }))
             }
             throw err
         }
-        return this.toFile(pdf, 'application/pdf', 'inline', `${template.name}.pdf`)
     }
 
     async update(

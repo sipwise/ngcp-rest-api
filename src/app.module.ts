@@ -43,6 +43,7 @@ import {HeaderManipulationRuleActionModule} from './api/header-manipulations/set
 import {HeaderManipulationRuleConditionModule} from './api/header-manipulations/sets/rules/conditions/condition.module'
 import {HeaderManipulationRuleModule} from './api/header-manipulations/sets/rules/rule.module'
 import {HeaderManipulationSetModule} from './api/header-manipulations/sets/set.module'
+import {InvoiceModule} from './api/invoices/invoice.module'
 import {JournalModule} from './api/journals/journal.module'
 import {NCOSLevelModule} from './api/ncos/levels/level.module'
 import {NCOSModule} from './api/ncos/ncos.module'
@@ -145,6 +146,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     HeaderManipulationRuleActionModule,
     HeaderManipulationRuleModule,
     HeaderManipulationSetModule,
+    InvoiceModule,
     InvoiceTemplateModule,
     NumberModule,
     AuthOtpModule,

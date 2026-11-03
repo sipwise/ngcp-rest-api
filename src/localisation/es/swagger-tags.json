@@ -68,6 +68,10 @@
         "description": "[/header-manipulation] Rutas de manipulación de cabeceras, incluidos conjuntos, reglas, acciones y condiciones"
     },
     {
+        "name": "Invoice",
+        "description": "[/invoices] Facturas de contratos de clientes, peering y revendedores"
+    },
+    {
         "name": "NCOS",
         "description": "[/ncos] Rutas de NCOS, incluidos los conjuntos y sus niveles"
     },

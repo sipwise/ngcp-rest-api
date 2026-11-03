@@ -306,5 +306,25 @@
   "INITIAL_OPEN_INTERVAL_REQUIRED": {
     "message": "An initial interval without start and stop timestamps and no billing network is required",
     "code": 10077
+  },
+  "INVOICE_PERIOD_REQUIRED": {
+    "message": "Either period or period_start is required",
+    "code": 10078
+  },
+  "INVOICE_PERIOD_INVALID": {
+    "message": "Invalid invoice period, period_start and period_end must be valid dates and period_start must be before period_end",
+    "code": 10079
+  },
+  "INVOICE_TEMPLATE_NOT_FOUND": {
+    "message": "Invoice template with id '{id}' not found",
+    "code": 10080
+  },
+  "INVOICE_CONTRACT_NOT_FOUND": {
+    "message": "No active {classes} contract with customer_id '{id}' found for invoice template category '{category}'",
+    "code": 10081
+  },
+  "INVOICE_CONTRACT_RESELLER_MISMATCH": {
+    "message": "Invoice template and customer_id '{id}' must belong to the same reseller",
+    "code": 10082
   }
 }
