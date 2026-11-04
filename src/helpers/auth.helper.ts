@@ -5,7 +5,7 @@ export function extractUsername(sr: ServiceRequest): string | null {
 
     // Handle JWT token (Bearer token)
     if (authHeader.startsWith('Bearer ')) {
-        const token = authHeader.split(' ')[0]
+        const token = authHeader.split(' ')[1]
         return extractUsernameFromJwt(token)
     }
 
@@ -30,7 +30,7 @@ export function extractUsernameDomain(sr: ServiceRequest, userDomain: string): s
 
 export function extractUsernameFromJwt(token: string): string | null {
     try {
-        const payload = JSON.parse(Buffer.from(token.split('.')[0], 'base64').toString('ascii'))
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('ascii'))
         return payload.username as string || null
     } catch {
         return null

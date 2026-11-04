@@ -3,6 +3,7 @@ import {Request, Response} from 'express'
 
 import {config} from '~/config/main.config'
 import Context from '~/helpers/context.helper'
+import {obfuscatePasswordQuery, obfuscatePasswordUrl} from '~/helpers/password-obfuscator.helper'
 import {LoggerService} from '~/logger/logger.service'
 
 @Catch(HttpException)
@@ -34,8 +35,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
                 is_master: request['user'] !== undefined ? user.is_master : 'unknown',
             },
             ip: request.ip,
-            url: `${request.protocol}://${request.header('host')}${request.url}`,
-            query_params: request.query,
+            url: `${request.protocol}://${request.header('host')}${obfuscatePasswordUrl(request.url)}`,
+            query_params: obfuscatePasswordQuery(request.query),
             content_type: request.header('content-type'),
             method: request.method,
             received_at: ctx != null ? ctx.startTime : now,
@@ -48,7 +49,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         response.status(status).json({
             tx: ctx != null ? ctx.txid : '',
             statusCode: status,
-            path: request.url,
+            path: obfuscatePasswordUrl(request.url),
             method: request.method,
             error: exception.response.errorCode || exception.response.error,
             message: message,

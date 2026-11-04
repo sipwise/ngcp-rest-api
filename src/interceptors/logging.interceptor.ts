@@ -5,6 +5,7 @@ import {Observable} from 'rxjs'
 import {map} from 'rxjs/operators'
 
 import Context from '~/helpers/context.helper'
+import {obfuscatePasswordQuery, obfuscatePasswordUrl} from '~/helpers/password-obfuscator.helper'
 import {LoggerService} from '~/logger/logger.service'
 
 /**
@@ -42,8 +43,8 @@ export class LoggingInterceptor implements NestInterceptor {
                         is_master: req['user'] !== undefined ? req.user.is_master : 'unknown',
                     },
                     ip: req.header('x-real-ip') ?? req.ip,
-                    url: `${req.protocol}://${req.header('host')}${req.url}`,
-                    query_params: req.query,
+                    url: `${req.protocol}://${req.header('host')}${obfuscatePasswordUrl(req.url)}`,
+                    query_params: obfuscatePasswordQuery(req.query),
                     content_type: req.header('content-type'),
                     method: req.method,
                     received_at: ctx.startTime,

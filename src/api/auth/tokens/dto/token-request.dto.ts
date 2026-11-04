@@ -3,12 +3,13 @@ import {IsNotEmpty, IsNumber, IsString, Max, Min} from 'class-validator'
 import {v4 as uuidv4} from 'uuid'
 
 import {AppService} from '~/app.service'
+import {AuthCredentialsRequestDto} from '~/auth/dto/auth-credentials-request.dto'
 import {RequestDto} from '~/dto/request.dto'
 import {internal} from '~/entities'
 
 const {auth_token_min_ttl: minTtl, auth_token_max_ttl: maxTtl} = AppService.config.common
 
-export class AuthTokenRequestDto implements RequestDto {
+export class AuthTokenRequestDto extends AuthCredentialsRequestDto implements RequestDto {
     @IsNotEmpty()
     @IsString()
     @ApiProperty({description: 'Free-form identifier for the client or device requesting the token'})

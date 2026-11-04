@@ -4,11 +4,14 @@ import {SetMetadata,applyDecorators} from '@nestjs/common'
 interface AuthOptions {
     skipMaxAge?: boolean
     skipReadOnly?: boolean
+    // username/password in the JSON body (strategy 'local')
+    allowBodyCredentials?: boolean
 }
 
 export function AuthOptions(options: AuthOptions): ClassDecorator & MethodDecorator {
     return applyDecorators(
         SetMetadata('skipMaxAge', options.skipMaxAge),
         SetMetadata('skipReadOnly', options.skipReadOnly),
+        SetMetadata('allowBodyCredentials', options.allowBodyCredentials),
     )
 }

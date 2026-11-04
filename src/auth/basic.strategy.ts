@@ -103,6 +103,9 @@ export class BasicJSONStrategy extends PassportStrategy(Strategy) {
      * @param password Password from JSON
      */
     async validate(req: Request, username: string, password: string): Promise<AuthResponseDto> {
+        // passport-local falls back to the query string, which ends up in the logs
+        if (req.body?.username !== username || req.body?.password !== password)
+            throw new UnauthorizedException()
         const sr = new ServiceRequest(req)
         return await this.auth(sr, username, password, sr.realm, this.authService)
     }

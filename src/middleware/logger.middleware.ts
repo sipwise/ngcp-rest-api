@@ -3,7 +3,7 @@ import {NextFunction, Request, Response} from 'express'
 
 import Context from '~/helpers/context.helper'
 import {deepCopy} from '~/helpers/deep-copy.helper'
-import {obfuscatePasswordJSON} from '~/helpers/password-obfuscator.helper'
+import {obfuscatePasswordJSON, obfuscatePasswordQuery, obfuscatePasswordUrl} from '~/helpers/password-obfuscator.helper'
 import {LoggerService} from '~/logger/logger.service'
 
 @Injectable()
@@ -38,8 +38,8 @@ export class LoggerMiddleware implements NestMiddleware {
             message: 'REQUEST',
             tx: ctx.txid,
             ip: req.ip,
-            url: `${req.protocol}://${req.header('host')}${req.url}`,
-            query_params: req.query,
+            url: `${req.protocol}://${req.header('host')}${obfuscatePasswordUrl(req.url)}`,
+            query_params: obfuscatePasswordQuery(req.query),
             content_type: req.header('content-type'),
             method: req.method,
             received_at: ctx.startTime,

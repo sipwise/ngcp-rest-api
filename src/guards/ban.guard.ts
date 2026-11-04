@@ -26,7 +26,14 @@ export class BanGuard implements CanActivate {
         const request = context.switchToHttp().getRequest<Request>()
         const sr = new ServiceRequest(request)
 
-        const userDomain = extractUsername(sr)
+        let userDomain = extractUsername(sr)
+        if (!userDomain && typeof request.body?.username === 'string') {
+            const allowBodyCredentials = this.reflector.getAllAndOverride<boolean>(
+                'allowBodyCredentials', [context.getHandler(), context.getClass()],
+            )
+            if (allowBodyCredentials)
+                userDomain = request.body.username
+        }
         if (!userDomain) {
             return true // Didnt find a username, let it pass for other guards to handle
         }

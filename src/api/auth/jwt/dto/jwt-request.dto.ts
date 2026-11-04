@@ -2,10 +2,11 @@ import {ApiPropertyOptional} from '@nestjs/swagger'
 import {IsInt, IsOptional, Max, Min} from 'class-validator'
 
 import {AppService} from '~/app.service'
+import {AuthCredentialsRequestDto} from '~/auth/dto/auth-credentials-request.dto'
 
 const {jwt_default_ttl: defTtl, jwt_min_ttl: minTtl, jwt_max_ttl: maxTtl} = AppService.config.common
 
-export class AuthJwtRequestDto {
+export class AuthJwtRequestDto extends AuthCredentialsRequestDto {
     @IsOptional()
     @IsInt()
     @Min(minTtl)

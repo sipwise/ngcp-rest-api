@@ -11,7 +11,7 @@ import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 @Auth()
 // read-only users must be able to obtain a token
-@AuthOptions({skipReadOnly: true})
+@AuthOptions({skipReadOnly: true, allowBodyCredentials: true})
 @Controller()
 export class AuthJwtController {
     constructor(private readonly authService: AuthService) {

@@ -13,6 +13,7 @@ import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
+import {AuthOptions} from '~/decorators/auth-options.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -45,6 +46,7 @@ export class AuthTokenController extends CrudController<AuthTokenRequestDto, Aut
     }
 
     @Post()
+    @AuthOptions({allowBodyCredentials: true})
     @ApiCreatedResponse(AuthTokenCreateResponseDto)
     async create(
         @Body() dto: AuthTokenRequestDto,

@@ -4,8 +4,11 @@ import {AuthGuard} from '@nestjs/passport'
 
 import {PublicGuard} from './public.guard'
 
+class OmniBodyCredentialsGuard extends AuthGuard(['jwt', 'cert-header', 'basic', 'local']) {
+}
+
 @Injectable()
-export class OmniGuard extends AuthGuard(['jwt', 'cert-header', 'basic', 'local']) {
+export class OmniGuard extends AuthGuard(['jwt', 'cert-header', 'basic']) {
     constructor(private readonly reflector: Reflector) {
         super()
     }
@@ -17,6 +20,12 @@ export class OmniGuard extends AuthGuard(['jwt', 'cert-header', 'basic', 'local'
         const publicGuard = new PublicGuard(this.reflector)
         if (await publicGuard.canActivate(context))
             return true
+
+        const allowBodyCredentials = this.reflector.getAllAndOverride<boolean>(
+            'allowBodyCredentials', [context.getHandler(), context.getClass()],
+        )
+        if (allowBodyCredentials)
+            return await new OmniBodyCredentialsGuard().canActivate(context) ? true : false
 
         return await super.canActivate(context) ? true : false
     }
