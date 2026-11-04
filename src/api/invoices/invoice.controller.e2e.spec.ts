@@ -1,7 +1,10 @@
-import {HttpStatus, INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, HttpStatus, INestApplication} from '@nestjs/common'
 import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
+import {In, MoreThanOrEqual} from 'typeorm'
+
 
 import {InvoiceResponseDto} from './dto/invoice-response.dto'
 import {InvoiceCdrContractType, InvoiceCostCategory} from './interfaces/invoice-data.interface'
@@ -18,8 +21,10 @@ import {InvoiceTemplateCallDirection, InvoiceTemplateCategory, InvoiceTemplateTy
 import {InvoiceGenerator} from '~/entities/internal/invoice.internal.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 import {LicenseMockRepository} from '~/repositories/license.mock.repository'
 import {LicenseRepository} from '~/repositories/license.repository'
@@ -51,6 +56,7 @@ describe('Invoice', () => {
     let authService: AuthService
     const licenseMockRepo = new LicenseMockRepository()
     const creds = {username: 'administrator', password: 'administrator'}
+    const startedAt = Date.now() / 1000
     const resellerCreds = {username: `inv_reseller_${Date.now()}`, password: 'FFFooobarbaz123!!!'}
     const ccareCreds = {username: `inv_ccare_${Date.now()}`, password: 'FFFooobarbaz123!!!'}
     const prefix = `e2e-inv-${Date.now()}`
@@ -152,18 +158,22 @@ describe('Invoice', () => {
         resellerId?: number,
     ): Promise<void> => {
         const response = await request(app.getHttpServer())
-            .post('/templates/invoices')
+            .post('/api/templates/invoices')
             .auth(creds.username, creds.password)
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send({name: `${prefix}-${name}`, category: category, call_direction: callDirection, reseller_id: resellerId})
         expect(response.status).toEqual(HttpStatus.CREATED)
-        templates[name] = +response.body[0].id
+        templates[name] = +response.body.data[0].id
         createdTemplateIds.push(templates[name])
     }
 
     const post = (body: Record<string, unknown>, user = creds): request.Test =>
         request(app.getHttpServer())
-            .post('/invoices')
+            .post('/api/invoices')
             .auth(user.username, user.password)
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send(body)
 
     const createPostFixtures = async (): Promise<void> => {
@@ -265,8 +275,10 @@ describe('Invoice', () => {
 
     const createAdmin = async (login: string, password: string, role: RbacRole): Promise<void> => {
         const response = await request(app.getHttpServer())
-            .post('/admins')
+            .post('/api/admins')
             .auth(creds.username, creds.password)
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send({
                 billing_data: true,
                 call_data: false,
@@ -283,22 +295,22 @@ describe('Invoice', () => {
                 enable_2fa: false,
             })
         expect(response.status).toEqual(HttpStatus.CREATED)
-        createdAdminIds.push(+response.body[0].id)
+        createdAdminIds.push(+response.body.data[0].id)
     }
 
-    const get = (url: string, user = creds): request.Test =>
+    const get = (url: string, user = creds, accept = 'application/json'): request.Test =>
         request(app.getHttpServer())
             .get(url)
             .auth(user.username, user.password)
+            .set('Accept', accept)
 
     const getPdf = (id: number, user = creds): request.Test =>
-        get(`/invoices/${id}`, user)
-            .set('Accept', 'application/pdf')
+        get(`/api/invoices/${id}`, user, 'application/pdf')
             .buffer(true)
             .parse(bufferParser)
 
     const ids = (response: request.Response): number[] =>
-        (response.body[0] as InvoiceResponseDto[]).map(i => i.id).sort((a, b) => a - b)
+        (response.body.data as InvoiceResponseDto[]).map(i => i.id).sort((a, b) => a - b)
 
     const idsOf = (...names: string[]): number[] => names.map(name => invoices[name].id).sort((a, b) => a - b)
 
@@ -314,9 +326,30 @@ describe('Invoice', () => {
 
         app = moduleRef.createNestApplication()
 
-        app.useGlobalPipes(new ValidateInputPipe({whitelist: true, forbidNonWhitelisted: true, transform: true}))
+        app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor(), new TransactionInterceptor(app.get(Reflector)))
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
 
@@ -365,13 +398,13 @@ describe('Invoice', () => {
         describe('GET', () => {
             it('does not read invoices if the invoice license is inactive', async () => {
                 licenseMockRepo.setLicense(LicenseType.invoice, 0)
-                const response = await get('/invoices')
+                const response = await get('/api/invoices')
                 expect(response.status).toEqual(HttpStatus.FORBIDDEN)
             })
             it('reads invoices without the pdf', async () => {
-                const response = await get(`/invoices?serial=${prefix}*`)
+                const response = await get(`/api/invoices?serial=${prefix}*`)
                 expect(response.status).toEqual(HttpStatus.OK)
-                const [list, count] = response.body
+                const {data: list, total_count: count} = response.body
                 expect(count).toEqual(4)
                 expect(ids(response)).toEqual(idsOf('a1', 'a2', 'a3', 'b1'))
                 expect(Object.keys(list[0]).filter(k => k != 'resourceUrl').sort()).toEqual([
@@ -380,7 +413,7 @@ describe('Invoice', () => {
                 ])
             })
             it('reads an invoice as json by default', async () => {
-                const response = await get(`/invoices/${invoices.a2.id}`)
+                const response = await get(`/api/invoices/${invoices.a2.id}`)
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(response.headers['content-type']).toMatch(/application\/json/)
                 const invoice: InvoiceResponseDto = response.body
@@ -403,7 +436,7 @@ describe('Invoice', () => {
                 expect(response.body).toEqual(invoices.a1.data)
             })
             it('does not read a non-existing invoice', async () => {
-                expect((await get('/invoices/999911111')).status).toEqual(HttpStatus.NOT_FOUND)
+                expect((await get('/api/invoices/999911111')).status).toEqual(HttpStatus.NOT_FOUND)
                 expect((await getPdf(999911111)).status).toEqual(HttpStatus.NOT_FOUND)
             })
         })
@@ -420,21 +453,21 @@ describe('Invoice', () => {
                 ['period range', (): string => 'period_start_ge=2025-02-01&period_end_le=2025-02-28 23:59:59', ['a2']],
             ])('filters by %s', async (_name, query, want) => {
                 const q = query()
-                const response = await get(q.startsWith('serial=') ? `/invoices?${q}` : `/invoices?serial=${prefix}*&${q}`)
+                const response = await get(q.startsWith('serial=') ? `/api/invoices?${q}` : `/api/invoices?serial=${prefix}*&${q}`)
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(ids(response)).toEqual(idsOf(...want))
             })
             it('filters with paging and ordering', async () => {
-                const response = await get(`/invoices?customer_id=${customerId}&order_by=serial&order_by_direction=desc&rows=2&page=1`)
+                const response = await get(`/api/invoices?customer_id=${customerId}&order_by=serial&order_by_direction=desc&rows=2&page=1`)
                 expect(response.status).toEqual(HttpStatus.OK)
-                const [list, count] = response.body
+                const {data: list, total_count: count} = response.body
                 expect(count).toEqual(3)
                 expect(list.map((i: InvoiceResponseDto) => i.id)).toEqual([invoices.a3.id, invoices.a2.id])
-                const page2 = await get(`/invoices?customer_id=${customerId}&order_by=serial&order_by_direction=desc&rows=2&page=2`)
-                expect(page2.body[0].map((i: InvoiceResponseDto) => i.id)).toEqual([invoices.a1.id])
+                const page2 = await get(`/api/invoices?customer_id=${customerId}&order_by=serial&order_by_direction=desc&rows=2&page=2`)
+                expect(page2.body.data.map((i: InvoiceResponseDto) => i.id)).toEqual([invoices.a1.id])
             })
             it('rejects unknown query parameters', async () => {
-                const response = await get('/invoices?unknown=1')
+                const response = await get('/api/invoices?unknown=1')
                 expect(response.status).toEqual(HttpStatus.BAD_REQUEST)
             })
         })
@@ -442,13 +475,19 @@ describe('Invoice', () => {
         describe('PUT, PATCH', () => {
             it('does not update invoices', async () => {
                 const put = await request(app.getHttpServer())
-                    .put(`/invoices/${invoices.a1.id}`)
+                    .put(`/api/invoices/${invoices.a1.id}`)
                     .auth(creds.username, creds.password)
+                    .set('Accept', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .set('Content-Type', 'application/json')
                     .send({serial: 'x'})
                 expect(put.status).toEqual(HttpStatus.NOT_FOUND)
                 const patch = await request(app.getHttpServer())
-                    .patch(`/invoices/${invoices.a1.id}`)
+                    .patch(`/api/invoices/${invoices.a1.id}`)
                     .auth(creds.username, creds.password)
+                    .set('Accept', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send([{op: 'replace', path: '/serial', value: 'x'}])
                 expect(patch.status).toEqual(HttpStatus.NOT_FOUND)
             })
@@ -459,30 +498,33 @@ describe('Invoice', () => {
                 await createAdmin(resellerCreds.username, resellerCreds.password, RbacRole.reseller)
             })
             it('reads only invoices of its own customers', async () => {
-                const response = await get(`/invoices?serial=${prefix}*`, resellerCreds)
+                const response = await get(`/api/invoices?serial=${prefix}*`, resellerCreds)
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(ids(response)).toEqual(idsOf('a1', 'a2', 'a3'))
-                const filtered = await get(`/invoices?serial=${prefix}*&reseller_id=${otherResellerId}`, resellerCreds)
-                expect(filtered.body[1]).toEqual(0)
+                const filtered = await get(`/api/invoices?serial=${prefix}*&reseller_id=${otherResellerId}`, resellerCreds)
+                expect(filtered.body.total_count).toEqual(0)
             })
             it('reads an invoice of its own customer', async () => {
-                expect((await get(`/invoices/${invoices.a1.id}`, resellerCreds)).status).toEqual(HttpStatus.OK)
+                expect((await get(`/api/invoices/${invoices.a1.id}`, resellerCreds)).status).toEqual(HttpStatus.OK)
                 expect((await getPdf(invoices.a1.id, resellerCreds)).status).toEqual(HttpStatus.OK)
             })
             it('does not read an invoice of another reseller', async () => {
-                expect((await get(`/invoices/${invoices.b1.id}`, resellerCreds)).status).toEqual(HttpStatus.NOT_FOUND)
+                expect((await get(`/api/invoices/${invoices.b1.id}`, resellerCreds)).status).toEqual(HttpStatus.NOT_FOUND)
                 expect((await getPdf(invoices.b1.id, resellerCreds)).status).toEqual(HttpStatus.NOT_FOUND)
             })
             it('does not delete an invoice of another reseller', async () => {
                 const response = await request(app.getHttpServer())
-                    .delete(`/invoices/${invoices.b1.id}`)
+                    .delete(`/api/invoices/${invoices.b1.id}`)
                     .auth(resellerCreds.username, resellerCreds.password)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(HttpStatus.NOT_FOUND)
             })
             it('does not bulk delete invoices of another reseller', async () => {
                 const response = await request(app.getHttpServer())
-                    .delete('/invoices/')
+                    .delete('/api/invoices/')
                     .auth(resellerCreds.username, resellerCreds.password)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send([invoices.a3.id, invoices.b1.id])
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
                 expect(await db.billing.Invoice.countBy({contract_id: customerId})).toEqual(3)
@@ -490,11 +532,13 @@ describe('Invoice', () => {
             })
             it('deletes an invoice of its own customer', async () => {
                 const response = await request(app.getHttpServer())
-                    .delete(`/invoices/${invoices.a3.id}`)
+                    .delete(`/api/invoices/${invoices.a3.id}`)
                     .auth(resellerCreds.username, resellerCreds.password)
+                    .set('Accept', 'application/json')
+                    .set('Prefer', 'return=representation')
                 expect(response.status).toEqual(HttpStatus.OK)
-                expect(response.body).toEqual([invoices.a3.id])
-                expect((await get(`/invoices/${invoices.a3.id}`)).status).toEqual(HttpStatus.NOT_FOUND)
+                expect(response.body.data).toEqual([invoices.a3.id])
+                expect((await get(`/api/invoices/${invoices.a3.id}`)).status).toEqual(HttpStatus.NOT_FOUND)
             })
         })
 
@@ -503,11 +547,12 @@ describe('Invoice', () => {
                 await createAdmin(ccareCreds.username, ccareCreds.password, RbacRole.ccareadmin)
             })
             it('rejects other roles', async () => {
-                expect((await get('/invoices', ccareCreds)).status).toEqual(HttpStatus.FORBIDDEN)
-                expect((await get(`/invoices/${invoices.a1.id}`, ccareCreds)).status).toEqual(HttpStatus.FORBIDDEN)
+                expect((await get('/api/invoices', ccareCreds)).status).toEqual(HttpStatus.FORBIDDEN)
+                expect((await get(`/api/invoices/${invoices.a1.id}`, ccareCreds)).status).toEqual(HttpStatus.FORBIDDEN)
                 const response = await request(app.getHttpServer())
-                    .delete(`/invoices/${invoices.a1.id}`)
+                    .delete(`/api/invoices/${invoices.a1.id}`)
                     .auth(ccareCreds.username, ccareCreds.password)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(HttpStatus.FORBIDDEN)
             })
         })
@@ -534,8 +579,9 @@ describe('Invoice', () => {
             ])('creates a %s invoice', async (category, contractId, net, vat) => {
                 const response = await post({customer_id: contractId(), template_id: templates[category], period: '2025-01'})
                 expect(response.status).toEqual(HttpStatus.CREATED)
-                const invoice: InvoiceResponseDto = response.body[0]
+                const invoice: InvoiceResponseDto = response.body.data[0]
                 created[category] = invoice
+                createdInvoiceIds.push(invoice.id)
                 expect(invoice.customer_id).toEqual(contractId())
                 expect(invoice.serial).toEqual(`INV202501${String(invoice.id).padStart(7, '0')}`)
                 expect(new Date(invoice.period_start)).toEqual(new Date(2025, 0, 1))
@@ -553,7 +599,8 @@ describe('Invoice', () => {
                     period_start: '2025-01-10', period_end: '2025-01-20 10:00:00',
                 })
                 expect(response.status).toEqual(HttpStatus.CREATED)
-                const invoice: InvoiceResponseDto = response.body[0]
+                const invoice: InvoiceResponseDto = response.body.data[0]
+                createdInvoiceIds.push(invoice.id)
                 // 100.5 (10th), 10 (15th), 200 (20th 10:00)
                 expect(invoice.amount_net).toBeCloseTo(310.5, 6)
                 expect(new Date(invoice.period_end)).toEqual(new Date(2025, 0, 20, 10, 0, 0))
@@ -578,9 +625,9 @@ describe('Invoice', () => {
                 ])
             })
             it('writes the created invoice to the journal', async () => {
-                const response = await get(`/invoices/${created.customer.id}/journal`)
+                const response = await get(`/api/invoices/${created.customer.id}/journal`)
                 expect(response.status).toEqual(HttpStatus.OK)
-                expect(response.body[0].map((j: {operation: string}) => j.operation)).toContain('create')
+                expect(response.body.data.map((j: {operation: string}) => j.operation)).toContain('create')
             })
             it.each([
                 ['without period', (): Record<string, unknown> => ({customer_id: cdrCustomerId, template_id: templates.customer})],
@@ -616,8 +663,9 @@ describe('Invoice', () => {
                 const response = await post({customer_id: cdrCustomerId, template_id: templates.customer, period: '2025-01'}, resellerCreds)
                 expect(response.status).toEqual(HttpStatus.CREATED)
                 // the carrier cost is not shown to resellers, the customer cost amounts are the same
-                expect(response.body[0].amount_net).toBeCloseTo(311.5, 6)
-                expect((await get(`/invoices/${response.body[0].id}`, resellerCreds)).status).toEqual(HttpStatus.OK)
+                expect(response.body.data[0].amount_net).toBeCloseTo(311.5, 6)
+                createdInvoiceIds.push(response.body.data[0].id)
+                expect((await get(`/api/invoices/${response.body.data[0].id}`, resellerCreds)).status).toEqual(HttpStatus.OK)
             })
             it('does not create invoices with templates or contracts of others as reseller', async () => {
                 const tt = [
@@ -640,26 +688,31 @@ describe('Invoice', () => {
         describe('DELETE', () => {
             it('deletes an invoice', async () => {
                 const response = await request(app.getHttpServer())
-                    .delete(`/invoices/${invoices.a1.id}`)
+                    .delete(`/api/invoices/${invoices.a1.id}`)
                     .auth(creds.username, creds.password)
+                    .set('Accept', 'application/json')
+                    .set('Prefer', 'return=representation')
                 expect(response.status).toEqual(HttpStatus.OK)
-                expect(response.body).toEqual([invoices.a1.id])
-                expect((await get(`/invoices/${invoices.a1.id}`)).status).toEqual(HttpStatus.NOT_FOUND)
+                expect(response.body.data).toEqual([invoices.a1.id])
+                expect((await get(`/api/invoices/${invoices.a1.id}`)).status).toEqual(HttpStatus.NOT_FOUND)
             })
             it('bulk deletes invoices', async () => {
                 const response = await request(app.getHttpServer())
-                    .delete('/invoices/')
+                    .delete('/api/invoices/')
                     .auth(creds.username, creds.password)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
                     .send([invoices.a2.id, invoices.b1.id])
                 expect(response.status).toEqual(HttpStatus.OK)
-                expect(response.body).toEqual([invoices.a2.id, invoices.b1.id])
-                expect((await get(`/invoices?serial=${prefix}*`)).body[1]).toEqual(0)
+                expect(response.body.data).toEqual([invoices.a2.id, invoices.b1.id])
+                expect((await get(`/api/invoices?serial=${prefix}*`)).body.total_count).toEqual(0)
             })
             it('writes the deletes to the journal', async () => {
                 for (const name of ['a1', 'a2', 'a3', 'b1']) {
-                    const response = await get(`/invoices/${invoices[name].id}/journal`)
+                    const response = await get(`/api/invoices/${invoices[name].id}/journal`)
                     expect(response.status).toEqual(HttpStatus.OK)
-                    const [journals] = response.body
+                    const journals = response.body.data
                     expect(journals.map((j: {operation: string}) => j.operation)).toContain('delete')
                 }
             })
@@ -667,13 +720,7 @@ describe('Invoice', () => {
     })
 
     describe('Invoice DELETE', () => {
-        it('cleanup', async () => {
-            for (const id of createdAdminIds) {
-                const response = await request(app.getHttpServer())
-                    .delete(`/admins/${id}`)
-                    .auth(creds.username, creds.password)
-                expect(response.status).toEqual(HttpStatus.OK)
-            }
+        it('delete fixtures', async () => {
             if (createdInvoiceIds.length)
                 await db.billing.Invoice.delete(createdInvoiceIds)
             await appService.db.query('DELETE FROM accounting.cdr WHERE call_id LIKE ?', [`${prefix}-cdr-%`])
@@ -697,6 +744,21 @@ describe('Invoice', () => {
                 await db.billing.Domain.delete(domainId)
             if (profileId)
                 await db.billing.BillingProfile.delete(profileId)
+        })
+        it('delete created admins', async () => {
+            for (const id of createdAdminIds) {
+                const response = await request(app.getHttpServer())
+                    .delete(`/api/admins/${id}`)
+                    .auth(creds.username, creds.password)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(HttpStatus.NO_CONTENT)
+            }
+        })
+        it('delete created journals', async () => {
+            for (const [resource, ids] of [['invoices', createdInvoiceIds], ['templates', createdTemplateIds], ['admins', createdAdminIds]] as const) {
+                if (ids.length)
+                    await db.billing.Journal.delete({resource_name: resource, resource_id: In(ids), timestamp: MoreThanOrEqual(startedAt)})
+            }
         })
     })
 })

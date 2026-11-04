@@ -1,5 +1,7 @@
-import {INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
 import {v4 as uuidv4} from 'uuid'
 
@@ -12,7 +14,10 @@ import {db} from '~/entities'
 import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 interface PbxSubscriber {
@@ -174,11 +179,30 @@ describe('PBX Group Member', () => {
 
         app = moduleRef.createNestApplication()
 
-        // TODO import other app configuration from bootstrap()
-        // like interceptors, etc.
-        app.useGlobalPipes(new ValidateInputPipe())
+        app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
 
@@ -186,7 +210,6 @@ describe('PBX Group Member', () => {
     })
 
     afterAll(async () => {
-        await deletePbxCustomers()
         if (appService.db.isInitialized)
             await appService.db.destroy()
 
@@ -209,7 +232,9 @@ describe('PBX Group Member', () => {
 
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
-            .post('/auth/jwt')
+            .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
@@ -218,7 +243,9 @@ describe('PBX Group Member', () => {
 
     const subscriberAuthHeaders = async (login: string): Promise<Record<string, string>> => {
         const response = await request(app.getHttpServer())
-            .post('/auth/jwt')
+            .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .set('x-auth-realm', 'subscriber')
             .send({username: login, password: 'e2e'})
         expect(response.status).toEqual(201)
@@ -229,10 +256,11 @@ describe('PBX Group Member', () => {
 
     const readMembers = async (headers: Record<string, string>, path: string, query = ''): Promise<{id: number, group_id: number, subscriber_id: number}[]> => {
         const response = await request(app.getHttpServer())
-            .get(`/pbx/groups/${path}?rows=100${query}`)
+            .get(`/api/pbx/groups/${path}?rows=100${query}`)
+            .set('Accept', 'application/json')
             .set(headers)
         expect(response.status).toEqual(200)
-        const [members, count]: [{id: number, group_id: number, subscriber_id: number}[], number] = response.body
+        const {data: members, total_count: count}: {data: {id: number, group_id: number, subscriber_id: number}[], total_count: number} = response.body
         expect(count).toEqual(members.length)
         members.forEach(member => expect(member.id).not.toBeNull())
         return members
@@ -246,10 +274,11 @@ describe('PBX Group Member', () => {
         describe('GET as admin', () => {
             it('read pbx group members', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/pbx/groups/members')
+                    .get('/api/pbx/groups/members')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                const [members, count] = response.body
+                const {data: members, total_count: count} = response.body
                 expect(count).toBeGreaterThanOrEqual(members.length)
             })
 
@@ -262,10 +291,11 @@ describe('PBX Group Member', () => {
 
             it('count members, not groups', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/pbx/groups/${customerA.groups[0].id}/members?rows=1`)
+                    .get(`/api/pbx/groups/${customerA.groups[0].id}/members?rows=1`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                const [members, count] = response.body
+                const {data: members, total_count: count} = response.body
                 expect(members).toHaveLength(1)
                 expect(count).toEqual(2)
             })
@@ -278,8 +308,9 @@ describe('PBX Group Member', () => {
                 const group = customerA.groups[1]
                 const [member] = await readMembers(adminAuthHeaders(), `${group.id}/members`)
                 const response = await request(app.getHttpServer())
-                    .get(`/pbx/groups/${group.id}/members/${member.id}`)
+                    .get(`/api/pbx/groups/${group.id}/members/${member.id}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 expect(response.body.id).toEqual(member.id)
                 expect(response.body.subscriber_id).toEqual(customerA.seats[1].id)
@@ -354,10 +385,17 @@ describe('PBX Group Member', () => {
                 const group = customerA.groups[1]
                 const [member] = await readMembers(adminAuthHeaders(), `${group.id}/members`)
                 const response = await request(app.getHttpServer())
-                    .get(`/pbx/groups/${group.id}/members/${member.id}`)
+                    .get(`/api/pbx/groups/${group.id}/members/${member.id}`)
                     .set(seatAuthHeaders)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(404)
             })
+        })
+    })
+
+    describe('PBX Group Member DELETE', () => {
+        it('delete created pbx customers', async () => {
+            await deletePbxCustomers()
         })
     })
 })

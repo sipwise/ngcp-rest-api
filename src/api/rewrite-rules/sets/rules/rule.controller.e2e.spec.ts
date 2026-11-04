@@ -1,6 +1,9 @@
-import {INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
+import {In, MoreThanOrEqual} from 'typeorm'
 
 import {RewriteRuleResponseDto} from './dto/rule-response.dto'
 import {RewriteRuleModule} from './rule.module'
@@ -9,10 +12,14 @@ import {RewriteRuleSetModule} from '~/api/rewrite-rules/sets/set.module'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {db} from '~/entities'
 import {RewriteRuleDirection, RewriteRuleField} from '~/entities/internal/rewrite-rule.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type RuleSetPost = {
@@ -40,6 +47,7 @@ describe('Rewrite Rule', () => {
     let createdSetIds: number[] = []
     let createdRuleIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
+    const startedAt = Date.now() / 1000
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -55,11 +63,30 @@ describe('Rewrite Rule', () => {
 
         app = moduleRef.createNestApplication()
 
-        // TODO import other app configuration from bootstrap()
-        // like interceptors, etc.
-        app.useGlobalPipes(new ValidateInputPipe())
+        app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
     })
@@ -86,7 +113,9 @@ describe('Rewrite Rule', () => {
 
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
-            .post('/auth/jwt')
+            .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
@@ -107,19 +136,23 @@ describe('Rewrite Rule', () => {
             }
             it('create set test_ruleset1', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/rewrite-rules/sets')
+                    .post('/api/rewrite-rules/sets')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(ruleset1)
                 expect(response.status).toEqual(201)
-                createdSetIds.push(+response.body[0].id)
+                createdSetIds.push(+response.body.data[0].id)
             })
             it('create set test_ruleset2', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/rewrite-rules/sets')
+                    .post('/api/rewrite-rules/sets')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(ruleset2)
                 expect(response.status).toEqual(201)
-                createdSetIds.push(+response.body[0].id)
+                createdSetIds.push(+response.body.data[0].id)
             })
 
             it('create rule 1', async () => {
@@ -134,11 +167,13 @@ describe('Rewrite Rule', () => {
                     enabled: true,
                 }
                 const response = await request(app.getHttpServer())
-                    .post('/rewrite-rules/sets/rules')
+                    .post('/api/rewrite-rules/sets/rules')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(rule1)
                 expect(response.status).toEqual(201)
-                createdRuleIds.push(+response.body[0].id)
+                createdRuleIds.push(+response.body.data[0].id)
             })
 
             it('create rule 2', async () => {
@@ -154,11 +189,13 @@ describe('Rewrite Rule', () => {
                     enabled: false,
                 }
                 const response = await request(app.getHttpServer())
-                    .post('/rewrite-rules/sets/rules')
+                    .post('/api/rewrite-rules/sets/rules')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(rule2)
                 expect(response.status).toEqual(201)
-                createdRuleIds.push(+response.body[0].id)
+                createdRuleIds.push(+response.body.data[0].id)
             })
 
             it('create rule 3', async () => {
@@ -173,19 +210,22 @@ describe('Rewrite Rule', () => {
                     enabled: true,
                 }
                 const response = await request(app.getHttpServer())
-                    .post('/rewrite-rules/sets/rules')
+                    .post('/api/rewrite-rules/sets/rules')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(rule3)
                 expect(response.status).toEqual(201)
-                createdRuleIds.push(+response.body[0].id)
+                createdRuleIds.push(+response.body.data[0].id)
             })
         })
 
         describe('GET', () => {
             it('read created rule 1', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/rewrite-rules/sets/rules/${createdRuleIds[0]}`)
+                    .get(`/api/rewrite-rules/sets/rules/${createdRuleIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const rule: RewriteRuleResponseDto = response.body
                 expect(rule.set_id).toEqual(createdSetIds[0])
@@ -195,8 +235,9 @@ describe('Rewrite Rule', () => {
             })
             it('read created rule 2', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/rewrite-rules/sets/${createdSetIds[1]}/rules/${createdRuleIds[1]}`)
+                    .get(`/api/rewrite-rules/sets/${createdSetIds[1]}/rules/${createdRuleIds[1]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const rule: RewriteRuleResponseDto = response.body
                 expect(rule.set_id).toEqual(createdSetIds[1])
@@ -206,8 +247,9 @@ describe('Rewrite Rule', () => {
             })
             it('read non-existing rule', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/rewrite-rules/rules/999911111122')
+                    .get('/api/rewrite-rules/rules/999911111122')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(404)
             })
         })
@@ -225,15 +267,18 @@ describe('Rewrite Rule', () => {
                     enabled: true,
                 }
                 const response = await request(app.getHttpServer())
-                    .put(`/rewrite-rules/sets/${createdSetIds[0]}/rules/${createdRuleIds[0]}`)
+                    .put(`/api/rewrite-rules/sets/${createdSetIds[0]}/rules/${createdRuleIds[0]}`)
                     .set(...authHeader)
-                    .send (rulefoo)
-                expect(response.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(rulefoo)
+                expect(response.status).toEqual(204)
             })
             it('read updated rule', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/rewrite-rules/sets/${createdSetIds[0]}/rules/${createdRuleIds[0]}`)
+                    .get(`/api/rewrite-rules/sets/${createdSetIds[0]}/rules/${createdRuleIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ruleset: RewriteRuleResponseDto = response.body
                 expect(ruleset.description).toEqual('test_rule_foo description')
@@ -250,9 +295,11 @@ describe('Rewrite Rule', () => {
                     priority:101,
                 }
                 const response = await request(app.getHttpServer())
-                    .put('/rewrite-rules/sets/rules/999911111122')
+                    .put('/api/rewrite-rules/sets/rules/999911111122')
                     .set(...authHeader)
-                    .send (rulefoo)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(rulefoo)
                 expect(response.status).toEqual(404)
             })
         })
@@ -267,23 +314,28 @@ describe('Rewrite Rule', () => {
             ]
             it('adjust rule 3 -> 5', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch(`/rewrite-rules/sets/rules/${createdRuleIds[2]}`)
+                    .patch(`/api/rewrite-rules/sets/rules/${createdRuleIds[2]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
-                expect(response.status).toEqual(200)
+                expect(response.status).toEqual(204)
             })
             it('read updated rule  5', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/rewrite-rules/sets/rules/${createdRuleIds[2]}`)
+                    .get(`/api/rewrite-rules/sets/rules/${createdRuleIds[2]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ruleset: RewriteRuleResponseDto = response.body
                 expect(ruleset.description).toEqual('test_rule5 description')
             })
             it('adjust non-existing rule', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch('/rewrite-rules/sets/rules/999911111122')
+                    .patch('/api/rewrite-rules/sets/rules/999911111122')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(404)
             })
@@ -294,18 +346,29 @@ describe('Rewrite Rule', () => {
         it('delete created rules', async () => {
             for (const id of createdRuleIds) {
                 const result = await request(app.getHttpServer())
-                    .delete(`/rewrite-rules/sets/rules/${id}`)
+                    .delete(`/api/rewrite-rules/sets/rules/${id}`)
                     .set(...authHeader)
-                expect(result.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                expect(result.status).toEqual(204)
             }
         })
         it('delete created sets', async () => {
             for (const id of createdSetIds) {
                 const result = await request(app.getHttpServer())
-                    .delete(`/rewrite-rules/sets/${id}`)
+                    .delete(`/api/rewrite-rules/sets/${id}`)
                     .set(...authHeader)
-                expect(result.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                expect(result.status).toEqual(204)
             }
+        })
+        it('delete created journals', async () => {
+            const rewriteRulesIds = [...createdSetIds, ...createdRuleIds]
+            if (rewriteRulesIds.length)
+                await db.billing.Journal.delete({
+                    resource_name: 'rewrite-rules',
+                    resource_id: In(rewriteRulesIds),
+                    timestamp: MoreThanOrEqual(startedAt),
+                })
         })
     })
 })

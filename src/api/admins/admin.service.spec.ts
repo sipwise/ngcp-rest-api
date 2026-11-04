@@ -1,4 +1,4 @@
-import {ForbiddenException} from '@nestjs/common'
+import {ForbiddenException, UnprocessableEntityException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 
 import {AdminModule} from './admin.module'
@@ -369,9 +369,6 @@ describe('AdminService', () => {
             callData: true,
             isActive: true,
             isMaster: true,
-            isSuperuser: false,
-            isSystem: true,
-            lawfulIntercept: true,
             login: 'protectedJest',
             role: 'reseller',
             showPasswords: false,
@@ -381,7 +378,7 @@ describe('AdminService', () => {
             it(`should throw ForbiddenException when updating ${s} on self`, async () => {
                 const id = 1
                 const patch: PatchOperation[] = [
-                    {op: 'replace', path: `/${s}`, value: protectedFields[s]},
+                    {op: 'replace', path: `/${s.replace(/[A-Z]/g, c => '_' + c.toLowerCase())}`, value: protectedFields[s]},
                 ]
                 const oldEntity = await service.read(id, sr)
                 const entity = await patchToEntity<internal.Admin, AdminRequestDto>(oldEntity, patch, AdminRequestDto)
@@ -389,6 +386,13 @@ describe('AdminService', () => {
                 await expect(service.update(update, sr)).rejects.toThrow(ForbiddenException)
             })
         })
+        for (const path of ['/is_superuser', '/is_system', '/lawful_intercept']) {
+            it(`should reject patching ${path}, it is not part of the request`, async () => {
+                const oldEntity = await service.read(1, sr)
+                await expect(patchToEntity<internal.Admin, AdminRequestDto>(oldEntity, [{op: 'replace', path: path, value: true}], AdminRequestDto))
+                    .rejects.toThrow(UnprocessableEntityException)
+            })
+        }
     })
 
     describe('delete', () => {

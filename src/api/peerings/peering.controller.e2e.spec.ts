@@ -1,5 +1,7 @@
-import {INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
 
 import {PeeringResponseDto} from './dto/peering-response.dto'
@@ -10,7 +12,10 @@ import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {validate} from '~/helpers/validate.helper'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 describe('Peering', () => {
@@ -31,11 +36,30 @@ describe('Peering', () => {
 
         app = moduleRef.createNestApplication()
 
-        // TODO import other app configuration from bootstrap()
-        // like interceptors, etc.
-        app.useGlobalPipes(new ValidateInputPipe())
+        app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
     })
@@ -62,7 +86,9 @@ describe('Peering', () => {
 
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
-            .post('/auth/jwt')
+            .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
@@ -73,8 +99,9 @@ describe('Peering', () => {
         describe('GET', () => {
             it('read peerings', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/peerings')
+                    .get('/api/peerings')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const setCollection: PeeringResponseDto = response.body
                 expect(await validate(setCollection)).toEqual([])

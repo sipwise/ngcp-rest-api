@@ -41,7 +41,7 @@ export class NCOSSetRequestDto implements RequestDto {
         entity.resellerId = this.reseller_id
         entity.name = this.name
         entity.description = this.description
-        entity.exposeToCustomer = this.expose_to_customer
+        entity.exposeToCustomer = this.expose_to_customer ?? false
         if (options.id)
             entity.id = options.id
 

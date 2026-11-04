@@ -9,6 +9,7 @@ export class FileshareRequestDto implements RequestDto {
         type: 'string',
         format: 'binary',
     })
+    @IsOptional()
         file: string
 
     @ApiPropertyOptional({

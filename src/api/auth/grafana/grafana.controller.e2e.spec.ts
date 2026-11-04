@@ -1,6 +1,9 @@
-import {INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
+import {In} from 'typeorm'
 
 import {AdminModule} from '~/api/admins/admin.module'
 import {AuthGrafanaModule} from '~/api/auth/grafana/grafana.module'
@@ -8,8 +11,12 @@ import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
+import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type AdminPost = {
@@ -25,6 +32,7 @@ type AdminPost = {
     can_reset_password: boolean
     password: string
     role: RbacRole
+    enable_2fa: boolean
 }
 
 describe('Auth Grafana', () => {
@@ -34,15 +42,18 @@ describe('Auth Grafana', () => {
     let authHeader: [string, string]
     let createdAdminIds: number[]
     const creds = {username: 'administrator', password: 'administrator'}
-    const preferHeader: [string, string] = ['prefer', 'return=representation']
     const strongPassword = 'FFFooobarbaz123!!!'
     const userHeader = 'ngcp-grafana-user'
     const tokens: {[login: string]: [string, string]} = {}
+    const run = Date.now().toString(36)
+    const rwAdmin = `grafana_rw_admin_${run}`
+    const roAdmin = `grafana_ro_admin_${run}`
+    const resellerAdmin = `grafana_reseller_${run}`
 
     const admins: AdminPost[] = [
         {
-            login: 'grafana_rw_admin',
-            email: 'grafana_rw_admin@example.com',
+            login: rwAdmin,
+            email: `${rwAdmin}@example.com`,
             role: RbacRole.admin,
             read_only: false,
             reseller_id: 1,
@@ -53,10 +64,11 @@ describe('Auth Grafana', () => {
             billing_data: true,
             can_reset_password: true,
             password: strongPassword,
+            enable_2fa: false,
         },
         {
-            login: 'grafana_ro_admin',
-            email: 'grafana_ro_admin@example.com',
+            login: roAdmin,
+            email: `${roAdmin}@example.com`,
             role: RbacRole.admin,
             read_only: true,
             reseller_id: 1,
@@ -67,10 +79,11 @@ describe('Auth Grafana', () => {
             billing_data: true,
             can_reset_password: true,
             password: strongPassword,
+            enable_2fa: false,
         },
         {
-            login: 'grafana_reseller',
-            email: 'grafana_reseller@example.com',
+            login: resellerAdmin,
+            email: `${resellerAdmin}@example.com`,
             role: RbacRole.reseller,
             read_only: false,
             reseller_id: 1,
@@ -81,6 +94,7 @@ describe('Auth Grafana', () => {
             billing_data: true,
             can_reset_password: true,
             password: strongPassword,
+            enable_2fa: false,
         },
     ]
 
@@ -95,10 +109,30 @@ describe('Auth Grafana', () => {
 
         app = moduleRef.createNestApplication()
 
-        app.useGlobalPipes(new ValidateInputPipe())
-        app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
         app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
+        app.useGlobalFilters(new HttpExceptionFilter())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         createdAdminIds = []
 
@@ -129,6 +163,8 @@ describe('Auth Grafana', () => {
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
             .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
@@ -141,10 +177,12 @@ describe('Auth Grafana', () => {
                 const response = await request(app.getHttpServer())
                     .post('/api/admins')
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
                     .send(admins)
                 expect(response.status).toEqual(201)
-                for (const admin of response.body) {
+                for (const admin of response.body.data) {
                     createdAdminIds.push(+admin.id)
                 }
                 expect(createdAdminIds.length).toEqual(admins.length)
@@ -155,6 +193,7 @@ describe('Auth Grafana', () => {
                     const response = await request(app.getHttpServer())
                         .post('/api/auth/jwt')
                         .auth(admin.login, strongPassword)
+                        .set('Accept', 'application/json')
                     expect(response.status).toEqual(201)
                     expect(response.body['access_token']).toBeDefined()
                     tokens[admin.login] = ['Authorization', 'Bearer ' + response.body['access_token']]
@@ -166,16 +205,19 @@ describe('Auth Grafana', () => {
             it('returns username without edit', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/api/auth/grafana')
-                    .set(...tokens['grafana_rw_admin'])
+                    .set(...tokens[rwAdmin])
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                expect(response.body.grafana_user).toEqual('grafana_rw_admin')
-                expect(response.headers[userHeader]).toEqual('grafana_rw_admin')
+                expect(response.body.grafana_user).toEqual(rwAdmin)
+                expect(response.headers[userHeader]).toEqual(rwAdmin)
             })
 
             it('returns admin with grafana_edit true', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/api/auth/grafana')
-                    .set(...tokens['grafana_rw_admin'])
+                    .set(...tokens[rwAdmin])
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({grafana_edit: true})
                 expect(response.status).toEqual(200)
                 expect(response.body.grafana_user).toEqual('admin')
@@ -185,7 +227,8 @@ describe('Auth Grafana', () => {
             it('returns admin with NGCP-Grafana-Edit: 1', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/api/auth/grafana')
-                    .set(...tokens['grafana_rw_admin'])
+                    .set(...tokens[rwAdmin])
+                    .set('Accept', 'application/json')
                     .set('NGCP-Grafana-Edit', '1')
                 expect(response.status).toEqual(200)
                 expect(response.body.grafana_user).toEqual('admin')
@@ -195,26 +238,31 @@ describe('Auth Grafana', () => {
             it('returns username with NGCP-Grafana-Edit: 0', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/api/auth/grafana')
-                    .set(...tokens['grafana_rw_admin'])
+                    .set(...tokens[rwAdmin])
+                    .set('Accept', 'application/json')
                     .set('NGCP-Grafana-Edit', '0')
                 expect(response.status).toEqual(200)
-                expect(response.body.grafana_user).toEqual('grafana_rw_admin')
+                expect(response.body.grafana_user).toEqual(rwAdmin)
             })
 
             it('grafana_edit in body takes precedence over the header', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/api/auth/grafana')
-                    .set(...tokens['grafana_rw_admin'])
+                    .set(...tokens[rwAdmin])
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .set('NGCP-Grafana-Edit', '1')
                     .send({grafana_edit: false})
                 expect(response.status).toEqual(200)
-                expect(response.body.grafana_user).toEqual('grafana_rw_admin')
+                expect(response.body.grafana_user).toEqual(rwAdmin)
             })
 
             it('fails with invalid grafana_edit', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/api/auth/grafana')
-                    .set(...tokens['grafana_rw_admin'])
+                    .set(...tokens[rwAdmin])
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({grafana_edit: 'yes'})
                 expect(response.status).toEqual(422)
             })
@@ -222,16 +270,19 @@ describe('Auth Grafana', () => {
             it('read-only admin gets username without edit', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/api/auth/grafana')
-                    .set(...tokens['grafana_ro_admin'])
+                    .set(...tokens[roAdmin])
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                expect(response.body.grafana_user).toEqual('grafana_ro_admin')
-                expect(response.headers[userHeader]).toEqual('grafana_ro_admin')
+                expect(response.body.grafana_user).toEqual(roAdmin)
+                expect(response.headers[userHeader]).toEqual(roAdmin)
             })
 
             it('read-only admin is denied with grafana_edit true', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/api/auth/grafana')
-                    .set(...tokens['grafana_ro_admin'])
+                    .set(...tokens[roAdmin])
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({grafana_edit: true})
                 expect(response.status).toEqual(403)
                 expect(response.headers[userHeader]).toBeUndefined()
@@ -240,7 +291,8 @@ describe('Auth Grafana', () => {
             it('read-only admin is denied with NGCP-Grafana-Edit: 1', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/api/auth/grafana')
-                    .set(...tokens['grafana_ro_admin'])
+                    .set(...tokens[roAdmin])
+                    .set('Accept', 'application/json')
                     .set('NGCP-Grafana-Edit', '1')
                 expect(response.status).toEqual(403)
             })
@@ -248,7 +300,9 @@ describe('Auth Grafana', () => {
             it('read-only admin is still denied on other write endpoints', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/api/admins')
-                    .set(...tokens['grafana_ro_admin'])
+                    .set(...tokens[roAdmin])
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send([])
                 expect(response.status).toEqual(403)
             })
@@ -256,26 +310,34 @@ describe('Auth Grafana', () => {
             it('reseller role is denied', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/api/auth/grafana')
-                    .set(...tokens['grafana_reseller'])
+                    .set(...tokens[resellerAdmin])
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(403)
             })
 
             it('GET is not supported', async () => {
                 const response = await request(app.getHttpServer())
                     .get('/api/auth/grafana')
-                    .set(...tokens['grafana_rw_admin'])
+                    .set(...tokens[rwAdmin])
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(404)
             })
         })
     })
 
-    describe('Cleanup', () => {
+    describe('Auth Grafana DELETE', () => {
         it('delete created admins bulk', async () => {
             const result = await request(app.getHttpServer())
                 .delete('/api/admins/')
                 .set(...authHeader)
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
                 .send(createdAdminIds)
-            expect(result.status).toEqual(200)
+            expect(result.status).toEqual(204)
+        })
+        it('delete created journals', async () => {
+            if (createdAdminIds.length)
+                await db.billing.Journal.delete({resource_name: 'admins', resource_id: In(createdAdminIds)})
         })
     })
 })

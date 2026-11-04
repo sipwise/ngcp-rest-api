@@ -1,6 +1,9 @@
-import {INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
+import {In, MoreThanOrEqual} from 'typeorm'
 
 import {HeaderManipulationRuleResponseDto} from './dto/rule-response.dto'
 import {HeaderManipulationRuleModule} from './rule.module'
@@ -9,9 +12,13 @@ import {HeaderManipulationSetModule} from '~/api/header-manipulations/sets/set.m
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type RuleSetPost = {
@@ -38,6 +45,7 @@ describe('Rule', () => {
     let createdSetIds: number[] = []
     let createdRuleIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
+    const startedAt = Date.now() / 1000
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -53,11 +61,30 @@ describe('Rule', () => {
 
         app = moduleRef.createNestApplication()
 
-        // TODO import other app configuration from bootstrap()
-        // like interceptors, etc.
-        app.useGlobalPipes(new ValidateInputPipe())
+        app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
     })
@@ -84,7 +111,9 @@ describe('Rule', () => {
 
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
-            .post('/auth/jwt')
+            .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
@@ -105,19 +134,23 @@ describe('Rule', () => {
             }
             it('create set test_ruleset1', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/header-manipulations/sets')
+                    .post('/api/header-manipulations/sets')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(ruleset1)
                 expect(response.status).toEqual(201)
-                createdSetIds.push(+response.body[0].id)
+                createdSetIds.push(+response.body.data[0].id)
             })
             it('create set test_ruleset2', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/header-manipulations/sets')
+                    .post('/api/header-manipulations/sets')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(ruleset2)
                 expect(response.status).toEqual(201)
-                createdSetIds.push(+response.body[0].id)
+                createdSetIds.push(+response.body.data[0].id)
             })
 
             it('create rule 1', async () => {
@@ -131,11 +164,13 @@ describe('Rule', () => {
                     enabled: true,
                 }
                 const response = await request(app.getHttpServer())
-                    .post('/header-manipulations/sets/rules')
+                    .post('/api/header-manipulations/sets/rules')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(rule1)
                 expect(response.status).toEqual(201)
-                createdRuleIds.push(+response.body[0].id)
+                createdRuleIds.push(+response.body.data[0].id)
             })
 
             it('create rule 2', async () => {
@@ -150,11 +185,13 @@ describe('Rule', () => {
                     enabled: false,
                 }
                 const response = await request(app.getHttpServer())
-                    .post('/header-manipulations/sets/rules')
+                    .post('/api/header-manipulations/sets/rules')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(rule2)
                 expect(response.status).toEqual(201)
-                createdRuleIds.push(+response.body[0].id)
+                createdRuleIds.push(+response.body.data[0].id)
             })
 
             it('create rule 3', async () => {
@@ -168,19 +205,22 @@ describe('Rule', () => {
                     enabled: true,
                 }
                 const response = await request(app.getHttpServer())
-                    .post('/header-manipulations/sets/rules')
+                    .post('/api/header-manipulations/sets/rules')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(rule3)
                 expect(response.status).toEqual(201)
-                createdRuleIds.push(+response.body[0].id)
+                createdRuleIds.push(+response.body.data[0].id)
             })
         })
 
         describe('GET', () => {
             it('read created rule 1', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/header-manipulations/sets/rules/${createdRuleIds[0]}`)
+                    .get(`/api/header-manipulations/sets/rules/${createdRuleIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const rule: HeaderManipulationRuleResponseDto = response.body
                 expect(rule.set_id).toEqual(createdSetIds[0])
@@ -193,8 +233,9 @@ describe('Rule', () => {
             })
             it('read created rule 2', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/header-manipulations/sets/${createdSetIds[1]}/rules/${createdRuleIds[1]}`)
+                    .get(`/api/header-manipulations/sets/${createdSetIds[1]}/rules/${createdRuleIds[1]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const rule: HeaderManipulationRuleResponseDto = response.body
                 expect(rule.set_id).toEqual(createdSetIds[1])
@@ -207,8 +248,9 @@ describe('Rule', () => {
             })
             it('read non-existing rule', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/header-manipulations/rules/999911111122')
+                    .get('/api/header-manipulations/rules/999911111122')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(404)
             })
         })
@@ -225,15 +267,18 @@ describe('Rule', () => {
                     enabled: false,
                 }
                 const response = await request(app.getHttpServer())
-                    .put(`/header-manipulations/sets/${createdSetIds[0]}/rules/${createdRuleIds[0]}`)
+                    .put(`/api/header-manipulations/sets/${createdSetIds[0]}/rules/${createdRuleIds[0]}`)
                     .set(...authHeader)
-                    .send (rulefoo)
-                expect(response.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(rulefoo)
+                expect(response.status).toEqual(204)
             })
             it('read updated rule', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/header-manipulations/sets/${createdSetIds[0]}/rules/${createdRuleIds[0]}`)
+                    .get(`/api/header-manipulations/sets/${createdSetIds[0]}/rules/${createdRuleIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ruleset: HeaderManipulationRuleResponseDto = response.body
                 expect(ruleset.name).toEqual('test_rule_foo')
@@ -249,9 +294,11 @@ describe('Rule', () => {
                     enabled: false,
                 }
                 const response = await request(app.getHttpServer())
-                    .put('/header-manipulations/sets/rules/999911111122')
+                    .put('/api/header-manipulations/sets/rules/999911111122')
                     .set(...authHeader)
-                    .send (rulefoo)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(rulefoo)
                 expect(response.status).toEqual(404)
             })
         })
@@ -271,15 +318,18 @@ describe('Rule', () => {
             ]
             it('adjust rule  3 -> 5', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch(`/header-manipulations/sets/rules/${createdRuleIds[2]}`)
+                    .patch(`/api/header-manipulations/sets/rules/${createdRuleIds[2]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
-                expect(response.status).toEqual(200)
+                expect(response.status).toEqual(204)
             })
             it('read updated rule  5', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/header-manipulations/sets/rules/${createdRuleIds[2]}`)
+                    .get(`/api/header-manipulations/sets/rules/${createdRuleIds[2]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ruleset: HeaderManipulationRuleResponseDto = response.body
                 expect(ruleset.name).toEqual('test_rule5')
@@ -287,8 +337,10 @@ describe('Rule', () => {
             })
             it('adjust non-existing rule', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch('/header-manipulations/sets/rules/999911111122')
+                    .patch('/api/header-manipulations/sets/rules/999911111122')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(404)
             })
@@ -299,18 +351,29 @@ describe('Rule', () => {
         it('delete created rules', async () => {
             for (const id of createdRuleIds) {
                 const result = await request(app.getHttpServer())
-                    .delete(`/header-manipulations/sets/rules/${id}`)
+                    .delete(`/api/header-manipulations/sets/rules/${id}`)
                     .set(...authHeader)
-                expect(result.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                expect(result.status).toEqual(204)
             }
         })
         it('delete created sets', async () => {
             for (const id of createdSetIds) {
                 const result = await request(app.getHttpServer())
-                    .delete(`/header-manipulations/sets/${id}`)
+                    .delete(`/api/header-manipulations/sets/${id}`)
                     .set(...authHeader)
-                expect(result.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                expect(result.status).toEqual(204)
             }
+        })
+        it('delete created journals', async () => {
+            const headerManipulationsIds = [...createdSetIds, ...createdRuleIds]
+            if (headerManipulationsIds.length)
+                await db.billing.Journal.delete({
+                    resource_name: 'header-manipulations',
+                    resource_id: In(headerManipulationsIds),
+                    timestamp: MoreThanOrEqual(startedAt),
+                })
         })
     })
 })

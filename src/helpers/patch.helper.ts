@@ -30,7 +30,8 @@ export async function patchToEntity<T extends {id?: number}, D extends RequestDt
     const patchEntity = Object.assign(Object.create(oldEntity), oldEntity)
     // the patch values are transformed as a request body (nested dtos, dates)
     const reqDto = plainToInstance(requestDto, applyPatch(new requestDto(null), patch).newDocument)
-    const errors = await classValidate(reqDto, {skipMissingProperties: true})
+    // paths outside the request dto are rejected like unknown properties of a POST/PUT body
+    const errors = await classValidate(reqDto, {skipMissingProperties: true, whitelist: true, forbidNonWhitelisted: true})
     if (errors && errors.length) {
         throw new UnprocessableEntityException(formatValidationErrors(errors))
     }

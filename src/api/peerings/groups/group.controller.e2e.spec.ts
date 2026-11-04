@@ -1,6 +1,9 @@
-import {INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
+import {In, MoreThanOrEqual} from 'typeorm'
 
 import {PeeringGroupResponseDto} from './dto/group-response.dto'
 import {PeeringGroupModule} from './group.module'
@@ -12,7 +15,10 @@ import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type PeeringGroupPost = {
@@ -31,6 +37,7 @@ describe('Peering Group', () => {
     const createdPeeringGroupIds: number[] = []
     const createdContractIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
+    const startedAt = Date.now() / 1000
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -43,11 +50,30 @@ describe('Peering Group', () => {
 
         app = moduleRef.createNestApplication()
 
-        // TODO import other app configuration from bootstrap()
-        // like interceptors, etc.
-        app.useGlobalPipes(new ValidateInputPipe())
+        app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
     })
@@ -74,7 +100,9 @@ describe('Peering Group', () => {
 
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
-            .post('/auth/jwt')
+            .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
@@ -87,23 +115,26 @@ describe('Peering Group', () => {
                 const contract = await db.billing.Contract.create({
                     product_id: 2,
                 }).save()
+                createdContractIds.push(contract.id)
                 const peeringGroup1DefaultPriority: PeeringGroupPost = {
                     name: 'test_peeringGroup1DefaultPriority',
                     description: 'test_peeringGroup1DefaultPriority description',
                     contract_id: contract.id,
                 }
                 const response = await request(app.getHttpServer())
-                    .post('/peerings/groups')
+                    .post('/api/peerings/groups')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(peeringGroup1DefaultPriority)
                 expect(response.status).toEqual(201)
-                createdPeeringGroupIds.push(+response.body[0].id)
-                createdContractIds.push(contract.id)
+                createdPeeringGroupIds.push(+response.body.data[0].id)
             })
             it('create group test_peeringGroup2', async () => {
                 const contract = await db.billing.Contract.create({
                     product_id: 2,
                 }).save()
+                createdContractIds.push(contract.id)
                 const peeringGroup2: PeeringGroupPost = {
                     name: 'test_peeringGroup2',
                     description: 'test_peeringGroup2 description',
@@ -111,17 +142,20 @@ describe('Peering Group', () => {
                     priority: 2,
                 }
                 const response = await request(app.getHttpServer())
-                    .post('/peerings/groups')
+                    .post('/api/peerings/groups')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(peeringGroup2)
                 expect(response.status).toEqual(201)
-                createdPeeringGroupIds.push(+response.body[0].id)
-                createdContractIds.push(contract.id)
+                createdPeeringGroupIds.push(+response.body.data[0].id)
             })
             it('fail create group with non existing system contract', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/peerings/groups')
+                    .post('/api/peerings/groups')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({
                         name: 'test_peeringGroup3',
                         description: 'test_peeringGroup3 description',
@@ -133,20 +167,24 @@ describe('Peering Group', () => {
                 const contract = await db.billing.Contract.create({
                     product_id: 2,
                 }).save()
+                createdContractIds.push(contract.id)
                 const success = await request(app.getHttpServer())
-                    .post('/peerings/groups')
+                    .post('/api/peerings/groups')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({
                         name: 'test_peeringGroup3',
                         description: 'test_peeringGroup3 description',
                         contract_id: contract.id,
                     })
                 expect(success.status).toEqual(201)
-                createdPeeringGroupIds.push(+success.body[0].id)
-                createdContractIds.push(contract.id)
+                createdPeeringGroupIds.push(+success.body.data[0].id)
                 const fail = await request(app.getHttpServer())
-                    .post('/peerings/groups')
+                    .post('/api/peerings/groups')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({
                         name: 'test_peeringGroup3',
                         description: 'test_peeringGroup3 description',
@@ -156,8 +194,10 @@ describe('Peering Group', () => {
             })
             it('validation fail on group', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/peerings/groups')
+                    .post('/api/peerings/groups')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({unknownField: 'test'})
                 expect(response.status).toEqual(422)
             })
@@ -165,8 +205,9 @@ describe('Peering Group', () => {
         describe('GET', () => {
             it('read created group test_peeringGroup1DefaultPriority by id', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/peerings/groups/${createdPeeringGroupIds[0]}`)
+                    .get(`/api/peerings/groups/${createdPeeringGroupIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const group: PeeringGroupResponseDto = response.body
                 expect(group.name).toEqual('test_peeringGroup1DefaultPriority')
@@ -174,14 +215,13 @@ describe('Peering Group', () => {
             })
             it('read created group test_peeringGroup1DefaultPriority by name', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/peerings/groups/?name=test_peeringGroup1DefaultPriority')
+                    .get('/api/peerings/groups/?name=test_peeringGroup1DefaultPriority')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                const setCollection: PeeringGroupResponseDto = response.body
-                expect(await validate(setCollection)).toEqual([])
-                expect(setCollection).toHaveLength(2)
-                expect(setCollection[1]).toEqual(1)
-                const setEntries = setCollection[0]
+                const setCollection = response.body
+                expect(setCollection.total_count).toEqual(1)
+                const setEntries: PeeringGroupResponseDto[] = setCollection.data
                 expect(await validate(setEntries)).toEqual([])
                 expect(setEntries).toHaveLength(1)
                 const group = setEntries[0]
@@ -190,14 +230,13 @@ describe('Peering Group', () => {
             })
             it('read created group test_peeringGroup2', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/peerings/groups/?name=test_peeringGroup2')
+                    .get('/api/peerings/groups/?name=test_peeringGroup2')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                const setCollection: PeeringGroupResponseDto = response.body
-                expect(await validate(setCollection)).toEqual([])
-                expect(setCollection).toHaveLength(2)
-                expect(setCollection[1]).toEqual(1)
-                const setEntries = setCollection[0]
+                const setCollection = response.body
+                expect(setCollection.total_count).toEqual(1)
+                const setEntries: PeeringGroupResponseDto[] = setCollection.data
                 expect(await validate(setEntries)).toEqual([])
                 expect(setEntries).toHaveLength(1)
                 const group = setEntries[0]
@@ -207,8 +246,9 @@ describe('Peering Group', () => {
             })
             it('read non-existing group', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/peerings/groups/999911111122')
+                    .get('/api/peerings/groups/999911111122')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(404)
             })
         })
@@ -217,55 +257,65 @@ describe('Peering Group', () => {
                 const contract = await db.billing.Contract.create({
                     product_id: 2,
                 }).save()
+                createdContractIds.push(contract.id)
                 const peeringGroup1DefaultPriorityUpdate: PeeringGroupPost = {
                     name: 'renamed_test_peeringGroup1DefaultPriority',
                     description: 'foo',
                     contract_id: contract.id,
                 }
                 const response = await request(app.getHttpServer())
-                    .put(`/peerings/groups/${createdPeeringGroupIds[0]}`)
+                    .put(`/api/peerings/groups/${createdPeeringGroupIds[0]}`)
                     .set(...authHeader)
-                    .send (peeringGroup1DefaultPriorityUpdate)
-                expect(response.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(peeringGroup1DefaultPriorityUpdate)
+                expect(response.status).toEqual(204)
             })
             it('update group test_peeringGroup2 -> renamed_test_peeringGroup2', async () => {
                 const contract = await db.billing.Contract.create({
                     product_id: 2,
                 }).save()
+                createdContractIds.push(contract.id)
                 const peeringGroup2Update: PeeringGroupPost = {
                     name: 'renamed_test_peeringGroup2',
                     description: 'bar',
                     contract_id: contract.id,
                 }
                 const response = await request(app.getHttpServer())
-                    .put(`/peerings/groups/${createdPeeringGroupIds[1]}`)
+                    .put(`/api/peerings/groups/${createdPeeringGroupIds[1]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(peeringGroup2Update)
-                expect(response.status).toEqual(200)
+                expect(response.status).toEqual(204)
             })
             it('read updated group 1', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/peerings/groups/${createdPeeringGroupIds[0]}`)
+                    .get(`/api/peerings/groups/${createdPeeringGroupIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const group: PeeringGroupResponseDto = response.body
                 expect(group.name).toEqual('renamed_test_peeringGroup1DefaultPriority')
             })
             it('read updated group 2', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/peerings/groups/${createdPeeringGroupIds[1]}`)
+                    .get(`/api/peerings/groups/${createdPeeringGroupIds[1]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const group: PeeringGroupResponseDto = response.body
                 expect(group.name).toEqual('renamed_test_peeringGroup2')
             })
             it('update non-existing group', async () => {
                 const response = await request(app.getHttpServer())
-                    .put('/peerings/groups/999911111122')
+                    .put('/api/peerings/groups/999911111122')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({
                         name: 'renamed_test_peeringGroup1DefaultPriority',
-                        contract_id: createdContractIds[-1],
+                        contract_id: createdContractIds[createdContractIds.length - 1],
                     })
                 expect(response.status).toEqual(404)
             })
@@ -280,23 +330,28 @@ describe('Peering Group', () => {
             ]
             it('adjust peeringGroup1DefaultPriority', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch(`/peerings/groups/${createdPeeringGroupIds[0]}`)
+                    .patch(`/api/peerings/groups/${createdPeeringGroupIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
-                expect(response.status).toEqual(200)
+                expect(response.status).toEqual(204)
             })
             it('read updated peeringGroup1DefaultPriority', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/peerings/groups/${createdPeeringGroupIds[0]}`)
+                    .get(`/api/peerings/groups/${createdPeeringGroupIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const group: PeeringGroupResponseDto = response.body
                 expect(group.name).toEqual('patched_test_peeringGroup1DefaultPriority')
             })
             it('adjust non-existing group', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch('/peerings/groups/999991111112')
+                    .patch('/api/peerings/groups/999991111112')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(404)
             })
@@ -307,11 +362,23 @@ describe('Peering Group', () => {
         it('delete created groups', async () => {
             for (const id of createdPeeringGroupIds) {
                 const result = await request(app.getHttpServer())
-                    .delete(`/peerings/groups/${id}`)
+                    .delete(`/api/peerings/groups/${id}`)
                     .set(...authHeader)
-                expect(result.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                expect(result.status).toEqual(204)
             }
-            await db.billing.Contract.delete(createdContractIds)
+        })
+        it('delete created contracts', async () => {
+            if (createdContractIds.length)
+                await db.billing.Contract.delete(createdContractIds)
+        })
+        it('delete created journals', async () => {
+            if (createdPeeringGroupIds.length)
+                await db.billing.Journal.delete({
+                    resource_name: 'peerings',
+                    resource_id: In(createdPeeringGroupIds),
+                    timestamp: MoreThanOrEqual(startedAt),
+                })
         })
     })
 })

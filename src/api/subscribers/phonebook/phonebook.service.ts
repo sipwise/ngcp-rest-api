@@ -174,10 +174,13 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
         const subscribers = new Set(entities.map(entity => entity.subscriberId))
         if (sr.query && sr.query['purge_existing']) {
             if (sr.query['purge_existing'] === 'true') {
+                delete sr.query['purge_existing']
                 const promises = Array.from(subscribers).map(async subscriber => {
                     await this.phonebookRepo.purge(subscriber, sr)
                 })
                 await Promise.all(promises)
+            } else {
+                delete sr.query['purge_existing']
             }
         }
         const ids = await this.phonebookRepo.create(entities, sr)

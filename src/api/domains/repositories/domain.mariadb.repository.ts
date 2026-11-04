@@ -79,7 +79,8 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
             func: this.readByDomain.name,
             user: sr.user.username,
         })
-        return (await db.billing.Domain.findOne({where: {domain: domain}})).toInternal()
+        const result = await db.billing.Domain.findOne({where: {domain: domain}})
+        return result?.toInternal()
     }
 
     async readResellerById(id: number, _sr: ServiceRequest): Promise<internal.Reseller> {

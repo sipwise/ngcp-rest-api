@@ -80,7 +80,7 @@ export class HeaderManipulationRuleActionRequestDto implements RequestDto {
         entity.value = this.value
         entity.rwrSetId = this.rwr_set_id
         entity.rwrDp = this.rwr_dp
-        entity.priority = this.priority
+        entity.priority = this.priority ?? 100
         entity.enabled = this.enabled
         if (options.id)
             entity.id = options.id

@@ -1,7 +1,10 @@
 
-import {INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
+import {In, MoreThanOrEqual} from 'typeorm'
 
 import {CustomerPhonebookResponseDto} from './dto/phonebook-response.dto'
 import {CustomerPhonebookModule} from './phonebook.module'
@@ -12,7 +15,10 @@ import {AuthService} from '~/auth/auth.service'
 import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type PhonebookPost = {
@@ -29,6 +35,7 @@ describe('Customer Phonebook', () => {
     const createdPhonebookIds: number[] = []
     const createdContractIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
+    const startedAt = Date.now() / 1000
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -41,11 +48,30 @@ describe('Customer Phonebook', () => {
 
         app = moduleRef.createNestApplication()
 
-        // TODO import other app configuration from bootstrap()
-        // like interceptors, etc.
-        app.useGlobalPipes(new ValidateInputPipe())
+        app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
     })
@@ -72,7 +98,9 @@ describe('Customer Phonebook', () => {
 
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
-            .post('/auth/jwt')
+            .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
@@ -83,7 +111,8 @@ describe('Customer Phonebook', () => {
         describe('POST', () => {
             it('create phonebook bulk with purge_existing', async () => {
                 const contract = await db.billing.Contract.create({
-                    product_id: 2,
+                    contact_id: 1,
+                    product_id: 4,
                 }).save()
                 createdContractIds.push(contract.id)
                 // test this first so it doesnt affect other tests via purge
@@ -101,13 +130,15 @@ describe('Customer Phonebook', () => {
                 ].join('\n')
 
                 const response = await request(app.getHttpServer())
-                    .post('/customers/phonebook?purge_existing=true')
+                    .post('/api/customers/phonebook?purge_existing=true')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Prefer', 'return=representation')
                     .attach('file', Buffer.from(csvContent), 'customer_phonebook_test.csv')
                 expect(response.status).toEqual(201)
                 createdPhonebookIds.pop()
-                createdPhonebookIds.push(+response.body[0].id)
-                createdPhonebookIds.push(+response.body[1].id)
+                createdPhonebookIds.push(+response.body.data[0].id)
+                createdPhonebookIds.push(+response.body.data[1].id)
 
                 const cnt = await db.billing.ContractPhonebook.count({where: {contract_id: contract.id}})
                 expect(cnt).toEqual(2)
@@ -116,14 +147,16 @@ describe('Customer Phonebook', () => {
                 const phonebook1: PhonebookPost = {
                     name: 'test_phonebook1',
                     number: '123',
-                    customer_id: 1,
+                    customer_id: createdContractIds[0],
                 }
                 const response = await request(app.getHttpServer())
-                    .post('/customers/phonebook')
+                    .post('/api/customers/phonebook')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(phonebook1)
                 expect(response.status).toEqual(201)
-                createdPhonebookIds.push(+response.body[0].id)
+                createdPhonebookIds.push(+response.body.data[0].id)
             })
             it('creates phonebook bulk from csv', async () => {
                 const csvContent = [
@@ -132,12 +165,14 @@ describe('Customer Phonebook', () => {
                     `${createdContractIds[0]},CUST_PHONEBOOK_TEST4,70004`,
                 ].join('\n')
                 const response = await request(app.getHttpServer())
-                    .post('/customers/phonebook')
+                    .post('/api/customers/phonebook')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Prefer', 'return=representation')
                     .attach('file', Buffer.from(csvContent), 'customer_phonebook_test.csv')
                 expect(response.status).toEqual(201)
-                createdPhonebookIds.push(+response.body[0].id)
-                createdPhonebookIds.push(+response.body[1].id)
+                createdPhonebookIds.push(+response.body.data[0].id)
+                createdPhonebookIds.push(+response.body.data[1].id)
             })
             it('fails to create phonebook bulk because duplicate', async () => {
                 const csvContent = [
@@ -146,36 +181,58 @@ describe('Customer Phonebook', () => {
                     `${createdContractIds[0]},CUST_PHONEBOOK_TEST4,70004`,
                 ].join('\n')
                 const response = await request(app.getHttpServer())
-                    .post('/customers/phonebook')
+                    .post('/api/customers/phonebook')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                     .attach('file', Buffer.from(csvContent), 'customer_phonebook_test.csv')
                 expect(response.status).toEqual(422)
             })
         })
 
         describe('GET', () => {
+            it('read phonebook collection', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/customers/phonebook?customer_id=${createdContractIds[0]}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(5)
+                expect(response.body.data).toHaveLength(5)
+            })
             it('read created phonebook', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/customers/phonebook/${createdPhonebookIds[2]}`)
+                    .get(`/api/customers/phonebook/${createdPhonebookIds[2]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const phonebook: CustomerPhonebookResponseDto = response.body
                 expect(phonebook.name).toEqual('test_phonebook1')
                 expect(phonebook.number).toEqual('123')
-                expect(phonebook.customer_id).toEqual(1)
+                expect(phonebook.customer_id).toEqual(createdContractIds[0])
             })
             it('read created phonebook from csv', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/customers/phonebook/${createdPhonebookIds[3]}`)
+                    .get(`/api/customers/phonebook/${createdPhonebookIds[3]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const phonebook: CustomerPhonebookResponseDto = response.body
                 expect(phonebook.name).toEqual('CUST_PHONEBOOK_TEST3')
             })
+            it('read phonebook as csv', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/customers/phonebook?customer_id=${createdContractIds[0]}`)
+                    .set(...authHeader)
+                    .set('Accept', 'text/csv')
+                expect(response.status).toEqual(200)
+                expect(response.headers['content-type']).toContain('text/csv')
+                expect(response.text).toContain('CUST_PHONEBOOK_TEST3')
+            })
             it('read non-existing phonebook', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/customers/phonebook/999911111122')
+                    .get('/api/customers/phonebook/999911111122')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(404)
             })
         })
@@ -188,15 +245,18 @@ describe('Customer Phonebook', () => {
                     customer_id: createdContractIds[0],
                 }
                 const response = await request(app.getHttpServer())
-                    .put(`/customers/phonebook/${createdPhonebookIds[2]}`)
+                    .put(`/api/customers/phonebook/${createdPhonebookIds[2]}`)
                     .set(...authHeader)
-                    .send (phonebookfoo)
-                expect(response.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(phonebookfoo)
+                expect(response.status).toEqual(204)
             })
             it('read updated phonebook', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/customers/phonebook/${createdPhonebookIds[2]}`)
+                    .get(`/api/customers/phonebook/${createdPhonebookIds[2]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const phonebookset: CustomerPhonebookResponseDto = response.body
                 expect(phonebookset.name).toEqual('test_phonebook_foo')
@@ -205,12 +265,14 @@ describe('Customer Phonebook', () => {
                 const phonebookfoo: PhonebookPost = {
                     name: 'test_phonebook_foo_bar',
                     number: '1234',
-                    customer_id: 1,
+                    customer_id: createdContractIds[0],
                 }
                 const response = await request(app.getHttpServer())
-                    .put('/customers/phonebook/999911111122')
+                    .put('/api/customers/phonebook/999911111122')
                     .set(...authHeader)
-                    .send (phonebookfoo)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(phonebookfoo)
                 expect(response.status).toEqual(404)
             })
         })
@@ -230,15 +292,18 @@ describe('Customer Phonebook', () => {
             ]
             it('adjust phonebook', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch(`/customers/phonebook/${createdPhonebookIds[0]}`)
+                    .patch(`/api/customers/phonebook/${createdPhonebookIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
-                expect(response.status).toEqual(200)
+                expect(response.status).toEqual(204)
             })
             it('read updated phonebook  5', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/customers/phonebook/${createdPhonebookIds[0]}`)
+                    .get(`/api/customers/phonebook/${createdPhonebookIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const phonebookset: CustomerPhonebookResponseDto = response.body
                 expect(phonebookset.name).toEqual('test_phonebook_foobar')
@@ -246,8 +311,10 @@ describe('Customer Phonebook', () => {
             })
             it('adjust non-existing phonebook', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch('/customers/phonebook/999911111122')
+                    .patch('/api/customers/phonebook/999911111122')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(404)
             })
@@ -258,12 +325,22 @@ describe('Customer Phonebook', () => {
         it('delete created phonebook', async () => {
             for (const id of createdPhonebookIds) {
                 const result = await request(app.getHttpServer())
-                    .delete(`/customers/phonebook/${id}`)
+                    .delete(`/api/customers/phonebook/${id}`)
                     .set(...authHeader)
-                expect(result.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                expect(result.status).toEqual(204)
             }
             if (createdContractIds.length)
                 await db.billing.Contract.delete(createdContractIds)
+        })
+        it('delete created journals', async () => {
+            // journals take the first path segment as resource_name
+            if (createdPhonebookIds.length)
+                await db.billing.Journal.delete({
+                    resource_name: 'customers',
+                    resource_id: In(createdPhonebookIds),
+                    timestamp: MoreThanOrEqual(startedAt),
+                })
         })
     })
 })

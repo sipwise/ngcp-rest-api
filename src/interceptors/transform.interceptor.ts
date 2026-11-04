@@ -113,7 +113,7 @@ export class TransformInterceptor implements NestInterceptor {
         const path = req.route.path
         let id: number | string
         let length: number
-        if (Array.isArray(data) && data.length == 2 && Number.isInteger(data[data.length - 1])) {
+        if (Array.isArray(data) && data.length == 2 && Array.isArray(data[0]) && Number.isInteger(data[1])) {
             if (data[0].length > 0 && 'id' in data[0][0])
                 id = data[0][0]['id']
             length = data[0].length
@@ -141,7 +141,7 @@ export class TransformInterceptor implements NestInterceptor {
 
         res.setHeader('content-type', 'application/json')
 
-        if (Array.isArray(data) && data.length == 2 && Number.isInteger(data[data.length - 1])) {
+        if (Array.isArray(data) && data.length == 2 && Array.isArray(data[0]) && Number.isInteger(data[1])) {
             response.data = data[0]
             response.total_count = data[1]
         } else if (Array.isArray(data)) {

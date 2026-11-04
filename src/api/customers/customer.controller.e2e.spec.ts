@@ -1,5 +1,7 @@
-import {HttpStatus, INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, HttpStatus, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
 import {In} from 'typeorm'
 
@@ -19,7 +21,10 @@ import {Discriminator} from '~/entities/internal/profile-package-set.internal.en
 import {toLocalDateTime} from '~/helpers/date.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {validate} from '~/helpers/validate.helper'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type BillingProfilePost = {
@@ -69,7 +74,6 @@ describe('CustomerController', () => {
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
-    const preferHeader: [string, string] = ['prefer', 'return=representation']
     const createdCustomerIds: number[] = []
     const _createdContactIds: number[] = []
     const _createdBillingProfileIds: number[] = []
@@ -147,8 +151,10 @@ describe('CustomerController', () => {
 
     const putProfiles = (contractId: number, billingProfiles: object[]): request.Test =>
         request(app.getHttpServer())
-            .put(`/customers/${contractId}`)
+            .put(`/api/customers/${contractId}`)
             .set(...authHeader)
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send({
                 contact_id: CONTACT_ID,
                 status: ContractStatus.Active,
@@ -170,9 +176,30 @@ describe('CustomerController', () => {
 
         app = moduleRef.createNestApplication()
 
-        app.useGlobalPipes(new ValidateInputPipe({whitelist: true, forbidNonWhitelisted: true, transform: true}))
+        app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
 
@@ -237,8 +264,9 @@ describe('CustomerController', () => {
 
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
-            .post('/auth/jwt')
+            .post('/api/auth/jwt')
             .auth(creds.username, creds.password)
+            .set('Accept', 'application/json')
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
         authHeader = ['Authorization', 'Bearer ' + response.body['access_token']]
@@ -292,8 +320,10 @@ describe('CustomerController', () => {
                 ])
                 const before = at(0)
                 const response = await request(app.getHttpServer())
-                    .put(`/customers/${contractId}`)
+                    .put(`/api/customers/${contractId}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({
                         contact_id: CONTACT_ID,
                         status: ContractStatus.Active,
@@ -301,7 +331,7 @@ describe('CustomerController', () => {
                         billing_profile_definition: ContractBillingProfileDefinition.ID,
                         billing_profile_id: profileB,
                     })
-                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.status).toEqual(HttpStatus.NO_CONTENT)
 
                 const mappings = await readMappings(contractId)
                 const futureMapping = mappings.find(m => m.billing_profile_id == profileC)
@@ -314,8 +344,10 @@ describe('CustomerController', () => {
             it('rejects a terminated billing profile with 422', async () => {
                 const contractId = await createContract([{profileId: profileA}])
                 const response = await request(app.getHttpServer())
-                    .put(`/customers/${contractId}`)
+                    .put(`/api/customers/${contractId}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({
                         contact_id: CONTACT_ID,
                         status: ContractStatus.Active,
@@ -330,8 +362,10 @@ describe('CustomerController', () => {
         describe('Customer PUT billing mappings, package mode', () => {
             const putPackage = (contractId: number, packageId?: number): request.Test =>
                 request(app.getHttpServer())
-                    .put(`/customers/${contractId}`)
+                    .put(`/api/customers/${contractId}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({
                         contact_id: CONTACT_ID,
                         status: ContractStatus.Active,
@@ -347,7 +381,7 @@ describe('CustomerController', () => {
                     {profileId: profileC, start: future},
                 ], at(0), packageA)
                 const response = await putPackage(contractId, packageB)
-                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.status).toEqual(HttpStatus.NO_CONTENT)
 
                 const mappings = await readMappings(contractId)
                 expect(mappings.find(m => m.billing_profile_id == profileC)?.start_date?.getTime()).toEqual(future.getTime())
@@ -368,7 +402,7 @@ describe('CustomerController', () => {
                 const response = await putProfiles(contractId, [
                     {profile_id: profileB, start: toLocalDateTime(start), stop: toLocalDateTime(stop)},
                 ])
-                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.status).toEqual(HttpStatus.NO_CONTENT)
 
                 const mapping = (await readMappings(contractId)).find(m => m.billing_profile_id == profileB)
                 expect(mapping?.start_date?.getTime()).toEqual(start.getTime())
@@ -379,7 +413,7 @@ describe('CustomerController', () => {
                 const response = await putProfiles(contractId, [
                     {profile_id: profileB, network_id: null, start: toLocalDateTime(at(5 * DAY)), stop: null},
                 ])
-                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.status).toEqual(HttpStatus.NO_CONTENT)
 
                 const mapping = (await readMappings(contractId)).find(m => m.billing_profile_id == profileB)
                 expect(mapping).toBeDefined()
@@ -390,14 +424,14 @@ describe('CustomerController', () => {
                 const response = await putProfiles(contractId, [
                     {profile_id: profileNoReseller, start: toLocalDateTime(at(5 * DAY))},
                 ])
-                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.status).toEqual(HttpStatus.NO_CONTENT)
             })
 
             it('accepts a network of the reseller', async () => {
                 const response = await putProfiles(contractId, [
                     {profile_id: profileB, network_id: networkA, start: toLocalDateTime(at(5 * DAY))},
                 ])
-                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.status).toEqual(HttpStatus.NO_CONTENT)
             })
 
             it.each([
@@ -419,9 +453,9 @@ describe('CustomerController', () => {
 
             const getList = (path: string): request.Test =>
                 request(app.getHttpServer())
-                    .get(`/customers/${contractId}/${path}`)
+                    .get(`/api/customers/${contractId}/${path}`)
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
 
             beforeAll(async () => {
                 contractId = await createContract([
@@ -435,7 +469,7 @@ describe('CustomerController', () => {
             it('lists whole-second schedules ordered by effective start time, without terminated profiles/networks', async () => {
                 const response = await getList('@billing-profiles')
                 expect(response.status).toEqual(HttpStatus.OK)
-                const [profiles, count] = response.body
+                const {data: profiles, total_count: count} = response.body
                 expect(count).toEqual(profiles.length)
                 const ids = profiles.map((p: {profile_id: number}) => p.profile_id)
                 expect(ids).toEqual(expect.arrayContaining([profileA, profileB]))
@@ -449,7 +483,7 @@ describe('CustomerController', () => {
             it('lists only future billing profiles', async () => {
                 const response = await getList('@future-billing-profiles')
                 expect(response.status).toEqual(HttpStatus.OK)
-                const [profiles, count] = response.body
+                const {data: profiles, total_count: count} = response.body
                 expect(count).toEqual(profiles.length)
                 expect(profiles.map((p: {profile_id: number}) => p.profile_id)).toEqual([profileB])
             })
@@ -460,8 +494,9 @@ describe('CustomerController', () => {
                     {profileId: profileTerminated, start: at(8 * DAY)},
                 ])
                 const response = await request(app.getHttpServer())
-                    .get(`/customers/${id}`)
+                    .get(`/api/customers/${id}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(response.body.billing_profile_definition).toEqual(ContractBillingProfileDefinition.ID)
             })
@@ -472,8 +507,10 @@ describe('CustomerController', () => {
                 const contractId = await createContract([{profileId: profileA}])
                 const start = at(5 * DAY)
                 const response = await request(app.getHttpServer())
-                    .patch(`/customers/${contractId}`)
+                    .patch(`/api/customers/${contractId}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send([
                         {op: 'replace', path: '/billing_profile_definition', value: ContractBillingProfileDefinition.Profiles},
                         {op: 'remove', path: '/billing_profile_id'},
@@ -481,7 +518,7 @@ describe('CustomerController', () => {
                             {profile_id: profileB, network_id: null, start: toLocalDateTime(start), stop: null},
                         ]},
                     ])
-                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.status).toEqual(HttpStatus.NO_CONTENT)
 
                 const mapping = (await readMappings(contractId)).find(m => m.billing_profile_id == profileB)
                 expect(mapping?.start_date?.getTime()).toEqual(start.getTime())
@@ -492,8 +529,10 @@ describe('CustomerController', () => {
             it('requires an open interval without network', async () => {
                 const contractsBefore = await db.billing.Contract.count()
                 const response = await request(app.getHttpServer())
-                    .post('/customers')
+                    .post('/api/customers')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({
                         contact_id: CONTACT_ID,
                         status: ContractStatus.Active,
@@ -532,12 +571,14 @@ describe('CustomerController', () => {
                 }
 
                 const response = await request(app.getHttpServer())
-                    .post('/customers')
+                    .post('/api/customers')
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
                     .send(customer)
                 expect(response.status).toEqual(HttpStatus.CREATED)
-                createdCustomerIds.push(+response.body[0].id)
+                createdCustomerIds.push(+response.body.data[0].id)
             })
 
             it('create a single Customer with billing_profile_definition_id', async () => {
@@ -558,12 +599,14 @@ describe('CustomerController', () => {
                 }
 
                 const response = await request(app.getHttpServer())
-                    .post('/customers')
+                    .post('/api/customers')
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
                     .send(customer)
                 expect(response.status).toEqual(HttpStatus.CREATED)
-                createdCustomerIds.push(+response.body[0].id)
+                createdCustomerIds.push(+response.body.data[0].id)
             })
 
             it('fail if both billing_profiles and billing_profile_id are set', async () => {
@@ -585,9 +628,11 @@ describe('CustomerController', () => {
                 }
 
                 const response = await request(app.getHttpServer())
-                    .post('/customers')
+                    .post('/api/customers')
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
                     .send(customer)
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
             })
@@ -597,9 +642,9 @@ describe('CustomerController', () => {
             it('read single created customer by id', async () => {
                 const id = createdCustomerIds[0]
                 const response = await request(app.getHttpServer())
-                    .get(`/customers/${id}`)
+                    .get(`/api/customers/${id}`)
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(HttpStatus.OK)
                 const customerRes: CustomerResponseDto = response.body
                 expect(await validate(customerRes)).toHaveLength(0)
@@ -608,11 +653,11 @@ describe('CustomerController', () => {
 
             it('read collection', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/customers')
+                    .get('/api/customers')
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(HttpStatus.OK)
-                const [customers, count] = response.body
+                const {data: customers, total_count: count} = response.body
                 expect(count).toBeGreaterThan(0)
                 expect(customers.length).toBeGreaterThan(0)
                 for (const customer of customers) {
@@ -622,9 +667,9 @@ describe('CustomerController', () => {
 
             it('read non-existing customer', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/customers/999999')
+                    .get('/api/customers/999999')
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(HttpStatus.NOT_FOUND)
             })
         })
@@ -637,8 +682,11 @@ describe('CustomerController', () => {
                     {op: 'replace', path: '/vat_rate', value: 0.27},
                 ]
                 const response = await request(app.getHttpServer())
-                    .patch(`/customers/${id}`)
+                    .patch(`/api/customers/${id}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .set('Prefer', 'return=representation')
                     .send(patch)
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(response.body.external_id).toEqual('patched-external-id')
@@ -650,8 +698,10 @@ describe('CustomerController', () => {
                     {op: 'replace', path: '/external_id', value: 'should-not-exist'},
                 ]
                 const response = await request(app.getHttpServer())
-                    .patch('/customers/999999')
+                    .patch('/api/customers/999999')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(HttpStatus.NOT_FOUND)
             })
@@ -662,8 +712,10 @@ describe('CustomerController', () => {
                     {op: 'replace', path: '/nonexistent_field', value: 'foo'},
                 ]
                 const response = await request(app.getHttpServer())
-                    .patch(`/customers/${id}`)
+                    .patch(`/api/customers/${id}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
             })
@@ -676,8 +728,10 @@ describe('CustomerController', () => {
                     {op: 'replace', path: '/billing_profile_definition', value: 'id'},
                 ]
                 const response = await request(app.getHttpServer())
-                    .patch(`/customers/${id}`)
+                    .patch(`/api/customers/${id}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
             })
@@ -692,13 +746,15 @@ describe('CustomerController', () => {
                     {op: 'replace', path: '/external_id', value: 'bulk-patch-2'},
                 ]
                 const response = await request(app.getHttpServer())
-                    .patch('/customers')
+                    .patch('/api/customers')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .set('Prefer', 'return=representation')
                     .send(patchDict)
                 expect(response.status).toEqual(HttpStatus.OK)
-                expect(Array.isArray(response.body)).toBe(true)
-                expect(response.body).toContain(createdCustomerIds[0])
-                expect(response.body).toContain(createdCustomerIds[1])
+                expect(response.body.data).toContain(createdCustomerIds[0])
+                expect(response.body.data).toContain(createdCustomerIds[1])
             })
         })
 
@@ -715,8 +771,11 @@ describe('CustomerController', () => {
                     billing_profile_id: 1,
                 }
                 const response = await request(app.getHttpServer())
-                    .put(`/customers/${id}`)
+                    .put(`/api/customers/${id}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
                     .send(putDto)
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(response.body.id).toEqual(id)
@@ -735,8 +794,10 @@ describe('CustomerController', () => {
                     billing_profile_id: 1,
                 }
                 const response = await request(app.getHttpServer())
-                    .put('/customers/999999')
+                    .put('/api/customers/999999')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(putDto)
                 expect(response.status).toEqual(HttpStatus.NOT_FOUND)
             })
@@ -756,8 +817,10 @@ describe('CustomerController', () => {
                     ],
                 }
                 const response = await request(app.getHttpServer())
-                    .put(`/customers/${id}`)
+                    .put(`/api/customers/${id}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(putDto)
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
             })
@@ -784,13 +847,15 @@ describe('CustomerController', () => {
                     billing_profile_id: 1,
                 }
                 const response = await request(app.getHttpServer())
-                    .put('/customers')
+                    .put('/api/customers')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
                     .send(putDict)
                 expect(response.status).toEqual(HttpStatus.OK)
-                expect(Array.isArray(response.body)).toBe(true)
-                expect(response.body).toContain(createdCustomerIds[0])
-                expect(response.body).toContain(createdCustomerIds[1])
+                expect(response.body.data).toContain(createdCustomerIds[0])
+                expect(response.body.data).toContain(createdCustomerIds[1])
             })
         })
 
@@ -798,11 +863,12 @@ describe('CustomerController', () => {
             it('terminate customer by id', async () => {
                 const id = createdCustomerIds[0]
                 const response = await request(app.getHttpServer())
-                    .delete(`/customers/${id}`)
+                    .delete(`/api/customers/${id}`)
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
+                    .set('Prefer', 'return=representation')
                 expect(response.status).toEqual(HttpStatus.OK)
-                expect(response.body).toContain(id)
+                expect(response.body.data).toContain(id)
                 const softDelete = await db.billing.Contract.findOne({
                     where: {
                         id,
@@ -815,6 +881,9 @@ describe('CustomerController', () => {
 
     describe('CustomerController DELETE', () => {
         it('delete created customers and fixtures', async () => {
+            const contractIds = [...createdCustomerIds, ...fixtureContractIds]
+            if (contractIds.length)
+                await db.billing.Journal.delete({resource_name: 'customers', resource_id: In(contractIds)})
             if (createdCustomerIds.length)
                 await db.billing.Contract.delete(createdCustomerIds)
             if (fixtureContractIds.length)

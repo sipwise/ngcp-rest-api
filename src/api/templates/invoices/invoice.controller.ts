@@ -105,7 +105,8 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
         validateResellerId([createDto], sr, {required: false})
         const created = await this.invoiceTemplateService.create([createDto.toInternal()], sr, file)
         const response = created.map((e) => new InvoiceTemplateResponseDto(e, {url: req.url}))
-        await this.journalService.writeJournal(sr, 0, response)
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
         return response
     }
 

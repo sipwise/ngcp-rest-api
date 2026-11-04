@@ -46,9 +46,7 @@ export class DomainService implements CrudService<internal.Domain> {
 
     private async domainExists(domain: string, sr: ServiceRequest): Promise<void> {
         const result = await this.domainRepo.readByDomain(domain, sr)
-        // TODO: This is a bug imho. The condition should be `if (result != undefined) {`
-        // eslint-disable-next-line no-constant-binary-expression
-        if (!result == undefined) {
+        if (result) {
             throw new UnprocessableEntityException(this.i18n.t('errors.DOMAIN_ALREADY_EXISTS', {args: {domain: domain}}))
         }
     }

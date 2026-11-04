@@ -1,5 +1,7 @@
-import {INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
 import {In} from 'typeorm'
 
@@ -11,7 +13,10 @@ import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type AdminPost = {
@@ -40,7 +45,9 @@ describe('OTP', () => {
     let authHeader: [string, string]
     let createdAdminIds: number[]
     const creds = {username: 'administrator', password: 'administrator'}
-    const preferHeader: [string, string] = ['prefer', 'return=representation']
+    const run = Date.now().toString(36)
+    const masterLogin = `adminmaster_${run}`
+    const master2faLogin = `adminmaster2fa_${run}`
     const strongPassword = 'FFFooobarbaz123!!!' //  MT#60560
 
     beforeAll(async () => {
@@ -54,12 +61,30 @@ describe('OTP', () => {
 
         app = moduleRef.createNestApplication()
 
-        // TODO import other app configuration from bootstrap()
-        // like interceptors, etc.
-        app.useGlobalPipes(new ValidateInputPipe())
-        app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
         app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
+        app.useGlobalFilters(new HttpExceptionFilter())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         createdAdminIds = []
 
@@ -90,6 +115,8 @@ describe('OTP', () => {
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
             .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
@@ -108,7 +135,7 @@ describe('OTP', () => {
                         is_active: true,
                         is_master: true,
                         email: 'adminmasterNo2Fa@example.com',
-                        login: 'adminmaster',
+                        login: masterLogin,
                         password: strongPassword,
                         read_only: false,
                         reseller_id: 1,
@@ -123,7 +150,7 @@ describe('OTP', () => {
                         is_active: true,
                         is_master: true,
                         email: 'adminmasterYes2Fa@example.com',
-                        login: 'adminmaster2fa',
+                        login: master2faLogin,
                         password: strongPassword,
                         read_only: false,
                         reseller_id: 1,
@@ -137,10 +164,12 @@ describe('OTP', () => {
                     const response = await request(app.getHttpServer())
                         .post('/api/admins')
                         .set(...authHeader)
-                        .set(...preferHeader)
+                        .set('Accept', 'application/json')
+                        .set('Content-Type', 'application/json')
+                        .set('Prefer', 'return=representation')
                         .send(admins)
                     expect(response.status).toEqual(201)
-                    for (const admin of response.body) {
+                    for (const admin of response.body.data) {
                         createdAdminIds.push(+admin.id)
                     }
                 })
@@ -168,7 +197,8 @@ describe('OTP', () => {
             it('read users otp_secret_key if 2fa is enabled', async () => {
                 const response = await request(app.getHttpServer())
                     .get('/api/auth/otp')
-                    .auth('adminmaster2fa', strongPassword)
+                    .auth(master2faLogin, strongPassword)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 expect(response.body['otp_secret_key']).toBeDefined()
             })
@@ -176,7 +206,8 @@ describe('OTP', () => {
             it('returns a qr code if qr=true', async () => {
                 const response = await request(app.getHttpServer())
                     .get('/api/auth/otp?qr=true')
-                    .auth('adminmaster2fa', strongPassword)
+                    .auth(master2faLogin, strongPassword)
+                    .set('Accept', 'image/png')
                 expect(response.status).toEqual(200)
                 expect(response.headers['content-type']).toEqual('image/png')
             })
@@ -184,19 +215,26 @@ describe('OTP', () => {
             it('fails to read users otp_secret_key if 2fa is disabled', async () => {
                 const response = await request(app.getHttpServer())
                     .get('/api/auth/otp')
-                    .auth('adminmaster', strongPassword)
+                    .auth(masterLogin, strongPassword)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(422)
             })
 
         })
     })
-    describe('Cleanup', () => {
+    describe('OTP DELETE', () => {
         it('delete created admins bulk', async () => {
             const result = await request(app.getHttpServer())
                 .delete('/api/admins/')
                 .set(...authHeader)
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
                 .send(createdAdminIds)
-            expect(result.status).toEqual(200)
+            expect(result.status).toEqual(204)
+        })
+        it('delete created journals', async () => {
+            if (createdAdminIds.length)
+                await db.billing.Journal.delete({resource_name: 'admins', resource_id: In(createdAdminIds)})
         })
     })
 })

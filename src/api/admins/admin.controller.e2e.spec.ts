@@ -1,6 +1,9 @@
-import {HttpStatus, INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, HttpStatus, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
+import {In} from 'typeorm'
 
 import {AdminModule} from './admin.module'
 
@@ -11,7 +14,10 @@ import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type AdminPost = {
@@ -37,10 +43,11 @@ describe('AdminController', () => {
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
-    const preferHeader: [string, string] = ['prefer', 'return=representation']
     let createdAdminIds: number[] = []
     const strongPassword = 'FFFooobarbaz123!!!' //  MT#60560
     const creds = {username: 'administrator', password: 'administrator'}
+    const run = Date.now().toString(36)
+    const loginOf = (name: string): string => `${name}_${run}`
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -55,11 +62,30 @@ describe('AdminController', () => {
 
         app = moduleRef.createNestApplication()
 
-        // TODO import other app configuration from bootstrap()
-        // like interceptors, etc.
-        app.useGlobalPipes(new ValidateInputPipe({whitelist: true, forbidNonWhitelisted: true}))
+        app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
     })
@@ -98,7 +124,9 @@ describe('AdminController', () => {
 
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
-            .post('/auth/jwt')
+            .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
@@ -115,7 +143,7 @@ describe('AdminController', () => {
                     is_active: true,
                     is_master: true,
                     email: 'adminmaster@example.com',
-                    login: 'adminmaster',
+                    login: loginOf('adminmaster'),
                     password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
@@ -130,7 +158,7 @@ describe('AdminController', () => {
                     is_active: true,
                     is_master: false,
                     email: 'admin@example.com',
-                    login: 'admin',
+                    login: loginOf('admin'),
                     password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
@@ -145,7 +173,7 @@ describe('AdminController', () => {
                     is_active: true,
                     is_master: true,
                     email: 'system@example.com',
-                    login: 'system',
+                    login: loginOf('system'),
                     password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
@@ -160,7 +188,7 @@ describe('AdminController', () => {
                     is_active: true,
                     is_master: true,
                     email: 'resellermaster@example.com',
-                    login: 'resellermaster',
+                    login: loginOf('resellermaster'),
                     password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
@@ -175,7 +203,7 @@ describe('AdminController', () => {
                     is_active: true,
                     is_master: false,
                     email: 'reseller@example.com',
-                    login: 'reseller',
+                    login: loginOf('reseller'),
                     password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
@@ -190,7 +218,7 @@ describe('AdminController', () => {
                     is_active: true,
                     is_master: true,
                     email: 'ccareadmin@example.com',
-                    login: 'ccareadmin',
+                    login: loginOf('ccareadmin'),
                     password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
@@ -205,7 +233,7 @@ describe('AdminController', () => {
                     is_active: true,
                     is_master: true,
                     email: 'ccare@example.com',
-                    login: 'ccare',
+                    login: loginOf('ccare'),
                     password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
@@ -220,7 +248,7 @@ describe('AdminController', () => {
                     is_active: true,
                     is_master: true,
                     email: 'lintercept@example.com',
-                    login: 'lintercept',
+                    login: loginOf('lintercept'),
                     password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
@@ -235,7 +263,7 @@ describe('AdminController', () => {
                     is_active: true,
                     is_master: true,
                     email: '2faProvidedSecret@example.com',
-                    login: '2faProvidedSecret',
+                    login: loginOf('2faProvidedSecret'),
                     password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
@@ -251,7 +279,7 @@ describe('AdminController', () => {
                     is_active: true,
                     is_master: true,
                     email: '2faGeneratedSecret@example.com',
-                    login: '2faGeneratedSecret',
+                    login: loginOf('2faGeneratedSecret'),
                     password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
@@ -264,22 +292,26 @@ describe('AdminController', () => {
             it('should create single admin ' + single.login, async () => {
                 expect.assertions(1)
                 const response = await request(app.getHttpServer())
-                    .post('/admins')
+                    .post('/api/admins')
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
                     .send(single)
                 expect(response.status).toEqual(201)
-                createdAdminIds.push(+response.body[0].id)
+                createdAdminIds.push(+response.body.data[0].id)
             })
             it('should create admins bulk', async () => {
                 expect.assertions(1)
                 const response = await request(app.getHttpServer())
-                    .post('/admins')
+                    .post('/api/admins')
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
                     .send(admins)
                 expect(response.status).toEqual(201)
-                for (const admin of response.body) {
+                for (const admin of response.body.data) {
                     createdAdminIds.push(+admin.id)
                 }
             })
@@ -288,85 +320,88 @@ describe('AdminController', () => {
         describe('Admins GET', () => {
             const tt = [
                 {
-                    username: 'system',
+                    username: loginOf('system'),
                     password: strongPassword, want: 200, canSeeResellerId: true,
                 },
                 {
-                    username: 'adminmaster',
+                    username: loginOf('adminmaster'),
                     password: strongPassword, want: 200, canSeeResellerId: true,
                 },
                 {
-                    username: 'admin',
+                    username: loginOf('admin'),
                     password: strongPassword, want: 200, canSeeResellerId: true,
                 },
                 {
-                    username: 'resellermaster',
+                    username: loginOf('resellermaster'),
                     password: strongPassword, want: 200, canSeeResellerId: false,
                 },
                 {
-                    username: 'reseller',
+                    username: loginOf('reseller'),
                     password: strongPassword, want: 200, canSeeResellerId: false,
                 },
                 {
-                    username: 'ccareadmin',
+                    username: loginOf('ccareadmin'),
                     password: strongPassword, want: 200, canSeeResellerId: true,
                 },
                 {
-                    username: 'ccare',
+                    username: loginOf('ccare'),
                     password: strongPassword, want: 200, canSeeResellerId: false,
                 },
                 {
-                    username: 'lintercept',
+                    username: loginOf('lintercept'),
                     password: strongPassword, want: 403, canSeeResellerId: false,
                 },
             ]
             for (const test of tt) {
                 it('finds all admins as role: ' + test.username, async () => {
                     const response = await request(app.getHttpServer())
-                        .get('/admins')
+                        .get('/api/admins')
                         .auth(test.username, test.password)
+                        .set('Accept', 'application/json')
                     expect(response.status).toEqual(test.want)
-                    if (response.body[0] !== undefined) {
+                    if (response.body.data !== undefined) {
                         if (test.canSeeResellerId)
-                            expect(response.body[0][0].reseller_id).toBeDefined()
+                            expect(response.body.data[0].reseller_id).toBeDefined()
                         else {
-                            expect(response.body[0][0].reseller_id).not.toBeDefined()
+                            expect(response.body.data[0].reseller_id).not.toBeDefined()
                         }
                     }
                 })
             }
             it('hides otp_secret from other users', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/admins?login=2faGeneratedSecret')
-                    .auth('adminmaster', strongPassword)
+                    .get(`/api/admins?login=${loginOf('2faGeneratedSecret')}`)
+                    .auth(loginOf('adminmaster'), strongPassword)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                expect(response.body[0][0].otp_secret_key).toBeUndefined()
+                expect(response.body.data[0].otp_secret_key).toBeUndefined()
 
-                const res = await db.billing.Admin.findOne({where: {login: '2faGeneratedSecret'}})
+                const res = await db.billing.Admin.findOne({where: {login: loginOf('2faGeneratedSecret')}})
                 expect(res.otp_secret).toBeDefined()
             })
             it('generates otp_secret if enable_2fa is set but otp_secret_key is not set', async () => {
-                const res = await db.billing.Admin.findOne({where: {login: '2faGeneratedSecret'}})
+                const res = await db.billing.Admin.findOne({where: {login: loginOf('2faGeneratedSecret')}})
                 expect(res.otp_secret).toBeDefined()
             })
             it('uses otp_secret if enable_2fa is set and otp_secret_key is set', async () => {
-                const res = await db.billing.Admin.findOne({where: {login: '2faProvidedSecret'}})
+                const res = await db.billing.Admin.findOne({where: {login: loginOf('2faProvidedSecret')}})
                 expect(res.otp_secret).toBe('3SLSWZPQQBB7WBRYDAQZ5J77W5D7I6GU')
             })
             it('makes otp_secret null and otp_ini to false if enable_2fa is not set', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/admins?login=adminmaster')
-                    .auth('adminmaster', strongPassword)
+                    .get(`/api/admins?login=${loginOf('adminmaster')}`)
+                    .auth(loginOf('adminmaster'), strongPassword)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                expect(response.body[0][0].otp_secret_key).toBeNull()
-                expect(response.body[0][0].enable_2fa).toBe(false)
+                expect(response.body.data[0].otp_secret_key).toBeNull()
+                expect(response.body.data[0].enable_2fa).toBe(false)
             })
         })
 
         describe('Admins POST', () => {
             const tt = [
                 {
-                    username: 'system',
+                    username: loginOf('system'),
                     password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 201},
                         {role: RbacRole.admin, isMaster: true, want: 201},
@@ -379,7 +414,7 @@ describe('AdminController', () => {
                     ], canSeeResellerId: true,
                 },
                 {
-                    username: 'adminmaster',
+                    username: loginOf('adminmaster'),
                     password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 403},
                         {role: RbacRole.admin, isMaster: true, want: 201},
@@ -392,7 +427,7 @@ describe('AdminController', () => {
                     ], canSeeResellerId: true,
                 },
                 {
-                    username: 'admin',
+                    username: loginOf('admin'),
                     password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 403},
                         {role: RbacRole.admin, isMaster: true, want: 403},
@@ -405,7 +440,7 @@ describe('AdminController', () => {
                     ], canSeeResellerId: true,
                 },
                 {
-                    username: 'resellermaster',
+                    username: loginOf('resellermaster'),
                     password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 403},
                         {role: RbacRole.admin, isMaster: true, want: 403},
@@ -418,7 +453,7 @@ describe('AdminController', () => {
                     ], canSeeResellerId: false,
                 },
                 {
-                    username: 'reseller',
+                    username: loginOf('reseller'),
                     password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 403},
                         {role: RbacRole.admin, isMaster: true, want: 403},
@@ -431,7 +466,7 @@ describe('AdminController', () => {
                     ], canSeeResellerId: false,
                 },
                 {
-                    username: 'ccareadmin',
+                    username: loginOf('ccareadmin'),
                     password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 403},
                         {role: RbacRole.admin, isMaster: true, want: 403},
@@ -444,7 +479,7 @@ describe('AdminController', () => {
                     ], canSeeResellerId: true,
                 },
                 {
-                    username: 'ccare',
+                    username: loginOf('ccare'),
                     password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 403},
                         {role: RbacRole.admin, isMaster: true, want: 403},
@@ -457,7 +492,7 @@ describe('AdminController', () => {
                     ], canSeeResellerId: false,
                 },
                 {
-                    username: 'lintercept',
+                    username: loginOf('lintercept'),
                     password: strongPassword, roles: [
                         {role: RbacRole.system, isMaster: false, want: 403},
                         {role: RbacRole.admin, isMaster: true, want: 403},
@@ -482,7 +517,7 @@ describe('AdminController', () => {
                             is_active: true,
                             is_master: roleTest.isMaster,
                             email: `${test.username}_create_${rand}@example.com`,
-                            login: `${test.username}_create_${rand}`,
+                            login: `create_${rand}_${run}`,
                             password: `${strongPassword}_create${rand}`,
                             read_only: false,
                             ...(test.canSeeResellerId ? {reseller_id: 1} : {}),
@@ -491,18 +526,20 @@ describe('AdminController', () => {
                             enable_2fa: false,
                         }
                         const response = await request(app.getHttpServer())
-                            .post('/admins')
-                            .set(...preferHeader)
+                            .post('/api/admins')
                             .auth(test.username, test.password)
+                            .set('Accept', 'application/json')
+                            .set('Content-Type', 'application/json')
+                            .set('Prefer', 'return=representation')
                             .send(data)
                         expect(response.status).toEqual(roleTest.want)
                         if (response.status == 201) {
                             if (test.canSeeResellerId)
-                                expect(response.body[0].reseller_id).toBeDefined()
+                                expect(response.body.data[0].reseller_id).toBeDefined()
                             else {
-                                expect(response.body[0].reseller_id).not.toBeDefined()
+                                expect(response.body.data[0].reseller_id).not.toBeDefined()
                             }
-                            createdAdminIds.push(+response.body[0].id)
+                            createdAdminIds.push(+response.body.data[0].id)
                         }
                     })
                 }
@@ -521,9 +558,11 @@ describe('AdminController', () => {
                 }
                 const want = HttpStatus.UNPROCESSABLE_ENTITY
                 const response = await request(app.getHttpServer())
-                    .post('/admins')
+                    .post('/api/admins')
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
                     .send(data)
                 expect(response.status).toEqual(want)
             })
@@ -543,9 +582,11 @@ describe('AdminController', () => {
                 data['nonWhitelistedField'] = 'invalid'
                 const want = HttpStatus.UNPROCESSABLE_ENTITY
                 const response = await request(app.getHttpServer())
-                    .post('/admins')
+                    .post('/api/admins')
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
                     .send(data)
                 expect(response.status).toEqual(want)
             })
@@ -570,27 +611,33 @@ describe('AdminController', () => {
             })
             it('admin: should fail creating admin without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/admins')
+                    .post('/api/admins')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(newAdmin('rid_admin_none', RbacRole.admin))
                 expect(response.status).toEqual(422)
                 expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
             })
             it('admin: should create admin with reseller_id', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/admins')
+                    .post('/api/admins')
                     .set(...authHeader)
-                    .set(...preferHeader)
-                    .send({...newAdmin('rid_admin', RbacRole.admin), reseller_id: 1})
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send({...newAdmin(loginOf('rid_admin'), RbacRole.admin), reseller_id: 1})
                 expect(response.status).toEqual(201)
-                adminCreatedId = +response.body[0].id
+                adminCreatedId = +response.body.data[0].id
                 createdAdminIds.push(adminCreatedId)
             })
             it('admin: should fail updating admin without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
-                    .put(`/admins/${adminCreatedId}`)
+                    .put(`/api/admins/${adminCreatedId}`)
                     .set(...authHeader)
-                    .send(newAdmin('rid_admin', RbacRole.admin))
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(newAdmin(loginOf('rid_admin'), RbacRole.admin))
                 expect(response.status).toEqual(422)
                 expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
             })
@@ -601,8 +648,10 @@ describe('AdminController', () => {
                 ]
                 for (const emptyPatch of tt) {
                     const response = await request(app.getHttpServer())
-                        .patch(`/admins/${adminCreatedId}`)
+                        .patch(`/api/admins/${adminCreatedId}`)
                         .set(...authHeader)
+                        .set('Accept', 'application/json')
+                        .set('Content-Type', 'application/json-patch+json')
                         .send(emptyPatch)
                     expect(response.status).toEqual(422)
                     expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
@@ -610,60 +659,73 @@ describe('AdminController', () => {
             })
             it('admin: should update admin with reseller_id', async () => {
                 const response = await request(app.getHttpServer())
-                    .put(`/admins/${adminCreatedId}`)
+                    .put(`/api/admins/${adminCreatedId}`)
                     .set(...authHeader)
-                    .set(...preferHeader)
-                    .send({...newAdmin('rid_admin', RbacRole.admin, `${strongPassword}_put`), reseller_id: 1})
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send({...newAdmin(loginOf('rid_admin'), RbacRole.admin, `${strongPassword}_put`), reseller_id: 1})
                 expect(response.status).toEqual(200)
                 expect(response.body.reseller_id).toEqual(1)
             })
             it('resellermaster: should fail creating admin with reseller_id', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/admins')
-                    .auth('resellermaster', strongPassword)
-                    .send({...newAdmin('rid_reseller', RbacRole.reseller), reseller_id: 1})
+                    .post('/api/admins')
+                    .auth(loginOf('resellermaster'), strongPassword)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({...newAdmin(loginOf('rid_reseller'), RbacRole.reseller), reseller_id: 1})
                 expect(response.status).toEqual(422)
                 expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
             })
             it('resellermaster: should create admin without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/admins')
-                    .auth('resellermaster', strongPassword)
-                    .set(...preferHeader)
-                    .send(newAdmin('rid_reseller', RbacRole.reseller))
+                    .post('/api/admins')
+                    .auth(loginOf('resellermaster'), strongPassword)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send(newAdmin(loginOf('rid_reseller'), RbacRole.reseller))
                 expect(response.status).toEqual(201)
-                resellerCreatedId = +response.body[0].id
+                resellerCreatedId = +response.body.data[0].id
                 createdAdminIds.push(resellerCreatedId)
             })
             it('resellermaster: should fail updating admin with reseller_id', async () => {
                 const response = await request(app.getHttpServer())
-                    .put(`/admins/${resellerCreatedId}`)
-                    .auth('resellermaster', strongPassword)
-                    .send({...newAdmin('rid_reseller', RbacRole.reseller), reseller_id: 1})
+                    .put(`/api/admins/${resellerCreatedId}`)
+                    .auth(loginOf('resellermaster'), strongPassword)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({...newAdmin(loginOf('rid_reseller'), RbacRole.reseller), reseller_id: 1})
                 expect(response.status).toEqual(422)
                 expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
             })
             it('resellermaster: should fail patching reseller_id', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch(`/admins/${resellerCreatedId}`)
-                    .auth('resellermaster', strongPassword)
+                    .patch(`/api/admins/${resellerCreatedId}`)
+                    .auth(loginOf('resellermaster'), strongPassword)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send([{op: 'replace', path: '/reseller_id', value: 1}])
                 expect(response.status).toEqual(422)
                 expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
             })
             it('resellermaster: should patch admin without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch(`/admins/${resellerCreatedId}`)
-                    .auth('resellermaster', strongPassword)
-                    .set(...preferHeader)
+                    .patch(`/api/admins/${resellerCreatedId}`)
+                    .auth(loginOf('resellermaster'), strongPassword)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .set('Prefer', 'return=representation')
                     .send([{op: 'replace', path: '/email', value: 'rid_reseller_patched@example.com'}])
                 expect(response.status).toEqual(200)
                 expect(response.body.email).toEqual('rid_reseller_patched@example.com')
             })
             it('admin: should read the reseller_id of the user on admin created by resellermaster', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/admins/${resellerCreatedId}`)
+                    .get(`/api/admins/${resellerCreatedId}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 expect(response.body.reseller_id).toEqual(1)
             })
@@ -679,7 +741,7 @@ describe('AdminController', () => {
                     is_active: true,
                     is_master: true,
                     email: 'update_self@example.com',
-                    login: 'update_self',
+                    login: loginOf('update_self'),
                     password: strongPassword,
                     read_only: false,
                     reseller_id: 1,
@@ -688,12 +750,14 @@ describe('AdminController', () => {
                     enable_2fa: false,
                 }
                 const response = await request(app.getHttpServer())
-                    .post('/admins')
+                    .post('/api/admins')
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
                     .send(data)
                 expect(response.status).toEqual(201)
-                createdId = response.body[0].id
+                createdId = response.body.data[0].id
                 createdAdminIds.push(createdId)
             })
             const protectedFields = {
@@ -707,8 +771,10 @@ describe('AdminController', () => {
                         {op: 'replace', path: `/${key}`, value: protectedFields[key]},
                     ]
                     const patchResponse = await request(app.getHttpServer())
-                        .patch(`/admins/${createdId}`)
-                        .auth('update_self', strongPassword)
+                        .patch(`/api/admins/${createdId}`)
+                        .auth(loginOf('update_self'), strongPassword)
+                        .set('Accept', 'application/json')
+                        .set('Content-Type', 'application/json-patch+json')
                         .send(patch)
                     expect(patchResponse.status).toEqual(403)
                 })
@@ -718,8 +784,10 @@ describe('AdminController', () => {
                     {op: 'replace', path: '/password', value: 'weakpassword'},
                 ]
                 const patchResponse = await request(app.getHttpServer())
-                    .patch(`/admins/${createdId}`)
-                    .auth('update_self', strongPassword)
+                    .patch(`/api/admins/${createdId}`)
+                    .auth(loginOf('update_self'), strongPassword)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(patchResponse.status).toEqual(422)
             })
@@ -728,8 +796,11 @@ describe('AdminController', () => {
                     {op: 'replace', path: '/enable_2fa', value: true},
                 ]
                 const patchResponse = await request(app.getHttpServer())
-                    .patch(`/admins/${createdId}`)
-                    .auth('update_self', strongPassword)
+                    .patch(`/api/admins/${createdId}`)
+                    .auth(loginOf('update_self'), strongPassword)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .set('Prefer', 'return=representation')
                     .send(patch)
                 expect(patchResponse.status).toEqual(200)
                 expect(patchResponse.body.enable_2fa).toEqual(true)
@@ -742,46 +813,59 @@ describe('AdminController', () => {
 
     describe('Admins DELETE', () => {
         it('delete single admin', async () => {
-            const single = createdAdminIds.pop()
+            const single = createdAdminIds[createdAdminIds.length - 1]
             if (single != undefined) {
                 const result = await request(app.getHttpServer())
-                    .delete(`/admins/${single}`)
+                    .delete(`/api/admins/${single}`)
                     .set(...authHeader)
-                expect(result.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                expect(result.status).toEqual(204)
             }
         })
         it('delete created admins bulk', async () => {
             const result = await request(app.getHttpServer())
-                .delete('/admins/')
+                .delete('/api/admins/')
                 .set(...authHeader)
-                .send(createdAdminIds)
-            expect(result.status).toEqual(200)
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send(createdAdminIds.slice(0, -1))
+            expect(result.status).toEqual(204)
         })
         it('fail if double array', async () => {
             const result = await request(app.getHttpServer())
-                .delete('/admins/')
+                .delete('/api/admins/')
                 .set(...authHeader)
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
                 .send([1.2, 3.4])
             expect(result.status).toEqual(400)
         })
         it('fail if not array', async () => {
             const result = await request(app.getHttpServer())
-                .delete('/admins/')
+                .delete('/api/admins/')
                 .set(...authHeader)
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
                 .send({id: 1})
             expect(result.status).toEqual(400)
         })
         it('fails if no trailing slash is provided', async () => {
             const result = await request(app.getHttpServer())
-                .delete('/admins')
+                .delete('/api/admins')
                 .set(...authHeader)
+                .set('Accept', 'application/json')
             expect(result.status).toEqual(404)
         })
         it('fails if no body and no params are defined', async () => {
             const result = await request(app.getHttpServer())
-                .delete('/admins/')
+                .delete('/api/admins/')
                 .set(...authHeader)
+                .set('Accept', 'application/json')
             expect(result.status).toEqual(400)
+        })
+        it('delete created journals', async () => {
+            if (createdAdminIds.length)
+                await db.billing.Journal.delete({resource_name: 'admins', resource_id: In(createdAdminIds)})
         })
     })
 })

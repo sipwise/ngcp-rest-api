@@ -6,7 +6,7 @@ import {CustomerSearchDto} from '~/api/customers/dto/customer-search.dto'
 import {CustomerRepository} from '~/api/customers/interfaces/customer.repository'
 import {AppService} from '~/app.service'
 import {db, internal} from '~/entities'
-import {BillingProfileStatus} from '~/entities/internal/billing-profile.internal.entity'
+import {BillingProfileStatus, IntervalUnit} from '~/entities/internal/billing-profile.internal.entity'
 import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {Discriminator} from '~/entities/internal/profile-package-set.internal.entity'
@@ -63,8 +63,21 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
     }
 
     async createInitialBalance(customerId: number): Promise<void> {
-        // TODO: When billing is migrated this needs to be adjusted
-        const balance = db.billing.ContractBalance.create({contract_id: customerId, cash_balance: 0})
+        // v1 create_initial_contract_balances with its defaults only (start mode '1st', no package, no initial
+        // balance/free time), see BILLING-BACKLOG C
+        const profile = await this.readActualBillingProfile(customerId)
+        const count = profile.intervalCount ?? 1
+        const now = new Date()
+        const start = new Date(now.getFullYear(), now.getMonth(), 1)
+        const next = profile.intervalUnit == IntervalUnit.Week
+            ? new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7 * count)
+            : new Date(start.getFullYear(), start.getMonth() + count, 1)
+        const balance = db.billing.ContractBalance.create({
+            contract_id: customerId,
+            cash_balance: 0,
+            start: start,
+            end: new Date(next.getTime() - 1000),
+        })
         await db.billing.ContractBalance.insert(balance)
     }
 

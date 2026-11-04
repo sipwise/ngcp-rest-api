@@ -1,6 +1,9 @@
-import {INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
+import {In, MoreThanOrEqual} from 'typeorm'
 
 import {NCOSPatternResponseDto} from './dto/pattern-response.dto'
 import {NCOSPatternModule} from './pattern.module'
@@ -12,7 +15,10 @@ import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type NCOSPatternPost = {
@@ -29,6 +35,7 @@ describe('NCOS Pattern', () => {
     const createdIds: number[] = []
     const createdLevelIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
+    const startedAt = Date.now() / 1000
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -41,11 +48,30 @@ describe('NCOS Pattern', () => {
 
         app = moduleRef.createNestApplication()
 
-        // TODO import other app configuration from bootstrap()
-        // like interceptors, etc.
-        app.useGlobalPipes(new ValidateInputPipe())
+        app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
     })
@@ -73,7 +99,9 @@ describe('NCOS Pattern', () => {
 
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
-            .post('/auth/jwt')
+            .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
@@ -93,38 +121,49 @@ describe('NCOS Pattern', () => {
                 description: 'test_ncosPattern2 description',
             }
             it('create level', async () => {
-                const level = await db.billing.NCOSLevel.create({}).save()
+                const level = await db.billing.NCOSLevel.create({
+                    reseller_id: 1,
+                    level: `e2e_pattern_${Date.now().toString(36)}`,
+                }).save()
                 createdLevelIds.push(level.id)
                 ncosPattern1.ncos_level_id = level.id
                 ncosPattern2.ncos_level_id = level.id
             })
             it('create ncos pattern test_ncosPattern1', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/ncos/patterns/')
+                    .post('/api/ncos/patterns/')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(ncosPattern1)
                 expect(response.status).toEqual(201)
-                createdIds.push(+response.body[0].id)
+                createdIds.push(+response.body.data[0].id)
             })
             it('create ncos pattern test_ncosPattern2', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/ncos/patterns/')
+                    .post('/api/ncos/patterns/')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(ncosPattern2)
                 expect(response.status).toEqual(201)
-                createdIds.push(+response.body[0].id)
+                createdIds.push(+response.body.data[0].id)
             })
             it('fail duplicate ncos pattern', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/ncos/patterns/')
+                    .post('/api/ncos/patterns/')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(ncosPattern1)
                 expect(response.status).toEqual(422)
             })
             it('validation fail ncos pattern', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/ncos/patterns/')
+                    .post('/api/ncos/patterns/')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({unknownField: 'test'})
                 expect(response.status).toEqual(422)
             })
@@ -133,14 +172,13 @@ describe('NCOS Pattern', () => {
         describe('GET', () => {
             it('read created ncos pattern 1', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/ncos/patterns?pattern=test_ncosPattern1')
+                    .get('/api/ncos/patterns?pattern=test_ncosPattern1')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                const setCollection: NCOSPatternResponseDto = response.body
-                expect(await validate(setCollection)).toEqual([])
-                expect(setCollection).toHaveLength(2)
-                expect(setCollection[1]).toEqual(1)
-                const setEntries = setCollection[0]
+                const setCollection = response.body
+                expect(setCollection.total_count).toEqual(1)
+                const setEntries: NCOSPatternResponseDto[] = setCollection.data
                 expect(await validate(setEntries)).toEqual([])
                 expect(setEntries).toHaveLength(1)
                 const ncosPattern = setEntries[0]
@@ -148,14 +186,13 @@ describe('NCOS Pattern', () => {
             })
             it('read created ncos pattern 2', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/ncos/patterns/?pattern=test_ncosPattern2')
+                    .get('/api/ncos/patterns/?pattern=test_ncosPattern2')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                const setCollection: NCOSPatternResponseDto = response.body
-                expect(await validate(setCollection)).toEqual([])
-                expect(setCollection).toHaveLength(2)
-                expect(setCollection[1]).toEqual(1)
-                const setEntries = setCollection[0]
+                const setCollection = response.body
+                expect(setCollection.total_count).toEqual(1)
+                const setEntries: NCOSPatternResponseDto[] = setCollection.data
                 expect(await validate(setEntries)).toEqual([])
                 expect(setEntries).toHaveLength(1)
                 const ncosPattern = setEntries[0]
@@ -163,8 +200,9 @@ describe('NCOS Pattern', () => {
             })
             it('read non-existing customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/ncos/patterns/999911111122')
+                    .get('/api/ncos/patterns/999911111122')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(404)
             })
         })
@@ -178,23 +216,28 @@ describe('NCOS Pattern', () => {
             it('update ncos pattern test_ncosPattern1 -> test_ncosPattern3', async () => {
                 ncosPattern3.ncos_level_id = createdLevelIds[0]
                 const response = await request(app.getHttpServer())
-                    .put(`/ncos/patterns/${createdIds[0]}`)
+                    .put(`/api/ncos/patterns/${createdIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(ncosPattern3)
-                expect(response.status).toEqual(200)
+                expect(response.status).toEqual(204)
             })
             it('read updated ncos pattern 3', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/ncos/patterns/${createdIds[0]}`)
+                    .get(`/api/ncos/patterns/${createdIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ncosPattern: NCOSPatternResponseDto = response.body
                 expect(ncosPattern.pattern).toEqual('test_ncosPattern3')
             })
             it('update non-existing ncos pattern', async () => {
                 const response = await request(app.getHttpServer())
-                    .put('/ncos/patterns/999911111122')
+                    .put('/api/ncos/patterns/999911111122')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(ncosPattern3)
                 expect(response.status).toEqual(404)
             })
@@ -210,23 +253,28 @@ describe('NCOS Pattern', () => {
             ]
             it('adjust ncos pattern 3 -> 4', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch(`/ncos/patterns/${createdIds[0]}`)
+                    .patch(`/api/ncos/patterns/${createdIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
-                expect(response.status).toEqual(200)
+                expect(response.status).toEqual(204)
             })
             it('read updated ncos pattern 4', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/ncos/patterns/${createdIds[0]}`)
+                    .get(`/api/ncos/patterns/${createdIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ncosPattern: NCOSPatternResponseDto = response.body
                 expect(ncosPattern.pattern).toEqual('test_ncospattern4')
             })
             it('adjust non-existing ncos pattern', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch('/ncos/patterns/999991111112')
+                    .patch('/api/ncos/patterns/999991111112')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(404)
             })
@@ -237,13 +285,23 @@ describe('NCOS Pattern', () => {
         it('delete created ncos patterns', async () => {
             for (const id of createdIds) {
                 const result = await request(app.getHttpServer())
-                    .delete(`/ncos/patterns/${id}`)
+                    .delete(`/api/ncos/patterns/${id}`)
                     .set(...authHeader)
-                expect(result.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                expect(result.status).toEqual(204)
             }
         })
-        it ('delete ncos level', async () => {
-            await db.billing.NCOSLevel.delete(createdLevelIds)
+        it('delete ncos level', async () => {
+            if (createdLevelIds.length)
+                await db.billing.NCOSLevel.delete(createdLevelIds)
+        })
+        it('delete created journals', async () => {
+            if (createdIds.length)
+                await db.billing.Journal.delete({
+                    resource_name: 'ncos',
+                    resource_id: In(createdIds),
+                    timestamp: MoreThanOrEqual(startedAt),
+                })
         })
     })
 })

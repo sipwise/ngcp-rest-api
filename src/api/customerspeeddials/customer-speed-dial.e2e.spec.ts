@@ -1,6 +1,10 @@
-import {INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
+import {In, MoreThanOrEqual} from 'typeorm'
+import {v4 as uuidv4} from 'uuid'
 
 import {CustomerSpeedDialModule} from './customer-speed-dial.module'
 import {CustomerSpeedDialResponseDto} from './dto/customer-speed-dial-response.dto'
@@ -8,10 +12,15 @@ import {CustomerSpeedDialResponseDto} from './dto/customer-speed-dial-response.d
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {db} from '~/entities'
+import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type CustomerSpeedDialPost = {
@@ -25,7 +34,12 @@ describe('CustomerSpeedDial', () => {
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
-    const testCustomerId = 13
+    const startedAt = Date.now() / 1000
+    const domain = `e2e-csd-${Date.now().toString(36)}.example.org`
+    let testCustomerId: number
+    let billingDomainId: number
+    let provisioningDomainId: number
+    let provisioningSubscriberId: number
     const createdIds: number[] = []
     let createdEntries = []
     const creds = {username: 'administrator', password: 'administrator'}
@@ -41,13 +55,51 @@ describe('CustomerSpeedDial', () => {
 
         app = moduleRef.createNestApplication()
 
-        // TODO import other app configuration from bootstrap()
-        // like interceptors, etc.
-        app.useGlobalPipes(new ValidateInputPipe())
+        app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
+
+        billingDomainId = (await db.billing.Domain.create({domain, reseller_id: 1}).save()).id
+        provisioningDomainId = (await db.provisioning.VoipDomain.create({domain}).save()).id
+        testCustomerId = (await db.billing.Contract.create({contact_id: 1, product_id: 4}).save()).id
+        const uuid = uuidv4()
+        await BillingVoipSubscriber.insert({ // insert instead of create to avoid a cyclic dependency error
+            contract_id: testCustomerId,
+            uuid: uuid,
+            username: 'e2e_csd',
+            domain_id: billingDomainId,
+            status: 'active',
+        })
+        provisioningSubscriberId = (await db.provisioning.VoipSubscriber.insert({
+            username: 'e2e_csd',
+            domain_id: provisioningDomainId,
+            uuid: uuid,
+            password: uuidv4().slice(0, 16),
+            account_id: testCustomerId,
+        })).identifiers[0].id
     })
 
     afterAll(async () => {
@@ -72,7 +124,9 @@ describe('CustomerSpeedDial', () => {
 
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
-            .post('/auth/jwt')
+            .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
@@ -93,31 +147,39 @@ describe('CustomerSpeedDial', () => {
             }
             it('create customer speed dial *1', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/customerspeeddials')
+                    .post('/api/customerspeeddials')
                     .set(...authHeader)
-                    .send(csd1)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({...csd1, customer_id: testCustomerId})
                 expect(response.status).toEqual(201)
-                createdIds.push(+response.body[0].id)
+                createdIds.push(+response.body.data[0].id)
             })
             it('create customer speed dial *2', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/customerspeeddials')
+                    .post('/api/customerspeeddials')
                     .set(...authHeader)
-                    .send(csd2)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({...csd2, customer_id: testCustomerId})
                 expect(response.status).toEqual(201)
-                createdIds.push(+response.body[0].id)
+                createdIds.push(+response.body.data[0].id)
             })
             it('fail duplicate customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/customerspeeddials')
+                    .post('/api/customerspeeddials')
                     .set(...authHeader)
-                    .send(csd1)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({...csd1, customer_id: testCustomerId})
                 expect(response.status).toEqual(422)
             })
             it('validation fail customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/customerspeeddials')
+                    .post('/api/customerspeeddials')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({customer_id: testCustomerId})
                 expect(response.status).toEqual(422)
             })
@@ -126,14 +188,13 @@ describe('CustomerSpeedDial', () => {
         describe('GET', () => {
             it('read created customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/customerspeeddials/?customer_id=${testCustomerId}`)
+                    .get(`/api/customerspeeddials/?customer_id=${testCustomerId}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                const csdCollection: CustomerSpeedDialResponseDto = response.body
-                expect(await validate(csdCollection)).toEqual([])
-                expect(csdCollection).toHaveLength(2)
-                expect(csdCollection[1]).toEqual(2)
-                const csdEntries = csdCollection[0]
+                const csdCollection = response.body
+                expect(csdCollection.total_count).toEqual(2)
+                const csdEntries: CustomerSpeedDialResponseDto[] = csdCollection.data
                 expect(await validate(csdEntries)).toEqual([])
                 expect(csdEntries).toHaveLength(2)
                 expect(csdEntries[0].customer_id).toEqual(testCustomerId)
@@ -146,8 +207,9 @@ describe('CustomerSpeedDial', () => {
             })
             it('read non-existing customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/customerspeeddials/9999111111')
+                    .get('/api/customerspeeddials/9999111111')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(404)
             })
         })
@@ -165,28 +227,31 @@ describe('CustomerSpeedDial', () => {
             }
             it('update customer speed dial *1 -> *3', async () => {
                 const response = await request(app.getHttpServer())
-                    .put(`/customerspeeddials/${createdEntries[0]['id']}`)
+                    .put(`/api/customerspeeddials/${createdEntries[0]['id']}`)
                     .set(...authHeader)
-                    .send(csd1)
-                expect(response.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({...csd1, customer_id: testCustomerId})
+                expect(response.status).toEqual(204)
             })
             it('update customer speed dial *2 -> *4', async () => {
                 const response = await request(app.getHttpServer())
-                    .put(`/customerspeeddials/${createdEntries[1]['id']}`)
+                    .put(`/api/customerspeeddials/${createdEntries[1]['id']}`)
                     .set(...authHeader)
-                    .send(csd2)
-                expect(response.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({...csd2, customer_id: testCustomerId})
+                expect(response.status).toEqual(204)
             })
             it('read adjusted customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/customerspeeddials/?customer_id=${testCustomerId}`)
+                    .get(`/api/customerspeeddials/?customer_id=${testCustomerId}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                const csdCollection: CustomerSpeedDialResponseDto = response.body
-                expect(await validate(csdCollection)).toEqual([])
-                expect(csdCollection).toHaveLength(2)
-                expect(csdCollection[1]).toEqual(2)
-                const csdEntries = csdCollection[0]
+                const csdCollection = response.body
+                expect(csdCollection.total_count).toEqual(2)
+                const csdEntries: CustomerSpeedDialResponseDto[] = csdCollection.data
                 expect(await validate(csdEntries)).toEqual([])
                 expect(csdEntries).toHaveLength(2)
                 expect(csdEntries[0].customer_id).toEqual(testCustomerId)
@@ -198,9 +263,11 @@ describe('CustomerSpeedDial', () => {
             })
             it('update non-existing customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
-                    .put('/customerspeeddials/999911111122')
+                    .put('/api/customerspeeddials/999911111122')
                     .set(...authHeader)
-                    .send(csd1)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({...csd1, customer_id: testCustomerId})
                 expect(response.status).toEqual(404)
             })
         })
@@ -220,21 +287,22 @@ describe('CustomerSpeedDial', () => {
             ]
             it('adjust customer speed dial *3 -> *5', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch(`/customerspeeddials/${createdEntries[0]['id']}`)
+                    .patch(`/api/customerspeeddials/${createdEntries[0]['id']}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
-                expect(response.status).toEqual(200)
+                expect(response.status).toEqual(204)
             })
             it('read updated customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/customerspeeddials/?customer_id=${testCustomerId}&slot=%2A5`)
+                    .get(`/api/customerspeeddials/?customer_id=${testCustomerId}&slot=%2A5`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                const csdCollection: CustomerSpeedDialResponseDto = response.body
-                expect(await validate(csdCollection)).toEqual([])
-                expect(csdCollection).toHaveLength(2)
-                expect(csdCollection[1]).toEqual(1)
-                const csdEntries = csdCollection[0]
+                const csdCollection = response.body
+                expect(csdCollection.total_count).toEqual(1)
+                const csdEntries: CustomerSpeedDialResponseDto[] = csdCollection.data
                 expect(await validate(csdEntries)).toEqual([])
                 expect(csdEntries).toHaveLength(1)
                 expect(csdEntries[0].customer_id).toEqual(testCustomerId)
@@ -243,8 +311,10 @@ describe('CustomerSpeedDial', () => {
             })
             it('adjust non-existing customer speed dial', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch('/customerspeeddials/999991111112')
+                    .patch('/api/customerspeeddials/999991111112')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(404)
             })
@@ -255,10 +325,27 @@ describe('CustomerSpeedDial', () => {
         it('delete created customer speed dial', async () => {
             for (const id of createdIds) {
                 const result = await request(app.getHttpServer())
-                    .delete(`/customerspeeddials/${id}`)
+                    .delete(`/api/customerspeeddials/${id}`)
                     .set(...authHeader)
-                expect(result.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                expect(result.status).toEqual(204)
             }
+        })
+        it('delete created journals and fixtures', async () => {
+            if (createdIds.length)
+                await db.billing.Journal.delete({
+                    resource_name: 'customerspeeddials',
+                    resource_id: In(createdIds),
+                    timestamp: MoreThanOrEqual(startedAt),
+                })
+            if (provisioningSubscriberId)
+                await db.provisioning.VoipSubscriber.delete(provisioningSubscriberId)
+            if (testCustomerId)
+                await db.billing.Contract.delete(testCustomerId)
+            if (provisioningDomainId)
+                await db.provisioning.VoipDomain.delete(provisioningDomainId)
+            if (billingDomainId)
+                await db.billing.Domain.delete(billingDomainId)
         })
     })
 })

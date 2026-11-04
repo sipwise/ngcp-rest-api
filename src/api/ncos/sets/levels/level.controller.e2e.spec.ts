@@ -1,6 +1,9 @@
-import {INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
+import {In, MoreThanOrEqual} from 'typeorm'
 
 import {NCOSSetLevelResponseDto} from './dto/level-response.dto'
 import {NCOSSetLevelModule} from './level.module'
@@ -13,7 +16,10 @@ import {db} from '~/entities'
 import {NCOSLevelMode} from '~/entities/internal/ncos-level.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {validate} from '~/helpers/validate.helper'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type NcosSetPost = {
@@ -31,6 +37,7 @@ describe('NCOS Set Level', () => {
     let createdSetLevelIds: number[] = []
     let createdLevelIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
+    const startedAt = Date.now() / 1000
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -47,11 +54,30 @@ describe('NCOS Set Level', () => {
 
         app = moduleRef.createNestApplication()
 
-        // TODO import other app configuration from bootstrap()
-        // like interceptors, etc.
-        app.useGlobalPipes(new ValidateInputPipe())
+        app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
     })
@@ -79,7 +105,9 @@ describe('NCOS Set Level', () => {
 
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
-            .post('/auth/jwt')
+            .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
@@ -94,11 +122,13 @@ describe('NCOS Set Level', () => {
                 description: 'test_ncossetlevel_set description',
             }
             const response = await request(app.getHttpServer())
-                .post('/ncos/sets')
+                .post('/api/ncos/sets')
                 .set(...authHeader)
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
                 .send(ncosset)
             expect(response.status).toEqual(201)
-            createdSetIds.push(+response.body[0].id)
+            createdSetIds.push(+response.body.data[0].id)
         })
 
         it('create ncos level', async () => {
@@ -116,21 +146,24 @@ describe('NCOS Set Level', () => {
         describe('POST', () => {
             it('create ncos set level', async () => {
                 const response = await request(app.getHttpServer())
-                    .post(`/ncos/sets/${createdSetIds[0]}/levels`)
+                    .post(`/api/ncos/sets/${createdSetIds[0]}/levels`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({level_id: createdLevelIds[0]})
                 expect(response.status).toEqual(201)
-                createdSetLevelIds.push(+response.body[0].id)
+                createdSetLevelIds.push(+response.body.data[0].id)
             })
         })
 
         describe('GET', () => {
             it('read all levels for set', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/ncos/sets/${createdSetIds[0]}/levels`)
+                    .get(`/api/ncos/sets/${createdSetIds[0]}/levels`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                const [levels, count] = response.body
+                const {data: levels, total_count: count} = response.body
                 expect(count).toEqual(1)
                 expect(levels).toHaveLength(1)
                 const level = levels[0]
@@ -140,8 +173,9 @@ describe('NCOS Set Level', () => {
 
             it('read specific level for set', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/ncos/sets/${createdSetIds[0]}/levels/${createdSetLevelIds[0]}`)
+                    .get(`/api/ncos/sets/${createdSetIds[0]}/levels/${createdSetLevelIds[0]}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const level: NCOSSetLevelResponseDto = response.body
                 expect(await validate(level)).toEqual([])
@@ -155,18 +189,20 @@ describe('NCOS Set Level', () => {
         it('delete created ncos set level', async () => {
             if (createdSetLevelIds.length) {
                 const response = await request(app.getHttpServer())
-                    .delete(`/ncos/sets/${createdSetIds[0]}/levels/${createdSetLevelIds[0]}`)
+                    .delete(`/api/ncos/sets/${createdSetIds[0]}/levels/${createdSetLevelIds[0]}`)
                     .set(...authHeader)
-                expect(response.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(204)
             }
         })
 
         it('delete created ncos set', async () => {
             for (const id of createdSetIds) {
                 const result = await request(app.getHttpServer())
-                    .delete(`/ncos/sets/${id}`)
+                    .delete(`/api/ncos/sets/${id}`)
                     .set(...authHeader)
-                expect(result.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                expect(result.status).toEqual(204)
             }
         })
 
@@ -175,6 +211,15 @@ describe('NCOS Set Level', () => {
                 const result = await db.billing.NCOSLevel.delete({id: createdLevelIds[0]})
                 expect(result.affected).toEqual(1)
             }
+        })
+        it('delete created journals', async () => {
+            const ncosIds = [...createdSetIds, ...createdSetLevelIds]
+            if (ncosIds.length)
+                await db.billing.Journal.delete({
+                    resource_name: 'ncos',
+                    resource_id: In(ncosIds),
+                    timestamp: MoreThanOrEqual(startedAt),
+                })
         })
     })
 })

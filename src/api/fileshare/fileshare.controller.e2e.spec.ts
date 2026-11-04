@@ -1,16 +1,23 @@
 import path from 'path'
 
-import {INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
+import {MoreThanOrEqual} from 'typeorm'
 
 import {FileshareModule} from './fileshare.module'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type FileSharePost = {
@@ -25,6 +32,7 @@ describe('Fileshare', () => {
     let authHeader: [string, string]
     let createdIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
+    const startedAt = Date.now() / 1000
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -39,11 +47,30 @@ describe('Fileshare', () => {
 
         app = moduleRef.createNestApplication()
 
-        // TODO import other app configuration from bootstrap()
-        // like interceptors, etc.
-        app.useGlobalPipes(new ValidateInputPipe())
+        app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
     })
@@ -70,7 +97,9 @@ describe('Fileshare', () => {
 
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
-            .post('/auth/jwt')
+            .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
@@ -85,8 +114,9 @@ describe('Fileshare', () => {
             }
             it('creates file', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/fileshare')
+                    .post('/api/fileshare')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                     .attach('file', path.resolve(__dirname, './fixtures/fileshare-test-file.txt'))
                     .field('ttl', fileshare.ttl)
                 expect(response.status).toEqual(201)
@@ -94,8 +124,9 @@ describe('Fileshare', () => {
             })
             it('does not create file without file', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/fileshare')
+                    .post('/api/fileshare')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                     .field('ttl', fileshare.ttl)
                 expect(response.status).toEqual(422)
             })
@@ -103,8 +134,9 @@ describe('Fileshare', () => {
         describe('GET', () => {
             it('fetches all fileshares', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/fileshare')
+                    .get('/api/fileshare')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
             })
         },
@@ -114,10 +146,15 @@ describe('Fileshare', () => {
         it('delete created files', async () => {
             for (const id of createdIds) {
                 const result = await request(app.getHttpServer())
-                    .delete(`/fileshare/${id}`)
+                    .delete(`/api/fileshare/${id}`)
                     .set(...authHeader)
-                expect(result.status).toEqual(200)
+                    .set('Accept', 'application/json')
+                expect(result.status).toEqual(204)
             }
+        })
+        it('delete created journals', async () => {
+            // fileshare ids are uuids, journals get resource_id 0
+            await db.billing.Journal.delete({resource_name: 'fileshare', resource_id: 0, timestamp: MoreThanOrEqual(startedAt)})
         })
     })
 })

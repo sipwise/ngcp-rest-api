@@ -1,5 +1,4 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {Expose} from 'class-transformer'
 import {IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString} from 'class-validator'
 
 import {RbacRole} from '~/config/constants.config'
@@ -84,7 +83,6 @@ export class AdminResponseDto extends ResponseDto {
 
     @IsBoolean()
     @ApiProperty()
-    @Expose({name: '2fa'})
         enable_2fa: boolean
 
     @IsBoolean()

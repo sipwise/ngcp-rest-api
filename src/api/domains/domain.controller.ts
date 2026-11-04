@@ -26,6 +26,7 @@ import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
+import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Roles} from '~/decorators/roles.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
 import {ExpandHelper} from '~/helpers/expand.helper'
@@ -123,7 +124,7 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
     })
     @Transactional()
     async delete(
-        @Param('id', new ParseIntIdArrayPipe()) ids: number[],
+        @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
         @Req() req: Request,
     ): Promise<number[]> {
         this.log.debug({message: 'delete domain by id', func: this.delete.name, url: req.url, method: req.method})

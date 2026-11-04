@@ -1,7 +1,9 @@
 import {inspect} from 'util'
 
-import {INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
 
 import {AuthJwtModule} from './jwt.module'
@@ -11,7 +13,10 @@ import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {LoggerService} from '~/logger/logger.service'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
@@ -25,7 +30,6 @@ describe('Auth JWT', () => {
     let authToken: string
     const secret = 'e2e-Secret-66545'
     const creds = {username: 'administrator', password: secret}
-    const json: [string, string] = ['Content-Type', 'application/json']
 
     const lifetime = (body: {created_at: string, expires_at: string}): number =>
         (new Date(body.expires_at).getTime() - new Date(body.created_at).getTime()) / 1000
@@ -41,6 +45,7 @@ describe('Auth JWT', () => {
 
         app = moduleRef.createNestApplication()
 
+        app.setGlobalPrefix('api')
         app.useGlobalPipes(new ValidateInputPipe({
             forbidUnknownValues: false,
             whitelist: true,
@@ -49,7 +54,21 @@ describe('Auth JWT', () => {
             disableErrorMessages: true,
         }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
     })
@@ -78,8 +97,9 @@ describe('Auth JWT', () => {
         describe('POST credentials', () => {
             it('login with credentials in the JSON body', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/auth/jwt')
-                    .set(...json)
+                    .post('/api/auth/jwt')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(creds)
                 expect(response.status).toEqual(201)
                 expect(response.body.access_token).toBeDefined()
@@ -90,8 +110,9 @@ describe('Auth JWT', () => {
 
             it('login with credentials and expires_in in the JSON body', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/auth/jwt')
-                    .set(...json)
+                    .post('/api/auth/jwt')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({...creds, expires_in: 600})
                 expect(response.status).toEqual(201)
                 expect(lifetime(response.body)).toEqual(600)
@@ -99,17 +120,19 @@ describe('Auth JWT', () => {
 
             it('login with basic auth', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/auth/jwt')
+                    .post('/api/auth/jwt')
                     .auth(creds.username, creds.password)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(201)
                 expect(response.body.access_token).toBeDefined()
             })
 
             it('login with basic auth and expires_in', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/auth/jwt')
+                    .post('/api/auth/jwt')
                     .auth(creds.username, creds.password)
-                    .set(...json)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({expires_in: 900})
                 expect(response.status).toEqual(201)
                 expect(lifetime(response.body)).toEqual(900)
@@ -118,8 +141,9 @@ describe('Auth JWT', () => {
             it('reject wrong password in the JSON body', async () => {
                 compareSpy.mockResolvedValueOnce(false)
                 const response = await request(app.getHttpServer())
-                    .post('/auth/jwt')
-                    .set(...json)
+                    .post('/api/auth/jwt')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(creds)
                 expect(response.status).toEqual(401)
             })
@@ -127,15 +151,17 @@ describe('Auth JWT', () => {
             it('reject wrong password with basic auth', async () => {
                 compareSpy.mockResolvedValueOnce(false)
                 const response = await request(app.getHttpServer())
-                    .post('/auth/jwt')
+                    .post('/api/auth/jwt')
                     .auth(creds.username, creds.password)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(401)
             })
 
             it('reset failed login attempts by a successful login', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/auth/jwt')
-                    .set(...json)
+                    .post('/api/auth/jwt')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send(creds)
                 expect(response.status).toEqual(201)
             })
@@ -144,7 +170,8 @@ describe('Auth JWT', () => {
                 const logSpy = jest.spyOn(LoggerService.prototype, 'log')
                 try {
                     const response = await request(app.getHttpServer())
-                        .post('/auth/jwt')
+                        .post('/api/auth/jwt')
+                        .set('Accept', 'application/json')
                         .query(creds)
                     expect(response.status).toEqual(401)
                     expect(response.body.path).toContain('password=********')
@@ -158,8 +185,9 @@ describe('Auth JWT', () => {
 
             it('reject unknown property without echoing the password', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/auth/jwt')
-                    .set(...json)
+                    .post('/api/auth/jwt')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({...creds, foo: 'bar'})
                 expect(response.status).toEqual(422)
                 expect(JSON.stringify(response.body)).toContain('foo')
@@ -170,8 +198,9 @@ describe('Auth JWT', () => {
                 const debugSpy = jest.spyOn(LoggerService.prototype, 'debug')
                 try {
                     const response = await request(app.getHttpServer())
-                        .post('/auth/jwt')
-                        .set(...json)
+                        .post('/api/auth/jwt')
+                        .set('Accept', 'application/json')
+                        .set('Content-Type', 'application/json')
                         .send({...creds, expires_in: 0})
                     expect(response.status).toEqual(422)
                     expect(JSON.stringify(response.body)).not.toContain(secret)
@@ -186,9 +215,10 @@ describe('Auth JWT', () => {
         describe('POST bearer', () => {
             it('renew with an access token', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/auth/jwt')
+                    .post('/api/auth/jwt')
                     .set('Authorization', `Bearer ${accessToken}`)
-                    .set(...json)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({expires_in: 300})
                 expect(response.status).toEqual(201)
                 expect(lifetime(response.body)).toEqual(300)
@@ -196,20 +226,22 @@ describe('Auth JWT', () => {
 
             it('create an auth token', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/auth/tokens')
+                    .post('/api/auth/tokens')
                     .set('Authorization', `Bearer ${accessToken}`)
-                    .set(...json)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
                     .send({identifier: 'test_jwt_exchange', expires_in: 3600})
                 expect(response.status).toEqual(201)
-                const created: AuthTokenCreateResponseDto = response.body[0]
+                const created: AuthTokenCreateResponseDto = response.body.data[0]
                 authTokenId = created.id
                 authToken = created.auth_token
             })
 
             it('exchange an auth token', async () => {
                 const response = await request(app.getHttpServer())
-                    .post('/auth/jwt')
+                    .post('/api/auth/jwt')
                     .set('Authorization', `Bearer ${authToken}`)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(201)
                 expect(response.body.access_token).toBeDefined()
             })
@@ -221,9 +253,10 @@ describe('Auth JWT', () => {
             if (!authTokenId)
                 return
             const response = await request(app.getHttpServer())
-                .delete(`/auth/tokens/${authTokenId}`)
+                .delete(`/api/auth/tokens/${authTokenId}`)
                 .set('Authorization', `Bearer ${accessToken}`)
-            expect(response.status).toEqual(200)
+                .set('Accept', 'application/json')
+            expect(response.status).toEqual(204)
         })
     })
 })

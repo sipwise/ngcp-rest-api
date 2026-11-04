@@ -33,8 +33,14 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
     private readonly log = new LoggerService(ContactMariadbRepository.name)
 
     async create(contacts: internal.Contact[], _sr: ServiceRequest): Promise<number[]> {
-        const qb = db.billing.Admin.createQueryBuilder('contact')
-        const values = contacts.map(contact => new db.billing.Contact().fromInternal(contact))
+        const qb = db.billing.Contact.createQueryBuilder('contact')
+        const now = new Date()
+        const values = contacts.map(contact => {
+            const entity = new db.billing.Contact().fromInternal(contact)
+            entity.create_timestamp ??= now
+            entity.modify_timestamp ??= now
+            return entity
+        })
         const result = await qb.insert().values(values).execute()
         return result.identifiers.map((obj: {id: number}) => obj.id)
     }

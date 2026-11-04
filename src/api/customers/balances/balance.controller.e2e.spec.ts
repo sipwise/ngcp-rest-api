@@ -1,6 +1,9 @@
-import {HttpStatus, INestApplication} from '@nestjs/common'
+import {ClassSerializerInterceptor, HttpStatus, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
+import bodyParser from 'body-parser'
 import request from 'supertest'
+import {In, MoreThanOrEqual} from 'typeorm'
 
 import {CustomerBalanceModule} from '~/api/customers/balances/balance.module'
 import {CustomerBalanceResponseDto} from '~/api/customers/balances/dto/balance-response.dto'
@@ -11,7 +14,10 @@ import {db} from '~/entities'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
+import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type CustomerBalancePut = {
@@ -29,10 +35,10 @@ describe('Customer Balances', () => {
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
-    const preferHeader: [string, string] = ['prefer', 'return=representation']
     const createdBalanceIds: number[] = []
     const fixtureContractIds: number[] = []
     const creds = {username: 'administrator', password: 'administrator'}
+    const startedAt = Date.now() / 1000
     let contractId: number
     let oldBalanceId: number
     let balanceId: number
@@ -56,8 +62,11 @@ describe('Customer Balances', () => {
 
     const putBalance = (id: number, balance: CustomerBalancePut): request.Test =>
         request(app.getHttpServer())
-            .put(`/customers/balances/${id}`)
+            .put(`/api/customers/balances/${id}`)
             .set(...authHeader)
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
+            .set('Prefer', 'return=representation')
             .send(balance)
 
     const expectKeptColumns = async (id: number): Promise<void> => {
@@ -83,9 +92,30 @@ describe('Customer Balances', () => {
 
         app = moduleRef.createNestApplication()
 
-        app.useGlobalPipes(new ValidateInputPipe({whitelist: true, forbidNonWhitelisted: true, transform: true}))
+        app.setGlobalPrefix('api')
+        app.useGlobalPipes(new ValidateInputPipe({
+            forbidUnknownValues: false,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            disableErrorMessages: true,
+        }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(
+            new TransformInterceptor({
+                pageName: AppService.config.common.api_default_query_page_name,
+                perPageName: AppService.config.common.api_default_query_rows_name,
+            }),
+            new LoggingInterceptor(),
+            new ClassSerializerInterceptor(app.get(Reflector)),
+            new TransactionInterceptor(app.get(Reflector)),
+            new ResponseValidationInterceptor(),
+        )
+        app.use(bodyParser.json({
+            type: ['application/json-patch+json', 'application/json'],
+        }))
+        app.getHttpAdapter().getInstance().disable('x-powered-by')
+        app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
 
@@ -124,8 +154,9 @@ describe('Customer Balances', () => {
 
     it('obtain auth token', async () => {
         const response = await request(app.getHttpServer())
-            .post('/auth/jwt')
+            .post('/api/auth/jwt')
             .auth(creds.username, creds.password)
+            .set('Accept', 'application/json')
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
         authHeader = ['Authorization', 'Bearer ' + response.body['access_token']]
@@ -135,28 +166,29 @@ describe('Customer Balances', () => {
         describe('GET', () => {
             it('read customer balances', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/customers/balances')
+                    .get('/api/customers/balances')
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(HttpStatus.OK)
-                const [balances, count] = response.body
+                const {data: balances, total_count: count} = response.body
                 expect(balances.length).toBeGreaterThan(0)
                 expect(count).toBeGreaterThanOrEqual(balances.length)
             })
             it('read the latest balance of a customer', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/customers/${contractId}/balances`)
+                    .get(`/api/customers/${contractId}/balances`)
                     .set(...authHeader)
-                    .set(...preferHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(HttpStatus.OK)
-                const [balances, count] = response.body
+                const {data: balances, total_count: count} = response.body
                 expect(count).toEqual(1)
                 expect(balances.map((b: CustomerBalanceResponseDto) => b.id)).toEqual([balanceId])
             })
             it('read customer balance', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/customers/balances/${balanceId}`)
+                    .get(`/api/customers/balances/${balanceId}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(HttpStatus.OK)
                 const balance: CustomerBalanceResponseDto = response.body
                 expect(balance.cash_balance).toEqual(20)
@@ -165,15 +197,17 @@ describe('Customer Balances', () => {
             })
             it('read an older customer balance', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/customers/balances/${oldBalanceId}`)
+                    .get(`/api/customers/balances/${oldBalanceId}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(response.body.id).toEqual(oldBalanceId)
             })
             it('read non-existing balance', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/customers/balances/999911111122')
+                    .get('/api/customers/balances/999911111122')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 expect(response.status).toEqual(HttpStatus.NOT_FOUND)
             })
         })
@@ -208,8 +242,9 @@ describe('Customer Balances', () => {
             })
             it('accepts the body of a GET', async () => {
                 const get = await request(app.getHttpServer())
-                    .get(`/customers/balances/${balanceId}`)
+                    .get(`/api/customers/balances/${balanceId}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
                 const {cash_balance, cash_debit, free_time_balance, free_time_spent} = get.body
                 const response = await putBalance(balanceId, {cash_balance, cash_debit, free_time_balance, free_time_spent})
                 expect(response.status).toEqual(HttpStatus.OK)
@@ -235,8 +270,11 @@ describe('Customer Balances', () => {
             ]
             it('adjust created balances cash_balance', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch(`/customers/balances/${balanceId}`)
+                    .patch(`/api/customers/balances/${balanceId}`)
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .set('Prefer', 'return=representation')
                     .send(patch)
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(response.body.cash_balance).toEqual(-1.5)
@@ -245,8 +283,10 @@ describe('Customer Balances', () => {
             })
             it('adjust non-existing balance', async () => {
                 const response = await request(app.getHttpServer())
-                    .patch('/customers/balances/999911111122')
+                    .patch('/api/customers/balances/999911111122')
                     .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(HttpStatus.NOT_FOUND)
             })
@@ -255,8 +295,15 @@ describe('Customer Balances', () => {
 
     describe('Customer Balances DELETE', () => {
         it('delete created balances and fixtures', async () => {
-            if (createdBalanceIds.length)
+            if (createdBalanceIds.length) {
+                // journals take the first path segment as resource_name, the ids are balance ids
+                await db.billing.Journal.delete({
+                    resource_name: 'customers',
+                    resource_id: In(createdBalanceIds),
+                    timestamp: MoreThanOrEqual(startedAt),
+                })
                 await db.billing.ContractBalance.delete(createdBalanceIds)
+            }
             if (fixtureContractIds.length)
                 await db.billing.Contract.delete(fixtureContractIds)
         })
