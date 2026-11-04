@@ -7,10 +7,13 @@ export const winstonLogger: NestLoggerService = WinstonModule.createLogger(winst
 
 const logLevelOrder: LogLevel[] = ['verbose', 'debug', 'log', 'warn', 'error', 'fatal']
 
+// no optional chaining: webpack's DefinePlugin turns process.env.API_LOG_LEVELS?.split() into undefined.split()
 const envLogLevels = process.env.API_LOG_LEVELS
-    ?.split(',')
-    .map(l => l.trim())
-    .filter((l): l is LogLevel => logLevelOrder.includes(l as LogLevel))
+    ? process.env.API_LOG_LEVELS
+        .split(',')
+        .map(l => l.trim())
+        .filter((l): l is LogLevel => logLevelOrder.includes(l as LogLevel))
+    : undefined
 
 @Injectable()
 export class LoggerService implements NestLoggerService {
