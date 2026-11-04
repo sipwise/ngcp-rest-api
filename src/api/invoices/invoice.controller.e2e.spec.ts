@@ -55,7 +55,7 @@ describe('Invoice', () => {
     let appService: AppService
     let authService: AuthService
     const licenseMockRepo = new LicenseMockRepository()
-    const creds = {username: 'administrator', password: 'administrator'}
+    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
     const resellerCreds = {username: `inv_reseller_${Date.now()}`, password: 'FFFooobarbaz123!!!'}
     const ccareCreds = {username: `inv_ccare_${Date.now()}`, password: 'FFFooobarbaz123!!!'}
@@ -352,6 +352,29 @@ describe('Invoice', () => {
         app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
+
+        await db.billing.Admin.delete({login: creds.username})
+        const adminRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.admin})
+        await db.billing.Admin.insert({
+            reseller_id: 1,
+            login: creds.username,
+            saltedpass: 'mockAdminSaltedpass',
+            saltedpass_modify_timestamp: new Date(),
+            role_id: adminRole.id,
+            is_master: true,
+            is_superuser: true,
+            is_system: false,
+            is_ccare: false,
+            lawful_intercept: false,
+            is_active: true,
+            read_only: false,
+            show_passwords: true,
+            call_data: true,
+            billing_data: true,
+            can_reset_password: true,
+            enable_2fa: false,
+            show_otp_registration_info: false,
+        })
 
         otherResellerContractId = await createContract(undefined, RESELLER_PRODUCT_ID, SYSTEM_CONTACT_ID)
         const reseller = await db.billing.Reseller.create({
@@ -759,6 +782,10 @@ describe('Invoice', () => {
                 if (ids.length)
                     await db.billing.Journal.delete({resource_name: resource, resource_id: In(ids), timestamp: MoreThanOrEqual(startedAt)})
             }
+        })
+
+        it('delete mock admin', async () => {
+            await db.billing.Admin.delete({login: creds.username})
         })
     })
 })

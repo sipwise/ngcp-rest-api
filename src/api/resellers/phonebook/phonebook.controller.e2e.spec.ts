@@ -37,7 +37,7 @@ describe('Reseller Phonebook', () => {
     let fixtureResellerId: number
     let fixtureContractId: number
     let resellerAdminId: number
-    const creds = {username: 'administrator', password: 'administrator'}
+    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
     const resellerCreds = {username: `pb_reseller_${Date.now().toString(36)}`, password: 'FFFooobarbaz123!!!'}
 
@@ -78,6 +78,29 @@ describe('Reseller Phonebook', () => {
         app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
+
+        await db.billing.Admin.delete({login: creds.username})
+        const adminRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.admin})
+        await db.billing.Admin.insert({
+            reseller_id: 1,
+            login: creds.username,
+            saltedpass: 'mockAdminSaltedpass',
+            saltedpass_modify_timestamp: new Date(),
+            role_id: adminRole.id,
+            is_master: true,
+            is_superuser: true,
+            is_system: false,
+            is_ccare: false,
+            lawful_intercept: false,
+            is_active: true,
+            read_only: false,
+            show_passwords: true,
+            call_data: true,
+            billing_data: true,
+            can_reset_password: true,
+            enable_2fa: false,
+            show_otp_registration_info: false,
+        })
     })
 
     afterAll(async () => {
@@ -566,6 +589,10 @@ describe('Reseller Phonebook', () => {
                 })
             if (resellerAdminId)
                 await db.billing.Journal.delete({resource_name: 'admins', resource_id: resellerAdminId})
+        })
+
+        it('delete mock admin', async () => {
+            await db.billing.Admin.delete({login: creds.username})
         })
     })
 })

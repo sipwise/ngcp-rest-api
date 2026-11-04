@@ -43,9 +43,11 @@ describe('AdminController', () => {
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
+    let systemAuthHeader: [string, string]
     let createdAdminIds: number[] = []
     const strongPassword = 'FFFooobarbaz123!!!' //  MT#60560
-    const creds = {username: 'administrator', password: 'administrator'}
+    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const systemCreds = {username: 'mockSystemUser', password: 'mockSystemPass'}
     const run = Date.now().toString(36)
     const loginOf = (name: string): string => `${name}_${run}`
 
@@ -88,6 +90,36 @@ describe('AdminController', () => {
         app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
+
+        // creating and deleting system and lintercept admins needs the system role
+        const mockAdmins = [
+            {login: creds.username, role: RbacRole.admin, is_superuser: true, is_system: false},
+            {login: systemCreds.username, role: RbacRole.system, is_superuser: false, is_system: true},
+        ]
+        for (const mockAdmin of mockAdmins) {
+            await db.billing.Admin.delete({login: mockAdmin.login})
+            const role = await db.billing.AclRole.findOneByOrFail({role: mockAdmin.role})
+            await db.billing.Admin.insert({
+                reseller_id: 1,
+                login: mockAdmin.login,
+                saltedpass: 'mockAdminSaltedpass',
+                saltedpass_modify_timestamp: new Date(),
+                role_id: role.id,
+                is_master: true,
+                is_superuser: mockAdmin.is_superuser,
+                is_system: mockAdmin.is_system,
+                is_ccare: false,
+                lawful_intercept: false,
+                is_active: true,
+                read_only: false,
+                show_passwords: true,
+                call_data: true,
+                billing_data: true,
+                can_reset_password: true,
+                enable_2fa: false,
+                show_otp_registration_info: false,
+            })
+        }
     })
 
     afterAll(async () => {
@@ -131,6 +163,17 @@ describe('AdminController', () => {
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
         authHeader = ['Authorization', 'Bearer ' + response.body['access_token']]
+    })
+
+    it('obtain system auth token', async () => {
+        const response = await request(app.getHttpServer())
+            .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
+            .send(systemCreds)
+        expect(response.status).toEqual(201)
+        expect(response.body['access_token']).toBeDefined()
+        systemAuthHeader = ['Authorization', 'Bearer ' + response.body['access_token']]
     })
 
     describe('', () => { // main tests block
@@ -293,7 +336,7 @@ describe('AdminController', () => {
                 expect.assertions(1)
                 const response = await request(app.getHttpServer())
                     .post('/api/admins')
-                    .set(...authHeader)
+                    .set(...systemAuthHeader)
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .set('Prefer', 'return=representation')
@@ -305,7 +348,7 @@ describe('AdminController', () => {
                 expect.assertions(1)
                 const response = await request(app.getHttpServer())
                     .post('/api/admins')
-                    .set(...authHeader)
+                    .set(...systemAuthHeader)
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .set('Prefer', 'return=representation')
@@ -817,7 +860,7 @@ describe('AdminController', () => {
             if (single != undefined) {
                 const result = await request(app.getHttpServer())
                     .delete(`/api/admins/${single}`)
-                    .set(...authHeader)
+                    .set(...systemAuthHeader)
                     .set('Accept', 'application/json')
                 expect(result.status).toEqual(204)
             }
@@ -825,7 +868,7 @@ describe('AdminController', () => {
         it('delete created admins bulk', async () => {
             const result = await request(app.getHttpServer())
                 .delete('/api/admins/')
-                .set(...authHeader)
+                .set(...systemAuthHeader)
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .send(createdAdminIds.slice(0, -1))
@@ -866,6 +909,10 @@ describe('AdminController', () => {
         it('delete created journals', async () => {
             if (createdAdminIds.length)
                 await db.billing.Journal.delete({resource_name: 'admins', resource_id: In(createdAdminIds)})
+        })
+
+        it('delete mock admins', async () => {
+            await db.billing.Admin.delete({login: In([creds.username, systemCreds.username])})
         })
     })
 })

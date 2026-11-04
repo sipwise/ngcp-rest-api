@@ -12,6 +12,7 @@ import {NCOSSetModule} from '~/api/ncos/sets/set.module'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {NCOSLevelMode} from '~/entities/internal/ncos-level.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
@@ -36,7 +37,7 @@ describe('NCOS Set Level', () => {
     let createdSetIds: number[] = []
     let createdSetLevelIds: number[] = []
     let createdLevelIds: number[] = []
-    const creds = {username: 'administrator', password: 'administrator'}
+    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
 
     beforeAll(async () => {
@@ -80,6 +81,29 @@ describe('NCOS Set Level', () => {
         app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
+
+        await db.billing.Admin.delete({login: creds.username})
+        const adminRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.admin})
+        await db.billing.Admin.insert({
+            reseller_id: 1,
+            login: creds.username,
+            saltedpass: 'mockAdminSaltedpass',
+            saltedpass_modify_timestamp: new Date(),
+            role_id: adminRole.id,
+            is_master: true,
+            is_superuser: true,
+            is_system: false,
+            is_ccare: false,
+            lawful_intercept: false,
+            is_active: true,
+            read_only: false,
+            show_passwords: true,
+            call_data: true,
+            billing_data: true,
+            can_reset_password: true,
+            enable_2fa: false,
+            show_otp_registration_info: false,
+        })
     })
 
     afterAll(async () => {
@@ -220,6 +244,10 @@ describe('NCOS Set Level', () => {
                     resource_id: In(ncosIds),
                     timestamp: MoreThanOrEqual(startedAt),
                 })
+        })
+
+        it('delete mock admin', async () => {
+            await db.billing.Admin.delete({login: creds.username})
         })
     })
 })

@@ -41,7 +41,7 @@ describe('Auth Grafana', () => {
     let authService: AuthService
     let authHeader: [string, string]
     let createdAdminIds: number[]
-    const creds = {username: 'administrator', password: 'administrator'}
+    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
     const strongPassword = 'FFFooobarbaz123!!!'
     const userHeader = 'ngcp-grafana-user'
     const tokens: {[login: string]: [string, string]} = {}
@@ -137,6 +137,29 @@ describe('Auth Grafana', () => {
         createdAdminIds = []
 
         await app.init()
+
+        await db.billing.Admin.delete({login: creds.username})
+        const adminRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.admin})
+        await db.billing.Admin.insert({
+            reseller_id: 1,
+            login: creds.username,
+            saltedpass: 'mockAdminSaltedpass',
+            saltedpass_modify_timestamp: new Date(),
+            role_id: adminRole.id,
+            is_master: true,
+            is_superuser: true,
+            is_system: false,
+            is_ccare: false,
+            lawful_intercept: false,
+            is_active: true,
+            read_only: false,
+            show_passwords: true,
+            call_data: true,
+            billing_data: true,
+            can_reset_password: true,
+            enable_2fa: false,
+            show_otp_registration_info: false,
+        })
     })
 
     afterAll(async () => {
@@ -338,6 +361,10 @@ describe('Auth Grafana', () => {
         it('delete created journals', async () => {
             if (createdAdminIds.length)
                 await db.billing.Journal.delete({resource_name: 'admins', resource_id: In(createdAdminIds)})
+        })
+
+        it('delete mock admin', async () => {
+            await db.billing.Admin.delete({login: creds.username})
         })
     })
 })

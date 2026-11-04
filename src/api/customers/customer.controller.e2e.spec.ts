@@ -12,6 +12,7 @@ import {CustomerMariadbRepository} from './repositories/customer.mariadb.reposit
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {BillingNetworkStatus} from '~/entities/internal/billing-network.internal.entity'
 import {BillingProfileStatus} from '~/entities/internal/billing-profile.internal.entity'
@@ -77,7 +78,7 @@ describe('CustomerController', () => {
     const createdCustomerIds: number[] = []
     const _createdContactIds: number[] = []
     const _createdBillingProfileIds: number[] = []
-    const creds = {username: 'administrator', password: 'administrator'}
+    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
     let repo: CustomerMariadbRepository
     const suffix = `${Date.now()}`
     const fixtureContractIds: number[] = []
@@ -202,6 +203,29 @@ describe('CustomerController', () => {
         app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
+
+        await db.billing.Admin.delete({login: creds.username})
+        const adminRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.admin})
+        await db.billing.Admin.insert({
+            reseller_id: 1,
+            login: creds.username,
+            saltedpass: 'mockAdminSaltedpass',
+            saltedpass_modify_timestamp: new Date(),
+            role_id: adminRole.id,
+            is_master: true,
+            is_superuser: true,
+            is_system: false,
+            is_ccare: false,
+            lawful_intercept: false,
+            is_active: true,
+            read_only: false,
+            show_passwords: true,
+            call_data: true,
+            billing_data: true,
+            can_reset_password: true,
+            enable_2fa: false,
+            show_otp_registration_info: false,
+        })
 
         const resellerContract = await db.billing.Contract.create({
             product_id: RESELLER_PRODUCT_ID,
@@ -900,6 +924,10 @@ describe('CustomerController', () => {
                 await db.billing.Reseller.delete(otherResellerId)
             if (otherResellerContractId)
                 await db.billing.Contract.delete(otherResellerContractId)
+        })
+
+        it('delete mock admin', async () => {
+            await db.billing.Admin.delete({login: creds.username})
         })
     })
 })

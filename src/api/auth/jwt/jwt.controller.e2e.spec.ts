@@ -12,6 +12,8 @@ import {AuthTokenCreateResponseDto} from '~/api/auth/tokens/dto/token-create-res
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
+import {RbacRole} from '~/config/constants.config'
+import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
@@ -29,7 +31,7 @@ describe('Auth JWT', () => {
     let authTokenId: string
     let authToken: string
     const secret = 'e2e-Secret-66545'
-    const creds = {username: 'administrator', password: secret}
+    const creds = {username: 'mockAdminUser', password: secret}
 
     const lifetime = (body: {created_at: string, expires_at: string}): number =>
         (new Date(body.expires_at).getTime() - new Date(body.created_at).getTime()) / 1000
@@ -71,6 +73,29 @@ describe('Auth JWT', () => {
         app.getHttpAdapter().getInstance().set('json spaces', 2)
 
         await app.init()
+
+        await db.billing.Admin.delete({login: creds.username})
+        const adminRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.admin})
+        await db.billing.Admin.insert({
+            reseller_id: 1,
+            login: creds.username,
+            saltedpass: 'mockAdminSaltedpass',
+            saltedpass_modify_timestamp: new Date(),
+            role_id: adminRole.id,
+            is_master: true,
+            is_superuser: true,
+            is_system: false,
+            is_ccare: false,
+            lawful_intercept: false,
+            is_active: true,
+            read_only: false,
+            show_passwords: true,
+            call_data: true,
+            billing_data: true,
+            can_reset_password: true,
+            enable_2fa: false,
+            show_otp_registration_info: false,
+        })
     })
 
     afterAll(async () => {
@@ -257,6 +282,10 @@ describe('Auth JWT', () => {
                 .set('Authorization', `Bearer ${accessToken}`)
                 .set('Accept', 'application/json')
             expect(response.status).toEqual(204)
+        })
+
+        it('delete mock admin', async () => {
+            await db.billing.Admin.delete({login: creds.username})
         })
     })
 })
