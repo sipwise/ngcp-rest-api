@@ -18,8 +18,14 @@ const prodDir = path.resolve(__dirname, '..', 'prod')
 const bundle = path.join(prodDir, 'server.js')
 const compiled = path.join(prodDir, 'server.jsc')
 
+// Node prints the source line of an uncaught error: for bytecode the dummy source, a single
+// line of millions of zero-width spaces (journald: "[48K blob data]"). Print the stack only.
 const loaderStub = [
     '\'use strict\'',
+    'process.on(\'uncaughtException\', (err) => {',
+    '    console.error(err)',
+    '    process.exit(1)',
+    '})',
     'require(\'./bytenode\')',
     'module.exports = require(\'./server.jsc\')',
     '',
