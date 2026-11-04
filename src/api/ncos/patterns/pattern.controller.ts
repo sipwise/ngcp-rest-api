@@ -70,10 +70,13 @@ export class NCOSPatternController extends CrudController<NCOSPatternRequestDto,
         const sr = new ServiceRequest(req)
         const sets = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.ncosPatternService.create(sets, sr)
-        return await Promise.all(created.map(async set => new NCOSPatternResponseDto(
+        const response = await Promise.all(created.map(async set => new NCOSPatternResponseDto(
             set,
             {url: req.url},
         )))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get()

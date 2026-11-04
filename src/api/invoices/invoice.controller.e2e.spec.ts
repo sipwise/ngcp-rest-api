@@ -778,10 +778,7 @@ describe('Invoice', () => {
             }
         })
         it('delete created journals', async () => {
-            for (const [resource, ids] of [['invoices', createdInvoiceIds], ['templates', createdTemplateIds], ['admins', createdAdminIds]] as const) {
-                if (ids.length)
-                    await db.billing.Journal.delete({resource_name: resource, resource_id: In(ids), timestamp: MoreThanOrEqual(startedAt)})
-            }
+            await db.billing.Journal.delete({username: In([creds.username, resellerCreds.username, ccareCreds.username]), timestamp: MoreThanOrEqual(startedAt)})
         })
 
         it('delete mock admin', async () => {

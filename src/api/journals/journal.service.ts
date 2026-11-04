@@ -69,6 +69,14 @@ export class JournalService {
         return
     }
 
+    /**
+     * Returns the journal resource name of the requested route, e.g. `customers/phonebook` for
+     * `/customers/phonebook/:id` and `/customers/phonebook/:id/journal`
+     */
+    resourceName(sr: ServiceRequest): string {
+        return extractResourceName(sr.req.route?.path ?? sr.req.path, this.app.config.common.api_prefix)
+    }
+
     public async writeJournal(sr: ServiceRequest, id: number, data: unknown): Promise<boolean> {
         // Set content format and default to json
         // TODO: Check if this even worked before as the 'content-type' was wrongly started with a capital letter
@@ -87,7 +95,7 @@ export class JournalService {
 
         const resourceId = id
 
-        const resourceName = extractResourceName(sr.req.path, this.app.config.common.api_prefix)
+        const resourceName = this.resourceName(sr)
 
         const ctx = Context.get(sr.req)
 

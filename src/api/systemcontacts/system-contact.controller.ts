@@ -70,7 +70,10 @@ export class SystemContactController extends CrudController<SystemContactRequest
         const sr = new ServiceRequest(req)
         const contacts = createDto.map(contact => contact.toInternal())
         const created = await this.contactService.create(contacts, sr)
-        return created.map((contact) => new SystemContactResponseDto(contact))
+        const response = created.map((contact) => new SystemContactResponseDto(contact))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get()

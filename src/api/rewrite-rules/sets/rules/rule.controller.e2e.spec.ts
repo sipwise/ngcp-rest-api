@@ -3,7 +3,7 @@ import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
 import bodyParser from 'body-parser'
 import request from 'supertest'
-import {In, MoreThanOrEqual} from 'typeorm'
+import {MoreThanOrEqual} from 'typeorm'
 
 import {RewriteRuleResponseDto} from './dto/rule-response.dto'
 import {RewriteRuleModule} from './rule.module'
@@ -386,13 +386,7 @@ describe('Rewrite Rule', () => {
             }
         })
         it('delete created journals', async () => {
-            const rewriteRulesIds = [...createdSetIds, ...createdRuleIds]
-            if (rewriteRulesIds.length)
-                await db.billing.Journal.delete({
-                    resource_name: 'rewrite-rules',
-                    resource_id: In(rewriteRulesIds),
-                    timestamp: MoreThanOrEqual(startedAt),
-                })
+            await db.billing.Journal.delete({username: creds.username, timestamp: MoreThanOrEqual(startedAt)})
         })
 
         it('delete mock admin', async () => {

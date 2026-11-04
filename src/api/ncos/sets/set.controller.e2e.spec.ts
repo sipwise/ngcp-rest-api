@@ -539,14 +539,7 @@ describe('NCOS Set', () => {
             expect(response.status).toEqual(204)
         })
         it('delete created journals', async () => {
-            if (createdIds.length)
-                await db.billing.Journal.delete({
-                    resource_name: 'ncos',
-                    resource_id: In(createdIds),
-                    timestamp: MoreThanOrEqual(startedAt),
-                })
-            if (resellerAdminId)
-                await db.billing.Journal.delete({resource_name: 'admins', resource_id: resellerAdminId})
+            await db.billing.Journal.delete({username: In([creds.username, resellerCreds.username]), timestamp: MoreThanOrEqual(startedAt)})
         })
 
         it('delete mock admin', async () => {

@@ -78,7 +78,7 @@ export class CrudController<CreateDTO, _ResponseDTO> {
         ..._params: unknown[]
     ): Promise<[JournalResponseDto[], number]>{
         const sr = new ServiceRequest(req)
-        const [result, count] = await this.journalCrudService.readAll(sr, this.resourceName, id)
+        const [result, count] = await this.journalCrudService.readAll(sr, this.journalCrudService.resourceName(sr), id)
         return [result.map(j => new JournalResponseDto(j)), count]
     }
 }

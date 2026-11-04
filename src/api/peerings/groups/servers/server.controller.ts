@@ -47,7 +47,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
         private readonly serverService: PeeringGroupServerService,
         private readonly journalService: JournalService,
     ) {
-        super(resourceName, serverService)
+        super(resourceName, serverService, journalService)
     }
 
     @Post('{:groupId/}servers')
@@ -70,10 +70,13 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
         const sr = new ServiceRequest(req)
         const servers = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.serverService.create(servers, sr)
-        return await Promise.all(created.map(async server => new PeeringGroupServerResponseDto(
+        const response = await Promise.all(created.map(async server => new PeeringGroupServerResponseDto(
             server,
             {url: req.url},
         )))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get('{:groupId/}servers')

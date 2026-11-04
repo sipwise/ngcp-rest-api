@@ -40,7 +40,7 @@ export class NCOSSetLevelController extends CrudController<NCOSSetLevelRequestDt
         private readonly ncosSetLevelService: NCOSSetLevelService,
         private readonly journalService: JournalService,
     ) {
-        super(resourceName, ncosSetLevelService)
+        super(resourceName, ncosSetLevelService, journalService)
     }
 
     @Post('{:setId/}levels')
@@ -64,7 +64,10 @@ export class NCOSSetLevelController extends CrudController<NCOSSetLevelRequestDt
         const reqDtoOptions = {parentId: +sr.params['setId']}
         const entities = await Promise.all(createDto.map(async dto => dto.toInternal(reqDtoOptions)))
         const created = await this.ncosSetLevelService.create(entities, sr)
-        return await Promise.all(created.map(async entity => new NCOSSetLevelResponseDto(entity)))
+        const response = await Promise.all(created.map(async entity => new NCOSSetLevelResponseDto(entity)))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get('{:setId/}levels')

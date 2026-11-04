@@ -67,7 +67,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
         private readonly journalService: JournalService,
         private readonly i18n: I18nService,
     ) {
-        super(resourceName, phonebookService)
+        super(resourceName, phonebookService, journalService)
     }
 
     @Post('{:resellerId/}phonebook')
@@ -105,12 +105,18 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
             validateResellerId(createDto, sr)
             const phonebook = await Promise.all(createDto.map(async set => set.toInternal()))
             const created = await this.phonebookService.importCsv(phonebook, sr)
-            return await Promise.all(created.map(async phonebook => new ResellerPhonebookResponseDto(phonebook)))
+            const response = await Promise.all(created.map(async phonebook => new ResellerPhonebookResponseDto(phonebook)))
+            for (const entry of response)
+                await this.journalService.writeJournal(sr, entry.id, entry)
+            return response
         }
         validateResellerId(createDto, sr)
         const phonebook = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.phonebookService.create(phonebook, sr)
-        return await Promise.all(created.map(async phonebook => new ResellerPhonebookResponseDto(phonebook)))
+        const response = await Promise.all(created.map(async phonebook => new ResellerPhonebookResponseDto(phonebook)))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get('{:resellerId/}phonebook')

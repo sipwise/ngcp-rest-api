@@ -3,7 +3,7 @@ import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
 import bodyParser from 'body-parser'
 import request from 'supertest'
-import {In, MoreThanOrEqual} from 'typeorm'
+import {MoreThanOrEqual} from 'typeorm'
 
 import {CustomerBalanceModule} from '~/api/customers/balances/balance.module'
 import {CustomerBalanceResponseDto} from '~/api/customers/balances/dto/balance-response.dto'
@@ -318,14 +318,12 @@ describe('Customer Balances', () => {
     })
 
     describe('Customer Balances DELETE', () => {
+        it('delete created journals', async () => {
+            await db.billing.Journal.delete({username: creds.username, timestamp: MoreThanOrEqual(startedAt)})
+        })
+
         it('delete created balances and fixtures', async () => {
             if (createdBalanceIds.length) {
-                // journals take the first path segment as resource_name, the ids are balance ids
-                await db.billing.Journal.delete({
-                    resource_name: 'customers',
-                    resource_id: In(createdBalanceIds),
-                    timestamp: MoreThanOrEqual(startedAt),
-                })
                 await db.billing.ContractBalance.delete(createdBalanceIds)
             }
             if (fixtureContractIds.length)

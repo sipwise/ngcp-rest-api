@@ -53,7 +53,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
         private readonly journalService: JournalService,
         @Inject(forwardRef(() => ExpandHelper)) private readonly expander: ExpandHelper,
     ) {
-        super(resourceName, customerService)
+        super(resourceName, customerService, journalService)
     }
 
     /* Customer billing profiles */
@@ -122,9 +122,12 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
         const sr = new ServiceRequest(req)
         const customers = await Promise.all(createDto.map(async customer => customer.toInternal()))
         const created = await this.customerService.create(customers, sr)
-        return await Promise.all(created.map(async customer => new CustomerResponseDto(
+        const response = await Promise.all(created.map(async customer => new CustomerResponseDto(
             customer,
         )))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get()

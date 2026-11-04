@@ -90,7 +90,10 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         validateResellerId(createDto, sr)
         const admins = createDto.map(admin => admin.toInternal())
         const created = await this.adminService.create(admins, sr)
-        return created.map((adm) => new AdminResponseDto(adm, sr.user.role))
+        const response = created.map((adm) => new AdminResponseDto(adm, sr.user.role))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get()

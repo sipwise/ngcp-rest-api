@@ -50,7 +50,7 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
         private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
-        super(resourceName, customerBalanceService)
+        super(resourceName, customerBalanceService, journalService)
     }
 
     @Get('{:customerId/}balances')

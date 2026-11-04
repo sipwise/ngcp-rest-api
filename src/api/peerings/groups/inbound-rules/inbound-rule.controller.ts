@@ -47,7 +47,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
         private readonly ruleService: PeeringInboundRuleService,
         private readonly journalService: JournalService,
     ) {
-        super(resourceName, ruleService)
+        super(resourceName, ruleService, journalService)
     }
 
     @Post('{:groupId/}inbound-rules')
@@ -70,10 +70,13 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
         const sr = new ServiceRequest(req)
         const rules = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.ruleService.create(rules, sr)
-        return await Promise.all(created.map(async server => new PeeringInboundRuleResponseDto(
+        const response = await Promise.all(created.map(async server => new PeeringInboundRuleResponseDto(
             server,
             {url: req.url},
         )))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get('{:groupId/}inbound-rules')

@@ -72,7 +72,10 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         const sr = new ServiceRequest(req)
         const csd = createDto.map(dial => dial.toInternal())
         const created = await this.customerSpeedDialService.create(csd, sr)
-        return created.map((dial) => new CustomerSpeedDialResponseDto(dial))
+        const response = created.map((dial) => new CustomerSpeedDialResponseDto(dial))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get()

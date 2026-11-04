@@ -3,7 +3,7 @@ import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
 import bodyParser from 'body-parser'
 import request from 'supertest'
-import {In, MoreThanOrEqual} from 'typeorm'
+import {MoreThanOrEqual} from 'typeorm'
 
 import {NCOSSetLevelResponseDto} from './dto/level-response.dto'
 import {NCOSSetLevelModule} from './level.module'
@@ -237,13 +237,7 @@ describe('NCOS Set Level', () => {
             }
         })
         it('delete created journals', async () => {
-            const ncosIds = [...createdSetIds, ...createdSetLevelIds]
-            if (ncosIds.length)
-                await db.billing.Journal.delete({
-                    resource_name: 'ncos',
-                    resource_id: In(ncosIds),
-                    timestamp: MoreThanOrEqual(startedAt),
-                })
+            await db.billing.Journal.delete({username: creds.username, timestamp: MoreThanOrEqual(startedAt)})
         })
 
         it('delete mock admin', async () => {

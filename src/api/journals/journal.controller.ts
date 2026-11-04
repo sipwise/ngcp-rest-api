@@ -1,5 +1,5 @@
-import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
-import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {Controller, Get, Param, Req} from '@nestjs/common'
+import {ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {JournalResponseDto} from './dto/journal-response.dto'
@@ -51,39 +51,26 @@ export class JournalController {
         return [responseList, totalCount]
     }
 
-    @Get(':resource_name')
+    @Get('*resource')
+    @ApiParam({
+        name: 'resource',
+        description: 'Resource name, optionally followed by a resource id (`customers`, `customers/phonebook/23`), ' +
+            'or a journal id',
+    })
     @ApiOkResponse({
         type: [JournalResponseDto],
     })
     async readByResource(
-        @Param('resource_name') resourceName: string,
+        @Param('resource') resource: string[],
         @Req() req: Request,
     ): Promise<[JournalResponseDto[], number]> {
         this.log.debug({message: 'fetch journals by resource name', func: this.readByResource.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
+        // swagger ui sends the parameter with encoded slashes, as one segment
+        const segments = resource.flatMap(segment => segment.split('/')).filter(segment => segment)
+        const resourceId = segments.length > 1 && /^\d+$/.test(segments.at(-1)) ? +segments.pop() : undefined
         const [journals, totalCount] =
-            await this.journalService.readAll(sr, resourceName)
-        const responseList = journals.map(j => new JournalResponseDto(j))
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const journalSearchDtoKeys = Object.keys(new JournalSearchDto())
-            await this.expander.expandObjects(responseList, journalSearchDtoKeys, sr)
-        }
-        return [responseList, totalCount]
-    }
-
-    @Get(':resource_name/:id')
-    @ApiOkResponse({
-        type: [JournalResponseDto],
-    })
-    async readByResourceAndId(
-        @Param('resource_name') resourceName: string,
-        @Param('id', ParseIntPipe) resourceId: number,
-        @Req() req: Request,
-    ): Promise<[JournalResponseDto[], number]> {
-        this.log.debug({message: 'fetch journals by resource name and id', func: this.readByResourceAndId.name, url: req.url, method: req.method})
-        const sr = new ServiceRequest(req)
-        const [journals, totalCount] =
-            await this.journalService.readAll(sr, resourceName, resourceId)
+            await this.journalService.readAll(sr, segments.join('/'), resourceId)
         const responseList = journals.map(j => new JournalResponseDto(j))
         if (sr.query.expand && !sr.isInternalRedirect) {
             const journalSearchDtoKeys = Object.keys(new JournalSearchDto())

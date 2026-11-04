@@ -3,7 +3,7 @@ import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
 import bodyParser from 'body-parser'
 import request from 'supertest'
-import {In, MoreThanOrEqual} from 'typeorm'
+import {MoreThanOrEqual} from 'typeorm'
 
 import {NCOSPatternResponseDto} from './dto/pattern-response.dto'
 import {NCOSPatternModule} from './pattern.module'
@@ -320,12 +320,7 @@ describe('NCOS Pattern', () => {
                 await db.billing.NCOSLevel.delete(createdLevelIds)
         })
         it('delete created journals', async () => {
-            if (createdIds.length)
-                await db.billing.Journal.delete({
-                    resource_name: 'ncos',
-                    resource_id: In(createdIds),
-                    timestamp: MoreThanOrEqual(startedAt),
-                })
+            await db.billing.Journal.delete({username: creds.username, timestamp: MoreThanOrEqual(startedAt)})
         })
 
         it('delete mock admin', async () => {

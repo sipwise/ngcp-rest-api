@@ -50,7 +50,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
-        super(resourceName, ruleService)
+        super(resourceName, ruleService, journalService)
     }
 
     @Post('{:setId/}rules')
@@ -73,7 +73,10 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         const sr = new ServiceRequest(req)
         const sets = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.ruleService.create(sets, sr)
-        return await Promise.all(created.map(async rule => new RewriteRuleResponseDto(rule)))
+        const response = await Promise.all(created.map(async rule => new RewriteRuleResponseDto(rule)))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get('{:setId/}rules')

@@ -3,7 +3,7 @@ import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
 import bodyParser from 'body-parser'
 import request from 'supertest'
-import {In, MoreThanOrEqual} from 'typeorm'
+import {MoreThanOrEqual} from 'typeorm'
 import {v4 as uuidv4} from 'uuid'
 
 import {SubscriberPhonebookResponseDto} from './dto/phonebook-response.dto'
@@ -365,12 +365,7 @@ describe('Subscriber Phonebook', () => {
                 await db.billing.Domain.delete(createdDomainIds)
         })
         it('delete created journals', async () => {
-            if (createdPhonebookIds.length)
-                await db.billing.Journal.delete({
-                    resource_name: 'subscribers',
-                    resource_id: In(createdPhonebookIds),
-                    timestamp: MoreThanOrEqual(startedAt),
-                })
+            await db.billing.Journal.delete({username: creds.username, timestamp: MoreThanOrEqual(startedAt)})
         })
 
         it('delete mock admin', async () => {

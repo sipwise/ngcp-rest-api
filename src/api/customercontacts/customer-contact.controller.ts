@@ -89,7 +89,10 @@ export class CustomerContactController extends CrudController<CustomerContactReq
         validateResellerId(createDto, sr)
         const customers = createDto.map(customer => customer.toInternal())
         const created = await this.contactService.create(customers, sr)
-        return created.map((contact) => new CustomerContactResponseDto(contact, sr.user.role))
+        const response = created.map((contact) => new CustomerContactResponseDto(contact, sr.user.role))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get()

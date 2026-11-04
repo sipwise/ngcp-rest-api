@@ -52,7 +52,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
         @Inject(forwardRef(() => ExpandHelper))private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
-        super(resourceName)
+        super(resourceName, ruleSetService, journalService)
     }
 
     @Post()
@@ -89,12 +89,15 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
             }
         }
 
-        return await Promise.all(created.map(
+        const response = await Promise.all(created.map(
             async set => new RewriteRuleSetResponseDto(
                 set,
                 {url: req.url},
             ),
         ))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get()

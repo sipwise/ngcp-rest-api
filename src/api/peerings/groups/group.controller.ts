@@ -49,7 +49,7 @@ export class PeeringGroupController extends CrudController<PeeringGroupRequestDt
         @Inject(forwardRef(() => ExpandHelper))private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
-        super(resourceName)
+        super(resourceName, peeringGroupService, journalService)
     }
 
     @Post()
@@ -72,12 +72,15 @@ export class PeeringGroupController extends CrudController<PeeringGroupRequestDt
         const sr = new ServiceRequest(req)
         const groups = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.peeringGroupService.create(groups, sr)
-        return await Promise.all(created.map(
+        const response = await Promise.all(created.map(
             async set => new PeeringGroupResponseDto(
                 set,
                 {url: req.url},
             ),
         ))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get()

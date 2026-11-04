@@ -81,7 +81,10 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
         validateResellerId(createDto, sr)
         const domains = createDto.map(domain => domain.toInternal())
         const created = await this.domainService.create(domains, sr)
-        return created.map((domain) => new DomainResponseDto(domain))
+        const response = created.map((domain) => new DomainResponseDto(domain))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get()

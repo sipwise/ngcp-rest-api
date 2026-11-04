@@ -74,10 +74,13 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
         const sr = new ServiceRequest(req)
         const resellers = createDto.map(reseller => reseller.toInternal())
         const created = await this.resellerService.create(resellers, sr)
-        return created.map((reseller) => new ResellerResponseDto(
+        const response = created.map((reseller) => new ResellerResponseDto(
             reseller,
             {url: req.url},
         ))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get()

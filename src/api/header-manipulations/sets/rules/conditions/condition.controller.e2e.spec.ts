@@ -3,7 +3,7 @@ import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
 import bodyParser from 'body-parser'
 import request from 'supertest'
-import {In, MoreThanOrEqual} from 'typeorm'
+import {MoreThanOrEqual} from 'typeorm'
 
 import {HeaderManipulationRuleConditionModule} from './condition.module'
 import {HeaderManipulationRuleConditionResponseDto} from './dto/condition-response.dto'
@@ -482,19 +482,7 @@ describe('Rule Condition', () => {
             }
         })
         it('delete created journals', async () => {
-            const headerManipulationsIds = [...createdSetIds, ...createdRuleIds, ...createdConditionIds]
-            if (headerManipulationsIds.length)
-                await db.billing.Journal.delete({
-                    resource_name: 'header-manipulations',
-                    resource_id: In(headerManipulationsIds),
-                    timestamp: MoreThanOrEqual(startedAt),
-                })
-            if (createdRwrSetIds.length)
-                await db.billing.Journal.delete({
-                    resource_name: 'rewrite-rules',
-                    resource_id: In(createdRwrSetIds),
-                    timestamp: MoreThanOrEqual(startedAt),
-                })
+            await db.billing.Journal.delete({username: creds.username, timestamp: MoreThanOrEqual(startedAt)})
         })
 
         it('delete mock admin', async () => {

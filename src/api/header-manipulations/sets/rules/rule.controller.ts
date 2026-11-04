@@ -48,7 +48,7 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
         private readonly ruleService: HeaderManipulationRuleService,
         private readonly journalService: JournalService,
     ) {
-        super(resourceName, ruleService)
+        super(resourceName, ruleService, journalService)
     }
 
     @Post('{:setId/}rules')
@@ -71,10 +71,13 @@ export class HeaderManipulationRuleController extends CrudController<HeaderManip
         const sr = new ServiceRequest(req)
         const rules = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.ruleService.create(rules, sr)
-        return await Promise.all(created.map(async rule => new HeaderManipulationRuleResponseDto(
+        const response = await Promise.all(created.map(async rule => new HeaderManipulationRuleResponseDto(
             rule,
             {url: req.url},
         )))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get('{:setId/}rules')

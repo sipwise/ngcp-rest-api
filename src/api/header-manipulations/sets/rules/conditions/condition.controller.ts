@@ -53,7 +53,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         @Inject(forwardRef(() => ExpandHelper))private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
-        super(resourceName, ruleConditionService)
+        super(resourceName, ruleConditionService, journalService)
     }
 
     @Post('{:setId/}rules{/:ruleId}/conditions')
@@ -76,12 +76,15 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         const sr = new ServiceRequest(req)
         const conditions = await Promise.all(createDto.map(async condition => condition.toInternal()))
         const created = await this.ruleConditionService.create(conditions, sr)
-        return await Promise.all(created.map(
+        const response = await Promise.all(created.map(
             async condition => new HeaderManipulationRuleConditionResponseDto(
                 condition,
                 {url: req.url},
             )),
         )
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get('{:setId/}rules{/:ruleId}/conditions')

@@ -4,7 +4,7 @@ import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
 import bodyParser from 'body-parser'
 import request from 'supertest'
-import {In, MoreThanOrEqual} from 'typeorm'
+import {MoreThanOrEqual} from 'typeorm'
 
 import {CustomerPhonebookResponseDto} from './dto/phonebook-response.dto'
 import {CustomerPhonebookModule} from './phonebook.module'
@@ -358,13 +358,7 @@ describe('Customer Phonebook', () => {
                 await db.billing.Contract.delete(createdContractIds)
         })
         it('delete created journals', async () => {
-            // journals take the first path segment as resource_name
-            if (createdPhonebookIds.length)
-                await db.billing.Journal.delete({
-                    resource_name: 'customers',
-                    resource_id: In(createdPhonebookIds),
-                    timestamp: MoreThanOrEqual(startedAt),
-                })
+            await db.billing.Journal.delete({username: creds.username, timestamp: MoreThanOrEqual(startedAt)})
         })
 
         it('delete mock admin', async () => {

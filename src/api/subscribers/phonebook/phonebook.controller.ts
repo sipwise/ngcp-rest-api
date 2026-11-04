@@ -74,7 +74,7 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
         private readonly journalService: JournalService,
         private readonly i18n: I18nService,
     ) {
-        super(resourceName, phonebookService)
+        super(resourceName, phonebookService, journalService)
     }
 
     @Post('{:subscriberId/}phonebook')
@@ -112,11 +112,17 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
             }
             const phonebook = await Promise.all(createDto.map(async set => set.toInternal(reqDtoOptions)))
             const created = await this.phonebookService.importCsv(phonebook, sr)
-            return await Promise.all(created.map(async phonebook => new SubscriberPhonebookResponseDto(phonebook)))
+            const response = await Promise.all(created.map(async phonebook => new SubscriberPhonebookResponseDto(phonebook)))
+            for (const entry of response)
+                await this.journalService.writeJournal(sr, +entry.id, entry)
+            return response
         }
         const phonebook = await Promise.all(createDto.map(async set => set.toInternal(reqDtoOptions)))
         const created = await this.phonebookService.create(phonebook, sr)
-        return await Promise.all(created.map(async phonebook => new SubscriberPhonebookResponseDto(phonebook)))
+        const response = await Promise.all(created.map(async phonebook => new SubscriberPhonebookResponseDto(phonebook)))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, +entry.id, entry)
+        return response
     }
 
     @Get('{:subscriberId/}phonebook')

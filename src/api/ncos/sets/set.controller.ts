@@ -72,10 +72,13 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         validateResellerId(createDto, sr)
         const sets = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.ncosSetService.create(sets, sr)
-        return await Promise.all(created.map(async set => new NCOSSetResponseDto(
+        const response = await Promise.all(created.map(async set => new NCOSSetResponseDto(
             set,
             {url: req.url},
         )))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Auth(

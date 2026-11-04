@@ -52,7 +52,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
         @Inject(forwardRef(() => ExpandHelper)) private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
-        super(resourceName, ruleSetService)
+        super(resourceName, ruleSetService, journalService)
     }
 
     @Post()
@@ -76,10 +76,13 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
         validateResellerId(createDto, sr)
         const sets = await Promise.all(createDto.map(async set => set.toInternal()))
         const created = await this.ruleSetService.create(sets, sr)
-        return await Promise.all(created.map(async set => new HeaderManipulationSetResponseDto(
+        const response = await Promise.all(created.map(async set => new HeaderManipulationSetResponseDto(
             set,
             {url: req.url},
         )))
+        for (const entry of response)
+            await this.journalService.writeJournal(sr, entry.id, entry)
+        return response
     }
 
     @Get()

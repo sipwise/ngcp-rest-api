@@ -1,16 +1,22 @@
 /**
- * Extracs the API resource name from request URL
- * @param url URL of requested resource
+ * Extracts the API resource name from the path pattern of the matched route: the path without the API prefix,
+ * the route parameters and a trailing `journal` segment, e.g. `/api/customers/{:customerId/}phonebook/:id/journal`
+ * is `customers/phonebook`
+ * @param routePath path pattern of the route (`req.route.path`)
  * @param prefix API prefix
  */
-export function extractResourceName(url: string, prefix: string): string {
-    if (url.startsWith('/')) {
-        url = url.slice(1)
-    }
-    if (url.startsWith(prefix)) {
-        return url.slice(prefix.length + 1).split('/')[0]
-    }
-    return url.split('/')[0]
+export function extractResourceName(routePath: string, prefix: string): string {
+    const segments = routePath
+        .replace(/[:*]\w+/g, '')
+        .replace(/[{}]/g, '')
+        .split('/')
+        .filter(segment => segment)
+    const prefixSegments = prefix.split('/').filter(segment => segment)
+    if (prefixSegments.every((segment, i) => segments[i] === segment))
+        segments.splice(0, prefixSegments.length)
+    if (segments.at(-1) === 'journal')
+        segments.pop()
+    return segments.join('/')
 }
 
 export function prepareUrlReference(url: string, removeLeadingResourceId?: boolean): string {

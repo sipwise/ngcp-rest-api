@@ -3,7 +3,7 @@ import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
 import bodyParser from 'body-parser'
 import request from 'supertest'
-import {In, MoreThanOrEqual} from 'typeorm'
+import {MoreThanOrEqual} from 'typeorm'
 
 import {PeeringGroupResponseDto} from './dto/group-response.dto'
 import {PeeringGroupModule} from './group.module'
@@ -397,12 +397,7 @@ describe('Peering Group', () => {
                 await db.billing.Contract.delete(createdContractIds)
         })
         it('delete created journals', async () => {
-            if (createdPeeringGroupIds.length)
-                await db.billing.Journal.delete({
-                    resource_name: 'peerings',
-                    resource_id: In(createdPeeringGroupIds),
-                    timestamp: MoreThanOrEqual(startedAt),
-                })
+            await db.billing.Journal.delete({username: creds.username, timestamp: MoreThanOrEqual(startedAt)})
         })
 
         it('delete mock admin', async () => {
