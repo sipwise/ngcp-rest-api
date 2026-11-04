@@ -1,6 +1,7 @@
 const path = require('path')
 
 process.env.NODE_JEST = true
+process.env.API_LOG_LEVELS ??= 'log,warn,error,fatal'
 // date tests (invoice periods, serials) use the CET month boundary and DST, independent of the host timezone
 process.env.TZ = 'Europe/Vienna'
 

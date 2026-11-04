@@ -1,5 +1,6 @@
 process.env.NODE_JEST = true
 process.env.NODE_TEST_E2E = true
+process.env.API_LOG_LEVELS ??= 'log,warn,error,fatal'
 
 module.exports =
 {
