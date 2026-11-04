@@ -10,7 +10,6 @@ export const redisProviders = [
             let redis: Redis
             const log = new LoggerService('databaseProviders[Redis]')
             if (process.env.NODE_ENV == 'test' && process.env.NODE_TEST_E2E !== 'true') {
-                log.debug('test environment detected, skip database connection')
                 return redis
             }
             try {
@@ -32,7 +31,6 @@ export const redisProviders = [
             let redis: Redis
             const log = new LoggerService('databaseProviders[RedisPubSub]')
             if (process.env.NODE_ENV == 'test' && process.env.NODE_TEST_E2E !== 'true') {
-                log.debug('test environment detected, skip database connection')
                 return redis
             }
             try {
