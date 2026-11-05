@@ -4,8 +4,11 @@ import {Observable, lastValueFrom, of} from 'rxjs'
 import {runInTransaction} from 'typeorm-transactional'
 
 import {TRANSACTIONAL_KEY} from '~/decorators/transactional.decorator'
+import {TransactionConflictException} from '~/helpers/errors.helper'
 import {postCommitQueueStorage} from '~/helpers/post-commit-queue.helper'
 import {LoggerService} from '~/logger/logger.service'
+
+const MAX_ATTEMPTS = 3
 
 @Injectable()
 export class TransactionInterceptor implements NestInterceptor {
@@ -23,6 +26,19 @@ export class TransactionInterceptor implements NestInterceptor {
             return next.handle()
         }
 
+        for (let attempt = 1; ; attempt++) {
+            try {
+                return of(await this.runTransaction(next))
+            } catch (err) {
+                if (!(err instanceof TransactionConflictException) || attempt >= MAX_ATTEMPTS)
+                    throw err
+                this.log.warn(`transaction conflict, retrying (attempt ${attempt + 1}/${MAX_ATTEMPTS})`)
+                await new Promise(resolve => setTimeout(resolve, Math.random() * 50 * attempt))
+            }
+        }
+    }
+
+    private async runTransaction(next: CallHandler): Promise<unknown> {
         let result: unknown
         await postCommitQueueStorage.run({callbacks: []}, async () => {
             await runInTransaction(async () => {
@@ -42,7 +58,6 @@ export class TransactionInterceptor implements NestInterceptor {
                 }
             }
         })
-
-        return of(result)
+        return result
     }
 }
