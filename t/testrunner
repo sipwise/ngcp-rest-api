@@ -1,0 +1,81 @@
+#!/bin/bash
+
+set -e
+set -u
+
+if ! [ -f /.dockerenv ] && ! grep -q 'devices:/docker' /proc/1/cgroup ; then
+  echo "Not running inside docker, exiting to avoid data damage." >&2
+  exit 1
+fi
+
+SERVER="${1:-}"
+SELECT="${2:-all}"
+OUTPUT_DIRECTORY="${3:-/code/}"
+FORMAT="${4:-pretty}"
+WORK_DIRECTORY="${HOME}/api"
+
+if [ -z "${SERVER}" ] ; then
+  echo "Usage: $0 <testsystem> [<testset>] [<output_directory>] [junit]" >&2
+  echo
+  echo "Usage example: $0 192.168.88.162"
+  echo "Usage example: $0 192.168.88.162 all /results/ junit"
+  echo "Possible test set: all, or a jest test path pattern, e.g. src/api/customers/phonebook"
+  echo "Default test set: all"
+  echo "Environment: API_DB_USER, API_DB_PASS (required), API_DB_HOST, API_DB_PORT,"
+  echo "             API_REDIS_HOST, API_REDIS_PORT, TZ (must match the DB time zone)"
+  exit 1
+fi
+
+: "${API_DB_USER:?API_DB_USER must be set}"
+: "${API_DB_PASS:?API_DB_PASS must be set}"
+
+export API_DB_HOST="${API_DB_HOST:-${SERVER}}"
+export API_REDIS_HOST="${API_REDIS_HOST:-${SERVER}}"
+export API_LOG_LEVELS="${API_LOG_LEVELS:-warn,error,fatal}"
+export TZ="${TZ:-UTC}"
+
+echo "DB: ${API_DB_HOST}:${API_DB_PORT:-3306}, Redis: ${API_REDIS_HOST}:${API_REDIS_PORT:-6379}, TZ: ${TZ}"
+
+echo "### Copying sources to ${WORK_DIRECTORY}"
+tar -C /code \
+  --exclude=./node_modules \
+  --exclude=./dist \
+  --exclude=./prod \
+  --exclude=./coverage \
+  --exclude=./.git \
+  --exclude='./.tmp_*' \
+  -cf - . | tar -C "${WORK_DIRECTORY}" -xf -
+cd "${WORK_DIRECTORY}"
+
+ARGS=()
+if [ "${SELECT}" = "all" ] ; then
+  echo "Test selection: all"
+else
+  echo "Test selection: ${SELECT}"
+  ARGS+=("${SELECT}")
+fi
+
+echo "################################################################################"
+echo "Finished main setup, now running tests ..."
+
+YARN=".yarn/releases/yarn-*.cjs"
+RC=0
+
+if [ "${FORMAT}" = "junit" ] ; then
+  export JEST_JUNIT_OUTPUT_DIR="${OUTPUT_DIRECTORY}"
+  export JEST_JUNIT_OUTPUT_NAME="api-e2e.xml"
+  node "${YARN}" test:e2e "${ARGS[@]}" --reporters=default --reporters=jest-junit || RC=$?
+else
+  node "${YARN}" test:e2e "${ARGS[@]}" 2>&1 | tee -a "${OUTPUT_DIRECTORY}/api-e2e.pretty"
+  RC=${PIPESTATUS[0]}
+fi
+
+echo "Finished test execution, test execution returned with exit code ${RC}."
+for file in "${OUTPUT_DIRECTORY}/api-e2e.pretty" "${OUTPUT_DIRECTORY}/api-e2e.xml" ; do
+  if [ -f "$file" ] ; then
+    echo "Test results available at ${file}"
+  fi
+done
+echo "################################################################################"
+
+exit "${RC}"

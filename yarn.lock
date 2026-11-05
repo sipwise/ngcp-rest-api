@@ -6445,6 +6445,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jest-junit@npm:17.0.0":
+  version: 17.0.0
+  resolution: "jest-junit@npm:17.0.0"
+  dependencies:
+    mkdirp: "npm:^1.0.4"
+    strip-ansi: "npm:^6.0.1"
+    uuid: "npm:^14.0.0"
+    xml: "npm:^1.0.1"
+  checksum: 10c0/24206792c48064a474cb13deba5edac6212667065f79dc024677cb6f34615b96991ed231cb61846fd32eca2d5f97011e5dfb714d8a30b583f5e584b41b0878da
+  languageName: node
+  linkType: hard
+
 "jest-leak-detector@npm:30.5.1":
   version: 30.5.1
   resolution: "jest-leak-detector@npm:30.5.1"
@@ -7370,6 +7382,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mkdirp@npm:^1.0.4":
+  version: 1.0.4
+  resolution: "mkdirp@npm:1.0.4"
+  bin:
+    mkdirp: bin/cmd.js
+  checksum: 10c0/46ea0f3ffa8bc6a5bc0c7081ffc3907777f0ed6516888d40a518c5111f8366d97d2678911ad1a6882bf592fa9de6c784fea32e1687bb94e1f4944170af48a5cf
+  languageName: node
+  linkType: hard
+
 "moo@npm:^0.5.1":
   version: 0.5.3
   resolution: "moo@npm:0.5.3"
@@ -7564,6 +7585,7 @@ __metadata:
     jest: "npm:30.5.2"
     jest-circus: "npm:30.5.2"
     jest-environment-node: "npm:30.5.2"
+    jest-junit: "npm:17.0.0"
     js-yaml: "npm:5.5.0"
     markdown-it: "npm:14.3.3"
     mysql2: "npm:3.24.6"
@@ -9843,7 +9865,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:14.0.3":
+"uuid@npm:14.0.3, uuid@npm:^14.0.0":
   version: 14.0.3
   resolution: "uuid@npm:14.0.3"
   bin:
@@ -10132,6 +10154,13 @@ __metadata:
     imurmurhash: "npm:^0.1.4"
     signal-exit: "npm:^4.0.1"
   checksum: 10c0/e8c850a8e3e74eeadadb8ad23c9d9d63e4e792bd10f4836ed74189ef6e996763959f1249c5650e232f3c77c11169d239cbfc8342fc70f3fe401407d23810505d
+  languageName: node
+  linkType: hard
+
+"xml@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "xml@npm:1.0.1"
+  checksum: 10c0/04bcc9b8b5e7b49392072fbd9c6b0f0958bd8e8f8606fee460318e43991349a68cbc5384038d179ff15aef7d222285f69ca0f067f53d071084eb14c7fdb30411
   languageName: node
   linkType: hard
 
