@@ -25,7 +25,7 @@ describe('Peering', () => {
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({

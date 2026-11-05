@@ -37,7 +37,7 @@ describe('Peering Group', () => {
     let authHeader: [string, string]
     const createdPeeringGroupIds: number[] = []
     const createdContractIds: number[] = []
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
 
     beforeAll(async () => {

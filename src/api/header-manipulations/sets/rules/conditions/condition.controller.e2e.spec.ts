@@ -66,8 +66,9 @@ describe('Rule Condition', () => {
     let createdSetIds: number[] = []
     let createdRuleIds: number[] = []
     let createdConditionIds: number[] = []
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
+    const suffix = `_${process.env.JEST_WORKER_ID}_${Date.now().toString(36).slice(-4)}`
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -170,7 +171,7 @@ describe('Rule Condition', () => {
     describe('', () => { // main tests block
         describe('POST', () => {
             const rwrSetPost = {
-                name: 'foo_rwr_set_1',
+                name: `foo_rwr_set_1${suffix}`,
                 reseller_id: 1,
                 description: 'foo_rwr_set_1 description',
             }
@@ -186,7 +187,7 @@ describe('Rule Condition', () => {
             })
 
             const ruleset1: RuleSetPost = {
-                name: 'test_ruleset1',
+                name: `test_ruleset1${suffix}`,
                 reseller_id: 1,
                 description: 'test_ruleset1 description',
             }

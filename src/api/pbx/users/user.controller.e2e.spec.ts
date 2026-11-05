@@ -39,7 +39,7 @@ describe('PBX User', () => {
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
 
     const prefix = `e2e_pbx_user_${Date.now()}`
     const domain = `${prefix}.example.org`

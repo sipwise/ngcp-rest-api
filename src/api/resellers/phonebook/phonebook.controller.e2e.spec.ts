@@ -37,7 +37,7 @@ describe('Reseller Phonebook', () => {
     let fixtureResellerId: number
     let fixtureContractId: number
     let resellerAdminId: number
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
     const resellerCreds = {username: `pb_reseller_${Date.now().toString(36)}`, password: 'FFFooobarbaz123!!!'}
 

@@ -29,7 +29,7 @@ describe('Voicemail', () => {
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
     const createdVoicemailIds: number[] = []
     const domain = `e2e-vm-${Date.now().toString(36)}.example.org`

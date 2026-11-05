@@ -35,8 +35,9 @@ describe('Rule Set', () => {
     let authHeader: [string, string]
     let createdIds: number[] = []
     let resellerAdminId: number
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
+    const suffix = `_${process.env.JEST_WORKER_ID}_${Date.now().toString(36).slice(-4)}`
     const resellerCreds = {username: `hm_set_reseller_${Date.now().toString(36)}`, password: 'FFFooobarbaz123!!!'}
 
     beforeAll(async () => {
@@ -137,12 +138,12 @@ describe('Rule Set', () => {
     describe('', () => { // main tests block
         describe('POST', () => {
             const ruleset1: RuleSetPost = {
-                name: 'test_ruleset1',
+                name: `test_ruleset1${suffix}`,
                 reseller_id: 1,
                 description: 'test_ruleset1 description',
             }
             const ruleset2: RuleSetPost = {
-                name: 'test_ruleset2',
+                name: `test_ruleset2${suffix}`,
                 reseller_id: 1,
                 description: 'test_ruleset2 description',
             }
@@ -194,13 +195,13 @@ describe('Rule Set', () => {
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ruleset: HeaderManipulationSetResponseDto = response.body
-                expect(ruleset.name).toEqual('test_ruleset1')
+                expect(ruleset.name).toEqual(`test_ruleset1${suffix}`)
                 expect(ruleset.reseller_id).toEqual(1)
                 expect(ruleset.description).toEqual('test_ruleset1 description')
             })
             it('read created set 1 by name', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/header-manipulations/sets/?name=test_ruleset1')
+                    .get(`/api/header-manipulations/sets/?name=test_ruleset1${suffix}`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -210,13 +211,13 @@ describe('Rule Set', () => {
                 expect(await validate(setEntries)).toEqual([])
                 expect(setEntries).toHaveLength(1)
                 const ruleset = setEntries[0]
-                expect(ruleset.name).toEqual('test_ruleset1')
+                expect(ruleset.name).toEqual(`test_ruleset1${suffix}`)
                 expect(ruleset.reseller_id).toEqual(1)
                 expect(ruleset.description).toEqual('test_ruleset1 description')
             })
             it('read created rule set 2', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/header-manipulations/sets/?name=test_ruleset2')
+                    .get(`/api/header-manipulations/sets/?name=test_ruleset2${suffix}`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -226,7 +227,7 @@ describe('Rule Set', () => {
                 expect(await validate(setEntries)).toEqual([])
                 expect(setEntries).toHaveLength(1)
                 const ruleset = setEntries[0]
-                expect(ruleset.name).toEqual('test_ruleset2')
+                expect(ruleset.name).toEqual(`test_ruleset2${suffix}`)
                 expect(ruleset.reseller_id).toEqual(1)
                 expect(ruleset.description).toEqual('test_ruleset2 description')
             })
@@ -246,7 +247,7 @@ describe('Rule Set', () => {
                 description: 'test ruleset3 description',
             }
             const ruleset4: RuleSetPost = {
-                name: 'test_ruleset4',
+                name: `test_ruleset4${suffix}`,
                 reseller_id: 1,
                 description: 'test_ruleset4 description',
             }
@@ -286,7 +287,7 @@ describe('Rule Set', () => {
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ruleset: HeaderManipulationSetResponseDto = response.body
-                expect(ruleset.name).toEqual('test_ruleset4')
+                expect(ruleset.name).toEqual(`test_ruleset4${suffix}`)
                 expect(ruleset.reseller_id).toEqual(1)
                 expect(ruleset.description).toEqual('test_ruleset4 description')
             })
@@ -306,7 +307,7 @@ describe('Rule Set', () => {
                 {
                     op: 'replace',
                     path: '/name',
-                    value: 'test_ruleset5',
+                    value: `test_ruleset5${suffix}`,
                 },
                 {
                     op: 'replace',
@@ -330,7 +331,7 @@ describe('Rule Set', () => {
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ruleset: HeaderManipulationSetResponseDto = response.body
-                expect(ruleset.name).toEqual('test_ruleset5')
+                expect(ruleset.name).toEqual(`test_ruleset5${suffix}`)
                 expect(ruleset.reseller_id).toEqual(1)
                 expect(ruleset.description).toEqual('test_ruleset5 description')
             })
@@ -353,7 +354,7 @@ describe('Rule Set', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        name: 'test_ruleset_no_reseller',
+                        name: `test_ruleset_no_reseller${suffix}`,
                         description: 'no reseller_id',
                     })
                 expect(response.status).toEqual(422)
@@ -366,7 +367,7 @@ describe('Rule Set', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        name: 'test_ruleset_no_reseller',
+                        name: `test_ruleset_no_reseller${suffix}`,
                         description: 'no reseller_id',
                     })
                 expect(response.status).toEqual(422)

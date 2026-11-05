@@ -44,7 +44,7 @@ describe('OTP', () => {
     let authService: AuthService
     let authHeader: [string, string]
     let createdAdminIds: number[]
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const run = Date.now().toString(36)
     const masterLogin = `adminmaster_${run}`
     const master2faLogin = `adminmaster2fa_${run}`

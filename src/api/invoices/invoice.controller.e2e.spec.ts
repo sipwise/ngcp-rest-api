@@ -55,7 +55,7 @@ describe('Invoice', () => {
     let appService: AppService
     let authService: AuthService
     const licenseMockRepo = new LicenseMockRepository()
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
     const resellerCreds = {username: `inv_reseller_${Date.now()}`, password: 'FFFooobarbaz123!!!'}
     const ccareCreds = {username: `inv_ccare_${Date.now()}`, password: 'FFFooobarbaz123!!!'}

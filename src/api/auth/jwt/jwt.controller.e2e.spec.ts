@@ -31,7 +31,7 @@ describe('Auth JWT', () => {
     let authTokenId: string
     let authToken: string
     const secret = 'e2e-Secret-66545'
-    const creds = {username: 'mockAdminUser', password: secret}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: secret}
 
     const lifetime = (body: {created_at: string, expires_at: string}): number =>
         (new Date(body.expires_at).getTime() - new Date(body.created_at).getTime()) / 1000

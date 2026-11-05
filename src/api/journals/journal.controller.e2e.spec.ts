@@ -31,7 +31,7 @@ describe('Journal', () => {
     let phonebookId: number
     let contactId: number
     let journalIds: number[] = []
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
 
     const get = (url: string): request.Test => request(app.getHttpServer())

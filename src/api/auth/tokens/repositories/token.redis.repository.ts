@@ -27,8 +27,9 @@ export class AuthTokenRedisRepository implements AuthTokenRepository {
         const redis = await this.getRedisDb()
         const key = this.buildKey(token.id, sr)
 
-        token.createdAt = new Date().toISOString()
-        token.expiresAt = new Date(Date.now() + token.ttl * 1000).toISOString()
+        const now = Date.now()
+        token.createdAt = new Date(now).toISOString()
+        token.expiresAt = new Date(now + token.ttl * 1000).toISOString()
 
         await redis.hset(key, {
             id: token.id,

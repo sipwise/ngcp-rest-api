@@ -45,8 +45,9 @@ describe('Rule', () => {
     let authHeader: [string, string]
     let createdSetIds: number[] = []
     let createdRuleIds: number[] = []
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
+    const suffix = `_${process.env.JEST_WORKER_ID}_${Date.now().toString(36).slice(-4)}`
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -147,12 +148,12 @@ describe('Rule', () => {
     describe('', () => { // main tests block
         describe('POST', () => {
             const ruleset1: RuleSetPost = {
-                name: 'test_ruleset1',
+                name: `test_ruleset1${suffix}`,
                 reseller_id: 1,
                 description: 'test_ruleset1 description',
             }
             const ruleset2: RuleSetPost = {
-                name: 'test_ruleset2',
+                name: `test_ruleset2${suffix}`,
                 reseller_id: 1,
                 description: 'test_ruleset2 description',
             }

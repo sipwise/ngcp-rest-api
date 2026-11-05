@@ -30,6 +30,7 @@ module.exports =
     ],
     slowTestThreshold: 15,
     testTimeout: 60 * 1000,
+    maxWorkers: 6,
     testRunner: 'jest-circus/runner',
     testEnvironment: '../jest-e2e-env-runtime.ts',
     moduleNameMapper: {

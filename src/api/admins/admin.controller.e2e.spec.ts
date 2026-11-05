@@ -46,8 +46,8 @@ describe('AdminController', () => {
     let systemAuthHeader: [string, string]
     let createdAdminIds: number[] = []
     const strongPassword = 'FFFooobarbaz123!!!' //  MT#60560
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
-    const systemCreds = {username: 'mockSystemUser', password: 'mockSystemPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const systemCreds = {username: `mockSystemUser${process.env.JEST_WORKER_ID}`, password: 'mockSystemPass'}
     const run = Date.now().toString(36)
     const loginOf = (name: string): string => `${name}_${run}`
 

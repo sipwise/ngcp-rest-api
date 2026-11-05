@@ -47,8 +47,9 @@ describe('Rule Set', () => {
     let authHeader: [string, string]
     let createdIds: number[] = []
     let resellerAdminId: number
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
+    const suffix = `_${process.env.JEST_WORKER_ID}_${Date.now().toString(36).slice(-4)}`
     const resellerCreds = {username: `rwr_set_reseller_${Date.now().toString(36)}`, password: 'FFFooobarbaz123!!!'}
 
     beforeAll(async () => {
@@ -149,17 +150,17 @@ describe('Rule Set', () => {
     describe('', () => { // main tests block
         describe('POST', () => {
             const ruleset1: RuleSetPost = {
-                name: 'test_ruleset1',
+                name: `test_ruleset1${suffix}`,
                 reseller_id: 1,
                 description: 'test_ruleset1 description',
             }
             const ruleset2: RuleSetPost = {
-                name: 'test_ruleset2',
+                name: `test_ruleset2${suffix}`,
                 reseller_id: 1,
                 description: 'test_ruleset2 description',
             }
             const rulesetWithSingleEmbedded: RuleSetPost = {
-                name: 'test_ruleset3',
+                name: `test_ruleset3${suffix}`,
                 reseller_id: 1,
                 description: 'test_ruleset3_with_embedded_rules description',
                 rules: [
@@ -174,7 +175,7 @@ describe('Rule Set', () => {
                 ],
             }
             const rulesetWithMultipleEmbedded: RuleSetPost = {
-                name: 'test_ruleset4',
+                name: `test_ruleset4${suffix}`,
                 reseller_id: 1,
                 description: 'test_ruleset4_with_embedded_rules description',
                 rules: [
@@ -197,13 +198,13 @@ describe('Rule Set', () => {
                 ],
             }
             const rulesetWithEmptyEmbedded: RuleSetPost = {
-                name: 'test_ruleset5',
+                name: `test_ruleset5${suffix}`,
                 reseller_id: 1,
                 description: 'test_ruleset5_with_embedded_rules description',
                 rules: [],
             }
             const rulesWithInvalidEmbedded: RuleSetPost = {
-                name: 'test_ruleset6',
+                name: `test_ruleset6${suffix}`,
                 reseller_id: 1,
                 description: 'test_ruleset6_with_invalid_embedded_rules description',
                 rules: [
@@ -218,7 +219,7 @@ describe('Rule Set', () => {
                 ],
             }
             const ruleSetWithMismatchingRuleSetId: RuleSetPost = {
-                name: 'test_ruleset7',
+                name: `test_ruleset7${suffix}`,
                 reseller_id: 1,
                 description: 'test_ruleset7_with_mismatching_rule_set_id description',
                 rules: [
@@ -268,7 +269,7 @@ describe('Rule Set', () => {
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
-                    .send({name: 'test_ruleset_no_reseller', description: 'no reseller_id'})
+                    .send({name: `test_ruleset_no_reseller${suffix}`, description: 'no reseller_id'})
                 expect(response.status).toEqual(422)
                 expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
             })
@@ -354,13 +355,13 @@ describe('Rule Set', () => {
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ruleset: RewriteRuleSetResponseDto = response.body
-                expect(ruleset.name).toEqual('test_ruleset1')
+                expect(ruleset.name).toEqual(`test_ruleset1${suffix}`)
                 expect(ruleset.reseller_id).toEqual(1)
                 expect(ruleset.description).toEqual('test_ruleset1 description')
             })
             it('read created set 1 by name', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/rewrite-rules/sets/?name=test_ruleset1')
+                    .get(`/api/rewrite-rules/sets/?name=test_ruleset1${suffix}`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -370,13 +371,13 @@ describe('Rule Set', () => {
                 expect(await validate(setEntries)).toEqual([])
                 expect(setEntries).toHaveLength(1)
                 const ruleset = setEntries[0]
-                expect(ruleset.name).toEqual('test_ruleset1')
+                expect(ruleset.name).toEqual(`test_ruleset1${suffix}`)
                 expect(ruleset.reseller_id).toEqual(1)
                 expect(ruleset.description).toEqual('test_ruleset1 description')
             })
             it('read created rule set 2', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/rewrite-rules/sets/?name=test_ruleset2')
+                    .get(`/api/rewrite-rules/sets/?name=test_ruleset2${suffix}`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -386,7 +387,7 @@ describe('Rule Set', () => {
                 expect(await validate(setEntries)).toEqual([])
                 expect(setEntries).toHaveLength(1)
                 const ruleset = setEntries[0]
-                expect(ruleset.name).toEqual('test_ruleset2')
+                expect(ruleset.name).toEqual(`test_ruleset2${suffix}`)
                 expect(ruleset.reseller_id).toEqual(1)
                 expect(ruleset.description).toEqual('test_ruleset2 description')
             })

@@ -38,7 +38,7 @@ describe('Customer Balances', () => {
     let authHeader: [string, string]
     const createdBalanceIds: number[] = []
     const fixtureContractIds: number[] = []
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
     let contractId: number
     let oldBalanceId: number

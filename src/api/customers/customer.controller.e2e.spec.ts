@@ -78,7 +78,7 @@ describe('CustomerController', () => {
     const createdCustomerIds: number[] = []
     const _createdContactIds: number[] = []
     const _createdBillingProfileIds: number[] = []
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     let repo: CustomerMariadbRepository
     const suffix = `${Date.now()}`
     const fixtureContractIds: number[] = []
@@ -551,7 +551,8 @@ describe('CustomerController', () => {
 
         describe('Customer POST billing mappings, profiles mode', () => {
             it('requires an open interval without network', async () => {
-                const contractsBefore = await db.billing.Contract.count()
+                const mappingWhere = {billing_profile_id: profileA, billing_network_id: networkA}
+                const mappingsBefore = await db.billing.ContractBillingProfileNetwork.countBy(mappingWhere)
                 const response = await request(app.getHttpServer())
                     .post('/api/customers')
                     .set(...authHeader)
@@ -565,7 +566,7 @@ describe('CustomerController', () => {
                         billing_profiles: [{profile_id: profileA, network_id: networkA, start: null, stop: null}],
                     })
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
-                expect(await db.billing.Contract.count()).toEqual(contractsBefore)
+                expect(await db.billing.ContractBillingProfileNetwork.countBy(mappingWhere)).toEqual(mappingsBefore)
             })
         })
 
@@ -678,6 +679,7 @@ describe('CustomerController', () => {
             it('read collection', async () => {
                 const response = await request(app.getHttpServer())
                     .get('/api/customers')
+                    .query({id: createdCustomerIds[0]})
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(HttpStatus.OK)

@@ -39,7 +39,7 @@ describe('CustomerContact', () => {
     let authHeader: [string, string]
     const createdIds: number[] = []
     let resellerAdminId: number
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const resellerCreds = {username: `cc_reseller_${Date.now().toString(36)}`, password: 'FFFooobarbaz123!!!'}
 
     beforeAll(async () => {

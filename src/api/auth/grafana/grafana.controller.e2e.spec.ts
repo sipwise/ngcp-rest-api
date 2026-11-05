@@ -41,7 +41,7 @@ describe('Auth Grafana', () => {
     let authService: AuthService
     let authHeader: [string, string]
     let createdAdminIds: number[]
-    const creds = {username: 'mockAdminUser', password: 'mockAdminPass'}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const strongPassword = 'FFFooobarbaz123!!!'
     const userHeader = 'ngcp-grafana-user'
     const tokens: {[login: string]: [string, string]} = {}

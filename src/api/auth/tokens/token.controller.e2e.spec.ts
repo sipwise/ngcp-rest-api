@@ -36,7 +36,7 @@ describe('Auth Token', () => {
     let authHeader: [string, string]
     let createdIds: string[] = []
     const secret = 'e2e-Secret-66545'
-    const creds = {username: 'mockAdminUser', password: secret}
+    const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: secret}
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
