@@ -5,6 +5,9 @@ import {EntityNotFoundError, QueryFailedError, TypeORMError} from 'typeorm'
 import errors from '~/localisation/en/errors.json'
 import {CsvValidationError} from '~/types/csv-validation-error.type'
 
+// a concurrent transaction changed what this one read or locked; the TransactionInterceptor retries the request
+export class TransactionConflictException extends UnprocessableEntityException {}
+
 export function handleTypeORMError(err: Error): Error {
     if (err instanceof TypeORMError) {
         switch (err.constructor) {
@@ -16,6 +19,9 @@ export function handleTypeORMError(err: Error): Error {
                 switch (qErr.driverError.code) {
                     case 'ER_DUP_ENTRY':
                         return new UnprocessableEntityException(errors.DUPLICATE_ENTRY)
+                    case 'ER_CHECKREAD':
+                    case 'ER_LOCK_DEADLOCK':
+                        return new TransactionConflictException()
                 }
         }
         // return new UnprocessableEntityException(err.message)
