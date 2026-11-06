@@ -26,7 +26,8 @@ export class JournalSearchDto {
     @ApiPropertyOptional()
         id: number = undefined
     @ApiHideProperty()
-    _alias = {
-        id: 'journal.id',
-    }
+        _alias = {
+            id: 'journal.id',
+            role: 'role.role',
+        }
 }
