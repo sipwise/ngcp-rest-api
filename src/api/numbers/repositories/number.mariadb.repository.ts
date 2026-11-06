@@ -1,5 +1,5 @@
 import {Injectable} from '@nestjs/common'
-import {BaseEntity, EntityNotFoundError, SelectQueryBuilder} from 'typeorm'
+import {BaseEntity, Brackets, EntityNotFoundError, SelectQueryBuilder} from 'typeorm'
 
 import {NumberSearchDto} from '~/api/numbers/dto/number-search.dto'
 import {AppService} from '~/app.service'
@@ -140,6 +140,7 @@ export class NumberMariadbRepository extends MariaDbRepository {
             {alias: 'voipNumber', property: 'ac', searchParam: 'ac'},
             {alias: 'voipNumber', property: 'sn', searchParam: 'sn'},
         ]
+        const orClauses: [string, Record<string, unknown>][] = []
         searchFields.map(field => {
             if (params[field.searchParam] != null) {
                 const parameter: string = params[field.searchParam].toString()
@@ -156,12 +157,14 @@ export class NumberMariadbRepository extends MariaDbRepository {
                 }
 
                 if (searchLogic.searchOr) {
-                    qb.orWhere(`${field.alias}.${field.property} ${whereComparator} :${field.property}`, {[`${field.property}`]: value})
+                    orClauses.push([`${field.alias}.${field.property} ${whereComparator} :search_${field.searchParam}`, {[`search_${field.searchParam}`]: value}])
                 } else {
-                    qb.andWhere(`${field.alias}.${field.property} ${whereComparator} :${field.property}`, {[`${field.property}`]: value})
+                    qb.andWhere(`${field.alias}.${field.property} ${whereComparator} :search_${field.searchParam}`, {[`search_${field.searchParam}`]: value})
                 }
             }
         })
+        if (orClauses.length)
+            qb.andWhere(new Brackets(b => orClauses.forEach(([where, parameters]) => b.orWhere(where, parameters))))
     }
 
     private addPaginationToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, searchLogic: SearchLogic): void {
