@@ -79,7 +79,7 @@ export class BanSubscriberMariadbRepository extends MariaDbRepository implements
                 qb.andWhere('bSubscriber.id IN (:ids)', {ids: filterBy.ids})
             }
             if (filterBy.customerId) {
-                qb.andWhere('pSubscriber.contract_id = :customerId', {customerId: filterBy.customerId})
+                qb.andWhere('pSubscriber.account_id = :customerId', {customerId: filterBy.customerId})
             }
             if (filterBy.resellerId) {
                 qb.andWhere('contact.reseller_id = :resellerId', {resellerId: filterBy.resellerId})

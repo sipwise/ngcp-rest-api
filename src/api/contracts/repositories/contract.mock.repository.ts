@@ -2,6 +2,7 @@ import {NotFoundException} from '@nestjs/common'
 
 import {ContractRepository} from '~/api/contracts/interfaces/contract.repository'
 import {internal} from '~/entities'
+import {BillingProfileStatus} from '~/entities/internal/billing-profile.internal.entity'
 import {ContactStatus} from '~/entities/internal/contact.internal.entity'
 import {ContractBillingProfileDefinition, ContractStatus, ContractType} from '~/entities/internal/contract.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
@@ -157,6 +158,21 @@ export class ContractMockRepository implements ContractRepository {
             }
         }
         return Promise.resolve(undefined)
+    }
+
+    readBillingProfile(id: number, _sr: ServiceRequest): Promise<internal.BillingProfile> {
+        if (id != 1)
+            return Promise.resolve(undefined)
+        return Promise.resolve(internal.BillingProfile.create({
+            id: 1,
+            status: BillingProfileStatus.Active,
+            prepaid: false,
+        } as internal.BillingProfile))
+    }
+
+    appendBillingMappings(contractId: number, mappings: internal.BillingMapping[], _sr: ServiceRequest): Promise<void> {
+        this.contractDB[contractId].billing_profile_id = mappings[mappings.length - 1].billingProfileId
+        return Promise.resolve()
     }
 
     save(_id: number, _newContract: internal.Contract): Promise<internal.Contract> {

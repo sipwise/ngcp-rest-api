@@ -140,7 +140,7 @@ export class CustomerSpeedDialMariadbRepository extends MariaDbRepository implem
                 qb.andWhere({contract_id: filterBy.customerId})
             }
             if (filterBy.resellerId) {
-                qb.innerJoin('voipContractSpeedDial.contract', 'contract')
+                qb.innerJoin('csd.contract', 'contract')
                 qb.innerJoin('contract.contact', 'contact')
                 qb.andWhere('contact.reseller_id = :id', {id: filterBy.resellerId})
             }

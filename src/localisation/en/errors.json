@@ -326,5 +326,9 @@
   "INVOICE_CONTRACT_RESELLER_MISMATCH": {
     "message": "Invoice template and customer_id '{id}' must belong to the same reseller",
     "code": 10082
+  },
+  "PEERING_RESELLER_CONTRACT_PREPAID_PROFILE": {
+    "message": "Peering/reseller contract can't be connected to a prepaid billing profile",
+    "code": 10083
   }
 }

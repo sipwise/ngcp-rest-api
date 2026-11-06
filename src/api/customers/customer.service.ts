@@ -48,12 +48,15 @@ export class CustomerService implements CrudService<internal.Customer> {
 
         const now = new Date()
         await Promise.all(entities.map(async customer => {
+            await this.checkTemplates(customer, activeContacts.find(c => c.id === customer.contactId))
             customer.productId = await this.readProductId(customer, sr)
             customer.createBillingMappings = await this.prepareCreateBillingMappings(customer, sr, now)
             customer.createTimestamp = now
             customer.modifyTimestamp = now
-            await this.assignDefaultEmailTemplates(customer)
         }))
+        // sequentially, so customers of one reseller don't create its missing templates twice
+        for (const customer of entities)
+            await this.assignDefaultEmailTemplates(customer)
         const createdIds = await this.customerRepository.create(entities, sr)
         const createdCustomersDictionary = new Dictionary<internal.Customer>()
         createdIds.forEach((id, index) => {
@@ -174,6 +177,7 @@ export class CustomerService implements CrudService<internal.Customer> {
 
         const productPromises = Object.keys(updates).map(async id => {
             const customer = updates[id]
+            await this.checkTemplates(customer, activeContacts.find(c => c.id === customer.contactId))
             customer.productId = await this.readProductId(customer, sr)
         })
         await Promise.all(productPromises)
@@ -425,6 +429,26 @@ export class CustomerService implements CrudService<internal.Customer> {
         }
     }
 
+    private async checkTemplates(customer: internal.Customer, contact: internal.Contact): Promise<void> {
+        const emailTemplateFields: {[key: string]: string} = {
+            subscriberEmailTemplateId: 'subscriber_email_template_id',
+            passresetEmailTemplateId: 'passreset_email_template_id',
+            invoiceEmailTemplateId: 'invoice_email_template_id',
+        }
+        const fields = Object.keys(emailTemplateFields).filter(field => customer[field] != undefined)
+        if (fields.length) {
+            const [readIds] = await this.customerRepository.readEmailTemplateIdsByIds(
+                [...new Set(fields.map(field => +customer[field]))], contact.reseller_id,
+            )
+            const invalid = fields.find(field => !readIds.includes(+customer[field]))
+            if (invalid)
+                throw new UnprocessableEntityException(`Invalid field '${emailTemplateFields[invalid]}'`)
+        }
+        if (customer.invoiceTemplateId != undefined
+            && !await this.customerRepository.readCountOfInvoiceTemplates([customer.invoiceTemplateId], contact.reseller_id))
+            throw new UnprocessableEntityException('Invalid field \'invoice_template_id\'')
+    }
+
     private async assignDefaultEmailTemplates(customer: internal.Customer): Promise<void> {
         if (!this.defaultEmailTemplates)
             this.defaultEmailTemplates = await this.customerRepository.findDefaultEmailTemplates()
@@ -432,22 +456,23 @@ export class CustomerService implements CrudService<internal.Customer> {
         const contact = await this.customerRepository.readContactById(customer.contactId)
         const resellerTemplates = await this.customerRepository.findResellerEmailTemplates(contact.reseller_id)
 
-
         const templateNames: {[key: string]: string} = {
             'subscriber_default_email': 'subscriberEmailTemplateId',
             'passreset_default_email': 'passresetEmailTemplateId',
             'invoice_default_email': 'invoiceEmailTemplateId',
         }
 
-        Object.keys(resellerTemplates).forEach(async templateName => {
-            const resellerTemplate = resellerTemplates.find(resellerTemplate => resellerTemplate.name === templateName)
+        for (const [templateName, field] of Object.entries(templateNames)) {
+            if (customer[field] != undefined)
+                continue
+            const resellerTemplate = resellerTemplates.find(template => template.name === templateName)
             if (resellerTemplate) {
-                customer[templateNames[templateName]] = resellerTemplate.id
-            } else {
-                const defaultTemplate = this.defaultEmailTemplates.find(defaultTemplate => defaultTemplate.name === templateName)
-                await this.customerRepository.createResellerDefaultTemplate(contact.reseller_id, defaultTemplate)
+                customer[field] = resellerTemplate.id
+                continue
             }
-        })
-
+            const defaultTemplate = this.defaultEmailTemplates.find(template => template.name === templateName)
+            if (defaultTemplate)
+                customer[field] = await this.customerRepository.createResellerDefaultTemplate(contact.reseller_id, defaultTemplate)
+        }
     }
 }
