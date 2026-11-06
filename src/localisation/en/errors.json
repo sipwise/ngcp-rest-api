@@ -242,5 +242,13 @@
   "INVALID_BILLING_PROFILE_DEFINITION": {
     "message": "Invalid billingProfileDefinition.",
     "code": 10061
+  },
+  "INVALID_BILLING_PROFILE_ID": {
+    "message": "Invalid billing profile ID",
+    "code": 10074
+  },
+  "PEERING_RESELLER_CONTRACT_PREPAID_PROFILE": {
+    "message": "Peering/reseller contract can't be connected to a prepaid billing profile",
+    "code": 10083
   }
 }

@@ -40,13 +40,7 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
         })
 
         const options = this.getSubscriberPhonebookOptionsFromServiceRequest(sr)
-        const allowedSusbscribersCount = await this.phonebookRepo.getAllowedSubscribersCount(
-            Object.values(subscriberIds), options['filterBy'], sr)
-
-        if (Object.values(subscriberIds).length != allowedSusbscribersCount) {
-            const error: ErrorMessage = this.i18n.t('errors.SUBSCRIBER_NOT_FOUND')
-            throw new UnprocessableEntityException(error.message)
-        }
+        await this.checkAllowedSubscribers(Object.values(subscriberIds), sr)
         const createdIds = await this.phonebookRepo.create(entities, sr)
 
         return await this.phonebookRepo.readWhereInIds(createdIds, options, sr)
@@ -107,6 +101,7 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
             const message = GenerateErrorMessageArray(ids, error.message)
             throw new UnprocessableEntityException(message)
         }
+        await this.checkAllowedSubscribers(Object.values(updates).map(entity => entity.subscriberId), sr)
 
         return await this.phonebookRepo.update(updates, sr)
     }
@@ -165,12 +160,7 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
         await this.validateCsvData(entities)
         const _options = this.getSubscriberPhonebookOptionsFromServiceRequest(sr)
 
-        if (sr.user.role === RbacRole.subscriberadmin || sr.user.role === RbacRole.subscriber) {
-            if (entities.some(entity => entity.subscriberId != sr.user.id)) {
-                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-                throw new UnprocessableEntityException(error.message)
-            }
-        }
+        await this.checkAllowedSubscribers(entities.map(entity => entity.subscriberId), sr)
         const subscribers = new Set(entities.map(entity => entity.subscriberId))
         if (sr.query && sr.query['purge_existing']) {
             if (sr.query['purge_existing'] === 'true') {
@@ -205,6 +195,18 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
             type: 'text/csv',
             disposition: 'attachment; filename="subscriber_phonebook.csv"',
         })
+    }
+
+    private async checkAllowedSubscribers(subscriberIds: number[], sr: ServiceRequest): Promise<void> {
+        const ids = [...new Set(subscriberIds.filter(id => id != undefined))]
+        if (!ids.length)
+            return
+        const options = this.getSubscriberPhonebookOptionsFromServiceRequest(sr)
+        const allowedCount = await this.phonebookRepo.getAllowedSubscribersCount(ids, options.filterBy, sr)
+        if (ids.length != allowedCount) {
+            const error: ErrorMessage = this.i18n.t('errors.SUBSCRIBER_NOT_FOUND')
+            throw new UnprocessableEntityException(error.message)
+        }
     }
 
     private async validateCsvData(entities: internal.SubscriberPhonebook[]): Promise<void> {

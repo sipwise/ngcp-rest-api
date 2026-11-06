@@ -236,6 +236,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
 
     async readByIdFromViewContract(id: string, options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<internal.VSubscriberPhonebook> {
         const qb = db.billing.VSubscriberContractPhonebook.createQueryBuilder('phonebook')
+        qb.leftJoinAndSelect('phonebook.subscriber', 'subscriber')
         const searchDto  = new SubscriberPhonebookSearchDto()
         configureQueryBuilder(
             qb,
@@ -281,6 +282,9 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
             }
             if (filterBy.subscriberId) {
                 qb.andWhere('phonebook.subscriber_id = :id', {id: filterBy.subscriberId})
+            }
+            if (filterBy.customerId) {
+                qb.andWhere('subscriber.contract_id = :customerId', {customerId: filterBy.customerId})
             }
         }
     }
