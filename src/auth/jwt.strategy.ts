@@ -74,6 +74,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
                 },
                 relations: ['role'],
             })
+            if (!admin) {
+                this.log.debug('admin auth failed the admin of the token does not exist')
+                return null
+            }
             const role = await this.app.dbRepo(db.billing.AclRole).findOne({
                 where: {
                     id: admin.role.id,

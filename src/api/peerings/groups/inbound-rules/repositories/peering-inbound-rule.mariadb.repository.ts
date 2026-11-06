@@ -120,7 +120,7 @@ export class PeeringInboundRuleMariadbRepository extends MariaDbRepository imple
         await db.provisioning.VoipPeeringGroup.update(groupId, group)
     }
 
-    async unsetGroupInboundRulesCount(groupId: number): Promise<void> {
+    async refreshGroupInboundRulesCount(groupId: number): Promise<void> {
         const group = await db.provisioning.VoipPeeringGroup.findOneOrFail({
             where: {
                 id: groupId,

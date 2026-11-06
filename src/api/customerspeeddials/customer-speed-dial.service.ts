@@ -48,6 +48,7 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
         const ids = Object.keys(updates).map(id => parseInt(id))
         for (const id of ids) {
             const entity = updates[id]
+            await this.read(id, sr)
             await this.checkPermissions(entity.contractId, sr)
             await this.checkAndTransformDestination(entity, sr)
         }

@@ -1,10 +1,11 @@
 import {Controller, Get, Post, Req} from '@nestjs/common'
-import {ApiTags} from '@nestjs/swagger'
+import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {AuthService} from './auth/auth.service'
 import {Auth} from './decorators/auth.decorator'
 
+import {UserinfoResponseDto} from '~/api/auth/userinfo/dto/userinfo-response.dto'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 @Auth()
@@ -24,8 +25,9 @@ export class AppController {
 
     @ApiTags('Userinfo')
     @Get('userinfo')
-    async userinfo(@Req() req: Request): Promise<unknown> {
+    @ApiOkResponse({type: UserinfoResponseDto})
+    async userinfo(@Req() req: Request): Promise<UserinfoResponseDto> {
         const sr = new ServiceRequest(req)
-        return sr.user
+        return new UserinfoResponseDto(sr.user)
     }
 }

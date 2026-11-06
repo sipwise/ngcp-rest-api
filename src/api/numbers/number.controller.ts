@@ -57,7 +57,7 @@ export class NumberController extends CrudController<never, NumberResponseDto> {
     @ApiOkResponse({
         type: NumberResponseDto,
     })
-    async read(@Param('id', ParseIntPipe) id: number, req): Promise<NumberResponseDto> {
+    async read(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<NumberResponseDto> {
         this.log.debug({
             message: 'fetch number by id',
             func: this.read.name,

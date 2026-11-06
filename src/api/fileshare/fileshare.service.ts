@@ -69,7 +69,7 @@ export class FileshareService { // implements CrudService<FileshareRequestDto, F
                     table: 'uploads',
                 })
                 .getRawOne()
-            if (totalSize && totalSize['size'] + file.size > totalQuota)
+            if (totalSize && Number(totalSize['size']) + file.size > totalQuota)
                 throw new UnprocessableEntityException(this.i18n.t('errors.QUOTA_EXCEEDED'))
         }
 
@@ -87,7 +87,7 @@ export class FileshareService { // implements CrudService<FileshareRequestDto, F
                 .select('SUM(upload.size) as sum')
                 .where(filter.where)
                 .getRawOne()
-            if (userSize['sum'] + file.size > userQuota)
+            if (Number(userSize?.['sum'] ?? 0) + file.size > userQuota)
                 throw new UnprocessableEntityException(this.i18n.t('errors.QUOTA_EXCEEDED'))
         }
 

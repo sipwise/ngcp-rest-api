@@ -13,6 +13,10 @@ export interface ContractRepository {
 
     readProductByType(type: string, sr: ServiceRequest): Promise<internal.Product>
 
+    readBillingProfile(id: number, sr: ServiceRequest): Promise<internal.BillingProfile>
+
+    appendBillingMappings(contractId: number, mappings: internal.BillingMapping[], sr: ServiceRequest): Promise<void>
+
     readAll(sr: ServiceRequest): Promise<[internal.Contract[], number]>
 
     update(updates: Dictionary<internal.Contract>, sr: ServiceRequest): Promise<number[]>
