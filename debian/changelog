@@ -1,3 +1,12 @@
+ngcp-rest-api (26.0.1.16+0~mr26.0.1.16) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [cb893fe] MT#66564 fix endpoint scope checks and data bugs
+  * [e897100] MT#66564 fix search_or and filter params leaking scope
+  * [4d451d4] MT#66567 fix admin certificate auth of unknown serials
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 06 Nov 2026 14:24:12 +0100
+
 ngcp-rest-api (26.0.1.15+0~mr26.0.1.15) unstable; urgency=medium
 
   [ Kirill Solomko ]
