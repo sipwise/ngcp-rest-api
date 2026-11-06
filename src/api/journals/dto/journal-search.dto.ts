@@ -12,5 +12,6 @@ export class JournalSearchDto {
     user_id: number = undefined
     _alias = {
         id: 'journal.id',
+        role: 'role.role',
     }
 }
