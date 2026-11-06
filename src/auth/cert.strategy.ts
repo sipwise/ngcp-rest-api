@@ -23,7 +23,7 @@ export class CertStrategy extends PassportStrategy(Strategy, 'cert-header') {
      * @param token Certificate serial number
      */
     async validate(token: string): Promise<AuthResponseDto> {
-        const admin = this.authService.validateAdminCert(token)
+        const admin = await this.authService.validateAdminCert(token)
         if (!admin) {
             throw new UnauthorizedException()
         }
