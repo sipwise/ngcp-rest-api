@@ -148,6 +148,10 @@ export class AuthService {
             where: {ssl_client_m_serial: sn},
             relations: ['role'],
         })
+        if (!admin) {
+            this.log.debug({message: 'admin user certificate authentication', success: false, serial: serial})
+            return null
+        }
         const role = await this.app.dbRepo(db.billing.AclRole).findOne({
             where: {
                 id: admin.role.id,
@@ -158,7 +162,7 @@ export class AuthService {
         if (!this.isAdminValid(admin)) {
             return null
         }
-        this.log.debug({message: 'admin user certificate authentication', success: false, serial: serial})
+        this.log.debug({message: 'admin user certificate authentication', success: true, serial: serial})
         return this.adminAuthToResponse(admin)
     }
 
