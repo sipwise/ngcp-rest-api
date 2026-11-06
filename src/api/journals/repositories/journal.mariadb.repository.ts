@@ -1,4 +1,5 @@
 import {Injectable} from '@nestjs/common'
+import {Brackets} from 'typeorm'
 
 import {JournalSearchDto} from '~/api/journals/dto/journal-search.dto'
 import {JournalRepository} from '~/api/journals/interfaces/journal.repository'
@@ -53,11 +54,13 @@ export class JournalMariadbRepository extends MariaDbRepository implements Journ
             ),
         )
         if (resourceName !== undefined) {
-            qb.andWhere('journal.resource_name = :resourceName', {resourceName: resourceName})
             if (resourceId !== undefined) {
+                qb.andWhere('journal.resource_name = :resourceName', {resourceName: resourceName})
                 qb.andWhere('journal.resource_id = :resourceId', {resourceId: resourceId})
             } else {
-                qb.orWhere('journal.id = :resourceName', {resourceName: resourceName})
+                qb.andWhere(new Brackets(b => b
+                    .where('journal.resource_name = :resourceName', {resourceName: resourceName})
+                    .orWhere('journal.id = :resourceName', {resourceName: resourceName})))
             }
         }
 
