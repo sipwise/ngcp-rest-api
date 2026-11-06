@@ -1,6 +1,6 @@
 import {ValidationError} from 'class-validator'
 
-const redactedKeys = ['password', 'webpassword']
+const redactedKeys = ['password', 'webpassword', 'otp_secret', 'otp_secret_key']
 
 export function obfuscatePasswordJSON(key: unknown, value: unknown): unknown {
     if (redactedKeys.includes(key as string)) {

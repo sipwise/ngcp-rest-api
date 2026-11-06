@@ -1,9 +1,10 @@
-import {Inject, Injectable} from '@nestjs/common'
+import {ForbiddenException, Inject, Injectable} from '@nestjs/common'
 import {isObject} from 'class-validator'
 
 import {JournalMariadbRepository} from './repositories/journal.mariadb.repository'
 
 import {AppService} from '~/app.service'
+import {RbacRole} from '~/config/constants.config'
 import {HandleDbErrors} from '~/decorators/handle-db-errors.decorator'
 import {internal} from '~/entities'
 import Context from '~/helpers/context.helper'
@@ -48,16 +49,24 @@ export class JournalService {
 
     /**
      * Find all `Journal` entries. Allows to provide search filters for `resourceName` and `resourceId`.
+     * Journals are admin-only, subscriber roles get 403.
      * @param resourceName Name of the resource
      * @param resourceId ID of the named resource
+     * @param resourceVerified the caller already read the resource within its scope (nested `:id/journal` routes)
      */
-    async readAll(sr: ServiceRequest, resourceName?: string, resourceId?: number | string): Promise<[internal.Journal[], number]> {
+    async readAll(sr: ServiceRequest, resourceName?: string, resourceId?: number | string, resourceVerified = false): Promise<[internal.Journal[], number]> {
         this.log.debug({
             message: 'finding journal entries',
             resourceName: resourceName,
             resourceId: resourceId,
         })
-        return await this.journalRepo.readAll(sr, resourceName, resourceId)
+        this.checkAccess(sr)
+        return await this.journalRepo.readAll(sr, resourceName, resourceId, resourceVerified)
+    }
+
+    checkAccess(sr: ServiceRequest): void {
+        if (sr.user.role == RbacRole.subscriber || sr.user.role == RbacRole.subscriberadmin)
+            throw new ForbiddenException()
     }
 
     /**
