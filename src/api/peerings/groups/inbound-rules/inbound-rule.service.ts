@@ -26,9 +26,8 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
 
     async create(entities: internal.VoipPeeringInboundRule[], sr: ServiceRequest): Promise<internal.VoipPeeringInboundRule[]> {
         const created = await this.ruleRepo.create(entities)
-        await Promise.all(entities.map(async entity => {
-            this.ruleRepo.setGroupInboundRulesCount(entity.groupId)
-        }))
+        for (const groupId of new Set(entities.map(entity => entity.groupId)))
+            await this.ruleRepo.setGroupInboundRulesCount(groupId)
         await this.reloadKamProxyLcrAfterCommit(sr)
         if (this.requiresDispatcherReload(entities)) {
             await this.reloadKamProxyDispatcherAfterCommit(sr)
@@ -67,7 +66,20 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
             await this.reloadKamProxyDispatcherAfterCommit(sr)
         }
 
-        return this.ruleRepo.update(updates, sr)
+        const result = await this.ruleRepo.update(updates, sr)
+
+        const movedGroupIds = new Set<number>()
+        for (const rule of rules) {
+            const groupId = updates[rule.id].groupId
+            if (groupId != rule.groupId) {
+                movedGroupIds.add(rule.groupId)
+                movedGroupIds.add(groupId)
+            }
+        }
+        for (const groupId of movedGroupIds)
+            await this.ruleRepo.refreshGroupInboundRulesCount(groupId)
+
+        return result
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
@@ -89,9 +101,8 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
 
         const result = await this.ruleRepo.delete(ids, sr)
 
-        await Promise.all(rules.map(async rule => {
-            this.ruleRepo.unsetGroupInboundRulesCount(rule.groupId)
-        }))
+        for (const groupId of new Set(rules.map(rule => rule.groupId)))
+            await this.ruleRepo.refreshGroupInboundRulesCount(groupId)
 
         return result
     }
