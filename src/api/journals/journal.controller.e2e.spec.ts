@@ -14,6 +14,8 @@ import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {ContactStatus} from '~/entities/internal/contact.internal.entity'
+import {ContractStatus} from '~/entities/internal/contract.internal.entity'
+import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
@@ -32,6 +34,11 @@ describe('Journal', () => {
     let contactId: number
     let journalIds: number[] = []
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const resellerCreds = {username: `mockResellerUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const suffix = `${process.env.JEST_WORKER_ID}x${Date.now()}`
+    let otherResellerContractId: number
+    let otherResellerId: number
+    let otherResellerJournalId: number
     const startedAt = Date.now() / 1000
 
     const get = (url: string): request.Test => request(app.getHttpServer())
@@ -254,6 +261,76 @@ describe('Journal', () => {
             })
         })
 
+        describe('reseller scope', () => {
+            const resourceName = `e2ejournalscope${suffix}`
+            let resellerHeader: [string, string]
+
+            it('create another reseller and log in as its reseller admin', async () => {
+                const now = new Date()
+                otherResellerContractId = (await db.billing.Contract.create({
+                    contact_id: 2, product_id: 3, status: ContractStatus.Active, create_timestamp: now, modify_timestamp: now,
+                }).save()).id
+                otherResellerId = (await db.billing.Reseller.create({
+                    contract_id: otherResellerContractId, name: `journal_reseller_${suffix}`, status: ResellerStatus.Active,
+                }).save()).id
+                await db.billing.Admin.delete({login: resellerCreds.username})
+                const resellerRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.reseller})
+                await db.billing.Admin.insert({
+                    reseller_id: otherResellerId,
+                    login: resellerCreds.username,
+                    saltedpass: 'mockAdminSaltedpass',
+                    saltedpass_modify_timestamp: now,
+                    role_id: resellerRole.id,
+                    is_master: true,
+                    is_superuser: false,
+                    is_system: false,
+                    is_ccare: false,
+                    lawful_intercept: false,
+                    is_active: true,
+                    read_only: false,
+                    show_passwords: true,
+                    call_data: true,
+                    billing_data: true,
+                    can_reset_password: true,
+                    enable_2fa: false,
+                    show_otp_registration_info: false,
+                })
+                otherResellerJournalId = (await db.billing.Journal.insert({
+                    operation: 'create',
+                    resource_name: resourceName,
+                    resource_id: 1,
+                    timestamp: now.getTime() / 1000,
+                    username: creds.username,
+                    content_format: 'json',
+                    content: '{}',
+                    role_id: resellerRole.id,
+                    reseller_id: 1,
+                })).identifiers[0].id
+                const response = await request(app.getHttpServer())
+                    .post('/api/auth/jwt')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(resellerCreds)
+                expect(response.status).toEqual(201)
+                resellerHeader = ['Authorization', 'Bearer ' + response.body['access_token']]
+            })
+
+            it('read journals of another reseller by resource name as admin', async () => {
+                const response = await get(`/api/journals/${resourceName}`)
+                expect(response.status).toEqual(200)
+                expect(response.body.data.map((j: JournalResponseDto) => j.id)).toEqual([otherResellerJournalId])
+            })
+
+            it('not read journals of another reseller by resource name', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/journals/${resourceName}`)
+                    .set(...resellerHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(0)
+            })
+        })
+
         describe('GET /<resource>/{id}/journal', () => {
             it('read the journal of a nested resource', async () => {
                 for (const url of [
@@ -301,6 +378,12 @@ describe('Journal', () => {
         })
 
         it('delete created fixtures', async () => {
+            if (otherResellerJournalId)
+                await db.billing.Journal.delete(otherResellerJournalId)
+            if (otherResellerId)
+                await db.billing.Reseller.delete(otherResellerId)
+            if (otherResellerContractId)
+                await db.billing.Contract.delete(otherResellerContractId)
             if (phonebookId)
                 await db.billing.ContractPhonebook.delete(phonebookId)
             if (contactId)
@@ -311,6 +394,7 @@ describe('Journal', () => {
 
         it('delete mock admin', async () => {
             await db.billing.Admin.delete({login: creds.username})
+            await db.billing.Admin.delete({login: resellerCreds.username})
         })
     })
 })

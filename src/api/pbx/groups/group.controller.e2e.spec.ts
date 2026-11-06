@@ -276,9 +276,12 @@ describe('PBX Group', () => {
 
     const adminAuthHeaders = (): Record<string, string> => ({[authHeader[0]]: authHeader[1]})
 
-    const readGroupIds = async (headers: Record<string, string>, query = ''): Promise<number[]> => {
+    const readGroupIds = async (headers: Record<string, string>, query = ''): Promise<number[]> =>
+        readGroupIdsBy(headers, `name=${prefix}*${query}`)
+
+    const readGroupIdsBy = async (headers: Record<string, string>, query: string): Promise<number[]> => {
         const response = await request(app.getHttpServer())
-            .get(`/api/pbx/groups?name=${prefix}*${query}`)
+            .get(`/api/pbx/groups?${query}`)
             .set('Accept', 'application/json')
             .set(headers)
         expect(response.status).toEqual(200)
@@ -338,6 +341,16 @@ describe('PBX Group', () => {
                 expect(await readGroupIds(adminAuthHeaders(), `&id=${group.id}`)).toEqual([group.id])
             })
 
+            it('search pbx groups with search_or', async () => {
+                const query = `search_or=1&customer_id=${customerB.contractId}&id=${customerA.groups[0].id}`
+                expect(await readGroupIdsBy(adminAuthHeaders(), query)).toEqual(ids([customerA.groups[0], ...customerB.groups]))
+            })
+
+            it('read only groups, not pilots or seats with search_or', async () => {
+                const query = `search_or=1&customer_id=${customerB.contractId}&id=${customerA.pilot.id}`
+                expect(await readGroupIdsBy(adminAuthHeaders(), query)).toEqual(ids(customerB.groups))
+            })
+
             it('read non-existing pbx group', async () => {
                 const response = await request(app.getHttpServer())
                     .get('/api/pbx/groups/999999999')
@@ -364,6 +377,15 @@ describe('PBX Group', () => {
                     .set(pilotAuthHeaders)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
+            })
+
+            it('read no groups filtered by another customer_id', async () => {
+                expect(await readGroupIds(pilotAuthHeaders, `&customer_id=${customerB.contractId}`)).toEqual([])
+            })
+
+            it('read groups of own customer only with search_or', async () => {
+                const query = `search_or=1&customer_id=${customerB.contractId}&extension=91`
+                expect(await readGroupIdsBy(pilotAuthHeaders, query)).toEqual(ids([customerA.groups[0]]))
             })
 
             it('read other customer group by id', async () => {

@@ -52,6 +52,7 @@ describe('CustomerSpeedDial', () => {
     let otherResellerId: number
     let otherContactId: number
     let otherCustomerId: number
+    let otherSpeedDialId: number
     let resellerHeader: [string, string]
 
     beforeAll(async () => {
@@ -425,6 +426,25 @@ describe('CustomerSpeedDial', () => {
                 expect(response.status).toEqual(404)
                 expect(await db.provisioning.VoipContractSpeedDial.findOneByOrFail({id})).toEqual(before)
             })
+            it('list only own speed dials with search_or', async () => {
+                otherSpeedDialId = (await db.provisioning.VoipContractSpeedDial.create({
+                    contract_id: otherCustomerId, slot: '*7', destination: 'sip:4317777@example.org',
+                }).save()).id
+                const response = await request(app.getHttpServer())
+                    .get(`/api/customerspeeddials?search_or=1&customer_id=${testCustomerId}&slot=*7`)
+                    .set(...resellerHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(1)
+                expect(response.body.data.map((csd: CustomerSpeedDialResponseDto) => csd.id)).toEqual([otherSpeedDialId])
+            })
+            it('not read a speed dial of another reseller with search_or', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/customerspeeddials/${createdEntries[0]['id']}?search_or=1&customer_id=${testCustomerId}&slot=*7`)
+                    .set(...resellerHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(404)
+            })
         })
     })
 
@@ -446,6 +466,8 @@ describe('CustomerSpeedDial', () => {
                     timestamp: MoreThanOrEqual(startedAt),
                 })
             await db.billing.Journal.delete({username: resellerCreds.username, timestamp: MoreThanOrEqual(startedAt)})
+            if (otherSpeedDialId)
+                await db.provisioning.VoipContractSpeedDial.delete(otherSpeedDialId)
             if (otherCustomerId)
                 await db.billing.Contract.delete(otherCustomerId)
             if (otherContactId)

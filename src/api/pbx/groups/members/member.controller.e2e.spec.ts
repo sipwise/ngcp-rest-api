@@ -382,6 +382,11 @@ describe('PBX Group Member', () => {
                 const members = await readMembers(pilotAuthHeaders, 'members')
                 expect(subscriberIds(members)).toEqual(ids([...customerA.seats, customerA.seats[1]]))
             })
+
+            it('read members of own customer groups only with search_or', async () => {
+                const members = await readMembers(pilotAuthHeaders, 'members', `&search_or=1&subscriber_id=${customerB.seats[0].id}&extension=12`)
+                expect(subscriberIds(members)).toEqual(ids([customerA.seats[1], customerA.seats[1]]))
+            })
         })
 
         describe('GET as subscriber', () => {
@@ -403,6 +408,15 @@ describe('PBX Group Member', () => {
             it('read all members of own groups only', async () => {
                 const members = await readMembers(seatAuthHeaders, 'members')
                 expect(subscriberIds(members)).toEqual(ids(customerA.seats))
+            })
+
+            it('read no members filtered by a subscriber_id of another group', async () => {
+                expect(await readMembers(seatAuthHeaders, 'members', `&subscriber_id=${customerB.seats[0].id}`)).toHaveLength(0)
+            })
+
+            it('read members of own groups only with search_or', async () => {
+                const members = await readMembers(seatAuthHeaders, 'members', `&search_or=1&subscriber_id=${customerB.seats[0].id}&extension=12`)
+                expect(subscriberIds(members)).toEqual([customerA.seats[1].id])
             })
 
             it('read member of a group the subscriber is not a member of by id', async () => {

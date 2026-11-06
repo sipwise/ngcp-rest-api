@@ -13,6 +13,8 @@ import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
+import {ContractStatus} from '~/entities/internal/contract.internal.entity'
+import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {validate} from '~/helpers/validate.helper'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
@@ -39,6 +41,10 @@ describe('', () => {
     const ac = `9${process.env.JEST_WORKER_ID}`
     const sn = `${Date.now()}`
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const resellerCreds = {username: `mockResellerUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    let otherResellerContractId: number
+    let otherResellerId: number
+    let resellerHeader: [string, string]
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -217,6 +223,73 @@ describe('', () => {
                 expect(response.status).toEqual(404)
             })
         })
+
+        describe('reseller scope', () => {
+            it('create another reseller and log in as its reseller admin', async () => {
+                const now = new Date()
+                otherResellerContractId = (await db.billing.Contract.create({
+                    contact_id: 2, product_id: 3, status: ContractStatus.Active, create_timestamp: now, modify_timestamp: now,
+                }).save()).id
+                otherResellerId = (await db.billing.Reseller.create({
+                    contract_id: otherResellerContractId, name: `number_reseller_${suffix}`, status: ResellerStatus.Active,
+                }).save()).id
+                await db.billing.Admin.delete({login: resellerCreds.username})
+                const resellerRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.reseller})
+                await db.billing.Admin.insert({
+                    reseller_id: otherResellerId,
+                    login: resellerCreds.username,
+                    saltedpass: 'mockAdminSaltedpass',
+                    saltedpass_modify_timestamp: now,
+                    role_id: resellerRole.id,
+                    is_master: true,
+                    is_superuser: false,
+                    is_system: false,
+                    is_ccare: false,
+                    lawful_intercept: false,
+                    is_active: true,
+                    read_only: false,
+                    show_passwords: true,
+                    call_data: true,
+                    billing_data: true,
+                    can_reset_password: true,
+                    enable_2fa: false,
+                    show_otp_registration_info: false,
+                })
+                const response = await request(app.getHttpServer())
+                    .post('/api/auth/jwt')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(resellerCreds)
+                expect(response.status).toEqual(201)
+                resellerHeader = ['Authorization', 'Bearer ' + response.body['access_token']]
+            })
+
+            it('list no numbers of another reseller filtered by its reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/numbers?reseller_id=1&sn=${sn}`)
+                    .set(...resellerHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(0)
+            })
+
+            it('list no numbers of another reseller with search_or', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/numbers?search_or=1&sn=${sn}&cc=${cc}`)
+                    .set(...resellerHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(0)
+            })
+
+            it('not read a number of another reseller with search_or', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/numbers/${numberId}?search_or=1&sn=${sn}&cc=${cc}`)
+                    .set(...resellerHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(404)
+            })
+        })
     })
 
     describe('Numbers DELETE', () => {
@@ -235,7 +308,12 @@ describe('', () => {
                 await db.provisioning.VoipDomain.delete(provisioningDomainId)
             if (billingDomainId)
                 await db.billing.Domain.delete(billingDomainId)
+            if (otherResellerId)
+                await db.billing.Reseller.delete(otherResellerId)
+            if (otherResellerContractId)
+                await db.billing.Contract.delete(otherResellerContractId)
             await db.billing.Admin.delete({login: creds.username})
+            await db.billing.Admin.delete({login: resellerCreds.username})
         })
     })
 })
