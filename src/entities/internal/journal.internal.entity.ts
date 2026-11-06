@@ -1,3 +1,7 @@
+import {inflateSync} from 'zlib'
+
+import {obfuscatePasswordJSON} from '~/helpers/password-obfuscator.helper'
+
 interface JournalInterface {
     id?: number
     content?: string | Buffer
@@ -38,11 +42,24 @@ export class Journal implements JournalInterface {
         return journal
     }
 
+    /**
+     * Decodes `json` and `json_deflate` (v1) content with the secrets masked; formats that can't be
+     * decoded (v1 `storable`, `sereal`) and broken content become null, never the raw bytes
+     */
     decodeContent(): void {
-        if (this.content_format == 'application/json' || this.content_format == 'json')  {
-            this.content = this.content && this.content instanceof Buffer
-                ? JSON.parse(this.content.toString())
-                : this.content
+        if (this.content == null)
+            return
+        try {
+            let json: string
+            if (this.content_format == 'application/json' || this.content_format == 'json')
+                json = this.content.toString()
+            else if (this.content_format == 'json_deflate')
+                json = inflateSync(this.content).toString()
+            else
+                throw new Error(`unsupported content format ${this.content_format}`)
+            this.content = json == '' ? null : JSON.parse(json, obfuscatePasswordJSON)
+        } catch {
+            this.content = null
         }
     }
 }

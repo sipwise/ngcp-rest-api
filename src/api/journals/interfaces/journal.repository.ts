@@ -6,5 +6,5 @@ export interface JournalRepository {
 
     read(id: number, sr: ServiceRequest): Promise<internal.Journal>
 
-    readAll(sr: ServiceRequest, resourceName?: string, resourceId?: number | string): Promise<[internal.Journal[], number]>
+    readAll(sr: ServiceRequest, resourceName?: string, resourceId?: number | string, resourceVerified?: boolean): Promise<[internal.Journal[], number]>
 }

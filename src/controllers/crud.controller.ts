@@ -1,8 +1,9 @@
 // TODO: Fix this later in the generic controller approach
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {BadRequestException} from '@nestjs/common'
+import {BadRequestException, NotFoundException} from '@nestjs/common'
 import {Request} from 'express'
+import {EntityNotFoundError} from 'typeorm'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
@@ -78,7 +79,19 @@ export class CrudController<CreateDTO, _ResponseDTO> {
         ..._params: unknown[]
     ): Promise<[JournalResponseDto[], number]>{
         const sr = new ServiceRequest(req)
-        const [result, count] = await this.journalCrudService.readAll(sr, this.resourceName, id)
+        this.journalCrudService.checkAccess(sr)
+        const resourceId = typeof id == 'string' && /^\d+$/.test(id) ? +id : id
+        // the journal of a resource readable within the caller's scope is not limited further; a deleted resource
+        // (or one out of scope) gets the scope of /journals/<name>/<id>
+        let resourceVerified = true
+        try {
+            await this.repo.read(resourceId, sr)
+        } catch (err) {
+            if (!(err instanceof NotFoundException || err instanceof EntityNotFoundError))
+                throw err
+            resourceVerified = false
+        }
+        const [result, count] = await this.journalCrudService.readAll(sr, this.resourceName, resourceId, resourceVerified)
         return [result.map(j => new JournalResponseDto(j)), count]
     }
 }
