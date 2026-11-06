@@ -1,5 +1,6 @@
 import {HttpStatus} from '@nestjs/common'
 import {NestApplication} from '@nestjs/core'
+import {OperationObject, ResponseObject} from '@nestjs/swagger'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
 
@@ -108,6 +109,22 @@ describe('Swagger', () => {
         expect(init.text).toMatch(/"lang": ?"en"/)
         const json = await request(app.getHttpServer()).get('/api/swagger.json?lang=xx')
         expect(json.body.info.title).toEqual(readSwaggerStrings('en').page.title)
+    })
+
+    it('describes every error response with the ErrorResponse schema', async () => {
+        const json = await request(app.getHttpServer()).get('/api/swagger.json')
+        expect(json.status).toEqual(HttpStatus.OK)
+        const schemas = json.body.components.schemas
+        expect(schemas.ErrorResponse.required).toEqual(['tx', 'statusCode', 'path', 'method', 'error', 'errorCode', 'message'])
+        expect(schemas.ErrorResponse.properties.errors.items).toEqual({$ref: '#/components/schemas/ErrorEntry'})
+        expect(schemas.ErrorEntry.required).toEqual(['code', 'message'])
+        const paths = json.body.paths as Record<string, Record<string, OperationObject>>
+        const operations = Object.values(paths).flatMap(item => Object.values(item))
+        expect(operations.length).toBeGreaterThan(100)
+        for (const operation of operations) {
+            for (const code of ['4XX', '5XX'])
+                expect((operation.responses[code] as ResponseObject).content['application/json'].schema).toEqual({$ref: '#/components/schemas/ErrorResponse'})
+        }
     })
 
     it('serves the localised document and pdf with ?lang=', async () => {

@@ -1,4 +1,4 @@
-import {CallHandler, ExecutionContext, Injectable, InternalServerErrorException, NestInterceptor} from '@nestjs/common'
+import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestjs/common'
 import {Reflector} from '@nestjs/core'
 import {Observable, lastValueFrom, of} from 'rxjs'
 import {runInTransaction} from 'typeorm-transactional'
@@ -46,9 +46,7 @@ export class TransactionInterceptor implements NestInterceptor {
             })
             const store = postCommitQueueStorage.getStore()
             if (!store) {
-                throw new InternalServerErrorException(
-                    'Internal error: post-commit queue store missing after commit - this should never happen',
-                )
+                throw new Error('post-commit queue store missing after commit - this should never happen')
             }
             for (const cb of store.callbacks) {
                 try {

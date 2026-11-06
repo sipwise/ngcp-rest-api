@@ -1,4 +1,4 @@
-import {BadRequestException, HttpException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {HttpStatus, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {ContactOptions} from '~/api/contacts/interfaces/contact-options.interface'
@@ -8,6 +8,7 @@ import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
 import {ContactType} from '~/entities/internal/contact.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrors,apiError, checkItems, idPointer, itemPointer, readFoundIds, throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -26,28 +27,25 @@ export class CustomerContactService implements CrudService<internal.Contact> {
     async create(contacts: internal.Contact[], sr: ServiceRequest): Promise<internal.Contact[]> {
         const now = new Date(Date.now())
         if (sr.user.reseller_id_required) {  // only fetch and validate reseller once if restricted to reseller_id
-            await this.resellerIdExists(sr.user.reseller_id, sr)
+            if (!await this.contactRepo.readResellerById(sr.user.reseller_id, sr))
+                throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
             for (const contact of contacts) {
                 contact.reseller_id = sr.user.reseller_id
                 contact.create_timestamp = now
                 contact.modify_timestamp = now
             }
         } else {  // fetch and validate reseller for each item
-            for (const contact of contacts) {
-                await this.resellerIdExists(contact.reseller_id, sr)
+            const errors = new ApiErrors()
+            for (const [index, contact] of contacts.entries()) {
+                if (!await this.contactRepo.readResellerById(contact.reseller_id, sr))
+                    errors.add(this.i18n.t('errors.RESELLER_ID_INVALID'), itemPointer(sr, index, contact, 'reseller_id'))
                 contact.create_timestamp = now
                 contact.modify_timestamp = now
             }
+            errors.throwIfAny()
         }
         const createdIds = await this.contactRepo.create(contacts, sr)
         return await this.contactRepo.readWhereInIds(createdIds)
-    }
-
-    private async resellerIdExists(id: number, sr: ServiceRequest): Promise<void> {
-        const reseller = await this.contactRepo.readResellerById(id, sr)
-        if (!reseller) {
-            throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
-        }
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
@@ -60,25 +58,20 @@ export class CustomerContactService implements CrudService<internal.Contact> {
         const options = this.getContactOptionsFromServiceRequest(sr)
 
         const contacts = await this.contactRepo.readWhereInIds(ids, options)
-        if (ids.length != contacts.length)
-            throw new UnprocessableEntityException()
+        throwMissingIds(sr, ids, contacts.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
+        // contacts with active contracts or subscribers can't be deleted (423 locked)
+        await checkItems(contacts, async contact => {
+            if (!contact.reseller_id) // TODO: imo this check is redundant as the repository only returns customer contacts
+                throw apiError(this.i18n.t('errors.CONTACT_DELETE_SYSTEM_CONTACT'), idPointer(sr, contact.id), HttpStatus.BAD_REQUEST)
+            if (await this.contactRepo.hasContactActiveContract(contact.id, sr))
+                throw apiError(this.i18n.t('errors.CONTACT_HAS_ACTIVE_CONTRACT'), idPointer(sr, contact.id), HttpStatus.LOCKED)
+            if (await this.contactRepo.hasContactActiveSubscriber(contact.id, sr))
+                throw apiError(this.i18n.t('errors.CONTACT_HAS_ACTIVE_SUBSCRIBER'), idPointer(sr, contact.id), HttpStatus.LOCKED)
+        })
         for (const contact of contacts) {
-            if (!contact.reseller_id) { // TODO: imo this check is redundant as the repository only returns customer contacts
-                throw new BadRequestException(this.i18n.t('errors.CONTACT_DELETE_SYSTEM_CONTACT')) // TODO: find better description
-            }
-
-            if (await this.contactRepo.hasContactActiveContract(contact.id, sr)) {
-                throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_CONTRACT'), 423) // 423 HTTP LOCKED
-            }
-
-            if (await this.contactRepo.hasContactActiveSubscriber(contact.id, sr)) {
-                throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_SUBSCRIBER'), 423) // 423 HTTP LOCKED
-            }
-
-            if (await this.contactRepo.hasContactTerminatedContract(contact.id, sr) || await this.contactRepo.hasContactTerminatedSubscriber(contact.id, sr)) {
+            if (await this.contactRepo.hasContactTerminatedContract(contact.id, sr) || await this.contactRepo.hasContactTerminatedSubscriber(contact.id, sr))
                 await this.contactRepo.terminate(contact.id, sr)
-            }
         }
         return await this.contactRepo.delete(ids, sr)
     }
@@ -114,20 +107,19 @@ export class CustomerContactService implements CrudService<internal.Contact> {
         })
 
         const options = this.getContactOptionsFromServiceRequest(sr)
+        throwMissingIds(sr, ids, await readFoundIds(ids, id => this.contactRepo.readById(id, options)), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
+        const errors = new ApiErrors()
         for (const id of ids) {
             const contact = updates[id]
             if (sr.user.reseller_id_required) {
                 contact.reseller_id = sr.user.reseller_id
             }
             const oldContact = await this.contactRepo.readById(id, options)
-            if (oldContact.reseller_id != contact.reseller_id) {
-                const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
-                if (!reseller) {
-                    throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
-                }
-            }
+            if (oldContact.reseller_id != contact.reseller_id && !await this.contactRepo.readResellerById(contact.reseller_id, sr))
+                errors.add(this.i18n.t('errors.RESELLER_ID_INVALID'), itemPointer(sr, id, contact, 'reseller_id'))
         }
+        errors.throwIfAny()
         return await this.contactRepo.update(updates, options)
     }
 

@@ -1,5 +1,4 @@
-import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
-import {I18nService} from 'nestjs-i18n'
+import {Inject, Injectable} from '@nestjs/common'
 import {IsNull, SelectQueryBuilder} from 'typeorm'
 
 import {CustomerSearchDto} from '~/api/customers/dto/customer-search.dto'
@@ -29,7 +28,6 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
 
     constructor(
         @Inject(AppService) private readonly app: AppService,
-        @Inject(I18nService) private readonly i18n: I18nService,
     ) {
         super()
     }
@@ -100,7 +98,7 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         qb.orderBy('cbpns.effective_start_time', 'DESC')
         const cbpns = await qb.getOne()
         if (!cbpns)
-            throw new UnprocessableEntityException(`no billing profile for contract id ${contractId} at ${at.toISOString()} (${epoch})`)
+            return undefined
         return cbpns.profileNetwork.billingProfile.toInternal()
     }
 
@@ -345,10 +343,7 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         qb.innerJoinAndSelect('profilePackage.packageProfileSets', 'packageProfileSets')
         qb.andWhere('packageProfileSets.discriminator = :discriminator', {discriminator: Discriminator.Initial})
         const profile = await qb.getOne()
-        if (!profile) {
-            throw new NotFoundException(this.i18n.t('errors.INVALID_PROFILE_PACKAGE_ID'))
-        }
-        return profile.toInternal()
+        return profile?.toInternal()
     }
 
     async readFutureBillingProfiles(customerId: number, _sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.CustomerBillingProfile[], number]> {

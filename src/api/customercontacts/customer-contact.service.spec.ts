@@ -1,4 +1,4 @@
-import {HttpException, UnprocessableEntityException} from '@nestjs/common'
+import {HttpException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 
 import {CustomerContactModule} from './customer-contact.module'
@@ -14,6 +14,7 @@ import {ContactStatus, ContactType} from '~/entities/internal/contact.internal.e
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {deepCopy} from '~/helpers/deep-copy.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -92,7 +93,7 @@ describe('CustomerContactService', () => {
             expect(contact.reseller_id).toStrictEqual(expectedResellerId)
         })
         it('should throw an error if reseller_id is invalid', async () => {
-            await expect(service.create([internal.Contact.create({reseller_id: 100})], sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.create([internal.Contact.create({reseller_id: 100})], sr)).rejects.toThrow(ApiErrorException)
         })
     })
 
@@ -137,7 +138,7 @@ describe('CustomerContactService', () => {
             const resellerId = 100
             const updates = new Dictionary<internal.Contact>()
             updates[id] = internal.Contact.create({reseller_id: resellerId})
-            await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(updates, sr)).rejects.toThrow(ApiErrorException)
         })
         // TODO: ? it('should throw an error if reseller changes reseller_id', async () => { })
     })
@@ -167,7 +168,7 @@ describe('CustomerContactService', () => {
             const oldEntity = await service.read(id, sr)
             const entity = await patchToEntity<internal.Contact, CustomerContactRequestDto>(oldEntity, patch, CustomerContactRequestDto)
             const update = new Dictionary<internal.Contact>(id.toString(), entity)
-            await expect(service.update(update, sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(update, sr)).rejects.toThrow(ApiErrorException)
         })
         it('should set reseller_id to user.reseller_id if user.reseller_id_required', async () => {
             const id = 2

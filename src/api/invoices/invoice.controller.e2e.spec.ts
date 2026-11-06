@@ -20,6 +20,7 @@ import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory, InvoiceTemplateType} from '~/entities/internal/invoice-template.internal.entity'
 import {InvoiceGenerator} from '~/entities/internal/invoice.internal.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
+import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
@@ -674,6 +675,18 @@ describe('Invoice', () => {
             ])('does not create an invoice %s', async (_name, body) => {
                 const response = await post(body())
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+            })
+            it.each([
+                ['an unknown contract', (): Record<string, unknown> => ({customer_id: 999999999, template_id: templates.customer, period: '2025-01'}), '/customer_id', 'INVOICE_CONTRACT_NOT_FOUND'],
+                ['an unknown template', (): Record<string, unknown> => ({customer_id: cdrCustomerId, template_id: 999999999, period: '2025-01'}), '/template_id', 'INVOICE_TEMPLATE_NOT_FOUND'],
+                ['a period_start after period_end', (): Record<string, unknown> => ({
+                    customer_id: cdrCustomerId, template_id: templates.customer, period_start: '2025-01-10', period_end: '2025-01-01',
+                }), '/period_end', 'INVOICE_PERIOD_INVALID'],
+            ])('points to the field of %s', async (_name, body, pointer, code) => {
+                const response = await post(body())
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errorCode).toEqual(code)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([[pointer, code]])
             })
             it('does not keep the invoice when the template fails to render', async () => {
                 const count = await db.billing.Invoice.countBy({contract_id: cdrCustomerId})

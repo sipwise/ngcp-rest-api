@@ -18,6 +18,7 @@ import {db} from '~/entities'
 import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
+import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
@@ -228,6 +229,22 @@ describe('Customer Phonebook', () => {
                     .set('Accept', 'application/json')
                     .attach('file', Buffer.from(csvContent), 'customer_phonebook_test.csv')
                 expect(response.status).toEqual(422)
+            })
+            it('points to the duplicate rows of a csv import', async () => {
+                const csvContent = [
+                    'customer_id,name,number',
+                    `${createdContractIds[0]},CUST_PHONEBOOK_DUP1,70091`,
+                    `${createdContractIds[0]},CUST_PHONEBOOK_DUP2,70092`,
+                    `${createdContractIds[0]},CUST_PHONEBOOK_DUP3,70091`,
+                ].join('\n')
+                const response = await request(app.getHttpServer())
+                    .post('/api/customers/phonebook')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .attach('file', Buffer.from(csvContent), 'customer_phonebook_test.csv')
+                expect(response.status).toEqual(422)
+                expect(response.body.errorCode).toEqual('DUPLICATE_IN_CSV')
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/2/number', 'DUPLICATE_IN_CSV']])
             })
         })
 
@@ -481,6 +498,7 @@ describe('Customer Phonebook', () => {
                     .set('Content-Type', 'application/json')
                     .send({name: 'foreign_entry', number: '4712', customer_id: createdContractIds[0]})
                 expect(response.status).toEqual(422)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/customer_id', 'ENTRY_NOT_FOUND']])
             })
             it('reject a csv import for a customer of another reseller', async () => {
                 const csvContent = ['customer_id,name,number', `${createdContractIds[0]},foreign_csv,4713`].join('\n')
@@ -490,6 +508,7 @@ describe('Customer Phonebook', () => {
                     .set('Accept', 'application/json')
                     .attach('file', Buffer.from(csvContent), 'customer_phonebook_test.csv')
                 expect(response.status).toEqual(422)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/0/customer_id', 'ENTRY_NOT_FOUND']])
                 expect(await db.billing.ContractPhonebook.countBy({contract_id: createdContractIds[0]})).toBeGreaterThan(0)
             })
             it('list only entries of own customers', async () => {

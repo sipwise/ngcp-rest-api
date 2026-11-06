@@ -4,10 +4,13 @@ import {IsInt, IsOptional, Matches} from 'class-validator'
 import {invoicePeriod} from '~/api/invoices/invoice-generator'
 import {RequestDto} from '~/dto/request.dto'
 import {internal} from '~/entities'
+import {DtoFields, withDtoFields} from '~/helpers/dto-fields.helper'
 
 const dateTimePattern = /^\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?$/
 
 export class InvoiceRequestDto implements RequestDto {
+    static readonly dtoFields: DtoFields<internal.Invoice, InvoiceRequestDto> = {contractId: 'customer_id'}
+
     @ApiProperty({description: 'Contract to create the invoice for: a customer for customer and did templates, a peering contract for peer templates, a reseller contract for reseller templates'})
     @IsInt()
         customer_id!: number
@@ -38,6 +41,6 @@ export class InvoiceRequestDto implements RequestDto {
         invoice.templateId = this.template_id
         invoice.periodStart = start
         invoice.periodEnd = end
-        return invoice
+        return withDtoFields(invoice, InvoiceRequestDto.dtoFields)
     }
 }

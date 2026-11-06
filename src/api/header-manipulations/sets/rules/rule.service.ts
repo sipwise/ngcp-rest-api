@@ -1,4 +1,4 @@
-import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {FilterBy, HeaderManipulationRuleMariadbRepository} from './repositories/rule.mariadb.repository'
@@ -7,10 +7,9 @@ import {HeaderManipulationSetMariadbRepository} from '~/api/header-manipulations
 import {HeaderManipulationSetRedisRepository} from '~/api/header-manipulations/sets/repositories/set.redis.repository'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {ApiErrors, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -29,10 +28,12 @@ export class HeaderManipulationRuleService implements CrudService<internal.Heade
     async create(entities: internal.HeaderRule[], sr: ServiceRequest): Promise<internal.HeaderRule[]> {
         if (sr.user.reseller_id_required) {
             const sets = await this.ruleSetRepo.readWhereInIds(entities.map(entity => entity.setId), sr)
-            if (sets.some(set => set.resellerId != sr.user.reseller_id)) {
-                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-                throw new UnprocessableEntityException(error.message)
-            }
+            const errors = new ApiErrors()
+            entities.forEach((entity, index) => {
+                if (sets.some(set => set.id == entity.setId && set.resellerId != sr.user.reseller_id))
+                    errors.add(this.i18n.t('errors.ENTRY_NOT_FOUND'), itemPointer(sr, index, entity, 'setId'))
+            })
+            errors.throwIfAny()
         }
 
         for (const entity of entities) {
@@ -90,13 +91,7 @@ export class HeaderManipulationRuleService implements CrudService<internal.Heade
             rules = await this.ruleRepo.readWhereInIds(ids, sr)
         }
 
-        if (rules.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != rules.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, rules.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         rules.forEach(async rule => await this.invalidateRuleSetAfterCommit(rule.setId, sr))
 
@@ -111,13 +106,7 @@ export class HeaderManipulationRuleService implements CrudService<internal.Heade
             rules = await this.ruleRepo.readWhereInIds(ids, sr)
         }
 
-        if (rules.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != rules.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, rules.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         const setIds = rules.map(rule => rule.setId)
         const sets = (await this.ruleSetRepo.readWhereInIds(setIds, sr)).filter(set => set.subscriberId)

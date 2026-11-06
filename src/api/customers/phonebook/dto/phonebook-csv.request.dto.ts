@@ -3,8 +3,11 @@ import {IsNotEmpty, IsNumberString, IsOptional, IsString, MaxLength} from 'class
 
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
+import {DtoFields, withDtoFields} from '~/helpers/dto-fields.helper'
 
 export class CustomerPhonebookCsvRequestDto implements RequestDto {
+    static readonly dtoFields: DtoFields<internal.CustomerPhonebook, CustomerPhonebookCsvRequestDto> = {contractId: 'customer_id'}
+
     @IsString()
     @IsNotEmpty()
     @MaxLength(255)
@@ -51,6 +54,6 @@ export class CustomerPhonebookCsvRequestDto implements RequestDto {
                     entity[k] = null
             })
         }
-        return entity
+        return withDtoFields(entity, CustomerPhonebookCsvRequestDto.dtoFields)
     }
 }

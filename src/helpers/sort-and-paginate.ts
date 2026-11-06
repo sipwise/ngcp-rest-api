@@ -1,5 +1,4 @@
-import {BadRequestException} from '@nestjs/common'
-
+import {InvalidParameterException} from './errors.helper'
 import {paginate} from './paginate.helper'
 
 import {AppService} from '~/app.service'
@@ -16,12 +15,12 @@ export function sortAndPaginate<T>(array: T[], sr: ServiceRequest, defaultField:
     const orderBy = sr.req.query['order_by'] as string ?? defaultField
     if (orderBy && array.length > 0) {
         if (!array[0][orderBy])
-            throw new BadRequestException(`invalid order_by value ${orderBy}`)
+            throw new InvalidParameterException([{parameter: 'order_by', code: 'isIn', message: 'order_by must be a sortable field'}])
     }
 
     const orderByDir = (sr.req.query['order_by_direction'] as string ?? '').toLowerCase()
     if (orderByDir && (orderByDir != 'asc' && orderByDir != 'desc')) {
-        throw new BadRequestException(`invalid order_by_direction value ${orderByDir}`)
+        throw new InvalidParameterException([{parameter: 'order_by_direction', code: 'isIn', message: 'order_by_direction must be one of the following values: asc, desc'}])
     }
 
     const orderByDirA = orderByDir == 'desc' ? 1 : -1

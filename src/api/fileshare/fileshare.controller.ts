@@ -8,7 +8,6 @@ import {
     Req,
     Response,
     StreamableFile,
-    UnprocessableEntityException,
     UploadedFile,
     UseInterceptors,
 } from '@nestjs/common'
@@ -29,6 +28,7 @@ import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorato
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Public} from '~/decorators/public.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
+import {ValidationFailedException} from '~/helpers/errors.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -64,9 +64,8 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
         @Req() req: Request,
         @UploadedFile() file,
     ): Promise<FileshareResponseDto> {
-        if (!file) {
-            throw new UnprocessableEntityException()
-        }
+        if (!file)
+            throw new ValidationFailedException([{pointer: '/file', code: 'isNotEmpty', message: 'file should not be empty'}])
         this.log.debug({message: 'create fileshare', func: this.create.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const response = await this.fileshareService.create(createDto, sr, file)

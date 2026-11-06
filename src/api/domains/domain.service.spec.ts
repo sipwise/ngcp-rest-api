@@ -1,4 +1,4 @@
-import {ForbiddenException, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 
 import {DomainModule} from './domain.module'
@@ -10,6 +10,7 @@ import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {deepCopy} from '~/helpers/deep-copy.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
@@ -104,19 +105,19 @@ describe('DomainService', () => {
 
         it('rejects an unknown reseller_id with 422 for admins', async () => {
             const spy = jest.spyOn(domainMockRepo, 'create')
-            await expect(service.create([makeDomain('new1', 99)], sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.create([makeDomain('new1', 99)], sr)).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
 
         it('rejects an existing domain name with 422 for admins', async () => {
             const spy = jest.spyOn(domainMockRepo, 'create')
-            await expect(service.create([makeDomain('domain1', 1)], sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.create([makeDomain('domain1', 1)], sr)).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
 
         it('does not create anything if one of several domains is invalid', async () => {
             const spy = jest.spyOn(domainMockRepo, 'create')
-            await expect(service.create([makeDomain('ok', 1), makeDomain('domain2', 1)], sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.create([makeDomain('ok', 1), makeDomain('domain2', 1)], sr)).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
 
@@ -128,7 +129,7 @@ describe('DomainService', () => {
 
         it('rejects an existing domain name with 422 for resellers', async () => {
             const rsr = {...sr, user: resellerUser}
-            await expect(service.create([makeDomain('domain3')], rsr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.create([makeDomain('domain3')], rsr)).rejects.toThrow(ApiErrorException)
         })
 
         it('rejects a reseller user whose reseller does not exist', async () => {
@@ -146,13 +147,13 @@ describe('DomainService', () => {
     describe('delete branches', () => {
         it('throws UnprocessableEntityException and deletes nothing if some ids are missing', async () => {
             const spy = jest.spyOn(domainMockRepo, 'delete')
-            await expect(service.delete([1, 100], sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.delete([1, 100], sr)).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
 
         it('throws ForbiddenException for a reseller deleting a foreign domain', async () => {
             const spy = jest.spyOn(domainMockRepo, 'delete')
-            await expect(service.delete([2], {...sr, user: resellerUser})).rejects.toThrow(ForbiddenException)
+            await expect(service.delete([2], {...sr, user: resellerUser})).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
 

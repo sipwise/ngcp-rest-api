@@ -5,6 +5,7 @@ import {FilterBy, NCOSSetLevelMariadbRepository} from './repositories/level.mari
 
 import {NCOSSetMariadbRepository} from '~/api/ncos/sets/repositories/set.mariadb.repository'
 import {internal} from '~/entities'
+import {throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -50,8 +51,7 @@ export class NCOSSetLevelService implements CrudService<internal.NCOSSetLevel> {
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         const entities = await this.ncosSetLevelRepo.readWhereInIds(ids, sr)
-        if (entities.length == 0)
-            throw new NotFoundException()
+        throwMissingIds(sr, ids, entities.map(entity => entity.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         const setIds = [...new Set(entities.map(entity => entity.ncosSetId))]
         for (const setId of setIds) {

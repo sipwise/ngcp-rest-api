@@ -81,9 +81,6 @@ export class AdminMockRepository implements AdminRepository {
         return Promise.resolve(admins)
     }
 
-    readCountOfIds(ids: number[], _options?: AdminOptions): Promise<number> {
-        return Promise.resolve(ids.length)
-    }
 
     update(updates: Dictionary<internal.Admin>, _options: AdminOptions): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))

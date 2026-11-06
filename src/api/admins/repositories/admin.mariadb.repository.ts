@@ -64,11 +64,6 @@ export class AdminMariadbRepository extends MariaDbRepository implements AdminRe
         return admins.map(admin => admin.toInternal())
     }
 
-    async readCountOfIds(ids: number[], options: AdminOptions): Promise<number> {
-        const qb = db.billing.Admin.createQueryBuilder('admin')
-        this.addPermissionCheckToQueryBuilder(qb, options)
-        return await qb.andWhereInIds(ids).getCount()
-    }
 
     async update(updates: Dictionary<internal.Admin>, _options: AdminOptions): Promise<number[]> {
         const ids: number[] = []

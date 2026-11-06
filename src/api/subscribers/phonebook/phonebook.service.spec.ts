@@ -12,6 +12,7 @@ import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -99,7 +100,7 @@ describe('subscriber phonebookService', () => {
                 number: '991',
                 subscriberId: 100,
                 shared: false,
-            })], sr)).rejects.toThrow(UnprocessableEntityException)
+            })], sr)).rejects.toThrow(ApiErrorException)
         })
     })
 
@@ -129,7 +130,7 @@ describe('subscriber phonebookService', () => {
                 name: 'foo',
                 number: '111',
             })
-            await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(updates, sr)).rejects.toThrow(ApiErrorException)
         })
     })
 
@@ -242,7 +243,7 @@ describe('subscriber phonebookService', () => {
         })
 
         it('should default the subscriber id to the user for subscriber', async () => {
-            const allowed = jest.spyOn(phonebookMockRepo, 'getAllowedSubscribersCount')
+            const allowed = jest.spyOn(phonebookMockRepo, 'getAllowedSubscriberIds')
             const entity = makeEntity(undefined, '801')
             await service.create([entity], makeSr(subscriberUser))
             expect(entity.subscriberId).toBe(1)
@@ -252,7 +253,7 @@ describe('subscriber phonebookService', () => {
         it('should default the subscriber id to the user for subscriberadmin and keep a given one', async () => {
             const given = makeEntity(3, '802')
             const missing = makeEntity(undefined, '803')
-            const allowed = jest.spyOn(phonebookMockRepo, 'getAllowedSubscribersCount').mockResolvedValue(2)
+            const allowed = jest.spyOn(phonebookMockRepo, 'getAllowedSubscriberIds').mockResolvedValue([1, 3])
             jest.spyOn(phonebookMockRepo, 'create').mockResolvedValue([1])
             await service.create([given, missing], makeSr(subadminUser))
             expect(given.subscriberId).toBe(3)
@@ -262,23 +263,23 @@ describe('subscriber phonebookService', () => {
         })
         it('should not default the subscriber id for admin', async () => {
             const entity = makeEntity(undefined, '804')
-            jest.spyOn(phonebookMockRepo, 'getAllowedSubscribersCount').mockResolvedValue(0)
+            jest.spyOn(phonebookMockRepo, 'getAllowedSubscriberIds').mockResolvedValue([])
             await expect(service.create([entity], makeSr(user))).rejects.toThrow(UnprocessableEntityException)
             expect(entity.subscriberId).toBeUndefined()
         })
         it('should count each subscriber id once', async () => {
-            const allowed = jest.spyOn(phonebookMockRepo, 'getAllowedSubscribersCount')
+            const allowed = jest.spyOn(phonebookMockRepo, 'getAllowedSubscriberIds')
             await service.create([makeEntity(1, '805'), makeEntity(1, '806')], makeSr(user))
             expect(allowed.mock.calls[0][0]).toStrictEqual([1])
         })
         it('should reject if a subscriber is not allowed and not create anything', async () => {
-            jest.spyOn(phonebookMockRepo, 'getAllowedSubscribersCount').mockResolvedValue(0)
+            jest.spyOn(phonebookMockRepo, 'getAllowedSubscriberIds').mockResolvedValue([])
             const spy = jest.spyOn(phonebookMockRepo, 'create')
-            await expect(service.create([makeEntity(1, '807')], makeSr(resellerUser))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.create([makeEntity(1, '807')], makeSr(resellerUser))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('should pass the reseller filter to the allowed check', async () => {
-            const allowed = jest.spyOn(phonebookMockRepo, 'getAllowedSubscribersCount')
+            const allowed = jest.spyOn(phonebookMockRepo, 'getAllowedSubscriberIds')
             await service.create([makeEntity(1, '808')], makeSr(resellerUser))
             expect(allowed.mock.calls[0][1].resellerId).toBe(2)
         })
@@ -296,32 +297,32 @@ describe('subscriber phonebookService', () => {
             return d
         }
 
-        it('update: should throw NotFound if no id is visible', async () => {
-            jest.spyOn(phonebookMockRepo, 'readCountOfIds').mockResolvedValue(0)
+        it('update: should throw 422 for every id if no id is visible', async () => {
+            jest.spyOn(phonebookMockRepo, 'readExistingIds').mockResolvedValue([])
             const spy = jest.spyOn(phonebookMockRepo, 'update')
-            await expect(service.update(updates(), makeSr(user))).rejects.toThrow(NotFoundException)
+            await expect(service.update(updates(), makeSr(user))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('update: should throw 422 if only some ids are visible', async () => {
-            jest.spyOn(phonebookMockRepo, 'readCountOfIds').mockResolvedValue(1)
+            jest.spyOn(phonebookMockRepo, 'readExistingIds').mockResolvedValue([1])
             const spy = jest.spyOn(phonebookMockRepo, 'update')
-            await expect(service.update(updates(), makeSr(user))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(updates(), makeSr(user))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('update: should pass the scope filter to the count', async () => {
-            const spy = jest.spyOn(phonebookMockRepo, 'readCountOfIds')
+            const spy = jest.spyOn(phonebookMockRepo, 'readExistingIds')
             await service.update(updates(), makeSr(subscriberUser))
             expect(spy.mock.calls[0][0]).toStrictEqual([1, 2])
             expect(spy.mock.calls[0][1].filterBy.subscriberId).toBe(1)
         })
-        it('delete: should throw NotFound if no id is visible', async () => {
-            jest.spyOn(phonebookMockRepo, 'readCountOfIds').mockResolvedValue(0)
-            await expect(service.delete([1, 2], makeSr(user))).rejects.toThrow(NotFoundException)
+        it('delete: should throw 422 for every id if no id is visible', async () => {
+            jest.spyOn(phonebookMockRepo, 'readExistingIds').mockResolvedValue([])
+            await expect(service.delete([1, 2], makeSr(user))).rejects.toThrow(ApiErrorException)
         })
         it('delete: should throw 422 if only some ids are visible', async () => {
-            jest.spyOn(phonebookMockRepo, 'readCountOfIds').mockResolvedValue(1)
+            jest.spyOn(phonebookMockRepo, 'readExistingIds').mockResolvedValue([1])
             const spy = jest.spyOn(phonebookMockRepo, 'delete')
-            await expect(service.delete([1, 2], makeSr(user))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.delete([1, 2], makeSr(user))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('delete: should delete several ids', async () => {
@@ -329,9 +330,9 @@ describe('subscriber phonebookService', () => {
         })
 
         it('update: should reject moving an entry to a subscriber outside the user scope', async () => {
-            jest.spyOn(phonebookMockRepo, 'getAllowedSubscribersCount').mockResolvedValue(0)
+            jest.spyOn(phonebookMockRepo, 'getAllowedSubscriberIds').mockResolvedValue([])
             const spy = jest.spyOn(phonebookMockRepo, 'update')
-            await expect(service.update(updates(9), makeSr(subscriberUser))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(updates(9), makeSr(subscriberUser))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
     })
@@ -344,24 +345,24 @@ describe('subscriber phonebookService', () => {
         it('should reject duplicate subscriber/number pairs', async () => {
             const spy = jest.spyOn(phonebookMockRepo, 'create')
             await expect(service.importCsv([makeEntity(1, '5'), makeEntity(1, '5')], makeSr(user)))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('should reject subscriber importing for another subscriber', async () => {
             const spy = jest.spyOn(phonebookMockRepo, 'create')
-            await expect(service.importCsv([makeEntity(2, '5')], makeSr(subscriberUser))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.importCsv([makeEntity(2, '5')], makeSr(subscriberUser))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('should reject subscriberadmin importing for a subscriber outside its customer', async () => {
-            const allowed = jest.spyOn(phonebookMockRepo, 'getAllowedSubscribersCount').mockResolvedValue(0)
+            const allowed = jest.spyOn(phonebookMockRepo, 'getAllowedSubscriberIds').mockResolvedValue([])
             const spy = jest.spyOn(phonebookMockRepo, 'create')
-            await expect(service.importCsv([makeEntity(2, '5')], makeSr(subadminUser))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.importCsv([makeEntity(2, '5')], makeSr(subadminUser))).rejects.toThrow(ApiErrorException)
             expect(allowed.mock.calls[0][0]).toStrictEqual([2])
             expect(allowed.mock.calls[0][1]).toMatchObject({customerId: 4})
             expect(spy).not.toHaveBeenCalled()
         })
         it('should allow subscriberadmin importing for a subscriber of its customer', async () => {
-            jest.spyOn(phonebookMockRepo, 'getAllowedSubscribersCount').mockResolvedValue(1)
+            jest.spyOn(phonebookMockRepo, 'getAllowedSubscriberIds').mockResolvedValue([3])
             jest.spyOn(phonebookMockRepo, 'create').mockResolvedValue([1])
             await expect(service.importCsv([makeEntity(3, '5')], makeSr(subadminUser))).resolves.toHaveLength(1)
         })
@@ -371,7 +372,7 @@ describe('subscriber phonebookService', () => {
         })
         it('should purge each subscriber once for purge_existing=true and drop the flag', async () => {
             const purge = jest.spyOn(phonebookMockRepo, 'purge')
-            jest.spyOn(phonebookMockRepo, 'getAllowedSubscribersCount').mockResolvedValue(2)
+            jest.spyOn(phonebookMockRepo, 'getAllowedSubscriberIds').mockResolvedValue([1, 2])
             jest.spyOn(phonebookMockRepo, 'create').mockResolvedValue([1])
             const req = makeSr(user, {purge_existing: 'true'})
             await service.importCsv([makeEntity(1, '5'), makeEntity(1, '6'), makeEntity(2, '7')], req)
@@ -388,9 +389,9 @@ describe('subscriber phonebookService', () => {
         })
 
         it('should reject importing for subscribers outside the reseller scope', async () => {
-            jest.spyOn(phonebookMockRepo, 'getAllowedSubscribersCount').mockResolvedValue(0)
+            jest.spyOn(phonebookMockRepo, 'getAllowedSubscriberIds').mockResolvedValue([])
             const spy = jest.spyOn(phonebookMockRepo, 'create')
-            await expect(service.importCsv([makeEntity(9, '5')], makeSr(resellerUser))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.importCsv([makeEntity(9, '5')], makeSr(resellerUser))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
     })

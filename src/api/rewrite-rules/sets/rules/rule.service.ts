@@ -1,5 +1,5 @@
 
-import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {FilterBy, RewriteRuleMariadbRepository} from './repositories/rule.mariadb.repository'
@@ -8,10 +8,9 @@ import {RewriteRuleRedisRepository} from './repositories/rule.redis.repository'
 import {RewriteRuleSetMariadbRepository} from '~/api/rewrite-rules/sets/repositories/set.mariadb.repository'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {ApiErrors, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -30,10 +29,12 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
     async create(entities: internal.RewriteRule[], sr: ServiceRequest): Promise<internal.RewriteRule[]> {
         if (sr.user.reseller_id_required) {
             const sets = await this.ruleSetRepo.readWhereInIds(entities.map(entity => entity.setId), sr)
-            if (sets.some(set => set.resellerId != sr.user.reseller_id)) {
-                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-                throw new UnprocessableEntityException(error.message)
-            }
+            const errors = new ApiErrors()
+            entities.forEach((entity, index) => {
+                if (sets.some(set => set.id == entity.setId && set.resellerId != sr.user.reseller_id))
+                    errors.add(this.i18n.t('errors.ENTRY_NOT_FOUND'), itemPointer(sr, index, entity, 'setId'))
+            })
+            errors.throwIfAny()
         }
 
         // TODO: Can this be done in a single query?
@@ -92,13 +93,7 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
             rules = await this.ruleRepo.readWhereInIds(ids, sr)
         }
 
-        if (rules.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != rules.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, rules.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         Object.values(updates).forEach(entity => {
             this.deflateMatchReplacePatterns(entity)
@@ -119,13 +114,7 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
             rules = await this.ruleRepo.readWhereInIds(ids, sr)
         }
 
-        if (rules.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != rules.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, rules.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         const deletedIds = await this.ruleRepo.delete(ids,sr)
 

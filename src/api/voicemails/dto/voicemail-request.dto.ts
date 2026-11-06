@@ -4,8 +4,11 @@ import {IsIn} from 'class-validator'
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
 import {supportedVoicemailFolders} from '~/enums/supported-voicemail-folders.enum'
+import {DtoFields, withDtoFields} from '~/helpers/dto-fields.helper'
 
 export class VoicemailRequestDto implements RequestDto {
+    static readonly dtoFields: DtoFields<internal.Voicemail, VoicemailRequestDto> = {dir: 'folder'}
+
     @IsIn(supportedVoicemailFolders)
     @ApiProperty({description: 'message folder', enum: supportedVoicemailFolders, example: 'Old'})
         folder: string
@@ -24,6 +27,6 @@ export class VoicemailRequestDto implements RequestDto {
                     voicemail[k] = null
             })
         }
-        return voicemail
+        return withDtoFields(voicemail, VoicemailRequestDto.dtoFields)
     }
 }

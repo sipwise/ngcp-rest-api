@@ -14,6 +14,7 @@ import {internal} from '~/entities'
 import {ContactStatus, ContactType} from '~/entities/internal/contact.internal.entity'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -99,7 +100,7 @@ describe('SystemContactService', () => {
             const id = 1
             const updates = new Dictionary<internal.Contact>()
             updates[id] = internal.Contact.create({reseller_id: 10})
-            await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(updates, sr)).rejects.toThrow(ApiErrorException)
         })
     })
 
@@ -128,7 +129,7 @@ describe('SystemContactService', () => {
             await expect(service.read(id, sr)).rejects.toThrow(NotFoundException)
             const entity = await patchToEntity<internal.Contact, SystemContactRequestDto>(internal.Contact.create({id}), patch, SystemContactRequestDto)
             const update = new Dictionary<internal.Contact>(id.toString(), entity)
-            await expect(service.update(update, sr)).rejects.toThrow(NotFoundException)
+            await expect(service.update(update, sr)).rejects.toThrow(ApiErrorException)
         })
 
         it('should throw an error if reseller_id was updated', async () => {

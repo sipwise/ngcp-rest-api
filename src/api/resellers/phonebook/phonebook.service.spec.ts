@@ -11,6 +11,7 @@ import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -223,32 +224,32 @@ describe('phonebookService', () => {
             return d
         }
 
-        it('update: should throw NotFound if no id is visible', async () => {
-            jest.spyOn(phonebookMockRepo, 'readCountOfIds').mockResolvedValue(0)
+        it('update: should throw 422 for every id if no id is visible', async () => {
+            jest.spyOn(phonebookMockRepo, 'readExistingIds').mockResolvedValue([])
             const spy = jest.spyOn(phonebookMockRepo, 'update')
-            await expect(service.update(updates(), makeSr(user))).rejects.toThrow(NotFoundException)
+            await expect(service.update(updates(), makeSr(user))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('update: should throw 422 if only some ids are visible', async () => {
-            jest.spyOn(phonebookMockRepo, 'readCountOfIds').mockResolvedValue(1)
+            jest.spyOn(phonebookMockRepo, 'readExistingIds').mockResolvedValue([1])
             const spy = jest.spyOn(phonebookMockRepo, 'update')
-            await expect(service.update(updates(), makeSr(user))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(updates(), makeSr(user))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
-        it('update: should pass the reseller filter to the count', async () => {
-            const spy = jest.spyOn(phonebookMockRepo, 'readCountOfIds')
+        it('update: should pass the reseller filter to the id check', async () => {
+            const spy = jest.spyOn(phonebookMockRepo, 'readExistingIds')
             await service.update(updates(), makeSr(resellerUser))
             expect(spy.mock.calls[0][0]).toStrictEqual([1, 2])
             expect(spy.mock.calls[0][1].filterBy.resellerId).toBe(1)
         })
-        it('delete: should throw NotFound if no id is visible', async () => {
-            jest.spyOn(phonebookMockRepo, 'readCountOfIds').mockResolvedValue(0)
-            await expect(service.delete([1, 2], makeSr(user))).rejects.toThrow(NotFoundException)
+        it('delete: should throw 422 for every id if no id is visible', async () => {
+            jest.spyOn(phonebookMockRepo, 'readExistingIds').mockResolvedValue([])
+            await expect(service.delete([1, 2], makeSr(user))).rejects.toThrow(ApiErrorException)
         })
         it('delete: should throw 422 if only some ids are visible', async () => {
-            jest.spyOn(phonebookMockRepo, 'readCountOfIds').mockResolvedValue(1)
+            jest.spyOn(phonebookMockRepo, 'readExistingIds').mockResolvedValue([1])
             const spy = jest.spyOn(phonebookMockRepo, 'delete')
-            await expect(service.delete([1, 2], makeSr(user))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.delete([1, 2], makeSr(user))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('delete: should delete several ids', async () => {
@@ -264,12 +265,12 @@ describe('phonebookService', () => {
         it('should reject duplicate reseller/number pairs', async () => {
             const spy = jest.spyOn(phonebookMockRepo, 'create')
             await expect(service.importCsv([makeEntity(1, '5'), makeEntity(1, '5')], makeSr(user)))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('should detect duplicates created by assigning the reseller id of a reseller user', async () => {
             await expect(service.importCsv([makeEntity(1, '5'), makeEntity(2, '5')], makeSr(resellerUser)))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
         it('should throw NotFound for a foreign reseller param', async () => {
             const spy = jest.spyOn(phonebookMockRepo, 'create')

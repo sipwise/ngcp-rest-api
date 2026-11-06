@@ -1,4 +1,4 @@
-import {ForbiddenException, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {NotFoundException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 
 import {CustomerSpeedDialModule} from './customer-speed-dial.module'
@@ -10,6 +10,7 @@ import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -108,7 +109,7 @@ describe('CustomerSpeedDialService', () => {
         it('throws ForbiddenException when the customer has no subscriber', async () => {
             const spy = jest.spyOn(csdMockRepo, 'create')
             await expect(service.create([newCsd({contractId: 3, destination: '4313'})], makeSr()))
-                .rejects.toThrow(ForbiddenException)
+                .rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
 
@@ -208,7 +209,7 @@ describe('CustomerSpeedDialService', () => {
 
         it('throws ForbiddenException for a plain destination of a customer without subscribers', async () => {
             await expect(service.update(updates({3: newCsd({contractId: 3, destination: '4400'})}), makeSr()))
-                .rejects.toThrow(ForbiddenException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         it('throws NotFoundException when moving to a customer of another reseller', async () => {
@@ -229,7 +230,7 @@ describe('CustomerSpeedDialService', () => {
 
         it('rejects an update of a speed dial of another reseller even with an own customer id in the body', async () => {
             await expect(service.update(updates({3: newCsd({contractId: 1, slot: '*6'})}), makeSr(resellerUser)))
-                .rejects.toThrow(NotFoundException)
+                .rejects.toThrow(ApiErrorException)
             expect(csdMockRepo.csdDB[3].contractId).toEqual(3)
         })
     })
@@ -243,7 +244,7 @@ describe('CustomerSpeedDialService', () => {
 
         it('throws UnprocessableEntityException when an id does not exist', async () => {
             const spy = jest.spyOn(csdMockRepo, 'delete')
-            await expect(service.delete([1, 99], makeSr())).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.delete([1, 99], makeSr())).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
 

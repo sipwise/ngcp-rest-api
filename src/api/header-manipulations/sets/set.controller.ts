@@ -23,7 +23,7 @@ import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
-import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
+import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {Operation} from '~/helpers/patch.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -230,12 +230,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
         const sr = new ServiceRequest(req)
         validatePatchResellerId(patches, sr)
 
-        const updates = new Dictionary<internal.HeaderRuleSet>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.ruleSetService.read(+id, sr)
-            const entity = await patchToEntity<internal.HeaderRuleSet, HeaderManipulationSetRequestDto>(oldEntity, patches[id], HeaderManipulationSetRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.HeaderRuleSet, HeaderManipulationSetRequestDto>(patches, id => this.ruleSetService.read(id, sr), HeaderManipulationSetRequestDto)
 
         return await this.ruleSetService.update(updates, sr)
     }

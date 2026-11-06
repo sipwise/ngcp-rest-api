@@ -1,49 +1,38 @@
-// TODO: Check if full type safety is possible in pipes
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     ArgumentMetadata,
-    HttpStatus,
     Injectable,
     Optional,
-    ParseUUIDPipe as UUIDPipe,
     ParseUUIDPipeOptions,
     PipeTransform,
     UUIDVersion,
 } from '@nestjs/common'
-import {HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
+import {isUUID} from 'class-validator'
 
-interface ParseUUIDIdPipeOptions extends ParseUUIDPipeOptions {
+import {parameterException} from '~/helpers/errors.helper'
+
+interface ParseUUIDIdPipeOptions extends Pick<ParseUUIDPipeOptions, 'version'> {
     allowUndefined?: boolean
+}
+
+export function isUuidValue(value: unknown, version?: UUIDVersion): boolean {
+    return typeof value == 'string' && isUUID(value, version as never)
 }
 
 @Injectable()
 export class ParseUUIDPipe implements PipeTransform {
-    private readonly version: UUIDVersion | undefined
-    protected exceptionFactory: (errors: string) => any
-
     constructor(
         @Optional() protected readonly options?: ParseUUIDIdPipeOptions,
     ) {
-        options = options || {}
-        const {
-            version,
-            exceptionFactory,
-            errorHttpStatusCode = HttpStatus.BAD_REQUEST,
-        } = options
-
-        this.version = version
-        this.exceptionFactory =
-            exceptionFactory ||
-            // TODO: Fix the return type
-            // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-            (error => new HttpErrorByCode[errorHttpStatusCode](error))
+        this.options = options || {}
     }
 
-    async transform(value: any, metadata: ArgumentMetadata): Promise<string> {
-        const parseId = new UUIDPipe(this.options)
+    async transform(value: unknown, metadata: ArgumentMetadata): Promise<string> {
         if (value == undefined && this.options.allowUndefined) {
             return undefined
         }
-        return await parseId.transform(value, metadata)
+        const name = metadata.data ?? 'id'
+        if (!isUuidValue(value, this.options.version))
+            throw parameterException(name, 'isUuid', `${name} must be a UUID`)
+        return value as string
     }
 }

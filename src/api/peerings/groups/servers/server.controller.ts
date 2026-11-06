@@ -21,7 +21,7 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
+import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {Operation} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -219,12 +219,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
-        const updates = new Dictionary<internal.VoipPeeringServer>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.serverService.read(+id, sr)
-            const entity = await patchToEntity<internal.VoipPeeringServer, PeeringGroupServerRequestDto>(oldEntity, patches[id], PeeringGroupServerRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.VoipPeeringServer, PeeringGroupServerRequestDto>(patches, id => this.serverService.read(id, sr), PeeringGroupServerRequestDto)
 
         return await this.serverService.update(updates, sr)
     }

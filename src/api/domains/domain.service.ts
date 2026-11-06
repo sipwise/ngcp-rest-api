@@ -1,9 +1,10 @@
-import {ForbiddenException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {HttpStatus, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {DomainMariadbRepository} from './repositories/domain.mariadb.repository'
 
 import {internal} from '~/entities'
+import {ApiErrors, idPointer, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -21,33 +22,21 @@ export class DomainService implements CrudService<internal.Domain> {
 
     async create(domains: internal.Domain[], sr: ServiceRequest): Promise<internal.Domain[]> {
         if (sr.user.reseller_id_required) {
-            await this.resellerIdExists(sr.user.reseller_id, sr)
-            for (const domain of domains) {
+            if (!await this.domainRepo.readResellerById(sr.user.reseller_id, sr))
+                throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
+            for (const domain of domains)
                 domain.reseller_id = sr.user.reseller_id
-                await this.domainExists(domain.domain, sr)
-            }
-        } else {
-            for (const domain of domains) {
-                await this.resellerIdExists(domain.reseller_id, sr)
-                await this.domainExists(domain.domain, sr)
-            }
         }
+        const errors = new ApiErrors()
+        for (const [index, domain] of domains.entries()) {
+            if (!sr.user.reseller_id_required && !await this.domainRepo.readResellerById(domain.reseller_id, sr))
+                errors.add(this.i18n.t('errors.RESELLER_ID_INVALID'), itemPointer(sr, index, domain, 'reseller_id'))
+            if (await this.domainRepo.readByDomain(domain.domain, sr))
+                errors.add(this.i18n.t('errors.DOMAIN_ALREADY_EXISTS', {args: {domain: domain.domain}}), itemPointer(sr, index, domain, 'domain'))
+        }
+        errors.throwIfAny()
         const createdIds = await this.domainRepo.create(domains, sr)
         return await this.domainRepo.readWhereInIds(createdIds, sr)
-    }
-
-    private async resellerIdExists(id: number, sr: ServiceRequest): Promise<void> {
-        const reseller = await this.domainRepo.readResellerById(id, sr)
-        if (!reseller) {
-            throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
-        }
-    }
-
-    private async domainExists(domain: string, sr: ServiceRequest): Promise<void> {
-        const result = await this.domainRepo.readByDomain(domain, sr)
-        if (result) {
-            throw new UnprocessableEntityException(this.i18n.t('errors.DOMAIN_ALREADY_EXISTS', {args: {domain: domain}}))
-        }
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Domain[], number]> {
@@ -75,15 +64,16 @@ export class DomainService implements CrudService<internal.Domain> {
             user: sr.user.username,
         })
         const domains = await this.domainRepo.readWhereInIds(ids, sr)
-        if (domains.length != ids.length)
-            throw new UnprocessableEntityException()
-        const deletedIds: number[] = []
-        for(const domain of domains) {
-            if (sr.user.reseller_id_required && domain.reseller_id != sr.user.reseller_id) {
-                throw new ForbiddenException(this.i18n.t('errors.DOMAIN_DOES_NOT_BELONG_TO_RESELLER'))
-            }
-            deletedIds.push(await this.domainRepo.delete(domain.id, sr))
+        throwMissingIds(sr, ids, domains.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
+        const errors = new ApiErrors()
+        for (const domain of domains) {
+            if (sr.user.reseller_id_required && domain.reseller_id != sr.user.reseller_id)
+                errors.add(this.i18n.t('errors.DOMAIN_DOES_NOT_BELONG_TO_RESELLER'), idPointer(sr, domain.id))
         }
+        errors.throwIfAny(HttpStatus.FORBIDDEN)
+        const deletedIds: number[] = []
+        for (const domain of domains)
+            deletedIds.push(await this.domainRepo.delete(domain.id, sr))
         return deletedIds
     }
 }

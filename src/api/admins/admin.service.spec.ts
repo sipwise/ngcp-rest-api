@@ -1,4 +1,4 @@
-import {ForbiddenException, UnprocessableEntityException} from '@nestjs/common'
+import {UnprocessableEntityException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 
 import {AdminModule} from './admin.module'
@@ -16,6 +16,7 @@ import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
 import {deepCopy} from '~/helpers/deep-copy.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -112,7 +113,7 @@ describe('AdminService', () => {
             await expect(service.create([internal.Admin.create({
                 login: 'jest',
                 role: 'admin',
-            })], localRequest)).rejects.toThrow(ForbiddenException)
+            })], localRequest)).rejects.toThrow(ApiErrorException)
         })
 
         it('should not set resellerId of the user if not set and not restricted', async () => {
@@ -189,7 +190,7 @@ describe('AdminService', () => {
             updates[id] = internal.Admin.create({login: 'jest', role: 'admin'})
             const localRequest = deepCopy(sr)
             localRequest.user.role = 'reseller'
-            await expect(service.update(updates, localRequest)).rejects.toThrow(ForbiddenException)
+            await expect(service.update(updates, localRequest)).rejects.toThrow(ApiErrorException)
         })
 
         const protectedFields = internal.Admin.create({
@@ -211,7 +212,7 @@ describe('AdminService', () => {
                 const admin = internal.Admin.create({id: 1, role: 'admin'})
                 admin[s] = protectedFields[s]
                 updates[id] = admin
-                await expect(service.update(updates, sr)).rejects.toThrow(ForbiddenException)
+                await expect(service.update(updates, sr)).rejects.toThrow(ApiErrorException)
             })
         })
 
@@ -362,7 +363,7 @@ describe('AdminService', () => {
             const oldEntity = await service.read(id, sr)
             const entity = await patchToEntity<internal.Admin, AdminRequestDto>(oldEntity, patch, AdminRequestDto)
             const update = new Dictionary<internal.Admin>(id.toString(), entity)
-            await expect(service.update(update, localRequest)).rejects.toThrow(ForbiddenException)
+            await expect(service.update(update, localRequest)).rejects.toThrow(ApiErrorException)
         })
         const requiredFields = {
             billingData: true,
@@ -383,7 +384,7 @@ describe('AdminService', () => {
                 const oldEntity = await service.read(id, sr)
                 const entity = await patchToEntity<internal.Admin, AdminRequestDto>(oldEntity, patch, AdminRequestDto)
                 const update = new Dictionary<internal.Admin>(id.toString(), entity)
-                await expect(service.update(update, sr)).rejects.toThrow(ForbiddenException)
+                await expect(service.update(update, sr)).rejects.toThrow(ApiErrorException)
             })
         })
         for (const path of ['/is_superuser', '/is_system', '/lawful_intercept']) {
@@ -398,7 +399,7 @@ describe('AdminService', () => {
     describe('delete', () => {
         it('should not allow deleting self', async () => {
             const id = 1
-            await expect(service.delete([id], sr)).rejects.toThrow(ForbiddenException)
+            await expect(service.delete([id], sr)).rejects.toThrow(ApiErrorException)
         })
 
         it('should return number of deleted items', async () => {

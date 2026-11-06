@@ -1,334 +1,272 @@
 {
   "PERMISSION_DENIED": {
-    "message": "Permission denied",
-    "code": 10001
+    "message": "Permission denied"
   },
   "INVALID_USER_ROLE": {
-    "message": "Invalid user role",
-    "code": 10002
+    "message": "Invalid user role"
   },
   "UNKNOWN_ROLE": {
-    "message": "Unknown role {role}",
-    "code": 10003
+    "message": "Unknown role '{role}'"
   },
   "ADMIN_DELETE_SPECIAL_USER": {
-    "message": "Cannot delete special user: {username}",
-    "code": 10004
+    "message": "Cannot delete special user '{username}'"
   },
   "ADMIN_DELETE_SELF": {
-    "message": "Cannot delete self",
-    "code": 10005
+    "message": "Cannot delete self"
   },
   "ADMIN_CHANGE_PROPERTY_SELF": {
-    "message": "Cannot change own property",
-    "code": 10006
+    "message": "Cannot change own property"
   },
   "RESELLER_ID_INVALID": {
-    "message": "Invalid reseller_id",
-    "code": 10007
+    "message": "Invalid reseller_id"
   },
   "CONTACT_HAS_ACTIVE_CONTRACT": {
-    "message": "Contact is still in use by an active contract",
-    "code": 10008
+    "message": "Contact is still in use by an active contract"
   },
   "CONTACT_HAS_ACTIVE_SUBSCRIBER": {
-    "message": "Contact is still in use by an active subscriber",
-    "code": 10009
+    "message": "Contact is still in use by an active subscriber"
   },
   "CONTACT_DELETE_SYSTEM_CONTACT": {
-    "message": "Cannot delete system contact",
-    "code": 10010
+    "message": "Cannot delete system contact"
   },
   "CONTACT_IS_CUSTOMER_CONTACT": {
-    "message": "reseller_id not allowed on system contact",
-    "code": 10011
+    "message": "The reseller_id is not allowed on a system contact"
   },
   "CONTACT_DELETE_CUSTOMER_CONTACT": {
-    "message": "Cannot delete customer contact",
-    "code": 10012
+    "message": "Cannot delete customer contact"
   },
   "RESELLER_NAME_EXISTS": {
-    "message": "invalid 'name', reseller with name '{name}' already exists",
-    "code": 10013
+    "message": "Reseller with name '{name}' already exists"
   },
   "RESELLER_CHANGE_UNASSOCIATED_FORBIDDEN": {
-    "message": "Updating item not associated with a reseller is not allowed",
-    "code": 10014
+    "message": "Updating item not associated with a reseller is not allowed"
   },
   "RESELLER_CONTRACT_EXISTS": {
-    "message": "invalid 'contract_id', reseller with contract already exists",
-    "code": 10015
+    "message": "A reseller with this contract already exists"
   },
   "CONTRACT_NOT_FOUND": {
-    "message": "Invalid 'contract_id'",
-    "code": 10016
+    "message": "Invalid contract_id"
   },
   "CONTACT_CONTRACT_INVALID_LINK": {
-    "message": "Invalid 'contract_id', linking to a customer contact",
-    "code": 10017
+    "message": "The contract_id links to a customer contact"
   },
   "TYPE_INVALID": {
-    "message": "invalid \"type\"",
-    "code": 10018
+    "message": "Invalid type"
   },
   "CONTACT_ID_INVALID": {
-    "message": "invalid contact_id",
-    "code": 10019
+    "message": "Invalid contact_id"
   },
   "DOMAIN_ALREADY_EXISTS": {
-    "message": "domain '{domain}' already exists",
-    "code": 10020
+    "message": "Domain '{domain}' already exists"
   },
   "DOMAIN_DOES_NOT_BELONG_TO_RESELLER": {
-    "message": "domain does not belong to reseller",
-    "code": 10021
+    "message": "Domain does not belong to reseller"
   },
   "FILES_LIMIT_REACHED": {
-    "message": "Files limit reached",
-    "code": 10022
+    "message": "Files limit reached"
   },
   "QUOTA_EXCEEDED": {
-    "message": "Quota exceeded",
-    "code": 10023
+    "message": "Quota exceeded"
   },
   "REQUEST_PROCESSING_ERROR": {
-    "message": "Cannot process the request",
-    "code": 10024
+    "message": "Cannot process the request"
   },
   "SUBSCRIBER_NOT_FOUND": {
-    "message": "Subscriber not found",
-    "code": 10025
+    "message": "Subscriber not found"
   },
   "DUPLICATE_ENTRY": {
-    "message": "Duplicate entry",
-    "code": 10026
+    "message": "Duplicate entry"
   },
   "EXPAND_NOT_POSSIBLE": {
-    "message": "Expanding {field} not allowed or impossible",
-    "code": 10027
+    "message": "Expanding {field} not allowed or impossible"
   },
   "EXPAND_FAILED": {
-    "message": "Cannot expand field {field}",
-    "code": 10028
+    "message": "Cannot expand field {field}"
   },
   "VALIDATION_FAILED_UNSUPPORTED_ID": {
-    "message": "Validation failed (unsupported :id format)",
-    "code": 10029
+    "message": "Validation failed (unsupported :id format)"
   },
   "CHANGE_ID_FORBIDDEN": {
-    "message": "Changing the reseller ID is not allowed",
-    "code": 10030
+    "message": "Changing the reseller ID is not allowed"
   },
   "RESELLER_SET_ID_FORBIDDEN": {
-    "message": "Cannot set the reseller Id if it was unset before",
-    "code": 10031
+    "message": "Cannot set the reseller ID if it was unset before"
   },
   "RESELLER_INVALID_ID": {
-    "message": "Reseller ID other than the user\"s reseller ID is not allowed",
-    "code": 10032
+    "message": "Reseller ID other than the user's reseller ID is not allowed"
   },
   "RESELLER_UNDEFINED_ID": {
-    "message": "Undefined reseller ID is not allowed",
-    "code": 10033
+    "message": "Undefined reseller ID is not allowed"
   },
   "RESELLER_CREATE_INVALID_ASSOCIATION": {
-    "message": "Creating items associated with a reseller is allowed for admin and reseller users only",
-    "code": 10034
+    "message": "Creating items associated with a reseller is allowed for admin and reseller users only"
   },
   "RESELLER_UPDATE_INVALID_ASSOCIATION": {
-    "message": "Updating items associated with a reseller is allowed for admin and reseller users only",
-    "code": 10035
+    "message": "Updating items associated with a reseller is allowed for admin and reseller users only"
   },
   "INVALID_SYSTEM_CONTACT": {
-    "message": "The contact_id is not a valid ngcp:systemcontacts item, but an ngcp:customercontacts item",
-    "code": 10036
+    "message": "The contact_id is not a valid ngcp:systemcontacts item, but an ngcp:customercontacts item"
   },
   "ENTRY_NOT_FOUND": {
-    "message": "Entry not found",
-    "code": 10037
+    "message": "Entry not found"
   },
   "PASSWORD_ALREADY_USED": {
-    "message": "Password has been used before",
-    "code": 10038
+    "message": "Password has been used before"
   },
   "AUTH_BANNED": {
-    "message": "Banned",
-    "code": 10039
+    "message": "Banned"
   },
   "FILE_MIME_TYPE_NOT_SUPPORTED": {
-    "message": "File mime type not supported",
-    "code": 10040
+    "message": "File mime type not supported"
   },
   "CSV_MALFORMED": {
-    "message": "Invalid or malformed CSV content/file",
-    "code": 10041
+    "message": "Invalid or malformed CSV content/file"
   },
   "MISSING_OTP": {
-    "message": "Missing OTP",
-    "code": 10042
+    "message": "Missing OTP"
   },
   "MISSING_OTP_WITH_REFER": {
-    "message": "Missing OTP. Refer: {refer}",
-    "code": 10043
+    "message": "Missing OTP. Refer: {refer}"
   },
   "INVALID_OTP": {
-    "message": "Invalid OTP",
-    "code": 10044
+    "message": "Invalid OTP"
   },
   "2FA_IS_DISABLED": {
-    "message": "2FA is disabled",
-    "code": 10045
+    "message": "2FA is disabled"
   },
   "DUPLICATE_IN_CSV": {
-    "message": "Duplicate in CSV",
-    "code": 10046
+    "message": "Duplicate in CSV"
   },
   "TASK_AGENT_COULD_NOT_PROCESS_REQUEST": {
-    "message": "Task agent could not process request",
-    "code": 10047
+    "message": "Task agent could not process request"
   },
   "INVALID_CONTACT_ID": {
-    "message": "Contact not found",
-    "code": 10046
+    "message": "Contact not found"
   },
   "BILLING_PROFILE_ALREADY_TERMINATED": {
-    "message": "Billing profile already terminated",
-    "code": 10047
+    "message": "Billing profile already terminated"
   },
   "CUSTOMER_CREATION_FAILED": {
-    "message": "Customer creation failed",
-    "code": 10049
+    "message": "Customer creation failed"
   },
   "SETTING_PROFILE_PACKAGE_FOR_CUSTOMER_CONTRACTS_ONLY": {
-    "message": "Setting profile package is only allowed for customer contracts",
-    "code": 10050
+    "message": "Setting profile package is only allowed for customer contracts"
   },
   "CONTACT_AND_BILLING_PROFILE_PACKAGE_RESELLER_ID_MISMATCH": {
-    "message": "Contact and billing profile package reseller ID mismatch",
-    "code": 10051
+    "message": "Contact and billing profile package reseller ID mismatch"
   },
   "INVALID_PROFILE_PACKAGE_ID": {
-    "message": "Invalid profile package ID",
-    "code": 10052
+    "message": "Invalid profile package ID"
   },
   "INVALID_BILLING_NETWORK_ID": {
-    "message": "Invalid billing network ID",
-    "code": 10054
+    "message": "Invalid billing network ID"
   },
   "START_DATE_NOT_IN_FUTURE": {
-    "message": "Start date must be in the future",
-    "code": 10055
+    "message": "Start date must be in the future"
   },
   "START_AFTER_END_DATE": {
-    "message": "Start date must be before end date",
-    "code": 10056
+    "message": "Start date must be before end date"
   },
   "NO_START_DATE_WITH_PROVIDED_END_DATE": {
-    "message": "No start date provided with provided end date",
-    "code": 10057
+    "message": "No start date provided with provided end date"
   },
   "INVALID_BILLING_PROFILES_ARRAY": {
-    "message": "Invalid field 'billingProfiles'. Must be an array.",
-    "code": 10058
+    "message": "The billing_profiles must be an array"
   },
   "CONTACT_IS_TERMINATED": {
-    "message": "Contact is terminated",
-    "code": 10059
+    "message": "Contact is terminated"
   },
   "OPEN_INTERVAL_MAPPING_NOT_ALLOWED": {
-    "message": "Adding mappings with open start date and open end date is not allowed",
-    "code": 10060
+    "message": "Adding mappings with open start date and open end date is not allowed"
   },
   "INVALID_BILLING_PROFILE_DEFINITION": {
-    "message": "Invalid billingProfileDefinition.",
-    "code": 10061
+    "message": "Invalid billing_profile_definition"
   },
-    "INVALID_SITE_ID": {
-    "message": "Invalid site_id value or multi site is not enabled.",
-    "code": 10062
+  "INVALID_SITE_ID": {
+    "message": "Invalid site_id or multi site is not enabled"
   },
   "INVOICE_TEMPLATE_NAME_EXISTS": {
-    "message": "Invoice template with name '{name}' already exists for reseller_id '{reseller_id}'",
-    "code": 10063
+    "message": "Invoice template with name '{name}' already exists for reseller_id '{reseller_id}'"
   },
   "INVOICE_TEMPLATE_RESELLER_REQUIRED": {
-    "message": "reseller_id is required for invoice template category '{category}'",
-    "code": 10064
+    "message": "A reseller_id is required for invoice template category '{category}'"
   },
   "INVOICE_TEMPLATE_RESELLER_NOT_ALLOWED": {
-    "message": "reseller_id must be empty for invoice template category '{category}'",
-    "code": 10065
+    "message": "The reseller_id must be empty for invoice template category '{category}'"
   },
   "INVOICE_TEMPLATE_INVALID_CONTENT": {
-    "message": "Invalid invoice template file, a non-empty svg file is expected",
-    "code": 10066
+    "message": "Invalid invoice template file, a non-empty svg file is expected"
   },
   "INVOICE_TEMPLATE_DEFAULT_NOT_FOUND": {
-    "message": "Default invoice template for category '{category}' not found",
-    "code": 10067
+    "message": "Default invoice template for category '{category}' not found"
   },
   "INVOICE_TEMPLATE_READ_ONLY": {
-    "message": "Read-only resource for authenticated role",
-    "code": 10068
+    "message": "Read-only resource for authenticated role"
   },
   "INVOICE_TEMPLATE_INVALID_DIRECTIVES": {
-    "message": "Invalid invoice template directive for category '{category}'",
-    "code": 10069
+    "message": "Invalid invoice template directive for category '{category}'"
   },
   "INVOICE_TEMPLATE_RENDER_FAILED": {
-    "message": "Failed to render invoice template for category '{category}': {reason}",
-    "code": 10070
+    "message": "Failed to render invoice template for category '{category}': {reason}"
   },
   "INVOICE_TEMPLATE_CONVERTER_FAILED": {
-    "message": "Failed to convert invoice template to pdf: {reason}",
-    "code": 10071
+    "message": "Failed to convert invoice template to pdf: {reason}"
   },
   "INVOICE_TEMPLATE_CATEGORY_IMMUTABLE": {
-    "message": "Category of an existing invoice template can not be changed",
-    "code": 10072
+    "message": "Category of an existing invoice template can not be changed"
   },
   "CONTACT_TYPE_IMMUTABLE": {
-    "message": "Contact can not be changed between a system contact (empty reseller_id) and a customer contact",
-    "code": 10073
+    "message": "Contact can not be changed between a system contact (empty reseller_id) and a customer contact"
   },
   "INVALID_BILLING_PROFILE_ID": {
-    "message": "Invalid billing profile ID",
-    "code": 10074
+    "message": "Invalid billing profile ID"
   },
   "CONTACT_AND_BILLING_PROFILE_RESELLER_ID_MISMATCH": {
-    "message": "Contact and billing profile reseller ID mismatch",
-    "code": 10075
+    "message": "Contact and billing profile reseller ID mismatch"
   },
   "CONTACT_AND_BILLING_NETWORK_RESELLER_ID_MISMATCH": {
-    "message": "Contact and billing network reseller ID mismatch",
-    "code": 10076
+    "message": "Contact and billing network reseller ID mismatch"
   },
   "INITIAL_OPEN_INTERVAL_REQUIRED": {
-    "message": "An initial interval without start and stop timestamps and no billing network is required",
-    "code": 10077
+    "message": "An initial interval without start and stop timestamps and no billing network is required"
   },
   "INVOICE_PERIOD_REQUIRED": {
-    "message": "Either period or period_start is required",
-    "code": 10078
+    "message": "Either period or period_start is required"
   },
   "INVOICE_PERIOD_INVALID": {
-    "message": "Invalid invoice period, period_start and period_end must be valid dates and period_start must be before period_end",
-    "code": 10079
+    "message": "Invalid invoice period, period_start and period_end must be valid dates and period_start must be before period_end"
   },
   "INVOICE_TEMPLATE_NOT_FOUND": {
-    "message": "Invoice template with id '{id}' not found",
-    "code": 10080
+    "message": "Invoice template with id '{id}' not found"
   },
   "INVOICE_CONTRACT_NOT_FOUND": {
-    "message": "No active {classes} contract with customer_id '{id}' found for invoice template category '{category}'",
-    "code": 10081
+    "message": "No active {classes} contract with customer_id '{id}' found for invoice template category '{category}'"
   },
   "INVOICE_CONTRACT_RESELLER_MISMATCH": {
-    "message": "Invoice template and customer_id '{id}' must belong to the same reseller",
-    "code": 10082
+    "message": "Invoice template and customer_id '{id}' must belong to the same reseller"
   },
   "PEERING_RESELLER_CONTRACT_PREPAID_PROFILE": {
-    "message": "Peering/reseller contract can't be connected to a prepaid billing profile",
-    "code": 10083
+    "message": "Peering/reseller contract can't be connected to a prepaid billing profile"
+  },
+  "VOICEMAIL_DIR_INVALID": {
+    "message": "Invalid voicemail folder '{dir}'"
+  },
+  "CONTACT_TERMINATED": {
+    "message": "Contact is terminated"
+  },
+  "EMAIL_TEMPLATE_NOT_FOUND": {
+    "message": "Email template not found"
+  },
+  "BILLING_PROFILES_REQUIRED": {
+    "message": "The billing_profiles must be a list of billing profiles"
+  },
+  "BILLING_PROFILE_DEFINITION_INVALID": {
+    "message": "Invalid billing_profile_definition"
+  },
+  "CONTRACT_BILLING_PROFILE_NOT_FOUND": {
+    "message": "Contract '{id}' has no billing profile at that time"
+  },
+  "PASSWORD_EXPIRED": {
+    "message": "Password expired"
   }
 }

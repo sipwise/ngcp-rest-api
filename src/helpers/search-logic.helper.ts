@@ -1,6 +1,6 @@
-import {BadRequestException} from '@nestjs/common'
 import {ApiPropertyOptional} from '@nestjs/swagger'
 
+import {InvalidParameterException} from '~/helpers/errors.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 interface Join {
@@ -43,7 +43,7 @@ export class SearchLogic {
         if (sr.query['order_by'] != null) {
             this.orderBy = sr.query['order_by'].toString()
             if (!searchableFields.includes(this.orderBy) && this.orderBy !== 'id')
-                throw new BadRequestException()
+                throw new InvalidParameterException([{parameter: 'order_by', code: 'isIn', message: 'order_by must be a sortable field'}])
             if (this.aliases && this.orderBy in this.aliases) {
                 const propertyAlias = this.aliases[this.orderBy]
                 if (typeof propertyAlias == 'object' && 'field' in Object.keys(propertyAlias))
@@ -64,11 +64,11 @@ export class SearchLogic {
     static getPaginationFromServiceRequest(sr: ServiceRequest): [number, number] {
         const page: number = +sr.query['page'] || 1
         if (page <= 0)
-            throw new BadRequestException()
+            throw new InvalidParameterException([{parameter: 'page', code: 'min', message: 'page must not be less than 1'}])
 
         const rows: number = +sr.query['rows'] || 10
         if (rows <= 0)
-            throw new BadRequestException()
+            throw new InvalidParameterException([{parameter: 'rows', code: 'min', message: 'rows must not be less than 1'}])
         return [page, rows]
     }
 }

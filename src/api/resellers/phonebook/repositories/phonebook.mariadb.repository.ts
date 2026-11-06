@@ -123,22 +123,13 @@ export class ResellerPhonebookMariadbRepository extends MariaDbRepository implem
         return await Promise.all(result.map(async (d) => d.toInternal()))
     }
 
-    async readCountOfIds(ids: number[], options: ResellerPhonebookOptions, sr: ServiceRequest): Promise<number> {
+    async readExistingIds(ids: number[], options: ResellerPhonebookOptions): Promise<number[]> {
         const qb = db.billing.ResellerPhonebook.createQueryBuilder('phonebook')
-        const searchDto = new ResellerPhonebookSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
-        qb.andWhereInIds(ids)
+        qb.select('phonebook.id')
+        qb.whereInIds(ids)
         this.addFilterBy(qb, options.filterBy)
-        return await qb.getCount()
+        const result = await qb.getMany()
+        return result.map(row => row.id)
     }
 
     private addFilterBy(qb: SelectQueryBuilder<db.billing.ResellerPhonebook>, filterBy: ResellerPhonebookOptions['filterBy']): void {

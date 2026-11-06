@@ -17,6 +17,7 @@ import {db} from '~/entities'
 import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
+import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
@@ -43,6 +44,7 @@ describe('CustomerSpeedDial', () => {
     let billingDomainId: number
     let provisioningDomainId: number
     let provisioningSubscriberId: number
+    let emptyCustomerId: number
     const createdIds: number[] = []
     let createdEntries = []
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
@@ -217,6 +219,17 @@ describe('CustomerSpeedDial', () => {
                     .set('Content-Type', 'application/json')
                     .send({customer_id: testCustomerId})
                 expect(response.status).toEqual(422)
+            })
+            it('point to customer_id for a customer without subscribers', async () => {
+                emptyCustomerId = (await db.billing.Contract.create({contact_id: 1, product_id: 4}).save()).id
+                const response = await request(app.getHttpServer())
+                    .post('/api/customerspeeddials')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({customer_id: emptyCustomerId, slot: '*9', destination: '4310009'})
+                expect(response.status).toEqual(403)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/customer_id', 'SUBSCRIBER_NOT_FOUND']])
             })
         })
 
@@ -470,6 +483,8 @@ describe('CustomerSpeedDial', () => {
                 await db.provisioning.VoipContractSpeedDial.delete(otherSpeedDialId)
             if (otherCustomerId)
                 await db.billing.Contract.delete(otherCustomerId)
+            if (emptyCustomerId)
+                await db.billing.Contract.delete(emptyCustomerId)
             if (otherContactId)
                 await db.billing.Contact.delete(otherContactId)
             if (otherResellerId)

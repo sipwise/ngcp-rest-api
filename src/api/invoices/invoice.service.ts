@@ -3,7 +3,6 @@ import {
     Injectable,
     NotFoundException,
     StreamableFile,
-    UnprocessableEntityException,
 } from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
@@ -28,9 +27,8 @@ import {internal} from '~/entities'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory} from '~/entities/internal/invoice-template.internal.entity'
 import {isShowCallListSuppressions} from '~/helpers/call-list-suppression.helper'
-import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {apiError, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -52,8 +50,8 @@ export class InvoiceService implements CrudService<internal.Invoice> {
 
     async create(invoices: internal.Invoice[], sr: ServiceRequest): Promise<internal.Invoice[]> {
         const created: internal.Invoice[] = []
-        for (const invoice of invoices)
-            created.push(await this.createInvoice(invoice, sr))
+        for (const [index, invoice] of invoices.entries())
+            created.push(await this.createInvoice(invoice, sr, index))
         return created
     }
 
@@ -79,22 +77,17 @@ export class InvoiceService implements CrudService<internal.Invoice> {
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         const invoices = await this.invoiceRepo.readWhereInIds(ids, sr, this.getFilterBy(sr))
-        if (invoices.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != invoices.length) {
-            const error: ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            throw new UnprocessableEntityException(GenerateErrorMessageArray(ids, error.message))
-        }
+        throwMissingIds(sr, ids, invoices.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
         return await this.invoiceRepo.delete(ids, sr)
     }
 
     /**
      * Creates the invoice of the contract and period with the template, the pdf is stored with the invoice
      */
-    private async createInvoice(invoice: internal.Invoice, sr: ServiceRequest): Promise<internal.Invoice> {
-        this.checkPeriod(invoice)
-        const template = await this.readTemplate(invoice.templateId, sr)
-        const contract = await this.readContract(invoice.contractId, template, sr)
+    private async createInvoice(invoice: internal.Invoice, sr: ServiceRequest, key: number): Promise<internal.Invoice> {
+        this.checkPeriod(invoice, sr, key)
+        const template = await this.readTemplate(invoice, sr, key)
+        const contract = await this.readContract(invoice, template, sr, key)
         const billingProfile = await this.customerService.readActualBillingProfile(invoice.contractId, invoice.periodStart)
 
         const category = template.category
@@ -149,26 +142,29 @@ export class InvoiceService implements CrudService<internal.Invoice> {
         return await this.invoiceRepo.readById(id, sr)
     }
 
-    private checkPeriod(invoice: internal.Invoice): void {
+    private checkPeriod(invoice: internal.Invoice, sr: ServiceRequest, key: number): void {
         if (!invoice.periodStart)
-            throw new UnprocessableEntityException(this.i18n.t('errors.INVOICE_PERIOD_REQUIRED'))
+            throw apiError(this.i18n.t('errors.INVOICE_PERIOD_REQUIRED'), itemPointer(sr, key, invoice, 'periodStart'))
         const start = invoice.periodStart.getTime()
         const end = invoice.periodEnd?.getTime()
         if (Number.isNaN(start) || end === undefined || Number.isNaN(end) || start >= end)
-            throw new UnprocessableEntityException(this.i18n.t('errors.INVOICE_PERIOD_INVALID'))
+            throw apiError(this.i18n.t('errors.INVOICE_PERIOD_INVALID'), itemPointer(sr, key, invoice, Number.isNaN(start) ? 'periodStart' : 'periodEnd'))
     }
 
-    private async readTemplate(id: number, sr: ServiceRequest): Promise<internal.InvoiceTemplate> {
+    private async readTemplate(invoice: internal.Invoice, sr: ServiceRequest, key: number): Promise<internal.InvoiceTemplate> {
+        const id = invoice.templateId
         try {
             return await this.invoiceTemplateService.read(id, sr)
         } catch (err) {
             if (err instanceof NotFoundException)
-                throw new UnprocessableEntityException(this.i18n.t('errors.INVOICE_TEMPLATE_NOT_FOUND', {args: {id: id}}))
+                throw apiError(this.i18n.t('errors.INVOICE_TEMPLATE_NOT_FOUND', {args: {id: id}}), itemPointer(sr, key, invoice, 'templateId'))
             throw err
         }
     }
 
-    private async readContract(id: number, template: internal.InvoiceTemplate, sr: ServiceRequest): Promise<InvoiceContract> {
+    private async readContract(invoice: internal.Invoice, template: internal.InvoiceTemplate, sr: ServiceRequest, key: number): Promise<InvoiceContract> {
+        const id = invoice.contractId
+        const pointer = itemPointer(sr, key, invoice, 'contractId')
         const classes = invoiceContractClasses[template.category]
         const contract = await this.invoiceRepo.readContract(id)
         if (!contract
@@ -176,14 +172,14 @@ export class InvoiceService implements CrudService<internal.Invoice> {
             || contract.contract.status == ContractStatus.Terminated
             || (sr.user.reseller_id_required && contract.contact.reseller_id != sr.user.reseller_id)
         ) {
-            throw new UnprocessableEntityException(this.i18n.t('errors.INVOICE_CONTRACT_NOT_FOUND', {
+            throw apiError(this.i18n.t('errors.INVOICE_CONTRACT_NOT_FOUND', {
                 args: {id: id, classes: classes.join('/'), category: template.category},
-            }))
+            }), pointer)
         }
         if (resellerCategories.includes(template.category) && contract.contact.reseller_id != template.resellerId) {
-            throw new UnprocessableEntityException(this.i18n.t('errors.INVOICE_CONTRACT_RESELLER_MISMATCH', {
+            throw apiError(this.i18n.t('errors.INVOICE_CONTRACT_RESELLER_MISMATCH', {
                 args: {id: id},
-            }))
+            }), pointer)
         }
         return contract
     }

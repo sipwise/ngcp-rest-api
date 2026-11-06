@@ -8,7 +8,6 @@ import {
     Optional,
     PipeTransform,
     Type,
-    UnprocessableEntityException,
 } from '@nestjs/common'
 import {ClassTransformOptions} from '@nestjs/common/interfaces/external/class-transform-options.interface'
 import {ValidatorOptions} from '@nestjs/common/interfaces/external/validator-options.interface'
@@ -16,8 +15,12 @@ import {ErrorHttpStatusCode} from '@nestjs/common/utils/http-error-by-code.util'
 import {instanceToPlain, plainToInstance} from 'class-transformer'
 
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {formatValidationErrors} from '~/helpers/errors.helper'
-import {obfuscatePasswordValidationErrors} from '~/helpers/password-obfuscator.helper'
+import {
+    InvalidParameterException,
+    ValidationFailedException,
+    formatParameterErrors,
+    formatValidationErrors,
+} from '~/helpers/errors.helper'
 import {validate} from '~/helpers/validate.helper'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -73,6 +76,7 @@ export class ValidateInputPipe implements PipeTransform<any> {
         }
 
         const metatype = metadata.metatype
+        this.validateNumericParameter(value, metadata)
         if (!metatype || !this.toValidate(metadata)) {
             return this.isTransformEnabled
                 ? this.transformPrimitive(value, metadata)
@@ -103,9 +107,14 @@ export class ValidateInputPipe implements PipeTransform<any> {
 
         const errors = await validate(entity, this.getValidatorOptions(value, metadata))
         if (errors.length > 0) {
-            obfuscatePasswordValidationErrors(errors)
+            if (metadata.type == 'query' || metadata.type == 'param') {
+                const parameterErrors = formatParameterErrors(errors)
+                this.log.debug({message: 'parameter validation failed', errors: errors})
+                throw new InvalidParameterException(parameterErrors)
+            }
+            const bodyErrors = formatValidationErrors(errors)
             this.log.debug({message: 'input validation failed', errors: errors})
-            throw new UnprocessableEntityException(formatValidationErrors(errors))
+            throw new ValidationFailedException(bodyErrors)
         }
         if (isPrimitive) {
             // if the value is a primitive value and the validation process has been successfully completed
@@ -135,6 +144,23 @@ export class ValidateInputPipe implements PipeTransform<any> {
             return {...this.validatorOptions, forbidNonWhitelisted: false}
         }
         return this.validatorOptions
+    }
+
+    // numeric path parameters are ids (integers), numeric query parameters numbers
+    protected validateNumericParameter(value: any, metadata: ArgumentMetadata): void {
+        const {type, metatype, data} = metadata
+        if (metatype !== Number || !data || isNil(value) || (type !== 'param' && type !== 'query'))
+            return
+        const valid = type === 'param'
+            ? /^-?\d+$/.test(`${value}`)
+            : `${value}`.trim() !== '' && isFinite(+value)
+        if (!valid) {
+            throw new InvalidParameterException([{
+                parameter: data,
+                code: type === 'param' ? 'isInt' : 'isNumber',
+                message: `${data} must be ${type === 'param' ? 'an integer number' : 'a number'}`,
+            }])
+        }
     }
 
     protected isPrimitive(value: unknown): boolean {

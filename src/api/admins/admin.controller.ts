@@ -36,7 +36,7 @@ import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
-import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
+import {Operation as PatchOperation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -239,12 +239,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         const sr = new ServiceRequest(req)
         validatePatchResellerId(patches, sr)
 
-        const updates = new Dictionary<internal.Admin>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.adminService.read(+id, sr)
-            const entity = await patchToEntity<internal.Admin, AdminRequestDto>(oldEntity, patches[id], AdminRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.Admin, AdminRequestDto>(patches, id => this.adminService.read(id, sr), AdminRequestDto)
 
         return await this.adminService.update(updates, sr)
     }

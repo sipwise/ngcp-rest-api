@@ -3,8 +3,11 @@ import {IsInt, IsNotEmpty, IsOptional, IsString, MaxLength} from 'class-validato
 
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
+import {DtoFields, withDtoFields} from '~/helpers/dto-fields.helper'
 
 export class CustomerPhonebookRequestDto implements RequestDto {
+    static readonly dtoFields: DtoFields<internal.CustomerPhonebook, CustomerPhonebookRequestDto> = {contractId: 'customer_id'}
+
     @IsString()
     @IsNotEmpty()
     @MaxLength(255)
@@ -51,6 +54,6 @@ export class CustomerPhonebookRequestDto implements RequestDto {
                     entity[k] = null
             })
         }
-        return entity
+        return withDtoFields(entity, CustomerPhonebookRequestDto.dtoFields)
     }
 }

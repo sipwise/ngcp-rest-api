@@ -4,9 +4,12 @@ import {IsDate, IsNumber, IsOptional} from 'class-validator'
 
 import {RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
+import {DtoFields, withDtoFields} from '~/helpers/dto-fields.helper'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class CustomerBillingProfileRequestDto {
+    static readonly dtoFields: DtoFields<internal.CustomerBillingProfile, CustomerBillingProfileRequestDto> = {id: 'profile_id', startDate: 'start', endDate: 'stop'}
+
     @ApiProperty()
     @IsNumber()
         profile_id: number
@@ -43,7 +46,7 @@ export class CustomerBillingProfileRequestDto {
             endDate: this.stop,
             startDate: this.start,
         })
-        return profile
+        return withDtoFields(profile, CustomerBillingProfileRequestDto.dtoFields)
     }
 
 }

@@ -1,4 +1,4 @@
-import {Inject, Injectable, NotFoundException, StreamableFile, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable, NotFoundException, StreamableFile} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {ResellerPhonebookResponseDto} from './dto/phonebook-response.dto'
@@ -9,9 +9,8 @@ import {AppService} from '~/app.service'
 import {internal} from '~/entities'
 import {dtoToCsv} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {ApiErrors, rowPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -52,15 +51,8 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
     async update(updates: Dictionary<internal.ResellerPhonebook>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         const options = this.getResellerPhonebookOptionsFromServiceRequest(sr)
-        const phonebookCount = await this.phonebookRepo.readCountOfIds(ids, options, sr)
-
-        if (phonebookCount == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != phonebookCount) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        const existingIds = await this.phonebookRepo.readExistingIds(ids, options)
+        throwMissingIds(sr, ids, existingIds, this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         this.assignUserResellerId(Object.values(updates), sr)
         return await this.phonebookRepo.update(updates, sr)
@@ -68,15 +60,8 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         const options = this.getResellerPhonebookOptionsFromServiceRequest(sr)
-        const phonebookCount = await this.phonebookRepo.readCountOfIds(ids, options, sr)
-
-        if (phonebookCount == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != phonebookCount) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        const existingIds = await this.phonebookRepo.readExistingIds(ids, options)
+        throwMissingIds(sr, ids, existingIds, this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         return await this.phonebookRepo.delete(ids,sr)
     }
@@ -151,13 +136,13 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
 
     private async validateCsvData(entities: internal.ResellerPhonebook[]): Promise<void> {
         const seen = new Set<string>()
-        for (const dto of entities) {
-            const key = `${dto.resellerId}-${dto.number}`
-            if (seen.has(key)) {
-                const error: ErrorMessage = this.i18n.t('errors.DUPLICATE_IN_CSV')
-                throw new UnprocessableEntityException(error.message)
-            }
+        const errors = new ApiErrors()
+        entities.forEach((entity, row) => {
+            const key = `${entity.resellerId}-${entity.number}`
+            if (seen.has(key))
+                errors.add(this.i18n.t('errors.DUPLICATE_IN_CSV'), rowPointer(row, entity, 'number'))
             seen.add(key)
-        }
+        })
+        errors.throwIfAny()
     }
 }

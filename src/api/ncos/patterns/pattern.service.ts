@@ -1,4 +1,4 @@
-import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable, NotFoundException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {NCOSPatternMariadbRepository} from './repositories/pattern.mariadb.repository'
@@ -6,9 +6,8 @@ import {NCOSPatternMariadbRepository} from './repositories/pattern.mariadb.repos
 import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -59,13 +58,7 @@ export class NCOSPatternService implements CrudService<internal.NCOSPattern> {
                 break
         }
 
-        if (patterns.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != patterns.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, patterns.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         const timeSetIds = new Set<number>()
         for (const pattern of patterns) {
@@ -87,13 +80,7 @@ export class NCOSPatternService implements CrudService<internal.NCOSPattern> {
                 break
         }
 
-        if (patterns.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != patterns.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, patterns.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         return await this.ncosPatternRepo.delete(ids, sr)
     }

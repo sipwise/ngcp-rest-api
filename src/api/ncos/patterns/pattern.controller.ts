@@ -22,7 +22,7 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
+import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -205,12 +205,7 @@ export class NCOSPatternController extends CrudController<NCOSPatternRequestDto,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
-        const updates = new Dictionary<internal.NCOSPattern>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.ncosPatternService.read(+id, sr)
-            const entity = await patchToEntity<internal.NCOSPattern, NCOSPatternRequestDto>(oldEntity, patches[id], NCOSPatternRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.NCOSPattern, NCOSPatternRequestDto>(patches, id => this.ncosPatternService.read(id, sr), NCOSPatternRequestDto)
 
         return await this.ncosPatternService.update(updates, sr)
     }

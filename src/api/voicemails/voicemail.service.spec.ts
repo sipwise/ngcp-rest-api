@@ -5,7 +5,7 @@ jest.mock('child_process', () => ({
 
 import {execFile} from 'child_process'
 
-import {BadRequestException, InternalServerErrorException, UnprocessableEntityException} from '@nestjs/common'
+import {UnprocessableEntityException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 
 import {VoicemailMariadbRepository} from './repositories/voicemail.mariadb.repository'
@@ -18,6 +18,7 @@ import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {voicemailSpoolDir} from '~/enums/supported-voicemail-folders.enum'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {postCommitQueueStorage} from '~/helpers/post-commit-queue.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -236,21 +237,15 @@ describe('VoicemailsService', () => {
             expect(updateSpy.mock.calls[0][0]['1'].dir).toEqual(`${basePath}/Old`)
         })
 
-        it('throws internal error when dir would be saved without full path', async () => {
-            jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([])
-            await expect(committed(() => service.update(folderUpdate(1, 'Old'), sr))).rejects.toThrow(InternalServerErrorException)
-            expect(updateSpy).not.toHaveBeenCalled()
-        })
-
         it('throws 422 when some ids do not exist', async () => {
-            jest.spyOn(voicemailMockRepo, 'readCountOfIds').mockResolvedValue(0)
-            await expect(committed(() => service.update(folderUpdate(1, 'Old'), sr))).rejects.toThrow(UnprocessableEntityException)
+            jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([])
+            await expect(committed(() => service.update(folderUpdate(1, 'Old'), sr))).rejects.toThrow(ApiErrorException)
             expect(updateSpy).not.toHaveBeenCalled()
         })
 
-        it('throws 400 for an unsupported folder', async () => {
+        it('throws 422 for an unsupported folder', async () => {
             jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([voicemail(1, `${basePath}/INBOX`)])
-            await expect(committed(() => service.update(folderUpdate(1, 'Nope'), sr))).rejects.toThrow(BadRequestException)
+            await expect(committed(() => service.update(folderUpdate(1, 'Nope'), sr))).rejects.toThrow(ApiErrorException)
             expect(updateSpy).not.toHaveBeenCalled()
         })
 

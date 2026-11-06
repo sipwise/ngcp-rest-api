@@ -1,4 +1,4 @@
-import {ForbiddenException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {HttpStatus, Inject, Injectable} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {AdminOptions} from './interfaces/admin-options.interface'
@@ -11,6 +11,7 @@ import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
 import {AdminPasswordJournal} from '~/entities/internal'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {apiError, checkItems, idPointer, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {AclRoleRepository} from '~/repositories/acl-role.repository'
@@ -31,8 +32,8 @@ export class AdminService { //} implements CrudService<internal.Admin> {
 
     async create(admins: internal.Admin[], sr: ServiceRequest): Promise<internal.Admin[]> {
         const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
-        for (const admin of admins) {
-            await this.populateAdmin(admin, accessorRole, sr)
+        await checkItems(admins, async (admin, key) => {
+            await this.populateAdmin(admin, accessorRole, sr, key)
             if (admin.enable2fa) {
                 if (!admin.otpSecret)
                     admin.otpSecret = this.authService.generateOtpSecretKey()
@@ -42,7 +43,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
                 admin.otpInit = false
                 admin.otpSecret = null
             }
-        }
+        })
 
         const createdIds = await this.adminRepo.create(admins)
         const created = await this.adminRepo.readWhereInIds(createdIds, this.getAdminOptionsFromServiceRequest(sr))
@@ -99,17 +100,16 @@ export class AdminService { //} implements CrudService<internal.Admin> {
 
     async update(updates: Dictionary<internal.Admin>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
-        if (ids.length != await this.adminRepo.readCountOfIds(ids, this.getAdminOptionsFromServiceRequest(sr))) {
-            throw new UnprocessableEntityException()
-        }
+        const admins = await this.adminRepo.readWhereInIds(ids, this.getAdminOptionsFromServiceRequest(sr))
+        throwMissingIds(sr, ids, admins.map(admin => admin.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr)
         const options = this.getAdminOptionsFromServiceRequest(sr)
 
-        for (const id of ids) {
-            const admin = updates[id]
+        await checkItems(updates, async (admin, key) => {
+            const id = +key
             admin.id = id  // TODO: Do we want to set the id here? After validation in controller it should not be possible to receive updates where the id in the update does not equal the key id
-            await this.populateAdmin(admin, accessorRole, sr)
+            await this.populateAdmin(admin, accessorRole, sr, key)
             const oldAdmin = await this.adminRepo.readById(id, options)
             // check for toggle
             if (oldAdmin.enable2fa != admin.enable2fa) {
@@ -124,8 +124,8 @@ export class AdminService { //} implements CrudService<internal.Admin> {
                 }
             }
 
-            await this.validateUpdate(sr.user.id, oldAdmin, admin)
-        }
+            this.validateUpdate(sr.user.id, oldAdmin, admin, sr, key)
+        })
         return await this.adminRepo.update(updates, options)
     }
 
@@ -152,12 +152,11 @@ export class AdminService { //} implements CrudService<internal.Admin> {
         this.log.debug({message: 'delete many admin by id', func: this.delete.name, user: sr.user.username, ids: ids})
 
         if (ids.includes(sr.user.id))
-            throw new ForbiddenException(this.i18n.t('errors.ADMIN_DELETE_SELF'))
+            throw apiError(this.i18n.t('errors.ADMIN_DELETE_SELF'), idPointer(sr, sr.user.id), HttpStatus.FORBIDDEN)
 
         const options =  this.getAdminOptionsFromServiceRequest(sr)
         const deleteIds = await this.adminRepo.readWhereInIds(ids, options)
-        if(ids.length != deleteIds.length)
-            throw new UnprocessableEntityException()
+        throwMissingIds(sr, ids, deleteIds.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
         return await this.adminRepo.delete(ids)
     }
 
@@ -175,7 +174,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             isMaster: sr.user.is_master,
         }
     }
-    private async populateAdmin(admin: internal.Admin, accessorRole: internal.AclRole, sr: ServiceRequest): Promise<void> {
+    private async populateAdmin(admin: internal.Admin, accessorRole: internal.AclRole, sr: ServiceRequest, key: number | string): Promise<void> {
         const role = await this.aclRepo.readOneByRole(admin.role, sr)
         await admin.setPermissionFlags()
         admin.roleId = role.id
@@ -189,9 +188,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
                 requested_role: admin.role,
                 is_master: sr.user.is_master,
             })
-            throw new ForbiddenException(
-                this.i18n.t('errors.PERMISSION_DENIED'),
-            )
+            throw apiError(this.i18n.t('errors.PERMISSION_DENIED'), itemPointer(sr, key, admin, 'role'), HttpStatus.FORBIDDEN)
         }
 
         if (admin.password) {
@@ -206,7 +203,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
                     const [storedSalt, storedHash] = pass.value.split('$')
                     const generatedHash = await admin.generateSaltedpass(6, storedSalt)
                     if (generatedHash.split('$')[1] === storedHash) {
-                        throw new UnprocessableEntityException(this.i18n.t('errors.PASSWORD_ALREADY_USED'))
+                        throw apiError(this.i18n.t('errors.PASSWORD_ALREADY_USED'), itemPointer(sr, key, admin, 'password'))
                     }
                 }
                 const journalHash = await admin.generateSaltedpass(6)
@@ -225,26 +222,23 @@ export class AdminService { //} implements CrudService<internal.Admin> {
     /**
      * Prevents change of passwords of other admin users and prevents change of
      * protected fields when updating self (admin.id == user.id)
+     * @param selfId
      * @param oldAdmin
      * @param admin
-     * @param selfId
-     * @private
-     *
-     * @returns admin object used to update the current entry
+     * @param sr
+     * @param key id of the item in the request
      */
-    private async validateUpdate(selfId: number, oldAdmin: internal.Admin, admin: internal.Admin): Promise<boolean> {
-        if (admin.id == selfId) {
-            ['login', 'role', 'isMaster', 'isActive',
-                'isSystem', 'isSuperuser', 'lawfulIntercept',
-                'readOnly', 'showPasswords',
-                'callData', 'billingData'].map(s => {
-                if (admin[s] != undefined && (oldAdmin[s] == undefined || oldAdmin[s] != admin[s])) {
-                    this.log.debug({message: 'Cannot change own property', id: selfId, field: s})
-                    throw new ForbiddenException(this.i18n.t('errors.ADMIN_CHANGE_PROPERTY_SELF'))
-                }
-            })
+    private validateUpdate(selfId: number, oldAdmin: internal.Admin, admin: internal.Admin, sr: ServiceRequest, key: number | string): void {
+        if (admin.id != selfId)
+            return
+        const protectedFields: (keyof internal.Admin)[] = ['login', 'role', 'isMaster', 'isActive', 'isSystem', 'isSuperuser',
+            'lawfulIntercept', 'readOnly', 'showPasswords', 'callData', 'billingData']
+        for (const field of protectedFields) {
+            if (admin[field] != undefined && (oldAdmin[field] == undefined || oldAdmin[field] != admin[field])) {
+                this.log.debug({message: 'Cannot change own property', id: selfId, field: field})
+                throw apiError(this.i18n.t('errors.ADMIN_CHANGE_PROPERTY_SELF'), itemPointer(sr, key, admin, field), HttpStatus.FORBIDDEN)
+            }
         }
-        return true
     }
 
 }

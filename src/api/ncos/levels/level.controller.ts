@@ -23,7 +23,7 @@ import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
-import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
+import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -235,12 +235,7 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
         const sr = new ServiceRequest(req)
         validatePatchResellerId(patches, sr)
 
-        const updates = new Dictionary<internal.NCOSLevel>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.ncosLevelService.read(+id, sr)
-            const entity = await patchToEntity<internal.NCOSLevel, NCOSLevelRequestDto>(oldEntity, patches[id], NCOSLevelRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.NCOSLevel, NCOSLevelRequestDto>(patches, id => this.ncosLevelService.read(id, sr), NCOSLevelRequestDto)
 
         return await this.ncosLevelService.update(updates, sr)
     }

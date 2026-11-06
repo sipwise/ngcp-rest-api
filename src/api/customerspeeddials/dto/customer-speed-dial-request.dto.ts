@@ -3,8 +3,11 @@ import {IsNotEmpty, IsNumber} from 'class-validator'
 
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
+import {DtoFields, withDtoFields} from '~/helpers/dto-fields.helper'
 
 export class CustomerSpeedDialRequestDto implements RequestDto {
+    static readonly dtoFields: DtoFields<internal.CustomerSpeedDial, CustomerSpeedDialRequestDto> = {contractId: 'customer_id'}
+
     @IsNotEmpty()
     @IsNumber()
     @ApiPropertyOptional({description: 'Customer id', example: 1})
@@ -41,6 +44,6 @@ export class CustomerSpeedDialRequestDto implements RequestDto {
                     csd[k] = null
             })
         }
-        return csd
+        return withDtoFields(csd, CustomerSpeedDialRequestDto.dtoFields)
     }
 }

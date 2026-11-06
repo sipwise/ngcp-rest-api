@@ -12,6 +12,7 @@ import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {ContractStatus, ContractType} from '~/entities/internal/contract.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -93,7 +94,7 @@ describe('ContractsService', () => {
                 status: ContractStatus.Active,
                 contact_id: 100,
                 type: ContractType.Reseller,
-            })], sr)).rejects.toThrow(UnprocessableEntityException)
+            })], sr)).rejects.toThrow(ApiErrorException)
         })
     })
 
@@ -121,7 +122,7 @@ describe('ContractsService', () => {
                 type: ContractType.Reseller,
                 billing_profile_id: 1,
             })
-            await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(updates, sr)).rejects.toThrow(ApiErrorException)
         })
         it('should throw an error if updated product type is invalid', async () => {
             // TODO: because of input validation in controller, this should not be possible
@@ -151,7 +152,7 @@ describe('ContractsService', () => {
             const oldEntity = await service.read(id, sr)
             const entity = await patchToEntity<internal.Contract, ContractRequestDto>(oldEntity, patch, ContractRequestDto)
             const update = new Dictionary<internal.Contract>(id.toString(), entity)
-            await expect(service.update(update, sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(update, sr)).rejects.toThrow(ApiErrorException)
         })
         it('should throw an error if updated product type is invalid', async () => {
             const id = 1

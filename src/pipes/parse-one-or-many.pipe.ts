@@ -1,31 +1,33 @@
-// TODO: Check if full type safety is possible in pipes
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import {ArgumentMetadata, ParseArrayOptions, PipeTransform, Type, ValidationPipe} from '@nestjs/common'
 
-import {ArgumentMetadata, HttpStatus, ParseArrayOptions, ParseArrayPipe, PipeTransform} from '@nestjs/common'
-import {HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
+import {ErrorEntry, ValidationFailedException} from '~/helpers/errors.helper'
+import {createItemValidationPipe, validateItem} from '~/helpers/validate.helper'
 
+/**
+ * Validates an object or an array of objects (bulk POST) against `items`; every failing item is reported,
+ * with pointers `/<index>/...` for arrays
+ */
 export class ParseOneOrManyPipe implements PipeTransform {
-    protected exceptionFactory: (error: string) => any
+    protected readonly validationPipe: ValidationPipe
 
     constructor(protected readonly options: ParseArrayOptions) {
-        this.options = options
-        this.options.whitelist = true
-        this.options.forbidNonWhitelisted = true
-
-        const {exceptionFactory, errorHttpStatusCode = HttpStatus.UNPROCESSABLE_ENTITY} =
-            options
-        this.exceptionFactory =
-            exceptionFactory ||
-            // TODO: Fix the return type
-            // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-            (error => new HttpErrorByCode[errorHttpStatusCode](error))
-        this.options.exceptionFactory = this.exceptionFactory
+        const {items: _items, separator: _separator, optional: _optional, exceptionFactory: _factory, ...validationOptions} = options
+        this.validationPipe = createItemValidationPipe({
+            ...validationOptions,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+        })
     }
 
-    async transform(value: any, metadata: ArgumentMetadata): Promise<any> {
-        const arrayPipe = new ParseArrayPipe(this.options)
-        if (!Array.isArray(value))
-            value = [value]
-        return arrayPipe.transform(value, metadata)
+    async transform(value: unknown, _metadata: ArgumentMetadata): Promise<unknown[]> {
+        const isArray = Array.isArray(value)
+        const items: unknown[] = isArray ? value : [value]
+        const errors: ErrorEntry[] = []
+        const result: unknown[] = []
+        for (const [index, item] of items.entries())
+            result.push(await validateItem(this.validationPipe, item, this.options.items as Type<unknown>, isArray ? `/${index}` : '', errors))
+        if (errors.length)
+            throw new ValidationFailedException(errors)
+        return result
     }
 }

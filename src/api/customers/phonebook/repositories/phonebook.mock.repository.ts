@@ -57,8 +57,8 @@ export class CustomerPhonebookMockRepository implements CustomerPhonebookReposit
         }
     }
 
-    readCountOfCustomers(customerIds: number[], resellerId: number): Promise<number> {
-        return Promise.resolve(customerIds.filter(id => this.customerResellers[id] == resellerId).length)
+    readCustomerIdsOfReseller(customerIds: number[], resellerId: number): Promise<number[]> {
+        return Promise.resolve(customerIds.filter(id => this.customerResellers[id] == resellerId))
     }
 
     create(phonebook: internal.CustomerPhonebook[]): Promise<number[]> {
@@ -101,8 +101,8 @@ export class CustomerPhonebookMockRepository implements CustomerPhonebookReposit
         return Promise.resolve(phonebook)
     }
 
-    readCountOfIds(ids: number[], _options?: CustomerPhonebookOptions): Promise<number> {
-        return Promise.resolve(ids.length)
+    readExistingIds(ids: number[], _options?: CustomerPhonebookOptions): Promise<number[]> {
+        return Promise.resolve(ids)
     }
 
     update(updates: Dictionary<internal.CustomerPhonebook>, _sr: ServiceRequest): Promise<number[]> {

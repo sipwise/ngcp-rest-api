@@ -102,8 +102,8 @@ export class SubscriberPhonebookMockRepository implements SubscriberPhonebookRep
         return Promise.resolve(phonebook)
     }
 
-    readCountOfIds(ids: number[], _options?: SubscriberPhonebookOptions): Promise<number> {
-        return Promise.resolve(ids.length)
+    readExistingIds(ids: number[], _options?: SubscriberPhonebookOptions): Promise<number[]> {
+        return Promise.resolve(ids)
     }
 
     update(updates: Dictionary<internal.SubscriberPhonebook>, _sr: ServiceRequest): Promise<number[]> {
@@ -146,9 +146,9 @@ export class SubscriberPhonebookMockRepository implements SubscriberPhonebookRep
         return Promise.resolve(_subscriberId)
     }
 
-    getAllowedSubscribersCount(ids: number[], filterBy: SubscriberPhonebookOptions['filterBy'], _sr: ServiceRequest): Promise<number> {
+    getAllowedSubscriberIds(ids: number[], filterBy: SubscriberPhonebookOptions['filterBy'], _sr: ServiceRequest): Promise<number[]> {
         return Promise.resolve(ids.filter(id => this.existingSubscribers.includes(id)
-            && (filterBy?.subscriberId == undefined || filterBy.subscriberId == id)).length)
+            && (filterBy?.subscriberId == undefined || filterBy.subscriberId == id)))
     }
 
     private getNextId(): number {

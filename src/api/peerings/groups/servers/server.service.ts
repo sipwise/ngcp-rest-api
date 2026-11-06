@@ -1,6 +1,6 @@
 
 
-import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {FilterBy, PeeringGroupServerMariadbRepository} from './repositories/server.mariadb.repository'
@@ -9,10 +9,9 @@ import {PeeringGroupServerRedisRepository} from './repositories/server.redis.rep
 import {AppService} from '~/app.service'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {ApiErrors, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -29,19 +28,7 @@ export class PeeringGroupServerService implements CrudService<internal.VoipPeeri
     }
 
     async create(entities: internal.VoipPeeringServer[], sr: ServiceRequest): Promise<internal.VoipPeeringServer[]> {
-        const invalidIds: number[] = []
-        await Promise.all(entities.map(async (entity) => {
-            if (!entity.siteId)
-                return
-            if (!this.validateSiteId(entity.siteId))
-                invalidIds.push(entity.siteId)
-        }))
-
-        if (invalidIds.length) {
-            const error: ErrorMessage = this.i18n.t('errors.INVALID_SITE_ID')
-            const message = GenerateErrorMessageArray(invalidIds, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        this.checkSiteIds(entities, sr)
 
         const created = await this.peeringGroupServerRepo.create(entities)
         await this.reloadKamProxyLcrAfterCommit(sr)
@@ -65,29 +52,9 @@ export class PeeringGroupServerService implements CrudService<internal.VoipPeeri
         const ids = Object.keys(updates).map(id => parseInt(id))
         const servers = await this.peeringGroupServerRepo.readWhereInIds(ids, sr)
 
-        if (servers.length == 0) {
-            throw new NotFoundException()
-        }
+        throwMissingIds(sr, ids, servers.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
-        if (ids.length != servers.length) {
-            const error: ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
-
-        const invalidIds: number[] = []
-        await Promise.all(Object.values(updates).map(async (update) => {
-            if (!update.siteId)
-                return
-            if (!this.validateSiteId(update.siteId))
-                invalidIds.push(update.id)
-        }))
-
-        if (invalidIds.length) {
-            const error: ErrorMessage = this.i18n.t('errors.INVALID_SITE_ID')
-            const message = GenerateErrorMessageArray(invalidIds, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        this.checkSiteIds(updates, sr)
 
         // Always reload LCR
         await this.reloadKamProxyLcrAfterCommit(sr)
@@ -99,15 +66,18 @@ export class PeeringGroupServerService implements CrudService<internal.VoipPeeri
         return this.peeringGroupServerRepo.update(updates, sr)
     }
 
+    private checkSiteIds(entities: internal.VoipPeeringServer[] | Dictionary<internal.VoipPeeringServer>, sr: ServiceRequest): void {
+        const errors = new ApiErrors()
+        for (const [key, entity] of Object.entries(entities)) {
+            if (entity.siteId && !this.validateSiteId(entity.siteId))
+                errors.add(this.i18n.t('errors.INVALID_SITE_ID'), itemPointer(sr, key, entity, 'siteId'))
+        }
+        errors.throwIfAny()
+    }
+
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         const servers = await this.peeringGroupServerRepo.readWhereInIds(ids, sr)
-        if (servers.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != servers.length) {
-            const error: ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, servers.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         await this.reloadKamProxyLcrAfterCommit(sr)
         if (this.requiresDispatcherReload(servers)) {

@@ -6,7 +6,6 @@ import {CsvConfig} from './csv.config.schema'
 import {DatabaseConfig} from './database.config.schema'
 import {FileShareConfig} from './fileshare.config.schema'
 import {GeneralConfig} from './general.config.schema'
-import {LegacyConfig} from './legacy.config.schema'
 import {MultiSiteConfig} from './multisite.config.schema'
 import {RedisConfig} from './redis.config.schema'
 import {SecurityConfig} from './security.config.schema'
@@ -37,10 +36,6 @@ export class AppConfig {
     @ValidateNested()
     @Type(() => SSLConfig)
         ssl: SSLConfig
-
-    @ValidateNested()
-    @Type(() => LegacyConfig)
-        legacy: LegacyConfig
 
     @ValidateNested()
     @Type(() => CsvConfig)

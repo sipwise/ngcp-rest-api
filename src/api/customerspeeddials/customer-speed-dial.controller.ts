@@ -1,7 +1,7 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
-import {Operation, patchToEntity} from 'helpers/patch.helper'
+import {Operation, patchManyToEntities, patchToEntity} from 'helpers/patch.helper'
 
 import {CustomerSpeedDialService} from './customer-speed-dial.service'
 import {CustomerSpeedDialRequestDto} from './dto/customer-speed-dial-request.dto'
@@ -177,12 +177,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
-        const updates = new Dictionary<internal.CustomerSpeedDial>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.customerSpeedDialService.read(+id, sr)
-            const entity = await patchToEntity<internal.CustomerSpeedDial, CustomerSpeedDialRequestDto>(oldEntity, patches[id], CustomerSpeedDialRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.CustomerSpeedDial, CustomerSpeedDialRequestDto>(patches, id => this.customerSpeedDialService.read(id, sr), CustomerSpeedDialRequestDto)
 
         return await this.customerSpeedDialService.update(updates, sr)
     }

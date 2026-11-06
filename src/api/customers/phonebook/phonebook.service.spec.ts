@@ -11,6 +11,7 @@ import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -228,12 +229,12 @@ describe('customer phonebookService', () => {
 
         it('should reject subscriberadmin creating for another customer', async () => {
             const spy = jest.spyOn(phonebookMockRepo, 'create')
-            await expect(service.create([makeEntity(2, '901')], makeSr(subadminUser))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.create([makeEntity(2, '901')], makeSr(subadminUser))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('should reject if any of several entities is for another customer', async () => {
             await expect(service.create([makeEntity(1, '902'), makeEntity(2, '903')], makeSr(subadminUser)))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
         it('should allow subscriberadmin creating for own customer', async () => {
             const result = await service.create([makeEntity(1, '904')], makeSr(subadminUser))
@@ -253,32 +254,32 @@ describe('customer phonebookService', () => {
             return d
         }
 
-        it('update: should throw NotFound if no id is visible', async () => {
-            jest.spyOn(phonebookMockRepo, 'readCountOfIds').mockResolvedValue(0)
+        it('update: should throw 422 for every id if no id is visible', async () => {
+            jest.spyOn(phonebookMockRepo, 'readExistingIds').mockResolvedValue([])
             const spy = jest.spyOn(phonebookMockRepo, 'update')
-            await expect(service.update(updates(), makeSr(user))).rejects.toThrow(NotFoundException)
+            await expect(service.update(updates(), makeSr(user))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('update: should throw 422 if only some ids are visible', async () => {
-            jest.spyOn(phonebookMockRepo, 'readCountOfIds').mockResolvedValue(1)
+            jest.spyOn(phonebookMockRepo, 'readExistingIds').mockResolvedValue([1])
             const spy = jest.spyOn(phonebookMockRepo, 'update')
-            await expect(service.update(updates(), makeSr(user))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(updates(), makeSr(user))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
-        it('update: should pass the reseller filter to the count', async () => {
-            const spy = jest.spyOn(phonebookMockRepo, 'readCountOfIds')
+        it('update: should pass the reseller filter to the id check', async () => {
+            const spy = jest.spyOn(phonebookMockRepo, 'readExistingIds')
             await service.update(updates(), makeSr(resellerUser))
             expect(spy.mock.calls[0][0]).toStrictEqual([1, 2])
             expect(spy.mock.calls[0][1].filterBy.resellerId).toBe(2)
         })
-        it('delete: should throw NotFound if no id is visible', async () => {
-            jest.spyOn(phonebookMockRepo, 'readCountOfIds').mockResolvedValue(0)
-            await expect(service.delete([1, 2], makeSr(user))).rejects.toThrow(NotFoundException)
+        it('delete: should throw 422 for every id if no id is visible', async () => {
+            jest.spyOn(phonebookMockRepo, 'readExistingIds').mockResolvedValue([])
+            await expect(service.delete([1, 2], makeSr(user))).rejects.toThrow(ApiErrorException)
         })
         it('delete: should throw 422 if only some ids are visible', async () => {
-            jest.spyOn(phonebookMockRepo, 'readCountOfIds').mockResolvedValue(1)
+            jest.spyOn(phonebookMockRepo, 'readExistingIds').mockResolvedValue([1])
             const spy = jest.spyOn(phonebookMockRepo, 'delete')
-            await expect(service.delete([1, 2], makeSr(user))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.delete([1, 2], makeSr(user))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('delete: should delete several ids', async () => {
@@ -289,7 +290,7 @@ describe('customer phonebookService', () => {
             const d = new Dictionary<internal.CustomerPhonebook>()
             d[1] = internal.CustomerPhonebook.create({id: 1, name: 'a', number: '1', contractId: 2})
             const spy = jest.spyOn(phonebookMockRepo, 'update')
-            await expect(service.update(d, makeSr(subadminUser))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(d, makeSr(subadminUser))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
     })
@@ -302,7 +303,7 @@ describe('customer phonebookService', () => {
         it('should reject duplicate customer/number pairs', async () => {
             const spy = jest.spyOn(phonebookMockRepo, 'create')
             await expect(service.importCsv([makeEntity(1, '5'), makeEntity(1, '5')], makeSr(user)))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('should accept the same number for different customers', async () => {
@@ -335,7 +336,7 @@ describe('customer phonebookService', () => {
 
         it('should reject subscriberadmin importing for another customer', async () => {
             const spy = jest.spyOn(phonebookMockRepo, 'create')
-            await expect(service.importCsv([makeEntity(2, '5')], makeSr(subadminUser))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.importCsv([makeEntity(2, '5')], makeSr(subadminUser))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
     })
@@ -346,7 +347,7 @@ describe('customer phonebookService', () => {
         })
 
         it('should create for a customer of the own reseller', async () => {
-            const count = jest.spyOn(phonebookMockRepo, 'readCountOfCustomers')
+            const count = jest.spyOn(phonebookMockRepo, 'readCustomerIdsOfReseller')
             const result = await service.create([makeEntity(1, '951')], makeSr(resellerUser))
             expect(result).toHaveLength(1)
             expect(count).toHaveBeenCalledWith([1], 2)
@@ -354,26 +355,26 @@ describe('customer phonebookService', () => {
         it('should reject create for a customer of another reseller', async () => {
             const spy = jest.spyOn(phonebookMockRepo, 'create')
             await expect(service.create([makeEntity(1, '952'), makeEntity(3, '953')], makeSr(resellerUser)))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('should reject moving an entry to a customer of another reseller', async () => {
             const d = new Dictionary<internal.CustomerPhonebook>()
             d[1] = internal.CustomerPhonebook.create({id: 1, name: 'a', number: '1', contractId: 3})
             const spy = jest.spyOn(phonebookMockRepo, 'update')
-            await expect(service.update(d, makeSr(resellerUser))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(d, makeSr(resellerUser))).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
         it('should reject importing for a customer of another reseller', async () => {
             const purge = jest.spyOn(phonebookMockRepo, 'purge')
             const spy = jest.spyOn(phonebookMockRepo, 'create')
             await expect(service.importCsv([makeEntity(3, '954')], makeSr(resellerUser, {purge_existing: 'true'})))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
             expect(purge).not.toHaveBeenCalled()
             expect(spy).not.toHaveBeenCalled()
         })
         it('should not check the customer reseller for an admin', async () => {
-            const count = jest.spyOn(phonebookMockRepo, 'readCountOfCustomers')
+            const count = jest.spyOn(phonebookMockRepo, 'readCustomerIdsOfReseller')
             await service.create([makeEntity(1, '955')], makeSr(user))
             expect(count).not.toHaveBeenCalled()
         })

@@ -1,4 +1,4 @@
-## Introduzione
+## Concetti
 
 API v2 è l'interfaccia REST per il provisioning e la gestione della piattaforma NGCP. Rispetto ad API v1 aggiunge il provisioning in blocco, la validazione rigorosa di ogni richiesta, in cui campi e parametri di query sconosciuti vengono rifiutati anziché ignorati, e funzionalità estese. È descritta da un documento OpenAPI 3, da cui viene generata questa pagina.
 
@@ -215,30 +215,109 @@ Una POST in blocco senza `Prefer` restituisce 204, quindi richiedere `return=id`
 
 ### Errori
 
-Gli errori hanno un corpo JSON. `message` è un testo oppure, se la validazione non riesce, un elenco dei campi rifiutati con i controlli non superati:
+Ogni errore ha lo stesso corpo JSON:
 
 ```json
 {
   "tx": "725d5b49f5674d719db795cf2f81262e",
   "statusCode": 422,
-  "path": "/api/v2/customercontacts/5",
-  "method": "PATCH",
+  "path": "/api/v2/customercontacts",
+  "method": "POST",
   "error": "Unprocessable Entity",
-  "message": [
-    {"status": [{"isEnum": "status must be one of the following values: active, terminated"}]}
+  "errorCode": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "errors": [
+    {"pointer": "/1/status", "code": "isEnum", "message": "status must be one of the following values: active, terminated"},
+    {"pointer": "/1/email", "code": "isEmail", "message": "email must be an email"}
   ]
 }
 ```
 
-`tx` identifica la richiesta nel log del server (`/var/log/ngcp/rest-api.log`). Indicarlo quando si segnala un problema.
+- `tx` identifica la richiesta nel log del server (`/var/log/ngcp/rest-api.log`). Indicarlo quando si segnala un problema.
+- `error` è il testo dello stato HTTP, `message` un testo leggibile.
+- `errorCode` è il codice dell'errore leggibile da una macchina: `VALIDATION_FAILED` (corpo non valido), `INVALID_PARAMETER` (parametro di percorso o di query non valido), `INVALID_JSON` (il corpo non è JSON), `INVALID_JSON_PATCH` (JSON Patch malformato), `JSON_PATCH_CONFLICT` (il JSON Patch non è applicabile all'elemento), un codice specifico come `RESELLER_ID_INVALID` oppure, altrimenti, il nome dello stato, come `NOT_FOUND` o `FORBIDDEN`.
+- `errors` elenca i singoli errori, una voce per controllo non superato, nell'ordine della richiesta. Viene omesso se non ce ne sono. Per impostazione predefinita vengono restituite al massimo 100 voci; `message` indica allora quante sono.
+
+Il documento OpenAPI (`swagger.json`, `swagger.yaml`) descrive questo corpo con lo schema `ErrorResponse`, con voci `ErrorEntry`; le risposte `4XX` e `5XX` di ogni operazione vi fanno riferimento.
+
+Basare la logica su `errorCode` e sul `code` delle voci, mai su `message`: i testi possono cambiare. I valori di `code` sono i nomi dei controlli non superati (`isEnum`, `isNotEmpty`, `whitelistValidation` per un campo che non deve essere inviato, `containsNumber`), l'errore di JSON Patch (`TEST_OPERATION_FAILED`) o un codice specifico.
+
+Una voce indica il valore errato con `pointer`, un [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901) nel corpo della richiesta, oppure nomina il `parameter` errato del percorso o della query string:
+
+| Richiesta | Pointer |
+| --- | --- |
+| POST, PUT di un elemento | `/email`, annidato `/rules/1/match_pattern` |
+| POST in bulk (array) | `/<index>/email` |
+| PUT, PATCH in bulk (indicizzato per id) | `/<id>/email` |
+| PATCH, valore non valido (422) | il campo nell'elemento modificato, ad esempio `/email` |
+| PATCH, operazione malformata o in conflitto (400, 409) | il membro dell'operazione nel documento di patch: `/0/op`, `/0/path`, `/0/value`; in bulk `/<id>/0/path` |
+| Importazione CSV | `/<row>/email`, righe contate da 0 dopo l'intestazione |
+
+Gli indici partono da 0: l'elemento di un POST in bulk (`/0` è il primo elemento), l'operazione di un JSON Patch (`/0/op`), l'id nella lista di id di un DELETE in bulk e la riga di dati CSV senza l'intestazione.
+
+```json
+{
+  "tx": "0c6f3e4ab4f04a4c9d1b6f0e8d0d6a51",
+  "statusCode": 400,
+  "path": "/api/v2/customercontacts?colour=blue",
+  "method": "GET",
+  "error": "Bad Request",
+  "errorCode": "INVALID_PARAMETER",
+  "message": "Validation failed",
+  "errors": [
+    {"parameter": "colour", "code": "whitelistValidation", "message": "parameter colour should not exist"}
+  ]
+}
+```
+
+Un campo annidato è indicato dal suo percorso completo, qui la seconda regola incorporata di un nuovo rewrite rule set:
+
+```json
+{
+  "tx": "9d4c2b7e1a3f4c6d8e0f1a2b3c4d5e6f",
+  "statusCode": 422,
+  "path": "/api/v2/rewrite-rules/sets",
+  "method": "POST",
+  "error": "Unprocessable Entity",
+  "errorCode": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "errors": [
+    {"pointer": "/rules/1/replace_pattern", "code": "containsSpaces", "message": "replace_pattern cannot contain spaces"},
+    {"pointer": "/rules/1/direction", "code": "isEnum", "message": "direction must be one of the following values: in, out, lnp"}
+  ]
+}
+```
+
+I controlli sui dati memorizzati, per esempio un `reseller_id` sconosciuto o un nome già esistente, restituiscono le stesse voci con il codice specifico come `code`. Il puntatore indica il campo o l'elemento nel suo insieme (`/<index>`, `/<id>`, il puntatore vuoto per un singolo elemento). Ogni elemento non valido è elencato con il proprio codice; `errorCode` e `message` sono quelli della prima voce.
+
+```json
+{
+  "tx": "3b9e6f1c2d7a4e5f8a0b1c2d3e4f5a6b",
+  "statusCode": 422,
+  "path": "/api/v2/domains",
+  "method": "POST",
+  "error": "Unprocessable Entity",
+  "errorCode": "DOMAIN_ALREADY_EXISTS",
+  "message": "Domain 'sip.example.org' already exists",
+  "errors": [
+    {"pointer": "/0/domain", "code": "DOMAIN_ALREADY_EXISTS", "message": "domain 'sip.example.org' already exists"},
+    {"pointer": "/2/reseller_id", "code": "RESELLER_ID_INVALID", "message": "invalid reseller_id"}
+  ]
+}
+```
+
+Gli id di un PUT, PATCH o DELETE in blocco che non esistono o non sono visibili restituiscono 422 `ENTRY_NOT_FOUND` con una voce per id: `/<id>` in un corpo PUT o PATCH, `/<index>` in un elenco di id DELETE. Un elemento indicato dal suo id nel percorso restituisce 404.
+
+400 significa che la richiesta non può essere interpretata (JSON o JSON Patch malformato, parametro non valido), 409 che un JSON Patch ben formato non è applicabile all'elemento corrente (`test` non superato, percorso inesistente), 422 che un contenuto ben formato non è valido.
 
 | Codice | Causa tipica |
 | --- | --- |
-| 400 | Richiesta malformata, parametro di query sconosciuto, JSON Patch non valido. |
+| 400 | JSON o JSON Patch malformato, parametro sconosciuto o non valido. |
 | 401 | Credenziali mancanti o errate. |
 | 403 | Non consentito per il proprio ruolo, utente in sola lettura, password scaduta, login bloccato, TOTP mancante o non valido. |
 | 404 | L'elemento non esiste o non è visibile all'utente. |
-| 415 | Il corpo non è un JSON valido. |
+| 409 | Il JSON Patch non è applicabile all'elemento. |
+| 415 | Nessun `Content-Type` e il corpo non è JSON. |
 | 422 | Validazione non riuscita, valore duplicato, campo non espandibile. |
 | 423 | L'elemento è ancora in uso, ad esempio un contatto associato a un contratto. |
 | 500, 503 | Problema lato server. Segnalarlo indicando il `tx`. |

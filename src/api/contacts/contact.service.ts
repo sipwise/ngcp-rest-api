@@ -1,10 +1,11 @@
-import {HttpException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {HttpStatus, Inject, Injectable} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {ContactMariadbRepository} from './repositories/contact.mariadb.repository'
 
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrors,apiError, checkItems, idPointer, itemPointer, readFoundIds, throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -25,17 +26,17 @@ export class ContactService implements CrudService<internal.Contact>{
             func: this.create.name,
             user: sr.user.username,
         })
-        for (const contact of contacts) {
+        const errors = new ApiErrors()
+        for (const [index, contact] of contacts.entries()) {
             if (contact.reseller_id != null) {
                 if (sr.user.reseller_id_required) {
                     contact.reseller_id = sr.user.reseller_id
                 }
-                const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
-                if (!reseller) {
-                    throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
-                }
+                if (!await this.contactRepo.readResellerById(contact.reseller_id, sr))
+                    errors.add(this.i18n.t('errors.RESELLER_ID_INVALID'), itemPointer(sr, index, contact, 'reseller_id'))
             }
         }
+        errors.throwIfAny()
         const createdIds = await this.contactRepo.create(contacts, sr)
         return await this.contactRepo.readWhereInIds(createdIds)
     }
@@ -48,23 +49,19 @@ export class ContactService implements CrudService<internal.Contact>{
             user: sr.user.username,
         })
         const contacts = await this.contactRepo.readWhereInIds(ids, {})
-        if (ids.length != contacts.length)
-            throw new UnprocessableEntityException()
+        throwMissingIds(sr, ids, contacts.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
-        // TODO: should exceptions be HttpException? I think this should be determined by the controller
+        // customer contacts with active contracts or subscribers can't be deleted (423 locked)
+        await checkItems(contacts.filter(contact => contact.reseller_id != null), async contact => {
+            if (await this.contactRepo.hasContactActiveContract(contact.id, sr))
+                throw apiError(this.i18n.t('errors.CONTACT_HAS_ACTIVE_CONTRACT'), idPointer(sr, contact.id), HttpStatus.LOCKED)
+            if (await this.contactRepo.hasContactActiveSubscriber(contact.id, sr))
+                throw apiError(this.i18n.t('errors.CONTACT_HAS_ACTIVE_SUBSCRIBER'), idPointer(sr, contact.id), HttpStatus.LOCKED)
+        })
         for (const contact of contacts) {
-            if (contact.reseller_id != null) {  // check for active contracts and subscribers when deleting customercontact
-                if (await this.contactRepo.hasContactActiveContract(contact.id, sr)) {
-                    throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_CONTRACT'), 423) // 423 HTTP LOCKED
-                }
-
-                if (await this.contactRepo.hasContactActiveSubscriber(contact.id, sr)) {
-                    throw new HttpException(this.i18n.t('errors.CONTACT_HAS_ACTIVE_SUBSCRIBER'), 423) // 423 HTTP LOCKED
-                }
-
-                if (await this.contactRepo.hasContactTerminatedContract(contact.id, sr) || await this.contactRepo.hasContactTerminatedSubscriber(contact.id, sr)) {
-                    await this.contactRepo.terminate(contact.id, sr) // TODO: currently there is no way of knowing whether contact was deleted or terminated
-                }
+            if (contact.reseller_id != null
+                && (await this.contactRepo.hasContactTerminatedContract(contact.id, sr) || await this.contactRepo.hasContactTerminatedSubscriber(contact.id, sr))) {
+                await this.contactRepo.terminate(contact.id, sr) // TODO: currently there is no way of knowing whether contact was deleted or terminated
             }
         }
         return await this.contactRepo.delete(ids, sr)
@@ -92,21 +89,18 @@ export class ContactService implements CrudService<internal.Contact>{
             ids: ids,
             user: sr.user.username,
         })
+        throwMissingIds(sr, ids, await readFoundIds(ids, id => this.contactRepo.readById(id)), this.i18n.t('errors.ENTRY_NOT_FOUND'))
+        const errors = new ApiErrors()
         for (const id of ids) {
             const contact = updates[id]
             const oldContact = await this.contactRepo.readById(id)
-            if ((oldContact.reseller_id == null) != (contact.reseller_id == null)) {
-                throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_TYPE_IMMUTABLE'))
-            }
-            if (oldContact.reseller_id != null) {
-                if (oldContact.reseller_id != contact.reseller_id) {
-                    const reseller = await this.contactRepo.readResellerById(contact.reseller_id, sr)
-                    if (!reseller) {
-                        throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
-                    }
-                }
-            }
+            if ((oldContact.reseller_id == null) != (contact.reseller_id == null))
+                errors.add(this.i18n.t('errors.CONTACT_TYPE_IMMUTABLE'), itemPointer(sr, id, contact, 'reseller_id'))
+            else if (oldContact.reseller_id != null && oldContact.reseller_id != contact.reseller_id
+                && !await this.contactRepo.readResellerById(contact.reseller_id, sr))
+                errors.add(this.i18n.t('errors.RESELLER_ID_INVALID'), itemPointer(sr, id, contact, 'reseller_id'))
         }
+        errors.throwIfAny()
         return await this.contactRepo.update(updates)
     }
 

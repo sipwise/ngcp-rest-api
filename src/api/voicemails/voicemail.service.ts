@@ -1,7 +1,7 @@
 import {execFile} from 'child_process'
 import {promisify} from 'util'
 
-import {BadRequestException, Inject, Injectable, InternalServerErrorException, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable, InternalServerErrorException, UnprocessableEntityException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {VoicemailMariadbRepository} from './repositories/voicemail.mariadb.repository'
@@ -9,6 +9,7 @@ import {VoicemailMariadbRepository} from './repositories/voicemail.mariadb.repos
 import {internal} from '~/entities'
 import {supportedVoicemailFolders, voicemailSpoolDir} from '~/enums/supported-voicemail-folders.enum'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrors, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -87,8 +88,7 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         const voicemails: Array<internal.Voicemail> = await this.voicemailRepo.readWhereInIds(ids, sr)
-        if (voicemails.length != new Set(ids).size)
-            throw new UnprocessableEntityException()
+        throwMissingIds(sr, ids, voicemails.map(voicemail => voicemail.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
         const folders = this.collectFolders(voicemails)
         const deletedIds: number[] = await this.voicemailRepo.delete(voicemails.map(voicemail => voicemail.id), sr)
 
@@ -103,12 +103,12 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
 
     async update(updates: Dictionary<internal.Voicemail>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
-        if (await this.voicemailRepo.readCountOfIds(ids, sr) != ids.length)
-            throw new UnprocessableEntityException()
+        const voicemails: Array<internal.Voicemail> = await this.voicemailRepo.readWhereInIds(ids, sr)
+        throwMissingIds(sr, ids, voicemails.map(voicemail => voicemail.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
         const notifies: Array<[number, string]> = []
         const originFolders = new Map<string, VoicemailFolder>()
         const nextMsgnums = new Map<string, number>()
-        const voicemails: Array<internal.Voicemail> = await this.voicemailRepo.readWhereInIds(ids, sr)
+        const invalidDirs = new ApiErrors()
 
         for (const voicemail of voicemails) {
             const id = voicemail.id
@@ -123,8 +123,10 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
                     }
                 })
 
-                if (!validDir)
-                    throw new BadRequestException(`not a valid value ${update.dir}`)
+                if (!validDir) {
+                    invalidDirs.add(this.i18n.t('errors.VOICEMAIL_DIR_INVALID', {args: {dir: update.dir}}), itemPointer(sr, id, update, 'dir'))
+                    continue
+                }
 
                 const targetDir = `${this.voicemailDir}${voicemail.mailboxuser}/${validDir}`
                 update.dir = targetDir
@@ -151,6 +153,8 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
                 notifies.push([id, action_type])
             }
         }
+
+        invalidDirs.throwIfAny()
 
         for (const id of ids) {
             const dir = updates[id].dir

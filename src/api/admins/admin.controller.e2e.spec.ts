@@ -12,6 +12,7 @@ import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
+import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
@@ -660,7 +661,7 @@ describe('AdminController', () => {
                     .set('Content-Type', 'application/json')
                     .send(newAdmin('rid_admin_none', RbacRole.admin))
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
             })
             it('admin: should create admin with reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -682,7 +683,7 @@ describe('AdminController', () => {
                     .set('Content-Type', 'application/json')
                     .send(newAdmin(loginOf('rid_admin'), RbacRole.admin))
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
             })
             it('admin: should fail emptying reseller_id with patch', async () => {
                 const tt: PatchOperation[][] = [
@@ -697,7 +698,7 @@ describe('AdminController', () => {
                         .set('Content-Type', 'application/json-patch+json')
                         .send(emptyPatch)
                     expect(response.status).toEqual(422)
-                    expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                    expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
                 }
             })
             it('admin: should update admin with reseller_id', async () => {
@@ -719,7 +720,7 @@ describe('AdminController', () => {
                     .set('Content-Type', 'application/json')
                     .send({...newAdmin(loginOf('rid_reseller'), RbacRole.reseller), reseller_id: 1})
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('resellermaster: should create admin without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -741,7 +742,7 @@ describe('AdminController', () => {
                     .set('Content-Type', 'application/json')
                     .send({...newAdmin(loginOf('rid_reseller'), RbacRole.reseller), reseller_id: 1})
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('resellermaster: should fail patching reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -751,7 +752,7 @@ describe('AdminController', () => {
                     .set('Content-Type', 'application/json-patch+json')
                     .send([{op: 'replace', path: '/reseller_id', value: 1}])
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('resellermaster: should patch admin without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -833,6 +834,28 @@ describe('AdminController', () => {
                     .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(patchResponse.status).toEqual(422)
+                expect(patchResponse.body.errorCode).toEqual('VALIDATION_FAILED')
+                expect(patchResponse.body.errors.length).toBeGreaterThan(0)
+                expect(patchResponse.body.errors.every((e: ErrorEntry) => e.pointer == '/password')).toBe(true)
+                expect(JSON.stringify(patchResponse.body)).not.toContain('weakpassword')
+            })
+            it('should not echo the password in a POST validation error', async () => {
+                const password = 'weakpassword_not_echoed'
+                const response = await request(app.getHttpServer())
+                    .post('/api/admins')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send([{
+                        login: `pw_echo_${Date.now().toString(36)}`,
+                        password: password,
+                        reseller_id: 1,
+                        role: RbacRole.admin,
+                    }])
+                expect(response.status).toEqual(422)
+                expect(response.body.errors.length).toBeGreaterThan(0)
+                expect(response.body.errors.some((e: ErrorEntry) => e.pointer == '/0/password')).toBe(true)
+                expect(JSON.stringify(response.body)).not.toContain(password)
             })
             it('should turn on 2fa', async () => {
                 const patch: PatchOperation[] = [
@@ -881,7 +904,8 @@ describe('AdminController', () => {
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .send([1.2, 3.4])
-            expect(result.status).toEqual(400)
+            expect(result.status).toEqual(422)
+            expect(result.body.errors).toEqual([{pointer: '/0', code: 'isInt', message: 'id must be an integer number'}])
         })
         it('fail if not array', async () => {
             const result = await request(app.getHttpServer())
@@ -890,7 +914,8 @@ describe('AdminController', () => {
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .send({id: 1})
-            expect(result.status).toEqual(400)
+            expect(result.status).toEqual(422)
+            expect(result.body.errors).toEqual([{pointer: '', code: 'isArray', message: 'id must be an array'}])
         })
         it('fails if no body and no params are defined', async () => {
             const result = await request(app.getHttpServer())

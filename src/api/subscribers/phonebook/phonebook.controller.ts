@@ -37,7 +37,7 @@ import {csvToDto, handleCsvExport} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
-import {patchToEntity} from '~/helpers/patch.helper'
+import {patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -290,14 +290,9 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
-        const updates = new Dictionary<internal.SubscriberPhonebook>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.phonebookService.read(+id, sr)
-            const entity = await patchToEntity<internal.SubscriberPhonebook, SubscriberPhonebookRequestDto>(
-                oldEntity as internal.SubscriberPhonebook, patches[id], SubscriberPhonebookRequestDto,
-            )
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.SubscriberPhonebook, SubscriberPhonebookRequestDto>(
+            patches, async id => await this.phonebookService.read(id, sr) as internal.SubscriberPhonebook, SubscriberPhonebookRequestDto,
+        )
 
         return await this.phonebookService.update(updates, sr)
     }

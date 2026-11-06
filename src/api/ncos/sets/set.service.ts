@@ -1,10 +1,11 @@
-import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable, NotFoundException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {NCOSSetMariadbRepository} from './repositories/set.mariadb.repository'
 
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {readFoundIds, throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -44,6 +45,7 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
     async update(updates: Dictionary<internal.NCOSSet>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         const revokes: number[] = []
+        throwMissingIds(sr, ids, await readFoundIds(ids, id => this.ncosSetRepo.readById(id, sr)), this.i18n.t('errors.ENTRY_NOT_FOUND'))
         for (const id of ids) {
             const entity = updates[id]
             const oldEntity = await this.ncosSetRepo.readById(id, sr)
@@ -59,8 +61,7 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         const sets = await this.ncosSetRepo.readWhereInIds(ids, sr)
-        if (ids.length != sets.length)
-            throw new UnprocessableEntityException()
+        throwMissingIds(sr, ids, sets.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
         for (const set of sets) {
             await this.checkPermissions(set.resellerId, sr)
         }

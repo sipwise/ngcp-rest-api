@@ -376,7 +376,7 @@ describe('Contact', () => {
                         .set('Content-Type', 'application/json')
                         .send({...{reseller_id: 1, status: 'active'}, ...fields})
                     expect(response.status).toEqual(422)
-                    expect(JSON.stringify(response.body.message)).toContain(Object.keys(fields)[0])
+                    expect(JSON.stringify(response.body.errors)).toContain(Object.keys(fields)[0])
                 }
             })
             it('fail adjust with invalid field types', async () => {
@@ -401,7 +401,7 @@ describe('Contact', () => {
                         .set('Content-Type', 'application/json-patch+json')
                         .send(emptyPatch)
                     expect(response.status).toEqual(422)
-                    expect(JSON.stringify(response.body.message)).toContain('status should not be empty')
+                    expect(JSON.stringify(response.body.errors)).toContain('status should not be empty')
                 }
             })
             it('clear fields with adjust', async () => {
@@ -457,7 +457,7 @@ describe('Contact', () => {
                     .set('Content-Type', 'application/json-patch+json')
                     .send([{op: 'replace', path: '/terminate_timestamp', value: '2000-01-01 00:00:00'}])
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property terminate_timestamp should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property terminate_timestamp should not exist')
                 const after = await request(app.getHttpServer())
                     .get(`/api/contacts/${createdIds[0]}`)
                     .set(...authHeader)

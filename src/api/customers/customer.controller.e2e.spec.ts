@@ -20,6 +20,7 @@ import {ContractBillingProfileDefinition, ContractStatus, ContractStatus as Cust
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
 import {Discriminator} from '~/entities/internal/profile-package-set.internal.entity'
 import {toLocalDateTime} from '~/helpers/date.helper'
+import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {validate} from '~/helpers/validate.helper'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
@@ -350,9 +351,9 @@ describe('CustomerController', () => {
                 expect(profile.id).toEqual(profileB)
             })
 
-            it('throws 422 without billing mappings', async () => {
+            it('returns nothing without billing mappings', async () => {
                 const id = await createContract([])
-                await expect(repo.readActualBillingProfile(id)).rejects.toMatchObject({status: HttpStatus.UNPROCESSABLE_ENTITY})
+                await expect(repo.readActualBillingProfile(id)).resolves.toBeUndefined()
                 // a customer without mappings breaks GET /customers
                 await db.billing.Contract.delete(id)
                 fixtureContractIds.splice(fixtureContractIds.indexOf(id), 1)
@@ -404,6 +405,9 @@ describe('CustomerController', () => {
                         billing_profile_id: profileTerminated,
                     })
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([
+                    ['/billing_profile_id', 'BILLING_PROFILE_ALREADY_TERMINATED'],
+                ])
             })
         })
 
@@ -482,17 +486,20 @@ describe('CustomerController', () => {
                 expect(response.status).toEqual(HttpStatus.NO_CONTENT)
             })
 
+            // the failing profile is the second one, the pointer names it and its field (request names: profile_id, start, stop)
             it.each([
-                ['a start in the past', (): object[] => [{profile_id: profileB, start: toLocalDateTime(at(-DAY))}]],
-                ['an open interval', (): object[] => [{profile_id: profileB}]],
-                ['a stop without start', (): object[] => [{profile_id: profileB, stop: toLocalDateTime(at(5 * DAY))}]],
-                ['a terminated billing profile', (): object[] => [{profile_id: profileTerminated, start: toLocalDateTime(at(5 * DAY))}]],
-                ['a billing profile of another reseller', (): object[] => [{profile_id: profileOtherReseller, start: toLocalDateTime(at(5 * DAY))}]],
-                ['an unknown billing profile', (): object[] => [{profile_id: 999999999, start: toLocalDateTime(at(5 * DAY))}]],
-                ['an unknown network', (): object[] => [{profile_id: profileB, network_id: 999999999, start: toLocalDateTime(at(5 * DAY))}]],
-            ])('rejects %s with 422', async (_name, profiles) => {
-                const response = await putProfiles(contractId, profiles())
+                ['a start in the past', (): object => ({profile_id: profileB, start: toLocalDateTime(at(-DAY))}), '/start', 'START_DATE_NOT_IN_FUTURE'],
+                ['an open interval', (): object => ({profile_id: profileB}), '', 'OPEN_INTERVAL_MAPPING_NOT_ALLOWED'],
+                ['a stop without start', (): object => ({profile_id: profileB, stop: toLocalDateTime(at(5 * DAY))}), '/start', 'NO_START_DATE_WITH_PROVIDED_END_DATE'],
+                ['a terminated billing profile', (): object => ({profile_id: profileTerminated, start: toLocalDateTime(at(5 * DAY))}), '/profile_id', 'BILLING_PROFILE_ALREADY_TERMINATED'],
+                ['a billing profile of another reseller', (): object => ({profile_id: profileOtherReseller, start: toLocalDateTime(at(5 * DAY))}), '/profile_id', 'CONTACT_AND_BILLING_PROFILE_RESELLER_ID_MISMATCH'],
+                ['an unknown billing profile', (): object => ({profile_id: 999999999, start: toLocalDateTime(at(5 * DAY))}), '/profile_id', 'INVALID_BILLING_PROFILE_ID'],
+                ['an unknown network', (): object => ({profile_id: profileB, network_id: 999999999, start: toLocalDateTime(at(5 * DAY))}), '/network_id', 'INVALID_BILLING_NETWORK_ID'],
+            ])('rejects %s with 422', async (_name, profile, field, code) => {
+                const response = await putProfiles(contractId, [{profile_id: profileB, start: toLocalDateTime(at(5 * DAY))}, profile()])
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errorCode).toEqual(code)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([[`/billing_profiles/1${field}`, code]])
             })
         })
 
@@ -590,7 +597,46 @@ describe('CustomerController', () => {
                         billing_profiles: [{profile_id: profileA, network_id: networkA, start: null, stop: null}],
                     })
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([
+                    ['/billing_profiles', 'INITIAL_OPEN_INTERVAL_REQUIRED'],
+                ])
                 expect(await db.billing.ContractBillingProfileNetwork.countBy(mappingWhere)).toEqual(mappingsBefore)
+            })
+        })
+
+        describe('Customer POST business errors', () => {
+            const valid = (): object => ({
+                contact_id: CONTACT_ID,
+                status: ContractStatus.Active,
+                type: CustomerType.SipAccount,
+                billing_profile_definition: ContractBillingProfileDefinition.Profiles,
+                billing_profiles: [{profile_id: profileA}],
+            })
+            const post = (body: object): request.Test => request(app.getHttpServer())
+                .post('/api/customers')
+                .set(...authHeader)
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send(body)
+
+            it('points to the failing items of a bulk POST only', async () => {
+                const response = await post([valid(), {...valid(), contact_id: 999999999}])
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errorCode).toEqual('INVALID_CONTACT_ID')
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/1/contact_id', 'INVALID_CONTACT_ID']])
+            })
+            it('reports every failing item with its own code, the first one as errorCode', async () => {
+                const response = await post([
+                    {...valid(), billing_profiles: [{profile_id: 999999999}]},
+                    valid(),
+                    {...valid(), billing_profiles: [{profile_id: profileA}, {profile_id: profileB, start: toLocalDateTime(at(-DAY))}]},
+                ])
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errorCode).toEqual('INVALID_BILLING_PROFILE_ID')
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([
+                    ['/0/billing_profiles/0/profile_id', 'INVALID_BILLING_PROFILE_ID'],
+                    ['/2/billing_profiles/1/start', 'START_DATE_NOT_IN_FUTURE'],
+                ])
             })
         })
 
@@ -946,6 +992,9 @@ describe('CustomerController', () => {
                         .set('Content-Type', 'application/json')
                         .send(customerOf({...ownTemplates, [field]: id}))
                     expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                    expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([
+                        [`/${field}`, field == 'invoice_template_id' ? 'INVOICE_TEMPLATE_NOT_FOUND' : 'EMAIL_TEMPLATE_NOT_FOUND'],
+                    ])
                 }
             })
             it.each(templateFields)('reject a %s of another reseller on PATCH', async field => {

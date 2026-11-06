@@ -1,4 +1,4 @@
-import {Inject, Injectable, NotFoundException, StreamableFile, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable, NotFoundException, StreamableFile} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {CustomerPhonebookView} from './dto/phonebook-query.dto'
@@ -11,9 +11,8 @@ import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
 import {dtoToCsv} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {ApiErrors, itemPointer, rowPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -85,33 +84,19 @@ export class CustomerPhonebookService implements CrudService<internal.CustomerPh
     }
 
     async update(updates: Dictionary<internal.CustomerPhonebook>, sr: ServiceRequest): Promise<number[]> {
-        await this.checkCustomerAccess(Object.values(updates), sr)
+        await this.checkCustomerAccess(updates, sr)
         const ids = Object.keys(updates).map(id => parseInt(id))
         const options = this.getCustomerPhonebookOptionsFromServiceRequest(sr)
-        const phonebookCount = await this.phonebookRepo.readCountOfIds(ids, options, sr)
-
-        if (phonebookCount == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != phonebookCount) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        const existingIds = await this.phonebookRepo.readExistingIds(ids, options)
+        throwMissingIds(sr, ids, existingIds, this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         return await this.phonebookRepo.update(updates, sr)
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         const options = this.getCustomerPhonebookOptionsFromServiceRequest(sr)
-        const phonebookCount = await this.phonebookRepo.readCountOfIds(ids, options, sr)
-
-        if (phonebookCount == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != phonebookCount) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        const existingIds = await this.phonebookRepo.readExistingIds(ids, options)
+        throwMissingIds(sr, ids, existingIds, this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         return await this.phonebookRepo.delete(ids,sr)
     }
@@ -149,7 +134,7 @@ export class CustomerPhonebookService implements CrudService<internal.CustomerPh
     async importCsv(entities: internal.CustomerPhonebook[], sr: ServiceRequest): Promise<internal.CustomerPhonebook[]> {
         await this.validateCsvData(entities)
         const _options = this.getCustomerPhonebookOptionsFromServiceRequest(sr)
-        await this.checkCustomerAccess(entities, sr)
+        await this.checkCustomerAccess(entities, sr, (row, entity) => rowPointer(+row, entity, 'contractId'))
         const customers = new Set(entities.map(entity => entity.contractId))
         if (sr.query && sr.query['purge_existing']) {
             if (sr.query['purge_existing'] === 'true') {
@@ -185,28 +170,39 @@ export class CustomerPhonebookService implements CrudService<internal.CustomerPh
         })
     }
 
-    private async checkCustomerAccess(entities: internal.CustomerPhonebook[], sr: ServiceRequest): Promise<void> {
-        const customerIds = [...new Set(entities.map(entity => entity.contractId).filter(id => id != undefined))]
-        let allowed = true
+    /**
+     * Reports every item whose customer is not one of the user's (subscriberadmin: own customer, reseller roles: own
+     * reseller's customers)
+     * @param pointer pointer of an item's customer_id
+     */
+    private async checkCustomerAccess(entities: internal.CustomerPhonebook[] | Dictionary<internal.CustomerPhonebook>, sr: ServiceRequest,
+        pointer = (key: string, entity: internal.CustomerPhonebook): string => itemPointer(sr, key, entity, 'contractId')): Promise<void> {
+        const customerIds = [...new Set(Object.values(entities).map(entity => entity.contractId).filter(id => id != undefined))]
+        let allowedIds: number[]
         if (sr.user.role === RbacRole.subscriberadmin)
-            allowed = customerIds.every(id => id == sr.user.customer_id)
+            allowedIds = [sr.user.customer_id]
         else if (sr.user.reseller_id_required && customerIds.length)
-            allowed = await this.phonebookRepo.readCountOfCustomers(customerIds, sr.user.reseller_id) == customerIds.length
-        if (!allowed) {
-            const error: ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            throw new UnprocessableEntityException(error.message)
+            allowedIds = await this.phonebookRepo.readCustomerIdsOfReseller(customerIds, sr.user.reseller_id)
+        else
+            return
+        const errors = new ApiErrors()
+        for (const [key, entity] of Object.entries(entities)) {
+            // ids of a csv import are strings
+            if (entity.contractId != undefined && !allowedIds.some(id => id == entity.contractId))
+                errors.add(this.i18n.t('errors.ENTRY_NOT_FOUND'), pointer(key, entity))
         }
+        errors.throwIfAny()
     }
 
     private async validateCsvData(entities: internal.CustomerPhonebook[]): Promise<void> {
         const seen = new Set<string>()
-        for (const dto of entities) {
-            const key = `${dto.contractId}-${dto.number}`
-            if (seen.has(key)) {
-                const error: ErrorMessage = this.i18n.t('errors.DUPLICATE_IN_CSV')
-                throw new UnprocessableEntityException(error.message)
-            }
+        const errors = new ApiErrors()
+        entities.forEach((entity, row) => {
+            const key = `${entity.contractId}-${entity.number}`
+            if (seen.has(key))
+                errors.add(this.i18n.t('errors.DUPLICATE_IN_CSV'), rowPointer(row, entity, 'number'))
             seen.add(key)
-        }
+        })
+        errors.throwIfAny()
     }
 }

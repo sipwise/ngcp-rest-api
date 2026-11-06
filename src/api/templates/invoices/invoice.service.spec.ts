@@ -36,6 +36,7 @@ import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory} from '~/entities/internal/invoice-template.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const admin: AuthResponseDto = {
@@ -166,14 +167,14 @@ describe('InvoiceTemplateService', () => {
         it('requires the reseller for customer and did categories', async () => {
             for (const category of [InvoiceTemplateCategory.Customer, InvoiceTemplateCategory.Did]) {
                 await expect(service.create([newTemplate({name: 'x', category})], makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
             }
         })
 
         it('rejects a reseller for peer and reseller categories as admin', async () => {
             for (const category of [InvoiceTemplateCategory.Peer, InvoiceTemplateCategory.Reseller]) {
                 await expect(service.create([newTemplate({name: 'x', category, resellerId: 1})], makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
             }
         })
 
@@ -194,7 +195,7 @@ describe('InvoiceTemplateService', () => {
             await expect(service.create(
                 [newTemplate({name: 'cust1', category: InvoiceTemplateCategory.Customer, resellerId: 1})],
                 makeSr(),
-            )).rejects.toThrow(UnprocessableEntityException)
+            )).rejects.toThrow(ApiErrorException)
         })
 
         it('allows the same name for another reseller', async () => {
@@ -207,7 +208,7 @@ describe('InvoiceTemplateService', () => {
 
         it('rejects a file without svg content', async () => {
             await expect(service.create([newTemplate({name: 'x', category: InvoiceTemplateCategory.Peer})], makeSr(), file('hello')))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         it('rejects a file without buffer', async () => {
@@ -215,7 +216,7 @@ describe('InvoiceTemplateService', () => {
                 [newTemplate({name: 'x', category: InvoiceTemplateCategory.Peer})],
                 makeSr(),
                 {} as Express.Multer.File,
-            )).rejects.toThrow(UnprocessableEntityException)
+            )).rejects.toThrow(ApiErrorException)
         })
 
         it('removes scripts from the uploaded file', async () => {
@@ -235,7 +236,7 @@ describe('InvoiceTemplateService', () => {
                 makeSr(),
                 file('<svg></svg>'),
             ) as Promise<unknown>).catch((e: unknown) => e) as UnprocessableEntityException
-            expect(err).toBeInstanceOf(UnprocessableEntityException)
+            expect(err).toBeInstanceOf(ApiErrorException)
             expect(JSON.stringify(err.getResponse())).toContain('bad one')
             expect(JSON.stringify(err.getResponse())).toContain('bad two')
         })
@@ -343,7 +344,7 @@ describe('InvoiceTemplateService', () => {
 
         it('throws NotFoundException if no id exists', async () => {
             await expect(service.update({99: newTemplate({name: 'n', category: InvoiceTemplateCategory.Peer})}, makeSr()))
-                .rejects.toThrow(NotFoundException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         it('throws UnprocessableEntityException if only some ids exist', async () => {
@@ -351,16 +352,16 @@ describe('InvoiceTemplateService', () => {
                 ...upd(1, {name: 'n1'}),
                 99: newTemplate({name: 'n99', category: InvoiceTemplateCategory.Peer}),
             }
-            await expect(service.update(updates, makeSr())).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(updates, makeSr())).rejects.toThrow(ApiErrorException)
         })
 
         it('does not update a template of another reseller', async () => {
-            await expect(service.update(upd(2, {name: 'n'}), makeSr(resellerUser))).rejects.toThrow(NotFoundException)
+            await expect(service.update(upd(2, {name: 'n'}), makeSr(resellerUser))).rejects.toThrow(ApiErrorException)
         })
 
         it('rejects a category change', async () => {
             await expect(service.update(upd(1, {name: 'n', category: InvoiceTemplateCategory.Did}), makeSr()))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         it('keeps the stored data without a file', async () => {
@@ -378,7 +379,7 @@ describe('InvoiceTemplateService', () => {
 
         it('rejects the name of another template of the reseller', async () => {
             repo.templateDB[2].resellerId = 1
-            await expect(service.update(upd(1, {name: 'cust2'}), makeSr())).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(upd(1, {name: 'cust2'}), makeSr())).rejects.toThrow(ApiErrorException)
         })
 
         it('replaces the data with a file', async () => {
@@ -393,7 +394,7 @@ describe('InvoiceTemplateService', () => {
 
         it('rejects an invalid file and keeps the data', async () => {
             const stored = repo.templateDB[1].data
-            await expect(service.update(upd(1, {name: 'cust1'}), makeSr(), file('nope'))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(upd(1, {name: 'cust1'}), makeSr(), file('nope'))).rejects.toThrow(ApiErrorException)
             expect(repo.templateDB[1].data).toBe(stored)
         })
 
@@ -404,7 +405,7 @@ describe('InvoiceTemplateService', () => {
 
         it('requires the reseller for a customer template as admin', async () => {
             await expect(service.update(upd(1, {name: 'cust1', resellerId: undefined}), makeSr()))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
     })
 
@@ -419,17 +420,17 @@ describe('InvoiceTemplateService', () => {
         })
 
         it('throws NotFoundException if no id exists', async () => {
-            await expect(service.delete([98, 99], makeSr())).rejects.toThrow(NotFoundException)
+            await expect(service.delete([98, 99], makeSr())).rejects.toThrow(ApiErrorException)
         })
 
         it('throws UnprocessableEntityException for partial ids and deletes nothing', async () => {
             const spy = jest.spyOn(repo, 'delete')
-            await expect(service.delete([1, 99], makeSr())).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.delete([1, 99], makeSr())).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
 
         it('does not delete a template of another reseller', async () => {
-            await expect(service.delete([2], makeSr(resellerUser))).rejects.toThrow(NotFoundException)
+            await expect(service.delete([2], makeSr(resellerUser))).rejects.toThrow(ApiErrorException)
             expect(repo.templateDB[2]).toBeDefined()
         })
     })

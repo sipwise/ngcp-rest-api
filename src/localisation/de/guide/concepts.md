@@ -1,4 +1,4 @@
-## Einführung
+## Konzepte
 
 API v2 ist die REST-Schnittstelle für die Provisionierung und den Betrieb der NGCP-Plattform. Gegenüber API v1 bietet sie Bulk-Provisionierung, eine strikte Validierung jeder Anfrage, bei der unbekannte Felder und Query-Parameter abgelehnt statt ignoriert werden, sowie erweiterte Funktionen. Sie ist durch ein OpenAPI-3-Dokument beschrieben, aus dem diese Seite erzeugt wird.
 
@@ -215,30 +215,109 @@ Ein Bulk-POST ohne `Prefer` liefert 204; fordern Sie daher `return=id` oder `ret
 
 ### Fehler
 
-Fehler haben einen JSON-Body. `message` ist ein Text oder, wenn die Validierung fehlschlägt, eine Liste der abgelehnten Felder mit den nicht bestandenen Prüfungen:
+Jeder Fehler hat denselben JSON-Body:
 
 ```json
 {
   "tx": "725d5b49f5674d719db795cf2f81262e",
   "statusCode": 422,
-  "path": "/api/v2/customercontacts/5",
-  "method": "PATCH",
+  "path": "/api/v2/customercontacts",
+  "method": "POST",
   "error": "Unprocessable Entity",
-  "message": [
-    {"status": [{"isEnum": "status must be one of the following values: active, terminated"}]}
+  "errorCode": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "errors": [
+    {"pointer": "/1/status", "code": "isEnum", "message": "status must be one of the following values: active, terminated"},
+    {"pointer": "/1/email", "code": "isEmail", "message": "email must be an email"}
   ]
 }
 ```
 
-`tx` identifiziert die Anfrage im Server-Log (`/var/log/ngcp/rest-api.log`). Geben Sie diesen Wert an, wenn Sie ein Problem melden.
+- `tx` identifiziert die Anfrage im Server-Log (`/var/log/ngcp/rest-api.log`). Geben Sie diesen Wert an, wenn Sie ein Problem melden.
+- `error` ist der Text des HTTP-Status, `message` ein lesbarer Text.
+- `errorCode` ist der maschinenlesbare Code des Fehlers: `VALIDATION_FAILED` (ungültiger Body), `INVALID_PARAMETER` (ungültiger Pfad- oder Query-Parameter), `INVALID_JSON` (der Body ist kein JSON), `INVALID_JSON_PATCH` (fehlerhafter JSON Patch), `JSON_PATCH_CONFLICT` (der JSON Patch lässt sich nicht auf den Eintrag anwenden), ein spezifischer Code wie `RESELLER_ID_INVALID` oder sonst der Name des Status, z. B. `NOT_FOUND` oder `FORBIDDEN`.
+- `errors` listet die einzelnen Fehler auf, ein Eintrag pro fehlgeschlagener Prüfung, in der Reihenfolge der Anfrage. Ohne Fehler entfällt das Feld. Standardmäßig werden höchstens 100 Einträge zurückgegeben; `message` nennt dann die Gesamtzahl.
+
+Das OpenAPI-Dokument (`swagger.json`, `swagger.yaml`) beschreibt diesen Body als Schema `ErrorResponse` mit Einträgen vom Typ `ErrorEntry`; die Antworten `4XX` und `5XX` jeder Operation verweisen darauf.
+
+Werten Sie `errorCode` und den `code` der Einträge aus, nie `message`: Die Texte können sich ändern. Die `code`-Werte sind die Namen der fehlgeschlagenen Prüfungen (`isEnum`, `isNotEmpty`, `whitelistValidation` für ein Feld, das nicht gesendet werden darf, `containsNumber`), der JSON-Patch-Fehler (`TEST_OPERATION_FAILED`) oder ein spezifischer Code.
+
+Ein Eintrag verweist mit `pointer` auf den fehlerhaften Wert, einen [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901) in den Request-Body, oder nennt den fehlerhaften `parameter` des Pfads oder Query-Strings:
+
+| Anfrage | Pointer |
+| --- | --- |
+| POST, PUT eines Eintrags | `/email`, verschachtelt `/rules/1/match_pattern` |
+| Bulk-POST (Array) | `/<index>/email` |
+| Bulk-PUT, -PATCH (nach id indiziert) | `/<id>/email` |
+| PATCH, ungültiger Wert (422) | das Feld im geänderten Eintrag, z. B. `/email` |
+| PATCH, fehlerhafte oder in Konflikt stehende Operation (400, 409) | das Member der Operation im Patch-Dokument: `/0/op`, `/0/path`, `/0/value`; bei Bulk `/<id>/0/path` |
+| CSV-Import | `/<row>/email`, Zeilen ab 0 nach der Kopfzeile gezählt |
+
+Indizes zählen ab 0: das Element eines Bulk-POST (`/0` ist das erste Element), die Operation eines JSON Patch (`/0/op`), die Id in der Id-Liste eines Bulk-DELETE und die CSV-Datenzeile ohne die Kopfzeile.
+
+```json
+{
+  "tx": "0c6f3e4ab4f04a4c9d1b6f0e8d0d6a51",
+  "statusCode": 400,
+  "path": "/api/v2/customercontacts?colour=blue",
+  "method": "GET",
+  "error": "Bad Request",
+  "errorCode": "INVALID_PARAMETER",
+  "message": "Validation failed",
+  "errors": [
+    {"parameter": "colour", "code": "whitelistValidation", "message": "parameter colour should not exist"}
+  ]
+}
+```
+
+Ein verschachteltes Feld wird mit seinem vollständigen Pfad adressiert, hier die zweite eingebettete Regel eines neuen Rewrite-Rule-Sets:
+
+```json
+{
+  "tx": "9d4c2b7e1a3f4c6d8e0f1a2b3c4d5e6f",
+  "statusCode": 422,
+  "path": "/api/v2/rewrite-rules/sets",
+  "method": "POST",
+  "error": "Unprocessable Entity",
+  "errorCode": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "errors": [
+    {"pointer": "/rules/1/replace_pattern", "code": "containsSpaces", "message": "replace_pattern cannot contain spaces"},
+    {"pointer": "/rules/1/direction", "code": "isEnum", "message": "direction must be one of the following values: in, out, lnp"}
+  ]
+}
+```
+
+Prüfungen gegen gespeicherte Daten, etwa eine unbekannte `reseller_id` oder ein bereits vorhandener Name, liefern dieselben Einträge mit dem spezifischen Code als `code`. Der Pointer nennt das Feld oder den Eintrag als Ganzes (`/<index>`, `/<id>`, der leere Pointer bei einem einzelnen Eintrag). Jeder fehlerhafte Eintrag wird mit seinem eigenen Code aufgeführt; `errorCode` und `message` sind die des ersten Eintrags.
+
+```json
+{
+  "tx": "3b9e6f1c2d7a4e5f8a0b1c2d3e4f5a6b",
+  "statusCode": 422,
+  "path": "/api/v2/domains",
+  "method": "POST",
+  "error": "Unprocessable Entity",
+  "errorCode": "DOMAIN_ALREADY_EXISTS",
+  "message": "Domain 'sip.example.org' already exists",
+  "errors": [
+    {"pointer": "/0/domain", "code": "DOMAIN_ALREADY_EXISTS", "message": "domain 'sip.example.org' already exists"},
+    {"pointer": "/2/reseller_id", "code": "RESELLER_ID_INVALID", "message": "invalid reseller_id"}
+  ]
+}
+```
+
+IDs eines Bulk-PUT, -PATCH oder -DELETE, die nicht existieren oder für Sie nicht sichtbar sind, liefern 422 `ENTRY_NOT_FOUND` mit einem Eintrag pro ID: `/<id>` in einem PUT- oder PATCH-Body, `/<index>` in einer DELETE-ID-Liste. Ein über seine ID im Pfad angesprochener Eintrag liefert 404.
+
+400 bedeutet, dass die Anfrage nicht interpretiert werden kann (fehlerhaftes JSON oder JSON Patch, ungültiger Parameter), 409, dass sich ein wohlgeformter JSON Patch nicht auf den aktuellen Eintrag anwenden lässt (fehlgeschlagener `test`, nicht vorhandener Pfad), 422, dass wohlgeformter Inhalt nicht gültig ist.
 
 | Code | Typische Ursache |
 | --- | --- |
-| 400 | Fehlerhafte Anfrage, unbekannter Query-Parameter, ungültiger JSON Patch. |
+| 400 | Fehlerhaftes JSON oder JSON Patch, unbekannter oder ungültiger Parameter. |
 | 401 | Fehlende oder falsche Zugangsdaten. |
 | 403 | Für Ihre Rolle nicht erlaubt, Benutzer nur mit Lesezugriff, Passwort abgelaufen, Login gesperrt, TOTP fehlt oder ungültig. |
 | 404 | Der Eintrag existiert nicht oder ist für Sie nicht sichtbar. |
-| 415 | Der Body ist kein gültiges JSON. |
+| 409 | Der JSON Patch lässt sich nicht auf den Eintrag anwenden. |
+| 415 | Kein `Content-Type` und der Body ist kein JSON. |
 | 422 | Validierung fehlgeschlagen, doppelter Wert, Feld kann nicht expandiert werden. |
 | 423 | Der Eintrag wird noch verwendet, z. B. ein Kontakt, der an einen Vertrag gebunden ist. |
 | 500, 503 | Serverseitiges Problem. Melden Sie es mit dem `tx`. |

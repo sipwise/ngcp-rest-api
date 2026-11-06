@@ -1,10 +1,11 @@
-import {ForbiddenException, Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {HttpStatus, Inject, Injectable, NotFoundException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {CustomerSpeedDialMariadbRepository} from './repositories/customer-speed-dial.mariadb.repository'
 
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {apiError, itemPointer, readFoundIds, throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -20,9 +21,9 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
     }
 
     async create(entities: internal.CustomerSpeedDial[], sr: ServiceRequest): Promise<internal.CustomerSpeedDial[]> {
-        for (const csd of entities) {
+        for (const [index, csd] of entities.entries()) {
             await this.checkPermissions(csd.contractId, sr)
-            await this.checkAndTransformDestination(csd, sr)
+            await this.checkAndTransformDestination(csd, sr, index)
         }
         const createdIds = await this.customerSpeedDialRepo.create(entities, sr)
         return await this.customerSpeedDialRepo.readWhereInIds(createdIds, sr)
@@ -46,19 +47,18 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
 
     async update(updates: Dictionary<internal.CustomerSpeedDial>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
+        throwMissingIds(sr, ids, await readFoundIds(ids, id => this.read(id, sr)), this.i18n.t('errors.ENTRY_NOT_FOUND'))
         for (const id of ids) {
             const entity = updates[id]
-            await this.read(id, sr)
             await this.checkPermissions(entity.contractId, sr)
-            await this.checkAndTransformDestination(entity, sr)
+            await this.checkAndTransformDestination(entity, sr, id)
         }
         return await this.customerSpeedDialRepo.update(updates, sr)
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         const csds = await this.customerSpeedDialRepo.readWhereInIds(ids, sr)
-        if (ids.length != csds.length)
-            throw new UnprocessableEntityException()
+        throwMissingIds(sr, ids, csds.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
         for (const csd of csds) {
             await this.checkPermissions(csd.contractId, sr)
         }
@@ -74,15 +74,15 @@ export class CustomerSpeedDialService implements CrudService<internal.CustomerSp
         }
     }
 
-    private async checkAndTransformDestination(entity: internal.CustomerSpeedDial, _sr: ServiceRequest): Promise<void> {
+    private async checkAndTransformDestination(entity: internal.CustomerSpeedDial, sr: ServiceRequest, key: number | string): Promise<void> {
         if (!RegExp('^sip:').test(entity.destination)) {
             let domain: string
             domain = await this.customerSpeedDialRepo.readSubscriberDomain(entity.contractId, {isPilot: true})
             if (!domain)
                 domain = await this.customerSpeedDialRepo.readSubscriberDomain(entity.contractId, {isPilot: false})
-            if (!domain) {
-                throw new ForbiddenException(this.i18n.t('errors.SUBSCRIBER_NOT_FOUND'))
-            }
+            // the destination's domain is the one of the customer's (pilot) subscriber
+            if (!domain)
+                throw apiError(this.i18n.t('errors.SUBSCRIBER_NOT_FOUND'), itemPointer(sr, key, entity, 'contractId'), HttpStatus.FORBIDDEN)
             entity.destination = `sip:${entity.destination}@${domain}`
         }
     }

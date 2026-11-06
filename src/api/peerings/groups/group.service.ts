@@ -1,6 +1,6 @@
 
 
-import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable, NotFoundException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 import {In} from 'typeorm'
 
@@ -10,10 +10,9 @@ import {PeeringGroupRedisRepository} from './repositories/group.redis.repository
 import {db, internal} from '~/entities'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {throwMissingIds} from '~/helpers/errors.helper'
 import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -60,13 +59,7 @@ export class PeeringGroupService implements CrudService<internal.VoipPeeringGrou
         const ids = Object.keys(updates).map(id => parseInt(id))
         const groups = await this.peeringGroupRepo.readWhereInIds(ids, sr)
 
-        if (groups.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != groups.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, groups.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         // check if contract exists
         const contractIds = groups.map(g => g.peeringContractId)
@@ -90,13 +83,7 @@ export class PeeringGroupService implements CrudService<internal.VoipPeeringGrou
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         const groups = await this.peeringGroupRepo.readWhereInIds(ids, sr)
-        if (groups.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != groups.length) {
-            const error: ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, groups.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         const reloadKamailioRequired = await this.peeringGroupRepo.hasEnabledOrProbedServerInGroups(ids, sr)
         if (reloadKamailioRequired) {

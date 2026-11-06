@@ -1,4 +1,4 @@
-import {HttpException, UnprocessableEntityException} from '@nestjs/common'
+import {HttpException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 
 import {ContactModule} from './contact.module'
@@ -11,6 +11,7 @@ import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {ContactType} from '~/entities/internal/contact.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -80,7 +81,7 @@ describe('ContactService', () => {
             expect(contact).toStrictEqual(await contactMockRepo.readById(contact.id, {type: ContactType.CustomerContact}))
         })
         it('should throw an error if reseller_id in customer contact does not exist', async () => {
-            await expect(service.create([internal.Contact.create({reseller_id: 100})], sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.create([internal.Contact.create({reseller_id: 100})], sr)).rejects.toThrow(ApiErrorException)
         })
     })
 
@@ -114,19 +115,19 @@ describe('ContactService', () => {
             const id = 2
             const updates = new Dictionary<internal.Contact>()
             updates[id] = internal.Contact.create({reseller_id: 100})
-            await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(updates, sr)).rejects.toThrow(ApiErrorException)
         })
         it('should throw an error if a system contact is changed to a customer contact', async () => {
             const id = 1
             const updates = new Dictionary<internal.Contact>()
             updates[id] = internal.Contact.create({reseller_id: 1})
-            await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(updates, sr)).rejects.toThrow(ApiErrorException)
         })
         it('should throw an error if a customer contact is changed to a system contact', async () => {
             const id = 2
             const updates = new Dictionary<internal.Contact>()
             updates[id] = internal.Contact.create({reseller_id: null})
-            await expect(service.update(updates, sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(updates, sr)).rejects.toThrow(ApiErrorException)
         })
     })
 

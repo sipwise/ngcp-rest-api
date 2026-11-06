@@ -23,7 +23,7 @@ import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
-import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
+import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {Operation} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -241,12 +241,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         })
         const sr = new ServiceRequest(req)
 
-        const updates = new Dictionary<internal.HeaderRuleAction>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.ruleActionService.read(+id, sr)
-            const entity = await patchToEntity<internal.HeaderRuleAction, HeaderManipulationRuleActionRequestDto>(oldEntity, patches[id], HeaderManipulationRuleActionRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.HeaderRuleAction, HeaderManipulationRuleActionRequestDto>(patches, id => this.ruleActionService.read(id, sr), HeaderManipulationRuleActionRequestDto)
 
         return await this.ruleActionService.update(updates, sr)
     }

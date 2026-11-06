@@ -54,10 +54,6 @@ export class VoicemailMariadbRepository extends MariaDbRepository implements Voi
         return await Promise.all(voicemails.map(async (voicemail) => voicemail.toInternal()))
     }
 
-    async readCountOfIds(ids: number[], sr: ServiceRequest): Promise<number> {
-        const qb = await this.createBaseQueryBuilder(sr)
-        return await qb.andWhereInIds(ids).getCount()
-    }
 
     async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
         await db.kamailio.VoicemailSpool.delete(ids)

@@ -1,4 +1,4 @@
-import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 import {In} from 'typeorm'
 
@@ -7,9 +7,8 @@ import {NCOSLevelMariadbRepository} from './repositories/level.mariadb.repositor
 import {RbacRole} from '~/config/constants.config'
 import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {ApiErrors, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -25,12 +24,7 @@ export class NCOSLevelService implements CrudService<internal.NCOSLevel> {
 
     async create(entities: internal.NCOSLevel[], sr: ServiceRequest): Promise<internal.NCOSLevel[]> {
         this.assignUserResellerId(entities, sr)
-        const timeSetIds = new Set<number>()
-        await Promise.all(entities.map(async entity => {
-            timeSetIds.add(entity.timeSetId)
-        }))
-
-        await this.hasAccessToTimeSets(timeSetIds, sr)
+        await this.hasAccessToTimeSets(entities, sr)
 
         const createdIds = await this.ncosLevelRepo.create(entities)
         return await this.ncosLevelRepo.readWhereInIds(createdIds, sr)
@@ -68,19 +62,9 @@ export class NCOSLevelService implements CrudService<internal.NCOSLevel> {
                 break
         }
 
-        if (levels.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != levels.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, levels.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
-        const timeSetIds = new Set<number>()
-        for (const level of levels) {
-            timeSetIds.add(level.timeSetId)
-        }
-        await this.hasAccessToTimeSets(timeSetIds, sr)
+        await this.hasAccessToTimeSets(updates, sr)
 
         this.assignUserResellerId(Object.values(updates), sr)
         return await this.ncosLevelRepo.update(updates, sr)
@@ -100,13 +84,7 @@ export class NCOSLevelService implements CrudService<internal.NCOSLevel> {
                 break
         }
 
-        if (levels.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != levels.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, levels.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         return await this.ncosLevelRepo.delete(ids, sr)
     }
@@ -118,24 +96,26 @@ export class NCOSLevelService implements CrudService<internal.NCOSLevel> {
             entity.resellerId = sr.user.reseller_id
     }
 
-    private async hasAccessToTimeSets(timeSetIds: Set<number>, sr: ServiceRequest): Promise<void> {
-        const ids = Array.from(timeSetIds).filter(id => id != null)
+    /**
+     * Reports every item whose time set is not one of the user's reseller (reseller, subscriberadmin)
+     */
+    private async hasAccessToTimeSets(levels: internal.NCOSLevel[] | Dictionary<internal.NCOSLevel>, sr: ServiceRequest): Promise<void> {
+        if (sr.user.role != RbacRole.reseller && sr.user.role != RbacRole.subscriberadmin)
+            return
+        const ids = [...new Set(Object.values(levels).map(level => level.timeSetId).filter(id => id != null))]
         if (!ids.length)
             return
-        if (sr.user.role == RbacRole.reseller || sr.user.role == RbacRole.subscriberadmin) {
-            const timeSets = await db.provisioning.VoipTimeSet.findBy({
-                id: In(ids),
-                reseller: {
-                    id: sr.user.reseller_id,
-                },
-            })
-            if (timeSets.length != ids.length) {
-                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-                const message = GenerateErrorMessageArray(ids, error.message)
-                throw new UnprocessableEntityException(message)
-            }
+        const timeSets = await db.provisioning.VoipTimeSet.findBy({
+            id: In(ids),
+            reseller: {
+                id: sr.user.reseller_id,
+            },
+        })
+        const errors = new ApiErrors()
+        for (const [key, level] of Object.entries(levels)) {
+            if (level.timeSetId != null && !timeSets.some(timeSet => timeSet.id == level.timeSetId))
+                errors.add(this.i18n.t('errors.ENTRY_NOT_FOUND'), itemPointer(sr, key, level, 'timeSetId'))
         }
-
-        return
+        errors.throwIfAny()
     }
 }

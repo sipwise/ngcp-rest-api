@@ -82,9 +82,6 @@ export class ResellerMockRepository implements ResellerRepository {
         return Promise.resolve(resellers)
     }
 
-    readCountOfIds(ids: number[]): Promise<number> {
-        return Promise.resolve(ids.filter(id => this.resellerDB[id] != undefined).length)
-    }
 
     readByName(name: string, _sr: ServiceRequest): Promise<internal.Reseller> {
         for (const key of Object.keys(this.resellerDB)) {

@@ -34,7 +34,7 @@ import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
-import {Operation,Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
+import {Operation,Operation as PatchOperation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -161,12 +161,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
-        const updates = new Dictionary<internal.Contact>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.contactService.read(+id, sr)
-            const entity = await patchToEntity<internal.Contact, ContactRequestDto>(oldEntity, patches[id], ContactRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.Contact, ContactRequestDto>(patches, id => this.contactService.read(id, sr), ContactRequestDto)
 
         return await this.contactService.update(updates, sr)
     }

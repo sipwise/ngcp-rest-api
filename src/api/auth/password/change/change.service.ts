@@ -1,4 +1,4 @@
-import {Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {Injectable, NotFoundException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {AdminPasswordJournalMariadbRepository} from './repositories/admin-password-journal.mariadb.repository'
@@ -6,6 +6,7 @@ import {SubscriberPasswordJournalMariadbRepository} from './repositories/subscri
 
 import {AppService} from '~/app.service'
 import {db} from '~/entities'
+import {apiError} from '~/helpers/errors.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -52,7 +53,7 @@ export class AuthPasswordChangeService {
                 const [storedSalt, storedHash] = pass.value.split('$')
                 const generatedHash = await internal.generateSaltedpass(6, storedSalt)
                 if (generatedHash.split('$')[1] === storedHash) {
-                    throw new UnprocessableEntityException(this.i18n.t('errors.PASSWORD_ALREADY_USED'))
+                    throw apiError(this.i18n.t('errors.PASSWORD_ALREADY_USED'), '/new_password')
                 }
             }
             const journalHash = await internal.generateSaltedpass(6)
@@ -87,7 +88,7 @@ export class AuthPasswordChangeService {
                 const [storedSalt, storedHash] = pass.value.split('$')
                 const generatedHash = await internal.generateSaltedpass(6, storedSalt)
                 if (generatedHash.split('$')[1] === storedHash) {
-                    throw new UnprocessableEntityException(this.i18n.t('errors.PASSWORD_ALREADY_USED'))
+                    throw apiError(this.i18n.t('errors.PASSWORD_ALREADY_USED'), '/new_password')
                 }
             }
             const journalHash = await internal.generateSaltedpass(6)

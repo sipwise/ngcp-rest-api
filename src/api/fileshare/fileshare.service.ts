@@ -1,4 +1,4 @@
-import {Inject, Injectable, NotFoundException, StreamableFile, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable, StreamableFile, UnprocessableEntityException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 import {FindManyOptions} from 'typeorm'
 import {v4 as uuidv4} from 'uuid'
@@ -10,9 +10,8 @@ import {AppService} from '~/app.service'
 import {HandleDbErrors} from '~/decorators/handle-db-errors.decorator'
 import {db} from '~/entities'
 import {fileshare} from '~/entities/db'
-import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {throwMissingIds} from '~/helpers/errors.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 
@@ -150,14 +149,7 @@ export class FileshareService { // implements CrudService<FileshareRequestDto, F
         const foundIds = await selectQb.getRawMany()
         const existingIds = foundIds.map((row: {fileshare_id: string}) => row.fileshare_id)
 
-        if (existingIds.length === 0)
-            throw new NotFoundException()
-
-        if (existingIds.length !== ids.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, existingIds, this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         const deleteQb = db.fileshare.Upload.createQueryBuilder('fileshare')
             .delete()

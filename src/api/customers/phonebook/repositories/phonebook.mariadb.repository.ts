@@ -122,30 +122,23 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
         return await Promise.all(result.map(async (d) => d.id))
     }
 
-    async readCountOfIds(ids: number[], options: CustomerPhonebookOptions, sr: ServiceRequest): Promise<number> {
+    async readExistingIds(ids: number[], options: CustomerPhonebookOptions): Promise<number[]> {
         const qb = db.billing.ContractPhonebook.createQueryBuilder('phonebook')
-        const searchDto = new CustomerPhonebookSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
-        qb.andWhereInIds(ids)
+        qb.select('phonebook.id')
+        qb.whereInIds(ids)
         this.addFilterBy(qb, options.filterBy)
-        return await qb.getCount()
+        const result = await qb.getMany()
+        return result.map(row => row.id)
     }
 
-    async readCountOfCustomers(customerIds: number[], resellerId: number): Promise<number> {
+    async readCustomerIdsOfReseller(customerIds: number[], resellerId: number): Promise<number[]> {
         const qb = db.billing.Contract.createQueryBuilder('contract')
+        qb.select('contract.id')
         qb.innerJoin('contract.contact', 'contact')
         qb.andWhereInIds(customerIds)
         qb.andWhere('contact.reseller_id = :resellerId', {resellerId})
-        return await qb.getCount()
+        const result = await qb.getMany()
+        return result.map(contract => contract.id)
     }
 
     async readAllFromViewAll(options: CustomerPhonebookOptions, sr: ServiceRequest): Promise<[internal.VCustomerPhonebook[], number]> {

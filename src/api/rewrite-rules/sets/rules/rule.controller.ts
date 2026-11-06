@@ -22,7 +22,7 @@ import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
-import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
+import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {Operation} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -217,12 +217,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
-        const updates = new Dictionary<internal.RewriteRule>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.ruleService.read(+id, sr)
-            const entity = await patchToEntity<internal.RewriteRule, RewriteRuleRequestDto>(oldEntity, patches[id], RewriteRuleRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.RewriteRule, RewriteRuleRequestDto>(patches, id => this.ruleService.read(id, sr), RewriteRuleRequestDto)
 
         return await this.ruleService.update(updates, sr)
     }

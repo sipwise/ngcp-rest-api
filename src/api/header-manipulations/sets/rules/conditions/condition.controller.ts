@@ -24,7 +24,7 @@ import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
-import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
+import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {Operation} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -261,12 +261,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         })
         const sr = new ServiceRequest(req)
 
-        const updates = new Dictionary<internal.HeaderRuleCondition>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.ruleConditionService.read(+id, sr)
-            const entity = await patchToEntity<internal.HeaderRuleCondition, HeaderManipulationRuleConditionRequestDto>(oldEntity, patches[id], HeaderManipulationRuleConditionRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.HeaderRuleCondition, HeaderManipulationRuleConditionRequestDto>(patches, id => this.ruleConditionService.read(id, sr), HeaderManipulationRuleConditionRequestDto)
 
         return await this.ruleConditionService.update(updates, sr)
     }

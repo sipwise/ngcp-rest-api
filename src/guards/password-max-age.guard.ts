@@ -5,6 +5,7 @@ import {Request} from 'express'
 import {PublicGuard} from './public.guard'
 
 import {AuthService} from '~/auth/auth.service'
+import {errorMessage} from '~/helpers/errors.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 
@@ -37,7 +38,7 @@ export class PasswordMaxAgeGuard implements CanActivate {
         if (sr.user.password_modified_timestamp) {
             const expired = await this.authService.isPasswordExpired(sr.user.password_modified_timestamp)
             if (expired)
-                throw new ForbiddenException('Password expired')
+                throw new ForbiddenException(errorMessage('PASSWORD_EXPIRED'))
         }
 
         return true

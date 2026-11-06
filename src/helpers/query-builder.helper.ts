@@ -1,10 +1,10 @@
-import {BadRequestException} from '@nestjs/common'
 import {BaseEntity, Brackets, SelectQueryBuilder} from 'typeorm'
 
 import {SearchLogic} from './search-logic.helper'
 
 import {reservedQueryParamKeys as reservedQueryParams} from '~/config/constants.config'
 import {isAllowUnknownParams} from '~/helpers/allow-unknown-params.helper'
+import {InvalidParameterException} from '~/helpers/errors.helper'
 import {QueriesDictionary} from '~/interfaces/service-request.interface'
 
 export function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: QueriesDictionary, searchLogic: SearchLogic): void {
@@ -32,15 +32,22 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
     const allowUnknownParams = isAllowUnknownParams(params)
     const orClauses: [string, Record<string, unknown>][] = []
 
+    if (!allowUnknownParams) {
+        const unknown = Object.keys(params).filter(field => !reservedQueryParams.includes(field) && !searchLogic.searchableFields.includes(field))
+        if (unknown.length) {
+            throw new InvalidParameterException(unknown.map(parameter => ({
+                parameter,
+                code: 'whitelistValidation',
+                message: `parameter ${parameter} should not exist`,
+            })))
+        }
+    }
+
     Object.keys(params).forEach((searchField: string) => {
         if (reservedQueryParams.includes(searchField))
             return
 
-        const paramExists = searchLogic.searchableFields.includes(searchField)
-        if (!allowUnknownParams && !paramExists)
-            throw new BadRequestException(`Unknown query parameter: ${searchField}`)
-
-        if (!paramExists)
+        if (!searchLogic.searchableFields.includes(searchField))
             return
 
         const propertyAlias = searchLogic.aliases?.[searchField] ?? searchField

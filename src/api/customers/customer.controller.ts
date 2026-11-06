@@ -24,7 +24,7 @@ import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
-import {Operation, patchToEntity} from '~/helpers/patch.helper'
+import {Operation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -261,12 +261,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
         @Req() req: Request,
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
-        const updates = new Dictionary<internal.Customer>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.customerService.read(+id, sr)
-            const entity = await patchToEntity<internal.Customer, CustomerRequestDto>(oldEntity, patches[id], CustomerRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.Customer, CustomerRequestDto>(patches, id => this.customerService.read(id, sr), CustomerRequestDto)
         return await this.customerService.update(updates, sr)
     }
 

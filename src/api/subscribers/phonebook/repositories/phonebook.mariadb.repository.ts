@@ -126,23 +126,14 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
         return await Promise.all(result.map(async (d) => d.id))
     }
 
-    async readCountOfIds(ids: number[], options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<number> {
+    async readExistingIds(ids: number[], options: SubscriberPhonebookOptions): Promise<number[]> {
         const qb = db.billing.SubscriberPhonebook.createQueryBuilder('phonebook')
-        qb.leftJoinAndSelect('phonebook.subscriber', 'subscriber')
-        const searchDto = new SubscriberPhonebookSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
-        qb.andWhereInIds(ids)
+        qb.leftJoin('phonebook.subscriber', 'subscriber')
+        qb.select('phonebook.id')
+        qb.whereInIds(ids)
         this.addFilterBy(qb, options.filterBy)
-        return await qb.getCount()
+        const result = await qb.getMany()
+        return result.map(row => row.id)
     }
 
     async readAllFromViewAll(options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<[internal.VSubscriberPhonebook[], number]> {
@@ -289,14 +280,15 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
         }
     }
 
-    async getAllowedSubscribersCount(ids: number[], filterBy: SubscriberPhonebookOptions['filterBy'], _sr: ServiceRequest): Promise<number> {
+    async getAllowedSubscriberIds(ids: number[], filterBy: SubscriberPhonebookOptions['filterBy'], _sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.VoipSubscriber.createQueryBuilder('subscriber')
+        qb.select('subscriber.id')
         qb.andWhereInIds(ids)
         qb.andWhere('subscriber.status != :status', {status: 'terminated'})
         if (filterBy) {
             if (filterBy.resellerId) {
-                qb.leftJoinAndSelect('subscriber.contract', 'contract')
-                qb.leftJoinAndSelect('contract.contact', 'contact')
+                qb.leftJoin('subscriber.contract', 'contract')
+                qb.leftJoin('contract.contact', 'contact')
                 qb.andWhere('contact.reseller_id = :resellerId', {resellerId: filterBy.resellerId})
             }
             if (filterBy.subscriberId) {
@@ -306,6 +298,7 @@ export class SubscriberPhonebookMariadbRepository extends MariaDbRepository impl
                 qb.andWhere('subscriber.contract_id = :contract_id', {contract_id: filterBy.customerId})
             }
         }
-        return await qb.getCount()
+        const result = await qb.getMany()
+        return result.map(subscriber => subscriber.id)
     }
 }

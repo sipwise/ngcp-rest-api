@@ -1,23 +1,25 @@
-// TODO: Check if full type safety is possible in pipes
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
     ArgumentMetadata,
-    BadRequestException,
-    HttpStatus,
     Injectable,
-    ParseIntPipe,
     PipeTransform,
     Type,
     ValidationPipe,
     ValidationPipeOptions,
 } from '@nestjs/common'
-import {HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
-import {isString} from '@nestjs/common/utils/shared.utils'
 
 import {PatchDto} from '~/dto/patch.dto'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {validate} from '~/helpers/patch.helper'
+import {
+    ErrorEntry,
+    ErrorListException,
+    ValidationFailedException,
+    escapePointerToken,
+    isErrorListException,
+    mergeErrorListExceptions,
+} from '~/helpers/errors.helper'
+import {Operation, assertJsonPatch, normalisePatch} from '~/helpers/patch.helper'
+import {createItemValidationPipe, validateItem} from '~/helpers/validate.helper'
+import {isIntId} from '~/pipes/parse-int-id.pipe'
 
 interface ParseIdDictionaryOptions extends Omit<
     ValidationPipeOptions,
@@ -25,162 +27,99 @@ interface ParseIdDictionaryOptions extends Omit<
 > {
     items: Type<unknown>
     valueIsArray?: boolean
-    exceptionFactory?: (error: any) => any
 }
 
+/**
+ * Validates a body of items keyed by id (bulk PUT/PATCH); every failing item is reported, with pointers
+ * `/<id>/...` (`/<id>/<index>/...` for arrays of items)
+ */
 @Injectable()
 export class ParseIdDictionary implements PipeTransform {
     protected readonly validationPipe: ValidationPipe
-    protected exceptionFactory: (errors: string) => any
     protected readonly options: ParseIdDictionaryOptions
 
     constructor(
         options: ParseIdDictionaryOptions,
     ) {
         this.options = options
-        this.validationPipe = new ValidationPipe({
-            transform: true,
-            validateCustomDecorators: true,
-            ...options,
-        })
-        const {
-            exceptionFactory,
-            errorHttpStatusCode = HttpStatus.UNPROCESSABLE_ENTITY,
-        } = options
-        this.exceptionFactory =
-            exceptionFactory ||
-            // TODO: Fix the return type
-            // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-            (error => new HttpErrorByCode[errorHttpStatusCode](error))
+        const {items: _items, valueIsArray: _valueIsArray, ...validationOptions} = options
+        this.validationPipe = createItemValidationPipe(validationOptions)
     }
 
-    async transform(value: any, metadata: ArgumentMetadata): Promise<Dictionary<unknown>> {
-        const parseIdOptions = this.options
-        // TODO: Fix the return type
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        parseIdOptions.exceptionFactory = (error => new HttpErrorByCode[HttpStatus.BAD_REQUEST](error))  // set exception factory to throw BAD_REQUEST when id cannot be parsed
-        const parseId = new ParseIntPipe(parseIdOptions)
-        if (typeof value != 'object')
-            throw this.exceptionFactory('Validation failed (parsable dictionary expected)')
+    async transform(value: unknown, _metadata: ArgumentMetadata): Promise<Dictionary<unknown>> {
+        if (value == null || typeof value != 'object' || Array.isArray(value))
+            throw new ValidationFailedException([{pointer: '', code: 'isObject', message: 'body must be an object of items keyed by id'}])
 
-        let errors = []
+        const errors: ErrorEntry[] = []
+        const patchErrors: ErrorListException[] = []
         const dict = new Dictionary<unknown>()
 
-        for (const val in value) {
-            if (!await parseId.transform(val, metadata))
-                throw this.exceptionFactory(`Validation failed (parsable key of type int expected; got: '${typeof val}'`)
-
-            const id = parseInt(val)
-
-            if (this.options.valueIsArray) {
-                const [instances, err] = await this.transformArray(id, value[id])
-                if (err.length > 0)
-                    errors = errors.concat(err)
-                dict[id] = instances
+        for (const [key, item] of Object.entries(value)) {
+            const pointer = `/${escapePointerToken(key)}`
+            if (!isIntId(key)) {
+                errors.push({pointer, code: 'isInt', message: 'key must be an integer id'})
                 continue
             }
-
-            try {
-                dict[id] = await this.toClassInstance(value[val])
-            } catch (err) {
-                errors = errors.concat(await this.generateErrorMessage(err, id))
+            if (this.options.items == PatchDto) {
+                try {
+                    assertJsonPatch(item, pointer)
+                    dict[key] = normalisePatch(item as Operation[])
+                } catch (err) {
+                    if (!isErrorListException(err))
+                        throw err
+                    patchErrors.push(err)
+                }
+                continue
             }
+            if (this.options.valueIsArray) {
+                if (!Array.isArray(item)) {
+                    errors.push({pointer, code: 'isArray', message: 'value must be an array'})
+                    continue
+                }
+                const instances = []
+                for (const [index, element] of item.entries())
+                    instances.push(await this.toInstance(element, `${pointer}/${index}`, errors))
+                dict[key] = instances
+                continue
+            }
+            dict[key] = await this.toInstance(item, pointer, errors)
         }
 
-        if (errors.length > 0) {
-            throw this.exceptionFactory(errors as any)
-        }
+        if (errors.length)
+            patchErrors.push(new ValidationFailedException(errors))
+        if (patchErrors.length)
+            throw mergeErrorListExceptions(patchErrors)
         return dict
     }
 
-    private async transformArray<T>(id: number, items: any): Promise<[T[], string[]]> {
-        let errors: string[] = []
-
-        if (!Array.isArray(items)) {
-            errors = errors.concat('Validation failed (parsable array expected)')
-            return [undefined, errors]
-        }
-
-        const instances = []
-
-        for (const item of items) {
+    private async toInstance(item: unknown, pointer: string, errors: ErrorEntry[]): Promise<unknown> {
+        if (typeof item == 'string') {
             try {
-                instances.push(await this.toClassInstance((item)))
-            } catch (err) {
-                errors = errors.concat(await this.generateErrorMessage(err, id))
+                item = JSON.parse(item)
+            } catch {
+                // not json, validated as is
             }
         }
-        return [instances, errors]
-    }
-
-    private async generateErrorMessage(err: any, id: number): Promise<string> {
-        if ((err as any).getResponse) {
-            const response = (err as any).getResponse()
-            if (Array.isArray(response.message)) {
-                return response.message.map(
-                    (item: string) => `[${id}] ${item}`,
-                )
-            }
-            return `[${id}] ${response.message}`
-        }
-        return err
-    }
-
-    private async toClassInstance(item: any, index?: number): Promise<any> {
-        const validationMetadata: ArgumentMetadata = {
-            metatype: this.options.items,
-            type: 'body',
-        }
-
-        try {
-            item = JSON.parse(item)
-        } catch {
-            //throw new BadRequestException(err)
-        }
-
-        if (this.isExpectedTypePrimitive()) {
-            return this.validatePrimitive(item, index)
-        }
-        if (this.isExpectedTypePatchOperation()) {
-            const err = validate(item)
-            if (err) {
-                throw new BadRequestException(err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\''))
-            }
-        }
-        return this.validationPipe.transform(item, validationMetadata)
-    }
-
-    private isExpectedTypePatchOperation(): boolean {
-        return this.options.items == PatchDto
+        if (this.isExpectedTypePrimitive())
+            return this.validatePrimitive(item, pointer, errors)
+        return validateItem(this.validationPipe, item, this.options.items, pointer, errors)
     }
 
     protected isExpectedTypePrimitive(): boolean {
-        return [Boolean, Number, String].includes(this.options.items as any)
+        return [Boolean, Number, String].includes(this.options.items as never)
     }
 
-    protected validatePrimitive(originalValue: any, index?: number): any {
+    protected validatePrimitive(value: unknown, pointer: string, errors: ErrorEntry[]): unknown {
         if (this.options.items === Number) {
-            const value =
-                originalValue !== null && originalValue !== '' ? +originalValue : NaN
-            if (isNaN(value)) {
-                throw this.exceptionFactory(
-                    `${index === undefined ? '' : `[${index}] `}item must be a number`,
-                )
-            }
-            return value
-        } else if (this.options.items === String) {
-            if (!isString(originalValue)) {
-                return `${originalValue}`
-            }
-        } else if (this.options.items === Boolean) {
-            if (typeof originalValue !== 'boolean') {
-                throw this.exceptionFactory(
-                    `${
-                        index === undefined ? '' : `[${index}] `
-                    }item must be a boolean value`,
-                )
-            }
+            const number = value !== null && value !== '' ? +value : NaN
+            if (isNaN(number))
+                errors.push({pointer, code: 'isNumber', message: 'item must be a number'})
+            return number
         }
-        return originalValue
+        if (this.options.items === String)
+            return typeof value == 'string' ? value : `${value}`
+        if (this.options.items === Boolean && typeof value !== 'boolean')
+            errors.push({pointer, code: 'isBoolean', message: 'item must be a boolean value'})
+        return value
     }
 }

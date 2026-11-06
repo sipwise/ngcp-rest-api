@@ -21,7 +21,7 @@ import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
-import {Operation, Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
+import {Operation, Operation as PatchOperation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -139,13 +139,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
-        const updates = new Dictionary<internal.Voicemail>()
-        for (const id of Object.keys(patches)) {
-            const patch = patches[id]
-            const oldEntity = await this.voicemailService.read(+id, sr)
-            const entity = await patchToEntity<internal.Voicemail, VoicemailRequestDto>(oldEntity, patch, VoicemailRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.Voicemail, VoicemailRequestDto>(patches, id => this.voicemailService.read(id, sr), VoicemailRequestDto)
 
         return await this.voicemailService.update(updates, sr)
     }

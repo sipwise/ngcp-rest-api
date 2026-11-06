@@ -13,6 +13,7 @@ import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
+import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
@@ -280,6 +281,26 @@ describe('NCOS Level', () => {
                     .set('Content-Type', 'application/json')
                     .send(ncosLevel3)
                 expect(response.status).toEqual(404)
+                expect(response.body.errors).toBeUndefined()
+            })
+            it('report every unknown id of a bulk PUT', async () => {
+                const some = await request(app.getHttpServer())
+                    .put('/api/ncos/levels')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({[createdIds[0]]: ncosLevel3, 999911111122: ncosLevel3})
+                expect(some.status).toEqual(422)
+                expect(some.body.errorCode).toEqual('ENTRY_NOT_FOUND')
+                expect(some.body.errors).toEqual([{pointer: '/999911111122', code: 'ENTRY_NOT_FOUND', message: 'entry not found'}])
+                const all = await request(app.getHttpServer())
+                    .put('/api/ncos/levels')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({999911111122: ncosLevel3, 999911111123: ncosLevel3})
+                expect(all.status).toEqual(422)
+                expect(all.body.errors.map((e: ErrorEntry) => e.pointer)).toEqual(['/999911111122', '/999911111123'])
             })
         })
 
@@ -344,7 +365,7 @@ describe('NCOS Level', () => {
                         time_set_invert: false,
                     })
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
             })
             it('fail update without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -362,7 +383,7 @@ describe('NCOS Level', () => {
                         time_set_invert: false,
                     })
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
             })
             it('fail adjust with empty reseller_id', async () => {
                 const tt: PatchOperation[][] = [
@@ -377,7 +398,7 @@ describe('NCOS Level', () => {
                         .set('Content-Type', 'application/json-patch+json')
                         .send(emptyPatch)
                     expect(response.status).toEqual(422)
-                    expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                    expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
                 }
             })
             it('fail bulk adjust with empty reseller_id', async () => {
@@ -391,7 +412,7 @@ describe('NCOS Level', () => {
                         [createdIds[1]]: [{op: 'replace', path: '/reseller_id', value: null}],
                     })
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain(`[${createdIds[1]}] reseller_id should not be empty`)
+                expect(response.body.errors).toContainEqual({pointer: `/${createdIds[1]}/reseller_id`, code: 'isNotEmpty', message: 'reseller_id should not be empty'})
             })
         })
 
@@ -437,7 +458,7 @@ describe('NCOS Level', () => {
                         time_set_invert: false,
                     }, reseller_id: 1})
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('create without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -482,7 +503,7 @@ describe('NCOS Level', () => {
                         time_set_invert: false,
                     }, reseller_id: 1})
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('update without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -517,7 +538,7 @@ describe('NCOS Level', () => {
                     .set('Content-Type', 'application/json-patch+json')
                     .send([{op: 'replace', path: '/reseller_id', value: 1}])
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('patch without reseller_id', async () => {
                 const response = await request(app.getHttpServer())

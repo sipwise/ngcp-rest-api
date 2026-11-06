@@ -22,7 +22,7 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
+import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -223,12 +223,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         const sr = new ServiceRequest(req)
         validatePatchResellerId(patches, sr)
 
-        const updates = new Dictionary<internal.NCOSSet>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.ncosSetService.read(+id, sr)
-            const entity = await patchToEntity<internal.NCOSSet, NCOSSetRequestDto>(oldEntity, patches[id], NCOSSetRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.NCOSSet, NCOSSetRequestDto>(patches, id => this.ncosSetService.read(id, sr), NCOSSetRequestDto)
 
         return await this.ncosSetService.update(updates, sr)
     }

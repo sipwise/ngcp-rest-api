@@ -1,4 +1,4 @@
-import {Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {Injectable, NotFoundException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {BanAdminMariadbRepository} from './repositories/admin.mariadb.repository'
@@ -7,9 +7,8 @@ import {BanAdminOptions} from '~/api/bans/admins/interfaces/admin-options.interf
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
-import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -44,22 +43,10 @@ export class BanAdminService implements CrudService<internal.BanAdmin> {
 
         // FIXME: For some reason the ids are string, not number
         const adminIds = await this.authService.filterNotBannedAdmins(ids.map(id => +id))
-        if (!adminIds.length) {
-            throw new NotFoundException()
-        } else if (adminIds.length != ids.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, adminIds, this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         const idsToDelete = await this.banAdminRepo.readWhereInIds(adminIds, this.getAdminOptionsFromServiceRequest(sr), sr)
-        if (idsToDelete.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != idsToDelete.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, idsToDelete.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         await Promise.all(idsToDelete.map(async admin => {
             await this.authService.removeAdminBan(admin.id, sr)

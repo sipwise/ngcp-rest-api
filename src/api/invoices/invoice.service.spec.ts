@@ -15,6 +15,7 @@ import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory} from '~/entities/internal/invoice-template.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {CallListSuppressionMode} from '~/helpers/call-list-suppression.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const admin: AuthResponseDto = {
@@ -157,7 +158,7 @@ describe('InvoiceService', () => {
         })
 
         it('stops at the first failing invoice', async () => {
-            await expect(service.create([newInvoice(), newInvoice({contractId: 99})], makeSr())).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.create([newInvoice(), newInvoice({contractId: 99})], makeSr())).rejects.toThrow(ApiErrorException)
             expect(Object.keys(repo.invoiceDB)).toEqual(['1'])
         })
 
@@ -267,19 +268,19 @@ describe('InvoiceService', () => {
                 ['start equals end', {periodEnd: periodStart}],
             ])('rejects %s', async (_n, data) => {
                 const spy = jest.spyOn(repo, 'create')
-                await expect(service.create([newInvoice(data)], makeSr())).rejects.toThrow(UnprocessableEntityException)
+                await expect(service.create([newInvoice(data)], makeSr())).rejects.toThrow(ApiErrorException)
                 expect(spy).not.toHaveBeenCalled()
             })
         })
 
         describe('template', () => {
             it('maps an unknown template to UnprocessableEntityException', async () => {
-                await expect(service.create([newInvoice({templateId: 99})], makeSr())).rejects.toThrow(UnprocessableEntityException)
+                await expect(service.create([newInvoice({templateId: 99})], makeSr())).rejects.toThrow(ApiErrorException)
             })
 
             it('maps a template of another reseller to UnprocessableEntityException for a reseller user', async () => {
                 templateService.read.mockRejectedValue(new NotFoundException())
-                await expect(service.create([newInvoice()], makeSr(resellerUser))).rejects.toThrow(UnprocessableEntityException)
+                await expect(service.create([newInvoice()], makeSr(resellerUser))).rejects.toThrow(ApiErrorException)
             })
 
             it('rethrows other errors of the template lookup', async () => {
@@ -291,21 +292,21 @@ describe('InvoiceService', () => {
 
         describe('contract', () => {
             it('rejects an unknown contract', async () => {
-                await expect(service.create([newInvoice({contractId: 99})], makeSr())).rejects.toThrow(UnprocessableEntityException)
+                await expect(service.create([newInvoice({contractId: 99})], makeSr())).rejects.toThrow(ApiErrorException)
             })
 
             it('rejects a terminated contract', async () => {
-                await expect(service.create([newInvoice({contractId: 12})], makeSr())).rejects.toThrow(UnprocessableEntityException)
+                await expect(service.create([newInvoice({contractId: 12})], makeSr())).rejects.toThrow(ApiErrorException)
             })
 
             it('rejects a contract of the wrong product class', async () => {
-                await expect(service.create([newInvoice({contractId: 13})], makeSr())).rejects.toThrow(UnprocessableEntityException)
-                await expect(service.create([newInvoice({contractId: 10, templateId: 3})], makeSr())).rejects.toThrow(UnprocessableEntityException)
+                await expect(service.create([newInvoice({contractId: 13})], makeSr())).rejects.toThrow(ApiErrorException)
+                await expect(service.create([newInvoice({contractId: 10, templateId: 3})], makeSr())).rejects.toThrow(ApiErrorException)
             })
 
             it('rejects the contract of another reseller for a reseller user', async () => {
                 await expect(service.create([newInvoice({contractId: 11, templateId: 5})], makeSr(resellerUser)))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
             })
 
             it('accepts the contract of another reseller for an admin if the template matches', async () => {
@@ -315,7 +316,7 @@ describe('InvoiceService', () => {
 
             it.each([[1], [2]])('rejects a reseller mismatch of the template %i and contract', async (templateId) => {
                 await expect(service.create([newInvoice({contractId: 11, templateId})], makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
             })
 
             it('does not check the template reseller for peer and reseller templates', async () => {
@@ -409,18 +410,18 @@ describe('InvoiceService', () => {
         })
 
         it('throws NotFoundException if no id exists', async () => {
-            await expect(service.delete([98, 99], makeSr())).rejects.toThrow(NotFoundException)
+            await expect(service.delete([98, 99], makeSr())).rejects.toThrow(ApiErrorException)
         })
 
         it('throws UnprocessableEntityException for partial ids and deletes nothing', async () => {
             const spy = jest.spyOn(repo, 'delete')
-            await expect(service.delete([1, 99], makeSr())).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.delete([1, 99], makeSr())).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
 
         it('does not delete the invoice of another reseller', async () => {
-            await expect(service.delete([3], makeSr(resellerUser))).rejects.toThrow(NotFoundException)
-            await expect(service.delete([1, 3], makeSr(resellerUser))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.delete([3], makeSr(resellerUser))).rejects.toThrow(ApiErrorException)
+            await expect(service.delete([1, 3], makeSr(resellerUser))).rejects.toThrow(ApiErrorException)
             expect(repo.invoiceDB[3]).toBeDefined()
         })
     })

@@ -353,7 +353,7 @@ describe('Reseller Phonebook', () => {
                         number: '8881',
                     })
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
             })
             it('fail update without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -366,7 +366,7 @@ describe('Reseller Phonebook', () => {
                         number: '8881',
                     })
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
             })
             it('fail adjust with empty reseller_id', async () => {
                 const tt: PatchOperation[][] = [
@@ -381,7 +381,7 @@ describe('Reseller Phonebook', () => {
                         .set('Content-Type', 'application/json-patch+json')
                         .send(emptyPatch)
                     expect(response.status).toEqual(422)
-                    expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                    expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
                 }
             })
             it('fail bulk adjust with empty reseller_id', async () => {
@@ -395,7 +395,22 @@ describe('Reseller Phonebook', () => {
                         [createdPhonebookIds[1]]: [{op: 'replace', path: '/reseller_id', value: null}],
                     })
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain(`[${createdPhonebookIds[1]}] reseller_id should not be empty`)
+                expect(response.body.errors).toContainEqual({pointer: `/${createdPhonebookIds[1]}/reseller_id`, code: 'isNotEmpty', message: 'reseller_id should not be empty'})
+            })
+            it('fail csv import with an invalid row', async () => {
+                const csvContent = [
+                    'reseller_id,name,number',
+                    '1,RES_PHONEBOOK_CSV_ROW_OK,40011',
+                    '1,,40012',
+                ].join('\n')
+                const response = await request(app.getHttpServer())
+                    .post('/api/resellers/phonebook')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .attach('file', Buffer.from(csvContent), 'reseller_phonebook_test.csv')
+                expect(response.status).toEqual(422)
+                expect(response.body.errorCode).toEqual('VALIDATION_FAILED')
+                expect(response.body.errors).toEqual([{pointer: '/1/name', code: 'isNotEmpty', message: 'name should not be empty'}])
             })
             it('fail csv import without reseller_id', async () => {
                 const csvContent = [
@@ -408,7 +423,7 @@ describe('Reseller Phonebook', () => {
                     .set('Accept', 'application/json')
                     .attach('file', Buffer.from(csvContent), 'reseller_phonebook_test.csv')
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('[0] reseller_id should not be empty')
+                expect(response.body.errors).toContainEqual({pointer: '/0/reseller_id', code: 'isNotEmpty', message: 'reseller_id should not be empty'})
             })
         })
 
@@ -449,7 +464,7 @@ describe('Reseller Phonebook', () => {
                         number: `${num}8882`,
                     }, reseller_id: 1})
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('create without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -484,7 +499,7 @@ describe('Reseller Phonebook', () => {
                         number: `${num}8882`,
                     }, reseller_id: 1})
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('update without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -514,7 +529,7 @@ describe('Reseller Phonebook', () => {
                     .set('Content-Type', 'application/json-patch+json')
                     .send([{op: 'replace', path: '/reseller_id', value: 1}])
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('patch without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -546,7 +561,7 @@ describe('Reseller Phonebook', () => {
                     .set('Accept', 'application/json')
                     .attach('file', Buffer.from(csvContent), 'reseller_phonebook_test.csv')
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('[0] property reseller_id should not exist')
+                expect(response.body.errors).toContainEqual({pointer: '/0/reseller_id', code: 'whitelistValidation', message: 'property reseller_id should not exist'})
             })
             it('csv import without reseller_id', async () => {
                 const tt = [

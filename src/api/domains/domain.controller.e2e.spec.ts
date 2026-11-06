@@ -15,6 +15,7 @@ import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
+import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
@@ -185,7 +186,7 @@ describe('Domain', () => {
                         .set('Content-Type', 'application/json')
                         .send(domain)
                     expect(response.status).toEqual(422)
-                    expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                    expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
                 }
             })
             it('fail create domain with invalid reseller_id', async () => {
@@ -196,6 +197,25 @@ describe('Domain', () => {
                     .set('Content-Type', 'application/json')
                     .send({domain: `admin-invalid.${domainSuffix}`, reseller_id: 999911111})
                 expect(response.status).toEqual(422)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/reseller_id', 'RESELLER_ID_INVALID']])
+            })
+            it('point every failing item of a bulk POST', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/domains')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send([
+                        {domain: `admin.${domainSuffix}`, reseller_id: 1},
+                        {domain: `admin-new.${domainSuffix}`, reseller_id: 1},
+                        {domain: `admin-invalid.${domainSuffix}`, reseller_id: 999911111},
+                    ])
+                expect(response.status).toEqual(422)
+                expect(response.body.errorCode).toEqual('DOMAIN_ALREADY_EXISTS')
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([
+                    ['/0/domain', 'DOMAIN_ALREADY_EXISTS'],
+                    ['/2/reseller_id', 'RESELLER_ID_INVALID'],
+                ])
             })
         })
 
@@ -264,7 +284,7 @@ describe('Domain', () => {
                     .set('Content-Type', 'application/json')
                     .send({domain: `reseller.${domainSuffix}`, reseller_id: 1})
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('create domain without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -360,7 +380,7 @@ describe('Domain', () => {
                     .set(...headers[RbacRole.reseller])
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
-                expect(response.status).toEqual(422)
+                expect(response.status).toEqual(404)
                 expect(await db.billing.Domain.findOneBy({id: createdIds[0]})).not.toBeNull()
             })
         })

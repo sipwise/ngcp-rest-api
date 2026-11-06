@@ -96,8 +96,8 @@ export class ResellerPhonebookMockRepository implements ResellerPhonebookReposit
         return Promise.resolve(phonebook)
     }
 
-    readCountOfIds(ids: number[], _options?: ResellerPhonebookOptions): Promise<number> {
-        return Promise.resolve(ids.length)
+    readExistingIds(ids: number[], _options?: ResellerPhonebookOptions): Promise<number[]> {
+        return Promise.resolve(ids)
     }
 
     update(updates: Dictionary<internal.ResellerPhonebook>, _sr: ServiceRequest): Promise<number[]> {

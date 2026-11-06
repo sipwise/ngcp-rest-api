@@ -5,11 +5,10 @@ import {plainToInstance} from 'class-transformer'
 import {Response} from 'express'
 import * as Papa from 'papaparse'
 
-import {formatValidationErrorsInCsv} from './errors.helper'
+import {ErrorEntry, ValidationFailedException, formatValidationErrors} from './errors.helper'
 import {validate} from './validate.helper'
 
-import {CsvValidationError} from '~/types/csv-validation-error.type'
-
+import {errorMessage} from '~/helpers/errors.helper'
 
 export interface CsvOptions {
     numericBooleans?: boolean
@@ -20,7 +19,6 @@ export interface CsvOptions {
  */
 export async function csvToDto<T extends object>(file: Express.Multer.File, dtoClass: new () => T): Promise<T[] | null> {
     return new Promise((resolve, reject) => {
-        const errors: CsvValidationError[] = []
         const stream = Readable.from(file.buffer.toString('utf-8'))
         stream.on('error', (error) => {
             reject(error)
@@ -38,30 +36,19 @@ export async function csvToDto<T extends object>(file: Express.Multer.File, dtoC
                         return
                     }
 
-                    const dtos = rows.map((row, idx) => {
-                        const dto = {idx, data: plainToInstance(dtoClass, row)}
-                        return dto
+                    const dtos = rows.map(row => plainToInstance(dtoClass, row))
+                    const errors: ErrorEntry[] = []
+                    const rowErrors = await Promise.all(dtos.map(dto => validate(dto)))
+                    rowErrors.forEach((validationErrors, row) => {
+                        errors.push(...formatValidationErrors(validationErrors, `/${row}`))
                     })
-
-                    const validationPromises = dtos.map(async dto => {
-                        const validationErrors = await validate(dto.data)
-                        if (validationErrors.length > 0) {
-                            validationErrors.forEach(error => {
-                                if (!error.target) error.target = {}
-                                error.target['row'] = dto.idx
-                            })
-                            errors.push({row: dto.idx, error: validationErrors})
-                        }
-                    })
-
-                    await Promise.all(validationPromises)
                     if (errors.length > 0) {
-                        reject(new UnprocessableEntityException(formatValidationErrorsInCsv(errors)))
+                        reject(new ValidationFailedException(errors))
                     } else {
-                        resolve(dtos.map(dto => dto.data))
+                        resolve(dtos)
                     }
                 } catch {
-                    reject(new UnprocessableEntityException('Invalid or malformed CSV file'))
+                    reject(new UnprocessableEntityException(errorMessage('CSV_MALFORMED')))
                 }
             },
             error: (error) => {

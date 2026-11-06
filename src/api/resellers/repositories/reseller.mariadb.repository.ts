@@ -76,10 +76,6 @@ export class ResellerMariadbRepository extends MariaDbRepository implements Rese
         return await Promise.all(created.map(async (reseller) => reseller.toInternal()))
     }
 
-    async readCountOfIds(ids: number[]): Promise<number> {
-        const qb = db.billing.Reseller.createQueryBuilder('reseller')
-        return await qb.andWhereInIds(ids).getCount()
-    }
 
     async readByName(name: string, sr: ServiceRequest): Promise<internal.Reseller> {
         this.log.debug({message: 'read reseller by id', func: this.readByName.name, user: sr.user.username, name: name})

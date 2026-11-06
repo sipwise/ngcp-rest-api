@@ -1,4 +1,4 @@
-import {Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {ContactOptions} from '~/api/contacts/interfaces/contact-options.interface'
@@ -6,6 +6,7 @@ import {ContactMariadbRepository} from '~/api/contacts/repositories/contact.mari
 import {internal} from '~/entities'
 import {ContactType} from '~/entities/internal/contact.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrors, itemPointer, readFoundIds, throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -34,8 +35,7 @@ export class SystemContactService implements CrudService<internal.Contact> {
         })
         const options = this.getContactOptionsFromServiceRequest(sr)
         const contacts = await this.contactRepo.readWhereInIds(ids, options)
-        if (ids.length != contacts.length)
-            throw new UnprocessableEntityException()
+        throwMissingIds(sr, ids, contacts.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
         return await this.contactRepo.delete(ids, sr)
     }
 
@@ -67,13 +67,15 @@ export class SystemContactService implements CrudService<internal.Contact> {
             user: sr.user.username,
         })
         const options = this.getContactOptionsFromServiceRequest(sr)
+        throwMissingIds(sr, ids, await readFoundIds(ids, id => this.contactRepo.readById(id, options)), this.i18n.t('errors.ENTRY_NOT_FOUND'))
+        const errors = new ApiErrors()
         for (const id of ids) {
             const contact = updates[id]
             const oldContact = await this.contactRepo.readById(id, options)
-            if (contact.reseller_id || oldContact.reseller_id) {
-                throw new UnprocessableEntityException(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'))
-            }
+            if (contact.reseller_id || oldContact.reseller_id)
+                errors.add(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'), itemPointer(sr, id))
         }
+        errors.throwIfAny()
         return await this.contactRepo.update(updates, options)
     }
 

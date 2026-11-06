@@ -17,9 +17,9 @@ import MarkdownIt from 'markdown-it'
 
 import {SwaggerLanguage, readLocalisationFile} from '~/helpers/swagger-i18n.helper'
 
-// the chapters in localisation/<lang>/guide, in order, with their tabs (also the address, #intro) and tab label strings
+// the chapters in localisation/<lang>/guide, in order, with their tabs (also the address, #concepts) and tab label strings
 export const GUIDE_CHAPTERS = [
-    {file: 'introduction', tab: 'intro', label: 'tabIntro'},
+    {file: 'concepts', tab: 'concepts', label: 'tabConcepts'},
     {file: 'authentication', tab: 'authentication', label: 'tabAuthentication'},
     {file: 'usage', tab: 'usage', label: 'tabUsage'},
 ]
@@ -41,7 +41,7 @@ export const GUIDE_TAB_LANGUAGES: Record<string, string> = {
 }
 
 /**
- * Returns the guide (introduction, authentication, usage) in the language as markdown, used as the OpenAPI
+ * Returns the guide (concepts, authentication, usage) in the language as markdown, used as the OpenAPI
  * description; chapters that are not translated are in english
  */
 export function readSwaggerGuide(lang: SwaggerLanguage): string {
@@ -222,7 +222,7 @@ export const swaggerGuideJs = `
 
     const slug = text => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
-    // the tab of the address, #intro, #authentication or #usage (#/usage after swagger's deep linking rewrote it),
+    // the tab of the address, #concepts, #authentication or #usage (#/usage after swagger's deep linking rewrote it),
     // anything else (swagger's #/tag/operation) is the API
     function tabFromHash() {
         const tab = window.location.hash.replace(/^#\\/?/, '')
@@ -246,7 +246,7 @@ export const swaggerGuideJs = `
         showTab(tab)
     }
 
-    // the chapters (h2) become the tabs Intro, Authentication and Usage next to API, the swagger operations
+    // the chapters (h2) become the tabs Concepts, Authentication and Usage next to API, the swagger operations
     function chapterTabs(markdown) {
         const anchor = document.querySelector('.swagger-ui .scheme-container') || document.querySelector('.swagger-ui .information-container')
         const nav = document.createElement('nav')

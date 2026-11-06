@@ -1,4 +1,4 @@
-import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {Inject, Injectable} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {FilterBy, PeeringInboundRuleMariadbRepository} from './repositories/inbound-rule.mariadb.repository'
@@ -6,10 +6,9 @@ import {PeeringInboundRuleRedisRepository} from './repositories/inbound-rule.red
 
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {throwMissingIds} from '~/helpers/errors.helper'
 import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -49,15 +48,7 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
         const ids = Object.keys(updates).map(id => parseInt(id))
         const rules = await this.ruleRepo.readWhereInIds(ids, sr)
 
-        if (rules.length == 0) {
-            throw new NotFoundException()
-        }
-
-        if (ids.length != rules.length) {
-            const error: ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, rules.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         // Always reload LCR
         await this.reloadKamProxyLcrAfterCommit(sr)
@@ -84,13 +75,7 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         const rules = await this.ruleRepo.readWhereInIds(ids, sr)
-        if (rules.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != rules.length) {
-            const error: ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, rules.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         // Always reload LCR
         await this.reloadKamProxyLcrAfterCommit(sr)

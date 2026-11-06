@@ -20,7 +20,7 @@ export function IsDateTimeStringOrZeroString(validationOptions?: ValidationOptio
                     return !isNaN(date)
                 },
                 defaultMessage(args: ValidationArguments) {
-                    return `"${args.property}" must be a valid ISO 8601 date string or the string "0.000"`
+                    return `${args.property} must be a valid ISO 8601 date string or the string '0.000'`
                 },
             },
         })

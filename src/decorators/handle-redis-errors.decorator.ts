@@ -1,5 +1,6 @@
 import {InternalServerErrorException} from '@nestjs/common'
 
+import {errorMessage} from '~/helpers/errors.helper'
 import {LoggerService} from '~/logger/logger.service'
 
 export function HandleRedisErrors(
@@ -19,7 +20,7 @@ export function HandleRedisErrors(
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return result.catch((err: Error) => {
                     log.error(err, err.stack, `${target.constructor.name}/${propertyKey}`)
-                    throw new InternalServerErrorException('Could not process request')
+                    throw new InternalServerErrorException(errorMessage('REQUEST_PROCESSING_ERROR'))
                 })
             }
             // TODO: Fix this any if fixable
@@ -27,7 +28,7 @@ export function HandleRedisErrors(
             return result
         } catch (err) {
             log.error(err, err.stack, `${target.constructor.name}/${propertyKey}`)
-            throw new InternalServerErrorException('Could not process request')
+            throw new InternalServerErrorException(errorMessage('REQUEST_PROCESSING_ERROR'))
         }
     }
     return descriptor

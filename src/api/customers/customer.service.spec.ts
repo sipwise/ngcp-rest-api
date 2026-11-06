@@ -15,6 +15,7 @@ import {ContactStatus} from '~/entities/internal/contact.internal.entity'
 import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -104,42 +105,42 @@ describe('CustomerService', () => {
 
         it('should reject an unknown contact', async () => {
             await expect(service.create([newCustomer({contactId: 100})], makeSr()))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         it('should reject a system contact', async () => {
             await expect(service.create([newCustomer({contactId: 1})], makeSr()))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         it('should reject a terminated contact', async () => {
             await expect(service.create([newCustomer({contactId: 5})], makeSr()))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         it('should reject a contact of another reseller for a reseller user', async () => {
             await expect(service.create([newCustomer({contactId: 4, billingProfileId: 2})], makeSr(resellerUser)))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         it('should reject an unknown type', async () => {
             await expect(service.create([newCustomer({type: 'invalid' as CustomerType})], makeSr()))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         it('should reject an unknown billing profile', async () => {
             await expect(service.create([newCustomer({billingProfileId: 99})], makeSr()))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         it('should reject a terminated billing profile', async () => {
             await expect(service.create([newCustomer({billingProfileId: 4})], makeSr()))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         it('should reject a billing profile of another reseller', async () => {
             await expect(service.create([newCustomer({billingProfileId: 2})], makeSr()))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         it('should fail when the created customers cannot be read back', async () => {
@@ -166,7 +167,7 @@ describe('CustomerService', () => {
 
             it('should reject a package of another reseller', async () => {
                 await expect(service.create([pkgCustomer(2)], makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
             })
         })
 
@@ -193,43 +194,43 @@ describe('CustomerService', () => {
 
             it('should require an open interval without network', async () => {
                 await expect(service.create([profilesCustomer([profile({id: 1, networkId: 1})])], makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
             })
 
             it('should require profiles', async () => {
                 await expect(service.create([profilesCustomer(undefined)], makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
             })
 
             it('should reject an end date without start date', async () => {
                 await expect(service.create([profilesCustomer([
                     profile({id: 1}),
                     profile({id: 3, endDate: new Date(Date.now() + day)}),
-                ])], makeSr())).rejects.toThrow(UnprocessableEntityException)
+                ])], makeSr())).rejects.toThrow(ApiErrorException)
             })
 
             it('should reject a start date in the past', async () => {
                 await expect(service.create([profilesCustomer([
                     profile({id: 1}),
                     profile({id: 3, startDate: new Date(Date.now() - day)}),
-                ])], makeSr())).rejects.toThrow(UnprocessableEntityException)
+                ])], makeSr())).rejects.toThrow(ApiErrorException)
             })
 
             it('should reject a start date after the end date', async () => {
                 await expect(service.create([profilesCustomer([
                     profile({id: 1}),
                     profile({id: 3, startDate: new Date(Date.now() + 2 * day), endDate: new Date(Date.now() + day)}),
-                ])], makeSr())).rejects.toThrow(UnprocessableEntityException)
+                ])], makeSr())).rejects.toThrow(ApiErrorException)
             })
 
             it('should reject an unknown network', async () => {
                 await expect(service.create([profilesCustomer([profile({id: 1}), profile({id: 1, networkId: 99})])], makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
             })
 
             it('should reject a network of another reseller', async () => {
                 await expect(service.create([profilesCustomer([profile({id: 1}), profile({id: 1, networkId: 2})])], makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
             })
         })
 
@@ -259,14 +260,14 @@ describe('CustomerService', () => {
             ])('should reject a %s of another reseller, a default or an unknown template (%s)', async (field, id) => {
                 const create = jest.spyOn(customerMockRepo, 'create')
                 await expect(service.create([newCustomer({[field]: id})], makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
                 expect(create).not.toHaveBeenCalled()
             })
 
             it.each([2, 999])('should reject an invoiceTemplateId of another reseller or unknown (%s)', async id => {
                 const create = jest.spyOn(customerMockRepo, 'create')
                 await expect(service.create([newCustomer({invoiceTemplateId: id})], makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
                 expect(create).not.toHaveBeenCalled()
             })
 
@@ -362,15 +363,15 @@ describe('CustomerService', () => {
         })
 
         it('should throw 404 if no customer is found', async () => {
-            await expect(service.terminate([100], makeSr())).rejects.toThrow(NotFoundException)
+            await expect(service.terminate([100], makeSr())).rejects.toThrow(ApiErrorException)
         })
 
         it('should throw 422 if some customers are not found', async () => {
-            await expect(service.terminate([1, 100], makeSr())).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.terminate([1, 100], makeSr())).rejects.toThrow(ApiErrorException)
         })
 
         it('should not terminate a customer of another reseller for a reseller user', async () => {
-            await expect(service.terminate([2], makeSr(resellerUser))).rejects.toThrow(NotFoundException)
+            await expect(service.terminate([2], makeSr(resellerUser))).rejects.toThrow(ApiErrorException)
         })
     })
 
@@ -380,15 +381,15 @@ describe('CustomerService', () => {
         })
 
         it('should throw 404 if no customer is found', async () => {
-            await expect(service.delete([100], makeSr())).rejects.toThrow(NotFoundException)
+            await expect(service.delete([100], makeSr())).rejects.toThrow(ApiErrorException)
         })
 
         it('should throw 422 if some customers are not found', async () => {
-            await expect(service.delete([1, 100], makeSr())).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.delete([1, 100], makeSr())).rejects.toThrow(ApiErrorException)
         })
 
         it('should not delete a customer of another reseller for a reseller user', async () => {
-            await expect(service.delete([1, 2], makeSr(resellerUser))).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.delete([1, 2], makeSr(resellerUser))).rejects.toThrow(ApiErrorException)
         })
     })
 
@@ -398,17 +399,17 @@ describe('CustomerService', () => {
 
         it('should reject an unknown contact', async () => {
             await expect(service.update(updateOf(1, {contactId: 100}), makeSr()))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         it('should reject an unknown type', async () => {
             await expect(service.update(updateOf(1, {type: 'invalid' as CustomerType}), makeSr()))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         it('should reject an unknown billing profile definition', async () => {
             await expect(service.update(updateOf(1, {billingProfileDefinition: 'invalid' as ContractBillingProfileDefinition}), makeSr()))
-                .rejects.toThrow(UnprocessableEntityException)
+                .rejects.toThrow(ApiErrorException)
         })
 
         describe('templates', () => {
@@ -428,13 +429,13 @@ describe('CustomerService', () => {
             ])('should reject a %s not of the contact reseller (%s)', async (field, id) => {
                 const update = jest.spyOn(customerMockRepo, 'update')
                 await expect(service.update(updateOf(1, {[field]: id}), makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
                 expect(update).not.toHaveBeenCalled()
             })
 
             it('should check the templates against the reseller of the customer contact', async () => {
                 await expect(service.update(updateOf(2, {subscriberEmailTemplateId: 11}), makeSr()))
-                    .rejects.toThrow('Invalid field \'subscriber_email_template_id\'')
+                    .rejects.toMatchObject({errorList: [{pointer: '/subscriber_email_template_id'}]})
             })
         })
 
@@ -472,7 +473,7 @@ describe('CustomerService', () => {
 
             it('should reject a billing profile of another reseller', async () => {
                 await expect(service.update(updateOf(3, {billingProfileId: 2}), makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
             })
         })
 
@@ -503,12 +504,12 @@ describe('CustomerService', () => {
 
             it('should reject profiles that are not an array', async () => {
                 await expect(service.update(profilesUpdate(undefined), makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
             })
 
             it('should reject an open interval', async () => {
                 await expect(service.update(profilesUpdate([profile({id: 3})]), makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
             })
         })
 
@@ -543,7 +544,7 @@ describe('CustomerService', () => {
             it('should reject a package of another reseller', async () => {
                 customerMockRepo.customerDB[2].profilePackageId = 1
                 await expect(service.update(packageUpdate(2), makeSr()))
-                    .rejects.toThrow(UnprocessableEntityException)
+                    .rejects.toThrow(ApiErrorException)
             })
         })
     })

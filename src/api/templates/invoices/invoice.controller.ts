@@ -11,7 +11,6 @@ import {
     Req,
     Response,
     StreamableFile,
-    UnprocessableEntityException,
     UploadedFile,
     UseInterceptors,
 } from '@nestjs/common'
@@ -42,6 +41,7 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ValidationFailedException, escapePointerToken} from '~/helpers/errors.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {patchToEntity} from '~/helpers/patch.helper'
@@ -315,12 +315,15 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
 
     private multipartToPatch(body: unknown, file?: Express.Multer.File): PatchOperation[] {
         const fields = (body && typeof body == 'object' ? body : {}) as Record<string, unknown>
-        if (!file && !Object.keys(fields).length) {
-            throw new UnprocessableEntityException()
-        }
+        if (!file && !Object.keys(fields).length)
+            throw new ValidationFailedException([{pointer: '', code: 'isNotEmpty', message: 'a field or a file is required'}])
         const unknownFields = Object.keys(fields).filter(key => !multipartPatchFields.includes(key))
         if (unknownFields.length) {
-            throw new UnprocessableEntityException(unknownFields.map(key => `property ${key} should not exist`))
+            throw new ValidationFailedException(unknownFields.map(key => ({
+                pointer: `/${escapePointerToken(key)}`,
+                code: 'whitelistValidation',
+                message: `property ${key} should not exist`,
+            })))
         }
         const dto = plainToInstance(InvoiceTemplateRequestDto, fields) as unknown as Record<string, unknown>
         const patch = Object.keys(fields).map(key => ({

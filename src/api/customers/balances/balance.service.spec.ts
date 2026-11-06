@@ -1,4 +1,4 @@
-import {NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {NotFoundException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 
 import {CustomerBalanceModule} from './balance.module'
@@ -10,6 +10,7 @@ import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -164,13 +165,13 @@ describe('CustomerBalanceService', () => {
         it('throws NotFoundException when no id exists', async () => {
             const spy = jest.spyOn(balanceMockRepo, 'update')
             await expect(service.update(updates({98: internal.ContractBalance.create({cashBalance: 5})}), makeSr()))
-                .rejects.toThrow(NotFoundException)
+                .rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
 
         it('throws NotFoundException when the only balance belongs to another reseller', async () => {
             await expect(service.update(updates({3: internal.ContractBalance.create({cashBalance: 5})}), makeSr(resellerUser)))
-                .rejects.toThrow(NotFoundException)
+                .rejects.toThrow(ApiErrorException)
             expect(balanceMockRepo.balanceDB[3].cashBalance).toEqual(30)
         })
 
@@ -179,9 +180,9 @@ describe('CustomerBalanceService', () => {
             const promise = service.update(updates({
                 1: internal.ContractBalance.create({cashBalance: 5}),
                 99: internal.ContractBalance.create({cashBalance: 5}),
-            }), makeSr())
-            await expect(promise).rejects.toThrow(UnprocessableEntityException)
-            await promise.catch(e => expect(JSON.stringify(e.getResponse())).toContain('[1]'))
+            }), {...makeSr(), req: {body: {1: {}, 99: {}}}} as ServiceRequest)
+            await expect(promise).rejects.toThrow(ApiErrorException)
+            await promise.catch(e => expect(JSON.stringify(e.getResponse())).toContain('"pointer":"/99"'))
             expect(spy).not.toHaveBeenCalled()
             expect(balanceMockRepo.balanceDB[1].cashBalance).toEqual(10)
         })
@@ -190,7 +191,7 @@ describe('CustomerBalanceService', () => {
             await expect(service.update(updates({
                 1: internal.ContractBalance.create({cashBalance: 5}),
                 3: internal.ContractBalance.create({cashBalance: 5}),
-            }), makeSr(resellerUser))).rejects.toThrow(UnprocessableEntityException)
+            }), makeSr(resellerUser))).rejects.toThrow(ApiErrorException)
             expect(balanceMockRepo.balanceDB[1].cashBalance).toEqual(10)
         })
     })

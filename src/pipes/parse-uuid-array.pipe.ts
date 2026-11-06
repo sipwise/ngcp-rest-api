@@ -1,55 +1,32 @@
-// TODO: Check if full type safety is possible in pipes
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-import {
-    ArgumentMetadata,
-    BadRequestException,
-    HttpStatus,
-    Injectable,
-    Optional, ParseUUIDPipe, ParseUUIDPipeOptions,
-    PipeTransform,
-    UUIDVersion,
-} from '@nestjs/common'
-import {HttpErrorByCode} from '@nestjs/common/utils/http-error-by-code.util'
+import {ArgumentMetadata, Injectable, Optional, ParseUUIDPipeOptions, PipeTransform} from '@nestjs/common'
 
-interface ParseUuidArrayPipeOptions extends ParseUUIDPipeOptions {
+import {paramOrBodyFromBody} from '~/decorators/param-or-body.decorator'
+import {parameterException} from '~/helpers/errors.helper'
+import {isUuidValue} from '~/pipes/parse-uuid.pipe'
+
+interface ParseUuidArrayPipeOptions extends Pick<ParseUUIDPipeOptions, 'version'> {
     allowUndefined?: boolean
 }
 
 @Injectable()
 export class ParseUUIDArrayPipe implements PipeTransform {
-    private readonly version: UUIDVersion | undefined
-    protected exceptionFactory: (errors: string) => any
-
     constructor(
         @Optional() protected readonly options?: ParseUuidArrayPipeOptions,
     ) {
-        options = options || {}
-        const {
-            version,
-            exceptionFactory,
-            errorHttpStatusCode = HttpStatus.BAD_REQUEST,
-        } = options
-
-        this.version = version
-        this.options = options
-        this.exceptionFactory =
-            exceptionFactory ||
-            // TODO: Fix the return type
-            // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-            (error => new HttpErrorByCode[errorHttpStatusCode](error))
+        this.options = options || {}
     }
-    async transform(value: any, metadata: ArgumentMetadata): Promise<string[]> {
-        const parseId = new ParseUUIDPipe(this.options)
+
+    async transform(value: unknown, metadata: ArgumentMetadata): Promise<string[]> {
         if (!Array.isArray(value) && this.options.allowUndefined) {
             return undefined
         }
+        const name = metadata.data ?? 'id'
+        const fromBody = value != null && typeof value == 'object' && paramOrBodyFromBody.has(value)
         if (!Array.isArray(value))
-            throw new BadRequestException('is no array')
-        for (const val of value) {
-            if(!await parseId.transform(val, metadata))
-                throw new BadRequestException('element is no int')
-        }
-        return value
+            throw parameterException(name, 'isArray', `${name} must be an array`, fromBody ? '' : undefined)
+        const index = value.findIndex(val => !isUuidValue(val, this.options.version))
+        if (index >= 0)
+            throw parameterException(name, 'isUuid', `${name} must be a UUID`, fromBody ? `/${index}` : undefined)
+        return value as string[]
     }
 }

@@ -24,7 +24,7 @@ export function NoDefinedViaRoutes() {
             name: 'NoDefinedViaRoutes',
             target: object.constructor,
             propertyName: propertyName,
-            options: {message: 'no available values for the property'},
+            options: {message: '$property has no available values'},
             validator: {
                 validate(_value: unknown, _args: ValidationArguments) {
                     if (!AppService.config.sip.external_sbc.length) return false
@@ -40,7 +40,7 @@ export function ValidViaRoutePatterns() {
             name: 'ValidViaRoutePatterns',
             target: object.constructor,
             propertyName: propertyName,
-            options: {message: 'must be a valid SIP-URI as one of: sip:ip:port | <sip:ip:port> | <sip:ip:port;lr>'},
+            options: {message: '$property must be a valid SIP-URI as one of: sip:ip:port | <sip:ip:port> | <sip:ip:port;lr>'},
             validator: {
                 validate(value: unknown, _args: ValidationArguments) {
                     if (!isString(value)) return false
@@ -60,7 +60,7 @@ export function ValidViaRouteValue() {
             name: 'ValidViaRouteValue',
             target: object.constructor,
             propertyName: propertyName,
-            options: {message: `must be one of: ${AppService.config.sip.external_sbc})`},
+            options: {message: `$property must be one of: ${AppService.config.sip.external_sbc}`},
             validator: {
                 validate(value: unknown, _args: ValidationArguments) {
                     if (!isString(value)) return false

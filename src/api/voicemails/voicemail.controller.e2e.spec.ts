@@ -19,6 +19,7 @@ import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voi
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {voicemailSpoolDir} from '~/enums/supported-voicemail-folders.enum'
+import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
@@ -567,7 +568,7 @@ describe('Voicemail', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({folder: 'INBOX'})
-                expect(put.status).toEqual(422)
+                expect(put.status).toEqual(404)
                 const putMany = await request(app.getHttpServer())
                     .put('/api/voicemails')
                     .set(...otherResellerHeader)
@@ -575,6 +576,7 @@ describe('Voicemail', () => {
                     .set('Content-Type', 'application/json')
                     .send({[id]: {folder: 'INBOX'}})
                 expect(putMany.status).toEqual(422)
+                expect(putMany.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([[`/${id}`, 'ENTRY_NOT_FOUND']])
                 const patch = await request(app.getHttpServer())
                     .patch(`/api/voicemails/${id}`)
                     .set(...otherResellerHeader)
@@ -592,7 +594,7 @@ describe('Voicemail', () => {
                     .set(...otherResellerHeader)
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
-                expect(response.status).toEqual(422)
+                expect(response.status).toEqual(404)
                 expect(await db.kamailio.VoicemailSpool.findOneBy({id: id})).not.toBeNull()
             })
 

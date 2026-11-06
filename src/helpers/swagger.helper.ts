@@ -1,8 +1,9 @@
 import {NestApplication} from '@nestjs/core'
-import {DocumentBuilder, OpenAPIObject, ParameterObject, ReferenceObject, SwaggerModule} from '@nestjs/swagger'
+import {DocumentBuilder, OpenAPIObject, ParameterObject, ReferenceObject, ResponseObject, SwaggerModule, getSchemaPath} from '@nestjs/swagger'
 import {NextFunction, Request, Response} from 'express'
 
 import {SEARCH_QUERY_ORDER_KEY} from '~/decorators/api-search-query.decorator'
+import {ErrorEntryDto, ErrorResponseDto} from '~/dto/error-response.dto'
 import {SIPWISE_LOGO_SVG} from '~/helpers/sipwise-logo'
 import {swaggerAuthCss, swaggerAuthJs} from '~/helpers/swagger-auth.helper'
 import {GUIDE_CHAPTERS, guideCodeBlocks, readSwaggerGuide, swaggerGuideCss, swaggerGuideJs} from '~/helpers/swagger-guide.helper'
@@ -414,8 +415,9 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string):
         app.useStaticAssets('./public/fonts', {prefix: '/fonts'})
     }
 
-    const document = SwaggerModule.createDocument(app, docBuilder.build())
+    const document = SwaggerModule.createDocument(app, docBuilder.build(), {extraModels: [ErrorResponseDto, ErrorEntryDto]})
     sortSearchQueryParameters(document)
+    addErrorResponses(document)
     const versions = readVersions()
     // the start of the server, refers the page to the init script and the pdf of this version
     const build = Date.now().toString(36)
@@ -558,20 +560,66 @@ function timestamp(): string {
 
 type OrderedParameter = (ParameterObject | ReferenceObject) & {[SEARCH_QUERY_ORDER_KEY]?: number}
 
+const OPERATION_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'] as const
+
 function sortSearchQueryParameters(document: OpenAPIObject): void {
-    const methods = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'] as const
     const rank = (param: OrderedParameter): number => {
         if ('in' in param && param.in === 'path')
             return -1
         return param[SEARCH_QUERY_ORDER_KEY] ?? Number.MAX_SAFE_INTEGER
     }
     for (const pathItem of Object.values(document.paths)) {
-        for (const method of methods) {
+        for (const method of OPERATION_METHODS) {
             const parameters = pathItem[method]?.parameters
             if (!parameters)
                 continue
             parameters.sort((a, b) => rank(a) - rank(b))
             parameters.forEach((param: OrderedParameter) => delete param[SEARCH_QUERY_ORDER_KEY])
+        }
+    }
+}
+
+const ERROR_RESPONSES: Record<string, ResponseObject> = {
+    '4XX': errorResponse('Client error, see errorCode and errors', {
+        statusCode: 422,
+        path: '/api/v2/customercontacts/1',
+        method: 'PUT',
+        error: 'Unprocessable Entity',
+        errorCode: 'VALIDATION_FAILED',
+        message: 'Validation failed',
+        errors: [{pointer: '/status', code: 'isEnum', message: 'status must be one of the following values: active, terminated'}],
+    }),
+    '5XX': errorResponse('Server error, the details are in the server log under tx', {
+        statusCode: 500,
+        path: '/api/v2/customercontacts/1',
+        method: 'GET',
+        error: 'Internal Server Error',
+        errorCode: 'INTERNAL_SERVER_ERROR',
+        message: 'Internal Server Error',
+    }),
+}
+
+function errorResponse(description: string, example: Omit<ErrorResponseDto, 'tx'>): ResponseObject {
+    return {
+        description,
+        content: {
+            'application/json': {
+                schema: {$ref: getSchemaPath(ErrorResponseDto)},
+                example: {tx: '725d5b49f5674d719db795cf2f81262e', ...example},
+            },
+        },
+    }
+}
+
+// every error has the same body (HttpExceptionFilter), codes declared by an operation are kept
+function addErrorResponses(document: OpenAPIObject): void {
+    for (const pathItem of Object.values(document.paths)) {
+        for (const method of OPERATION_METHODS) {
+            const operation = pathItem[method]
+            if (!operation)
+                continue
+            for (const [code, response] of Object.entries(ERROR_RESPONSES))
+                operation.responses[code] ??= response
         }
     }
 }

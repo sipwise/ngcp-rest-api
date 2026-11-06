@@ -21,7 +21,7 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {Operation as PatchOperation,patchToEntity} from '~/helpers/patch.helper'
+import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {Operation} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -219,12 +219,7 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
     ): Promise<number[]> {
         const sr = new ServiceRequest(req)
 
-        const updates = new Dictionary<internal.VoipPeeringInboundRule>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.ruleService.read(+id, sr)
-            const entity = await patchToEntity<internal.VoipPeeringInboundRule, PeeringInboundRuleRequestDto>(oldEntity, patches[id], PeeringInboundRuleRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.VoipPeeringInboundRule, PeeringInboundRuleRequestDto>(patches, id => this.ruleService.read(id, sr), PeeringInboundRuleRequestDto)
 
         return await this.ruleService.update(updates, sr)
     }

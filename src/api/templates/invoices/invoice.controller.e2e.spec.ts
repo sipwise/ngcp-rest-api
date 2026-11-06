@@ -607,7 +607,7 @@ describe('InvoiceTemplate', () => {
                 for (const req of tt) {
                     const response = await req()
                     expect(response.status).toEqual(422)
-                    expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                    expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
                 }
             })
             it('creates invoice template without reseller_id', async () => {
@@ -630,7 +630,7 @@ describe('InvoiceTemplate', () => {
                     .set('Content-Type', 'application/json')
                     .send({name: `${templateName}-reseller-put`, reseller_id: resellerId})
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('updates invoice template without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -660,7 +660,7 @@ describe('InvoiceTemplate', () => {
                 for (const req of tt) {
                     const response = await req()
                     expect(response.status).toEqual(422)
-                    expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                    expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
                 }
             })
             it('patches invoice template without reseller_id', async () => {

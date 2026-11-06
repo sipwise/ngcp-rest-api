@@ -1,7 +1,8 @@
-import {UnprocessableEntityException} from '@nestjs/common'
+import {Request} from 'express'
 
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ErrorEntry, ValidationFailedException} from '~/helpers/errors.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -20,18 +21,21 @@ const admin: AuthResponseDto = {
 
 const reseller: AuthResponseDto = {...admin, role: 'reseller', reseller_id: 2, reseller_id_required: true}
 
-const toSr = (user: AuthResponseDto): ServiceRequest =>
-    ({returnContent: true, headers: [undefined], params: undefined, query: undefined, user: user, req: undefined})
+const toSr = (user: AuthResponseDto, body?: unknown): ServiceRequest =>
+    ({returnContent: true, headers: [undefined], params: undefined, query: undefined, user: user, req: {body} as Request})
 
-const messages = (fn: () => void): string[] => {
+const errors = (fn: () => void): ErrorEntry[] => {
     try {
         fn()
     } catch (err) {
-        expect(err).toBeInstanceOf(UnprocessableEntityException)
-        return ((err as UnprocessableEntityException).getResponse() as {message: string[]}).message
+        expect(err).toBeInstanceOf(ValidationFailedException)
+        return (err as ValidationFailedException).errorList
     }
-    throw new Error('expected UnprocessableEntityException')
+    throw new Error('expected ValidationFailedException')
 }
+
+const missing = (pointer: string): ErrorEntry => ({pointer, code: 'isNotEmpty', message: 'reseller_id should not be empty'})
+const notAllowed = (pointer: string): ErrorEntry => ({pointer, code: 'whitelistValidation', message: 'property reseller_id should not exist'})
 
 describe('reseller-id.helper', () => {
     describe('validateResellerId', () => {
@@ -40,8 +44,9 @@ describe('reseller-id.helper', () => {
         })
 
         it('should require reseller_id for admin roles', () => {
-            expect(messages(() => validateResellerId([{reseller_id: 1}, {}, {reseller_id: null}], toSr(admin))))
-                .toEqual(['[1] reseller_id should not be empty', '[2] reseller_id should not be empty'])
+            const dtos = [{reseller_id: 1}, {}, {reseller_id: null}]
+            expect(errors(() => validateResellerId(dtos, toSr(admin, dtos))))
+                .toEqual([missing('/1/reseller_id'), missing('/2/reseller_id')])
         })
 
         it('should not require reseller_id for admin roles if not required', () => {
@@ -54,13 +59,13 @@ describe('reseller-id.helper', () => {
 
         it('should reject reseller_id for reseller roles', () => {
             const dtos = new Dictionary<{reseller_id?: number}>('5', {reseller_id: 2})
-            expect(messages(() => validateResellerId(dtos, toSr(reseller))))
-                .toEqual(['[5] property reseller_id should not exist'])
+            expect(errors(() => validateResellerId(dtos, toSr(reseller, {5: {reseller_id: 2}}))))
+                .toEqual([notAllowed('/5/reseller_id')])
         })
 
         it('should reject null reseller_id for reseller roles even if not required', () => {
-            expect(messages(() => validateResellerId([{reseller_id: null}], toSr(reseller), {required: false})))
-                .toEqual(['[0] property reseller_id should not exist'])
+            expect(errors(() => validateResellerId([{reseller_id: null}], toSr(reseller, {reseller_id: null}), {required: false})))
+                .toEqual([notAllowed('/reseller_id')])
         })
     })
 
@@ -84,8 +89,8 @@ describe('reseller-id.helper', () => {
                 [{op: 'remove', path: '/reseller_id'}],
             ]
             for (const ops of tt) {
-                expect(messages(() => validatePatchResellerId(patches(ops), toSr(admin))))
-                    .toEqual(['[3] reseller_id should not be empty'])
+                expect(errors(() => validatePatchResellerId(patches(ops), toSr(admin, ops))))
+                    .toEqual([missing('/reseller_id')])
             }
         })
 
@@ -96,8 +101,8 @@ describe('reseller-id.helper', () => {
 
         it('should reject any reseller_id op for reseller roles', () => {
             const ops: PatchOperation[] = [{op: 'replace', path: '/reseller_id', value: 2}]
-            expect(messages(() => validatePatchResellerId(patches(ops), toSr(reseller))))
-                .toEqual(['[3] property reseller_id should not exist'])
+            expect(errors(() => validatePatchResellerId(patches(ops), toSr(reseller, {3: ops}))))
+                .toEqual([notAllowed('/3/reseller_id')])
         })
     })
 })

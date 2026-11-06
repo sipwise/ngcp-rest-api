@@ -7,6 +7,7 @@ import {AppService} from '~/app.service'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {db} from '~/entities'
 import {fileshare} from '~/entities/db'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const admin: AuthResponseDto = {
@@ -316,7 +317,7 @@ describe('FileshareService', () => {
         it('throws NotFoundException when none of the ids is found', async () => {
             const qb = makeQb(undefined, [])
             jest.spyOn(db.fileshare.Upload, 'createQueryBuilder').mockReturnValue(qb as never)
-            await expect(service.delete(['a'], makeSr(admin))).rejects.toThrow(NotFoundException)
+            await expect(service.delete(['a'], makeSr(admin))).rejects.toThrow(ApiErrorException)
             expect(qb.execute).not.toHaveBeenCalled()
         })
 
@@ -324,7 +325,7 @@ describe('FileshareService', () => {
             const qb = makeQb(undefined, [{fileshare_id: 'a'}])
             const spy = jest.spyOn(db.fileshare.Upload, 'createQueryBuilder').mockReturnValue(qb as never)
             const promise = service.delete(['a', 'b'], makeSr(admin))
-            await expect(promise).rejects.toThrow(UnprocessableEntityException)
+            await expect(promise).rejects.toThrow(ApiErrorException)
             expect(spy).toHaveBeenCalledTimes(1)
             expect(qb.execute).not.toHaveBeenCalled()
         })

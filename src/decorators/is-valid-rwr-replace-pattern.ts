@@ -20,7 +20,7 @@ function CanCompileRegex() {
             name: 'canCompileRegex',
             target: object.constructor,
             propertyName: propertyName,
-            options: {message: 'invalid regex pattern'},
+            options: {message: '$property must be a valid regex pattern'},
             validator: {
                 validate(_value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
                     // TODO: implement it
@@ -37,7 +37,7 @@ function EndsWithDollarChar() {
             name: 'endsWithDollarChar',
             target: object.constructor,
             propertyName: propertyName,
-            options: {message: 'cannot end with \'$\''},
+            options: {message: '$property cannot end with \'$\''},
             validator: {
                 validate(_value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
                     const replacePattern: string = args.object['replace_pattern'] || ''
@@ -51,10 +51,10 @@ function EndsWithDollarChar() {
 function StartsWithQuestionChar() {
     return function (object: unknown, propertyName: string): void {
         registerDecorator({
-            name: 'endsWithDollarChar',
+            name: 'startsWithQuestionChar',
             target: object.constructor,
             propertyName: propertyName,
-            options: {message: 'cannot start with \'?\''},
+            options: {message: '$property cannot start with \'?\''},
             validator: {
                 validate(_value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
                     const replacePattern: string = args.object['replace_pattern'] || ''
@@ -68,10 +68,10 @@ function StartsWithQuestionChar() {
 function ContainsSpaces() {
     return function (object: unknown, propertyName: string): void {
         registerDecorator({
-            name: 'endsWithDollarChar',
+            name: 'containsSpaces',
             target: object.constructor,
             propertyName: propertyName,
-            options: {message: 'cannot contain spaces'},
+            options: {message: '$property cannot contain spaces'},
             validator: {
                 validate(_value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
                     const replacePattern: string = args.object['replace_pattern'] || ''
@@ -85,10 +85,10 @@ function ContainsSpaces() {
 function HasArrayVars() {
     return function (object: unknown, propertyName: string): void {
         registerDecorator({
-            name: 'endsWithDollarChar',
+            name: 'hasArrayVars',
             target: object.constructor,
             propertyName: propertyName,
-            options: {message: 'cannot have array variable'},
+            options: {message: '$property cannot have array variable'},
             validator: {
                 validate(_value: unknown, args?: ValidationArguments): Promise<boolean> | boolean {
                     const replacePattern: string = args.object['replace_pattern'] || ''

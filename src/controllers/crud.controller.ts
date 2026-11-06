@@ -1,14 +1,14 @@
 // TODO: Fix this later in the generic controller approach
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {BadRequestException, NotFoundException} from '@nestjs/common'
+import {NotFoundException} from '@nestjs/common'
 import {Request} from 'express'
 import {EntityNotFoundError} from 'typeorm'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
 import {Auth} from '~/decorators/auth.decorator'
-import {Operation as PatchOperation, validate} from '~/helpers/patch.helper'
+import {Operation as PatchOperation, assertJsonPatch} from '~/helpers/patch.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 @Auth()
@@ -57,11 +57,7 @@ export class CrudController<CreateDTO, _ResponseDTO> {
         req: Request,
         ..._params: unknown[]
     ): Promise<any> {
-        const err = validate(patch)
-        if (err) {
-            const message = err.message.replace(/[\n\s]+/g, ' ').replace(/"/g, '\'')
-            throw new BadRequestException(message)
-        }
+        assertJsonPatch(patch)
         return await this.repo.adjust(id, patch, new ServiceRequest(req))
     }
 

@@ -1,7 +1,7 @@
 {
     "page": {
         "title": "Documentazione API NGCP",
-        "tabIntro": "Introduzione",
+        "tabConcepts": "Concetti",
         "tabAuthentication": "Autenticazione",
         "tabUsage": "Utilizzo",
         "tabApi": "API",

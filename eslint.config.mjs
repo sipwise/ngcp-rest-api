@@ -43,6 +43,10 @@ const defaultOptions = {
         'array-bracket-spacing': ['error', 'never'],
         'import-x/prefer-default-export': [0],
         'unused-imports/no-unused-imports': 'error',
+        'no-restricted-syntax': ['error', {
+            selector: 'NewExpression[callee.name=/Exception$/][arguments.0.type=/^(Literal|TemplateLiteral|BinaryExpression)$/]',
+            message: 'HTTP exceptions need an errors.json key (i18n.t(\'errors.X\') or errorMessage()), no plain strings',
+        }],
         'import-x/order': [
             'error',
             {

@@ -101,7 +101,7 @@ describe('swagger-pdf.helper', () => {
 
         it('renders the markdown description as guide chapters', async () => {
             const description = [
-                '## Introduction', 'Send `Accept: application/json` with **every** request, see [RFC 6902](https://example.com).',
+                '## Concepts', 'Send `Accept: application/json` with **every** request, see [RFC 6902](https://example.com).',
                 '### Paging', '| Parameter | Meaning |', '| --- | --- |', '| `page` | Page number |',
                 '- first item', '- second item',
                 '## Usage', '### List', '```shell', 'curl "$NGCP_URL/admins"', '```', '```python', 'print("a" * 200)', '```',

@@ -3,7 +3,6 @@ import {
     Inject,
     Injectable,
     InternalServerErrorException,
-    NotFoundException,
     StreamableFile,
     UnprocessableEntityException,
 } from '@nestjs/common'
@@ -31,7 +30,7 @@ import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
 import {InvoiceTemplateCategory} from '~/entities/internal/invoice-template.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {GenerateErrorMessageArray} from '~/helpers/http-error.helper'
+import {ApiErrorException,apiError, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -56,7 +55,7 @@ export class InvoiceTemplateService implements CrudService<internal.InvoiceTempl
             return []
         }
         const entity = entities[0]
-        await this.checkTemplate(entity, sr)
+        await this.checkTemplate(entity, sr, 0)
         entity.data = await this.newContent(entity.category, file)
 
         const createdIds = await this.invoiceTemplateRepo.create([entity])
@@ -126,10 +125,9 @@ export class InvoiceTemplateService implements CrudService<internal.InvoiceTempl
         for (const template of templates) {
             const update = updates[template.id]
             update.id = template.id
-            if (update.category != template.category) {
-                throw new UnprocessableEntityException(this.i18n.t('errors.INVOICE_TEMPLATE_CATEGORY_IMMUTABLE'))
-            }
-            await this.checkTemplate(update, sr)
+            if (update.category != template.category)
+                throw apiError(this.i18n.t('errors.INVOICE_TEMPLATE_CATEGORY_IMMUTABLE'), itemPointer(sr, template.id, update, 'category'))
+            await this.checkTemplate(update, sr, template.id)
             if (file || replace) {
                 update.data = await this.newContent(update.category, file)
             } else {
@@ -148,12 +146,7 @@ export class InvoiceTemplateService implements CrudService<internal.InvoiceTempl
 
     private async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.InvoiceTemplate[]> {
         const templates = await this.invoiceTemplateRepo.readWhereInIds(ids, sr, this.getFilterBy(sr))
-        if (templates.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != templates.length) {
-            const error: ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            throw new UnprocessableEntityException(GenerateErrorMessageArray(ids, error.message))
-        }
+        throwMissingIds(sr, ids, templates.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
         return templates
     }
 
@@ -167,26 +160,26 @@ export class InvoiceTemplateService implements CrudService<internal.InvoiceTempl
         }
     }
 
-    private async checkTemplate(entity: internal.InvoiceTemplate, sr: ServiceRequest): Promise<void> {
+    private async checkTemplate(entity: internal.InvoiceTemplate, sr: ServiceRequest, key: number | string): Promise<void> {
         if (sr.user.reseller_id_required) {
             entity.resellerId = sr.user.reseller_id
         } else if (resellerRequiredCategories.includes(entity.category)) {
             if (!entity.resellerId) {
-                throw new UnprocessableEntityException(this.i18n.t('errors.INVOICE_TEMPLATE_RESELLER_REQUIRED', {
+                throw apiError(this.i18n.t('errors.INVOICE_TEMPLATE_RESELLER_REQUIRED', {
                     args: {category: entity.category},
-                }))
+                }), itemPointer(sr, key, entity, 'resellerId'))
             }
         } else if (entity.resellerId) {
-            throw new UnprocessableEntityException(this.i18n.t('errors.INVOICE_TEMPLATE_RESELLER_NOT_ALLOWED', {
+            throw apiError(this.i18n.t('errors.INVOICE_TEMPLATE_RESELLER_NOT_ALLOWED', {
                 args: {category: entity.category},
-            }))
+            }), itemPointer(sr, key, entity, 'resellerId'))
         }
 
         const existing = await this.invoiceTemplateRepo.readByResellerAndName(entity.resellerId, entity.name)
         if (existing && existing.id != entity.id) {
-            throw new UnprocessableEntityException(this.i18n.t('errors.INVOICE_TEMPLATE_NAME_EXISTS', {
+            throw apiError(this.i18n.t('errors.INVOICE_TEMPLATE_NAME_EXISTS', {
                 args: {name: entity.name, reseller_id: entity.resellerId ?? 'none'},
-            }))
+            }), itemPointer(sr, key, entity, 'name'))
         }
     }
 
@@ -195,21 +188,21 @@ export class InvoiceTemplateService implements CrudService<internal.InvoiceTempl
             return await this.getDefaultContent(category)
 
         const content = file.buffer?.toString('utf8') ?? ''
-        if (!isSvgContent(content)) {
-            throw new UnprocessableEntityException(this.i18n.t('errors.INVOICE_TEMPLATE_INVALID_CONTENT'))
-        }
+        if (!isSvgContent(content))
+            throw apiError(this.i18n.t('errors.INVOICE_TEMPLATE_INVALID_CONTENT'), '/file')
         const sanitized = sanitizeSvg(content)
         this.checkDirectives(sanitized, category)
         return Buffer.from(sanitized, 'utf8')
     }
 
     private checkDirectives(content: string, category: InvoiceTemplateCategory): void {
-        const errors = checkInvoiceTemplateDirectives(content, category)
-        if (errors.length) {
+        const problems = checkInvoiceTemplateDirectives(content, category)
+        if (problems.length) {
             const error: ErrorMessage = this.i18n.t('errors.INVOICE_TEMPLATE_INVALID_DIRECTIVES', {
                 args: {category: category},
             })
-            throw new UnprocessableEntityException(errors.map(e => `${error.message}: ${e}`))
+            // the uploaded template is the multipart field `file`
+            throw new ApiErrorException(problems.map(problem => ({pointer: '/file', code: error.errorCode, message: `${error.message}: ${problem}`})))
         }
     }
 

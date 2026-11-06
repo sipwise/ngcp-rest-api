@@ -108,7 +108,7 @@ function ContainsASCII(validationOptions?: ValidationOptions) {
             name: 'containsASCII',
             target: object.constructor,
             propertyName: propertyName,
-            options: validationOptions || {message: 'must contain ascii'},
+            options: validationOptions || {message: '$property must contain ascii'},
             validator: {
                 validate(value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
                     if (!isString(value))
@@ -128,7 +128,7 @@ function ContainsLowerCase(n:number, validationOptions?: ValidationOptions) {
             name: 'containsLowerCase',
             target: object.constructor,
             propertyName: propertyName,
-            options: validationOptions || {message: `must contain at least ${n} lowercase characters`},
+            options: validationOptions || {message: `$property must contain at least ${n} lowercase characters`},
             validator: {
                 validate(value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
                     const regex = new RegExp(`(?:.*[a-z]){${n}}`)
@@ -148,7 +148,7 @@ function ContainsUpperCase(n:number, validationOptions?: ValidationOptions) {
             name: 'containsUpperCase',
             target: object.constructor,
             propertyName: propertyName,
-            options: validationOptions || {message: `must contain at least ${n} uppercase characters`},
+            options: validationOptions || {message: `$property must contain at least ${n} uppercase characters`},
             validator: {
                 validate(value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
                     const regex = new RegExp(`(?:.*[A-Z]){${n}}`)
@@ -168,7 +168,7 @@ function ContainsSpecialCharacter(n:number, validationOptions?: ValidationOption
             name: 'containsSpecialCharacter',
             target: object.constructor,
             propertyName: propertyName,
-            options: validationOptions || {message: `must contain at least ${n} special characters`},
+            options: validationOptions || {message: `$property must contain at least ${n} special characters`},
             validator: {
                 validate(value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
                     const regex = new RegExp(`(?:.*[^0-9a-zA-Z]){${n}}`)
@@ -188,7 +188,7 @@ function ContainsDigit(n:number, validationOptions?: ValidationOptions) {
             name: 'containsNumber',
             target: object.constructor,
             propertyName: propertyName,
-            options: validationOptions || {message: `must contain at least ${n} digits`},
+            options: validationOptions || {message: `$property must contain at least ${n} digits`},
             validator: {
                 validate(value: unknown, _args?: ValidationArguments): Promise<boolean> | boolean {
                     const regex = new RegExp(`(?:.*[0-9]){${n}}`)

@@ -358,7 +358,7 @@ describe('Rule Set', () => {
                         description: 'no reseller_id',
                     })
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
             })
             it('fail update without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -371,7 +371,7 @@ describe('Rule Set', () => {
                         description: 'no reseller_id',
                     })
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
             })
             it('fail adjust with empty reseller_id', async () => {
                 const tt: PatchOperation[][] = [
@@ -386,7 +386,7 @@ describe('Rule Set', () => {
                         .set('Content-Type', 'application/json-patch+json')
                         .send(emptyPatch)
                     expect(response.status).toEqual(422)
-                    expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                    expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
                 }
             })
             it('fail bulk adjust with empty reseller_id', async () => {
@@ -400,7 +400,7 @@ describe('Rule Set', () => {
                         [createdIds[1]]: [{op: 'replace', path: '/reseller_id', value: null}],
                     })
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain(`[${createdIds[1]}] reseller_id should not be empty`)
+                expect(response.body.errors).toContainEqual({pointer: `/${createdIds[1]}/reseller_id`, code: 'isNotEmpty', message: 'reseller_id should not be empty'})
             })
         })
 
@@ -441,7 +441,7 @@ describe('Rule Set', () => {
                         description: 'reseller',
                     }, reseller_id: 1})
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('create without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -476,7 +476,7 @@ describe('Rule Set', () => {
                         description: 'reseller',
                     }, reseller_id: 1})
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('update without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -506,7 +506,7 @@ describe('Rule Set', () => {
                     .set('Content-Type', 'application/json-patch+json')
                     .send([{op: 'replace', path: '/reseller_id', value: 1}])
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('patch without reseller_id', async () => {
                 const response = await request(app.getHttpServer())

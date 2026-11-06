@@ -1,5 +1,4 @@
-import {Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
-import {GenerateErrorMessageArray} from 'helpers/http-error.helper'
+import {Inject, Injectable} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {FilterBy, HeaderManipulationSetMariadbRepository} from './repositories/set.mariadb.repository'
@@ -7,9 +6,9 @@ import {HeaderManipulationSetRedisRepository} from './repositories/set.redis.rep
 
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {throwMissingIds} from '~/helpers/errors.helper'
 import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
-import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -64,13 +63,7 @@ export class HeaderManipulationSetService implements CrudService<internal.Header
             sets = await this.ruleSetRepo.readWhereInIds(ids, sr)
         }
 
-        if (sets.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != sets.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, sets.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         this.assignUserResellerId(Object.values(updates), sr)
         return await this.ruleSetRepo.update(updates, sr)
@@ -85,13 +78,7 @@ export class HeaderManipulationSetService implements CrudService<internal.Header
             sets = await this.ruleSetRepo.readWhereInIds(ids, sr)
         }
 
-        if (sets.length == 0) {
-            throw new NotFoundException()
-        } else if (ids.length != sets.length) {
-            const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-            const message = GenerateErrorMessageArray(ids, error.message)
-            throw new UnprocessableEntityException(message)
-        }
+        throwMissingIds(sr, ids, sets.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         ids.forEach(async setId => await this.invalidateRuleSetAfterCommit(setId, sr))
 

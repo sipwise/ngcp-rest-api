@@ -8,7 +8,7 @@ export function OneOf(otherProperty: string) {
             propertyName,
             validator: {
                 defaultMessage() {
-                    return `Only one of ${propertyName} or ${otherProperty} is required`
+                    return `only one of ${propertyName} or ${otherProperty} is required`
                 },
                 validate(_value: unknown, args?: ValidationArguments) {
                     const thisObject = args.object

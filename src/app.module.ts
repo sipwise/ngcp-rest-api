@@ -8,10 +8,12 @@ import {
     MiddlewareConsumer,
     Module,
     NestModule,
+    OnModuleInit,
     RequestMethod,
     Type,
 } from '@nestjs/common'
 import {ConfigModule} from '@nestjs/config'
+import {HttpAdapterHost} from '@nestjs/core'
 import {ScheduleModule} from '@nestjs/schedule'
 import {AcceptLanguageResolver, CookieResolver, HeaderResolver, I18nModule, QueryResolver} from 'nestjs-i18n'
 
@@ -78,6 +80,8 @@ import {AppConfig} from './config/schemas/app.config.schema'
 import {DatabaseModule} from './database/database.module'
 import {RedisModule} from './database/redis.module'
 import {ExpandModule} from './helpers/expand.module'
+import {keepBodyParserErrors} from './helpers/http-exception.filter'
+import {I18nErrorCodeLoader} from './helpers/i18n-loader.helper'
 import {TaskAgentModule} from './helpers/task-agent.module'
 import {InterceptorModule} from './interceptors/interceptor.module'
 import {LicenseModule} from './license/license.module'
@@ -102,6 +106,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     }),
     I18nModule.forRoot({
         fallbackLanguage: 'en',
+        loader: I18nErrorCodeLoader,
         loaderOptions: {
             path: path.join(__dirname, '/localisation/'),
             watch: true,
@@ -204,7 +209,13 @@ if (process.env.NODE_ENV != 'test') {
         LicenseService,
     ],
 })
-export class AppModule implements NestModule {
+export class AppModule implements NestModule, OnModuleInit {
+    constructor(private readonly adapterHost: HttpAdapterHost) {}
+
+    onModuleInit(): void {
+        keepBodyParserErrors(this.adapterHost.httpAdapter)
+    }
+
     configure(consumer: MiddlewareConsumer): void {
         consumer.apply(ContentTypeMiddleware, ContextMiddleware, LoggerMiddleware, StateMiddleware).forRoutes({
             path: '*',

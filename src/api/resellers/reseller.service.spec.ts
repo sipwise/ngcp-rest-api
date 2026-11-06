@@ -1,4 +1,4 @@
-import {ForbiddenException, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {NotFoundException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 
 import {ResellerMariadbRepository} from './repositories/reseller.mariadb.repository'
@@ -11,6 +11,7 @@ import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -88,28 +89,28 @@ describe('ResellerService', () => {
                 contract_id: 100,
                 name: 'jest2',
                 status: ResellerStatus.Active,
-            })], sr)).rejects.toThrow(UnprocessableEntityException)
+            })], sr)).rejects.toThrow(ApiErrorException)
         })
         it('should throw an error if contract does not have systemcontact', async () => {
             await expect(service.create([internal.Reseller.create({
                 contract_id: 4,
                 name: 'jest3',
                 status: ResellerStatus.Active,
-            })], sr)).rejects.toThrow(UnprocessableEntityException)
+            })], sr)).rejects.toThrow(ApiErrorException)
         })
         it('should throw an error if reseller with contract id exists', async () => {
             await expect(service.create([internal.Reseller.create({
                 contract_id: 2,
                 name: 'jest4',
                 status: ResellerStatus.Active,
-            })], sr)).rejects.toThrow(UnprocessableEntityException)
+            })], sr)).rejects.toThrow(ApiErrorException)
         })
         it('should throw an error if non-terminated reseller with name exists', async () => {
             await expect(service.create([internal.Reseller.create({
                 contract_id: 5,
                 name: 'reseller1',
                 status: ResellerStatus.Active,
-            })], sr)).rejects.toThrow(UnprocessableEntityException)
+            })], sr)).rejects.toThrow(ApiErrorException)
         })
     })
 
@@ -133,7 +134,7 @@ describe('ResellerService', () => {
             await expect(service.create([
                 internal.Reseller.create({contract_id: 5, name: 'jest-ok', status: ResellerStatus.Active}),
                 internal.Reseller.create({contract_id: 100, name: 'jest-bad', status: ResellerStatus.Active}),
-            ], sr)).rejects.toThrow(UnprocessableEntityException)
+            ], sr)).rejects.toThrow(ApiErrorException)
             expect(createSpy).not.toHaveBeenCalled()
         })
     })
@@ -175,7 +176,7 @@ describe('ResellerService', () => {
         it('throws 422 when the new name exists', async () => {
             jest.spyOn(resellerMockRepo, 'readByName').mockResolvedValue(
                 internal.Reseller.create({id: 2, contract_id: 2, name: 'taken'} as internal.Reseller))
-            await expect(service.update(upd(1, {contract_id: 1, name: 'taken'}), sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(upd(1, {contract_id: 1, name: 'taken'}), sr)).rejects.toThrow(ApiErrorException)
             expect(updateSpy).not.toHaveBeenCalled()
         })
 
@@ -184,15 +185,15 @@ describe('ResellerService', () => {
         })
 
         it('throws 422 when the new contract does not exist', async () => {
-            await expect(service.update(upd(1, {contract_id: 100, name: 'reseller1'}), sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(upd(1, {contract_id: 100, name: 'reseller1'}), sr)).rejects.toThrow(ApiErrorException)
         })
 
         it('throws 422 when the new contract already has a reseller', async () => {
-            await expect(service.update(upd(1, {contract_id: 2, name: 'reseller1'}), sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(upd(1, {contract_id: 2, name: 'reseller1'}), sr)).rejects.toThrow(ApiErrorException)
         })
 
         it('throws 422 when the new contract has no system contact', async () => {
-            await expect(service.update(upd(1, {contract_id: 4, name: 'reseller1'}), sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(upd(1, {contract_id: 4, name: 'reseller1'}), sr)).rejects.toThrow(ApiErrorException)
         })
 
         it('accepts a valid new contract', async () => {
@@ -200,7 +201,7 @@ describe('ResellerService', () => {
         })
 
         it('forbids a reseller user to update another reseller', async () => {
-            await expect(service.update(upd(2, {contract_id: 2, name: 'reseller1'}), srReseller)).rejects.toThrow(ForbiddenException)
+            await expect(service.update(upd(2, {contract_id: 2, name: 'reseller1'}), srReseller)).rejects.toThrow(ApiErrorException)
             expect(updateSpy).not.toHaveBeenCalled()
         })
 

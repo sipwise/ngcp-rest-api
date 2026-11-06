@@ -1,4 +1,4 @@
-import {NotFoundException, UnprocessableEntityException} from '@nestjs/common'
+import {NotFoundException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 
 import {RewriteRuleSetRequestDto} from './dto/set-request.dto'
@@ -13,6 +13,7 @@ import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
 import {TaskAgentMockHelper} from '~/helpers/task-agent-mock.helper'
@@ -222,13 +223,13 @@ describe('RewriteRuleSet Service', () => {
 
         it('update throws NotFoundException if no set belongs to the reseller', async () => {
             const spy = jest.spyOn(rwrMockRepo, 'update')
-            await expect(service.update(makeUpdates(2), sr)).rejects.toThrow(NotFoundException)
+            await expect(service.update(makeUpdates(2), sr)).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
 
         it('delete throws NotFoundException if no set belongs to the reseller', async () => {
             const spy = jest.spyOn(rwrMockRepo, 'delete')
-            await expect(service.delete([2], sr)).rejects.toThrow(NotFoundException)
+            await expect(service.delete([2], sr)).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
 
@@ -239,7 +240,7 @@ describe('RewriteRuleSet Service', () => {
         })
 
         it('cleanSets throws NotFoundException for a set of another reseller', async () => {
-            await expect(service.cleanSets([3], sr)).rejects.toThrow(NotFoundException)
+            await expect(service.cleanSets([3], sr)).rejects.toThrow(ApiErrorException)
             expect(rwrMockRepo.cleaned).toHaveLength(0)
         })
     })
@@ -247,24 +248,24 @@ describe('RewriteRuleSet Service', () => {
     describe('partial ids', () => {
         it('update throws UnprocessableEntityException and updates nothing if some ids are missing', async () => {
             const spy = jest.spyOn(rwrMockRepo, 'update')
-            await expect(service.update(makeUpdates(1, 100), sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.update(makeUpdates(1, 100), sr)).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
         })
 
         it('delete throws UnprocessableEntityException and deletes nothing if some ids are missing', async () => {
             const spy = jest.spyOn(rwrMockRepo, 'delete')
-            await expect(service.delete([1, 100], sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.delete([1, 100], sr)).rejects.toThrow(ApiErrorException)
             expect(spy).not.toHaveBeenCalled()
             expect(reloadSpy).not.toHaveBeenCalled()
         })
 
         it('cleanSets throws UnprocessableEntityException if some ids are missing', async () => {
-            await expect(service.cleanSets([1, 100], sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.cleanSets([1, 100], sr)).rejects.toThrow(ApiErrorException)
             expect(rwrMockRepo.cleaned).toHaveLength(0)
         })
 
         it('updateWithRuleRecreation throws UnprocessableEntityException if some ids are missing', async () => {
-            await expect(service.updateWithRuleRecreation(makeUpdates(1, 100), [], sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(service.updateWithRuleRecreation(makeUpdates(1, 100), [], sr)).rejects.toThrow(ApiErrorException)
             expect(rwrMockRepo.cleaned).toHaveLength(0)
         })
     })
@@ -310,7 +311,7 @@ describe('RewriteRuleSet Service', () => {
         })
 
         it('throws NotFoundException if no set exists', async () => {
-            await expect(service.updateWithRuleRecreation(makeUpdates(100), [rule()], sr)).rejects.toThrow(NotFoundException)
+            await expect(service.updateWithRuleRecreation(makeUpdates(100), [rule()], sr)).rejects.toThrow(ApiErrorException)
         })
 
         it('forces the reseller id of reseller users and filters by it', async () => {
@@ -319,7 +320,7 @@ describe('RewriteRuleSet Service', () => {
             updates[1].resellerId = 9
             await service.updateWithRuleRecreation(updates, [], sr)
             expect(updates[1].resellerId).toEqual(1)
-            await expect(service.updateWithRuleRecreation(makeUpdates(2), [], sr)).rejects.toThrow(NotFoundException)
+            await expect(service.updateWithRuleRecreation(makeUpdates(2), [], sr)).rejects.toThrow(ApiErrorException)
         })
     })
 
@@ -330,7 +331,7 @@ describe('RewriteRuleSet Service', () => {
         })
 
         it('throws NotFoundException if no set exists', async () => {
-            await expect(service.cleanSets([100], sr)).rejects.toThrow(NotFoundException)
+            await expect(service.cleanSets([100], sr)).rejects.toThrow(ApiErrorException)
         })
     })
 

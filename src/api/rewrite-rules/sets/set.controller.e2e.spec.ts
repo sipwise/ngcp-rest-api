@@ -271,7 +271,7 @@ describe('Rule Set', () => {
                     .set('Content-Type', 'application/json')
                     .send({name: `test_ruleset_no_reseller${suffix}`, description: 'no reseller_id'})
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
             })
             it('validation fail rule set', async () => {
                 const response = await request(app.getHttpServer())
@@ -281,6 +281,26 @@ describe('Rule Set', () => {
                     .set('Content-Type', 'application/json')
                     .send({unknownField: 'test'})
                 expect(response.status).toEqual(422)
+            })
+            it('fail create set with an invalid embedded rule', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        ...rulesetWithMultipleEmbedded,
+                        rules: [
+                            rulesetWithMultipleEmbedded.rules[0],
+                            {...rulesetWithMultipleEmbedded.rules[1], replace_pattern: '+43 \\1', direction: 'sideways'},
+                        ],
+                    })
+                expect(response.status).toEqual(422)
+                expect(response.body.errorCode).toEqual('VALIDATION_FAILED')
+                expect(response.body.errors).toEqual([
+                    {pointer: '/rules/1/replace_pattern', code: 'containsSpaces', message: 'replace_pattern cannot contain spaces'},
+                    {pointer: '/rules/1/direction', code: 'isEnum', message: 'direction must be one of the following values: in, out, lnp'},
+                ])
             })
             it('create set test_ruleset3 with a single embedded rule', async () => {
                 const response = await request(app.getHttpServer())
@@ -459,7 +479,7 @@ describe('Rule Set', () => {
                     .set('Content-Type', 'application/json')
                     .send({name: 'renamed_test_ruleset1', description: 'foo'})
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
             })
             it('update non-existing set', async () => {
                 const response = await request(app.getHttpServer())
@@ -518,7 +538,7 @@ describe('Rule Set', () => {
                         .set('Content-Type', 'application/json-patch+json')
                         .send(emptyPatch)
                     expect(response.status).toEqual(422)
-                    expect(JSON.stringify(response.body.message)).toContain('reseller_id should not be empty')
+                    expect(JSON.stringify(response.body.errors)).toContain('reseller_id should not be empty')
                 }
             })
             it('fail bulk adjust with empty reseller_id as admin', async () => {
@@ -532,7 +552,7 @@ describe('Rule Set', () => {
                         [createdIds[1]]: [{op: 'replace', path: '/reseller_id', value: null}],
                     })
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain(`[${createdIds[1]}] reseller_id should not be empty`)
+                expect(response.body.errors).toContainEqual({pointer: `/${createdIds[1]}/reseller_id`, code: 'isNotEmpty', message: 'reseller_id should not be empty'})
             })
             it('adjust non-existing set', async () => {
                 const response = await request(app.getHttpServer())
@@ -579,7 +599,7 @@ describe('Rule Set', () => {
                     .set('Content-Type', 'application/json')
                     .send({name: 'test_reseller_ruleset', reseller_id: 1, description: 'reseller'})
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('create set without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -608,7 +628,7 @@ describe('Rule Set', () => {
                     .set('Content-Type', 'application/json')
                     .send({name: 'renamed_test_reseller_ruleset', reseller_id: 1, description: 'reseller'})
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('update set without reseller_id', async () => {
                 const response = await request(app.getHttpServer())
@@ -632,7 +652,7 @@ describe('Rule Set', () => {
                     .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(422)
-                expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
             })
             it('patch set description', async () => {
                 const patch: PatchOperation[] = [

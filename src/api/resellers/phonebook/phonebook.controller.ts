@@ -35,7 +35,7 @@ import {csvToDto, handleCsvExport} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
-import {patchToEntity} from '~/helpers/patch.helper'
+import {patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -284,12 +284,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
         const sr = new ServiceRequest(req)
         validatePatchResellerId(patches, sr)
 
-        const updates = new Dictionary<internal.ResellerPhonebook>()
-        for (const id of Object.keys(patches)) {
-            const oldEntity = await this.phonebookService.read(+id, sr)
-            const entity = await patchToEntity<internal.ResellerPhonebook, ResellerPhonebookRequestDto>(oldEntity, patches[id], ResellerPhonebookRequestDto)
-            updates[id] = entity
-        }
+        const updates = await patchManyToEntities<internal.ResellerPhonebook, ResellerPhonebookRequestDto>(patches, id => this.phonebookService.read(id, sr), ResellerPhonebookRequestDto)
 
         return await this.phonebookService.update(updates, sr)
     }
