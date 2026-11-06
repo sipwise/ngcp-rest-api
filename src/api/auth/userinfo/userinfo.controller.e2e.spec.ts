@@ -26,6 +26,7 @@ describe('', () => {
     let adminId: number
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const goneLogin = `mockGoneAdmin${process.env.JEST_WORKER_ID}${Date.now()}`
+    const certSerial = Date.now() * 100 + Number(process.env.JEST_WORKER_ID)
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -86,6 +87,7 @@ describe('', () => {
             can_reset_password: true,
             enable_2fa: false,
             show_otp_registration_info: false,
+            ssl_client_m_serial: certSerial,
         })
         adminId = result.identifiers[0].id
     })
@@ -147,7 +149,7 @@ describe('', () => {
 
             it('reject the token of a deleted admin', async () => {
                 const admin = await db.billing.Admin.findOneByOrFail({id: adminId})
-                await db.billing.Admin.insert({...admin, id: undefined, login: goneLogin, otp_secret: null})
+                await db.billing.Admin.insert({...admin, id: undefined, login: goneLogin, otp_secret: null, ssl_client_m_serial: null})
                 const jwt = await request(app.getHttpServer())
                     .post('/api/auth/jwt')
                     .set('Accept', 'application/json')
@@ -160,6 +162,37 @@ describe('', () => {
                     .set('Authorization', 'Bearer ' + jwt.body['access_token'])
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(401)
+            })
+
+            it('read auth/userinfo with a client certificate serial', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/api/auth/userinfo')
+                    .set('x-ssl-client-serial', certSerial.toString(16))
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.id).toEqual(adminId)
+                expect(response.body.role).toEqual('admin')
+            })
+
+            it.each([
+                ['an unknown', '1fffffffffffff'],
+                ['an invalid', 'zz'],
+            ])('reject %s client certificate serial', async (_name, serial) => {
+                const response = await request(app.getHttpServer())
+                    .get('/api/auth/userinfo')
+                    .set('x-ssl-client-serial', serial)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(401)
+            })
+
+            it('reject the client certificate serial of an inactive admin', async () => {
+                await db.billing.Admin.update(adminId, {is_active: false})
+                const response = await request(app.getHttpServer())
+                    .get('/api/auth/userinfo')
+                    .set('x-ssl-client-serial', certSerial.toString(16))
+                    .set('Accept', 'application/json')
+                await db.billing.Admin.update(adminId, {is_active: true})
+                expect(response.status).toEqual(403)
             })
 
             it('reject auth/userinfo without credentials', async () => {
