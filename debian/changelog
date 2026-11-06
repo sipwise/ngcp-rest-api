@@ -1,3 +1,11 @@
+ngcp-rest-api (26.3.1.6+0~mr26.3.1.6) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [f28e31c] MT#66031 fix journals leaking entries out of the role scope
+  * [c20bd01] MT#66571 fix voicemail/domains access scope, journal role search
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 06 Nov 2026 16:31:49 +0100
+
 ngcp-rest-api (26.3.1.5+0~mr26.3.1.5) unstable; urgency=medium
 
   [ Kirill Solomko ]
