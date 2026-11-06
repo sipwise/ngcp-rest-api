@@ -30,18 +30,14 @@ export class ResellerMariadbRepository extends MariaDbRepository implements Rese
             resellerId: resellerId,
         })
         const defaultTemplates = await this.findDefaultEmailTemplates()
-        defaultTemplates.forEach(template => {
-            delete template.id
-            if (Array.isArray(resellerId)) {
-                for (const number of resellerId) {
-                    template.reseller_id = number
-                    db.billing.EmailTemplate.insert(template)
-                }
-            } else {
-                template.reseller_id = resellerId
-                db.billing.EmailTemplate.insert(template)
-            }
-        })
+        const resellerIds = Array.isArray(resellerId) ? resellerId : [resellerId]
+        const templates = resellerIds.flatMap(id => defaultTemplates.map(template => {
+            const copy = db.billing.EmailTemplate.create({...template, reseller_id: id})
+            delete copy.id
+            return copy
+        }))
+        if (templates.length)
+            await db.billing.EmailTemplate.insert(templates)
     }
 
     async findDefaultEmailTemplates(): Promise<db.billing.EmailTemplate[]> {

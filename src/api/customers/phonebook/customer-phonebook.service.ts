@@ -29,12 +29,7 @@ export class CustomerPhonebookService implements CrudService<internal.CustomerPh
     }
 
     async create(entities: internal.CustomerPhonebook[], sr: ServiceRequest): Promise<internal.CustomerPhonebook[]> {
-        if (sr.user.role === RbacRole.subscriberadmin) {
-            if (entities.some(entity => entity.contractId != sr.user.customer_id)) {
-                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-                throw new UnprocessableEntityException(error.message)
-            }
-        }
+        await this.checkCustomerAccess(entities, sr)
 
         const createdIds = await this.phonebookRepo.create(entities, sr)
 
@@ -90,6 +85,7 @@ export class CustomerPhonebookService implements CrudService<internal.CustomerPh
     }
 
     async update(updates: Dictionary<internal.CustomerPhonebook>, sr: ServiceRequest): Promise<number[]> {
+        await this.checkCustomerAccess(Object.values(updates), sr)
         const ids = Object.keys(updates).map(id => parseInt(id))
         const options = this.getCustomerPhonebookOptionsFromServiceRequest(sr)
         const phonebookCount = await this.phonebookRepo.readCountOfIds(ids, options, sr)
@@ -153,12 +149,7 @@ export class CustomerPhonebookService implements CrudService<internal.CustomerPh
     async importCsv(entities: internal.CustomerPhonebook[], sr: ServiceRequest): Promise<internal.CustomerPhonebook[]> {
         await this.validateCsvData(entities)
         const _options = this.getCustomerPhonebookOptionsFromServiceRequest(sr)
-        if (sr.user.customer_id_required) {
-            if (entities.some(entity => entity.contractId != sr.user.customer_id)) {
-                const error:ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
-                throw new UnprocessableEntityException(error.message)
-            }
-        }
+        await this.checkCustomerAccess(entities, sr)
         const customers = new Set(entities.map(entity => entity.contractId))
         if (sr.query && sr.query['purge_existing']) {
             if (sr.query['purge_existing'] === 'true') {
@@ -192,6 +183,19 @@ export class CustomerPhonebookService implements CrudService<internal.CustomerPh
             type: 'text/csv',
             disposition: 'attachment; filename="customer_phonebook.csv"',
         })
+    }
+
+    private async checkCustomerAccess(entities: internal.CustomerPhonebook[], sr: ServiceRequest): Promise<void> {
+        const customerIds = [...new Set(entities.map(entity => entity.contractId).filter(id => id != undefined))]
+        let allowed = true
+        if (sr.user.role === RbacRole.subscriberadmin)
+            allowed = customerIds.every(id => id == sr.user.customer_id)
+        else if (sr.user.reseller_id_required && customerIds.length)
+            allowed = await this.phonebookRepo.readCountOfCustomers(customerIds, sr.user.reseller_id) == customerIds.length
+        if (!allowed) {
+            const error: ErrorMessage = this.i18n.t('errors.ENTRY_NOT_FOUND')
+            throw new UnprocessableEntityException(error.message)
+        }
     }
 
     private async validateCsvData(entities: internal.CustomerPhonebook[]): Promise<void> {

@@ -140,6 +140,14 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
         return await qb.getCount()
     }
 
+    async readCountOfCustomers(customerIds: number[], resellerId: number): Promise<number> {
+        const qb = db.billing.Contract.createQueryBuilder('contract')
+        qb.innerJoin('contract.contact', 'contact')
+        qb.andWhereInIds(customerIds)
+        qb.andWhere('contact.reseller_id = :resellerId', {resellerId})
+        return await qb.getCount()
+    }
+
     async readAllFromViewAll(options: CustomerPhonebookOptions, sr: ServiceRequest): Promise<[internal.VCustomerPhonebook[], number]> {
         const qb = db.billing.VContractPhonebook.createQueryBuilder('phonebook')
         const searchDto  = new CustomerPhonebookSearchDto()
@@ -267,6 +275,14 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
         if (filterBy) {
             if (filterBy.customerId) {
                 qb.andWhere('phonebook.contract_id = :id', {id: filterBy.customerId})
+            }
+            if (filterBy.resellerId) {
+                qb.andWhere(
+                    'phonebook.contract_id IN (SELECT contract.id FROM billing.contracts contract'
+                    + ' JOIN billing.contacts contact ON contact.id = contract.contact_id'
+                    + ' WHERE contact.reseller_id = :resellerId)',
+                    {resellerId: filterBy.resellerId},
+                )
             }
         }
     }
