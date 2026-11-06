@@ -1,5 +1,5 @@
 import {NotFoundException} from '@nestjs/common'
-import {SelectQueryBuilder} from 'typeorm'
+import {Brackets, SelectQueryBuilder} from 'typeorm'
 
 import {PbxGroupSearchDto} from '~/api/pbx/groups/dto/group-search.dto'
 import {PbxGroupRepository} from '~/api/pbx/groups/interfaces/group.repository'
@@ -75,6 +75,7 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
 
     private addSearchFilterToQueryBuilder(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, searchLogic: SearchLogic, sr: ServiceRequest): void {
         const params = sr.query
+        const orClauses: [string, Record<string, unknown>][] = []
         for (const property of searchLogic.searchableFields) {
             if (params[property] != null) {
                 let value: string = params[property].toString()
@@ -105,12 +106,14 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
                         break
                 }
                 if (searchLogic.searchOr) {
-                    qb.orWhere(`${where} ${whereComparator} :${property}`, {[`${property}`]: value})
+                    orClauses.push([`${where} ${whereComparator} :search_${property}`, {[`search_${property}`]: value}])
                 } else {
-                    qb.andWhere(`${where} ${whereComparator} :${property}`, {[`${property}`]: value})
+                    qb.andWhere(`${where} ${whereComparator} :search_${property}`, {[`search_${property}`]: value})
                 }
             }
         }
+        if (orClauses.length)
+            qb.andWhere(new Brackets(b => orClauses.forEach(([where, parameters]) => b.orWhere(where, parameters))))
     }
 
     private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, sr: ServiceRequest): void {

@@ -1,5 +1,5 @@
 import {BadRequestException} from '@nestjs/common'
-import {BaseEntity, SelectQueryBuilder} from 'typeorm'
+import {BaseEntity, Brackets, SelectQueryBuilder} from 'typeorm'
 
 import {SearchLogic} from './search-logic.helper'
 
@@ -30,6 +30,7 @@ function addJoinFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilde
 
 function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: QueriesDictionary, searchLogic: SearchLogic): void {
     const allowUnknownParams = isAllowUnknownParams(params)
+    const orClauses: [string, Record<string, unknown>][] = []
 
     Object.keys(params).forEach((searchField: string) => {
         if (reservedQueryParams.includes(searchField))
@@ -88,11 +89,13 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
 
         const whereClause = `(${conditions.join(' OR ')})`
         if (searchLogic.searchOr) {
-            qb.orWhere(whereClause, parameters)
+            orClauses.push([whereClause, parameters])
         } else {
             qb.andWhere(whereClause, parameters)
         }
     })
+    if (orClauses.length)
+        qb.andWhere(new Brackets(b => orClauses.forEach(([where, parameters]) => b.orWhere(where, parameters))))
 }
 
 export function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, _params: QueriesDictionary, searchLogic: SearchLogic): void {
