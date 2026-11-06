@@ -1,5 +1,6 @@
 import {Injectable, InternalServerErrorException} from '@nestjs/common'
 import {MariaDbRepository} from 'repositories/mariadb.repository'
+import {SelectQueryBuilder} from 'typeorm'
 
 import {DomainSearchDto} from '~/api/domains/dto/domain-search.dto'
 import {DomainRepository} from '~/api/domains/interfaces/domain.repository'
@@ -53,7 +54,7 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
             func: this.readAll.name,
             user: sr.user.username,
         })
-        const queryBuilder = db.billing.Domain.createQueryBuilder('domain')
+        const queryBuilder = await this.createBaseQueryBuilder(sr)
         const searchDto = new DomainSearchDto()
         await configureQueryBuilder(
             queryBuilder,
@@ -69,8 +70,8 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
         return [result.map(d => d.toInternal()), totalCount]
     }
 
-    async readWhereInIds(ids: number[], _sr: ServiceRequest): Promise<internal.Domain[]> {
-        const qb = db.billing.Domain.createQueryBuilder('domain')
+    async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Domain[]> {
+        const qb = await this.createBaseQueryBuilder(sr)
         const created = await qb.andWhereInIds(ids).getMany()
         return await Promise.all(created.map(async (domain) => domain.toInternal()))
     }
@@ -81,7 +82,9 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
             func: this.readById.name,
             user: sr.user.username,
         })
-        return (await db.billing.Domain.findOneByOrFail({id: id})).toInternal()
+        const qb = await this.createBaseQueryBuilder(sr)
+        qb.andWhere('domain.id = :id', {id: id})
+        return (await qb.getOneOrFail()).toInternal()
     }
 
     async readByDomain(domain: string, sr: ServiceRequest): Promise<internal.Domain> {
@@ -113,5 +116,12 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
         await telnetDispatcher.deactivateDomain(domain.domain)
         await xmlDispatcher.sipDomainReload(domain.domain)
         return domain.id
+    }
+
+    private async createBaseQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Domain>> {
+        const qb = db.billing.Domain.createQueryBuilder('domain')
+        if (sr.user.reseller_id_required)
+            qb.andWhere('domain.reseller_id = :reseller_id', {reseller_id: sr.user.reseller_id})
+        return Promise.resolve(qb)
     }
 }

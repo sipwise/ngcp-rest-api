@@ -86,8 +86,10 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
         const voicemails: Array<internal.Voicemail> = await this.voicemailRepo.readWhereInIds(ids, sr)
+        if (voicemails.length != new Set(ids).size)
+            throw new UnprocessableEntityException()
         const folders = this.collectFolders(voicemails)
-        const deletedIds: number[] = await this.voicemailRepo.delete(ids, sr)
+        const deletedIds: number[] = await this.voicemailRepo.delete(voicemails.map(voicemail => voicemail.id), sr)
 
         for (const folder of folders.values())
             await this.voicemailRepo.renumberDir(folder.mailboxuser, folder.dir, sr)
