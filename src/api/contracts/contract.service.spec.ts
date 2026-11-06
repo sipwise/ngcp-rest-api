@@ -80,6 +80,7 @@ describe('ContractsService', () => {
     describe('create', () => {
         it('should return a valid contract', async () => {
             const result = await service.create([internal.Contract.create({
+                billing_profile_id: 1,
                 contact_id: 3,
                 status: ContractStatus.Active,
                 type: ContractType.Reseller,

@@ -1,5 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString} from 'class-validator'
+import {IsEnum, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString} from 'class-validator'
 
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
@@ -11,9 +11,12 @@ import {
 
 export class ContractRequestDto implements RequestDto {
     @IsOptional()
-    @IsEnum(ContractBillingProfileDefinition)
+    @IsIn([ContractBillingProfileDefinition.ID])
     @IsNotEmpty()
-    @ApiProperty({description: 'Explicitly declare the way how you want to set billing profiles for this API call.'})
+    @ApiProperty({
+        description: 'Explicitly declare the way how you want to set billing profiles for this API call.',
+        enum: [ContractBillingProfileDefinition.ID],
+    })
         billing_profile_definition?: ContractBillingProfileDefinition
 
     @IsNumber()
@@ -54,23 +57,24 @@ export class ContractRequestDto implements RequestDto {
     }
 
     toInternal(options: RequestDtoOptions = {}): internal.Contract {
-        const contract = internal.Contract.create({
+        const fields = {
             billing_profile_definition: this.billing_profile_definition,
             billing_profile_id: this.billing_profile_id,
             contact_id: this.contact_id,
             external_id: this.external_id,
             status: this.status,
             type: this.type,
-        })
-        if (options.id)
-            contract.id = options.id
-
+        }
+        // only the request's fields: the other columns of the contract aren't touched
         if (options.assignNulls) {
-            Object.keys(contract).forEach(k => {
-                if (contract[k] === undefined)
-                    contract[k] = null
+            Object.keys(fields).forEach(k => {
+                if (fields[k] === undefined)
+                    fields[k] = null
             })
         }
+        const contract = internal.Contract.create(fields)
+        if (options.id)
+            contract.id = options.id
         return contract
     }
 }

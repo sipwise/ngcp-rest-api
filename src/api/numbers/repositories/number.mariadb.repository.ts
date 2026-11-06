@@ -40,7 +40,7 @@ export class NumberMariadbRepository extends MariaDbRepository {
 
 
     async readById(numberID: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.VoipNumber> {
-        const qb = this.createBaseQueryBuilder(sr, filterBy)
+        const qb = await this.createBaseQueryBuilder(sr, filterBy)
         const searchDto = new NumberSearchDto()
         const searchLogic = new SearchLogic(
             sr,
@@ -52,7 +52,7 @@ export class NumberMariadbRepository extends MariaDbRepository {
         qb.andWhere('voipNumber.id = :voipNumberID', {voipNumberID: numberID})
         const raw: RawNumberRow = await qb.getRawOne()
         if (raw == undefined)
-            throw new EntityNotFoundError(db.billing.Contract, '')
+            throw new EntityNotFoundError(db.billing.VoipNumber, '')
         return internal.VoipNumber.create({
             subscriberID: raw.billingSubscriber_id,
             resellerID: raw.voipNumber_reseller_id,
@@ -68,13 +68,13 @@ export class NumberMariadbRepository extends MariaDbRepository {
 
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.VoipNumber[], number]> {
-        const qb = this.createReadAllQueryBuilder(sr, filterBy)
+        const qb = await this.createReadAllQueryBuilder(sr, filterBy)
 
         const resultRawEntity = await qb.getRawAndEntities()
         const result: RawNumberRow[] = resultRawEntity.raw
         const count = await qb.getCount()
 
-        const numbers = this.transformRawNumberRows(result)
+        const numbers = await this.transformRawNumberRows(result)
 
         return [numbers, count]
     }
@@ -85,8 +85,8 @@ export class NumberMariadbRepository extends MariaDbRepository {
      * @param numbers
      * @private
      */
-    private transformRawNumberRows(numbers: RawNumberRow[]): internal.VoipNumber[] {
-        return numbers.map(raw => internal.VoipNumber.create({
+    private transformRawNumberRows(numbers: RawNumberRow[]): Promise<internal.VoipNumber[]> {
+        return Promise.resolve(numbers.map(raw => internal.VoipNumber.create({
             subscriberID: raw.billingSubscriber_id,
             resellerID: raw.voipNumber_reseller_id,
             sn: raw.voipNumber_sn,
@@ -96,10 +96,10 @@ export class NumberMariadbRepository extends MariaDbRepository {
             isPrimary: raw.is_primary == 1,
             id: raw.voipNumber_id,
             contractID: raw.contract_id,
-        }))
+        })))
     }
 
-    private createBaseQueryBuilder(_sr: ServiceRequest, filterBy: FilterBy): SelectQueryBuilder<db.billing.VoipNumber> {
+    private createBaseQueryBuilder(_sr: ServiceRequest, filterBy: FilterBy): Promise<SelectQueryBuilder<db.billing.VoipNumber>> {
         const qb = db.billing.VoipNumber.createQueryBuilder('voipNumber')
         qb.innerJoinAndSelect('voipNumber.subscriber', 'billingSubscriber')
         qb.innerJoinAndSelect('billingSubscriber.contract', 'contract')
@@ -111,10 +111,10 @@ export class NumberMariadbRepository extends MariaDbRepository {
             'dbAlias.username = CONCAT(voipNumber.cc, voipNumber.ac, voipNumber.sn)',
         )
         this.addPermissionFilterToQueryBuilder(qb, filterBy)
-        return qb
+        return Promise.resolve(qb)
     }
 
-    private createReadAllQueryBuilder(sr: ServiceRequest, filterBy: FilterBy): SelectQueryBuilder<db.billing.VoipNumber> {
+    private async createReadAllQueryBuilder(sr: ServiceRequest, filterBy: FilterBy): Promise<SelectQueryBuilder<db.billing.VoipNumber>> {
         const searchDto = new NumberSearchDto()
         const searchLogic = new SearchLogic(
             sr,
@@ -122,7 +122,7 @@ export class NumberMariadbRepository extends MariaDbRepository {
             undefined,
             searchDto._alias,
         )
-        const qb = this.createBaseQueryBuilder(sr, filterBy)
+        const qb = await this.createBaseQueryBuilder(sr, filterBy)
         this.addSearchFilterToQueryBuilder(qb, sr.query, searchLogic)
         addOrderByToQueryBuilder(qb, sr.query, searchLogic)
         this.addPaginationToQueryBuilder(qb, searchLogic)
