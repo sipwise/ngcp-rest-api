@@ -37,7 +37,7 @@ export class JournalMockRepository implements JournalRepository {
         return Promise.resolve(undefined)
     }
 
-    readAll(_sr: ServiceRequest, _resourceName?: string, _resourceId?: number | string): Promise<[internal.Journal[], number]> {
+    readAll(_sr: ServiceRequest, _resourceName?: string, _resourceId?: number | string, _resourceVerified?: boolean): Promise<[internal.Journal[], number]> {
         return Promise.resolve([[] as internal.Journal[], 0])
     }
 

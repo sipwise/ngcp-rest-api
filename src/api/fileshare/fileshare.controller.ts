@@ -21,7 +21,6 @@ import {FileshareResponseDto} from './dto/fileshare-response.dto'
 import {FileshareSearchDto} from './dto/fileshare-search.dto'
 import {FileshareService} from './fileshare.service'
 
-import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
 import {AppService} from '~/app.service'
 import {CrudController} from '~/controllers/crud.controller'
@@ -140,18 +139,6 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
             await this.journalService.writeJournal(sr, 0, deletedId)
         }
         return deletedIds
-    }
-
-    @Get(':id/journal')
-    @ApiOkResponse({
-        type: [JournalResponseDto],
-    })
-    async journal(
-        @Param('id') id: number | string,
-        @Req() req: Request,
-    ): Promise<[JournalResponseDto[], number]> {
-        this.log.debug({message: 'fetch fileshare journal by id', func: this.journal.name, url: req.url, method: req.method})
-        return super.journal(id, req)
     }
 
 }
