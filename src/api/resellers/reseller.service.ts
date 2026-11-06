@@ -1,4 +1,4 @@
-import {ForbiddenException, Inject, Injectable, UnprocessableEntityException} from '@nestjs/common'
+import {ForbiddenException, Inject, Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
 import {ResellerMariadbRepository} from './repositories/reseller.mariadb.repository'
@@ -58,7 +58,7 @@ export class ResellerService implements CrudService<internal.Reseller> {
     async update(updates: Dictionary<internal.Reseller>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         if (await this.resellerRepo.readCountOfIds(ids) != ids.length)
-            throw new UnprocessableEntityException()
+            throw new NotFoundException()
         this.log.debug({message: 'update reseller by ids', func: this.update.name, user: sr.user.username, ids: ids})
         for (const id of ids) {
             const oldReseller = await this.resellerRepo.read(id, sr)

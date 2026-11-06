@@ -125,11 +125,11 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         return [readIds, count]
     }
 
-    async readInvoiceTemplateById(id: number, resellerId: number): Promise<void> {
+    async readCountOfInvoiceTemplates(ids: number[], resellerId: number): Promise<number> {
         const qb = db.billing.InvoiceTemplate.createQueryBuilder('invoiceTemplate')
         qb.andWhere('invoiceTemplate.reseller_id = :resellerId', {resellerId: resellerId})
-        qb.andWhere('invoiceTemplate.id = :id', {id: id})
-        await qb.getOneOrFail()
+        qb.andWhereInIds(ids)
+        return await qb.getCount()
     }
 
     async readProductByType(type: string, sr: ServiceRequest): Promise<internal.Product> {
@@ -397,11 +397,12 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         return templates.map(template => template.toInternal())
     }
 
-    async createResellerDefaultTemplate(resellerId: number, defaultTemplate: internal.EmailTemplate): Promise<void> {
-        const resellerTemplate = Object.assign(new internal.EmailTemplate(), defaultTemplate)
-        resellerTemplate.resellerId = resellerId
-
-        await db.billing.EmailTemplate.insert(resellerTemplate)
+    async createResellerDefaultTemplate(resellerId: number, defaultTemplate: internal.EmailTemplate): Promise<number> {
+        const template = await db.billing.EmailTemplate.findOneByOrFail({id: defaultTemplate.id})
+        const copy = db.billing.EmailTemplate.create({...template, reseller_id: resellerId})
+        delete copy.id
+        const result = await db.billing.EmailTemplate.insert(copy)
+        return (result.identifiers[0] as {id: number}).id
     }
 
     async readContactById(contactId: number): Promise<internal.Contact> {
