@@ -42,21 +42,21 @@ export class VoicemailMariadbRepository extends MariaDbRepository implements Voi
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Voicemail> {
         const qb = await this.createBaseQueryBuilder(sr)
-        qb.where('voicemail.id = :id', {id: id})
+        qb.andWhere('voicemail.id = :id', {id: id})
         const result = await qb.getOneOrFail()
         return result.toInternal()
     }
 
     async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Voicemail[]> {
         const qb = await this.createBaseQueryBuilder(sr)
-        qb.whereInIds(ids)
+        qb.andWhereInIds(ids)
         const voicemails = await qb.getMany()
         return await Promise.all(voicemails.map(async (voicemail) => voicemail.toInternal()))
     }
 
     async readCountOfIds(ids: number[], sr: ServiceRequest): Promise<number> {
         const qb = await this.createBaseQueryBuilder(sr)
-        return await qb.whereInIds(ids).getCount()
+        return await qb.andWhereInIds(ids).getCount()
     }
 
     async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
@@ -129,10 +129,15 @@ export class VoicemailMariadbRepository extends MariaDbRepository implements Voi
         return mCount
     }
 
-    private async createBaseQueryBuilder(_sr: ServiceRequest): Promise<SelectQueryBuilder<db.kamailio.VoicemailSpool>> {
+    private async createBaseQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.kamailio.VoicemailSpool>> {
         const qb = db.kamailio.VoicemailSpool.createQueryBuilder('voicemail')
         qb.leftJoinAndSelect('voicemail.billingSubscriber', 'bSubscriber')
         qb.leftJoinAndSelect('voicemail.provisioningSubscriber', 'pSubscriber')
+        if (sr.user.reseller_id_required) {
+            qb.innerJoin('bSubscriber.contract', 'contract')
+            qb.innerJoin('contract.contact', 'contact')
+            qb.andWhere('contact.reseller_id = :reseller_id', {reseller_id: sr.user.reseller_id})
+        }
         return qb
     }
 }

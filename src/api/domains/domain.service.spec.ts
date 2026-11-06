@@ -88,6 +88,7 @@ describe('DomainService', () => {
         it('should not allow deleting domain with different reseller_id as reseller', async () => {
             const localRequest = deepCopy(sr)
             localRequest.user.role = 'reseller'
+            localRequest.user.reseller_id_required = true
             localRequest.user.reseller_id = 5
             await expect(service.delete([1], localRequest)).rejects.toThrow()
         })

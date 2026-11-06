@@ -13,6 +13,8 @@ import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
+import {ContractStatus} from '~/entities/internal/contract.internal.entity'
+import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
@@ -31,6 +33,38 @@ describe('Domain', () => {
     const startedAt = Date.now() / 1000
     const resellerCreds = {username: `domain_reseller_${Date.now().toString(36)}`, password: 'FFFooobarbaz123!!!'}
     const domainSuffix = `${Date.now()}.e2e.example.org`
+    const scopeLogins = {
+        [RbacRole.reseller]: `mockResellerUser${process.env.JEST_WORKER_ID}`,
+        [RbacRole.ccare]: `mockCcareUser${process.env.JEST_WORKER_ID}`,
+        [RbacRole.ccareadmin]: `mockCcareadminUser${process.env.JEST_WORKER_ID}`,
+    }
+    let otherResellerContractId: number
+    let otherResellerId: number
+
+    const insertAdmin = async (login: string, role: RbacRole, resellerId: number): Promise<void> => {
+        await db.billing.Admin.delete({login: login})
+        const aclRole = await db.billing.AclRole.findOneByOrFail({role: role})
+        await db.billing.Admin.insert({
+            reseller_id: resellerId,
+            login: login,
+            saltedpass: 'mockAdminSaltedpass',
+            saltedpass_modify_timestamp: new Date(),
+            role_id: aclRole.id,
+            is_master: true,
+            is_superuser: false,
+            is_system: false,
+            is_ccare: role == RbacRole.ccare || role == RbacRole.ccareadmin,
+            lawful_intercept: false,
+            is_active: true,
+            read_only: false,
+            show_passwords: true,
+            call_data: true,
+            billing_data: true,
+            can_reset_password: true,
+            enable_2fa: false,
+            show_otp_registration_info: false,
+        })
+    }
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -253,6 +287,83 @@ describe('Domain', () => {
                 expect(response.body.reseller_id).toEqual(1)
             })
         })
+
+        describe('reseller scope', () => {
+            const headers: {[role: string]: [string, string]} = {}
+            let otherDomainId: number
+
+            const get = (role: string, url: string): request.Test => request(app.getHttpServer())
+                .get(url)
+                .set(...headers[role])
+                .set('Accept', 'application/json')
+
+            it('create another reseller with a domain and log in as its admins', async () => {
+                const now = new Date()
+                otherResellerContractId = (await db.billing.Contract.create({
+                    contact_id: 2, product_id: 3, status: ContractStatus.Active, create_timestamp: now, modify_timestamp: now,
+                }).save()).id
+                otherResellerId = (await db.billing.Reseller.create({
+                    contract_id: otherResellerContractId,
+                    name: `domain_reseller_${process.env.JEST_WORKER_ID}_${Date.now()}`,
+                    status: ResellerStatus.Active,
+                }).save()).id
+                const response = await request(app.getHttpServer())
+                    .post('/api/domains')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({domain: `other.${domainSuffix}`, reseller_id: otherResellerId})
+                expect(response.status).toEqual(201)
+                otherDomainId = +response.body.data[0].id
+                createdIds.push(otherDomainId)
+                for (const [role, login] of Object.entries(scopeLogins)) {
+                    await insertAdmin(login, role as RbacRole, otherResellerId)
+                    const auth = await request(app.getHttpServer())
+                        .post('/api/auth/jwt')
+                        .set('Accept', 'application/json')
+                        .set('Content-Type', 'application/json')
+                        .send({username: login, password: 'mockAdminPass'})
+                    expect(auth.status).toEqual(201)
+                    headers[role] = ['Authorization', 'Bearer ' + auth.body['access_token']]
+                }
+            })
+
+            it.each([RbacRole.reseller, RbacRole.ccare])('list only own domains as %s', async role => {
+                const response = await get(role, `/api/domains?domain=*.${domainSuffix}`)
+                expect(response.status).toEqual(200)
+                expect(response.body.data.map((d: DomainResponseDto) => +d.id)).toEqual([otherDomainId])
+            })
+
+            it.each([RbacRole.reseller, RbacRole.ccare])('read own domain as %s', async role => {
+                const response = await get(role, `/api/domains/${otherDomainId}`)
+                expect(response.status).toEqual(200)
+                expect(response.body.reseller_id).toEqual(otherResellerId)
+            })
+
+            it.each([RbacRole.reseller, RbacRole.ccare])('not read a domain of another reseller as %s', async role => {
+                const response = await get(role, `/api/domains/${createdIds[0]}`)
+                expect(response.status).toEqual(404)
+            })
+
+            it('list and read domains of all resellers as ccareadmin', async () => {
+                const list = await get(RbacRole.ccareadmin, `/api/domains?domain=*.${domainSuffix}`)
+                expect(list.status).toEqual(200)
+                expect(list.body.data.map((d: DomainResponseDto) => +d.id)).toEqual(expect.arrayContaining(createdIds))
+                const response = await get(RbacRole.ccareadmin, `/api/domains/${createdIds[0]}`)
+                expect(response.status).toEqual(200)
+                expect(response.body.reseller_id).toEqual(1)
+            })
+
+            it('not delete a domain of another reseller', async () => {
+                const response = await request(app.getHttpServer())
+                    .delete(`/api/domains/${createdIds[0]}`)
+                    .set(...headers[RbacRole.reseller])
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                expect(response.status).toEqual(422)
+                expect(await db.billing.Domain.findOneBy({id: createdIds[0]})).not.toBeNull()
+            })
+        })
     })
 
     describe('Domain DELETE', () => {
@@ -285,8 +396,16 @@ describe('Domain', () => {
                 await db.billing.Journal.delete({resource_name: 'admins', resource_id: resellerAdminId})
         })
 
+        it('delete created fixtures', async () => {
+            if (otherResellerId)
+                await db.billing.Reseller.delete(otherResellerId)
+            if (otherResellerContractId)
+                await db.billing.Contract.delete(otherResellerContractId)
+        })
+
         it('delete mock admin', async () => {
             await db.billing.Admin.delete({login: creds.username})
+            await db.billing.Admin.delete({login: In(Object.values(scopeLogins))})
         })
     })
 })

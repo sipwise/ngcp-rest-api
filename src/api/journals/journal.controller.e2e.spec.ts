@@ -326,6 +326,17 @@ describe('Journal', () => {
                 expect(response.status).toEqual(200)
                 expect(response.body.data.map((j: JournalResponseDto) => j.id)).toContain(journalIds[0])
             })
+            it('search by role', async () => {
+                const resourceName = `e2ejournalrole${suffix}`
+                const adminJournalId = await insertJournal(resourceName, 1, RbacRole.admin, 1)
+                const resellerJournalId = await insertJournal(resourceName, 1, RbacRole.reseller, 1)
+                const admin = await get(`/api/journals?resource_name=${resourceName}&role=admin`)
+                expect(admin.status).toEqual(200)
+                expect(admin.body.data.map((j: JournalResponseDto) => j.id)).toEqual([adminJournalId])
+                const reseller = await get(`/api/journals?resource_name=${resourceName}&role=reseller`)
+                expect(reseller.status).toEqual(200)
+                expect(reseller.body.data.map((j: JournalResponseDto) => j.id)).toEqual([resellerJournalId])
+            })
             it('read nothing for an unknown resource', async () => {
                 const response = await get(`/api/journals/customers/foo/${phonebookId}`)
                 expect(response.status).toEqual(200)

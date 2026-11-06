@@ -16,6 +16,8 @@ import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
+import {ContractStatus} from '~/entities/internal/contract.internal.entity'
+import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {voicemailSpoolDir} from '~/enums/supported-voicemail-folders.enum'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
@@ -38,6 +40,37 @@ describe('Voicemail', () => {
     let contractId: number
     let provisioningSubscriberId: number
     let mailboxUuid: string
+    const otherResellerCreds = {username: `mockResellerUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const reseller1Creds = {username: `mockReseller1User${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    let otherResellerContractId: number
+    let otherResellerId: number
+    let otherResellerHeader: [string, string]
+    let reseller1Header: [string, string]
+
+    const insertResellerAdmin = async (login: string, resellerId: number): Promise<void> => {
+        await db.billing.Admin.delete({login: login})
+        const resellerRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.reseller})
+        await db.billing.Admin.insert({
+            reseller_id: resellerId,
+            login: login,
+            saltedpass: 'mockAdminSaltedpass',
+            saltedpass_modify_timestamp: new Date(),
+            role_id: resellerRole.id,
+            is_master: true,
+            is_superuser: false,
+            is_system: false,
+            is_ccare: false,
+            lawful_intercept: false,
+            is_active: true,
+            read_only: false,
+            show_passwords: true,
+            call_data: true,
+            billing_data: true,
+            can_reset_password: true,
+            enable_2fa: false,
+            show_otp_registration_info: false,
+        })
+    }
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -480,6 +513,99 @@ describe('Voicemail', () => {
                 expect(await readDir(oldId)).toEqual(`${basePath}/Old`)
             })
         })
+
+        describe('reseller scope', () => {
+            const login = async (loginCreds: {username: string, password: string}): Promise<[string, string]> => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/auth/jwt')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(loginCreds)
+                expect(response.status).toEqual(201)
+                return ['Authorization', 'Bearer ' + response.body['access_token']]
+            }
+
+            it('create another reseller and log in as reseller admins', async () => {
+                const now = new Date()
+                otherResellerContractId = (await db.billing.Contract.create({
+                    contact_id: 2, product_id: 3, status: ContractStatus.Active, create_timestamp: now, modify_timestamp: now,
+                }).save()).id
+                otherResellerId = (await db.billing.Reseller.create({
+                    contract_id: otherResellerContractId,
+                    name: `vm_reseller_${process.env.JEST_WORKER_ID}_${Date.now()}`,
+                    status: ResellerStatus.Active,
+                }).save()).id
+                await insertResellerAdmin(otherResellerCreds.username, otherResellerId)
+                await insertResellerAdmin(reseller1Creds.username, 1)
+                otherResellerHeader = await login(otherResellerCreds)
+                reseller1Header = await login(reseller1Creds)
+            })
+
+            it('not list voicemails of another reseller', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/api/voicemails')
+                    .set(...otherResellerHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(0)
+            })
+
+            it('not read a voicemail of another reseller', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/voicemails/${createdVoicemailIds[0]}`)
+                    .set(...otherResellerHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(404)
+            })
+
+            it('not update a voicemail of another reseller', async () => {
+                const id = createdVoicemailIds[0]
+                const dir = (await db.kamailio.VoicemailSpool.findOneByOrFail({id: id})).dir
+                const put = await request(app.getHttpServer())
+                    .put(`/api/voicemails/${id}`)
+                    .set(...otherResellerHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({folder: 'INBOX'})
+                expect(put.status).toEqual(422)
+                const putMany = await request(app.getHttpServer())
+                    .put('/api/voicemails')
+                    .set(...otherResellerHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({[id]: {folder: 'INBOX'}})
+                expect(putMany.status).toEqual(422)
+                const patch = await request(app.getHttpServer())
+                    .patch(`/api/voicemails/${id}`)
+                    .set(...otherResellerHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send([{op: 'replace', path: '/folder', value: 'INBOX'}])
+                expect(patch.status).toEqual(404)
+                expect((await db.kamailio.VoicemailSpool.findOneByOrFail({id: id})).dir).toEqual(dir)
+            })
+
+            it('not delete a voicemail of another reseller', async () => {
+                const id = createdVoicemailIds[0]
+                const response = await request(app.getHttpServer())
+                    .delete(`/api/voicemails/${id}`)
+                    .set(...otherResellerHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                expect(response.status).toEqual(422)
+                expect(await db.kamailio.VoicemailSpool.findOneBy({id: id})).not.toBeNull()
+            })
+
+            it('read own voicemails as reseller admin', async () => {
+                const id = createdVoicemailIds[0]
+                const response = await request(app.getHttpServer())
+                    .get(`/api/voicemails/${id}`)
+                    .set(...reseller1Header)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.id).toEqual(id)
+            })
+        })
     })
 
     describe('Voicemail DELETE', () => {
@@ -502,10 +628,16 @@ describe('Voicemail', () => {
                 await db.provisioning.VoipDomain.delete(provisioningDomainId)
             if (billingDomainId)
                 await db.billing.Domain.delete(billingDomainId)
+            if (otherResellerId)
+                await db.billing.Reseller.delete(otherResellerId)
+            if (otherResellerContractId)
+                await db.billing.Contract.delete(otherResellerContractId)
         })
 
         it('delete mock admin', async () => {
             await db.billing.Admin.delete({login: creds.username})
+            await db.billing.Admin.delete({login: otherResellerCreds.username})
+            await db.billing.Admin.delete({login: reseller1Creds.username})
         })
     })
 })

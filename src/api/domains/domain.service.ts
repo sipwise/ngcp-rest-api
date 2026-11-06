@@ -3,7 +3,6 @@ import {I18nService} from 'nestjs-i18n'
 
 import {DomainMariadbRepository} from './repositories/domain.mariadb.repository'
 
-import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -80,7 +79,7 @@ export class DomainService implements CrudService<internal.Domain> {
             throw new UnprocessableEntityException()
         const deletedIds: number[] = []
         for(const domain of domains) {
-            if (RbacRole.reseller == sr.user.role && domain.reseller_id != sr.user.reseller_id) {
+            if (sr.user.reseller_id_required && domain.reseller_id != sr.user.reseller_id) {
                 throw new ForbiddenException(this.i18n.t('errors.DOMAIN_DOES_NOT_BELONG_TO_RESELLER'))
             }
             deletedIds.push(await this.domainRepo.delete(domain.id, sr))

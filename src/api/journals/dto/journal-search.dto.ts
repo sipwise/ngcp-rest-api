@@ -28,5 +28,6 @@ export class JournalSearchDto {
     @ApiHideProperty()
         _alias = {
             id: 'journal.id',
+            role: 'role.role',
         }
 }
