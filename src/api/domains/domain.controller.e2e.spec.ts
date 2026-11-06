@@ -176,6 +176,17 @@ describe('Domain', () => {
                 expect(domain.domain).toEqual(`admin.${domainSuffix}`)
                 expect(domain.reseller_id).toEqual(1)
             })
+            it('read domains list filtered by name', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/domains?domain=admin.${domainSuffix}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(1)
+                const domains: DomainResponseDto[] = response.body.data
+                expect(domains.map(d => +d.id)).toEqual([createdIds[0]])
+                expect(domains[0].domain).toEqual(`admin.${domainSuffix}`)
+            })
             it('read non-existing domain', async () => {
                 const response = await request(app.getHttpServer())
                     .get('/api/domains/999911111122')

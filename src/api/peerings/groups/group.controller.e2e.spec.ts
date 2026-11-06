@@ -331,6 +331,30 @@ describe('Peering Group', () => {
                 const group: PeeringGroupResponseDto = response.body
                 expect(group.name).toEqual('renamed_test_peeringGroup2')
             })
+            it('update group bulk', async () => {
+                const response = await request(app.getHttpServer())
+                    .put('/api/peerings/groups')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        [createdPeeringGroupIds[0]]: {name: 'bulk_put_test_peeringGroup1', description: 'bulk1', contract_id: createdContractIds[3]},
+                        [createdPeeringGroupIds[1]]: {name: 'bulk_put_test_peeringGroup2', description: 'bulk2', contract_id: createdContractIds[4]},
+                    })
+                expect(response.status).toEqual(204)
+            })
+            it('read bulk updated groups', async () => {
+                for (const [i, n] of [[0, 1], [1, 2]]) {
+                    const response = await request(app.getHttpServer())
+                        .get(`/api/peerings/groups/${createdPeeringGroupIds[i]}`)
+                        .set(...authHeader)
+                        .set('Accept', 'application/json')
+                    expect(response.status).toEqual(200)
+                    const group: PeeringGroupResponseDto = response.body
+                    expect(group.name).toEqual(`bulk_put_test_peeringGroup${n}`)
+                    expect(group.description).toEqual(`bulk${n}`)
+                }
+            })
             it('update non-existing group', async () => {
                 const response = await request(app.getHttpServer())
                     .put('/api/peerings/groups/999911111122')
@@ -369,6 +393,34 @@ describe('Peering Group', () => {
                 expect(response.status).toEqual(200)
                 const group: PeeringGroupResponseDto = response.body
                 expect(group.name).toEqual('patched_test_peeringGroup1DefaultPriority')
+            })
+            it('adjust groups bulk', async () => {
+                const response = await request(app.getHttpServer())
+                    .patch('/api/peerings/groups')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send({
+                        [createdPeeringGroupIds[0]]: [{op: 'replace', path: '/description', value: 'bulk_patched1'}],
+                        [createdPeeringGroupIds[1]]: [{op: 'replace', path: '/name', value: 'bulk_patch_test_peeringGroup2'}],
+                    })
+                expect(response.status).toEqual(204)
+            })
+            it('read bulk adjusted groups', async () => {
+                const first = await request(app.getHttpServer())
+                    .get(`/api/peerings/groups/${createdPeeringGroupIds[0]}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(first.status).toEqual(200)
+                expect(first.body.description).toEqual('bulk_patched1')
+                expect(first.body.name).toEqual('patched_test_peeringGroup1DefaultPriority')
+                const second = await request(app.getHttpServer())
+                    .get(`/api/peerings/groups/${createdPeeringGroupIds[1]}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(second.status).toEqual(200)
+                expect(second.body.name).toEqual('bulk_patch_test_peeringGroup2')
+                expect(second.body.description).toEqual('bulk2')
             })
             it('adjust non-existing group', async () => {
                 const response = await request(app.getHttpServer())

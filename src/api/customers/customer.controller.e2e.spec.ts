@@ -97,6 +97,10 @@ describe('CustomerController', () => {
     let networkTerminated: number
     let packageA: number
     let packageB: number
+    const emailTemplateIds: number[] = []
+    const invoiceTemplateIds: number[] = []
+    const ownTemplates: {[key: string]: number} = {}
+    const foreignTemplates: {[key: string]: number} = {}
 
     const createProfile = async (name: string, resellerId: number | null, status = BillingProfileStatus.Active): Promise<number> => {
         const profile = await db.billing.BillingProfile.create({
@@ -260,6 +264,26 @@ describe('CustomerController', () => {
         }).save()
         networkIds.push(terminatedNetwork.id)
         networkTerminated = terminatedNetwork.id
+
+        for (const [field, resellerId, templates] of [
+            ['subscriber_email_template_id', RESELLER_ID, ownTemplates],
+            ['passreset_email_template_id', RESELLER_ID, ownTemplates],
+            ['invoice_email_template_id', RESELLER_ID, ownTemplates],
+            ['subscriber_email_template_id', otherResellerId, foreignTemplates],
+            ['passreset_email_template_id', otherResellerId, foreignTemplates],
+            ['invoice_email_template_id', otherResellerId, foreignTemplates],
+        ] as [string, number, {[key: string]: number}][]) {
+            const template = await db.billing.EmailTemplate.create({
+                reseller_id: resellerId, name: `e2e_${field}_${suffix}`, from_email: 'e2e@example.org', subject: 'e2e', body: 'e2e',
+            }).save()
+            emailTemplateIds.push(template.id)
+            templates[field] = template.id
+        }
+        for (const [resellerId, templates] of [[RESELLER_ID, ownTemplates], [otherResellerId, foreignTemplates]] as [number, {[key: string]: number}][]) {
+            const template = await db.billing.InvoiceTemplate.create({reseller_id: resellerId, name: `e2e invoice ${suffix}`}).save()
+            invoiceTemplateIds.push(template.id)
+            templates['invoice_template_id'] = template.id
+        }
 
         packageA = await createPackage('package A', profileA)
         packageB = await createPackage('package B', profileB)
@@ -885,6 +909,58 @@ describe('CustomerController', () => {
             })
         })
 
+        describe('Customer email and invoice templates', () => {
+            const templateFields = ['subscriber_email_template_id', 'passreset_email_template_id', 'invoice_email_template_id', 'invoice_template_id']
+            let templateCustomerId: number
+            const customerOf = (templates: {[key: string]: number}): CustomerPost => ({
+                type: CustomerType.SipAccount,
+                contact_id: CONTACT_ID,
+                status: CustomerStatus.Active,
+                vat_rate: 0,
+                add_vat: false,
+                billing_profile_definition: ContractBillingProfileDefinition.ID,
+                billing_profile_id: profileA,
+                ...templates,
+            })
+
+            it('create a customer with templates of the contact reseller', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/customers')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send(customerOf(ownTemplates))
+                expect(response.status).toEqual(HttpStatus.CREATED)
+                templateCustomerId = +response.body.data[0].id
+                createdCustomerIds.push(templateCustomerId)
+                for (const field of templateFields)
+                    expect(response.body.data[0][field]).toEqual(ownTemplates[field])
+            })
+            it.each(templateFields)('reject a %s of another reseller or unknown on POST', async field => {
+                for (const id of [foreignTemplates[field], 4294967]) {
+                    const response = await request(app.getHttpServer())
+                        .post('/api/customers')
+                        .set(...authHeader)
+                        .set('Accept', 'application/json')
+                        .set('Content-Type', 'application/json')
+                        .send(customerOf({...ownTemplates, [field]: id}))
+                    expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                }
+            })
+            it.each(templateFields)('reject a %s of another reseller on PATCH', async field => {
+                const response = await request(app.getHttpServer())
+                    .patch(`/api/customers/${templateCustomerId}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send([{op: 'replace', path: `/${field}`, value: foreignTemplates[field]}])
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                const contract = await db.billing.Contract.findOneByOrFail({id: templateCustomerId})
+                expect(contract[field]).toEqual(ownTemplates[field])
+            })
+        })
+
         describe('Customer DELETE', () => {
             it('terminate customer by id', async () => {
                 const id = createdCustomerIds[0]
@@ -914,6 +990,10 @@ describe('CustomerController', () => {
                 await db.billing.Contract.delete(createdCustomerIds)
             if (fixtureContractIds.length)
                 await db.billing.Contract.delete(fixtureContractIds)
+            if (emailTemplateIds.length)
+                await db.billing.EmailTemplate.delete(emailTemplateIds)
+            if (invoiceTemplateIds.length)
+                await db.billing.InvoiceTemplate.delete(invoiceTemplateIds)
             if (packageIds.length) {
                 await appService.db.getRepository(db.billing.PackageProfileSet).delete({package_id: In(packageIds)})
                 await db.billing.ProfilePackage.delete(packageIds)

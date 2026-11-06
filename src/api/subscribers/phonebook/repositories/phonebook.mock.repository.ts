@@ -118,6 +118,39 @@ export class SubscriberPhonebookMockRepository implements SubscriberPhonebookRep
         return Promise.resolve(ids)
     }
 
+    readAllFromViewAll(options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<[internal.SubscriberPhonebook[], number]> {
+        return this.readAll(options, sr)
+    }
+
+    readByIdFromViewAll(id: string, options: SubscriberPhonebookOptions): Promise<internal.SubscriberPhonebook> {
+        return this.readById(+id, options)
+    }
+
+    readAllFromViewContract(options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<[internal.SubscriberPhonebook[], number]> {
+        return this.readAll(options, sr)
+    }
+
+    readByIdFromViewContract(id: string, options: SubscriberPhonebookOptions): Promise<internal.SubscriberPhonebook> {
+        return this.readById(+id, options)
+    }
+
+    readAllFromViewReseller(options: SubscriberPhonebookOptions, sr: ServiceRequest): Promise<[internal.SubscriberPhonebook[], number]> {
+        return this.readAll(options, sr)
+    }
+
+    readByIdFromViewReseller(id: string, options: SubscriberPhonebookOptions): Promise<internal.SubscriberPhonebook> {
+        return this.readById(+id, options)
+    }
+
+    purge(_subscriberId: number, _sr: ServiceRequest): Promise<number> {
+        return Promise.resolve(_subscriberId)
+    }
+
+    getAllowedSubscribersCount(ids: number[], filterBy: SubscriberPhonebookOptions['filterBy'], _sr: ServiceRequest): Promise<number> {
+        return Promise.resolve(ids.filter(id => this.existingSubscribers.includes(id)
+            && (filterBy?.subscriberId == undefined || filterBy.subscriberId == id)).length)
+    }
+
     private getNextId(): number {
         const keys = Object.keys(this.db)
         return (+keys[keys.length - 1]) + 1
@@ -126,9 +159,5 @@ export class SubscriberPhonebookMockRepository implements SubscriberPhonebookRep
     private throwErrorIfIdNotExists(id: number): void {
         if (this.db[id] == undefined)
             throw new NotFoundException()
-    }
-
-    getAllowedSubscribersCount(_ids: number[], _filterBy: SubscriberPhonebookOptions['filterBy'], _sr: ServiceRequest): Promise<number> {
-        return Promise.resolve(1)
     }
 }

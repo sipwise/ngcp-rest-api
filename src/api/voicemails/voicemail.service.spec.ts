@@ -1,4 +1,11 @@
-import {InternalServerErrorException} from '@nestjs/common'
+jest.mock('child_process', () => ({
+    ...jest.requireActual<typeof import('child_process')>('child_process'),
+    execFile: jest.fn(),
+}))
+
+import {execFile} from 'child_process'
+
+import {BadRequestException, InternalServerErrorException, UnprocessableEntityException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 
 import {VoicemailMariadbRepository} from './repositories/voicemail.mariadb.repository'
@@ -49,22 +56,95 @@ describe('VoicemailsService', () => {
         expect(voicemailMockRepo).toBeDefined()
     })
 
-    // describe('read', () => {
+    const uuid = '31a16db6-e160-4a94-b7ff-bd4d1480c6b1'
+    const basePath = `${voicemailSpoolDir}${uuid}`
+    type ExecCb = (err: Error | null, res?: unknown) => void
+    const execMock = execFile as unknown as jest.Mock
 
-    // })
+    const makeVoicemail = (id: number, dir: string, msgnum = 0): internal.Voicemail =>
+        internal.Voicemail.create({
+            id, dir, mailboxuser: uuid, msgnum, username: '4311', callerid: '4312', duration: 5, call_id: 'cid' + id,
+            origtime: '1700000000',
+        } as unknown as internal.Voicemail)
 
-    // describe('readAll', () => {
+    afterEach(() => {
+        jest.restoreAllMocks()
+        execMock.mockReset()
+    })
 
-    // })
+    describe('read', () => {
+        it('returns the voicemail from the repository', async () => {
+            const vm = makeVoicemail(1, `${basePath}/INBOX`)
+            const spy = jest.spyOn(voicemailMockRepo, 'read').mockResolvedValue(vm)
+            await expect(service.read(1, sr)).resolves.toBe(vm)
+            expect(spy).toHaveBeenCalledWith(1, sr)
+        })
+    })
 
-    // describe('create', () => {
+    describe('readAll', () => {
+        it('returns the list and count from the repository', async () => {
+            const vm = makeVoicemail(1, `${basePath}/INBOX`)
+            jest.spyOn(voicemailMockRepo, 'readAll').mockResolvedValue([[vm], 1])
+            await expect(service.readAll(sr)).resolves.toEqual([[vm], 1])
+        })
+    })
 
-    // })
+    describe('sendNotification', () => {
+        it('calls ngcp-vmnotify with the message args and the default action', async () => {
+            jest.spyOn(voicemailMockRepo, 'readMessagesCountByUUID').mockResolvedValue({new_messages: 2, old_messages: 3})
+            execMock.mockImplementation((_cmd, _args, _opts, cb: ExecCb) => { cb(null, {stdout: '', stderr: ''}) })
+            await service.sendNotification(makeVoicemail(7, `${basePath}/INBOX`, 4), sr)
+            expect(execMock).toHaveBeenCalledTimes(1)
+            const [cmd, args, opts] = execMock.mock.calls[0]
+            expect(cmd).toEqual('/usr/bin/ngcp-vmnotify')
+            expect(args).toEqual([
+                'default', '4311', uuid, '2', '3', '0', '4', '4312', '2023-11-14T22:13:20.000Z', '5', 'r', '7', 'cid7',
+            ])
+            expect(opts).toMatchObject({shell: false})
+        })
+
+        it('uses the given action type', async () => {
+            execMock.mockImplementation((_cmd, _args, _opts, cb: ExecCb) => { cb(null, {stdout: '', stderr: ''}) })
+            await service.sendNotification(makeVoicemail(7, `${basePath}/INBOX`), sr, 'd')
+            expect(execMock.mock.calls[0][1].slice(-3)).toEqual(['d', '7', 'cid7'])
+        })
+
+        it('throws 422 when the notify command fails', async () => {
+            execMock.mockImplementation((_cmd, _args, _opts, cb: ExecCb) => { cb(Object.assign(new Error('fail'), {cmd: 'x', stdout: '', stderr: 'boom'})) })
+            await expect(service.sendNotification(makeVoicemail(7, `${basePath}/INBOX`), sr)).rejects.toThrow(UnprocessableEntityException)
+        })
+    })
+
+    describe('delete', () => {
+        it('deletes, renumbers each affected folder once and notifies every voicemail', async () => {
+            const vms = [
+                makeVoicemail(1, `${basePath}/INBOX`, 0),
+                makeVoicemail(2, `${basePath}/INBOX`, 1),
+                makeVoicemail(3, `${basePath}/Old`, 0),
+            ]
+            jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue(vms)
+            const delSpy = jest.spyOn(voicemailMockRepo, 'delete').mockResolvedValue([1, 2, 3])
+            const renumberSpy = jest.spyOn(voicemailMockRepo, 'renumberDir')
+            const notifySpy = jest.spyOn(service, 'sendNotification').mockResolvedValue()
+            await expect(service.delete([1, 2, 3], sr)).resolves.toEqual([1, 2, 3])
+            expect(delSpy).toHaveBeenCalledWith([1, 2, 3], sr)
+            expect(renumberSpy).toHaveBeenCalledTimes(2)
+            expect(renumberSpy).toHaveBeenCalledWith(uuid, `${basePath}/INBOX`, sr)
+            expect(renumberSpy).toHaveBeenCalledWith(uuid, `${basePath}/Old`, sr)
+            expect(notifySpy).toHaveBeenCalledTimes(3)
+            expect(notifySpy).toHaveBeenCalledWith(vms[0], sr, 'd')
+        })
+
+        it('does nothing besides the delete for no voicemails', async () => {
+            const renumberSpy = jest.spyOn(voicemailMockRepo, 'renumberDir')
+            const notifySpy = jest.spyOn(service, 'sendNotification').mockResolvedValue()
+            await service.delete([], sr)
+            expect(renumberSpy).not.toHaveBeenCalled()
+            expect(notifySpy).not.toHaveBeenCalled()
+        })
+    })
 
     describe('update', () => {
-        const uuid = '31a16db6-e160-4a94-b7ff-bd4d1480c6b1'
-        const basePath = `${voicemailSpoolDir}${uuid}`
-
         const voicemail = (id: number, dir: string): internal.Voicemail =>
             internal.Voicemail.create({id, dir, mailboxuser: uuid, msgnum: 0} as internal.Voicemail)
 
@@ -76,7 +156,6 @@ describe('VoicemailsService', () => {
         let notifySpy: jest.SpyInstance
 
         beforeEach(() => {
-            jest.restoreAllMocks()
             updateSpy = jest.spyOn(voicemailMockRepo, 'update').mockResolvedValue([1])
             renumberSpy = jest.spyOn(voicemailMockRepo, 'renumberDir')
             notifySpy = jest.spyOn(service, 'sendNotification').mockResolvedValue()
@@ -119,13 +198,58 @@ describe('VoicemailsService', () => {
             await expect(service.update(folderUpdate(1, 'Old'), sr)).rejects.toThrow(InternalServerErrorException)
             expect(updateSpy).not.toHaveBeenCalled()
         })
+
+        it('throws 422 when some ids do not exist', async () => {
+            jest.spyOn(voicemailMockRepo, 'readCountOfIds').mockResolvedValue(0)
+            await expect(service.update(folderUpdate(1, 'Old'), sr)).rejects.toThrow(UnprocessableEntityException)
+            expect(updateSpy).not.toHaveBeenCalled()
+        })
+
+        it('throws 400 for an unsupported folder', async () => {
+            jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([voicemail(1, `${basePath}/INBOX`)])
+            await expect(service.update(folderUpdate(1, 'Nope'), sr)).rejects.toThrow(BadRequestException)
+            expect(updateSpy).not.toHaveBeenCalled()
+        })
+
+        it('matches the folder name case-insensitively', async () => {
+            jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([voicemail(1, `${basePath}/Old`)])
+            await service.update(folderUpdate(1, 'inbox'), sr)
+            expect(updateSpy.mock.calls[0][0]['1'].dir).toEqual(`${basePath}/INBOX`)
+            expect(notifySpy).toHaveBeenCalledWith(expect.anything(), sr, 'x')
+        })
+
+        it('appends after the highest msgnum of the destination folder', async () => {
+            jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([voicemail(1, `${basePath}/INBOX`)])
+            const maxSpy = jest.spyOn(voicemailMockRepo, 'readMaxMsgnumByDir').mockResolvedValue(4)
+            await service.update(folderUpdate(1, 'Work'), sr)
+            expect(maxSpy).toHaveBeenCalledWith(uuid, `${basePath}/Work`, sr)
+            expect(updateSpy.mock.calls[0][0]['1'].msgnum).toEqual(5)
+        })
+
+        it('gives consecutive msgnums to several messages moved into one folder', async () => {
+            jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([
+                voicemail(1, `${basePath}/INBOX`), voicemail(2, `${basePath}/INBOX`),
+            ])
+            const maxSpy = jest.spyOn(voicemailMockRepo, 'readMaxMsgnumByDir').mockResolvedValue(4)
+            const updates = folderUpdate(1, 'Work')
+            updates['2'] = internal.Voicemail.create({id: 2, dir: 'Work'} as internal.Voicemail)
+            await service.update(updates, sr)
+            expect(maxSpy).toHaveBeenCalledTimes(1)
+            expect(updateSpy.mock.calls[0][0]['1'].msgnum).toEqual(5)
+            expect(updateSpy.mock.calls[0][0]['2'].msgnum).toEqual(6)
+            expect(renumberSpy).toHaveBeenCalledTimes(1)
+            expect(notifySpy).toHaveBeenCalledTimes(2)
+        })
+
+        it('updates without folder handling when no dir is given', async () => {
+            jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([voicemail(1, `${basePath}/INBOX`)])
+            const maxSpy = jest.spyOn(voicemailMockRepo, 'readMaxMsgnumByDir')
+            const updates = new Dictionary<internal.Voicemail>('1', internal.Voicemail.create({id: 1} as internal.Voicemail))
+            await expect(service.update(updates, sr)).resolves.toEqual([1])
+            expect(maxSpy).not.toHaveBeenCalled()
+            expect(renumberSpy).not.toHaveBeenCalled()
+            expect(notifySpy).not.toHaveBeenCalled()
+        })
     })
 
-    // describe('adjust', () => {
-
-    // })
-
-    // describe('delete', () => {
-
-    // })
 })

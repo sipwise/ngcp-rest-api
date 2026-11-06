@@ -51,7 +51,7 @@ describe('Rule', () => {
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
-            imports: [HeaderManipulationSetModule,HeaderManipulationRuleModule, AppModule],
+            imports: [HeaderManipulationRuleModule, HeaderManipulationSetModule, AppModule],
         })
             .compile()
 
@@ -271,6 +271,18 @@ describe('Rule', () => {
                 expect(rule.stopper).toEqual(true)
                 expect(rule.enabled).toEqual(false)
             })
+            it('list rules of created sets', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/header-manipulations/sets/${createdSetIds[1]}/rules`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(2)
+                const ids = response.body.data.map((r: HeaderManipulationRuleResponseDto) => r.id)
+                expect(ids.sort()).toEqual([createdRuleIds[1], createdRuleIds[2]].sort())
+                for (const rule of response.body.data)
+                    expect(rule.set_id).toEqual(createdSetIds[1])
+            })
             it('read non-existing rule', async () => {
                 const response = await request(app.getHttpServer())
                     .get('/api/header-manipulations/rules/999911111122')
@@ -326,6 +338,56 @@ describe('Rule', () => {
                     .send(rulefoo)
                 expect(response.status).toEqual(404)
             })
+
+            it('update rules 2 and 3 bulk', async () => {
+                const body: Record<number, RulePost> = {
+                    [createdRuleIds[1]]: {
+                        set_id: createdSetIds[1],
+                        name: 'test_rule_bulk2',
+                        description: 'test_rule_bulk2 description',
+                        priority: 210,
+                        direction: 'a_inbound',
+                        stopper: false,
+                        enabled: true,
+                    },
+                    [createdRuleIds[2]]: {
+                        set_id: createdSetIds[1],
+                        name: 'test_rule_bulk3',
+                        description: 'test_rule_bulk3 description',
+                        priority: 310,
+                        direction: 'a_outbound',
+                        stopper: false,
+                        enabled: false,
+                    },
+                }
+                const response = await request(app.getHttpServer())
+                    .put('/api/header-manipulations/sets/rules')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(body)
+                expect(response.status).toEqual(204)
+            })
+            it('read bulk updated rules', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/header-manipulations/sets/${createdSetIds[1]}/rules`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(2)
+                const rules: Record<number, HeaderManipulationRuleResponseDto> = {}
+                for (const rule of response.body.data)
+                    rules[rule.id] = rule
+                expect(rules[createdRuleIds[1]].name).toEqual('test_rule_bulk2')
+                expect(rules[createdRuleIds[1]].priority).toEqual(210)
+                expect(rules[createdRuleIds[1]].direction).toEqual('a_inbound')
+                expect(rules[createdRuleIds[1]].stopper).toEqual(false)
+                expect(rules[createdRuleIds[1]].enabled).toEqual(true)
+                expect(rules[createdRuleIds[2]].name).toEqual('test_rule_bulk3')
+                expect(rules[createdRuleIds[2]].priority).toEqual(310)
+                expect(rules[createdRuleIds[2]].direction).toEqual('a_outbound')
+                expect(rules[createdRuleIds[2]].enabled).toEqual(false)
+            })
         })
 
         describe('PATCH', () => {
@@ -368,6 +430,41 @@ describe('Rule', () => {
                     .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(404)
+            })
+            it('adjust rules 2 and 3 bulk', async () => {
+                const body: Record<number, PatchOperation[]> = {
+                    [createdRuleIds[1]]: [
+                        {op: 'replace', path: '/priority', value: 250},
+                        {op: 'replace', path: '/name', value: 'test_rule_patch2'},
+                    ],
+                    [createdRuleIds[2]]: [
+                        {op: 'replace', path: '/priority', value: 350},
+                        {op: 'replace', path: '/stopper', value: true},
+                    ],
+                }
+                const response = await request(app.getHttpServer())
+                    .patch('/api/header-manipulations/sets/rules')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send(body)
+                expect(response.status).toEqual(204)
+            })
+            it('read bulk adjusted rules', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/header-manipulations/sets/${createdSetIds[1]}/rules`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(2)
+                const rules: Record<number, HeaderManipulationRuleResponseDto> = {}
+                for (const rule of response.body.data)
+                    rules[rule.id] = rule
+                expect(rules[createdRuleIds[1]].name).toEqual('test_rule_patch2')
+                expect(rules[createdRuleIds[1]].priority).toEqual(250)
+                expect(rules[createdRuleIds[2]].name).toEqual('test_rule5')
+                expect(rules[createdRuleIds[2]].priority).toEqual(350)
+                expect(rules[createdRuleIds[2]].stopper).toEqual(true)
             })
         })
     })

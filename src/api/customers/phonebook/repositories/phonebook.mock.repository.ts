@@ -14,6 +14,7 @@ export class CustomerPhonebookMockRepository implements CustomerPhonebookReposit
     private readonly db: CustomerPhonebookMockDB
 
     public existingContracts = [1]
+    public customerResellers: {[customerId: number]: number} = {1: 2}
 
     constructor() {
         this.db = {
@@ -54,6 +55,10 @@ export class CustomerPhonebookMockRepository implements CustomerPhonebookReposit
                 number: '600',
             }),
         }
+    }
+
+    readCountOfCustomers(customerIds: number[], resellerId: number): Promise<number> {
+        return Promise.resolve(customerIds.filter(id => this.customerResellers[id] == resellerId).length)
     }
 
     create(phonebook: internal.CustomerPhonebook[]): Promise<number[]> {
@@ -110,6 +115,34 @@ export class CustomerPhonebookMockRepository implements CustomerPhonebookReposit
             this.db[id] = updates[id]
         }
         return Promise.resolve(ids)
+    }
+
+    readAllFromViewAll(options: CustomerPhonebookOptions, sr: ServiceRequest): Promise<[internal.CustomerPhonebook[], number]> {
+        return this.readAll(options, sr)
+    }
+
+    readByIdFromViewAll(id: string, options: CustomerPhonebookOptions): Promise<internal.CustomerPhonebook> {
+        return this.readById(+id, options)
+    }
+
+    readAllFromViewShared(options: CustomerPhonebookOptions, sr: ServiceRequest): Promise<[internal.CustomerPhonebook[], number]> {
+        return this.readAll(options, sr)
+    }
+
+    readByIdFromViewShared(id: string, options: CustomerPhonebookOptions): Promise<internal.CustomerPhonebook> {
+        return this.readById(+id, options)
+    }
+
+    readAllFromViewReseller(options: CustomerPhonebookOptions, sr: ServiceRequest): Promise<[internal.CustomerPhonebook[], number]> {
+        return this.readAll(options, sr)
+    }
+
+    readByIdFromViewReseller(id: string, options: CustomerPhonebookOptions): Promise<internal.CustomerPhonebook> {
+        return this.readById(+id, options)
+    }
+
+    purge(_customerId: number, _sr: ServiceRequest): Promise<number> {
+        return Promise.resolve(_customerId)
     }
 
     private getNextId(): number {

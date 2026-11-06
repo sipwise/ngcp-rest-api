@@ -1,6 +1,7 @@
 import {NotFoundException} from '@nestjs/common'
 
 import {RewriteRuleSetRepository} from '~/api/rewrite-rules/sets/interfaces/set.repository'
+import {FilterBy} from '~/api/rewrite-rules/sets/repositories/set.mariadb.repository'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -13,6 +14,8 @@ export class RewriteRuleSetMockRepository implements RewriteRuleSetRepository {
 
     private readonly db: RewriteRuleSetMockDB
     private nextId: number
+    readonly cleaned: number[] = []
+    readonly createdRules: internal.RewriteRule[] = []
 
     constructor() {
         this.db = {
@@ -48,26 +51,40 @@ export class RewriteRuleSetMockRepository implements RewriteRuleSetRepository {
         for (const id of ids) {
             this.throwErrorIfIdNotExists(id)
         }
+        for (const id of ids) {
+            delete this.db[id]
+        }
         return Promise.resolve(ids)
     }
 
-    async readAll(_sr: ServiceRequest): Promise<[internal.RewriteRuleSet[], number]> {
-        const sets: [internal.RewriteRuleSet[], number] =
-            [Object.keys(this.db).map(id => this.db[id] as internal.RewriteRuleSet), Object.keys(this.db).length]
-        return Promise.resolve(sets)
+    async readAll(_sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.RewriteRuleSet[], number]> {
+        const sets = (Object.values(this.db) as internal.RewriteRuleSet[]).filter(set => this.matches(set, filterBy))
+        return Promise.resolve([sets, sets.length])
     }
 
-    async readById(id: number, _sr: ServiceRequest): Promise<internal.RewriteRuleSet> {
+    async readById(id: number, _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.RewriteRuleSet> {
         this.throwErrorIfIdNotExists(id)
+        if (!this.matches(this.db[id], filterBy))
+            throw new NotFoundException()
         return Promise.resolve(this.db[id])
     }
 
-    async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.RewriteRuleSet[]> {
-        const sets: internal.RewriteRuleSet[] = []
-        for (const id of ids) {
-            sets.push(await this.readById(id, sr))
-        }
-        return Promise.resolve(sets)
+    async readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.RewriteRuleSet[]> {
+        return Promise.resolve(ids.filter(id => this.db[id] != undefined && this.matches(this.db[id], filterBy)).map(id => this.db[id]))
+    }
+
+    async cleanSets(id: number, _sr: ServiceRequest): Promise<void> {
+        this.cleaned.push(id)
+        return Promise.resolve()
+    }
+
+    async createRules(rules: internal.RewriteRule[]): Promise<number[]> {
+        this.createdRules.push(...rules)
+        return Promise.resolve(rules.map((_r, i) => i + 1))
+    }
+
+    private matches(set: internal.RewriteRuleSet, filterBy?: FilterBy): boolean {
+        return filterBy?.resellerId === undefined || set.resellerId == filterBy.resellerId
     }
 
     private throwErrorIfIdNotExists(id: number): void {

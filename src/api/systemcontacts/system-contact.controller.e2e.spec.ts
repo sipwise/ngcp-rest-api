@@ -251,6 +251,32 @@ describe('SystemContact', () => {
                     .send(contact3)
                 expect(response.status).toEqual(404)
             })
+            it('update system contacts bulk', async () => {
+                const response = await request(app.getHttpServer())
+                    .put('/api/systemcontacts')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        [createdIds[1]]: {
+                            firstname: 'test_sc2_first',
+                            lastname: 'test_sc2_put_last',
+                            email: 'test_sc2@example.com',
+                            newsletter: false,
+                            status: ContactStatus.Active,
+                        },
+                    })
+                expect(response.status).toEqual(204)
+
+                const read = await request(app.getHttpServer())
+                    .get(`/api/systemcontacts/${createdIds[1]}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(read.status).toEqual(200)
+                const contact: SystemContactResponseDto = read.body
+                expect(contact.lastname).toEqual('test_sc2_put_last')
+                expect(contact.newsletter).toEqual(false)
+            })
         })
 
         describe('PATCH', () => {

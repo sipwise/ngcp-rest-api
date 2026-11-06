@@ -39,6 +39,10 @@ export class VoicemailMockRepository implements VoicemailRepository {
         return Promise.resolve(-1)
     }
 
+    readMessagesCountByUUID(_mailboxuser: string, _sr: ServiceRequest): Promise<{new_messages: number, old_messages: number}> {
+        return Promise.resolve({new_messages: 0, old_messages: 0})
+    }
+
     renumberDir(_mailboxuser: string, _dir: string, _sr: ServiceRequest): Promise<void> {
         return Promise.resolve()
     }

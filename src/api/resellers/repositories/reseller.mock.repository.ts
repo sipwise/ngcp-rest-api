@@ -30,6 +30,7 @@ export class ResellerMockRepository implements ResellerRepository {
             3: internal.Contract.create({id: 3, status: ContractStatus.Active, contact_id: 1}),
             4: internal.Contract.create({id: 4, status: ContractStatus.Active}),
             5: internal.Contract.create({id: 5, status: ContractStatus.Active, contact_id: 1}),
+            6: internal.Contract.create({id: 6, status: ContractStatus.Active, contact_id: 1}),
         }
     }
 
@@ -79,6 +80,10 @@ export class ResellerMockRepository implements ResellerRepository {
             resellers.push(this.resellerDB[id])
         }
         return Promise.resolve(resellers)
+    }
+
+    readCountOfIds(ids: number[]): Promise<number> {
+        return Promise.resolve(ids.filter(id => this.resellerDB[id] != undefined).length)
     }
 
     readByName(name: string, _sr: ServiceRequest): Promise<internal.Reseller> {

@@ -53,7 +53,7 @@ describe('Rewrite Rule', () => {
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
-            imports: [RewriteRuleSetModule, RewriteRuleModule, AppModule],
+            imports: [RewriteRuleModule, RewriteRuleSetModule, AppModule],
         })
             .compile()
 
@@ -269,6 +269,26 @@ describe('Rewrite Rule', () => {
                 expect(rule.description).toEqual('test_rule2 description')
                 expect(rule.priority).toEqual(200)
                 expect(rule.enabled).toEqual(false)
+            })
+            it('read rules list of a set', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/rewrite-rules/sets/${createdSetIds[1]}/rules`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(2)
+                const ids = response.body.data.map((r: {id: number}) => +r.id).sort((a: number, b: number) => a - b)
+                expect(ids).toEqual([createdRuleIds[1], createdRuleIds[2]].sort((a, b) => a - b))
+            })
+            it('read rules list filtered by set', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/rewrite-rules/sets/rules?set_id=${createdSetIds[1]}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(2)
+                const ids = response.body.data.map((r: {id: number}) => +r.id).sort((a: number, b: number) => a - b)
+                expect(ids).toEqual([createdRuleIds[1], createdRuleIds[2]].sort((a, b) => a - b))
             })
             it('read non-existing rule', async () => {
                 const response = await request(app.getHttpServer())

@@ -1,4 +1,4 @@
-import {UnprocessableEntityException} from '@nestjs/common'
+import {ForbiddenException, NotFoundException, UnprocessableEntityException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 
 import {ResellerMariadbRepository} from './repositories/reseller.mariadb.repository'
@@ -10,6 +10,7 @@ import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
+import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -41,6 +42,10 @@ describe('ResellerService', () => {
 
         service = module.get<ResellerService>(ResellerService)
         sr = {returnContent: true, headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
+    })
+
+    afterEach(() => {
+        jest.restoreAllMocks()
     })
 
     it('should be defined', () => {
@@ -105,6 +110,102 @@ describe('ResellerService', () => {
                 name: 'reseller1',
                 status: ResellerStatus.Active,
             })], sr)).rejects.toThrow(UnprocessableEntityException)
+        })
+    })
+
+    describe('create (terminated name, side effects)', () => {
+        it('renames a terminated reseller with the same name and creates the new one', async () => {
+            jest.spyOn(resellerMockRepo, 'readByName').mockResolvedValue(
+                internal.Reseller.create({id: 77, contract_id: 1, name: 'old', status: ResellerStatus.Terminated}))
+            const renameSpy = jest.spyOn(resellerMockRepo, 'renameReseller')
+            const templatesSpy = jest.spyOn(resellerMockRepo, 'createEmailTemplates')
+            const result = await service.create([internal.Reseller.create({
+                contract_id: 6,
+                name: 'old',
+                status: ResellerStatus.Active,
+            })], sr)
+            expect(renameSpy).toHaveBeenCalledWith(77, 'old')
+            expect(templatesSpy).toHaveBeenCalledWith([result[0].id])
+        })
+
+        it('does not create anything when a later item is invalid', async () => {
+            const createSpy = jest.spyOn(resellerMockRepo, 'create')
+            await expect(service.create([
+                internal.Reseller.create({contract_id: 5, name: 'jest-ok', status: ResellerStatus.Active}),
+                internal.Reseller.create({contract_id: 100, name: 'jest-bad', status: ResellerStatus.Active}),
+            ], sr)).rejects.toThrow(UnprocessableEntityException)
+            expect(createSpy).not.toHaveBeenCalled()
+        })
+    })
+
+    describe('update', () => {
+        const upd = (id: number, r: Partial<internal.Reseller>): Dictionary<internal.Reseller> =>
+            new Dictionary<internal.Reseller>(id.toString(), internal.Reseller.create({id, ...r} as internal.Reseller))
+        const resellerUser: AuthResponseDto = {...user, role: 'reseller', is_master: false, reseller_id: 1, reseller_id_required: true}
+        let srReseller: ServiceRequest
+        let updateSpy: jest.SpyInstance
+
+        beforeEach(() => {
+            updateSpy = jest.spyOn(resellerMockRepo, 'update').mockResolvedValue([1])
+            srReseller = {...sr, user: resellerUser}
+        })
+
+        it('throws NotFoundException when an id does not exist', async () => {
+            await expect(service.update(upd(100, {contract_id: 1, name: 'x'}), sr)).rejects.toThrow(NotFoundException)
+            expect(updateSpy).not.toHaveBeenCalled()
+        })
+
+        it('throws NotFoundException when only some ids exist', async () => {
+            const updates = upd(1, {contract_id: 1, name: 'reseller1'})
+            updates['100'] = internal.Reseller.create({id: 100, contract_id: 1, name: 'x'} as internal.Reseller)
+            await expect(service.update(updates, sr)).rejects.toThrow(NotFoundException)
+            expect(updateSpy).not.toHaveBeenCalled()
+        })
+
+        it('updates without validation when contract and name are unchanged', async () => {
+            const contractSpy = jest.spyOn(resellerMockRepo, 'contractExists')
+            const nameSpy = jest.spyOn(resellerMockRepo, 'readByName')
+            const updates = upd(1, {contract_id: 1, name: 'reseller1', status: ResellerStatus.Active})
+            await expect(service.update(updates, sr)).resolves.toEqual([1])
+            expect(contractSpy).not.toHaveBeenCalled()
+            expect(nameSpy).not.toHaveBeenCalled()
+            expect(updateSpy).toHaveBeenCalledWith(updates, sr)
+        })
+
+        it('throws 422 when the new name exists', async () => {
+            jest.spyOn(resellerMockRepo, 'readByName').mockResolvedValue(
+                internal.Reseller.create({id: 2, contract_id: 2, name: 'taken'} as internal.Reseller))
+            await expect(service.update(upd(1, {contract_id: 1, name: 'taken'}), sr)).rejects.toThrow(UnprocessableEntityException)
+            expect(updateSpy).not.toHaveBeenCalled()
+        })
+
+        it('allows a free new name', async () => {
+            await expect(service.update(upd(1, {contract_id: 1, name: 'free-name'}), sr)).resolves.toEqual([1])
+        })
+
+        it('throws 422 when the new contract does not exist', async () => {
+            await expect(service.update(upd(1, {contract_id: 100, name: 'reseller1'}), sr)).rejects.toThrow(UnprocessableEntityException)
+        })
+
+        it('throws 422 when the new contract already has a reseller', async () => {
+            await expect(service.update(upd(1, {contract_id: 2, name: 'reseller1'}), sr)).rejects.toThrow(UnprocessableEntityException)
+        })
+
+        it('throws 422 when the new contract has no system contact', async () => {
+            await expect(service.update(upd(1, {contract_id: 4, name: 'reseller1'}), sr)).rejects.toThrow(UnprocessableEntityException)
+        })
+
+        it('accepts a valid new contract', async () => {
+            await expect(service.update(upd(1, {contract_id: 5, name: 'reseller1'}), sr)).resolves.toEqual([1])
+        })
+
+        it('forbids a reseller user to update another reseller', async () => {
+            await expect(service.update(upd(2, {contract_id: 2, name: 'reseller1'}), srReseller)).rejects.toThrow(ForbiddenException)
+            expect(updateSpy).not.toHaveBeenCalled()
+        })
+
+        it('allows a reseller user to update its own reseller', async () => {
+            await expect(service.update(upd(1, {contract_id: 1, name: 'reseller1'}), srReseller)).resolves.toEqual([1])
         })
     })
 })

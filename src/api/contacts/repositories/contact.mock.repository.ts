@@ -142,6 +142,18 @@ export class ContactMockRepository implements ContactRepository {
         return Promise.resolve(contacts)
     }
 
+    readActiveContactsInIds(ids: number[], options?: ContactOptions): Promise<internal.Contact[]> {
+        return Promise.resolve(ids.map(id => this.contactDB[id]).filter(contact => {
+            if (!contact || contact.status !== ContactStatus.Active)
+                return false
+            if (options?.type === ContactType.CustomerContact && contact.reseller_id == undefined)
+                return false
+            if (options?.type === ContactType.SystemContact && contact.reseller_id != undefined)
+                return false
+            return options?.filterBy?.resellerId == undefined || contact.reseller_id == options.filterBy.resellerId
+        }))
+    }
+
     readResellerById(id: number, _sr: ServiceRequest): Promise<internal.Reseller> {
         return Promise.resolve(this.resellerDB[id])
     }

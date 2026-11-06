@@ -13,6 +13,7 @@ const baseOptions = {
     ...parsed.options,
     module: ts.ModuleKind.CommonJS,
     isolatedModules: true,
+    outDir: undefined,
 };
 
 module.exports = {
@@ -25,6 +26,7 @@ module.exports = {
 
         const result = ts.transpileModule(sourceText, {
             compilerOptions: baseOptions,
+            fileName: sourceFilePath,
             /*
             ...(isTypeScript && {
                 transformers: {

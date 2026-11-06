@@ -4,8 +4,7 @@ import {Test} from '@nestjs/testing'
 import bodyParser from 'body-parser'
 import request from 'supertest'
 
-import {SubscriberResponseDto} from './dto/subscriber-response.dto'
-import {SubscriberModule} from './subscriber.module'
+import {AuthUserinfoModule} from './userinfo.module'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
@@ -13,7 +12,6 @@ import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
-import {validate} from '~/helpers/validate.helper'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
@@ -25,11 +23,13 @@ describe('', () => {
     let appService: AppService
     let authService: AuthService
     let authHeader: [string, string]
+    let adminId: number
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const goneLogin = `mockGoneAdmin${process.env.JEST_WORKER_ID}${Date.now()}`
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
-            imports: [SubscriberModule, AppModule],
+            imports: [AuthUserinfoModule, AppModule],
         })
             .compile()
 
@@ -67,7 +67,7 @@ describe('', () => {
 
         await db.billing.Admin.delete({login: creds.username})
         const adminRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.admin})
-        await db.billing.Admin.insert({
+        const result = await db.billing.Admin.insert({
             reseller_id: 1,
             login: creds.username,
             saltedpass: 'mockAdminSaltedpass',
@@ -87,6 +87,7 @@ describe('', () => {
             enable_2fa: false,
             show_otp_registration_info: false,
         })
+        adminId = result.identifiers[0].id
     })
 
     afterAll(async () => {
@@ -122,20 +123,57 @@ describe('', () => {
 
     describe('', () => { // main tests block
         describe('GET', () => {
-            it('read subscribers', async () => {
+            it('read auth/userinfo', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/subscribers')
+                    .get('/api/auth/userinfo')
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                const subscribers: SubscriberResponseDto[] = response.body.data
-                expect(await validate(subscribers)).toEqual([])
+                expect(response.body.username).toEqual(creds.username)
+                expect(response.body.role).toEqual('admin')
+                expect(response.body.id).toEqual(adminId)
+            })
+
+            it('not expose the otp secret', async () => {
+                await db.billing.Admin.update(adminId, {otp_secret: 'MOCKOTPSECRETE2E'})
+                const response = await request(app.getHttpServer())
+                    .get('/api/auth/userinfo')
+                    .set('Authorization', 'Basic ' + Buffer.from(`${creds.username}:${creds.password}`).toString('base64'))
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body).not.toHaveProperty('otp_secret_key')
+                expect(JSON.stringify(response.body)).not.toContain('MOCKOTPSECRETE2E')
+            })
+
+            it('reject the token of a deleted admin', async () => {
+                const admin = await db.billing.Admin.findOneByOrFail({id: adminId})
+                await db.billing.Admin.insert({...admin, id: undefined, login: goneLogin, otp_secret: null})
+                const jwt = await request(app.getHttpServer())
+                    .post('/api/auth/jwt')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({username: goneLogin, password: creds.password})
+                expect(jwt.status).toEqual(201)
+                await db.billing.Admin.delete({login: goneLogin})
+                const response = await request(app.getHttpServer())
+                    .get('/api/auth/userinfo')
+                    .set('Authorization', 'Bearer ' + jwt.body['access_token'])
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(401)
+            })
+
+            it('reject auth/userinfo without credentials', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/api/auth/userinfo')
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(401)
             })
         })
     })
 
-    describe('Subscribers DELETE', () => {
+    describe('Auth Userinfo DELETE', () => {
         it('delete mock admin', async () => {
+            await db.billing.Admin.delete({login: goneLogin})
             await db.billing.Admin.delete({login: creds.username})
         })
     })

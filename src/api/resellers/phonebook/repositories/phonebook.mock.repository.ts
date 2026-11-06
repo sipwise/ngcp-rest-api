@@ -112,6 +112,10 @@ export class ResellerPhonebookMockRepository implements ResellerPhonebookReposit
         return Promise.resolve(ids)
     }
 
+    purge(_resellerId: number, _sr: ServiceRequest): Promise<number> {
+        return Promise.resolve(_resellerId)
+    }
+
     private getNextId(): number {
         const keys = Object.keys(this.db)
         return (+keys[keys.length - 1]) + 1

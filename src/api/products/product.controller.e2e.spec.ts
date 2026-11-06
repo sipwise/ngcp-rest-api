@@ -4,8 +4,8 @@ import {Test} from '@nestjs/testing'
 import bodyParser from 'body-parser'
 import request from 'supertest'
 
-import {RewriteRuleBaseResponseDto} from './dto/rewrite-rule-base-response.dto'
-import {RewriteRuleModule} from './rewrite-rule.module'
+import {ProductResponseDto} from './dto/product-response.dto'
+import {ProductModule} from './product.module'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
@@ -29,7 +29,7 @@ describe('', () => {
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
-            imports: [RewriteRuleModule, AppModule],
+            imports: [ProductModule, AppModule],
         })
             .compile()
 
@@ -122,19 +122,42 @@ describe('', () => {
 
     describe('', () => { // main tests block
         describe('GET', () => {
-            it('read rewrite rules', async () => {
+            it('read products', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/rewrite-rules')
+                    .get('/api/products')
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                const setCollection: RewriteRuleBaseResponseDto = response.body
-                expect(await validate(setCollection)).toEqual([])
+                expect(response.body.total_count).toBeGreaterThanOrEqual(5)
+                const products: ProductResponseDto[] = response.body.data
+                expect(products.map(product => product.id)).toContain(1)
+                expect(await validate(products)).toEqual([])
+            })
+
+            it('read product by id', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/api/products/1')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                const product: ProductResponseDto = response.body
+                expect(product.id).toEqual(1)
+                expect(typeof product.handle).toEqual('string')
+                expect(typeof product.name).toEqual('string')
+                expect(await validate(product)).toEqual([])
+            })
+
+            it('return 404 for a non-existing product', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/api/products/2147483647')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(404)
             })
         })
     })
 
-    describe('Rewrite Rules DELETE', () => {
+    describe('Products DELETE', () => {
         it('delete mock admin', async () => {
             await db.billing.Admin.delete({login: creds.username})
         })

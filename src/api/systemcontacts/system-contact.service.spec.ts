@@ -120,29 +120,27 @@ describe('SystemContactService', () => {
             const result = await service.read(id, sr)
             expect(result.status).toStrictEqual(ContractStatus.Terminated)
         })
-        it.skip('should throw an error if id does not exist', async () => {
+        it('should throw an error if id does not exist', async () => {
             const id = 100
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/status', value: ContactStatus.Terminated},
             ]
-            const oldEntity = await service.read(id, sr)
-            const entity = await patchToEntity<internal.Contact, SystemContactRequestDto>(oldEntity, patch, SystemContactRequestDto)
+            await expect(service.read(id, sr)).rejects.toThrow(NotFoundException)
+            const entity = await patchToEntity<internal.Contact, SystemContactRequestDto>(internal.Contact.create({id}), patch, SystemContactRequestDto)
             const update = new Dictionary<internal.Contact>(id.toString(), entity)
             await expect(service.update(update, sr)).rejects.toThrow(NotFoundException)
         })
 
-        // TODO: when debugging reseller_id is not set, but an exception is thrown as expected
-        //       but DELETE fails because somehow the reseller_id is set in the repository!?
-        it.skip('should throw an error if reseller_id was updated', async () => {
+        it('should throw an error if reseller_id was updated', async () => {
             const id = 1
             const resellerId = 1
             const patch: PatchOperation[] = [
                 {op: 'replace', path: '/reseller_id', value: resellerId},
             ]
             const oldEntity = await service.read(id, sr)
-            const entity = await patchToEntity<internal.Contact, SystemContactRequestDto>(oldEntity, patch, SystemContactRequestDto)
-            const update = new Dictionary<internal.Contact>(id.toString(), entity)
-            await expect(service.update(update, sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(patchToEntity<internal.Contact, SystemContactRequestDto>(oldEntity, patch, SystemContactRequestDto))
+                .rejects.toThrow(UnprocessableEntityException)
+            expect((await service.read(id, sr)).reseller_id).toBeUndefined()
         })
     })
 

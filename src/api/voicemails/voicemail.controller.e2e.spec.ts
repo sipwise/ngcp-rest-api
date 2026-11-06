@@ -298,6 +298,53 @@ describe('Voicemail', () => {
             })
         })
 
+        describe('GET by id', () => {
+            it('should get a voicemail by id', async () => {
+                const id = createdVoicemailIds[0]
+                const response = await request(app.getHttpServer())
+                    .get(`/api/voicemails/${id}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.id).toEqual(id)
+                expect(response.body.call_id).toEqual('76d762ae_pbx-1')
+                expect(response.body.duration).toEqual('173')
+                expect(response.body.folder).toEqual('Old')
+            })
+        })
+
+        describe('DELETE by id', () => {
+            it('should delete a voicemail and then not find it', async () => {
+                const spool = await db.kamailio.VoicemailSpool.findOneByOrFail({id: createdVoicemailIds[0]})
+                const id = (await db.kamailio.VoicemailSpool.save(db.kamailio.VoicemailSpool.create({
+                    msgnum: 9100,
+                    dir: `${voicemailSpoolDir}${spool.mailboxuser}/Old`,
+                    context: spool.context,
+                    mailboxcontext: spool.mailboxcontext,
+                    mailboxuser: spool.mailboxuser,
+                    msg_id: 'delete-test',
+                    call_id: 'delete-test',
+                    flag: '',
+                    origtime: spool.origtime,
+                    duration: spool.duration,
+                }))).id
+                createdVoicemailIds.push(id)
+                const notify = jest.spyOn(app.get(VoicemailService), 'sendNotification').mockResolvedValue()
+                const response = await request(app.getHttpServer())
+                    .delete(`/api/voicemails/${id}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                expect(response.status).toEqual(204)
+                expect(notify).toHaveBeenCalledWith(expect.objectContaining({id: id}), expect.anything(), 'd')
+                const get = await request(app.getHttpServer())
+                    .get(`/api/voicemails/${id}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(get.status).toEqual(404)
+            })
+        })
+
         describe('PUT/PATCH folder', () => {
             let basePath: string
             let inboxId: number

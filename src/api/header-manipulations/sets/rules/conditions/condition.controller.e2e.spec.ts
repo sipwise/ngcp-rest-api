@@ -310,6 +310,18 @@ describe('Rule Condition', () => {
                 expect(conditions.data.length).toEqual(3)
                 expect(conditions.data[0].value).toEqual('foo')
             })
+            it('list conditions of created rule', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/header-manipulations/sets/rules/${createdRuleIds[0]}/conditions`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(createdConditionIds.length)
+                const ids = response.body.data.map((c: HeaderManipulationRuleConditionResponseDto) => c.id)
+                expect(ids.sort()).toEqual([...createdConditionIds].sort())
+                for (const condition of response.body.data)
+                    expect(condition.rule_id).toEqual(createdRuleIds[0])
+            })
             it('read non-existing condition', async () => {
                 const response = await request(app.getHttpServer())
                     .get('/api/header-manipulations/sets/rules/conditions/999911111122')

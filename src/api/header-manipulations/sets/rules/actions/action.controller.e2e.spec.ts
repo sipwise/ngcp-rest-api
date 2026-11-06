@@ -298,6 +298,18 @@ describe('Rule Action', () => {
                 expect(action.header_part).toEqual('full')
                 expect((action as unknown as RuleActionWithExpand).rwr_set_id_expand).toBeDefined()
             })
+            it('list actions of created rule', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/header-manipulations/sets/rules/${createdRuleIds[0]}/actions`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(createdActionIds.length)
+                const ids = response.body.data.map((a: HeaderManipulationRuleActionResponseDto) => a.id)
+                expect(ids.sort()).toEqual([...createdActionIds].sort())
+                for (const action of response.body.data)
+                    expect(action.rule_id).toEqual(createdRuleIds[0])
+            })
             it('read non-existing action', async () => {
                 const response = await request(app.getHttpServer())
                     .get('/api/header-manipulations/sets/rules/actions/999911111122')

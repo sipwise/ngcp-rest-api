@@ -12,6 +12,7 @@ export class DomainMockRepository implements DomainRepository {
 
     private readonly db: DomainMockDB
     private nextId: number
+    private readonly resellerIds = [1, 2, 3]
 
     constructor() {
         this.db = {
@@ -45,8 +46,12 @@ export class DomainMockRepository implements DomainRepository {
         return Promise.resolve(domains)
     }
 
-    async readByDomain(_domain: string, _sr: ServiceRequest): Promise<internal.Domain> {
-        return Promise.resolve(undefined as unknown as internal.Domain)
+    async readByDomain(domain: string, _sr: ServiceRequest): Promise<internal.Domain> {
+        return Promise.resolve((Object.values(this.db) as internal.Domain[]).find(d => d.domain == domain))
+    }
+
+    async readResellerById(id: number, _sr: ServiceRequest): Promise<internal.Reseller> {
+        return Promise.resolve(this.resellerIds.includes(id) ? {id: id} as internal.Reseller : undefined)
     }
 
     async readById(id: number, _sr: ServiceRequest): Promise<internal.Domain> {
@@ -54,12 +59,8 @@ export class DomainMockRepository implements DomainRepository {
         return Promise.resolve(this.db[id])
     }
 
-    async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Domain[]> {
-        const domains: internal.Domain[] = []
-        for (const id of ids) {
-            domains.push(await this.readById(id, sr))
-        }
-        return Promise.resolve(domains)
+    async readWhereInIds(ids: number[], _sr: ServiceRequest): Promise<internal.Domain[]> {
+        return Promise.resolve(ids.filter(id => this.db[id] != undefined).map(id => this.db[id]))
     }
 
     private throwErrorIfIdNotExists(id: number): void {

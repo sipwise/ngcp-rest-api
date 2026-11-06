@@ -40,6 +40,7 @@ describe('Reseller Phonebook', () => {
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
     const resellerCreds = {username: `pb_reseller_${Date.now().toString(36)}`, password: 'FFFooobarbaz123!!!'}
+    const num = `${process.env.JEST_WORKER_ID}${Date.now().toString().slice(-6)}`
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -147,7 +148,7 @@ describe('Reseller Phonebook', () => {
                 const purgeTest = await db.billing.ResellerPhonebook.create({
                     reseller_id: fixtureResellerId,
                     name: 'test',
-                    number: '123',
+                    number: `${num}123`,
                 }).save()
                 createdPhonebookIds.push(purgeTest.id)
 
@@ -173,7 +174,7 @@ describe('Reseller Phonebook', () => {
             it('create phonebook', async () => {
                 const phonebook1: PhonebookPost = {
                     name: 'test_phonebook1',
-                    number: '123',
+                    number: `${num}123`,
                     reseller_id: 1,
                 }
                 const response = await request(app.getHttpServer())
@@ -188,8 +189,8 @@ describe('Reseller Phonebook', () => {
             it('creates phonebook bulk from csv', async () => {
                 const csvContent = [
                     'reseller_id,name,number',
-                    '1,RES_PHONEBOOK_TEST_3,30003',
-                    '1,RES_PHONEBOOK_TEST_4,30004',
+                    `1,RES_PHONEBOOK_TEST_3,${num}30003`,
+                    `1,RES_PHONEBOOK_TEST_4,${num}30004`,
                 ].join('\n')
                 const response = await request(app.getHttpServer())
                     .post('/api/resellers/phonebook')
@@ -204,8 +205,8 @@ describe('Reseller Phonebook', () => {
             it('fails to create phonebook bulk because duplicate', async () => {
                 const csvContent = [
                     'reseller_id,name,number',
-                    '1,RES_PHONEBOOK_TEST_3,30003',
-                    '1,RES_PHONEBOOK_TEST_4,30004',
+                    `1,RES_PHONEBOOK_TEST_3,${num}30003`,
+                    `1,RES_PHONEBOOK_TEST_4,${num}30004`,
                 ].join('\n')
                 const response = await request(app.getHttpServer())
                     .post('/api/resellers/phonebook')
@@ -225,7 +226,7 @@ describe('Reseller Phonebook', () => {
                 expect(response.status).toEqual(200)
                 const phonebook: ResellerPhonebookResponseDto = response.body
                 expect(phonebook.name).toEqual('test_phonebook1')
-                expect(phonebook.number).toEqual('123')
+                expect(phonebook.number).toEqual(`${num}123`)
                 expect(phonebook.reseller_id).toEqual(1)
             })
             it('read created phonebook from csv', async () => {
@@ -236,6 +237,17 @@ describe('Reseller Phonebook', () => {
                 expect(response.status).toEqual(200)
                 const phonebook: ResellerPhonebookResponseDto = response.body
                 expect(phonebook.name).toEqual('RES_PHONEBOOK_TEST_3')
+            })
+            it('read phonebook list filtered by reseller', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/resellers/phonebook?reseller_id=${fixtureResellerId}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(2)
+                const entries: ResellerPhonebookResponseDto[] = response.body.data
+                expect(entries.map(e => +e.id).sort((a, b) => a - b)).toEqual(createdPhonebookIds.slice(0, 2).sort((a, b) => a - b))
+                expect(entries.every(e => e.reseller_id === fixtureResellerId)).toBe(true)
             })
             it('read non-existing phonebook', async () => {
                 const response = await request(app.getHttpServer())
@@ -250,7 +262,7 @@ describe('Reseller Phonebook', () => {
             it('update phonebook test_phonebook1 > test_phonebook_foo', async () => {
                 const phonebookfoo: PhonebookPost = {
                     name: 'test_phonebook_foo',
-                    number: '123',
+                    number: `${num}123`,
                     reseller_id: 1,
                 }
                 const response = await request(app.getHttpServer())
@@ -434,7 +446,7 @@ describe('Reseller Phonebook', () => {
                     .set('Content-Type', 'application/json')
                     .send({...{
                         name: 'test_phonebook_reseller',
-                        number: '8882',
+                        number: `${num}8882`,
                     }, reseller_id: 1})
                 expect(response.status).toEqual(422)
                 expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
@@ -447,7 +459,7 @@ describe('Reseller Phonebook', () => {
                     .set('Content-Type', 'application/json')
                     .send({
                         name: 'test_phonebook_reseller',
-                        number: '8882',
+                        number: `${num}8882`,
                     })
                 expect(response.status).toEqual(201)
                 resellerEntityId = +response.body.data[0].id
@@ -469,7 +481,7 @@ describe('Reseller Phonebook', () => {
                     .set('Content-Type', 'application/json')
                     .send({...{
                         name: 'renamed_test_phonebook_reseller',
-                        number: '8882',
+                        number: `${num}8882`,
                     }, reseller_id: 1})
                 expect(response.status).toEqual(422)
                 expect(JSON.stringify(response.body.message)).toContain('property reseller_id should not exist')
@@ -482,7 +494,7 @@ describe('Reseller Phonebook', () => {
                     .set('Content-Type', 'application/json')
                     .send({
                         name: 'renamed_test_phonebook_reseller',
-                        number: '8882',
+                        number: `${num}8882`,
                     })
                 expect(response.status).toEqual(204)
             })
@@ -538,8 +550,8 @@ describe('Reseller Phonebook', () => {
             })
             it('csv import without reseller_id', async () => {
                 const tt = [
-                    ['name,number', 'RES_PHONEBOOK_RESELLER_2,40003'],
-                    ['reseller_id,name,number', ',RES_PHONEBOOK_RESELLER_3,40004'],
+                    ['name,number', `RES_PHONEBOOK_RESELLER_2,${num}40003`],
+                    ['reseller_id,name,number', `,RES_PHONEBOOK_RESELLER_3,${num}40004`],
                 ]
                 for (const rows of tt) {
                     const response = await request(app.getHttpServer())

@@ -3,38 +3,41 @@ import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
 import bodyParser from 'body-parser'
 import request from 'supertest'
+import {MoreThanOrEqual} from 'typeorm'
 
-import {PbxResponseDto} from './dto/pbx-response.dto'
-import {PbxModule} from './pbx.module'
+import {AuthPasswordChangeModule} from './change.module'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
-import {License as LicenseType, RbacRole} from '~/config/constants.config'
-import {db} from '~/entities'
+import {RbacRole} from '~/config/constants.config'
+import {db, internal} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
-import {validate} from '~/helpers/validate.helper'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
 import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
-import {LicenseMockRepository} from '~/repositories/license.mock.repository'
-import {LicenseRepository} from '~/repositories/license.repository'
 
 describe('', () => {
     let app: INestApplication
     let appService: AppService
     let authService: AuthService
-    const licenseMockRepo = new LicenseMockRepository()
-    let authHeader: [string, string]
+    let fixtureAdminId: number
+    const startedAt = Date.now() / 1000
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const fixture = {
+        username: `pwchange${process.env.JEST_WORKER_ID}x${Date.now()}`,
+        password: 'OldPass#Abc123$Xyz!q',
+        newPassword: 'NewPass#Def456$Uvw!r',
+    }
+    const basicAuth = (username: string, password: string): [string, string] =>
+        ['Authorization', 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')]
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
-            imports: [PbxModule, AppModule],
+            imports: [AuthPasswordChangeModule, AppModule],
         })
-            .overrideProvider(LicenseRepository).useValue(licenseMockRepo)
             .compile()
 
         appService = moduleRef.get<AppService>(AppService)
@@ -69,12 +72,9 @@ describe('', () => {
 
         await app.init()
 
-        await db.billing.Admin.delete({login: creds.username})
         const adminRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.admin})
-        await db.billing.Admin.insert({
+        const adminFlags = {
             reseller_id: 1,
-            login: creds.username,
-            saltedpass: 'mockAdminSaltedpass',
             saltedpass_modify_timestamp: new Date(),
             role_id: adminRole.id,
             is_master: true,
@@ -90,11 +90,23 @@ describe('', () => {
             can_reset_password: true,
             enable_2fa: false,
             show_otp_registration_info: false,
-        })
-    })
+        }
 
-    afterEach(async () => {
-        licenseMockRepo.reset()
+        await db.billing.Admin.delete({login: creds.username})
+        await db.billing.Admin.insert({
+            ...adminFlags,
+            login: creds.username,
+            saltedpass: 'mockAdminSaltedpass',
+        })
+
+        const fixtureInternal = new internal.Admin()
+        fixtureInternal.password = fixture.password
+        const result = await db.billing.Admin.insert({
+            ...adminFlags,
+            login: fixture.username,
+            saltedpass: await fixtureInternal.generateSaltedpass(),
+        })
+        fixtureAdminId = result.identifiers[0].id
     })
 
     afterAll(async () => {
@@ -113,8 +125,12 @@ describe('', () => {
     })
 
     it('mock authService.compareBcryptPassword', async () => {
-        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(async () => true)
-        expect(await authService.compareBcryptPassword('123', '456')).toBe(true)
+        const realCompare: (pass: string, saltedpass: string) => Promise<boolean> =
+            authService.compareBcryptPassword.bind(authService)
+        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(
+            async (pass: string, saltedpass: string) => saltedpass === 'mockAdminSaltedpass' || realCompare(pass, saltedpass),
+        )
+        expect(await authService.compareBcryptPassword('123', 'mockAdminSaltedpass')).toBe(true)
     })
 
     it('obtain auth token', async () => {
@@ -125,39 +141,71 @@ describe('', () => {
             .send(creds)
         expect(response.status).toEqual(201)
         expect(response.body['access_token']).toBeDefined()
-        authHeader = ['Authorization', 'Bearer ' + response.body['access_token']]
     })
 
     describe('', () => { // main tests block
-        describe('GET', () => {
-            it('read pbx if pbx license is active', async () => {
+        describe('POST', () => {
+            it('log in with the fixture admin password', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/pbx')
-                    .set(...authHeader)
+                    .get('/api/auth/userinfo')
+                    .set(...basicAuth(fixture.username, fixture.password))
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
             })
-            it('does not read pbx if pbx license is inactive', async () => {
-                licenseMockRepo.setLicense(LicenseType.pbx, 0)
+
+            it('change the password', async () => {
+                const before = await db.billing.Admin.findOneByOrFail({id: fixtureAdminId})
                 const response = await request(app.getHttpServer())
-                    .get('/api/pbx')
-                    .set(...authHeader)
+                    .post('/api/auth/password/change')
+                    .set(...basicAuth(fixture.username, fixture.password))
                     .set('Accept', 'application/json')
-                expect(response.status).toEqual(403)
+                    .set('Content-Type', 'application/json')
+                    .send({new_password: fixture.newPassword})
+                expect(response.status).toEqual(201)
+
+                const after = await db.billing.Admin.findOneByOrFail({id: fixtureAdminId})
+                expect(after.saltedpass).not.toEqual(before.saltedpass)
+                expect(after.saltedpass_modify_timestamp.getTime())
+                    .toBeGreaterThanOrEqual(before.saltedpass_modify_timestamp.getTime())
+                expect(await authService.compareBcryptPassword(fixture.password, after.saltedpass)).toBe(false)
+                expect(await authService.compareBcryptPassword(fixture.newPassword, after.saltedpass)).toBe(true)
+                expect(await db.billing.AdminPasswordJournal.countBy({admin_id: fixtureAdminId})).toEqual(1)
             })
-            it('read pbx', async () => {
+
+            it('log in with the new password', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/pbx')
-                    .set(...authHeader)
+                    .get('/api/auth/userinfo')
+                    .set(...basicAuth(fixture.username, fixture.newPassword))
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
-                const setCollection: PbxResponseDto = response.body
-                expect(await validate(setCollection)).toEqual([])
+                expect(response.body.username).toEqual(fixture.username)
+            })
+
+            it('reject a weak password with 422', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/auth/password/change')
+                    .set(...basicAuth(fixture.username, fixture.newPassword))
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({new_password: 'weak'})
+                expect(response.status).toEqual(422)
             })
         })
     })
 
-    describe('PBX DELETE', () => {
+    describe('Auth Password Change DELETE', () => {
+        it('delete created journals', async () => {
+            await db.billing.Journal.delete({username: fixture.username, timestamp: MoreThanOrEqual(startedAt)})
+            await db.billing.Journal.delete({username: creds.username, timestamp: MoreThanOrEqual(startedAt)})
+        })
+
+        it('delete fixture admin', async () => {
+            if (fixtureAdminId) {
+                await db.billing.AdminPasswordJournal.delete({admin_id: fixtureAdminId})
+                await db.billing.Admin.delete(fixtureAdminId)
+            }
+        })
+
         it('delete mock admin', async () => {
             await db.billing.Admin.delete({login: creds.username})
         })

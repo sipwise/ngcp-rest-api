@@ -15,6 +15,8 @@ import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
+import {ContractStatus} from '~/entities/internal/contract.internal.entity'
+import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
@@ -44,6 +46,13 @@ describe('CustomerSpeedDial', () => {
     const createdIds: number[] = []
     let createdEntries = []
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const resellerCreds = {username: `mockResellerUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const suffix = `${process.env.JEST_WORKER_ID}${Date.now()}`
+    let otherResellerContractId: number
+    let otherResellerId: number
+    let otherContactId: number
+    let otherCustomerId: number
+    let resellerHeader: [string, string]
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -84,6 +93,7 @@ describe('CustomerSpeedDial', () => {
         await app.init()
 
         await db.billing.Admin.delete({login: creds.username})
+        await db.billing.Admin.delete({login: resellerCreds.username})
         const adminRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.admin})
         await db.billing.Admin.insert({
             reseller_id: 1,
@@ -343,6 +353,79 @@ describe('CustomerSpeedDial', () => {
                 expect(response.status).toEqual(404)
             })
         })
+        describe('reseller scope', () => {
+            it('create another reseller with a customer and log in as its reseller admin', async () => {
+                const now = new Date()
+                otherResellerContractId = (await db.billing.Contract.create({
+                    contact_id: 2, product_id: 3, status: ContractStatus.Active, create_timestamp: now, modify_timestamp: now,
+                }).save()).id
+                otherResellerId = (await db.billing.Reseller.create({
+                    contract_id: otherResellerContractId, name: `csd_reseller_${suffix}`, status: ResellerStatus.Active,
+                }).save()).id
+                otherContactId = (await db.billing.Contact.create({
+                    reseller_id: otherResellerId, email: `csd_${suffix}@example.org`, create_timestamp: now,
+                }).save()).id
+                otherCustomerId = (await db.billing.Contract.create({
+                    contact_id: otherContactId, product_id: 4, status: ContractStatus.Active, create_timestamp: now, modify_timestamp: now,
+                }).save()).id
+                const resellerRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.reseller})
+                await db.billing.Admin.insert({
+                    reseller_id: otherResellerId,
+                    login: resellerCreds.username,
+                    saltedpass: 'mockAdminSaltedpass',
+                    saltedpass_modify_timestamp: now,
+                    role_id: resellerRole.id,
+                    is_master: true,
+                    is_superuser: false,
+                    is_system: false,
+                    is_ccare: false,
+                    lawful_intercept: false,
+                    is_active: true,
+                    read_only: false,
+                    show_passwords: true,
+                    call_data: true,
+                    billing_data: true,
+                    can_reset_password: true,
+                    enable_2fa: false,
+                    show_otp_registration_info: false,
+                })
+                const response = await request(app.getHttpServer())
+                    .post('/api/auth/jwt')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(resellerCreds)
+                expect(response.status).toEqual(201)
+                resellerHeader = ['Authorization', 'Bearer ' + response.body['access_token']]
+            })
+            it('list no speed dials of another reseller', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/api/customerspeeddials')
+                    .set(...resellerHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(0)
+                expect(response.body.data).toHaveLength(0)
+            })
+            it('not read a speed dial of another reseller', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/customerspeeddials/${createdEntries[0]['id']}`)
+                    .set(...resellerHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(404)
+            })
+            it('not update a speed dial of another reseller with an own customer_id', async () => {
+                const id = createdEntries[0]['id']
+                const before = await db.provisioning.VoipContractSpeedDial.findOneByOrFail({id})
+                const response = await request(app.getHttpServer())
+                    .put(`/api/customerspeeddials/${id}`)
+                    .set(...resellerHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({customer_id: otherCustomerId, slot: '*9', destination: 'sip:4319999@example.org'})
+                expect(response.status).toEqual(404)
+                expect(await db.provisioning.VoipContractSpeedDial.findOneByOrFail({id})).toEqual(before)
+            })
+        })
     })
 
     describe('CustomerSpeedDial DELETE', () => {
@@ -362,6 +445,15 @@ describe('CustomerSpeedDial', () => {
                     resource_id: In(createdIds),
                     timestamp: MoreThanOrEqual(startedAt),
                 })
+            await db.billing.Journal.delete({username: resellerCreds.username, timestamp: MoreThanOrEqual(startedAt)})
+            if (otherCustomerId)
+                await db.billing.Contract.delete(otherCustomerId)
+            if (otherContactId)
+                await db.billing.Contact.delete(otherContactId)
+            if (otherResellerId)
+                await db.billing.Reseller.delete(otherResellerId)
+            if (otherResellerContractId)
+                await db.billing.Contract.delete(otherResellerContractId)
             if (provisioningSubscriberId)
                 await db.provisioning.VoipSubscriber.delete(provisioningSubscriberId)
             if (testCustomerId)
@@ -374,6 +466,7 @@ describe('CustomerSpeedDial', () => {
 
         it('delete mock admin', async () => {
             await db.billing.Admin.delete({login: creds.username})
+            await db.billing.Admin.delete({login: resellerCreds.username})
         })
     })
 })

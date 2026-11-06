@@ -4,8 +4,7 @@ import {Test} from '@nestjs/testing'
 import bodyParser from 'body-parser'
 import request from 'supertest'
 
-import {TemplateResponseDto} from './dto/template-response.dto'
-import {TemplateModule} from './template.module'
+import {ClearCallCounterModule} from './clear-call-counter.module'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
@@ -13,28 +12,23 @@ import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
-import {validate} from '~/helpers/validate.helper'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
 import {TransformInterceptor} from '~/interceptors/transform.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
-import {LicenseMockRepository} from '~/repositories/license.mock.repository'
-import {LicenseRepository} from '~/repositories/license.repository'
 
 describe('', () => {
     let app: INestApplication
     let appService: AppService
     let authService: AuthService
-    const licenseMockRepo = new LicenseMockRepository()
     let authHeader: [string, string]
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
-            imports: [TemplateModule, AppModule],
+            imports: [ClearCallCounterModule, AppModule],
         })
-            .overrideProvider(LicenseRepository).useValue(licenseMockRepo)
             .compile()
 
         appService = moduleRef.get<AppService>(AppService)
@@ -93,10 +87,6 @@ describe('', () => {
         })
     })
 
-    afterEach(async () => {
-        licenseMockRepo.reset()
-    })
-
     afterAll(async () => {
         if (appService.db.isInitialized)
             await appService.db.destroy()
@@ -129,20 +119,46 @@ describe('', () => {
     })
 
     describe('', () => { // main tests block
-        describe('GET', () => {
-            it('read templates', async () => {
+        describe('POST', () => {
+            it('forbid clearcallcounters for admin', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/templates')
+                    .post('/api/clearcallcounters')
                     .set(...authHeader)
                     .set('Accept', 'application/json')
-                expect(response.status).toEqual(200)
-                const setCollection: TemplateResponseDto = response.body
-                expect(await validate(setCollection)).toEqual([])
+                    .set('Content-Type', 'application/json')
+                    .send({})
+                expect(response.status).toEqual(403)
+            })
+
+            it('reject clearcallcounters without credentials', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/clearcallcounters')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({})
+                expect(response.status).toEqual(401)
+            })
+        })
+
+        describe('GET', () => {
+            it('forbid clearcallcounters for admin', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/api/clearcallcounters')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(403)
+            })
+
+            it('reject clearcallcounters without credentials', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/api/clearcallcounters')
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(401)
             })
         })
     })
 
-    describe('Templates DELETE', () => {
+    describe('Clear Call Counters DELETE', () => {
         it('delete mock admin', async () => {
             await db.billing.Admin.delete({login: creds.username})
         })
