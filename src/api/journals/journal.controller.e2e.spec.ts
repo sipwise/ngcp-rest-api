@@ -1,9 +1,12 @@
+import {deflateSync} from 'zlib'
+
 import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
 import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
 import bodyParser from 'body-parser'
 import request from 'supertest'
-import {Like, MoreThanOrEqual} from 'typeorm'
+import {In, Like, MoreThanOrEqual} from 'typeorm'
+import {v4 as uuidv4} from 'uuid'
 
 import {JournalResponseDto} from './dto/journal-response.dto'
 import {JournalModule} from './journal.module'
@@ -13,6 +16,7 @@ import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
+import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
 import {ContactStatus} from '~/entities/internal/contact.internal.entity'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
@@ -35,16 +39,84 @@ describe('Journal', () => {
     let journalIds: number[] = []
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const resellerCreds = {username: `mockResellerUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const reseller1Creds = {username: `mockReseller1User${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const nonMasterCreds = {username: `mockNonMasterUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const suffix = `${process.env.JEST_WORKER_ID}x${Date.now()}`
     let otherResellerContractId: number
     let otherResellerId: number
     let otherResellerJournalId: number
+    let resellerHeader: [string, string]
+    const fixtureJournalIds: number[] = []
+    const subscriberDomain = `journal-${suffix}.test`
+    const subadminUsername = `journal_subadmin_${suffix}`
+    const subscriberUsername = `journal_sub_${suffix}`
+    let subscriberBillingDomainId: number
+    let subscriberProvisioningDomainId: number
+    const subscriberProvisioningIds: number[] = []
     const startedAt = Date.now() / 1000
 
     const get = (url: string): request.Test => request(app.getHttpServer())
         .get(url)
         .set(...authHeader)
         .set('Accept', 'application/json')
+
+    const getAs = (header: [string, string], url: string): request.Test => request(app.getHttpServer())
+        .get(url)
+        .set(...header)
+        .set('Accept', 'application/json')
+
+    const login = async (loginCreds: {username: string, password: string}): Promise<[string, string]> => {
+        const response = await request(app.getHttpServer())
+            .post('/api/auth/jwt')
+            .set('Accept', 'application/json')
+            .set('Content-Type', 'application/json')
+            .send(loginCreds)
+        expect(response.status).toEqual(201)
+        return ['Authorization', 'Bearer ' + response.body['access_token']]
+    }
+
+    const insertAdmin = async (login: string, role: RbacRole, resellerId: number, isMaster: boolean): Promise<number> => {
+        await db.billing.Admin.delete({login: login})
+        const aclRole = await db.billing.AclRole.findOneByOrFail({role: role})
+        return (await db.billing.Admin.insert({
+            reseller_id: resellerId,
+            login: login,
+            saltedpass: 'mockAdminSaltedpass',
+            saltedpass_modify_timestamp: new Date(),
+            role_id: aclRole.id,
+            is_master: isMaster,
+            is_superuser: role == RbacRole.admin,
+            is_system: false,
+            is_ccare: false,
+            lawful_intercept: false,
+            is_active: true,
+            read_only: false,
+            show_passwords: true,
+            call_data: true,
+            billing_data: true,
+            can_reset_password: true,
+            enable_2fa: false,
+            show_otp_registration_info: false,
+        })).identifiers[0].id as number
+    }
+
+    const insertJournal = async (resourceName: string, resourceId: number, role: RbacRole, resellerId: number,
+        content: string | Buffer = '{}', contentFormat = 'json'): Promise<number> => {
+        const aclRole = await db.billing.AclRole.findOneByOrFail({role: role})
+        const id = (await db.billing.Journal.insert({
+            operation: 'update',
+            resource_name: resourceName,
+            resource_id: resourceId,
+            timestamp: Date.now() / 1000,
+            username: creds.username,
+            content_format: contentFormat,
+            content: content,
+            role_id: aclRole.id,
+            reseller_id: resellerId,
+        })).identifiers[0].id as number
+        fixtureJournalIds.push(id)
+        return id
+    }
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -263,7 +335,6 @@ describe('Journal', () => {
 
         describe('reseller scope', () => {
             const resourceName = `e2ejournalscope${suffix}`
-            let resellerHeader: [string, string]
 
             it('create another reseller and log in as its reseller admin', async () => {
                 const now = new Date()
@@ -364,10 +435,153 @@ describe('Journal', () => {
                 '/api/peerings/groups/servers/999999999/journal',
                 '/api/rewrite-rules/sets/999999999/journal',
                 '/api/rewrite-rules/sets/rules/999999999/journal',
-            ])('read the empty journal of %s', async url => {
+            ])('read the empty journal of the missing resource %s', async url => {
                 const response = await get(url)
                 expect(response.status).toEqual(200)
                 expect(response.body.total_count).toEqual(0)
+            })
+            it('not read fileshare journals (uuid ids are not journaled by id)', async () => {
+                const response = await get('/api/fileshare/0/journal')
+                expect(response.status).toEqual(404)
+            })
+        })
+
+        describe('cross reseller writers', () => {
+            let ccareadminJournalId: number
+            let reseller1Header: [string, string]
+
+            it('journal a ccareadmin of the other reseller updating a phonebook entry of reseller 1', async () => {
+                // ccareadmin is not bound to a reseller, v2 stamps the writer's reseller
+                ccareadminJournalId = await insertJournal('customers/phonebook', phonebookId, RbacRole.ccareadmin, otherResellerId)
+                await insertAdmin(reseller1Creds.username, RbacRole.reseller, 1, true)
+                reseller1Header = await login(reseller1Creds)
+            })
+            it('not read it by the resource as the other reseller', async () => {
+                const response = await getAs(resellerHeader, `/api/journals/customers/phonebook/${phonebookId}`)
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(0)
+            })
+            it('not read it in the collection as the other reseller', async () => {
+                const response = await getAs(resellerHeader, `/api/journals?resource_name=customers/phonebook&resource_id=${phonebookId}`)
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(0)
+            })
+            it.each([
+                (): string => `/api/customers/phonebook/${phonebookId}/journal`,
+                (): string => `/api/customers/${contractId}/phonebook/${phonebookId}/journal`,
+            ])('not read the journal of the entry as the other reseller (%#)', async url => {
+                const response = await getAs(resellerHeader, url())
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(0)
+            })
+            it('read only the entries of accessible roles on the journal of the entry as the owner reseller', async () => {
+                const response = await getAs(reseller1Header, `/api/customers/phonebook/${phonebookId}/journal`)
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(1)
+                expect(response.body.data.map((j: JournalResponseDto) => j.id)).toEqual([ccareadminJournalId])
+            })
+        })
+
+        describe('admins', () => {
+            let adminId: number
+            let nonMasterId: number
+            let nonMasterHeader: [string, string]
+            const resourceIds = (body: {data: JournalResponseDto[]}): number[] => body.data.map(j => j.resource_id).sort()
+
+            it('journal the master and a non-master admin', async () => {
+                adminId = (await db.billing.Admin.findOneByOrFail({login: creds.username})).id
+                nonMasterId = await insertAdmin(nonMasterCreds.username, RbacRole.admin, 1, false)
+                await insertJournal('admins', adminId, RbacRole.admin, 1)
+                await insertJournal('admins', nonMasterId, RbacRole.admin, 1)
+                nonMasterHeader = await login(nonMasterCreds)
+            })
+            it('read the journals of all admins as master', async () => {
+                const response = await get(`/api/journals?resource_name=admins&resource_id=${adminId},${nonMasterId}`)
+                expect(response.status).toEqual(200)
+                expect(resourceIds(response.body)).toEqual([adminId, nonMasterId].sort())
+            })
+            it('read only the own journals as non-master', async () => {
+                const response = await getAs(nonMasterHeader, `/api/journals?resource_name=admins&resource_id=${adminId},${nonMasterId}`)
+                expect(response.status).toEqual(200)
+                expect(resourceIds(response.body)).toEqual([nonMasterId])
+            })
+            it('read the own journal as non-master', async () => {
+                const response = await getAs(nonMasterHeader, `/api/admins/${nonMasterId}/journal`)
+                expect(response.status).toEqual(200)
+                expect(resourceIds(response.body)).toEqual([nonMasterId])
+            })
+            it('not read the journal of another admin as non-master', async () => {
+                const response = await getAs(nonMasterHeader, `/api/admins/${adminId}/journal`)
+                expect(response.status).toEqual(200)
+                expect(response.body.total_count).toEqual(0)
+            })
+        })
+
+        describe('subscriber roles', () => {
+            const asSubscriber = (username: string, url: string): request.Test => request(app.getHttpServer())
+                .get(url)
+                .auth(`${username}@${subscriberDomain}`, 'mockSubscriberWebpassword')
+                .set('X-Auth-Realm', 'subscriber')
+                .set('Accept', 'application/json')
+
+            it('create a subscriberadmin and a subscriber of the phonebook customer', async () => {
+                subscriberBillingDomainId = (await db.billing.Domain.create({domain: subscriberDomain, reseller_id: 1}).save()).id
+                subscriberProvisioningDomainId = (await db.provisioning.VoipDomain.create({domain: subscriberDomain}).save()).id
+                for (const [username, isAdmin] of [[subadminUsername, true], [subscriberUsername, false]] as [string, boolean][]) {
+                    const uuid = uuidv4()
+                    await BillingVoipSubscriber.insert({ // insert instead of create to avoid a cyclic dependency error
+                        contract_id: contractId,
+                        uuid: uuid,
+                        username: username,
+                        domain_id: subscriberBillingDomainId,
+                        status: 'active',
+                    })
+                    subscriberProvisioningIds.push((await db.provisioning.VoipSubscriber.insert({
+                        username: username,
+                        domain_id: subscriberProvisioningDomainId,
+                        uuid: uuid,
+                        password: uuidv4().slice(0, 16),
+                        webusername: username,
+                        webpassword: 'mockSubscriberWebpassword',
+                        webpassword_modify_timestamp: new Date(),
+                        admin: isAdmin,
+                        account_id: contractId,
+                    })).identifiers[0].id)
+                }
+            })
+            it.each([
+                ['subscriberadmin', (): string => `/api/customers/phonebook/${phonebookId}/journal`],
+                ['subscriberadmin', (): string => `/api/customers/${contractId}/phonebook/${phonebookId}/journal`],
+                ['subscriberadmin', (): string => '/api/customerspeeddials/1/journal'],
+                ['subscriberadmin', (): string => '/api/subscribers/phonebook/1/journal'],
+                ['subscriber', (): string => '/api/subscribers/phonebook/1/journal'],
+            ])('reject the %s on %s', async (role, url) => {
+                const response = await asSubscriber(role == 'subscriber' ? subscriberUsername : subadminUsername, url())
+                expect(response.status).toEqual(403)
+            })
+        })
+
+        describe('content', () => {
+            const resourceName = `e2ejournalsecret${suffix}`
+            const masked = '********'
+            const secrets = {name: 'n', password: 'clear', nested: {webpassword: 'clear', otp_secret_key: 'clear', otp_secret: 'clear'}}
+            let jsonId: number
+            let deflateId: number
+            let storableId: number
+
+            it('journal secrets in json, json_deflate and storable content', async () => {
+                jsonId = await insertJournal(resourceName, 1, RbacRole.admin, 1, JSON.stringify(secrets))
+                deflateId = await insertJournal(resourceName, 2, RbacRole.admin, 1, deflateSync(JSON.stringify(secrets)), 'json_deflate')
+                storableId = await insertJournal(resourceName, 3, RbacRole.admin, 1, Buffer.from('pst0\x04\x0b\x03'), 'storable')
+            })
+            it('read the content with the secrets masked', async () => {
+                const response = await get(`/api/journals/${resourceName}`)
+                expect(response.status).toEqual(200)
+                const content = Object.fromEntries(response.body.data.map((j: JournalResponseDto) => [j.id, j.content]))
+                const expected = {name: 'n', password: masked, nested: {webpassword: masked, otp_secret_key: masked, otp_secret: masked}}
+                expect(content[jsonId]).toEqual(expected)
+                expect(content[deflateId]).toEqual(expected)
+                expect(content[storableId]).toBeNull()
             })
         })
     })
@@ -380,6 +594,16 @@ describe('Journal', () => {
         it('delete created fixtures', async () => {
             if (otherResellerJournalId)
                 await db.billing.Journal.delete(otherResellerJournalId)
+            if (fixtureJournalIds.length)
+                await db.billing.Journal.delete(fixtureJournalIds)
+            if (subscriberProvisioningIds.length)
+                await db.provisioning.VoipSubscriber.delete(subscriberProvisioningIds)
+            if (contractId)
+                await BillingVoipSubscriber.delete({contract_id: contractId, username: In([subadminUsername, subscriberUsername])})
+            if (subscriberBillingDomainId)
+                await db.billing.Domain.delete(subscriberBillingDomainId)
+            if (subscriberProvisioningDomainId)
+                await db.provisioning.VoipDomain.delete(subscriberProvisioningDomainId)
             if (otherResellerId)
                 await db.billing.Reseller.delete(otherResellerId)
             if (otherResellerContractId)
@@ -395,6 +619,8 @@ describe('Journal', () => {
         it('delete mock admin', async () => {
             await db.billing.Admin.delete({login: creds.username})
             await db.billing.Admin.delete({login: resellerCreds.username})
+            await db.billing.Admin.delete({login: reseller1Creds.username})
+            await db.billing.Admin.delete({login: nonMasterCreds.username})
         })
     })
 })

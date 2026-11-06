@@ -1,6 +1,6 @@
 import {ValidationError} from 'class-validator'
 
-const redactedKeys = ['password', 'webpassword']
+const redactedKeys = ['password', 'webpassword', 'otp_secret', 'otp_secret_key']
 
 const redactedQueryParams = new RegExp(`([?&](?:${redactedKeys.join('|')})=)[^&#]*`, 'gi')
 

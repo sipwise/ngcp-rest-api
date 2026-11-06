@@ -40,7 +40,7 @@ export class JournalMockRepository implements JournalRepository {
         return Promise.resolve(this.journalDB[id])
     }
 
-    readAll(_sr: ServiceRequest, resourceName?: string, resourceId?: number | string): Promise<[internal.Journal[], number]> {
+    readAll(_sr: ServiceRequest, resourceName?: string, resourceId?: number | string, _resourceVerified?: boolean): Promise<[internal.Journal[], number]> {
         const journals = (Object.values(this.journalDB) as internal.Journal[]).filter(j =>
             (resourceName === undefined || j.resource_name == resourceName) &&
             (resourceId === undefined || j.resource_id == resourceId))

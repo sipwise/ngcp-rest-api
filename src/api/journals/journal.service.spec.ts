@@ -1,3 +1,4 @@
+import {ForbiddenException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 import {Request} from 'express'
 
@@ -74,7 +75,18 @@ describe('JournalService', () => {
         it('passes resource name and id to the repository', async () => {
             const spy = jest.spyOn(journalMockRepo, 'readAll')
             await service.readAll(sr, 'customers/phonebook', 5)
-            expect(spy).toHaveBeenCalledWith(sr, 'customers/phonebook', 5)
+            expect(spy).toHaveBeenCalledWith(sr, 'customers/phonebook', 5, false)
+        })
+
+        it('passes a verified resource to the repository', async () => {
+            const spy = jest.spyOn(journalMockRepo, 'readAll')
+            await service.readAll(sr, 'customers/phonebook', 5, true)
+            expect(spy).toHaveBeenCalledWith(sr, 'customers/phonebook', 5, true)
+        })
+
+        it.each(['subscriber', 'subscriberadmin'])('rejects the %s role', async (role) => {
+            sr.user = {...user, role}
+            await expect(service.readAll(sr, 'customers/phonebook', 5, true)).rejects.toThrow(ForbiddenException)
         })
 
         it('returns only the matching journals', async () => {

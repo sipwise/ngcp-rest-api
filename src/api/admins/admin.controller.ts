@@ -276,8 +276,6 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         @Param('id') id: number | string,
         @Req() req: Request,
     ): Promise<[JournalResponseDto[], number]> {
-        const [journals, count] = await this.journalService.readAll(new ServiceRequest(req), 'admins', id)
-        const responseList = journals.map(j => new JournalResponseDto(j))
-        return [responseList, count]
+        return super.journal(id, req)
     }
 }
