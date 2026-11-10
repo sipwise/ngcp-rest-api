@@ -9,6 +9,7 @@ import {VoicemailMariadbRepository} from './repositories/voicemail.mariadb.repos
 import {internal} from '~/entities'
 import {supportedVoicemailFolders, voicemailSpoolDir} from '~/enums/supported-voicemail-folders.enum'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -95,7 +96,7 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
             await this.voicemailRepo.renumberDir(folder.mailboxuser, folder.dir, sr)
 
         for (const voicemail of voicemails)
-            await this.sendNotification(voicemail, sr, 'd')
+            runOnTransactionCommit(async () => await this.sendNotification(voicemail, sr, 'd'))
 
         return deletedIds
     }
@@ -170,8 +171,10 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
             await this.voicemailRepo.renumberDir(folder.mailboxuser, folder.dir, sr)
 
         for (const [id, action_type] of notifies) {
-            const voicemail = await this.voicemailRepo.read(id, sr)
-            await this.sendNotification(voicemail, sr, action_type)
+            runOnTransactionCommit(async () => {
+                const voicemail = await this.voicemailRepo.read(id, sr)
+                await this.sendNotification(voicemail, sr, action_type)
+            })
         }
 
         return result
