@@ -1,3 +1,12 @@
+ngcp-rest-api (26.3.1.7+0~mr26.3.1.7) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [81471de] MT#65828 e2e: register TransactionInterceptor like main.ts
+  * [ec3cbd5] MT#66596 voicemails: send vmnotify after the commit
+  * [03ecb3c] MT#66555 retry transactions on DB conflicts
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 10 Nov 2026 13:44:37 +0100
+
 ngcp-rest-api (26.3.1.6+0~mr26.3.1.6) unstable; urgency=medium
 
   [ Kirill Solomko ]
