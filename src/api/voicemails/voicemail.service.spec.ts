@@ -19,6 +19,7 @@ import {internal} from '~/entities'
 import {voicemailSpoolDir} from '~/enums/supported-voicemail-folders.enum'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ExpandModule} from '~/helpers/expand.module'
+import {postCommitQueueStorage} from '~/helpers/post-commit-queue.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
@@ -66,6 +67,17 @@ describe('VoicemailsService', () => {
             id, dir, mailboxuser: uuid, msgnum, username: '4311', callerid: '4312', duration: 5, call_id: 'cid' + id,
             origtime: '1700000000',
         } as unknown as internal.Voicemail)
+
+    // runs fn like TransactionInterceptor: the post-commit callbacks after it resolves, each one's error only logged
+    const committed = async <T>(fn: () => Promise<T>, commit = true): Promise<T> => {
+        const store = {callbacks: []}
+        const result = await postCommitQueueStorage.run(store, fn)
+        if (commit) {
+            for (const cb of store.callbacks)
+                await Promise.resolve(cb()).catch(() => undefined)
+        }
+        return result
+    }
 
     afterEach(() => {
         jest.restoreAllMocks()
@@ -126,7 +138,7 @@ describe('VoicemailsService', () => {
             const delSpy = jest.spyOn(voicemailMockRepo, 'delete').mockResolvedValue([1, 2, 3])
             const renumberSpy = jest.spyOn(voicemailMockRepo, 'renumberDir')
             const notifySpy = jest.spyOn(service, 'sendNotification').mockResolvedValue()
-            await expect(service.delete([1, 2, 3], sr)).resolves.toEqual([1, 2, 3])
+            await expect(committed(() => service.delete([1, 2, 3], sr))).resolves.toEqual([1, 2, 3])
             expect(delSpy).toHaveBeenCalledWith([1, 2, 3], sr)
             expect(renumberSpy).toHaveBeenCalledTimes(2)
             expect(renumberSpy).toHaveBeenCalledWith(uuid, `${basePath}/INBOX`, sr)
@@ -135,10 +147,33 @@ describe('VoicemailsService', () => {
             expect(notifySpy).toHaveBeenCalledWith(vms[0], sr, 'd')
         })
 
+        it('notifies only after the commit', async () => {
+            const vm = makeVoicemail(1, `${basePath}/INBOX`, 0)
+            jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([vm])
+            jest.spyOn(voicemailMockRepo, 'delete').mockResolvedValue([1])
+            const notifySpy = jest.spyOn(service, 'sendNotification').mockResolvedValue()
+            await committed(() => service.delete([1], sr), false)
+            expect(notifySpy).not.toHaveBeenCalled()
+            await committed(() => service.delete([1], sr))
+            expect(notifySpy).toHaveBeenCalledWith(vm, sr, 'd')
+        })
+
+        it('notifies the other voicemails when one notification fails', async () => {
+            const vms = [makeVoicemail(1, `${basePath}/INBOX`, 0), makeVoicemail(2, `${basePath}/INBOX`, 1)]
+            jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue(vms)
+            jest.spyOn(voicemailMockRepo, 'delete').mockResolvedValue([1, 2])
+            const notifySpy = jest.spyOn(service, 'sendNotification')
+                .mockRejectedValueOnce(new UnprocessableEntityException())
+                .mockResolvedValue()
+            await expect(committed(() => service.delete([1, 2], sr))).resolves.toEqual([1, 2])
+            expect(notifySpy).toHaveBeenCalledTimes(2)
+            expect(notifySpy).toHaveBeenLastCalledWith(vms[1], sr, 'd')
+        })
+
         it('does nothing besides the delete for no voicemails', async () => {
             const renumberSpy = jest.spyOn(voicemailMockRepo, 'renumberDir')
             const notifySpy = jest.spyOn(service, 'sendNotification').mockResolvedValue()
-            await service.delete([], sr)
+            await committed(() => service.delete([], sr))
             expect(renumberSpy).not.toHaveBeenCalled()
             expect(notifySpy).not.toHaveBeenCalled()
         })
@@ -164,7 +199,7 @@ describe('VoicemailsService', () => {
 
         it('keeps full path when the folder is unchanged', async () => {
             jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([voicemail(1, `${basePath}/Old`)])
-            await service.update(folderUpdate(1, 'Old'), sr)
+            await committed(() => service.update(folderUpdate(1, 'Old'), sr))
             expect(updateSpy.mock.calls[0][0]['1'].dir).toEqual(`${basePath}/Old`)
             expect(updateSpy.mock.calls[0][0]['1'].msgnum).toBeUndefined()
             expect(renumberSpy).not.toHaveBeenCalled()
@@ -173,47 +208,55 @@ describe('VoicemailsService', () => {
 
         it('writes full path when the folder is changed', async () => {
             jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([voicemail(1, `${basePath}/INBOX`)])
-            await service.update(folderUpdate(1, 'Old'), sr)
+            await committed(() => service.update(folderUpdate(1, 'Old'), sr))
             expect(updateSpy.mock.calls[0][0]['1'].dir).toEqual(`${basePath}/Old`)
             expect(updateSpy.mock.calls[0][0]['1'].msgnum).toEqual(0)
             expect(renumberSpy).toHaveBeenCalledWith(uuid, `${basePath}/INBOX`, sr)
             expect(notifySpy).toHaveBeenCalledWith(expect.anything(), sr, 'r')
         })
 
+        it('reads and notifies the moved voicemail only after the commit', async () => {
+            jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([voicemail(1, `${basePath}/INBOX`)])
+            const readSpy = jest.spyOn(voicemailMockRepo, 'read')
+            await committed(() => service.update(folderUpdate(1, 'Old'), sr), false)
+            expect(readSpy).not.toHaveBeenCalled()
+            expect(notifySpy).not.toHaveBeenCalled()
+        })
+
         it('uses x action type when moving to INBOX', async () => {
             jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([voicemail(1, `${basePath}/Old`)])
-            await service.update(folderUpdate(1, 'INBOX'), sr)
+            await committed(() => service.update(folderUpdate(1, 'INBOX'), sr))
             expect(updateSpy.mock.calls[0][0]['1'].dir).toEqual(`${basePath}/INBOX`)
             expect(notifySpy).toHaveBeenCalledWith(expect.anything(), sr, 'x')
         })
 
         it('repairs a stored dir without full path', async () => {
             jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([voicemail(1, 'Old')])
-            await service.update(folderUpdate(1, 'Old'), sr)
+            await committed(() => service.update(folderUpdate(1, 'Old'), sr))
             expect(updateSpy.mock.calls[0][0]['1'].dir).toEqual(`${basePath}/Old`)
         })
 
         it('throws internal error when dir would be saved without full path', async () => {
             jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([])
-            await expect(service.update(folderUpdate(1, 'Old'), sr)).rejects.toThrow(InternalServerErrorException)
+            await expect(committed(() => service.update(folderUpdate(1, 'Old'), sr))).rejects.toThrow(InternalServerErrorException)
             expect(updateSpy).not.toHaveBeenCalled()
         })
 
         it('throws 422 when some ids do not exist', async () => {
             jest.spyOn(voicemailMockRepo, 'readCountOfIds').mockResolvedValue(0)
-            await expect(service.update(folderUpdate(1, 'Old'), sr)).rejects.toThrow(UnprocessableEntityException)
+            await expect(committed(() => service.update(folderUpdate(1, 'Old'), sr))).rejects.toThrow(UnprocessableEntityException)
             expect(updateSpy).not.toHaveBeenCalled()
         })
 
         it('throws 400 for an unsupported folder', async () => {
             jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([voicemail(1, `${basePath}/INBOX`)])
-            await expect(service.update(folderUpdate(1, 'Nope'), sr)).rejects.toThrow(BadRequestException)
+            await expect(committed(() => service.update(folderUpdate(1, 'Nope'), sr))).rejects.toThrow(BadRequestException)
             expect(updateSpy).not.toHaveBeenCalled()
         })
 
         it('matches the folder name case-insensitively', async () => {
             jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([voicemail(1, `${basePath}/Old`)])
-            await service.update(folderUpdate(1, 'inbox'), sr)
+            await committed(() => service.update(folderUpdate(1, 'inbox'), sr))
             expect(updateSpy.mock.calls[0][0]['1'].dir).toEqual(`${basePath}/INBOX`)
             expect(notifySpy).toHaveBeenCalledWith(expect.anything(), sr, 'x')
         })
@@ -221,7 +264,7 @@ describe('VoicemailsService', () => {
         it('appends after the highest msgnum of the destination folder', async () => {
             jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([voicemail(1, `${basePath}/INBOX`)])
             const maxSpy = jest.spyOn(voicemailMockRepo, 'readMaxMsgnumByDir').mockResolvedValue(4)
-            await service.update(folderUpdate(1, 'Work'), sr)
+            await committed(() => service.update(folderUpdate(1, 'Work'), sr))
             expect(maxSpy).toHaveBeenCalledWith(uuid, `${basePath}/Work`, sr)
             expect(updateSpy.mock.calls[0][0]['1'].msgnum).toEqual(5)
         })
@@ -233,7 +276,7 @@ describe('VoicemailsService', () => {
             const maxSpy = jest.spyOn(voicemailMockRepo, 'readMaxMsgnumByDir').mockResolvedValue(4)
             const updates = folderUpdate(1, 'Work')
             updates['2'] = internal.Voicemail.create({id: 2, dir: 'Work'} as internal.Voicemail)
-            await service.update(updates, sr)
+            await committed(() => service.update(updates, sr))
             expect(maxSpy).toHaveBeenCalledTimes(1)
             expect(updateSpy.mock.calls[0][0]['1'].msgnum).toEqual(5)
             expect(updateSpy.mock.calls[0][0]['2'].msgnum).toEqual(6)
@@ -245,7 +288,7 @@ describe('VoicemailsService', () => {
             jest.spyOn(voicemailMockRepo, 'readWhereInIds').mockResolvedValue([voicemail(1, `${basePath}/INBOX`)])
             const maxSpy = jest.spyOn(voicemailMockRepo, 'readMaxMsgnumByDir')
             const updates = new Dictionary<internal.Voicemail>('1', internal.Voicemail.create({id: 1} as internal.Voicemail))
-            await expect(service.update(updates, sr)).resolves.toEqual([1])
+            await expect(committed(() => service.update(updates, sr))).resolves.toEqual([1])
             expect(maxSpy).not.toHaveBeenCalled()
             expect(renumberSpy).not.toHaveBeenCalled()
             expect(notifySpy).not.toHaveBeenCalled()
