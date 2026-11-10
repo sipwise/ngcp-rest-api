@@ -5,10 +5,12 @@ import {CustomerSearchDto} from '~/api/customers/dto/customer-search.dto'
 import {CustomerRepository} from '~/api/customers/interfaces/customer.repository'
 import {AppService} from '~/app.service'
 import {db, internal} from '~/entities'
-import {BillingProfileStatus, IntervalUnit} from '~/entities/internal/billing-profile.internal.entity'
+import {BillingProfileStatus} from '~/entities/internal/billing-profile.internal.entity'
 import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {Discriminator} from '~/entities/internal/profile-package-set.internal.entity'
+import {andWhereActualBillingMapping, billingMappingsCsv} from '~/helpers/billing-mapping.helper'
+import {initialBalanceInterval} from '~/helpers/billing.helper'
 import {toLocalDateTime} from '~/helpers/date.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
@@ -40,14 +42,7 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
     }
 
     async appendBillingMappings(customerId: number, mappings: internal.BillingMapping[], now?: Date, deleteMappings?: boolean): Promise<void> {
-        let csvString = ''
-        for (const mapping of mappings) {
-            csvString += `${mapping.startDate ? toLocalDateTime(mapping.startDate) : ''},`
-            csvString += `${mapping.endDate ? toLocalDateTime(mapping.endDate) : ''},`
-            csvString += `${mapping.billingProfileId || ''},`
-            csvString += `${mapping.networkId || ''},`
-            csvString += ';'
-        }
+        const csvString = billingMappingsCsv(mappings)
         this.log.debug({
             message: `create contract id ${customerId} billing mappings via proc: ${csvString}`,
             func: this.appendBillingMappings.name,
@@ -61,82 +56,27 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
     }
 
     async createInitialBalance(customerId: number): Promise<void> {
-        // v1 create_initial_contract_balances with its defaults only (start mode '1st', no package, no initial
-        // balance/free time), see BILLING-BACKLOG C
         const profile = await this.readActualBillingProfile(customerId)
-        const count = profile.intervalCount ?? 1
-        const now = new Date()
-        const start = new Date(now.getFullYear(), now.getMonth(), 1)
-        const next = profile.intervalUnit == IntervalUnit.Week
-            ? new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7 * count)
-            : new Date(start.getFullYear(), start.getMonth() + count, 1)
+        const {start, end} = initialBalanceInterval(profile, new Date())
         const balance = db.billing.ContractBalance.create({
             contract_id: customerId,
             cash_balance: 0,
             start: start,
-            end: new Date(next.getTime() - 1000),
+            end: end,
         })
         await db.billing.ContractBalance.insert(balance)
     }
 
-    async readCurrentBillingProfile(customerId: number): Promise<internal.BillingProfile> {
-        return this.readActualBillingProfile(customerId)
-    }
-
     async readActualBillingProfile(contractId: number, at: Date = new Date()): Promise<internal.BillingProfile> {
         const contract = await db.billing.Contract.findOneByOrFail({id: contractId})
-        const contractCreatedAt = contract.create_timestamp ?? contract.modify_timestamp
-        if (at < contractCreatedAt)
-            at = contractCreatedAt
-        const epoch = Math.floor(at.getTime() / 1000)
         const qb = db.billing.ContractBillingProfileNetworkSchedule.createQueryBuilder('cbpns')
         qb.innerJoinAndSelect('cbpns.profileNetwork', 'profile_network')
         qb.innerJoinAndSelect('profile_network.billingProfile', 'billing_profile')
-        qb.andWhere('profile_network.contract_id = :contract_id', {contract_id: contractId})
-        qb.andWhere('profile_network.base = 1')
-        qb.andWhere('cbpns.effective_start_time <= :epoch', {epoch: epoch})
-        qb.orderBy('cbpns.effective_start_time', 'DESC')
+        andWhereActualBillingMapping(qb, contract, at)
         const cbpns = await qb.getOne()
         if (!cbpns)
             return undefined
         return cbpns.profileNetwork.billingProfile.toInternal()
-    }
-
-    async readFutureBillingMappings(customerId: number): Promise<internal.BillingMapping[]> {
-        const now = Date.now().valueOf()/1000
-        const qb = db.billing.ContractBillingProfileNetworkSchedule.createQueryBuilder('cbpns')
-        qb.innerJoinAndSelect('cbpns.profileNetwork', 'profile_network')
-        qb.innerJoinAndSelect('profile_network.billingProfile', 'billing_profile')
-        qb.andWhere('profile_network.contract_id = :contract_id', {contract_id: customerId})
-        qb.andWhere('profile_network.base = 1')
-        qb.andWhere('cbpns.effective_start_time > :now', {now: now})
-        qb.orderBy('cbpns.effective_start_time', 'DESC')
-        const result = await qb.getMany()
-        return result.map(cbpns => internal.BillingMapping.create({
-            billingProfileId: cbpns.profileNetwork.billing_profile_id,
-            effectiveStartTime: cbpns.effective_start_time,
-            endDate: cbpns.profileNetwork.end_date,
-            networkId: cbpns.profileNetwork.billing_network_id,
-            startDate: cbpns.profileNetwork.start_date,
-        }))
-    }
-
-    async readAllBillingMappings(customerId: number): Promise<internal.BillingMapping[]> {
-        const qb = db.billing.ContractBillingProfileNetworkSchedule.createQueryBuilder('cbpns')
-        qb.innerJoinAndSelect('cbpns.profileNetwork', 'profile_network')
-        qb.innerJoinAndSelect('profile_network.billingProfile', 'billing_profile')
-        qb.andWhere('profile_network.contract_id = :contract_id', {contract_id: customerId})
-        qb.andWhere('profile_network.base = 1')
-        qb.andWhere('FLOOR(cbpns.effective_start_time) = cbpns.effective_start_time')
-        qb.orderBy('cbpns.effective_start_time', 'ASC')
-        const result = await qb.getMany()
-        return result.map(cbpns => internal.BillingMapping.create({
-            billingProfileId: cbpns.profileNetwork.billing_profile_id,
-            effectiveStartTime: cbpns.effective_start_time,
-            endDate: cbpns.profileNetwork.end_date,
-            networkId: cbpns.profileNetwork.billing_network_id,
-            startDate: cbpns.profileNetwork.start_date,
-        }))
     }
 
     async readEmailTemplateIdsByIds(ids: number[], resellerId: number): Promise<[number[], number]> {
@@ -165,20 +105,6 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         })
         const product = await db.billing.Product.findOneBy({class: <ProductClass>type})
         return product != undefined ? product.toInternal() : undefined
-    }
-
-    async readProfilePackageById(id: number): Promise<internal.ProfilePackage> {
-        const qb = db.billing.ProfilePackage.createQueryBuilder('profilePackage')
-        qb.innerJoinAndSelect('profilePackage.packageProfileSets', 'packageProfileSets')
-        qb.andWhereInIds(id)
-        qb.andWhere('packageProfileSets.discriminator = :discriminator', {discriminator: Discriminator.Initial})
-        const profilePackage = await qb.getOneOrFail()
-        return profilePackage.toInternal()
-    }
-
-    async readBillingProfileById(id: number): Promise<internal.BillingProfile> {
-        const profile = await db.billing.BillingProfile.findOneByOrFail({id: id})
-        return profile.toInternal()
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.Customer[], number]> {
@@ -358,7 +284,7 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         return [result.map((d) => d.toInternalCustomerBillingProfile()), totalCount]
     }
 
-    // as v1 resource_from_mappings: no end markers (+0.001), no terminated profiles/networks
+    // no end markers (+0.001), no terminated profiles/networks
     private billingProfilesQueryBuilder(customerId: number): Promise<SelectQueryBuilder<db.billing.VContractBillingProfileNetworkSchedule>> {
         const qb = db.billing.VContractBillingProfileNetworkSchedule.createQueryBuilder('billingProfiles')
         // no joins: the view has no primary column for getCount()

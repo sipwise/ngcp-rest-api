@@ -86,7 +86,7 @@ export class CustomerBalanceMariadbRepository extends MariaDbRepository implemen
 
     async update(updates: Dictionary<internal.ContractBalance>, _sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
-        // as v1: only the balances are writable, an omitted one is kept
+        // only the balances are writable, an omitted one is kept
         for (const id of ids) {
             const balance = updates[id]
             const values: Partial<db.billing.ContractBalance> = {}

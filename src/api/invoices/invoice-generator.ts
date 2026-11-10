@@ -203,10 +203,10 @@ export interface InvoiceAmounts {
 }
 
 /**
- * Amounts in cents: the net amount is the zone total of the category (as v1)
+ * Amounts in cents: the net amount is the zone total of the category
  */
 export function invoiceAmounts(zones: InvoiceTemplateZonesVars, contract: internal.Contract): InvoiceAmounts {
-    // TODO: interval_charge, v1 never added the billing profile interval_charge (INVOICES-BACKLOG P1)
+    // TODO: add the billing profile interval_charge
     const amountNet = zones.totalcost
     const amountVat = contract.add_vat ? amountNet * (contract.vat_rate ?? 0) / 100 : 0
     return {amountNet, amountVat, amountTotal: amountNet + amountVat}

@@ -333,7 +333,7 @@ describe('CustomerController', () => {
             })
 
             it('returns the current profile, not a future one', async () => {
-                const profile = await repo.readCurrentBillingProfile(contractId)
+                const profile = await repo.readActualBillingProfile(contractId)
                 expect(profile.id).toEqual(profileA)
             })
 

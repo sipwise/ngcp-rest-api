@@ -3,6 +3,7 @@ import {
     Injectable,
     NotFoundException,
     StreamableFile,
+    UnprocessableEntityException,
 } from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
@@ -20,7 +21,6 @@ import {
 } from './invoice-generator'
 import {FilterBy, InvoiceMariadbRepository} from './repositories/invoice.mariadb.repository'
 
-import {CustomerService} from '~/api/customers/customer.service'
 import {zonesTotal} from '~/api/templates/invoices/invoice-template.vars'
 import {InvoiceTemplateService} from '~/api/templates/invoices/invoice.service'
 import {internal} from '~/entities'
@@ -44,7 +44,6 @@ export class InvoiceService implements CrudService<internal.Invoice> {
         @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(InvoiceMariadbRepository) private readonly invoiceRepo: InvoiceMariadbRepository,
         @Inject(InvoiceTemplateService) private readonly invoiceTemplateService: InvoiceTemplateService,
-        @Inject(CustomerService) private readonly customerService: CustomerService,
     ) {
     }
 
@@ -88,7 +87,9 @@ export class InvoiceService implements CrudService<internal.Invoice> {
         this.checkPeriod(invoice, sr, key)
         const template = await this.readTemplate(invoice, sr, key)
         const contract = await this.readContract(invoice, template, sr, key)
-        const billingProfile = await this.customerService.readActualBillingProfile(invoice.contractId, invoice.periodStart)
+        const billingProfile = await this.invoiceRepo.readActualBillingProfile(contract.contract, invoice.periodStart)
+        if (!billingProfile)
+            throw new UnprocessableEntityException(this.i18n.t('errors.CONTRACT_BILLING_PROFILE_NOT_FOUND', {args: {id: invoice.contractId}}))
 
         const category = template.category
         const role = sr.user.role

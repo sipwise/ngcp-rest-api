@@ -7,9 +7,9 @@ import {ContactOptions} from '~/api/contacts/interfaces/contact-options.interfac
 import {ContactMariadbRepository} from '~/api/contacts/repositories/contact.mariadb.repository'
 import {AppService} from '~/app.service'
 import {internal} from '~/entities'
-import {BillingProfileStatus} from '~/entities/internal/billing-profile.internal.entity'
 import {ContactStatus, ContactType} from '~/entities/internal/contact.internal.entity'
 import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/internal/contract.internal.entity'
+import {billingIntervalError, billingNetworkError, billingOpenIntervalError, billingProfileError} from '~/helpers/billing-mapping.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrors,apiError, checkItems, itemPointer, readFoundIds, throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
@@ -98,13 +98,6 @@ export class CustomerService implements CrudService<internal.Customer> {
         return await this.customerRepository.readAllBillingProfiles(customerId, sr, CustomerFilterBy)
     }
 
-    async readActualBillingProfile(contractId: number, at: Date): Promise<internal.BillingProfile> {
-        const profile = await this.customerRepository.readActualBillingProfile(contractId, at)
-        if (!profile)
-            throw new UnprocessableEntityException(this.i18n.t('errors.CONTRACT_BILLING_PROFILE_NOT_FOUND', {args: {id: contractId}}))
-        return profile
-    }
-
     async readFutureBillingProfiles(customerId: number, sr: ServiceRequest): Promise<[internal.CustomerBillingProfile[], number]> {
         const CustomerFilterBy: CustomerFilterBy = {customerId}
         if (sr.user.reseller_id_required)
@@ -167,7 +160,7 @@ export class CustomerService implements CrudService<internal.Customer> {
             const contact = activeContacts.find(c => c.id === resource.contactId)
             const profileDef = resource.billingProfileDefinition || ContractBillingProfileDefinition.ID
             let mappingsToCreate: internal.BillingMapping[] = []
-            // as v1: only the profiles mode replaces future mappings
+            // only the profiles mode replaces future mappings
             let deleteMappings = false
             if (profileDef === ContractBillingProfileDefinition.ID) {
                 if (resource.billingProfileId !== undefined && resource.billingProfileId !== oldEntity.billingProfileId) {
@@ -340,39 +333,25 @@ export class CustomerService implements CrudService<internal.Customer> {
 
     private async billingMappingsFromProfiles(customer: internal.Customer, contact: internal.Contact, sr: ServiceRequest, key: number | string, now: Date, isUpdate: boolean): Promise<internal.BillingMapping[]> {
         const mappings: internal.BillingMapping[] = []
-        let firstOpenInterval: number
-        let openIntervalsAnyNetwork = 0
-        for (const [index, profile] of (customer.billingProfiles ?? []).entries()) {
+        const profiles = customer.billingProfiles ?? []
+        for (const [index, profile] of profiles.entries()) {
             const at = (field: keyof internal.CustomerBillingProfile): string => itemPointer(sr, key, customer, 'billingProfiles', index, field)
             const [billingProfile, network] = await this.checkProfileNetwork(profile.id, profile.networkId, contact, sr, at('id'), at('networkId'))
-            const start = profile.startDate || undefined
-            const end = profile.endDate || undefined
-
-            if (!start && !end) {
-                firstOpenInterval ??= index
-                if (!network)
-                    openIntervalsAnyNetwork += 1
-            } else if (!start && end) {
-                throw apiError(this.i18n.t('errors.NO_START_DATE_WITH_PROVIDED_END_DATE'), at('startDate'))
-            } else {
-                if (start <= now)
-                    throw apiError(this.i18n.t('errors.START_DATE_NOT_IN_FUTURE'), at('startDate'))
-                if (end && start >= end)
-                    throw apiError(this.i18n.t('errors.START_AFTER_END_DATE'), at('startDate'))
-            }
-
+            const intervalError = billingIntervalError(profile, now)
+            if (intervalError)
+                throw apiError(this.i18n.t(`errors.${intervalError}`), at('startDate'))
             mappings.push(internal.BillingMapping.create({
                 billingProfileId: billingProfile.id,
                 networkId: network ? network.id : null,
-                startDate: start,
-                endDate: end,
+                startDate: profile.startDate || undefined,
+                endDate: profile.endDate || undefined,
             }))
         }
-
-        if (!isUpdate && openIntervalsAnyNetwork < 1)
-            throw apiError(this.i18n.t('errors.INITIAL_OPEN_INTERVAL_REQUIRED'), itemPointer(sr, key, customer, 'billingProfiles'))
-        if (isUpdate && firstOpenInterval != undefined)
-            throw apiError(this.i18n.t('errors.OPEN_INTERVAL_MAPPING_NOT_ALLOWED'), itemPointer(sr, key, customer, 'billingProfiles', firstOpenInterval))
+        const openError = billingOpenIntervalError(profiles, isUpdate)
+        if (openError)
+            throw apiError(this.i18n.t(`errors.${openError.key}`), openError.index == undefined
+                ? itemPointer(sr, key, customer, 'billingProfiles')
+                : itemPointer(sr, key, customer, 'billingProfiles', openError.index))
         return mappings
     }
 
@@ -382,19 +361,15 @@ export class CustomerService implements CrudService<internal.Customer> {
      */
     private async checkProfileNetwork(profileId: number, networkId: number | undefined, contact: internal.Contact, sr: ServiceRequest, profilePointer: string, networkPointer?: string): Promise<[internal.BillingProfile, internal.BillingNetwork | undefined]> {
         const profile = await this.customerRepository.readBillingProfile(profileId, sr)
-        if (!profile)
-            throw apiError(this.i18n.t('errors.INVALID_BILLING_PROFILE_ID'), profilePointer)
-        if (profile.status === BillingProfileStatus.Terminated)
-            throw apiError(this.i18n.t('errors.BILLING_PROFILE_ALREADY_TERMINATED'), profilePointer)
-        if (contact.reseller_id != undefined && profile.resellerId != undefined && contact.reseller_id != profile.resellerId)
-            throw apiError(this.i18n.t('errors.CONTACT_AND_BILLING_PROFILE_RESELLER_ID_MISMATCH'), profilePointer)
+        const profileError = billingProfileError(profile, contact.reseller_id)
+        if (profileError)
+            throw apiError(this.i18n.t(`errors.${profileError}`), profilePointer)
         if (networkId == undefined)
             return [profile, undefined]
         const network = await this.customerRepository.readBillingNetwork(networkId, sr)
-        if (!network)
-            throw apiError(this.i18n.t('errors.INVALID_BILLING_NETWORK_ID'), networkPointer)
-        if (contact.reseller_id != undefined && network.resellerId != undefined && contact.reseller_id != network.resellerId)
-            throw apiError(this.i18n.t('errors.CONTACT_AND_BILLING_NETWORK_RESELLER_ID_MISMATCH'), networkPointer)
+        const networkError = billingNetworkError(network, contact.reseller_id)
+        if (networkError)
+            throw apiError(this.i18n.t(`errors.${networkError}`), networkPointer)
         return [profile, network]
     }
 

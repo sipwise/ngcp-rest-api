@@ -5,8 +5,8 @@ import {ContractMariadbRepository} from './repositories/contract.mariadb.reposit
 
 import {AppService} from '~/app.service'
 import {internal} from '~/entities'
-import {BillingProfileStatus} from '~/entities/internal/billing-profile.internal.entity'
 import {ContractType} from '~/entities/internal/contract.internal.entity'
+import {billingProfileError} from '~/helpers/billing-mapping.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {apiError, checkItems, itemPointer, readFoundIds, throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
@@ -51,14 +51,13 @@ export class ContractService implements CrudService<internal.Contract> {
         contract.product_id = product.id
     }
 
-    // as v1 'id' mode; the contact is a system contact, so the profile's reseller isn't checked
+    // 'id' mode; the contact is a system contact, so the profile's reseller isn't checked
     private async validateBillingProfile(contract: internal.Contract, sr: ServiceRequest, key: number | string): Promise<void> {
         const profile = await this.contractsRepo.readBillingProfile(contract.billing_profile_id, sr)
         const pointer = itemPointer(sr, key, contract, 'billing_profile_id')
-        if (profile == undefined)
-            throw apiError(this.i18n.t('errors.INVALID_BILLING_PROFILE_ID'), pointer)
-        if (profile.status == BillingProfileStatus.Terminated)
-            throw apiError(this.i18n.t('errors.BILLING_PROFILE_ALREADY_TERMINATED'), pointer)
+        const profileError = billingProfileError(profile)
+        if (profileError)
+            throw apiError(this.i18n.t(`errors.${profileError}`), pointer)
         if (profile.prepaid && [ContractType.SipPeering, ContractType.Reseller].includes(contract.type))
             throw apiError(this.i18n.t('errors.PEERING_RESELLER_CONTRACT_PREPAID_PROFILE'), pointer)
     }
@@ -98,7 +97,7 @@ export class ContractService implements CrudService<internal.Contract> {
             } else {
                 await this.setProductId(contract, sr, key)
             }
-            // as v1: a changed profile becomes active now, the mappings scheduled so far stay
+            // a changed profile becomes active now, the mappings scheduled so far stay
             if (contract.billing_profile_id != undefined && contract.billing_profile_id != oldContract.billing_profile_id) {
                 await this.validateBillingProfile(contract, sr, key)
                 profileChanges.set(id, contract.billing_profile_id)

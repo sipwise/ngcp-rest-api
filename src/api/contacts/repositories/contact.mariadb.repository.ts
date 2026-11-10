@@ -102,7 +102,6 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
     }
 
     async hasContactTerminatedContract(contactId: number, sr: ServiceRequest): Promise<boolean> {
-        // v1 backwards compatability
         this.log.debug({
             message: 'check whether contact has terminated contract',
             contactId: contactId,

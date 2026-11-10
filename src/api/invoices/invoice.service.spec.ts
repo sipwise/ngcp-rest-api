@@ -7,7 +7,6 @@ import {InvoiceService} from './invoice.service'
 import {InvoiceMariadbRepository} from './repositories/invoice.mariadb.repository'
 import {InvoiceMockRepository} from './repositories/invoice.mock.repository'
 
-import {CustomerService} from '~/api/customers/customer.service'
 import {InvoiceTemplateService} from '~/api/templates/invoices/invoice.service'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
@@ -49,7 +48,6 @@ describe('InvoiceService', () => {
     let service: InvoiceService
     let repo: InvoiceMockRepository
     let templateService: {read: jest.Mock, render: jest.Mock}
-    let customerService: {readActualBillingProfile: jest.Mock}
     let templates: {[key: number]: internal.InvoiceTemplate}
 
     const makeSr = (user: AuthResponseDto = admin): ServiceRequest => ({
@@ -104,14 +102,12 @@ describe('InvoiceService', () => {
             }),
             render: jest.fn(async () => Buffer.from('pdf')),
         }
-        customerService = {readActualBillingProfile: jest.fn(async () => Object.assign(new internal.BillingProfile(), {id: 1, handle: 'h', name: 'n'}))}
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 InvoiceService,
                 {provide: InvoiceMariadbRepository, useValue: repo},
                 {provide: I18nService, useValue: {t: (key: string) => key}},
                 {provide: InvoiceTemplateService, useValue: templateService},
-                {provide: CustomerService, useValue: customerService},
             ],
         }).compile()
         service = module.get<InvoiceService>(InvoiceService)
@@ -170,8 +166,14 @@ describe('InvoiceService', () => {
         })
 
         it('uses the billing profile at the period start', async () => {
+            const spy = jest.spyOn(repo, 'readActualBillingProfile')
             await service.create([newInvoice()], makeSr())
-            expect(customerService.readActualBillingProfile).toHaveBeenCalledWith(10, periodStart)
+            expect(spy).toHaveBeenCalledWith(repo.contractDB[10].contract, periodStart)
+        })
+
+        it('rejects a contract without a billing profile at the period start', async () => {
+            repo.billingProfile = undefined
+            await expect(service.create([newInvoice()], makeSr())).rejects.toThrow(UnprocessableEntityException)
         })
 
         it('renders the template with the invoice variables', async () => {

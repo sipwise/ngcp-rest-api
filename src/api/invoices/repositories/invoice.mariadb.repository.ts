@@ -15,6 +15,7 @@ import {InvoiceRepository} from '~/api/invoices/interfaces/invoice.repository'
 import {db, internal} from '~/entities'
 import {InvoiceTemplateCallDirection} from '~/entities/internal/invoice-template.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
+import {andWhereActualBillingMapping} from '~/helpers/billing-mapping.helper'
 import {
     CallListSuppression,
     CallListSuppressionDirection,
@@ -59,7 +60,7 @@ const toZoneRow = (row: Row): InvoiceZoneRow => ({
 })
 
 /**
- * Zone aggregate of the calls of one side of the contract, as v1 get_contract_zonesfees_rs: the costs and the
+ * Zone aggregate of the calls of one side of the contract: the costs and the
  * zone of the cost category, no calls within the contract; did: grouped by the subscribers of the contract
  */
 function zoneQuery(q: InvoiceCdrQuery, side: InvoiceCallSide, did: boolean): [string, unknown[]] {
@@ -87,7 +88,7 @@ function zoneQuery(q: InvoiceCdrQuery, side: InvoiceCallSide, did: boolean): [st
 }
 
 /**
- * Calls of one side of the contract, as v1 get_contract_calls_rs, with the zone of that side and the id of
+ * Calls of one side of the contract, with the zone of that side and the id of
  * the matching call list suppression; without shown suppressions, filtered calls are left out
  */
 function callQuery(q: InvoiceCdrQuery, side: InvoiceCallSide, showSuppressions: boolean): [string, unknown[]] {
@@ -181,6 +182,14 @@ export class InvoiceMariadbRepository extends MariaDbRepository implements Invoi
             contact: contract.contact.toInternal(),
             resellerContact: contract.contact.reseller?.contract?.contact?.toInternal(),
         }
+    }
+
+    async readActualBillingProfile(contract: internal.Contract, at: Date): Promise<internal.BillingProfile | undefined> {
+        const qb = db.billing.ContractBillingProfileNetworkSchedule.createQueryBuilder('cbpns')
+            .innerJoinAndSelect('cbpns.profileNetwork', 'profile_network')
+            .innerJoinAndSelect('profile_network.billingProfile', 'billing_profile')
+        const cbpns = await andWhereActualBillingMapping(qb, contract, at).getOne()
+        return cbpns?.profileNetwork.billingProfile.toInternal()
     }
 
     async readZones(q: InvoiceCdrQuery): Promise<InvoiceZoneRow[]> {

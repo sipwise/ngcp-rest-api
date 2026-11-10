@@ -8,7 +8,7 @@ import {db, internal} from '~/entities'
 import {ContactStatus} from '~/entities/internal/contact.internal.entity'
 import {ContractBillingProfileDefinition} from '~/entities/internal/contract.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
-import {toLocalDateTime} from '~/helpers/date.helper'
+import {billingMappingsCsv} from '~/helpers/billing-mapping.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -57,12 +57,7 @@ export class ContractMariadbRepository extends MariaDbRepository implements Cont
     }
 
     async appendBillingMappings(contractId: number, mappings: internal.BillingMapping[], _sr: ServiceRequest): Promise<void> {
-        const csv = mappings.map(mapping => [
-            mapping.startDate ? toLocalDateTime(mapping.startDate) : '',
-            mapping.endDate ? toLocalDateTime(mapping.endDate) : '',
-            mapping.billingProfileId ?? '',
-            mapping.networkId ?? '',
-        ].join(',') + ',;').join('')
+        const csv = billingMappingsCsv(mappings)
         await this.app.dbConnection().query('call billing.schedule_contract_billing_profile_network(?,?,?);', [
             contractId,
             undefined,
@@ -151,7 +146,7 @@ export class ContractMariadbRepository extends MariaDbRepository implements Cont
         return ids
     }
 
-    // as v1: billing_profile_id is the actual profile, the definition is always 'id'
+    // billing_profile_id is the actual profile, the definition is always 'id'
     private async setActualBillingProfiles(contracts: internal.Contract[]): Promise<internal.Contract[]> {
         if (!contracts.length)
             return contracts

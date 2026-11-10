@@ -44,7 +44,7 @@ export class JournalMariadbRepository extends MariaDbRepository implements Journ
 
     /**
      * The writer's role (`role_id`) must be in the reader's `has_access_to`; rows written by subscribers (NULL) are
-     * readable once any role is. `reseller_id` is the writer's reseller (v2) or the owner's (v1), so it scopes reseller
+     * readable once any role is. `reseller_id` is the writer's reseller or, in older rows, the owner's, so it scopes reseller
      * bound readers only on the collection, and there only for writers bound to a reseller as well. With
      * `resourceVerified` the caller has read the resource within its scope already.
      */

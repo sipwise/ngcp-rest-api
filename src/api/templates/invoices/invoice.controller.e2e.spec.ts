@@ -375,7 +375,7 @@ describe('InvoiceTemplate', () => {
                 expect((response.body as Buffer).subarray(0, 5).toString('latin1')).toEqual('%PDF-')
             })
             it('does not render a preview of a template failing at runtime', async () => {
-                // stored before the upload validation (e.g. migrated from v1), the api rejects it on upload
+                // stored before the upload validation, the api rejects it on upload
                 const broken = await db.billing.InvoiceTemplate.create({
                     name: `${templateName}-broken`,
                     reseller_id: resellerId,

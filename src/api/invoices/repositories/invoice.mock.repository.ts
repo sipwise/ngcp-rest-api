@@ -18,6 +18,7 @@ export class InvoiceMockRepository implements InvoiceRepository {
     readonly invoiceDB: {[key: number]: internal.Invoice & {resellerId?: number}} = {}
     readonly contractDB: {[key: number]: InvoiceContract} = {}
     zones: InvoiceZoneRow[] = []
+    billingProfile: internal.BillingProfile | undefined = Object.assign(new internal.BillingProfile(), {id: 1, handle: 'h', name: 'n'})
     didZoneRows: InvoiceDidZoneRow[] = []
     calls: InvoiceCallRow[] = []
     suppressions: CallListSuppression[] = []
@@ -60,6 +61,10 @@ export class InvoiceMockRepository implements InvoiceRepository {
 
     async readContract(contractId: number): Promise<InvoiceContract | undefined> {
         return this.contractDB[contractId]
+    }
+
+    async readActualBillingProfile(_contract: internal.Contract, _at: Date): Promise<internal.BillingProfile | undefined> {
+        return this.billingProfile
     }
 
     async readZones(_q: InvoiceCdrQuery): Promise<InvoiceZoneRow[]> {

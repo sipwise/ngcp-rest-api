@@ -43,8 +43,8 @@ export class Journal implements JournalInterface {
     }
 
     /**
-     * Decodes `json` and `json_deflate` (v1) content with the secrets masked; formats that can't be
-     * decoded (v1 `storable`, `sereal`) and broken content become null, never the raw bytes
+     * Decodes `json` and `json_deflate` content with the secrets masked; formats that can't be
+     * decoded (`storable`, `sereal`) and broken content become null, never the raw bytes
      */
     decodeContent(): void {
         if (this.content == null)

@@ -344,13 +344,6 @@ describe('CustomerService', () => {
             await service.readFutureBillingProfiles(1, sr)
             expect(read).toHaveBeenCalledWith(1, sr, {customerId: 1})
         })
-
-        it('should read the actual billing profile', async () => {
-            const at = new Date()
-            const read = jest.spyOn(customerMockRepo, 'readActualBillingProfile')
-            expect(await service.readActualBillingProfile(1, at)).toStrictEqual(customerMockRepo.billingProfileDB[1])
-            expect(read).toHaveBeenCalledWith(1, at)
-        })
     })
 
     describe('terminate', () => {
