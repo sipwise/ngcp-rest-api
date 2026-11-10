@@ -2,6 +2,7 @@ import {readFileSync} from 'fs'
 import path from 'path'
 
 import {INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
 
@@ -14,6 +15,7 @@ import {AuthService} from '~/auth/auth.service'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory, InvoiceTemplateType} from '~/entities/internal/invoice-template.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 import {LicenseMockRepository} from '~/repositories/license.mock.repository'
 import {LicenseRepository} from '~/repositories/license.repository'
@@ -77,7 +79,7 @@ describe('InvoiceTemplate', () => {
             transform: true,
         }))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(new TransactionInterceptor(app.get(Reflector)), new ResponseValidationInterceptor())
 
         await app.init()
     })
