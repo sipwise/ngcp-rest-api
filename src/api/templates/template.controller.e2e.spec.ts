@@ -1,4 +1,5 @@
 import {INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
 import {validate} from 'class-validator'
 import request from 'supertest'
@@ -11,6 +12,7 @@ import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 import {LicenseMockRepository} from '~/repositories/license.mock.repository'
 import {LicenseRepository} from '~/repositories/license.repository'
@@ -39,7 +41,7 @@ describe('', () => {
         // like interceptors, etc.
         app.useGlobalPipes(new ValidateInputPipe())
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(new TransactionInterceptor(app.get(Reflector)), new ResponseValidationInterceptor())
 
         await app.init()
     })
