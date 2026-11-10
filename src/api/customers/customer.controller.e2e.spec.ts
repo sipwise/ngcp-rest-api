@@ -1,4 +1,5 @@
 import {HttpStatus, INestApplication} from '@nestjs/common'
+import {Reflector} from '@nestjs/core'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
 
@@ -14,6 +15,7 @@ import {CustomerType} from '~/entities/internal/customer.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {validate} from '~/helpers/validate.helper'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
+import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
 import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type BillingProfilePost = {
@@ -66,7 +68,7 @@ describe('CustomerController', () => {
 
         app.useGlobalPipes(new ValidateInputPipe({whitelist: true, forbidNonWhitelisted: true, transform: true}))
         app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(new ResponseValidationInterceptor())
+        app.useGlobalInterceptors(new TransactionInterceptor(app.get(Reflector)), new ResponseValidationInterceptor())
 
         await app.init()
     })
