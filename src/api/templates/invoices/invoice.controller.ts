@@ -277,7 +277,7 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
         return response
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

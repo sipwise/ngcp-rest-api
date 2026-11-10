@@ -187,7 +187,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         return await this.customerSpeedDialService.update(updates, sr)
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

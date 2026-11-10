@@ -266,7 +266,7 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
         return await this.ruleSetService.update(updates, sr)
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

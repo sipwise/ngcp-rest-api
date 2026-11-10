@@ -99,7 +99,7 @@ export class AuthTokenController extends CrudController<AuthTokenRequestDto, Aut
         return new AuthTokenResponseDto(token)
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [String],
     })

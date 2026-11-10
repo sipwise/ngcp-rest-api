@@ -234,7 +234,7 @@ export class CustomerContactController extends CrudController<CustomerContactReq
         return await this.contactService.update(contacts, sr)
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

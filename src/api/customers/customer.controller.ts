@@ -270,7 +270,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
         return await this.customerService.update(updates, sr)
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

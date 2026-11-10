@@ -544,7 +544,7 @@ describe('Invoice', () => {
             })
             it('does not bulk delete invoices of another reseller', async () => {
                 const response = await request(app.getHttpServer())
-                    .delete('/api/invoices/')
+                    .delete('/api/invoices')
                     .auth(resellerCreds.username, resellerCreds.password)
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
@@ -721,7 +721,7 @@ describe('Invoice', () => {
             })
             it('bulk deletes invoices', async () => {
                 const response = await request(app.getHttpServer())
-                    .delete('/api/invoices/')
+                    .delete('/api/invoices')
                     .auth(creds.username, creds.password)
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')

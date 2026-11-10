@@ -351,7 +351,7 @@ describe('Auth Grafana', () => {
     describe('Auth Grafana DELETE', () => {
         it('delete created admins bulk', async () => {
             const result = await request(app.getHttpServer())
-                .delete('/api/admins/')
+                .delete('/api/admins')
                 .set(...authHeader)
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')

@@ -245,7 +245,7 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
         return await this.ncosLevelService.update(updates, sr)
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

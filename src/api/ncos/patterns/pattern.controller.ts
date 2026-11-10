@@ -215,7 +215,7 @@ export class NCOSPatternController extends CrudController<NCOSPatternRequestDto,
         return await this.ncosPatternService.update(updates, sr)
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

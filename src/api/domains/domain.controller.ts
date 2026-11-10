@@ -121,7 +121,7 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
         return responseItem
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

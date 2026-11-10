@@ -111,7 +111,7 @@ export class InvoiceController extends CrudController<InvoiceRequestDto, Invoice
         return responseItem
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

@@ -867,7 +867,7 @@ describe('AdminController', () => {
         })
         it('delete created admins bulk', async () => {
             const result = await request(app.getHttpServer())
-                .delete('/api/admins/')
+                .delete('/api/admins')
                 .set(...systemAuthHeader)
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
@@ -876,7 +876,7 @@ describe('AdminController', () => {
         })
         it('fail if double array', async () => {
             const result = await request(app.getHttpServer())
-                .delete('/api/admins/')
+                .delete('/api/admins')
                 .set(...authHeader)
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
@@ -885,23 +885,16 @@ describe('AdminController', () => {
         })
         it('fail if not array', async () => {
             const result = await request(app.getHttpServer())
-                .delete('/api/admins/')
+                .delete('/api/admins')
                 .set(...authHeader)
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json')
                 .send({id: 1})
             expect(result.status).toEqual(400)
         })
-        it('fails if no trailing slash is provided', async () => {
-            const result = await request(app.getHttpServer())
-                .delete('/api/admins')
-                .set(...authHeader)
-                .set('Accept', 'application/json')
-            expect(result.status).toEqual(404)
-        })
         it('fails if no body and no params are defined', async () => {
             const result = await request(app.getHttpServer())
-                .delete('/api/admins/')
+                .delete('/api/admins')
                 .set(...authHeader)
                 .set('Accept', 'application/json')
             expect(result.status).toEqual(400)

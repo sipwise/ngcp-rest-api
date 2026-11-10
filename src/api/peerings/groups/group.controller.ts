@@ -235,7 +235,7 @@ export class PeeringGroupController extends CrudController<PeeringGroupRequestDt
     }
 
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

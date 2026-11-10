@@ -124,7 +124,7 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
         return stream
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({})
     @Transactional()
     async delete(

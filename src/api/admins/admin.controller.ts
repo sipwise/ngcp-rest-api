@@ -249,7 +249,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         return await this.adminService.update(updates, sr)
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

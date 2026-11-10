@@ -240,7 +240,7 @@ export class HeaderManipulationSetController extends CrudController<HeaderManipu
         return await this.ruleSetService.update(updates, sr)
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

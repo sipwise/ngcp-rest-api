@@ -233,7 +233,7 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         return await this.ncosSetService.update(updates, sr)
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

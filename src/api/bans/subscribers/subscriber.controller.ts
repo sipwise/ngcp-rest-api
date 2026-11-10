@@ -86,7 +86,7 @@ export class BanSubscriberController extends CrudController<never, BanSubscriber
         return response
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

@@ -77,7 +77,7 @@ export class BanIpController {
         return responseItem
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

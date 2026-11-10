@@ -209,7 +209,7 @@ export class SystemContactController extends CrudController<SystemContactRequest
         return await this.contactService.update(updates, sr)
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })

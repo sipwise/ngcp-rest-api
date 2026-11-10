@@ -83,7 +83,7 @@ export class BanAdminController extends CrudController<never, BanAdminResponseDt
         return response
     }
 
-    @Delete('{:id}')
+    @Delete('{/:id}')
     @ApiOkResponse({
         type: [Number],
     })
