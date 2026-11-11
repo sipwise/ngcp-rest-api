@@ -46,7 +46,10 @@ export class SubscriberAliasNumberResponseDto extends SubscriberNumberResponseDt
     }
 }
 
-const subscriberRoles: string[] = [RbacRole.subscriberadmin, RbacRole.subscriber]
+const subscriberRoles: string[] = [
+    RbacRole.subscriberadmin,
+    RbacRole.subscriber,
+]
 
 export class SubscriberResponseDto extends ResponseDto {
     @IsInt()

@@ -7,6 +7,7 @@ import {SubscriberPasswordJournalMariadbRepository} from './repositories/subscri
 import {AppService} from '~/app.service'
 import {db} from '~/entities'
 import {apiError} from '~/helpers/errors.helper'
+import {isPasswordInJournal, passwordJournalHash} from '~/helpers/password.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -49,14 +50,9 @@ export class AuthPasswordChangeService {
         internal.saltedpassModifyTimestamp = new Date()
         if (this.app.config.security.password.web_validate && this.app.config.security.password.web_keep_last_used > 0) {
             const lastPasswords = await this.adminPasswordJournalRepo.readLastNPasswords(admin.id, this.app.config.security.password.web_keep_last_used, sr)
-            for (const pass of lastPasswords) {
-                const [storedSalt, storedHash] = pass.value.split('$')
-                const generatedHash = await internal.generateSaltedpass(6, storedSalt)
-                if (generatedHash.split('$')[1] === storedHash) {
-                    throw apiError(this.i18n.t('errors.PASSWORD_ALREADY_USED'), '/new_password')
-                }
-            }
-            const journalHash = await internal.generateSaltedpass(6)
+            if (await isPasswordInJournal(newPassword, lastPasswords.map(pass => pass.value)))
+                throw apiError(this.i18n.t('errors.PASSWORD_ALREADY_USED'), '/new_password')
+            const journalHash = await passwordJournalHash(newPassword)
             const journal = db.billing.AdminPasswordJournal.create({admin_id: admin.id, value: journalHash})
             const keepPasswordAmount = this.app.config.security.password.web_keep_last_used
             await this.adminPasswordJournalRepo.create([journal], sr)
@@ -84,14 +80,9 @@ export class AuthPasswordChangeService {
         internal.webPasswordModifyTimestamp = new Date()
         if (this.app.config.security.password.web_validate && this.app.config.security.password.web_keep_last_used > 0) {
             const lastPasswords = await this.subscriberPasswordJournalRepo.readLastNPasswords(subscriber.id, this.app.config.security.password.web_keep_last_used, sr)
-            for (const pass of lastPasswords) {
-                const [storedSalt, storedHash] = pass.value.split('$')
-                const generatedHash = await internal.generateSaltedpass(6, storedSalt)
-                if (generatedHash.split('$')[1] === storedHash) {
-                    throw apiError(this.i18n.t('errors.PASSWORD_ALREADY_USED'), '/new_password')
-                }
-            }
-            const journalHash = await internal.generateSaltedpass(6)
+            if (await isPasswordInJournal(newPassword, lastPasswords.map(pass => pass.value)))
+                throw apiError(this.i18n.t('errors.PASSWORD_ALREADY_USED'), '/new_password')
+            const journalHash = await passwordJournalHash(newPassword)
             const journal = db.provisioning.VoipSubscriberWebPasswordJournal.create({subscriber_id: subscriber.id, value: journalHash})
             const keepPasswordAmount = this.app.config.security.password.web_keep_last_used
             await this.subscriberPasswordJournalRepo.create([journal], sr)

@@ -1,12 +1,13 @@
 import {Injectable} from '@nestjs/common'
 
 import {License as LicenseType} from '~/config/constants.config'
-import {License} from '~/license/license.service'
+import {License, LicenseCounter} from '~/license/license.service'
 
 @Injectable()
 export class LicenseMockRepository {
     private license: License
     private readonly defaultLicense: License
+    private counts: {[key: string]: number} = {}
 
     constructor() {
         this.license = {
@@ -57,5 +58,14 @@ export class LicenseMockRepository {
 
     reset(): void {
         this.license = Object.assign({}, this.defaultLicense)
+        this.counts = {}
+    }
+
+    async readCount(kind: 'max' | 'current', name: LicenseCounter): Promise<number> {
+        return this.counts[`${kind}_${name}`] ?? -1
+    }
+
+    setCount(kind: 'max' | 'current', name: LicenseCounter, value: number): void {
+        this.counts[`${kind}_${name}`] = value
     }
 }

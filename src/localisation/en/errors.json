@@ -268,5 +268,95 @@
   },
   "PASSWORD_EXPIRED": {
     "message": "Password expired"
+  },
+  "SUBSCRIBER_READ_ONLY": {
+    "message": "Read-only resource for authenticated role"
+  },
+  "SUBSCRIBER_FIELD_READ_ONLY": {
+    "message": "Read-only field for authenticated role"
+  },
+  "SUBSCRIBER_FIELD_IMMUTABLE": {
+    "message": "Field can not be changed"
+  },
+  "SUBSCRIBER_CUSTOMER_REQUIRED": {
+    "message": "customer_id is required"
+  },
+  "SUBSCRIBER_CUSTOMER_INVALID": {
+    "message": "Invalid customer_id, no active sipaccount or pbxaccount customer"
+  },
+  "SUBSCRIBER_EXISTS": {
+    "message": "Subscriber '{username}' already exists in the domain"
+  },
+  "SUBSCRIBER_WEBUSERNAME_EXISTS": {
+    "message": "Webusername '{webusername}' already exists in the domain"
+  },
+  "SUBSCRIBER_DOMAIN_REQUIRED": {
+    "message": "Either domain or domain_id is required"
+  },
+  "SUBSCRIBER_DOMAIN_INVALID": {
+    "message": "Invalid domain, it doesn't exist or doesn't belong to the customer's reseller"
+  },
+  "SUBSCRIBER_LIMIT_REACHED": {
+    "message": "Maximum number of {limit} reached"
+  },
+  "SUBSCRIBER_PASSWORD_REQUIRED": {
+    "message": "password is required"
+  },
+  "LICENSE_PBX_INACTIVE": {
+    "message": "PBX customers can not be changed without an active PBX license and enabled cloud PBX"
+  },
+  "SUBSCRIBER_PBX_FIELD_INVALID": {
+    "message": "Field is not allowed for this kind of subscriber"
+  },
+  "SUBSCRIBER_PBX_PILOT_EXISTS": {
+    "message": "Customer already has a PBX pilot subscriber"
+  },
+  "SUBSCRIBER_PBX_PILOT_MISSING": {
+    "message": "Customer has no PBX pilot subscriber yet and is_pbx_pilot is not set"
+  },
+  "SUBSCRIBER_PBX_PILOT_NO_NUMBER": {
+    "message": "The PBX pilot subscriber has no primary number"
+  },
+  "SUBSCRIBER_PBX_EXTENSION_REQUIRED": {
+    "message": "pbx_extension is required for PBX subscribers other than the pilot"
+  },
+  "SUBSCRIBER_PBX_EXTENSION_EXISTS": {
+    "message": "pbx_extension '{extension}' already exists for this customer"
+  },
+  "SUBSCRIBER_PBX_EXTENSION_RANGE": {
+    "message": "pbx_extension is out of the customer's extension range"
+  },
+  "SUBSCRIBER_PBX_GROUP_INVALID": {
+    "message": "Invalid id {id}, no PBX group of this customer"
+  },
+  "SUBSCRIBER_PBX_MEMBER_INVALID": {
+    "message": "Invalid id {id}, no PBX subscriber of this customer that can be a group member"
+  },
+  "SUBSCRIBER_PRIMARY_NUMBER_REQUIRED": {
+    "message": "primary_number is required"
+  },
+  "SUBSCRIBER_PRIMARY_NUMBER_DERIVED": {
+    "message": "primary_number of a PBX subscriber is derived from the pilot's number and pbx_extension: {number}"
+  },
+  "SUBSCRIBER_NUMBER_IN_USE": {
+    "message": "Number '{number}' is already in use"
+  },
+  "SUBSCRIBER_NUMBER_DUPLICATE": {
+    "message": "Number '{number}' is given more than once"
+  },
+  "SUBSCRIBER_NUMBER_NOT_IN_POOL": {
+    "message": "Number '{number}' is not available in the number pool"
+  },
+  "SUBSCRIBER_PROFILE_SET_INVALID": {
+    "message": "Invalid profile_set_id, no profile set of the customer's reseller"
+  },
+  "SUBSCRIBER_PROFILE_SET_REQUIRED": {
+    "message": "profile_id requires profile_set_id"
+  },
+  "SUBSCRIBER_PROFILE_INVALID": {
+    "message": "Invalid profile_id, no profile of the profile set"
+  },
+  "SUBSCRIBER_PROFILE_UNDETERMINED": {
+    "message": "The profile set has no default profile, profile_id is required"
   }
 }

@@ -14,6 +14,13 @@ enum OrderByDirection {
 }
 
 export class SearchLogic {
+    static readonly booleanValues = [
+        'true',
+        'false',
+        '1',
+        '0',
+    ]
+
     joins?: Join[]
     aliases?: {[key: string]: string | object}
     searchableFields: string[]
@@ -60,7 +67,23 @@ export class SearchLogic {
                     : OrderByDirection.ASC
 
         }
-        this.searchOr = sr.query['search_or'] != null && (sr.query['search_or'] === '1' || sr.query['search_or'] === 'true')
+        this.searchOr = SearchLogic.isTrue(sr.query['search_or'])
+    }
+
+    static isTrue(value: unknown): boolean {
+        return value === 'true' || value === '1'
+    }
+
+    /**
+     * Boolean query parameter, undefined when not given; 400 for values other than booleanValues
+     */
+    static parseBoolean(sr: ServiceRequest, name: string): boolean | undefined {
+        const value = sr.query?.[name]
+        if (value == undefined)
+            return undefined
+        if (!SearchLogic.booleanValues.includes(`${value}`))
+            throw new InvalidParameterException([{parameter: name, code: 'isIn', message: `${name} must be one of ${SearchLogic.booleanValues.join(', ')}`}])
+        return SearchLogic.isTrue(value)
     }
 
     static getPaginationFromServiceRequest(sr: ServiceRequest): [number, number] {

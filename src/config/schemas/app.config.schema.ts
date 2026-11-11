@@ -4,9 +4,12 @@ import {IsNumber, IsOptional, ValidateNested} from 'class-validator'
 import {CommonConfig} from './common.config.schema'
 import {CsvConfig} from './csv.config.schema'
 import {DatabaseConfig} from './database.config.schema'
+import {FeaturesConfig} from './features.config.schema'
 import {FileShareConfig} from './fileshare.config.schema'
 import {GeneralConfig} from './general.config.schema'
 import {MultiSiteConfig} from './multisite.config.schema'
+import {NumberManagementConfig} from './numbermanagement.config.schema'
+import {PrivilegesConfig} from './privileges.config.schema'
 import {RedisConfig} from './redis.config.schema'
 import {SecurityConfig} from './security.config.schema'
 import {SipConfig} from './sip.config.schema'
@@ -52,6 +55,18 @@ export class AppConfig {
     @ValidateNested()
     @Type(() => MultiSiteConfig)
         multisite: MultiSiteConfig
+
+    @ValidateNested()
+    @Type(() => FeaturesConfig)
+        features: FeaturesConfig
+
+    @ValidateNested()
+    @Type(() => NumberManagementConfig)
+        numbermanagement: NumberManagementConfig
+
+    @ValidateNested()
+    @Type(() => PrivilegesConfig)
+        privileges: PrivilegesConfig
 
     @IsNumber()
     @IsOptional()

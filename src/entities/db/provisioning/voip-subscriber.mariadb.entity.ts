@@ -257,6 +257,7 @@ export class VoipSubscriber extends BaseEntity {
     toInternalSubscriber(): internal.Subscriber {
         const subscriber = new internal.Subscriber()
         subscriber.provisioningId = this.id
+        subscriber.provisioningDomainId = this.domain_id
         subscriber.webusername = this.webusername ?? null
         subscriber.administrative = !!this.admin
         subscriber.profileSetId = this.profile_set_id ?? null

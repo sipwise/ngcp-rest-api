@@ -4,7 +4,7 @@ import path from 'path'
 import {Injectable} from '@nestjs/common'
 
 import {License as LicenseType, procLicensesLocation} from '~/config/constants.config'
-import {License} from '~/license/license.service'
+import {License, LicenseCounter} from '~/license/license.service'
 
 @Injectable()
 export class LicenseRepository {
@@ -33,6 +33,21 @@ export class LicenseRepository {
             return licenseStatuses
         } catch {
             return licenseStatuses
+        }
+    }
+
+    /**
+     * Platform license counter from /proc/ngcp/<kind>_<name>; -1 when unlimited or unknown.
+     * Not read in development, where there is no NGCP platform: unlimited.
+     */
+    async readCount(kind: 'max' | 'current', name: LicenseCounter): Promise<number> {
+        if (process.env.NODE_ENV == 'development')
+            return -1
+        try {
+            const value = (await fs.readFile(`/proc/ngcp/${kind}_${name}`, 'utf8')).trim()
+            return /^\d+$/.test(value) ? +value : -1
+        } catch {
+            return -1
         }
     }
 }

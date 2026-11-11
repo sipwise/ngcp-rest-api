@@ -71,7 +71,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
                     billing_voip_subscriber: true,
                 },
             })
-            if (!this.auth.isSubscriberValid(subscriber)) {
+            if (!await this.auth.isSubscriberValid(subscriber)) {
                 this.log.debug('subscriber auth failed the token is invalid')
                 return null
             }

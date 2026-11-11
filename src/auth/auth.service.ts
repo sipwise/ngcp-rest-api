@@ -15,9 +15,13 @@ import {AppService} from '~/app.service'
 import {RbacRole} from '~/config/constants.config'
 import {RedisDatabases} from '~/config/redis.config'
 import {db, internal} from '~/entities'
+import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {findKeys, keyExists} from '~/helpers/redis.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
+
+// lock levels below it restrict calls only
+const GLOBAL_LOCK_LEVEL = '4'
 
 /**
  * `AuthService` provides functionality to authenticate Admins and to sign JWTs for authenticated users
@@ -213,9 +217,24 @@ export class AuthService {
         return response
     }
 
-    isSubscriberValid(subscriber: db.provisioning.VoipSubscriber): boolean {
+    async isSubscriberValid(subscriber: db.provisioning.VoipSubscriber): Promise<boolean> {
         if (!subscriber) {
             this.log.debug({message: 'validating subscriber', success: false, constraint: 'empty object'})
+            return false
+        }
+        const lock = await this.app.dbRepo(db.provisioning.VoipUsrPreference).findOne({
+            where: {
+                subscriber_id: subscriber.id,
+                voipPreference: {attribute: 'lock'},
+            },
+            relations: {voipPreference: true},
+        })
+        if (lock?.value === GLOBAL_LOCK_LEVEL) {
+            this.log.debug({message: 'validating subscriber', success: false, constraint: 'lock'})
+            return false
+        }
+        if (subscriber.contract?.status !== ContractStatus.Active) {
+            this.log.debug({message: 'validating subscriber', success: false, constraint: 'customer status'})
             return false
         }
         this.log.debug({message: 'validating subscriber', success: true})
@@ -251,7 +270,7 @@ export class AuthService {
                 domain: true,
             },
         })
-        if (!this.isSubscriberValid(subscriber)) {
+        if (!await this.isSubscriberValid(subscriber)) {
             return null
         }
 

@@ -220,6 +220,67 @@ describe('Subscriber', () => {
 
     const idsOf = (...names: string[]): number[] => names.map(name => subscribers[name].id).sort((a, b) => a - b)
 
+    // write tests
+    const wdomain = `w${domain}`
+    const strongPassword = 'Ab1!Cd2@Ef3#gh'
+    const created: Record<string, number> = {}
+    let wBillingDomainId: number
+    let wProvisioningDomainId: number
+    let otherDomainId: number
+    let otherProvisioningDomainId: number
+    let wSipCustomerId: number
+    let wPbxCustomerId: number
+    let profileSetId: number
+    let defaultProfileId: number
+    let otherProfileId: number
+    let otherResellerProfileSetId: number
+
+    const wNumber = (sn: string): {cc: number, ac: string, sn: string} => ({cc: 43, ac: '98', sn: `${snBase}${sn}`})
+
+    const wLogin = (name: string): Login => ({username: `w${name}${suffix}@${wdomain}`, password: 'any', realm: 'subscriber'})
+
+    const send = (method: 'post' | 'put' | 'patch', url: string, body: unknown, user: Login = creds): request.Test => {
+        const req = request(app.getHttpServer())[method](url)
+            .auth(user.username, user.password)
+            .set('Accept', 'application/json')
+            .set('Content-Type', method == 'patch' ? 'application/json-patch+json' : 'application/json')
+            .set('Prefer', 'return=representation')
+        return (user.realm ? req.set('X-Auth-Realm', user.realm) : req).send(body as object)
+    }
+
+    const sipBody = (name: string, values: object = {}): object => ({
+        customer_id: wSipCustomerId,
+        username: `${name}${suffix}`,
+        domain: wdomain,
+        password: 'sipPassword1',
+        webusername: `w${name}${suffix}`,
+        ...values,
+    })
+
+    /**
+     * Creates a subscriber as admin (or the given login) and remembers its id
+     */
+    const createViaApi = async (name: string, body: object, user: Login = creds): Promise<SubscriberResponseDto> => {
+        const response = await send('post', '/api/subscribers', body, user)
+        expect(response.status).toEqual(HttpStatus.CREATED)
+        const subscriber: SubscriberResponseDto = response.body.data[0]
+        created[name] = subscriber.id
+        return subscriber
+    }
+
+    const read = async (name: string): Promise<SubscriberResponseDto> => {
+        const response = await get(`/api/subscribers/${created[name]}`)
+        expect(response.status).toEqual(HttpStatus.OK)
+        const subscriber: SubscriberResponseDto = response.body
+        return subscriber
+    }
+
+    const errorPointers = (response: request.Response): string[] =>
+        (response.body.errors as {pointer: string}[]).map(e => e.pointer)
+
+    const errorCodes = (response: request.Response): string[] =>
+        (response.body.errors as {code: string}[]).map(e => e.code)
+
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
             imports: [SubscriberModule, AppModule],
@@ -307,6 +368,22 @@ describe('Subscriber', () => {
 
         await createSubscriber('other', otherCustomerId)
         await createSubscriber('peering', peeringContractId)
+
+        // write tests: own domain, customers, profile sets and number block (43 98 <snBase>...)
+        wBillingDomainId = (await db.billing.Domain.create({domain: wdomain, reseller_id: RESELLER_ID}).save()).id
+        wProvisioningDomainId = (await db.provisioning.VoipDomain.create({domain: wdomain}).save()).id
+        otherDomainId = (await db.billing.Domain.create({domain: `o${domain}`, reseller_id: otherResellerId}).save()).id
+        otherProvisioningDomainId = (await db.provisioning.VoipDomain.create({domain: `o${domain}`}).save()).id
+        wSipCustomerId = await createContract(SIPACCOUNT_PRODUCT_ID, customerContactId)
+        wPbxCustomerId = await createContract(PBXACCOUNT_PRODUCT_ID, customerContactId)
+        for (const [attribute, value] of [['ext_range_min', '100'], ['ext_range_max', '299']]) {
+            const preference = await db.provisioning.VoipPreference.findOneByOrFail({attribute})
+            await db.provisioning.VoipContractPreference.insert({contract_id: wPbxCustomerId, attribute_id: preference.id, value})
+        }
+        profileSetId = (await db.provisioning.VoipSubscriberProfileSet.insert({reseller_id: RESELLER_ID, name: prefix, description: ''})).identifiers[0].id
+        defaultProfileId = (await db.provisioning.VoipSubscriberProfile.insert({set_id: profileSetId, name: 'default', description: '', set_default: true})).identifiers[0].id
+        otherProfileId = (await db.provisioning.VoipSubscriberProfile.insert({set_id: profileSetId, name: 'other', description: '', set_default: false})).identifiers[0].id
+        otherResellerProfileSetId = (await db.provisioning.VoipSubscriberProfileSet.insert({reseller_id: otherResellerId, name: prefix, description: ''})).identifiers[0].id
     })
 
     afterAll(async () => {
@@ -562,9 +639,455 @@ describe('Subscriber', () => {
                 expect(response.status).toEqual(HttpStatus.FORBIDDEN)
             })
         })
+
+        describe('POST', () => {
+            it('creates a SIP subscriber with numbers, contact, preferences and the default profile', async () => {
+                const subscriber = await createViaApi('wsip', sipBody('wsip', {
+                    primary_number: wNumber('100'),
+                    alias_numbers: [{...wNumber('101'), is_devid: true}, wNumber('102')],
+                    email: `${prefix}-wsip@example.org`,
+                    timezone: 'Europe/Vienna',
+                    display_name: 'W Sip',
+                    external_id: `${prefix}-wext`,
+                    lock: 2,
+                    profile_set_id: profileSetId,
+                }))
+                expect(subscriber).toMatchObject({
+                    customer_id: wSipCustomerId,
+                    username: `wsip${suffix}`,
+                    domain: wdomain,
+                    domain_id: wBillingDomainId,
+                    status: 'active',
+                    lock: '2',
+                    external_id: `${prefix}-wext`,
+                    email: `${prefix}-wsip@example.org`,
+                    timezone: 'Europe/Vienna',
+                    webusername: `wwsip${suffix}`,
+                    administrative: false,
+                    profile_set_id: profileSetId,
+                    profile_id: defaultProfileId,
+                    primary_number: wNumber('100'),
+                    display_name: 'W Sip',
+                })
+                expect(subscriber.alias_numbers).toEqual([
+                    expect.objectContaining({...wNumber('101'), is_devid: true}),
+                    expect.objectContaining({...wNumber('102'), is_devid: false}),
+                ])
+                expect(subscriber).not.toHaveProperty('password')
+                expect(subscriber).not.toHaveProperty('is_pbx_pilot')
+            })
+
+            it('writes a journal entry per created subscriber', async () => {
+                const response = await send('post', '/api/subscribers', [
+                    sipBody('wbulk1', {primary_number: wNumber('110')}),
+                    sipBody('wbulk2', {primary_number: wNumber('111'), status: 'locked'}),
+                ])
+                expect(response.status).toEqual(HttpStatus.CREATED)
+                const [first, second] = response.body.data as SubscriberResponseDto[]
+                created.wbulk1 = first.id
+                created.wbulk2 = second.id
+                expect(second).toMatchObject({status: 'locked', lock: '4'})
+                for (const id of [first.id, second.id]) {
+                    const journal = await get(`/api/subscribers/${id}/journal`)
+                    expect(journal.status).toEqual(HttpStatus.OK)
+                    expect(journal.body.total_count).toEqual(1)
+                }
+            })
+
+            it.each([
+                ['customer_id missing', {customer_id: undefined}, '/customer_id', 'SUBSCRIBER_CUSTOMER_REQUIRED'],
+                ['unknown customer', {customer_id: 999999999}, '/customer_id', 'SUBSCRIBER_CUSTOMER_INVALID'],
+                ['domain missing', {domain: undefined}, '/domain', 'SUBSCRIBER_DOMAIN_REQUIRED'],
+                ['domain of another reseller', {domain: undefined, domain_id: -1}, '/domain_id', 'SUBSCRIBER_DOMAIN_INVALID'],
+                ['existing username', {username: `sipadmin${suffix}`, domain}, '/username', 'SUBSCRIBER_EXISTS'],
+                ['primary number missing', {primary_number: undefined}, '/primary_number', 'SUBSCRIBER_PRIMARY_NUMBER_REQUIRED'],
+                ['number of another subscriber', {primary_number: wNumber('100')}, '/primary_number', 'SUBSCRIBER_NUMBER_IN_USE'],
+                ['alias equal to the primary', {alias_numbers: [wNumber('120')]}, '/alias_numbers/0', 'SUBSCRIBER_NUMBER_DUPLICATE'],
+                ['password missing', {password: undefined}, '/password', 'SUBSCRIBER_PASSWORD_REQUIRED'],
+                ['profile set of another reseller', {profile_set_id: -1}, '/profile_set_id', 'SUBSCRIBER_PROFILE_SET_INVALID'],
+                ['profile without profile set', {profile_id: -1}, '/profile_id', 'SUBSCRIBER_PROFILE_SET_REQUIRED'],
+                ['PBX field on a SIP customer', {pbx_extension: '101'}, '/pbx_extension', 'SUBSCRIBER_PBX_FIELD_INVALID'],
+            ])('rejects %s with 422', async (_case, values: Record<string, unknown>, pointer, code) => {
+                const body = sipBody('winvalid', {primary_number: wNumber('120'), ...values})
+                if ('domain_id' in values)
+                    Object.assign(body, {domain_id: otherDomainId})
+                if (values.profile_set_id == -1)
+                    Object.assign(body, {profile_set_id: otherResellerProfileSetId})
+                if (values.profile_id == -1)
+                    Object.assign(body, {profile_id: otherProfileId})
+                const response = await send('post', '/api/subscribers', body)
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors).toContainEqual(expect.objectContaining({pointer, code}))
+            })
+
+            it('rejects a profile outside the profile set with 422', async () => {
+                const set = (await db.provisioning.VoipSubscriberProfile.insert({set_id: otherResellerProfileSetId, name: 'x', description: ''})).identifiers[0].id
+                const response = await send('post', '/api/subscribers', sipBody('winvalid', {
+                    primary_number: wNumber('120'), profile_set_id: profileSetId, profile_id: set,
+                }))
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(errorCodes(response)).toEqual(['SUBSCRIBER_PROFILE_INVALID'])
+            })
+
+            it('rejects status terminated with 422', async () => {
+                const response = await send('post', '/api/subscribers', sipBody('winvalid', {primary_number: wNumber('120'), status: 'terminated'}))
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(errorPointers(response)).toEqual(['/status'])
+            })
+
+            it('reports every failing item of a bulk request', async () => {
+                const response = await send('post', '/api/subscribers', [
+                    sipBody('winvalid1', {primary_number: wNumber('100')}),
+                    sipBody('winvalid2', {primary_number: wNumber('121')}),
+                    sipBody('winvalid3', {primary_number: undefined}),
+                ])
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(errorPointers(response)).toEqual(['/0/primary_number', '/2/primary_number'])
+                expect((await list(`username=winvalid2${suffix}`)).body.total_count).toEqual(0)
+            })
+
+            it('rejects a customer of another reseller for reseller with 422', async () => {
+                const response = await send('post', '/api/subscribers', sipBody('winvalid', {
+                    customer_id: otherCustomerId, primary_number: wNumber('120'),
+                }), resellerCreds)
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(errorCodes(response)).toEqual(['SUBSCRIBER_CUSTOMER_INVALID'])
+            })
+
+            it('lets ccare create a subscriber of its reseller', async () => {
+                await createViaApi('wccare', sipBody('wccare', {primary_number: wNumber('130')}), ccareCreds)
+            })
+
+            it('rejects the customer limit with 422', async () => {
+                await db.billing.Contract.update(wSipCustomerId, {max_subscribers: 4})
+                const response = await send('post', '/api/subscribers', sipBody('winvalid', {primary_number: wNumber('120')}))
+                await db.billing.Contract.update(wSipCustomerId, {max_subscribers: null})
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body).toMatchObject({errorCode: 'SUBSCRIBER_LIMIT_REACHED', message: 'Maximum number of customer subscribers reached'})
+            })
+
+            it('rejects lintercept with 403', async () => {
+                const response = await send('post', '/api/subscribers', sipBody('winvalid', {primary_number: wNumber('120')}), linterceptCreds)
+                expect(response.status).toEqual(HttpStatus.FORBIDDEN)
+            })
+
+            it('rejects an invalid create_primary_acli with 400', async () => {
+                const response = await send('post', '/api/subscribers?create_primary_acli=no', sipBody('winvalid', {primary_number: wNumber('120')}))
+                expect(response.status).toEqual(HttpStatus.BAD_REQUEST)
+                expect(response.body.errors).toEqual([expect.objectContaining({parameter: 'create_primary_acli'})])
+            })
+
+            it('rejects subscriber with 403', async () => {
+                const response = await send('post', '/api/subscribers', sipBody('winvalid', {primary_number: wNumber('120')}), wLogin('wsip'))
+                expect(response.status).toEqual(HttpStatus.FORBIDDEN)
+            })
+
+            it('rejects a subscriberadmin of a SIP customer without the write privilege with 403', async () => {
+                const response = await send('post', '/api/subscribers', {username: `winvalid${suffix}`, password: 'x', primary_number: wNumber('120')}, subscriberLogin('sipadmin'))
+                expect(response.status).toEqual(HttpStatus.FORBIDDEN)
+                expect(response.body.errorCode).toEqual('SUBSCRIBER_READ_ONLY')
+            })
+        })
+
+        describe('POST PBX', () => {
+            it('creates the pilot and a seat in one request, the seat number derived', async () => {
+                const response = await send('post', '/api/subscribers', [
+                    sipBody('wpilot', {
+                        customer_id: wPbxCustomerId,
+                        is_pbx_pilot: true,
+                        administrative: true,
+                        primary_number: wNumber('500'),
+                        alias_numbers: [wNumber('501'), wNumber('502'), wNumber('503')],
+                    }),
+                    sipBody('wseat', {customer_id: wPbxCustomerId, pbx_extension: '101', display_name: 'W Seat'}),
+                ])
+                expect(response.status).toEqual(HttpStatus.CREATED)
+                const [pilot, seat] = response.body.data as SubscriberResponseDto[]
+                created.wpilot = pilot.id
+                created.wseat = seat.id
+                expect(pilot).toMatchObject({is_pbx_pilot: true, is_pbx_group: false, administrative: true, ext_range_min: 100, ext_range_max: 299})
+                expect(seat).toMatchObject({is_pbx_pilot: false, pbx_extension: '101', primary_number: wNumber('500101'), pbx_group_ids: []})
+            })
+
+            it('creates a group with members in order and a seat in the group', async () => {
+                const group = await createViaApi('wgroup', sipBody('wgroup', {
+                    customer_id: wPbxCustomerId,
+                    is_pbx_group: true,
+                    pbx_extension: '200',
+                    pbx_hunt_policy: 'serial',
+                    pbx_hunt_timeout: 20,
+                    pbx_hunt_cancel_mode: 'bye',
+                    pbx_groupmember_ids: [created.wseat],
+                }))
+                expect(group).toMatchObject({primary_number: wNumber('500200'), pbx_groupmember_ids: [created.wseat], pbx_hunt_policy: 'serial'})
+                const seat = await createViaApi('wseat2', sipBody('wseat2', {
+                    customer_id: wPbxCustomerId, pbx_extension: '102', pbx_group_ids: [created.wgroup],
+                }))
+                expect(seat.pbx_group_ids).toEqual([created.wgroup])
+                expect((await read('wgroup')).pbx_groupmember_ids).toEqual([created.wseat, created.wseat2])
+            })
+
+            it.each([
+                ['a second pilot', {is_pbx_pilot: true, primary_number: wNumber('510')}, '/is_pbx_pilot', 'SUBSCRIBER_PBX_PILOT_EXISTS'],
+                ['a seat without extension', {}, '/pbx_extension', 'SUBSCRIBER_PBX_EXTENSION_REQUIRED'],
+                ['an existing extension', {pbx_extension: '101'}, '/pbx_extension', 'SUBSCRIBER_PBX_EXTENSION_EXISTS'],
+                ['an extension out of range', {pbx_extension: '300'}, '/pbx_extension', 'SUBSCRIBER_PBX_EXTENSION_RANGE'],
+                ['a primary number other than the derived', {pbx_extension: '103', primary_number: wNumber('510')}, '/primary_number', 'SUBSCRIBER_PRIMARY_NUMBER_DERIVED'],
+                ['hunt fields on a seat', {pbx_extension: '103', pbx_hunt_policy: 'serial'}, '/pbx_hunt_policy', 'SUBSCRIBER_PBX_FIELD_INVALID'],
+                ['an unknown group', {pbx_extension: '103', pbx_group_ids: [-1]}, '/pbx_group_ids/0', 'SUBSCRIBER_PBX_GROUP_INVALID'],
+                ['a group member that is a group', {pbx_extension: '201', is_pbx_group: true, pbx_groupmember_ids: [-2]}, '/pbx_groupmember_ids/0', 'SUBSCRIBER_PBX_MEMBER_INVALID'],
+            ])('rejects %s with 422', async (_case, values: Record<string, unknown>, pointer, code) => {
+                const body = sipBody('winvalid', {customer_id: wPbxCustomerId, ...values})
+                if ((values.pbx_groupmember_ids as number[])?.[0] == -2)
+                    Object.assign(body, {pbx_groupmember_ids: [created.wgroup]})
+                const response = await send('post', '/api/subscribers', body)
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors).toContainEqual(expect.objectContaining({pointer, code}))
+            })
+
+            it('lets the pilot create a seat with a number from the pool', async () => {
+                const seat = await createViaApi('wseat3', {
+                    username: `wseat3${suffix}`, password: 'sipPassword1', webusername: `wwseat3${suffix}`, pbx_extension: '103',
+                    alias_numbers: [{...wNumber('501'), is_devid: true}],
+                }, wLogin('wpilot'))
+                expect(seat).toMatchObject({customer_id: wPbxCustomerId, domain: wdomain, primary_number: wNumber('500103')})
+                expect(seat.alias_numbers).toEqual([expect.objectContaining({...wNumber('501'), is_devid: true})])
+                expect((await read('wpilot')).alias_numbers.map(n => n.sn)).toEqual([wNumber('502').sn, wNumber('503').sn])
+            })
+
+            it.each([
+                ['a number outside the pool', {alias_numbers: [wNumber('520')]}, '/alias_numbers/0', 'SUBSCRIBER_NUMBER_NOT_IN_POOL'],
+                ['administrative', {administrative: true}, '/administrative', 'SUBSCRIBER_FIELD_READ_ONLY'],
+                ['a profile set', (): object => ({profile_set_id: profileSetId}), '/profile_set_id', 'SUBSCRIBER_FIELD_READ_ONLY'],
+                ['another customer', (): object => ({customer_id: wSipCustomerId}), '/customer_id', 'SUBSCRIBER_CUSTOMER_INVALID'],
+            ])('rejects %s from the pilot with 422', async (_case, values, pointer, code) => {
+                const response = await send('post', '/api/subscribers', {
+                    username: `winvalid${suffix}`, password: 'sipPassword1', pbx_extension: '104',
+                    ...typeof values == 'function' ? values() : values,
+                }, wLogin('wpilot'))
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors).toContainEqual(expect.objectContaining({pointer, code}))
+            })
+        })
+
+        describe('PUT and PATCH', () => {
+            const patch = (name: string, ops: object[], user: Login = creds): request.Test =>
+                send('patch', `/api/subscribers/${created[name]}`, ops, user)
+
+            it('patches fields and writes a journal entry', async () => {
+                const response = await patch('wsip', [
+                    {op: 'replace', path: '/display_name', value: 'W Sip 2'},
+                    {op: 'replace', path: '/status', value: 'locked'},
+                    {op: 'remove', path: '/timezone'},
+                ])
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body).toMatchObject({display_name: 'W Sip 2', status: 'locked', lock: '4', timezone: null, email: `${prefix}-wsip@example.org`})
+                const journal = await get(`/api/subscribers/${created.wsip}/journal`)
+                expect(journal.body.total_count).toEqual(2)
+            })
+
+            it('keeps the lock when unlocking without a lock level', async () => {
+                const response = await patch('wsip', [{op: 'replace', path: '/status', value: 'active'}])
+                expect(response.body).toMatchObject({status: 'active', lock: '4'})
+            })
+
+            it('takes a given lock level when locking', async () => {
+                const response = await patch('wbulk1', [
+                    {op: 'replace', path: '/status', value: 'locked'},
+                    {op: 'replace', path: '/lock', value: 3},
+                ])
+                expect(response.body).toMatchObject({status: 'locked', lock: '3'})
+                const unlocked = await patch('wbulk1', [{op: 'replace', path: '/status', value: 'active'}, {op: 'replace', path: '/lock', value: 0}])
+                expect(unlocked.body).toMatchObject({status: 'active', lock: null})
+            })
+
+            it('replaces with PUT: omitted fields are reset, aliases released', async () => {
+                const response = await send('put', `/api/subscribers/${created.wsip}`, sipBody('wsip', {primary_number: wNumber('100')}))
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body).toMatchObject({
+                    status: 'active', lock: null, email: null, display_name: null, external_id: null, alias_numbers: [],
+                    profile_set_id: null, profile_id: null,
+                })
+                const released = await db.billing.VoipNumber.findOneByOrFail({cc: 43, ac: '98', sn: wNumber('101').sn})
+                expect(released.subscriber_id).toBeNull()
+            })
+
+            it('claims a released number for another subscriber', async () => {
+                const response = await patch('wbulk1', [{op: 'add', path: '/alias_numbers/-', value: wNumber('101')}])
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.alias_numbers).toEqual([expect.objectContaining(wNumber('101'))])
+            })
+
+            it.each([
+                ['username', {op: 'replace', path: '/username', value: 'changed'}, '/username', 'SUBSCRIBER_FIELD_IMMUTABLE'],
+                ['customer_id', {op: 'replace', path: '/customer_id', value: 1}, '/customer_id', 'SUBSCRIBER_FIELD_IMMUTABLE'],
+                ['is_pbx_pilot', {op: 'replace', path: '/is_pbx_pilot', value: true}, '/is_pbx_pilot', 'SUBSCRIBER_FIELD_IMMUTABLE'],
+                ['status terminated', {op: 'replace', path: '/status', value: 'terminated'}, '/status', 'isIn'],
+                ['a number in use', {op: 'replace', path: '/primary_number', value: wNumber('110')}, '/primary_number', 'SUBSCRIBER_NUMBER_IN_USE'],
+            ])('rejects a change of %s with 422', async (_case, op, pointer, code) => {
+                const response = await patch('wsip', [op])
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors).toContainEqual(expect.objectContaining({pointer, code}))
+            })
+
+            it('changes the profile within the set', async () => {
+                const response = await patch('wbulk2', [
+                    {op: 'replace', path: '/profile_set_id', value: profileSetId},
+                    {op: 'replace', path: '/profile_id', value: otherProfileId},
+                ])
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body).toMatchObject({profile_set_id: profileSetId, profile_id: otherProfileId})
+            })
+
+            it('reports every failing item of a bulk PATCH and writes nothing', async () => {
+                const response = await send('patch', '/api/subscribers', {
+                    [created.wbulk1]: [{op: 'replace', path: '/display_name', value: 'never'}],
+                    [created.wbulk2]: [{op: 'replace', path: '/username', value: 'changed'}],
+                    [created.wccare]: [{op: 'replace', path: '/primary_number', value: wNumber('100')}],
+                })
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(errorPointers(response)).toEqual([`/${created.wbulk2}/username`, `/${created.wccare}/primary_number`])
+                expect((await read('wbulk1')).display_name).toBeNull()
+            })
+
+            it('updates in bulk with PUT and writes a journal entry per subscriber', async () => {
+                const response = await send('put', '/api/subscribers', {
+                    [created.wbulk1]: sipBody('wbulk1', {primary_number: wNumber('110'), display_name: 'B1'}),
+                    [created.wbulk2]: sipBody('wbulk2', {primary_number: wNumber('111'), display_name: 'B2'}),
+                })
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect((await read('wbulk1')).display_name).toEqual('B1')
+                expect((await read('wbulk2')).display_name).toEqual('B2')
+                expect((await get(`/api/subscribers/${created.wbulk2}/journal`)).body.total_count).toEqual(3)
+            })
+
+            it('returns 404 for a subscriber outside the scope', async () => {
+                const response = await send('patch', `/api/subscribers/${subscribers.other.id}`, [{op: 'replace', path: '/display_name', value: 'x'}], resellerCreds)
+                expect(response.status).toEqual(HttpStatus.NOT_FOUND)
+            })
+
+            describe('subscriberadmin', () => {
+                it.each([
+                    ['administrative', {op: 'replace', path: '/administrative', value: true}],
+                    ['external_id', {op: 'replace', path: '/external_id', value: 'x'}],
+                    ['profile_id', (): object => ({op: 'replace', path: '/profile_id', value: otherProfileId})],
+                ])('rejects a change of %s on a seat with 422', async (field, op) => {
+                    const response = await patch('wseat', [typeof op == 'function' ? op() : op], wLogin('wpilot'))
+                    expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                    expect(response.body.errors).toEqual([expect.objectContaining({pointer: `/${field}`, code: 'SUBSCRIBER_FIELD_READ_ONLY'})])
+                })
+
+                it.each([
+                    ['status', {op: 'replace', path: '/status', value: 'locked'}],
+                    ['alias_numbers', {op: 'remove', path: '/alias_numbers/0'}],
+                ])('rejects a change of %s on itself with 422', async (field, op) => {
+                    const response = await patch('wpilot', [op], wLogin('wpilot'))
+                    expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                    expect(errorPointers(response)).toEqual([`/${field}`])
+                })
+
+                it('passes unchanged read-only fields and changes its own display name', async () => {
+                    const response = await patch('wpilot', [
+                        {op: 'replace', path: '/status', value: 'active'},
+                        {op: 'replace', path: '/display_name', value: 'Pilot'},
+                    ], wLogin('wpilot'))
+                    expect(response.status).toEqual(HttpStatus.OK)
+                    expect(response.body.display_name).toEqual('Pilot')
+                })
+
+                it('assigns a pool number to a seat and revokes it back to the pilot', async () => {
+                    const assigned = await patch('wseat', [{op: 'add', path: '/alias_numbers/-', value: wNumber('502')}], wLogin('wpilot'))
+                    expect(assigned.status).toEqual(HttpStatus.OK)
+                    expect(assigned.body.alias_numbers).toEqual([expect.objectContaining(wNumber('502'))])
+                    expect((await read('wpilot')).alias_numbers.map(n => n.sn)).toEqual([wNumber('503').sn])
+                    const revoked = await patch('wseat', [{op: 'remove', path: '/alias_numbers/0'}], wLogin('wpilot'))
+                    expect(revoked.body.alias_numbers).toEqual([])
+                    expect((await read('wpilot')).alias_numbers.map(n => n.sn).sort()).toEqual([wNumber('502').sn, wNumber('503').sn])
+                })
+
+                it('rejects another seat\'s number with 422', async () => {
+                    const response = await patch('wseat', [{op: 'add', path: '/alias_numbers/-', value: wNumber('501')}], wLogin('wpilot'))
+                    expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                    expect(response.body.errors).toEqual([expect.objectContaining({pointer: '/alias_numbers/0', code: 'SUBSCRIBER_NUMBER_NOT_IN_POOL'})])
+                })
+
+                it('changes the groups of a seat', async () => {
+                    const response = await patch('wseat', [{op: 'replace', path: '/pbx_group_ids', value: []}], wLogin('wpilot'))
+                    expect(response.body.pbx_group_ids).toEqual([])
+                    expect((await read('wgroup')).pbx_groupmember_ids).toEqual([created.wseat2])
+                })
+
+                it('renumbers the seat with its extension', async () => {
+                    const response = await patch('wseat', [{op: 'replace', path: '/pbx_extension', value: '110'}], wLogin('wpilot'))
+                    expect(response.status).toEqual(HttpStatus.OK)
+                    expect(response.body.primary_number).toMatchObject(wNumber('500110'))
+                })
+            })
+
+            describe('subscriber', () => {
+                it.each([
+                    ['pbx_extension', {op: 'replace', path: '/pbx_extension', value: '111'}],
+                    ['pbx_group_ids', {op: 'replace', path: '/pbx_group_ids', value: []}],
+                    ['lock', {op: 'replace', path: '/lock', value: 1}],
+                ])('rejects a change of %s with 422', async (field, op) => {
+                    const response = await patch('wseat2', [op], wLogin('wseat2'))
+                    expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                    expect(errorPointers(response)).toEqual([`/${field}`])
+                })
+
+                it('changes its web password, a reused one is rejected with 422', async () => {
+                    const change = await patch('wseat2', [{op: 'add', path: '/webpassword', value: strongPassword}], wLogin('wseat2'))
+                    expect(change.status).toEqual(HttpStatus.OK)
+                    expect(change.body).not.toHaveProperty('webpassword')
+                    const reuse = await patch('wseat2', [{op: 'add', path: '/webpassword', value: strongPassword}], wLogin('wseat2'))
+                    expect(reuse.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                    expect(reuse.body.errors).toEqual([expect.objectContaining({pointer: '/webpassword', code: 'PASSWORD_ALREADY_USED'})])
+                })
+
+                it('returns 404 for another subscriber', async () => {
+                    const response = await patch('wseat', [{op: 'replace', path: '/display_name', value: 'x'}], wLogin('wseat2'))
+                    expect(response.status).toEqual(HttpStatus.NOT_FOUND)
+                })
+            })
+
+            it('renumbers the seats and groups when the pilot number changes', async () => {
+                const response = await patch('wpilot', [{op: 'replace', path: '/primary_number', value: wNumber('600')}])
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect((await read('wseat')).primary_number).toMatchObject(wNumber('600110'))
+                expect((await read('wgroup')).primary_number).toMatchObject(wNumber('600200'))
+                const old = await db.billing.VoipNumber.findOneByOrFail({cc: 43, ac: '98', sn: wNumber('500110').sn})
+                expect(old.subscriber_id).toBeNull()
+            })
+        })
     })
 
     describe('Subscriber DELETE', () => {
+        it('delete write fixtures', async () => {
+            const createdIds = Object.values(created)
+            if (createdIds.length) {
+                const rows = await db.billing.VoipSubscriber.find({where: {id: In(createdIds)}})
+                const provisioning = await db.provisioning.VoipSubscriber.find({where: {uuid: In(rows.map(row => row.uuid))}})
+                const provisioningIds = provisioning.map(row => row.id)
+                if (provisioningIds.length) {
+                    await db.provisioning.VoipUsrPreference.delete({subscriber_id: In(provisioningIds)})
+                    await db.provisioning.VoipDBAlias.delete({subscriber_id: In(provisioningIds)})
+                    await appService.db.query(
+                        'DELETE FROM provisioning.voip_pbx_groups WHERE group_id IN (?) OR subscriber_id IN (?)', [provisioningIds, provisioningIds],
+                    )
+                    await db.provisioning.VoipSubscriber.delete(provisioningIds)
+                }
+                await db.kamailio.VoicemailUser.delete({customer_id: In(rows.map(row => row.uuid))})
+                await db.billing.Journal.delete({resource_name: 'subscribers', resource_id: In(createdIds)})
+                await db.billing.VoipSubscriber.update({id: In(createdIds)}, {contact_id: null, primary_number_id: null})
+                const contactIds = rows.map(row => row.contact_id).filter(id => id != null)
+                if (contactIds.length)
+                    await db.billing.Contact.delete(contactIds)
+            }
+            await appService.db.query('DELETE FROM billing.voip_numbers WHERE cc = 43 AND ac = ? AND sn LIKE ?', ['98', `${snBase}%`])
+            if (profileSetId)
+                await db.provisioning.VoipSubscriberProfileSet.delete([profileSetId, otherResellerProfileSetId])
+        })
+
         it('delete fixtures', async () => {
             const provisioningIds = Object.values(subscribers).map(s => s.provisioningId)
             if (provisioningIds.length) {
@@ -593,6 +1116,10 @@ describe('Subscriber', () => {
                 await db.billing.Domain.delete(billingDomainId)
             if (provisioningDomainId)
                 await db.provisioning.VoipDomain.delete(provisioningDomainId)
+            if (wBillingDomainId)
+                await db.billing.Domain.delete([wBillingDomainId, otherDomainId])
+            if (wProvisioningDomainId)
+                await db.provisioning.VoipDomain.delete([wProvisioningDomainId, otherProvisioningDomainId])
         })
 
         it('delete mock admins', async () => {

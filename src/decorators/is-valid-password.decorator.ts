@@ -7,22 +7,25 @@ import {config} from '~/config/main.config'
 
 export type PasswordOptions = {
     username?: string
+    /** SIP password: checked when `sip_validate` is set, not limited to ASCII */
+    sip?: boolean
     validationOptions?: ValidationOptions
 }
 
 export function IsValidPassword(opts: PasswordOptions): PropertyDecorator {
     const settings = config.security.password
 
-    if (!settings.web_validate) {
+    if (!(opts.sip ? settings.sip_validate : settings.web_validate)) {
         return applyDecorators()
     }
 
     const decorators: PropertyDecorator[] = [
         IsString(),
         IsNotEmpty(),
-        ContainsASCII(opts.validationOptions),
-        IsValidLength(settings.min_length, settings.max_length, opts.validationOptions),
     ]
+    if (!opts.sip)
+        decorators.push(ContainsASCII(opts.validationOptions))
+    decorators.push(IsValidLength(settings.min_length, settings.max_length, opts.validationOptions))
 
     if (settings.musthave_lowercase > 0)
         decorators.push(ContainsLowerCase(settings.musthave_lowercase, opts.validationOptions))

@@ -2,16 +2,24 @@ import {ForbiddenException, NotFoundException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
 import {I18nService} from 'nestjs-i18n'
 
+import {SubscriberCustomer} from './interfaces/subscriber.repository'
 import {SubscriberMariadbRepository} from './repositories/subscriber.mariadb.repository'
 import {SubscriberMockRepository} from './repositories/subscriber.mock.repository'
 import {SubscriberService} from './subscriber.service'
 
+import {AppService} from '~/app.service'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
-import {RbacRole} from '~/config/constants.config'
+import {License, RbacRole} from '~/config/constants.config'
+import {config} from '~/config/main.config'
+import {AppConfig} from '~/config/schemas/app.config.schema'
 import {internal} from '~/entities'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
+import {ApiErrorException} from '~/helpers/errors.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LicenseService} from '~/license/license.service'
+import {LicenseMockRepository} from '~/repositories/license.mock.repository'
+import {LicenseRepository} from '~/repositories/license.repository'
 
 const admin: AuthResponseDto = {
     readOnly: false,
@@ -32,9 +40,24 @@ const user = (role: RbacRole, data: Partial<AuthResponseDto> = {}): AuthResponse
     ...data,
 })
 
+const customer = (id: number, productClass: ProductClass): SubscriberCustomer => ({
+    id,
+    productClass,
+    externalId: null,
+    maxSubscribers: null,
+    resellerId: 1,
+    resellerContractId: 1,
+    resellerMaxSubscribers: null,
+    extRangeMin: null,
+    extRangeMax: null,
+    soundSetId: null,
+})
+
 describe('SubscriberService', () => {
     let service: SubscriberService
     let repo: SubscriberMockRepository
+    let licenseRepo: LicenseMockRepository
+    let appConfig: AppConfig
 
     const makeSr = (u: AuthResponseDto): ServiceRequest => ({
         returnContent: true,
@@ -52,8 +75,15 @@ describe('SubscriberService', () => {
             customerId,
             customerProductClass: ProductClass.SipAccount,
             username: `user${id}`,
+            domain: 'example.org',
+            domainId: 1,
+            provisioningId: id,
+            provisioningDomainId: 1,
             status: VoipSubscriberStatus.Active,
+            primaryNumber: null,
             aliasNumbers: [],
+            pbxGroupIds: [],
+            pbxGroupmemberIds: [],
         })
     }
 
@@ -66,11 +96,18 @@ describe('SubscriberService', () => {
         seed(2, 1, 10)
         seed(3, 1, 11)
         seed(4, 2, 20)
+        repo.customerDB[10] = customer(10, ProductClass.SipAccount)
+        repo.customerDB[30] = customer(30, ProductClass.PbxAccount)
+        repo.domainDB[1] = {id: 1, domain: 'example.org', resellerId: 1, provisioningId: 1}
+        appConfig = structuredClone(config)
+        licenseRepo = new LicenseMockRepository()
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 SubscriberService,
                 {provide: SubscriberMariadbRepository, useValue: repo},
-                {provide: I18nService, useValue: {t: (key: string): string => key}},
+                {provide: I18nService, useValue: {t: (key: string): object => ({message: key, errorCode: key.replace('errors.', '')})}},
+                {provide: AppService, useValue: {config: appConfig}},
+                {provide: LicenseService, useValue: new LicenseService(undefined, licenseRepo as unknown as LicenseRepository)},
             ],
         }).compile()
         service = module.get<SubscriberService>(SubscriberService)
@@ -118,6 +155,97 @@ describe('SubscriberService', () => {
             const err = await service.read(id, makeSr(u)).catch((e: unknown) => e)
             expect(err).toBeInstanceOf(NotFoundException)
             expect((err as NotFoundException).message).toBe('errors.SUBSCRIBER_NOT_FOUND')
+        })
+    })
+
+    describe('create', () => {
+        const sipSubscriber = (values: Partial<internal.Subscriber> = {}): internal.Subscriber => Object.assign(new internal.Subscriber(), {
+            customerId: 10,
+            username: 'new',
+            domain: 'example.org',
+            password: 'secret',
+            primaryNumber: {cc: 43, ac: '1', sn: '100'},
+            ...values,
+        })
+
+        const failure = async (promise: Promise<unknown>): Promise<ApiErrorException> => {
+            const err = await promise.catch((e: unknown) => e)
+            expect(err).toBeInstanceOf(ApiErrorException)
+            return err as ApiErrorException
+        }
+
+        it('rejects subscriber with 403', async () => {
+            await expect(service.create([sipSubscriber()], makeSr(user(RbacRole.subscriber, {id: 2, customer_id: 10}))))
+                .rejects.toThrow(ForbiddenException)
+        })
+
+        it('creates a subscriber with the customer preferences and allowed CLIs', async () => {
+            const [created] = await service.create([sipSubscriber()], makeSr(user(RbacRole.admin)))
+            expect(created).toMatchObject({customerId: 10, username: 'new', status: VoipSubscriberStatus.Active, lock: null})
+            const plan = repo.plans[0]
+            expect(plan.allowCli).toBe(true)
+            expect(plan.preferences).toMatchObject({account_id: '10', reseller_id: '1', cc: '43', ac: '1', cli: '431100'})
+            expect(plan.numbers.primary).toMatchObject({number: {cc: 43, ac: '1', sn: '100'}, isPrimary: true})
+        })
+
+        it('skips allowed CLIs with create_primary_acli=false', async () => {
+            const sr = makeSr(user(RbacRole.admin))
+            sr.query = {create_primary_acli: 'false'}
+            await service.create([sipSubscriber()], sr)
+            expect(repo.plans[0].allowCli).toBe(false)
+        })
+
+        it('rejects a subscriberadmin of a SIP customer without the write privilege with 403', async () => {
+            const err = await failure(service.create([sipSubscriber({customerId: undefined})], makeSr(user(RbacRole.subscriberadmin, {id: 1, customer_id: 10}))))
+            expect(err.getStatus()).toBe(403)
+            expect(err.errorList[0].code).toBe('SUBSCRIBER_READ_ONLY')
+        })
+
+        it('lets a subscriberadmin with the write privilege take numbers from its own pool', async () => {
+            appConfig.privileges.subscriberadmin.subscribers = ['write']
+            repo.subscriberDB[1].aliasNumbers = [{numberId: 501, cc: 43, ac: '1', sn: '501', isDevId: false}]
+            const sr = makeSr(user(RbacRole.subscriberadmin, {id: 1, customer_id: 10}))
+            const [created] = await service.create([sipSubscriber({customerId: undefined, domain: undefined, primaryNumber: {cc: 43, ac: '1', sn: '501'}})], sr)
+            expect(created.customerId).toBe(10)
+            expect(repo.plans[0].numbers.primary).toMatchObject({numberId: 501, fromProvisioningId: 1})
+            const err = await failure(service.create([sipSubscriber({customerId: undefined, username: 'other', primaryNumber: {cc: 43, ac: '1', sn: '999'}})], sr))
+            expect(err.errorList[0]).toMatchObject({pointer: '/primary_number', code: 'SUBSCRIBER_NUMBER_NOT_IN_POOL'})
+        })
+
+        it.each([
+            ['the pbx license is inactive', (): void => licenseRepo.setLicense(License.pbx, 0)],
+            ['cloud PBX is disabled', (): void => {
+                appConfig.features.cloudpbx = false
+            }],
+        ])('rejects PBX customers with 403 when %s', async (_case, disable) => {
+            disable()
+            const err = await failure(service.create([sipSubscriber({customerId: 30, isPbxPilot: true})], makeSr(user(RbacRole.admin))))
+            expect(err.getStatus()).toBe(403)
+            expect(err.errorList[0].code).toBe('LICENSE_PBX_INACTIVE')
+        })
+
+        it('rejects subscribers over the platform limit, counting the request', async () => {
+            licenseRepo.setCount('max', 'subscribers', 6)
+            licenseRepo.setCount('current', 'subscribers', 5)
+            const err = await failure(service.create([
+                sipSubscriber(),
+                sipSubscriber({username: 'second', primaryNumber: {cc: 43, ac: '1', sn: '101'}}),
+            ], makeSr(user(RbacRole.admin))))
+            expect(err.errorList).toHaveLength(1)
+            expect(err.errorList[0]).toMatchObject({code: 'SUBSCRIBER_LIMIT_REACHED', message: 'errors.SUBSCRIBER_LIMIT_REACHED'})
+        })
+
+        it.each([
+            ['customer', (): void => {
+                repo.customerDB[10].maxSubscribers = 2
+            }],
+            ['reseller', (): void => {
+                repo.customerDB[10].resellerMaxSubscribers = 3
+            }],
+        ])('rejects subscribers over the %s limit', async (_case, limit) => {
+            limit()
+            const err = await failure(service.create([sipSubscriber()], makeSr(user(RbacRole.admin))))
+            expect(err.errorList[0].code).toBe('SUBSCRIBER_LIMIT_REACHED')
         })
     })
 })

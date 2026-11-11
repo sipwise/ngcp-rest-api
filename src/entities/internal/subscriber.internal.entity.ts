@@ -31,6 +31,7 @@ export interface SubscriberAliasNumber extends SubscriberNumber {
 export class Subscriber {
     id: number
     provisioningId?: number
+    provisioningDomainId?: number
     uuid: string
     customerId: number
     customerProductClass?: ProductClass

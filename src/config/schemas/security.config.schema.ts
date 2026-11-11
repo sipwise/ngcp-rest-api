@@ -48,6 +48,10 @@ class SecurityPasswordConfig {
 
     @IsBoolean()
         sip_validate: boolean
+
+    @IsNumber()
+        sip_keep_last_used: number
+
     @IsBoolean()
         web_autogenerate: boolean
 

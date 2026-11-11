@@ -1,9 +1,10 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
+import {SearchLogic} from '~/helpers/search-logic.helper'
 
 const booleanFilter = (column: string): object => ({
-    format: (args: string[]): string => ['true', '1'].includes(args[0]) ? '1' : '0',
+    format: (args: string[]): string => SearchLogic.isTrue(args[0]) ? '1' : '0',
     where: (param: string): string => `${column} = :${param}`,
 })
 
