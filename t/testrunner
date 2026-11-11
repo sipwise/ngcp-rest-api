@@ -58,15 +58,14 @@ fi
 echo "################################################################################"
 echo "Finished main setup, now running tests ..."
 
-YARN=".yarn/releases/yarn-*.cjs"
 RC=0
 
 if [ "${FORMAT}" = "junit" ] ; then
   export JEST_JUNIT_OUTPUT_DIR="${OUTPUT_DIRECTORY}"
   export JEST_JUNIT_OUTPUT_NAME="api-e2e.xml"
-  node "${YARN}" test:e2e "${ARGS[@]}" --reporters=default --reporters=jest-junit || RC=$?
+  node .yarn/releases/yarn-*.cjs test:e2e "${ARGS[@]}" --reporters=default --reporters=jest-junit || RC=$?
 else
-  node "${YARN}" test:e2e "${ARGS[@]}" 2>&1 | tee -a "${OUTPUT_DIRECTORY}/api-e2e.pretty"
+  node .yarn/releases/yarn-*.cjs test:e2e "${ARGS[@]}" 2>&1 | tee -a "${OUTPUT_DIRECTORY}/api-e2e.pretty"
   RC=${PIPESTATUS[0]}
 fi
 
