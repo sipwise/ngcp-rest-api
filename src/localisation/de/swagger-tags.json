@@ -105,7 +105,7 @@
     },
     {
         "name": "Subscriber",
-        "description": "[/subscribers] Verfügbare Routen für Subscriber, einschließlich Telefonbuch"
+        "description": "[/subscribers] Subscriber von Customers (SIP- und PBX-Accounts) mit ihren Nummern, PBX-Einstellungen, Journal und Telefonbuch"
     },
     {
         "name": "SystemContact",

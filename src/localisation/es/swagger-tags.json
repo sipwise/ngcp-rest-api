@@ -105,7 +105,7 @@
     },
     {
         "name": "Subscriber",
-        "description": "[/subscribers] Rutas de suscriptores, incluida la agenda telefónica"
+        "description": "[/subscribers] Suscriptores de clientes (cuentas SIP y PBX) con sus números, ajustes PBX, diario y agenda telefónica"
     },
     {
         "name": "SystemContact",

@@ -20,6 +20,8 @@ import {Contract} from '~/entities/db/billing/contract.mariadb.entity'
 import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
 import {VoipTimeSet} from '~/entities/db/provisioning/voip-time-set.mariadb.entity'
 import {VoipUsrPreference} from '~/entities/db/provisioning/voip-usr-preference.mariadb.entity'
+import {SubscriberPbxHuntCancelMode, SubscriberPbxHuntPolicy} from '~/entities/internal/subscriber.internal.entity'
+import {validDateOrNull} from '~/helpers/date.helper'
 
 @Entity({
     name: 'voip_subscribers',
@@ -92,6 +94,13 @@ export class VoipSubscriber extends BaseEntity {
         default: () => 'CURRENT_TIMESTAMP',
     })
         webpassword_modify_timestamp: Date
+
+    @Column({
+        type: 'timestamp',
+        nullable: false,
+        default: () => 'CURRENT_TIMESTAMP',
+    })
+        password_modify_timestamp: Date
 
     @Column({
         type: 'boolean',
@@ -239,6 +248,36 @@ export class VoipSubscriber extends BaseEntity {
         subscriber.id = this.id
         subscriber.webPassword = this.password
         subscriber.webPasswordModifyTimestamp = this.webpassword_modify_timestamp
+        return subscriber
+    }
+
+    /**
+     * Provisioning part of the subscriber; ids, numbers and billing fields are set by the billing row
+     */
+    toInternalSubscriber(): internal.Subscriber {
+        const subscriber = new internal.Subscriber()
+        subscriber.provisioningId = this.id
+        subscriber.webusername = this.webusername ?? null
+        subscriber.administrative = !!this.admin
+        subscriber.profileSetId = this.profile_set_id ?? null
+        subscriber.profileId = this.profile_id ?? null
+        subscriber.isPbxPilot = !!this.is_pbx_pilot
+        subscriber.isPbxGroup = !!this.is_pbx_group
+        subscriber.pbxExtension = this.pbx_extension ?? null
+        subscriber.pbxHuntPolicy = (this.pbx_hunt_policy ?? null) as SubscriberPbxHuntPolicy | null
+        subscriber.pbxHuntTimeout = this.pbx_hunt_timeout ?? null
+        subscriber.pbxHuntCancelMode = (this.pbx_hunt_cancel_mode ?? null) as SubscriberPbxHuntCancelMode | null
+        subscriber.createTimestamp = validDateOrNull(new Date(this.create_timestamp))
+        subscriber.modifyTimestamp = validDateOrNull(new Date(this.modify_timestamp))
+        subscriber.passwordModifyTimestamp = this.password_modify_timestamp
+        subscriber.webpasswordModifyTimestamp = this.webpassword_modify_timestamp
+        subscriber.aliasNumbers = []
+        subscriber.displayName = null
+        subscriber.lock = null
+        subscriber.pbxGroupIds = []
+        subscriber.pbxGroupmemberIds = []
+        subscriber.extRangeMin = null
+        subscriber.extRangeMax = null
         return subscriber
     }
 

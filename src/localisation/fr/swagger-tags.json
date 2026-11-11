@@ -105,7 +105,7 @@
     },
     {
         "name": "Subscriber",
-        "description": "[/subscribers] Routes relatives aux abonnés, y compris l'annuaire"
+        "description": "[/subscribers] Abonnés des clients (comptes SIP et PBX) avec leurs numéros, paramètres PBX, journal et annuaire"
     },
     {
         "name": "SystemContact",

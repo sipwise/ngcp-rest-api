@@ -105,7 +105,7 @@
     },
     {
         "name": "Subscriber",
-        "description": "[/subscribers] Available Subscriber related routes including phonebook"
+        "description": "[/subscribers] Subscribers of customers (SIP and PBX accounts) with their numbers, PBX settings, journal and phonebook"
     },
     {
         "name": "SystemContact",

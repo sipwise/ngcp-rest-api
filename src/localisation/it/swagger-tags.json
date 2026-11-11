@@ -105,7 +105,7 @@
     },
     {
         "name": "Subscriber",
-        "description": "[/subscribers] Route disponibili relative agli abbonati, inclusa la rubrica"
+        "description": "[/subscribers] Abbonati dei clienti (account SIP e PBX) con i loro numeri, impostazioni PBX, registro e rubrica"
     },
     {
         "name": "SystemContact",

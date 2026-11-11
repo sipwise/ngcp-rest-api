@@ -46,10 +46,12 @@ export class SearchLogic {
                 throw new InvalidParameterException([{parameter: 'order_by', code: 'isIn', message: 'order_by must be a sortable field'}])
             if (this.aliases && this.orderBy in this.aliases) {
                 const propertyAlias = this.aliases[this.orderBy]
-                if (typeof propertyAlias == 'object' && 'field' in Object.keys(propertyAlias))
-                    this.orderBy = propertyAlias['field']
-                else if (typeof propertyAlias == 'string')
+                if (typeof propertyAlias == 'string')
                     this.orderBy = propertyAlias
+                else if (typeof propertyAlias['field'] == 'string')
+                    this.orderBy = propertyAlias['field'] as string
+                else
+                    throw new InvalidParameterException([{parameter: 'order_by', code: 'isIn', message: 'order_by must be a sortable field'}])
             }
             this.orderByDirection =
                 sr.query['order_by_direction'] != null &&

@@ -1,10 +1,14 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn} from 'typeorm'
 
+import {Contact} from './contact.mariadb.entity'
 import {Contract} from './contract.mariadb.entity'
+import {Domain} from './domain.mariadb.entity'
 import {SubscriberPhonebook} from './subscriber-phonebook.mariadb.entity'
 import {VoipNumber} from './voip-number.mariadb.entity'
 
+import {internal} from '~/entities'
 import {VoipSubscriber as ProvisioningVoipSubscriber} from '~/entities/db/provisioning/voip-subscriber.mariadb.entity'
+import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
 
 @Entity({
@@ -76,6 +80,14 @@ export class VoipSubscriber extends BaseEntity {
     @JoinColumn({name: 'contract_id'})
         contract!: Contract
 
+    @ManyToOne(() => Domain)
+    @JoinColumn({name: 'domain_id'})
+        domain!: Domain
+
+    @ManyToOne(() => Contact)
+    @JoinColumn({name: 'contact_id'})
+        contact?: Contact
+
     @OneToOne(() => ProvisioningVoipSubscriber)
     @JoinColumn({name: 'uuid', referencedColumnName: 'uuid'})
         provisioningVoipSubscriber!: ProvisioningVoipSubscriber
@@ -89,4 +101,28 @@ export class VoipSubscriber extends BaseEntity {
 
     @OneToMany(() => SubscriberPhonebook, phonebook => phonebook.subscriber)
         phonebook!: SubscriberPhonebook[]
+
+    /**
+     * Subscriber with the loaded provisioning row, contract (contact, product), domain, contact and primary number
+     */
+    toInternal(): internal.Subscriber {
+        const subscriber = this.provisioningVoipSubscriber.toInternalSubscriber()
+        subscriber.id = this.id
+        subscriber.uuid = this.uuid
+        subscriber.customerId = this.contract_id
+        subscriber.customerProductClass = this.contract?.product?.class as ProductClass
+        subscriber.resellerId = this.contract?.contact?.reseller_id
+        subscriber.contactId = this.contact_id ?? null
+        subscriber.username = this.username
+        subscriber.domainId = this.domain_id
+        subscriber.domain = this.domain?.domain
+        subscriber.status = this.status as VoipSubscriberStatus
+        subscriber.externalId = this.external_id ?? null
+        subscriber.email = this.contact?.email ?? null
+        subscriber.timezone = this.contact?.timezone ?? null
+        subscriber.primaryNumber = this.primaryNumber
+            ? {numberId: this.primaryNumber.id, cc: this.primaryNumber.cc, ac: this.primaryNumber.ac, sn: this.primaryNumber.sn}
+            : null
+        return subscriber
+    }
 }

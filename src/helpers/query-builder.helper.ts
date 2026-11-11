@@ -66,12 +66,15 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
             const field = propertyAlias['field']
             const comparator = propertyAlias['comparator']
             const transform = propertyAlias['transform']
+            const where = propertyAlias['where'] as ((paramKey: string) => string) | undefined
 
             values.forEach((value, index) => {
-                const paramKey = `${field}_${index}`
+                const paramKey = `${searchField}_${index}`
                 const formattedValue = complexSearch([value.replace(/\*/g, '%')])
 
-                if (transform) {
+                if (where) {
+                    conditions.push(where(paramKey))
+                } else if (transform) {
                     conditions.push(`${transform}(${qbAlias}.${field}) ${comparator} ${transform}(:${paramKey})`)
                 } else {
                     conditions.push(`${qbAlias}.${field} ${comparator} :${paramKey}`)
