@@ -6,6 +6,7 @@ import {
     SubscriberRef,
     SubscriberRepository,
     SubscriberScope,
+    SubscriberTerminatePlan,
     SubscriberWritePlan,
 } from '~/api/subscribers/interfaces/subscriber.repository'
 import {internal} from '~/entities'
@@ -19,6 +20,7 @@ export class SubscriberMockRepository implements SubscriberRepository {
     readonly profileSetDB: {[key: number]: {id: number, resellerId: number}} = {}
     readonly profileDB: {[key: number]: SubscriberProfileRow} = {}
     readonly plans: SubscriberWritePlan[] = []
+    readonly terminatePlans: SubscriberTerminatePlan[] = []
 
     async readAll(_sr: ServiceRequest, scope: SubscriberScope): Promise<[internal.Subscriber[], number]> {
         const rows = this.visible(scope)
@@ -134,6 +136,11 @@ export class SubscriberMockRepository implements SubscriberRepository {
     async update(plan: SubscriberWritePlan): Promise<void> {
         this.subscriberDB[plan.subscriber.id] = Object.assign(new internal.Subscriber(), this.subscriberDB[plan.subscriber.id], plan.subscriber)
         this.plans.push(plan)
+    }
+
+    async terminate(plan: SubscriberTerminatePlan): Promise<void> {
+        delete this.subscriberDB[plan.subscriber.id]
+        this.terminatePlans.push(plan)
     }
 
     async setCustomerPreference(_customerId: number, _attribute: string, _value: string): Promise<void> {

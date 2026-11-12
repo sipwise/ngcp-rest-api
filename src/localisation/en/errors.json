@@ -358,5 +358,14 @@
   },
   "SUBSCRIBER_PROFILE_UNDETERMINED": {
     "message": "The profile set has no default profile, profile_id is required"
+  },
+  "SUBSCRIBER_TERMINATE_SELF": {
+    "message": "Cannot terminate own subscriber"
+  },
+  "SUBSCRIBER_TERMINATE_PILOT": {
+    "message": "Cannot terminate pilot subscriber"
+  },
+  "SUBSCRIBER_PBX_PILOT_HAS_SUBSCRIBERS": {
+    "message": "Cannot terminate pilot subscriber when other subscribers exist"
   }
 }

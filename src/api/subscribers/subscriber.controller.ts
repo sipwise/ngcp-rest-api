@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, ValidationPipe} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, ValidationPipe} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
@@ -17,6 +17,7 @@ import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorato
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
+import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
@@ -27,6 +28,7 @@ import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
+import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
 import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
 import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
@@ -261,6 +263,29 @@ export class SubscriberController extends CrudController<SubscriberRequestDto, S
                 sr.user.role,
             ))
         return ids
+    }
+
+    @Delete('{/:id}')
+    @ApiOkResponse({
+        type: [Number],
+    })
+    @Transactional()
+    async delete(
+        @ParamOrBody('id', new ParseIntIdArrayPipe()) ids: number[],
+        @Req() req: Request,
+    ): Promise<number[]> {
+        this.log.debug({
+            message: 'terminate subscribers',
+            id: ids,
+            func: this.delete.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const terminated = await this.subscriberService.terminate(ids, sr)
+        for (const id of terminated)
+            await this.journalService.writeJournal(sr, id, {})
+        return terminated
     }
 
     /**

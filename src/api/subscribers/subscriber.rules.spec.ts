@@ -9,10 +9,13 @@ import {
     readOnlyFields,
     renumber,
     sameValue,
+    terminationAors,
+    terminationReleases,
 } from './subscriber.rules'
 
 import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
+import {SubscriberAliasNumber} from '~/entities/internal/subscriber.internal.entity'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
 
 const subscriber = (values: Partial<internal.Subscriber> = {}): internal.Subscriber => Object.assign(new internal.Subscriber(), {
@@ -135,6 +138,42 @@ describe('subscriber.rules', () => {
             ['active without a lock', 'active', undefined, subscriber({lock: '1'}), null],
         ])('lock level: %s', (_case, status, lock, stored, expected) => {
             expect(lockLevel(status, lock, stored)).toBe(expected)
+        })
+    })
+
+    describe('termination', () => {
+        const alias = (sn: string, isDevId: boolean): SubscriberAliasNumber => ({numberId: +sn, cc: 43, ac: '1', sn, isDevId})
+
+        it('collects the AORs of the subscriber and its devid aliases', () => {
+            const s = subscriber({username: 'seat', domain: 'example.org', aliasNumbers: [alias('101', true), alias('102', false)]})
+            expect(terminationAors(s)).toEqual(['seat@example.org', '431101@example.org'])
+        })
+
+        it('collects the devid AORs of the pilot', () => {
+            const s = subscriber({username: 'pilot', domain: 'example.org', isPbxPilot: true, aliasNumbers: [alias('201', true)]})
+            expect(terminationAors(s)).toEqual(['pilot@example.org', '431201@example.org'])
+        })
+
+        it('gives the aliases of a seat back to the pilot and releases its primary number', () => {
+            const s = subscriber({aliasNumbers: [alias('101', false)]})
+            const pilot = subscriber({id: 1, isPbxPilot: true})
+            expect(terminationReleases(s, pilot)).toEqual([
+                {number: s.primaryNumber, toPilot: false},
+                {number: s.aliasNumbers[0], toPilot: true},
+            ])
+        })
+
+        it.each([
+            ['without a pilot', undefined],
+            ['of the pilot itself', subscriber({isPbxPilot: true})],
+        ])('releases all numbers %s', (_case, pilot) => {
+            const s = subscriber({aliasNumbers: [alias('101', false)]})
+            expect(terminationReleases(s, pilot).map(release => release.toPilot)).toEqual([false, false])
+        })
+
+        it('releases only the aliases without a primary number', () => {
+            const s = subscriber({primaryNumber: null, aliasNumbers: [alias('101', false)]})
+            expect(terminationReleases(s)).toEqual([{number: s.aliasNumbers[0], toPilot: false}])
         })
     })
 })

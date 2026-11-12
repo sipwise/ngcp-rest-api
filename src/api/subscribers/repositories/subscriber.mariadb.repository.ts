@@ -13,6 +13,7 @@ import {
     SubscriberRef,
     SubscriberRepository,
     SubscriberScope,
+    SubscriberTerminatePlan,
     SubscriberWritePlan,
 } from '~/api/subscribers/interfaces/subscriber.repository'
 import {numberString} from '~/api/subscribers/subscriber.rules'
@@ -557,6 +558,26 @@ export class SubscriberMariadbRepository extends MariaDbRepository implements Su
         if (plan.forwards)
             await this.rewriteForwards(target.provisioningId, plan.forwards)
         await this.writeDetails(target, plan)
+    }
+
+    /**
+     * Gives up the numbers, pbx group memberships and allowed IP groups, removes the provisioning subscriber (its
+     * preferences, aliases, voicemail user, speed dials, fax settings and trusted sources follow by cascade and
+     * triggers) and marks the billing subscriber terminated
+     */
+    async terminate(plan: SubscriberTerminatePlan): Promise<void> {
+        const s = plan.subscriber
+        const target: Target = {id: s.id, provisioningId: s.provisioningId, provisioningDomainId: s.provisioningDomainId}
+        for (const release of plan.released)
+            await this.releaseNumber(target, release, plan.allowCli)
+        await this.setMemberships(target, [], s)
+        await this.setMembers(target, [])
+        const ipGroups = await this.readPreferences(s.provisioningId, ['allowed_ips_grp', 'man_allowed_ips_grp'])
+        const groupIds = [...ipGroups.values()].flat().filter(value => /^\d+$/.test(value)).map(Number)
+        if (groupIds.length)
+            await db.provisioning.VoipAllowedIpGroup.delete({group_id: In(groupIds)})
+        await db.provisioning.VoipSubscriber.delete(s.provisioningId)
+        await db.billing.VoipSubscriber.update(s.id, {status: VoipSubscriberStatus.Terminated})
     }
 
     async setCustomerPreference(customerId: number, attribute: string, value: string): Promise<void> {

@@ -292,3 +292,30 @@ export function lockLevel(
         return stored?.status == 'locked' ? stored.lock ?? '4' : '4'
     return stored?.status == 'locked' ? stored.lock : null
 }
+
+/**
+ * Registration AORs of a subscriber: its own and those of its devid aliases
+ */
+export function terminationAors(subscriber: internal.Subscriber): string[] {
+    return [
+        `${subscriber.username}@${subscriber.domain}`,
+        ...subscriber.aliasNumbers
+            .filter(alias => alias.isDevId)
+            .map(alias => `${numberString(alias)}@${subscriber.domain}`),
+    ]
+}
+
+/**
+ * Numbers a terminated subscriber gives up: the aliases of a PBX seat or group
+ * go back to the pilot, everything else is released
+ */
+export function terminationReleases(
+    subscriber: internal.Subscriber,
+    pilot?: internal.Subscriber,
+): {number: SubscriberNumber, toPilot: boolean}[] {
+    const toPilot = pilot != undefined && pilot.id != subscriber.id
+    return [
+        ...subscriber.primaryNumber ? [{number: subscriber.primaryNumber, toPilot: false}] : [],
+        ...subscriber.aliasNumbers.map(number => ({number, toPilot})),
+    ]
+}

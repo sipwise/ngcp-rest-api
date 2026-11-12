@@ -106,6 +106,16 @@ export interface SubscriberWritePlan {
     removedAttributeIds?: number[]
 }
 
+/**
+ * Everything a termination writes for one subscriber
+ */
+export interface SubscriberTerminatePlan {
+    subscriber: internal.Subscriber
+    /** all numbers of the subscriber: back to the pool owner, else unassigned */
+    released: SubscriberNumberRelease[]
+    allowCli: boolean
+}
+
 export interface SubscriberRepository {
     readAll(sr: ServiceRequest, scope: SubscriberScope): Promise<[internal.Subscriber[], number]>
 
@@ -152,6 +162,8 @@ export interface SubscriberRepository {
     create(plan: SubscriberWritePlan): Promise<number>
 
     update(plan: SubscriberWritePlan): Promise<void>
+
+    terminate(plan: SubscriberTerminatePlan): Promise<void>
 
     setCustomerPreference(customerId: number, attribute: string, value: string): Promise<void>
 }

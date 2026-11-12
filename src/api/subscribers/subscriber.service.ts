@@ -13,6 +13,7 @@ import {
     SubscriberWritePlan,
 } from './interfaces/subscriber.repository'
 import {SubscriberMariadbRepository} from './repositories/subscriber.mariadb.repository'
+import {SubscriberRedisRepository} from './repositories/subscriber.redis.repository'
 import {
     SubscriberField,
     changedFields,
@@ -29,6 +30,8 @@ import {
     sameAliases,
     sameNumber,
     sameValue,
+    terminationAors,
+    terminationReleases,
 } from './subscriber.rules'
 
 import {AppService} from '~/app.service'
@@ -38,8 +41,9 @@ import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {SubscriberNumber} from '~/entities/internal/subscriber.internal.entity'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ApiErrorException, ApiErrors, apiError, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
+import {ApiErrorException, ApiErrors, apiError, idPointer, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {generatePassword, isPasswordInJournal, passwordJournalHash, saltedPassword} from '~/helpers/password.helper'
+import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ErrorMessage} from '~/interfaces/error-message.interface'
@@ -85,6 +89,7 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
     constructor(
         @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(SubscriberMariadbRepository) private readonly subscriberRepo: SubscriberMariadbRepository,
+        @Inject(SubscriberRedisRepository) private readonly subscriberRedisRepo: SubscriberRedisRepository,
         @Inject(AppService) private readonly app: AppService,
         @Inject(LicenseService) private readonly license: LicenseService,
     ) {
@@ -145,6 +150,27 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
             await this.updateSubscriber(subscriber, old, key, ctx, sr)
         })
         return ids
+    }
+
+    /**
+     * Terminates the subscribers in request order, so a pilot listed after its seats and groups is terminated too;
+     * their registrations are removed and the trusted hosts reloaded after the commit
+     */
+    async terminate(ids: number[], sr: ServiceRequest): Promise<number[]> {
+        const scope = this.roleScope(sr)
+        if (sr.user.role == RbacRole.subscriber)
+            throw new ForbiddenException(this.i18n.t('errors.PERMISSION_DENIED'))
+        const unique = [...new Set(ids.map(Number))]
+        const found = await this.subscriberRepo.readWhereInIds(unique, scope)
+        throwMissingIds(sr, unique, found.map(s => s.id), this.i18n.t('errors.SUBSCRIBER_NOT_FOUND'))
+        const ctx = await this.lockAndReadCustomers(found.map(s => s.customerId), {}, sr, true)
+        const aors: string[] = []
+        await this.writeInRequestOrder(unique, async id => {
+            aors.push(...await this.terminateSubscriber(id, scope, ctx, sr))
+        })
+        runOnTransactionCommit(async () => await this.subscriberRedisRepo.removeLocations(aors))
+        runOnTransactionCommit(async () => await this.subscriberRedisRepo.reloadTrustedHosts())
+        return unique
     }
 
     private roleScope(sr: ServiceRequest): SubscriberScope {
@@ -486,6 +512,42 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
         await this.subscriberRepo.setCustomerPreference(customer.id, 'cloud_pbx_base_cli', numberString(pilot.primaryNumber))
     }
 
+    /* Terminate */
+
+    /**
+     * @returns the AORs whose registrations are removed after the commit
+     */
+    private async terminateSubscriber(id: number, scope: SubscriberScope, ctx: WriteContext, sr: ServiceRequest): Promise<string[]> {
+        const pointer = idPointer(sr, id)
+        const s = await this.subscriberRepo.readById(id, scope)
+        throwMissingIds(sr, [id], s ? [id] : [], this.i18n.t('errors.SUBSCRIBER_NOT_FOUND'))
+        const customer = ctx.customers.get(s.customerId)
+        if (!customer)
+            throw apiError(this.i18n.t('errors.SUBSCRIBER_CUSTOMER_INVALID'), pointer)
+        await this.checkWriteAccess(customer, ctx, sr, pointer, s)
+        if (sr.user.role == RbacRole.subscriberadmin) {
+            if (s.id == sr.user.id)
+                throw apiError(this.i18n.t('errors.SUBSCRIBER_TERMINATE_SELF'), pointer, HttpStatus.FORBIDDEN)
+            if (s.isPbxPilot)
+                throw apiError(this.i18n.t('errors.SUBSCRIBER_TERMINATE_PILOT'), pointer, HttpStatus.FORBIDDEN)
+        }
+        const pbx = customer.productClass == ProductClass.PbxAccount
+        if (pbx && s.isPbxPilot && await this.subscriberRepo.countActive(customer.id) > 1)
+            throw apiError(this.i18n.t('errors.SUBSCRIBER_PBX_PILOT_HAS_SUBSCRIBERS'), pointer)
+        const pilot = pbx && !s.isPbxPilot ? await this.subscriberRepo.readPilot(customer.id) : undefined
+        const owner = pilot ? {id: pilot.id, provisioningId: pilot.provisioningId, provisioningDomainId: pilot.provisioningDomainId} : undefined
+        await this.subscriberRepo.terminate({
+            subscriber: s,
+            released: terminationReleases(s, pilot).map(({number, toPilot}) => ({
+                numberId: number.numberId,
+                number,
+                toOwner: toPilot ? owner : undefined,
+            })),
+            allowCli: ctx.allowCli,
+        })
+        return terminationAors(s)
+    }
+
     /* Shared steps */
 
     /**
@@ -566,7 +628,7 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
      * Groups or members by billing id in request order (duplicates dropped), unknown ids reported
      */
     private async readPbxRefs(ids: number[], customer: SubscriberCustomer, groups: boolean, at: Pointer, field: SubscriberField, errorKey: string, errors: ApiErrors): Promise<SubscriberRef[]> {
-        const unique = [...new Set(ids)]
+        const unique = [...new Set(ids.map(Number))]
         const refs = await this.subscriberRepo.readRefs(unique, customer.id, groups)
         ids.forEach((id, index) => {
             if (!refs.some(ref => ref.id == id))

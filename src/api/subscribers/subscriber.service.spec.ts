@@ -5,6 +5,8 @@ import {I18nService} from 'nestjs-i18n'
 import {SubscriberCustomer} from './interfaces/subscriber.repository'
 import {SubscriberMariadbRepository} from './repositories/subscriber.mariadb.repository'
 import {SubscriberMockRepository} from './repositories/subscriber.mock.repository'
+import {SubscriberRedisMockRepository} from './repositories/subscriber.redis.mock.repository'
+import {SubscriberRedisRepository} from './repositories/subscriber.redis.repository'
 import {SubscriberService} from './subscriber.service'
 
 import {AppService} from '~/app.service'
@@ -16,6 +18,7 @@ import {internal} from '~/entities'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
 import {ApiErrorException} from '~/helpers/errors.helper'
+import {postCommitQueueStorage} from '~/helpers/post-commit-queue.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LicenseService} from '~/license/license.service'
 import {LicenseMockRepository} from '~/repositories/license.mock.repository'
@@ -56,6 +59,7 @@ const customer = (id: number, productClass: ProductClass): SubscriberCustomer =>
 describe('SubscriberService', () => {
     let service: SubscriberService
     let repo: SubscriberMockRepository
+    let redisRepo: SubscriberRedisMockRepository
     let licenseRepo: LicenseMockRepository
     let appConfig: AppConfig
 
@@ -91,6 +95,7 @@ describe('SubscriberService', () => {
 
     beforeEach(async () => {
         repo = new SubscriberMockRepository()
+        redisRepo = new SubscriberRedisMockRepository()
         // reseller 1: customers 10 (subscribers 1, 2) and 11 (3); reseller 2: customer 20 (4)
         seed(1, 1, 10)
         seed(2, 1, 10)
@@ -105,6 +110,7 @@ describe('SubscriberService', () => {
             providers: [
                 SubscriberService,
                 {provide: SubscriberMariadbRepository, useValue: repo},
+                {provide: SubscriberRedisRepository, useValue: redisRepo},
                 {provide: I18nService, useValue: {t: (key: string): object => ({message: key, errorCode: key.replace('errors.', '')})}},
                 {provide: AppService, useValue: {config: appConfig}},
                 {provide: LicenseService, useValue: new LicenseService(undefined, licenseRepo as unknown as LicenseRepository)},
@@ -246,6 +252,106 @@ describe('SubscriberService', () => {
             limit()
             const err = await failure(service.create([sipSubscriber()], makeSr(user(RbacRole.admin))))
             expect(err.errorList[0].code).toBe('SUBSCRIBER_LIMIT_REACHED')
+        })
+    })
+
+    describe('terminate', () => {
+        const sr = (u: AuthResponseDto): ServiceRequest => ({...makeSr(u), req: {method: 'DELETE', body: undefined, params: {}} as ServiceRequest['req']})
+
+        /**
+         * Runs the termination like a transactional request and then its post-commit callbacks
+         */
+        const terminate = async (ids: number[], u: AuthResponseDto): Promise<number[]> => {
+            const store = {callbacks: [] as (() => void | Promise<void>)[]}
+            const result = await postCommitQueueStorage.run(store, () => service.terminate(ids, sr(u)))
+            for (const callback of store.callbacks)
+                await callback()
+            return result
+        }
+
+        const failure = async (ids: number[], u: AuthResponseDto): Promise<ApiErrorException> => {
+            const err = await terminate(ids, u).catch((e: unknown) => e)
+            expect(err).toBeInstanceOf(ApiErrorException)
+            return err as ApiErrorException
+        }
+
+        const seedPbx = (): void => {
+            // customer 30: pilot 31 with a pool number, seat 32 with an alias and a devid alias
+            for (const id of [31, 32]) {
+                seed(id, 1, 30)
+                repo.subscriberDB[id].customerProductClass = ProductClass.PbxAccount
+            }
+            Object.assign(repo.subscriberDB[31], {isPbxPilot: true, primaryNumber: {numberId: 310, cc: 43, ac: '1', sn: '300'}})
+            Object.assign(repo.subscriberDB[32], {
+                primaryNumber: {numberId: 320, cc: 43, ac: '1', sn: '300101'},
+                aliasNumbers: [
+                    {numberId: 321, cc: 43, ac: '1', sn: '321', isDevId: false},
+                    {numberId: 322, cc: 43, ac: '1', sn: '322', isDevId: true},
+                ],
+            })
+        }
+
+        it('rejects subscriber with 403', async () => {
+            await expect(terminate([2], user(RbacRole.subscriber, {id: 2, customer_id: 10}))).rejects.toThrow(ForbiddenException)
+        })
+
+        it('rejects ids outside the scope with 422 per id', async () => {
+            const err = await failure([1, 4], user(RbacRole.reseller, {reseller_id: 1}))
+            expect(err.errorList).toEqual([expect.objectContaining({code: 'SUBSCRIBER_NOT_FOUND'})])
+            expect(repo.terminatePlans).toHaveLength(0)
+        })
+
+        it('releases the numbers of a SIP subscriber and removes its registration after the commit', async () => {
+            repo.subscriberDB[2].primaryNumber = {numberId: 200, cc: 43, ac: '1', sn: '200'}
+            expect(await terminate([2], user(RbacRole.admin))).toEqual([2])
+            expect(repo.terminatePlans[0].released).toEqual([expect.objectContaining({numberId: 200, toOwner: undefined})])
+            expect(redisRepo.removedLocations).toEqual([['user2@example.org']])
+            expect(redisRepo.trustedHostsReloads).toBe(1)
+        })
+
+        it('gives the aliases of a seat back to the pilot', async () => {
+            seedPbx()
+            await terminate([32], user(RbacRole.admin))
+            const released = repo.terminatePlans[0].released
+            expect(released.map(r => [r.numberId, r.toOwner?.id])).toEqual([[320, undefined], [321, 31], [322, 31]])
+            expect(redisRepo.removedLocations).toEqual([['user32@example.org', '431322@example.org']])
+        })
+
+        it('rejects the pilot with other subscribers with 422', async () => {
+            seedPbx()
+            const err = await failure([31], user(RbacRole.admin))
+            expect(err.getStatus()).toBe(422)
+            expect(err.errorList[0].code).toBe('SUBSCRIBER_PBX_PILOT_HAS_SUBSCRIBERS')
+        })
+
+        it('terminates the pilot after its seats in one request, the trusted hosts reloaded once', async () => {
+            seedPbx()
+            expect(await terminate([32, 31], user(RbacRole.admin))).toEqual([32, 31])
+            expect(repo.terminatePlans.map(plan => plan.subscriber.id)).toEqual([32, 31])
+            expect(repo.terminatePlans[1].released.every(r => r.toOwner == undefined)).toBe(true)
+            expect(redisRepo.removedLocations).toHaveLength(1)
+            expect(redisRepo.trustedHostsReloads).toBe(1)
+        })
+
+        it.each([
+            ['itself', 32, 'SUBSCRIBER_TERMINATE_SELF'],
+            ['the pilot', 31, 'SUBSCRIBER_TERMINATE_PILOT'],
+        ])('rejects a subscriberadmin terminating %s with 403', async (_case, id, code) => {
+            seedPbx()
+            const err = await failure([id], user(RbacRole.subscriberadmin, {id: 32, customer_id: 30}))
+            expect(err.getStatus()).toBe(403)
+            expect(err.errorList[0].code).toBe(code)
+        })
+
+        it('rejects a subscriberadmin of a SIP customer without the write privilege with 403', async () => {
+            const err = await failure([2], user(RbacRole.subscriberadmin, {id: 1, customer_id: 10}))
+            expect(err.getStatus()).toBe(403)
+            expect(err.errorList[0].code).toBe('SUBSCRIBER_READ_ONLY')
+        })
+
+        it('lets a subscriberadmin with the write privilege terminate another subscriber', async () => {
+            appConfig.privileges.subscriberadmin.subscribers = ['write']
+            expect(await terminate([2], user(RbacRole.subscriberadmin, {id: 1, customer_id: 10}))).toEqual([2])
         })
     })
 })

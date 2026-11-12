@@ -8,6 +8,8 @@ import request from 'supertest'
 import {In} from 'typeorm'
 
 import {SubscriberResponseDto} from './dto/subscriber-response.dto'
+import {SubscriberRedisMockRepository} from './repositories/subscriber.redis.mock.repository'
+import {SubscriberRedisRepository} from './repositories/subscriber.redis.repository'
 import {SubscriberModule} from './subscriber.module'
 
 import {AppModule} from '~/app.module'
@@ -235,6 +237,11 @@ describe('Subscriber', () => {
     let otherProfileId: number
     let otherResellerProfileSetId: number
 
+    // delete tests
+    const redisMock = new SubscriberRedisMockRepository()
+    const ipGroupId = Number(`9${worker}${String(Date.now()).slice(-7)}`)
+    let tPbxCustomerId: number
+
     const wNumber = (sn: string): {cc: number, ac: string, sn: string} => ({cc: 43, ac: '98', sn: `${snBase}${sn}`})
 
     const wLogin = (name: string): Login => ({username: `w${name}${suffix}@${wdomain}`, password: 'any', realm: 'subscriber'})
@@ -284,7 +291,9 @@ describe('Subscriber', () => {
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
             imports: [SubscriberModule, AppModule],
-        }).compile()
+        })
+            .overrideProvider(SubscriberRedisRepository).useValue(redisMock)
+            .compile()
 
         appService = moduleRef.get<AppService>(AppService)
         authService = moduleRef.get<AuthService>(AuthService)
@@ -1059,6 +1068,159 @@ describe('Subscriber', () => {
                 expect(old.subscriber_id).toBeNull()
             })
         })
+
+        describe('DELETE', () => {
+            const del = (ids: number | number[], user: Login = creds): request.Test => {
+                const req = request(app.getHttpServer())
+                    .delete(Array.isArray(ids) ? '/api/subscribers' : `/api/subscribers/${ids}`)
+                    .auth(user.username, user.password)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                const withRealm = user.realm ? req.set('X-Auth-Realm', user.realm) : req
+                return Array.isArray(ids) ? withRealm.send(ids) : withRealm
+            }
+
+            const pbxBody = (name: string, values: object = {}): object => sipBody(name, {customer_id: tPbxCustomerId, ...values})
+
+            const provisioningRow = async (name: string): Promise<db.provisioning.VoipSubscriber | null> => {
+                const billing = await db.billing.VoipSubscriber.findOneByOrFail({id: created[name]})
+                return await db.provisioning.VoipSubscriber.findOneBy({uuid: billing.uuid})
+            }
+
+            const numberOwner = async (sn: string): Promise<number | null> =>
+                (await db.billing.VoipNumber.findOneByOrFail({cc: 43, ac: '98', sn: wNumber(sn).sn})).subscriber_id ?? null
+
+            const aor = (name: string): string => `${name}${suffix}@${wdomain}`
+
+            it('sets up a PBX customer with pilot, seats, a group and SIP subscribers', async () => {
+                tPbxCustomerId = await createContract(PBXACCOUNT_PRODUCT_ID, customerContactId)
+                const response = await send('post', '/api/subscribers', [
+                    pbxBody('tpilot', {is_pbx_pilot: true, administrative: true, primary_number: wNumber('800'), alias_numbers: [wNumber('801'), wNumber('802'), wNumber('803')]}),
+                    pbxBody('tseat', {pbx_extension: '11'}),
+                    pbxBody('tseat2', {pbx_extension: '12', administrative: true}),
+                ])
+                expect(response.status).toEqual(HttpStatus.CREATED)
+                const [pilot, seat, seat2] = response.body.data as SubscriberResponseDto[]
+                Object.assign(created, {tpilot: pilot.id, tseat: seat.id, tseat2: seat2.id})
+                await createViaApi('tgroup', pbxBody('tgroup', {
+                    is_pbx_group: true, pbx_extension: '20', pbx_hunt_policy: 'serial', pbx_groupmember_ids: [seat.id, seat2.id],
+                }))
+                const assigned = await send('patch', `/api/subscribers/${seat.id}`, [
+                    {op: 'add', path: '/alias_numbers/-', value: {...wNumber('801'), is_devid: true}},
+                    {op: 'add', path: '/alias_numbers/-', value: wNumber('802')},
+                ], wLogin('tpilot'))
+                expect(assigned.status).toEqual(HttpStatus.OK)
+                const attribute = await db.provisioning.VoipPreference.findOneByOrFail({attribute: 'allowed_ips_grp'})
+                await db.provisioning.VoipUsrPreference.insert({subscriber_id: (await provisioningRow('tseat')).id, attribute_id: attribute.id, value: `${ipGroupId}`})
+                await db.provisioning.VoipAllowedIpGroup.insert({group_id: ipGroupId, ipnet: '192.0.2.0/24'})
+                for (const [index, name] of ['tsip1', 'tsip2', 'tsip3'].entries())
+                    await createViaApi(name, sipBody(name, {primary_number: wNumber(`81${index}`)}))
+            })
+
+            it('rejects subscriber and lintercept with 403', async () => {
+                expect((await del(created.tsip1, wLogin('tseat'))).status).toEqual(HttpStatus.FORBIDDEN)
+                expect((await del(created.tsip1, linterceptCreds)).status).toEqual(HttpStatus.FORBIDDEN)
+            })
+
+            it('rejects a subscriberadmin of a SIP customer without the write privilege with 403', async () => {
+                const response = await del(subscribers.sipuser.id, subscriberLogin('sipadmin'))
+                expect(response.status).toEqual(HttpStatus.FORBIDDEN)
+                expect(response.body.errorCode).toEqual('SUBSCRIBER_READ_ONLY')
+            })
+
+            it('returns 404 for a subscriber outside the scope', async () => {
+                expect((await del(subscribers.other.id, resellerCreds)).status).toEqual(HttpStatus.NOT_FOUND)
+                expect((await del(created.tseat, subscriberLogin('sipadmin'))).status).toEqual(HttpStatus.NOT_FOUND)
+            })
+
+            it.each([
+                ['admin', 'tsip1', '810', (): Login => creds],
+                ['reseller', 'tsip2', '811', (): Login => resellerCreds],
+                ['ccare', 'tsip3', '812', (): Login => ccareCreds],
+            ])('%s terminates a SIP subscriber', async (_role, name, sn, login) => {
+                const before = redisMock.removedLocations.length
+                const response = await del(created[name], login())
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.data).toEqual([created[name]])
+                expect((await db.billing.VoipSubscriber.findOneByOrFail({id: created[name]})).status).toEqual(VoipSubscriberStatus.Terminated)
+                expect(await provisioningRow(name)).toBeNull()
+                expect(await numberOwner(sn)).toBeNull()
+                expect(redisMock.removedLocations.slice(before)).toEqual([[aor(name)]])
+                expect((await get(`/api/subscribers/${created[name]}`)).status).toEqual(HttpStatus.NOT_FOUND)
+                expect((await list('')).body.data.map((s: SubscriberResponseDto) => s.id)).not.toContain(created[name])
+                expect(await db.billing.Journal.countBy({resource_name: 'subscribers', resource_id: created[name], operation: 'delete'})).toEqual(1)
+            })
+
+            it('returns 404 on DELETE and PATCH of a terminated subscriber', async () => {
+                expect((await del(created.tsip1)).status).toEqual(HttpStatus.NOT_FOUND)
+                const patched = await send('patch', `/api/subscribers/${created.tsip1}`, [{op: 'replace', path: '/display_name', value: 'x'}])
+                expect(patched.status).toEqual(HttpStatus.NOT_FOUND)
+            })
+
+            it.each([
+                ['itself', 'tseat2', 'SUBSCRIBER_TERMINATE_SELF'],
+                ['the pilot', 'tpilot', 'SUBSCRIBER_TERMINATE_PILOT'],
+            ])('rejects a subscriberadmin terminating %s with 403', async (_case, name, code) => {
+                const response = await del(created[name], wLogin('tseat2'))
+                expect(response.status).toEqual(HttpStatus.FORBIDDEN)
+                expect(response.body.errors).toEqual([expect.objectContaining({code})])
+            })
+
+            it('rejects the pilot with other subscribers with 422', async () => {
+                const response = await del(created.tpilot)
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors).toEqual([expect.objectContaining({code: 'SUBSCRIBER_PBX_PILOT_HAS_SUBSCRIBERS'})])
+            })
+
+            it('lets the pilot terminate a seat: aliases back to the pilot, groups and allowed IPs cleaned up', async () => {
+                const before = redisMock.trustedHostsReloads
+                const response = await del(created.tseat, wLogin('tpilot'))
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(await numberOwner('80011')).toBeNull()
+                expect(await numberOwner('801')).toEqual(created.tpilot)
+                expect(await numberOwner('802')).toEqual(created.tpilot)
+                const pilot = await read('tpilot')
+                expect(pilot.alias_numbers.map(n => [n.sn, n.is_devid]).sort()).toEqual([
+                    [wNumber('801').sn, false],
+                    [wNumber('802').sn, false],
+                    [wNumber('803').sn, false],
+                ])
+                expect((await read('tgroup')).pbx_groupmember_ids).toEqual([created.tseat2])
+                const huntGroup = await db.provisioning.VoipPreference.findOneByOrFail({attribute: 'cloud_pbx_hunt_group'})
+                const group = await provisioningRow('tgroup')
+                const huntPreferences = await db.provisioning.VoipUsrPreference.findBy({subscriber_id: group.id, attribute_id: huntGroup.id})
+                expect(huntPreferences.map(p => p.value)).toEqual([`sip:${aor('tseat2')}`])
+                expect(await db.provisioning.VoipAllowedIpGroup.countBy({group_id: ipGroupId})).toEqual(0)
+                expect(redisMock.removedLocations.at(-1)).toEqual([aor('tseat'), `${wNumber('801').cc}${wNumber('801').ac}${wNumber('801').sn}@${wdomain}`])
+                expect(redisMock.trustedHostsReloads).toEqual(before + 1)
+            })
+
+            it('reports unknown ids of a bulk DELETE with 422 per id and terminates nothing', async () => {
+                const response = await del([created.tseat2, 999999999])
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors).toEqual([expect.objectContaining({pointer: '/1', code: 'SUBSCRIBER_NOT_FOUND'})])
+                expect((await get(`/api/subscribers/${created.tseat2}`)).status).toEqual(HttpStatus.OK)
+            })
+
+            it('terminates the pilot after its group and seat in one request', async () => {
+                const before = redisMock.trustedHostsReloads
+                const locations = redisMock.removedLocations.length
+                const ids = [created.tgroup, created.tseat2, created.tpilot]
+                const group = await provisioningRow('tgroup')
+                const response = await del(ids)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.data).toEqual(ids)
+                for (const id of ids)
+                    expect((await get(`/api/subscribers/${id}`)).status).toEqual(HttpStatus.NOT_FOUND)
+                for (const sn of ['800', '801', '802', '803', '80012', '80020'])
+                    expect(await numberOwner(sn)).toBeNull()
+                expect(await db.provisioning.VoipPbxGroup.countBy({group_id: group.id})).toEqual(0)
+                expect(redisMock.removedLocations.slice(locations)).toEqual([[aor('tgroup'), aor('tseat2'), aor('tpilot')]])
+                expect(redisMock.trustedHostsReloads).toEqual(before + 1)
+                expect(await db.billing.Journal.countBy({resource_name: 'subscribers', resource_id: In(ids), operation: 'delete'})).toEqual(3)
+            })
+        })
     })
 
     describe('Subscriber DELETE', () => {
@@ -1083,6 +1245,7 @@ describe('Subscriber', () => {
                 if (contactIds.length)
                     await db.billing.Contact.delete(contactIds)
             }
+            await db.provisioning.VoipAllowedIpGroup.delete({group_id: ipGroupId})
             await appService.db.query('DELETE FROM billing.voip_numbers WHERE cc = 43 AND ac = ? AND sn LIKE ?', ['98', `${snBase}%`])
             if (profileSetId)
                 await db.provisioning.VoipSubscriberProfileSet.delete([profileSetId, otherResellerProfileSetId])

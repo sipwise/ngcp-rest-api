@@ -1,3 +1,4 @@
+export {VoipAllowedIpGroup} from './voip-allowed-ip-group.mariadb.entity'
 export {VoipContractPreference} from './voip-contract-preference.mariadb.entity'
 export {VoipContractSpeedDial} from './voip-contract-speed-dial.mariadb.entity'
 export {VoipDBAlias} from './voip-dbalias.mariadb.entity'
