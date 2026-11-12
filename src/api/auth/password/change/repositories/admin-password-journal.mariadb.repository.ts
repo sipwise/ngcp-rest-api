@@ -33,24 +33,16 @@ export class AdminPasswordJournalMariadbRepository extends MariaDbRepository imp
     }
 
     async keepLastNPasswords(adminId: number, n: number, _sr: ServiceRequest): Promise<void> {
-        const idsQb = db.billing.AdminPasswordJournal.createQueryBuilder('pass')
+        const rows = await db.billing.AdminPasswordJournal.createQueryBuilder('pass')
             .select('pass.id')
             .where('pass.admin_id = :admin_id', {admin_id: adminId})
             .orderBy('pass.id', 'DESC')
-            .limit(n)
+            .getMany()
+        const stale = rows.slice(n)
 
-        const ids = await idsQb.getMany()
-        const lastIdToKeep = ids.pop()?.id
-
-        if (!lastIdToKeep) {
+        if (!stale.length)
             return
-        }
 
-        const deleteQb = db.billing.AdminPasswordJournal.createQueryBuilder()
-            .delete()
-            .where('admin_id = :admin_id', {admin_id: adminId})
-            .andWhere('id < :id', {id: lastIdToKeep})
-
-        await deleteQb.execute()
+        await db.billing.AdminPasswordJournal.delete(stale.map(row => row.id))
     }
 }

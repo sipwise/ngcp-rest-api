@@ -31,24 +31,16 @@ export class SubscriberPasswordJournalMariadbRepository extends MariaDbRepositor
     }
 
     async keepLastNPasswords(subscriberId: number, n: number, _sr: ServiceRequest): Promise<void> {
-        const idsQb = db.provisioning.VoipSubscriberWebPasswordJournal.createQueryBuilder('pass')
+        const rows = await db.provisioning.VoipSubscriberWebPasswordJournal.createQueryBuilder('pass')
             .select('pass.id')
             .where('pass.subscriber_id = :subscriber_id', {subscriber_id: subscriberId})
             .orderBy('pass.id', 'DESC')
-            .limit(n)
+            .getMany()
+        const stale = rows.slice(n)
 
-        const ids = await idsQb.getMany()
-        const lastIdToKeep = ids.pop()?.id
-
-        if (!lastIdToKeep) {
+        if (!stale.length)
             return
-        }
 
-        const deleteQb = db.provisioning.VoipSubscriberWebPasswordJournal.createQueryBuilder()
-            .delete()
-            .where('subscriber_id = :subscriber_id', {subscriber_id: subscriberId})
-            .andWhere('id < :id', {id: lastIdToKeep})
-
-        await deleteQb.execute()
+        await db.provisioning.VoipSubscriberWebPasswordJournal.delete(stale.map(row => row.id))
     }
 }
