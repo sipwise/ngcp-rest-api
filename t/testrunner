@@ -63,6 +63,10 @@ RC=0
 if [ "${FORMAT}" = "junit" ] ; then
   export JEST_JUNIT_OUTPUT_DIR="${OUTPUT_DIRECTORY}"
   export JEST_JUNIT_OUTPUT_NAME="api-e2e.xml"
+  export JEST_JUNIT_CLASSNAME="{classname}"
+  export JEST_JUNIT_TITLE="{title}"
+  export JEST_JUNIT_ANCESTOR_SEPARATOR=" › "
+  touch "${WORK_DIRECTORY}/.junit-start"
   node .yarn/releases/yarn-*.cjs test:e2e "${ARGS[@]}" --reporters=default --reporters=jest-junit || RC=$?
 else
   node .yarn/releases/yarn-*.cjs test:e2e "${ARGS[@]}" 2>&1 | tee -a "${OUTPUT_DIRECTORY}/api-e2e.pretty"
@@ -76,5 +80,17 @@ for file in "${OUTPUT_DIRECTORY}/api-e2e.pretty" "${OUTPUT_DIRECTORY}/api-e2e.xm
   fi
 done
 echo "################################################################################"
+
+# junit: test failures are reported via the XML (Jenkins marks the build
+# unstable), a non-zero exit code is kept when this run wrote no results
+if [ "${FORMAT}" = "junit" ] && [ "${RC}" -ne 0 ] ; then
+  XML="${OUTPUT_DIRECTORY}/api-e2e.xml"
+  if [ -s "${XML}" ] && [ "${XML}" -nt "${WORK_DIRECTORY}/.junit-start" ] ; then
+    echo "Test failures are reported in ${XML}, exiting with 0."
+    RC=0
+  else
+    echo "No junit results written, keeping exit code ${RC}." >&2
+  fi
+fi
 
 exit "${RC}"
