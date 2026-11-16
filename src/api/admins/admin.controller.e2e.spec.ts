@@ -448,6 +448,38 @@ describe('AdminController', () => {
                 expect(response.body.errors).toEqual([expect.objectContaining({parameter: 'use_owner_tz'})])
             })
 
+            it('filters boolean fields by true/false and 1/0', async () => {
+                const logins = `${loginOf('adminmaster')},${loginOf('admin')}`
+                const tt = [
+                    ['true', [loginOf('adminmaster')]],
+                    ['false', [loginOf('admin')]],
+                    ['1', [loginOf('adminmaster')]],
+                    ['0', [loginOf('admin')]],
+                    ['true,false', [loginOf('admin'), loginOf('adminmaster')]],
+                ] as const
+                for (const [value, want] of tt) {
+                    const response = await request(app.getHttpServer())
+                        .get(`/api/admins?login=${logins}&is_master=${value}`)
+                        .auth(loginOf('system'), strongPassword)
+                        .set('Accept', 'application/json')
+                    expect(response.status).toEqual(200)
+                    expect(response.body.data.map((a: {login: string}) => a.login).sort()).toEqual([...want].sort())
+                }
+            })
+
+            it('rejects boolean filter values other than true/false', async () => {
+                for (const value of ['yes', 'tru*', '']) {
+                    const response = await request(app.getHttpServer())
+                        .get(`/api/admins?is_master=${value}`)
+                        .auth(loginOf('system'), strongPassword)
+                        .set('Accept', 'application/json')
+                    expect(response.status).toEqual(400)
+                    expect(response.body.errors).toEqual([{
+                        parameter: 'is_master', code: 'INVALID_BOOLEAN', message: 'is_master must be true or false',
+                    }])
+                }
+            })
+
             it('hides otp_secret from other users', async () => {
                 const response = await request(app.getHttpServer())
                     .get(`/api/admins?login=${loginOf('2faGeneratedSecret')}`)

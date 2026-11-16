@@ -116,7 +116,7 @@ export class PeeringInboundRuleMariadbRepository extends MariaDbRepository imple
                 id: groupId,
             },
         })
-        group.has_inbound_rules = 1
+        group.has_inbound_rules = true
         await db.provisioning.VoipPeeringGroup.update(groupId, group)
     }
 
@@ -130,7 +130,7 @@ export class PeeringInboundRuleMariadbRepository extends MariaDbRepository imple
             group_id: groupId,
         })
 
-        group.has_inbound_rules = remainingRulesCount > 0 ? 1 : 0
+        group.has_inbound_rules = remainingRulesCount > 0
         await db.provisioning.VoipPeeringGroup.update(groupId, group)
     }
 }

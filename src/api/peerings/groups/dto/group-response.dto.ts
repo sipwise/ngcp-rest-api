@@ -1,5 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsInt, IsNotEmpty, IsString} from 'class-validator'
+import {IsBoolean, IsInt, IsNotEmpty, IsString} from 'class-validator'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {ResponseDto} from '~/dto/response.dto'
@@ -29,9 +29,9 @@ export class PeeringGroupResponseDto extends ResponseDto {
     @ApiProperty()
         priority: number
 
-    @IsInt()
+    @IsBoolean()
     @ApiProperty()
-        has_inbound_rules: number
+        has_inbound_rules: boolean
 
     @CanBeNull()
     @IsInt()

@@ -44,6 +44,29 @@ function filterError(parameter: string, error: ErrorMessage): InvalidParameterEx
     return new InvalidParameterException([{parameter, code: error.errorCode, message: `${parameter} ${error.message}`}])
 }
 
+/**
+ * Column stored as 0/1 behind a boolean entity property; its filter values are true/false (also 1/0)
+ */
+function isBooleanColumn<T extends BaseEntity>(qb: SelectQueryBuilder<T>, qbAlias: string, property: string): boolean {
+    const alias = qb.expressionMap.aliases.find(a => a.name == qbAlias)
+    if (!alias?.hasMetadata)
+        return false
+    const column = alias.metadata.findColumnWithPropertyPath(property)
+        ?? alias.metadata.findColumnWithDatabaseName(property)
+    if (!column)
+        return false
+    const target = column.target
+    return column.type === 'boolean' || column.type === Boolean
+        || typeof target == 'function' && Reflect.getMetadata('design:type', target.prototype, column.propertyName) === Boolean
+}
+
+function booleanFilterValue(parameter: string, value: string): number {
+    const parsed = SearchLogic.toBoolean(value)
+    if (parsed == undefined)
+        throw filterError(parameter, errorMessage('INVALID_BOOLEAN'))
+    return parsed ? 1 : 0
+}
+
 function dateTimeFilterValue(parameter: string, value: string, kind: DateTimeFilter['dateTime']): Date | string {
     if (value.includes('*'))
         throw filterError(parameter, errorMessage('DATE_TIME_WILDCARD'))
@@ -142,6 +165,9 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
                 }
                 parameters[paramKey] = formattedValue
             })
+        } else if (typeof alias == 'string' && isBooleanColumn(qb, qbAlias, alias)) {
+            conditions.push(`${qbAlias}.${alias} IN (:...${alias}_in)`)
+            parameters[`${alias}_in`] = values.map(value => booleanFilterValue(searchField, value))
         } else {
             const exactValues = values.filter(value => !value.includes('*'))
             const likeValues = values.filter(value => value.includes('*'))

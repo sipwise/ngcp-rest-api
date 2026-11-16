@@ -102,7 +102,7 @@ HTTP/1.1 204 No Content
 | `page`, `rows` | Seitennummer, beginnend bei 1, und Seitengröße (Standard 10). |
 | `order_by`, `order_by_direction` | Sortierfeld und `asc` (Standard) oder `desc`. |
 | jedes Feld der Collection | Filter. Werte müssen exakt übereinstimmen, `*` ist ein Platzhalter, ein Komma trennt Alternativen. |
-| `search_or=1` | Mehrere Filter mit OR statt AND verknüpfen. |
+| `search_or=true` | Mehrere Filter mit OR statt AND verknüpfen. |
 
 Die Filter, die eine Collection unterstützt, sind unten bei ihrer GET-Operation aufgeführt. Unbekannte Query-Parameter werden mit 400 abgelehnt.
 
@@ -126,11 +126,11 @@ GET /api/v2/resellers/1?expand=contract_id.contact_id
 GET /api/v2/subscribers?expand=customer_id,domain_id
 ```
 
-Ein Feld, das nicht expandiert werden kann, führt zu 422, ein referenzierter Eintrag, den Sie nicht lesen dürfen, zu 403. Mit `soft_expand=1` erhalten Sie stattdessen nur, was expandiert werden kann: solche Felder und Einträge fehlen dann. Ein fehlerhafter Pfad wie `a..b` führt in jedem Fall zu 400.
+Ein Feld, das nicht expandiert werden kann, führt zu 422, ein referenzierter Eintrag, den Sie nicht lesen dürfen, zu 403. Mit `soft_expand=true` erhalten Sie stattdessen nur, was expandiert werden kann: solche Felder und Einträge fehlen dann. Ein fehlerhafter Pfad wie `a..b` führt in jedem Fall zu 400.
 
-`expand` und `soft_expand` gibt es nur bei GET-Anfragen mit JSON-Antwort, also z. B. nicht bei schreibenden Anfragen, unter `/auth` oder mit `Accept: text/csv`: dort führen sie zu 400, außer mit `soft_expand=1`.
+`expand` und `soft_expand` gibt es nur bei GET-Anfragen mit JSON-Antwort, also z. B. nicht bei schreibenden Anfragen, unter `/auth` oder mit `Accept: text/csv`: dort führen sie zu 400, außer mit `soft_expand=true`.
 
-Collections lassen sich auch nach Feldern referenzierter Einträge filtern: `<field>.<Filter der referenzierten Collection>=<Wert>`, in beliebiger Tiefe. Es treffen nur referenzierte Einträge zu, die Sie lesen dürfen, und der Filter wird mit den übrigen per AND verknüpft, auch mit `search_or=1`:
+Collections lassen sich auch nach Feldern referenzierter Einträge filtern: `<field>.<Filter der referenzierten Collection>=<Wert>`, in beliebiger Tiefe. Es treffen nur referenzierte Einträge zu, die Sie lesen dürfen, und der Filter wird mit den übrigen per AND verknüpft, auch mit `search_or=true`:
 
 ```http
 GET /api/v2/customers?contact_id.email=*@example.com

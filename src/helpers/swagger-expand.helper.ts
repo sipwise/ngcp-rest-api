@@ -110,9 +110,9 @@ function expandParameters(fields: string[]): ParameterObject[] {
             name: 'soft_expand',
             in: 'query',
             required: false,
-            description: '`1`: only what can be expanded is added, fields and items that cannot be expanded or '
+            description: '`true`: only what can be expanded is added, fields and items that cannot be expanded or '
                 + 'read are left out instead of the 400, 422 or 403 error (a malformed `expand` stays 400).',
-            schema: {type: 'string', enum: ['1', '0', 'true', 'false']},
+            schema: {type: 'boolean'},
         },
     ]
 }

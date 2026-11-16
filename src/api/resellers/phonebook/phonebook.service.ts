@@ -10,6 +10,7 @@ import {internal} from '~/entities'
 import {dtoToCsv} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrors, rowPointer, throwMissingIds} from '~/helpers/errors.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -95,7 +96,7 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
 
         const resellers = new Set(entities.map(entity => entity.resellerId))
         if (sr.query && sr.query['purge_existing']) {
-            if (sr.query['purge_existing'] === 'true') {
+            if (SearchLogic.isTrue(sr.query['purge_existing'])) {
                 delete sr.query['purge_existing']
                 const promises = Array.from(resellers).map(async reseller => {
                     await this.phonebookRepo.purge(reseller, sr)

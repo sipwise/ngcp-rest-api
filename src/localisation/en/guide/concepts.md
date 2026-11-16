@@ -102,7 +102,7 @@ HTTP/1.1 204 No Content
 | `page`, `rows` | Page number, starting at 1, and page size (default 10). |
 | `order_by`, `order_by_direction` | Sort field and `asc` (default) or `desc`. |
 | any field of the collection | Filter. Values match exactly, `*` is a wildcard and a comma separates alternatives. |
-| `search_or=1` | Combine several filters with OR instead of AND. |
+| `search_or=true` | Combine several filters with OR instead of AND. |
 
 The filters a collection supports are listed with its GET operation below. Unknown query parameters are rejected with 400.
 
@@ -126,11 +126,11 @@ GET /api/v2/resellers/1?expand=contract_id.contact_id
 GET /api/v2/subscribers?expand=customer_id,domain_id
 ```
 
-A field that cannot be expanded returns 422, a referenced item you may not read 403. With `soft_expand=1` you get only what can be expanded instead: such fields and items are left out. A malformed path such as `a..b` returns 400 in any case.
+A field that cannot be expanded returns 422, a referenced item you may not read 403. With `soft_expand=true` you get only what can be expanded instead: such fields and items are left out. A malformed path such as `a..b` returns 400 in any case.
 
-`expand` and `soft_expand` are accepted on GET requests with a JSON response only, e.g. not on writes, on `/auth` or with `Accept: text/csv`: there they return 400, unless `soft_expand=1` is given.
+`expand` and `soft_expand` are accepted on GET requests with a JSON response only, e.g. not on writes, on `/auth` or with `Accept: text/csv`: there they return 400, unless `soft_expand=true` is given.
 
-Collections can also be filtered by the fields of referenced items: `<field>.<filter of the referenced collection>=<value>`, at any depth. Only referenced items you may read match, and the filter is combined with the others with AND, also with `search_or=1`:
+Collections can also be filtered by the fields of referenced items: `<field>.<filter of the referenced collection>=<value>`, at any depth. Only referenced items you may read match, and the filter is combined with the others with AND, also with `search_or=true`:
 
 ```http
 GET /api/v2/customers?contact_id.email=*@example.com

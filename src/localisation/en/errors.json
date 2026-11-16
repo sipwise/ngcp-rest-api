@@ -395,6 +395,9 @@
   "DATE_TIME_WILDCARD": {
     "message": "does not support wildcards"
   },
+  "INVALID_BOOLEAN": {
+    "message": "must be true or false"
+  },
   "INVALID_TIMEZONE_NAME": {
     "message": "must be an IANA time zone name (e.g. Europe/Vienna) or null"
   }

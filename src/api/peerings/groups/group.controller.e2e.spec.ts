@@ -238,6 +238,7 @@ describe('Peering Group', () => {
                 const group: PeeringGroupResponseDto = response.body
                 expect(group.name).toEqual('test_peeringGroup1DefaultPriority')
                 expect(group.priority).toEqual(1)
+                expect(group.has_inbound_rules).toBe(false)
             })
             it('read created group test_peeringGroup1DefaultPriority by name', async () => {
                 const response = await request(app.getHttpServer())

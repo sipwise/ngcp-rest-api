@@ -1,6 +1,6 @@
 import {ApiPropertyOptional} from '@nestjs/swagger'
 
-import {InvalidParameterException, ValidationFailedException} from '~/helpers/errors.helper'
+import {InvalidParameterException, ValidationFailedException, errorMessage} from '~/helpers/errors.helper'
 import {NestedFilter, nestedFilters} from '~/helpers/nested-filter.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -15,9 +15,13 @@ enum OrderByDirection {
 }
 
 export class SearchLogic {
+    // documented boolean values, 1/0 are accepted as well
     static readonly booleanValues = [
         'true',
         'false',
+    ]
+    static readonly acceptedBooleanValues = [
+        ...SearchLogic.booleanValues,
         '1',
         '0',
     ]
@@ -77,19 +81,30 @@ export class SearchLogic {
     }
 
     static isTrue(value: unknown): boolean {
-        return value === 'true' || value === '1'
+        return SearchLogic.toBoolean(value) === true
+    }
+
+    static toBoolean(value: unknown): boolean | undefined {
+        if (value === 'true' || value === '1')
+            return true
+        if (value === 'false' || value === '0')
+            return false
+        return undefined
     }
 
     /**
-     * Boolean query parameter, undefined when not given; 400 for values other than booleanValues
+     * Boolean query parameter, undefined when not given; 400 for values other than acceptedBooleanValues
      */
     static parseBoolean(sr: ServiceRequest, name: string): boolean | undefined {
         const value = sr.query?.[name]
         if (value == undefined)
             return undefined
-        if (!SearchLogic.booleanValues.includes(`${value}`))
-            throw new InvalidParameterException([{parameter: name, code: 'isIn', message: `${name} must be one of ${SearchLogic.booleanValues.join(', ')}`}])
-        return SearchLogic.isTrue(value)
+        const parsed = SearchLogic.toBoolean(`${value}`)
+        if (parsed == undefined) {
+            const error = errorMessage('INVALID_BOOLEAN')
+            throw new InvalidParameterException([{parameter: name, code: error.errorCode, message: `${name} ${error.message}`}])
+        }
+        return parsed
     }
 
     static getPaginationFromServiceRequest(sr: ServiceRequest): [number, number] {

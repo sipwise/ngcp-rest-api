@@ -692,6 +692,7 @@ describe('ExpandInterceptor', () => {
                 limit: () => qb,
                 offset: () => qb,
                 addOrderBy: () => qb,
+                expressionMap: {aliases: []},
             } as unknown as SelectQueryBuilder<BaseEntity>
             return {qb, wheres}
         }

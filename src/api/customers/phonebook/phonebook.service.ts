@@ -12,6 +12,7 @@ import {internal} from '~/entities'
 import {dtoToCsv} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrors, itemPointer, rowPointer, throwMissingIds} from '~/helpers/errors.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -137,7 +138,7 @@ export class CustomerPhonebookService implements CrudService<internal.CustomerPh
         await this.checkCustomerAccess(entities, sr, (row, entity) => rowPointer(+row, entity, 'contractId'))
         const customers = new Set(entities.map(entity => entity.contractId))
         if (sr.query && sr.query['purge_existing']) {
-            if (sr.query['purge_existing'] === 'true') {
+            if (SearchLogic.isTrue(sr.query['purge_existing'])) {
                 delete sr.query['purge_existing']
                 const promises = Array.from(customers).map(async reseller => {
                     await this.phonebookRepo.purge(reseller, sr)

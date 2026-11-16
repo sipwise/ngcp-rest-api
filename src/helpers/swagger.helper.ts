@@ -4,6 +4,7 @@ import {NextFunction, Request, Response} from 'express'
 
 import {SEARCH_QUERY_ORDER_KEY} from '~/decorators/api-search-query.decorator'
 import {ErrorEntryDto, ErrorResponseDto} from '~/dto/error-response.dto'
+import {SearchLogic} from '~/helpers/search-logic.helper'
 import {SIPWISE_LOGO_SVG} from '~/helpers/sipwise-logo'
 import {swaggerAuthCss, swaggerAuthJs} from '~/helpers/swagger-auth.helper'
 import {addExpandDocumentation} from '~/helpers/swagger-expand.helper'
@@ -69,7 +70,7 @@ const pdfDownloadButtonJs = `
     const variants = [
         {label: 'downloadPdf', query: '', prefix: '${PDF_FILENAME_PREFIX}'},
         {label: 'downloadPdfUsageCurl', query: '&usage=curl', prefix: '${PDF_USAGE_CURL_FILENAME_PREFIX}'},
-        {label: 'downloadPdfApiOnly', query: '&api_only=1', prefix: '${PDF_API_ONLY_FILENAME_PREFIX}'},
+        {label: 'downloadPdfApiOnly', query: '&api_only=true', prefix: '${PDF_API_ONLY_FILENAME_PREFIX}'},
     ]
 
     function download(button, variant) {
@@ -532,10 +533,10 @@ function localisedDocuments(document: OpenAPIObject, versions: Versions, build: 
 function serveSwaggerPdf(app: NestApplication, api_prefix: string, documents: LocalisedDocuments, versions: Versions): void {
     const log = new LoggerService('swagger')
     // the complete documentation, with ?usage=curl only the curl examples in the usage chapter, or with
-    // ?api_only=1 the reference without the guide chapters
+    // ?api_only=true the reference without the guide chapters
     const pdfs = new Map<string, Promise<Buffer>>()
     app.getHttpAdapter().get('/' + api_prefix + '/swagger.pdf', async (req: Request, res: Response) => {
-        const apiOnly = req.query.api_only == '1'
+        const apiOnly = SearchLogic.isTrue(req.query.api_only)
         const usage = !apiOnly && req.query.usage == 'curl' ? 'curl' : undefined
         const lang = swaggerLanguage(req)
         const key = `${lang}:${apiOnly}:${usage ?? ''}`

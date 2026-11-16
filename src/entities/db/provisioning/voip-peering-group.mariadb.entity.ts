@@ -46,11 +46,10 @@ export class VoipPeeringGroup extends BaseEntity {
         peering_contract_id?: number
 
     @Column({
-        type: 'tinyint',
-        unsigned: true,
+        type: 'boolean',
         nullable: false,
     })
-        has_inbound_rules: number
+        has_inbound_rules: boolean
 
     @Column({
         type: 'int',

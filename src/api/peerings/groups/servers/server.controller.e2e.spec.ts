@@ -133,7 +133,7 @@ describe('Peering Server', () => {
             name: prefix,
             priority: 1,
             peering_contract_id: contractId,
-            has_inbound_rules: 0,
+            has_inbound_rules: false,
         })
         groupId = group.identifiers[0].id
     })

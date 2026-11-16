@@ -21,6 +21,7 @@ import {
     formatParameterErrors,
     formatValidationErrors,
 } from '~/helpers/errors.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
 import {validate} from '~/helpers/validate.helper'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -189,7 +190,7 @@ export class ValidateInputPipe implements PipeTransform<any> {
             return value
         }
         if (metatype === Boolean) {
-            return value === true || value === 'true'
+            return value === true || SearchLogic.isTrue(value)
         }
         if (metatype === Number) {
             return +value

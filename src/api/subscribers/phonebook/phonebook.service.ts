@@ -13,6 +13,7 @@ import {internal} from '~/entities'
 import {dtoToCsv} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrors, itemPointer, rowPointer, throwMissingIds} from '~/helpers/errors.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -148,7 +149,7 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
         await this.checkAllowedSubscribers(entities, sr, (row, entity) => rowPointer(+row, entity, 'subscriberId'))
         const subscribers = new Set(entities.map(entity => entity.subscriberId))
         if (sr.query && sr.query['purge_existing']) {
-            if (sr.query['purge_existing'] === 'true') {
+            if (SearchLogic.isTrue(sr.query['purge_existing'])) {
                 delete sr.query['purge_existing']
                 const promises = Array.from(subscribers).map(async subscriber => {
                     await this.phonebookRepo.purge(subscriber, sr)

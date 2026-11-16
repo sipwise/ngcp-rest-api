@@ -127,14 +127,14 @@ describe('Peering Inbound Rule', () => {
             name: prefix,
             priority: 1,
             peering_contract_id: contractId,
-            has_inbound_rules: 0,
+            has_inbound_rules: false,
         })
         groupId = group.identifiers[0].id
         const otherGroup = await db.provisioning.VoipPeeringGroup.insert({
             name: `${prefix}_other`,
             priority: 1,
             peering_contract_id: contractId,
-            has_inbound_rules: 0,
+            has_inbound_rules: false,
         })
         otherGroupId = otherGroup.identifiers[0].id
     })
@@ -192,8 +192,12 @@ describe('Peering Inbound Rule', () => {
                 expect(rules[0].enabled).toBe(true)
             })
             it('set has_inbound_rules on the group', async () => {
-                const group = await db.provisioning.VoipPeeringGroup.findOneByOrFail({id: groupId})
-                expect(group.has_inbound_rules).toEqual(1)
+                const response = await request(app.getHttpServer())
+                    .get(`/api/peerings/groups/${groupId}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.has_inbound_rules).toBe(true)
             })
             it('fail to create inbound rule with invalid field', async () => {
                 const response = await request(app.getHttpServer())
@@ -315,7 +319,7 @@ describe('Peering Inbound Rule', () => {
         })
 
         describe('move between groups', () => {
-            const hasInboundRules = async (id: number): Promise<number> =>
+            const hasInboundRules = async (id: number): Promise<boolean> =>
                 (await db.provisioning.VoipPeeringGroup.findOneByOrFail({id})).has_inbound_rules
 
             it('set has_inbound_rules on the new group with update', async () => {
@@ -326,8 +330,8 @@ describe('Peering Inbound Rule', () => {
                     .set('Content-Type', 'application/json')
                     .send({...rulePost(1), group_id: otherGroupId})
                 expect(response.status).toEqual(204)
-                expect(await hasInboundRules(otherGroupId)).toEqual(1)
-                expect(await hasInboundRules(groupId)).toEqual(1)
+                expect(await hasInboundRules(otherGroupId)).toEqual(true)
+                expect(await hasInboundRules(groupId)).toEqual(true)
             })
             it('clear has_inbound_rules on the old group with adjust', async () => {
                 const response = await request(app.getHttpServer())
@@ -337,8 +341,8 @@ describe('Peering Inbound Rule', () => {
                     .set('Content-Type', 'application/json-patch+json')
                     .send([{op: 'replace', path: '/group_id', value: otherGroupId}])
                 expect(response.status).toEqual(204)
-                expect(await hasInboundRules(groupId)).toEqual(0)
-                expect(await hasInboundRules(otherGroupId)).toEqual(1)
+                expect(await hasInboundRules(groupId)).toEqual(false)
+                expect(await hasInboundRules(otherGroupId)).toEqual(true)
             })
             it('update has_inbound_rules of both groups with bulk adjust', async () => {
                 const response = await request(app.getHttpServer())
@@ -351,8 +355,8 @@ describe('Peering Inbound Rule', () => {
                         [createdIds[1]]: [{op: 'replace', path: '/group_id', value: groupId}],
                     })
                 expect(response.status).toEqual(204)
-                expect(await hasInboundRules(groupId)).toEqual(1)
-                expect(await hasInboundRules(otherGroupId)).toEqual(0)
+                expect(await hasInboundRules(groupId)).toEqual(true)
+                expect(await hasInboundRules(otherGroupId)).toEqual(false)
             })
         })
     })
@@ -371,7 +375,7 @@ describe('Peering Inbound Rule', () => {
         })
         it('clear has_inbound_rules on the group after the last rule is deleted', async () => {
             const group = await db.provisioning.VoipPeeringGroup.findOneByOrFail({id: groupId})
-            expect(group.has_inbound_rules).toEqual(0)
+            expect(group.has_inbound_rules).toEqual(false)
         })
         it('delete created group and contract', async () => {
             await db.provisioning.VoipPeeringInboundRule.delete({group_id: In([groupId, otherGroupId])})

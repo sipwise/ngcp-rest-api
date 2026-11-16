@@ -102,7 +102,7 @@ HTTP/1.1 204 No Content
 | `page`, `rows` | Numéro de page, à partir de 1, et taille de page (10 par défaut). |
 | `order_by`, `order_by_direction` | Champ de tri et `asc` (par défaut) ou `desc`. |
 | tout champ de la collection | Filtre. Les valeurs doivent correspondre exactement, `*` est un caractère générique et une virgule sépare les alternatives. |
-| `search_or=1` | Combine plusieurs filtres avec OR au lieu de AND. |
+| `search_or=true` | Combine plusieurs filtres avec OR au lieu de AND. |
 
 Les filtres pris en charge par une collection sont indiqués avec son opération GET ci-dessous. Les paramètres de requête inconnus sont rejetés avec 400.
 
@@ -126,11 +126,11 @@ GET /api/v2/resellers/1?expand=contract_id.contact_id
 GET /api/v2/subscribers?expand=customer_id,domain_id
 ```
 
-Un champ qui ne peut pas être développé renvoie 422, un élément référencé que vous ne pouvez pas lire 403. Avec `soft_expand=1`, vous obtenez à la place uniquement ce qui peut être développé : ces champs et éléments sont omis. Un chemin mal formé comme `a..b` renvoie 400 dans tous les cas.
+Un champ qui ne peut pas être développé renvoie 422, un élément référencé que vous ne pouvez pas lire 403. Avec `soft_expand=true`, vous obtenez à la place uniquement ce qui peut être développé : ces champs et éléments sont omis. Un chemin mal formé comme `a..b` renvoie 400 dans tous les cas.
 
-`expand` et `soft_expand` ne sont acceptés que sur les requêtes GET avec une réponse JSON, par exemple pas sur les écritures, sous `/auth` ni avec `Accept: text/csv` : ils y renvoient 400, sauf avec `soft_expand=1`.
+`expand` et `soft_expand` ne sont acceptés que sur les requêtes GET avec une réponse JSON, par exemple pas sur les écritures, sous `/auth` ni avec `Accept: text/csv` : ils y renvoient 400, sauf avec `soft_expand=true`.
 
-Les collections peuvent aussi être filtrées selon les champs des éléments référencés : `<field>.<filtre de la collection référencée>=<valeur>`, à n'importe quelle profondeur. Seuls les éléments référencés que vous pouvez lire correspondent, et le filtre est combiné aux autres avec AND, même avec `search_or=1` :
+Les collections peuvent aussi être filtrées selon les champs des éléments référencés : `<field>.<filtre de la collection référencée>=<valeur>`, à n'importe quelle profondeur. Seuls les éléments référencés que vous pouvez lire correspondent, et le filtre est combiné aux autres avec AND, même avec `search_or=true` :
 
 ```http
 GET /api/v2/customers?contact_id.email=*@example.com

@@ -102,7 +102,7 @@ HTTP/1.1 204 No Content
 | `page`, `rows` | Número de página, a partir de 1, y tamaño de página (predeterminado 10). |
 | `order_by`, `order_by_direction` | Campo de ordenación y `asc` (predeterminado) o `desc`. |
 | cualquier campo de la colección | Filtro. Los valores deben coincidir exactamente, `*` es un comodín y una coma separa alternativas. |
-| `search_or=1` | Combina varios filtros con OR en lugar de AND. |
+| `search_or=true` | Combina varios filtros con OR en lugar de AND. |
 
 Los filtros que admite una colección se indican más abajo en su operación GET. Los parámetros de consulta desconocidos se rechazan con 400.
 
@@ -126,11 +126,11 @@ GET /api/v2/resellers/1?expand=contract_id.contact_id
 GET /api/v2/subscribers?expand=customer_id,domain_id
 ```
 
-Un campo que no se puede expandir devuelve 422, un elemento referenciado que usted no puede leer 403. Con `soft_expand=1` obtiene en su lugar solo lo que se puede expandir: esos campos y elementos se omiten. Una ruta mal formada como `a..b` devuelve 400 en cualquier caso.
+Un campo que no se puede expandir devuelve 422, un elemento referenciado que usted no puede leer 403. Con `soft_expand=true` obtiene en su lugar solo lo que se puede expandir: esos campos y elementos se omiten. Una ruta mal formada como `a..b` devuelve 400 en cualquier caso.
 
-`expand` y `soft_expand` solo se admiten en peticiones GET con respuesta JSON, por ejemplo no en escrituras, en `/auth` ni con `Accept: text/csv`: allí devuelven 400, salvo con `soft_expand=1`.
+`expand` y `soft_expand` solo se admiten en peticiones GET con respuesta JSON, por ejemplo no en escrituras, en `/auth` ni con `Accept: text/csv`: allí devuelven 400, salvo con `soft_expand=true`.
 
-Las colecciones también pueden filtrarse por los campos de los elementos referenciados: `<field>.<filtro de la colección referenciada>=<valor>`, a cualquier profundidad. Solo coinciden los elementos referenciados que usted puede leer, y el filtro se combina con los demás mediante AND, también con `search_or=1`:
+Las colecciones también pueden filtrarse por los campos de los elementos referenciados: `<field>.<filtro de la colección referenciada>=<valor>`, a cualquier profundidad. Solo coinciden los elementos referenciados que usted puede leer, y el filtro se combina con los demás mediante AND, también con `search_or=true`:
 
 ```http
 GET /api/v2/customers?contact_id.email=*@example.com
