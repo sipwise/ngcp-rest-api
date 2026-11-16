@@ -145,7 +145,7 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Customer> {
         const qb = await this.createQueryBuilder(filterBy)
-        qb.where({id: id})
+        qb.andWhere({id: id})
         const searchDto  = new CustomerSearchDto()
         configureQueryBuilder(
             qb,
@@ -233,8 +233,7 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
 
     async readAllBillingProfiles(customerId: number, _sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.CustomerBillingProfile[], number]> {
         const customerQb = await this.createQueryBuilder(filterBy)
-        customerQb.where({id: customerId})
-        this.addFilterBy(customerQb, filterBy)
+        customerQb.andWhere({id: customerId})
         await customerQb.getOneOrFail()
 
         const qb = await this.billingProfilesQueryBuilder(customerId)
@@ -274,8 +273,7 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
 
     async readFutureBillingProfiles(customerId: number, _sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.CustomerBillingProfile[], number]> {
         const customerQb = await this.createQueryBuilder(filterBy)
-        customerQb.where({id: customerId})
-        this.addFilterBy(customerQb, filterBy)
+        customerQb.andWhere({id: customerId})
         await customerQb.getOneOrFail()
 
         const qb = await this.billingProfilesQueryBuilder(customerId)

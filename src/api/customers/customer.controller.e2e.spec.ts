@@ -80,9 +80,11 @@ describe('CustomerController', () => {
     const _createdContactIds: number[] = []
     const _createdBillingProfileIds: number[] = []
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const resellerCreds = {username: `mockResellerUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     let repo: CustomerMariadbRepository
     const suffix = `${Date.now()}`
     const fixtureContractIds: number[] = []
+    const fixtureContactIds: number[] = []
     const profileIds: number[] = []
     const networkIds: number[] = []
     const packageIds: number[] = []
@@ -129,9 +131,9 @@ describe('CustomerController', () => {
         return pkg.id
     }
 
-    const createContract = async (mappings: Mapping[], createdAt = at(0), profilePackageId?: number): Promise<number> => {
+    const createContract = async (mappings: Mapping[], createdAt = at(0), profilePackageId?: number, contactId = CONTACT_ID): Promise<number> => {
         const contract = await db.billing.Contract.create({
-            contact_id: CONTACT_ID,
+            contact_id: contactId,
             product_id: SIPACCOUNT_PRODUCT_ID,
             status: ContractStatus.Active,
             profile_package_id: profilePackageId,
@@ -1010,6 +1012,106 @@ describe('CustomerController', () => {
             })
         })
 
+        describe('Customer scope by id', () => {
+            const ids: Record<string, number> = {}
+
+            const send = (method: 'get' | 'put' | 'patch', id: number, user = creds, query = ''): request.Test => {
+                const req = request(app.getHttpServer())[method](`/api/customers/${id}${query}`)
+                    .auth(user.username, user.password)
+                    .set('Accept', 'application/json')
+                if (method == 'get')
+                    return req
+                if (method == 'patch')
+                    return req.set('Content-Type', 'application/json-patch+json')
+                        .send([{op: 'replace', path: '/external_id', value: `e2e-scope-${suffix}`}])
+                return req.set('Content-Type', 'application/json').send({
+                    contact_id: CONTACT_ID,
+                    status: ContractStatus.Active,
+                    type: CustomerType.SipAccount,
+                    billing_profile_definition: ContractBillingProfileDefinition.ID,
+                    billing_profile_id: profileA,
+                })
+            }
+
+            beforeAll(async () => {
+                await db.billing.Admin.delete({login: resellerCreds.username})
+                const resellerRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.reseller})
+                await db.billing.Admin.insert({
+                    reseller_id: RESELLER_ID,
+                    login: resellerCreds.username,
+                    saltedpass: 'mockAdminSaltedpass',
+                    saltedpass_modify_timestamp: new Date(),
+                    role_id: resellerRole.id,
+                    is_master: true,
+                    is_superuser: false,
+                    is_system: false,
+                    is_ccare: false,
+                    lawful_intercept: false,
+                    is_active: true,
+                    read_only: false,
+                    show_passwords: true,
+                    call_data: true,
+                    billing_data: true,
+                    can_reset_password: true,
+                    enable_2fa: false,
+                    show_otp_registration_info: false,
+                })
+                for (const [name, resellerId] of [['own', RESELLER_ID], ['foreign', otherResellerId]] as [string, number][]) {
+                    const contact = await db.billing.Contact.create({
+                        reseller_id: resellerId,
+                        email: `e2e-scope-${name}-${suffix}@example.org`,
+                        create_timestamp: new Date(),
+                    }).save()
+                    fixtureContactIds.push(contact.id)
+                    const profileId = name == 'own' ? profileA : profileOtherReseller
+                    ids[name] = await createContract([{profileId: profileId}], at(0), undefined, contact.id)
+                }
+                ids.terminated = await createContract([{profileId: profileA}])
+                await db.billing.Contract.update(ids.terminated, {status: ContractStatus.Terminated})
+            })
+
+            it('reads a customer of its own reseller as reseller admin', async () => {
+                const response = await send('get', ids.own, resellerCreds)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.id).toEqual(ids.own)
+            })
+
+            it.each(['get', 'put', 'patch'] as const)('does not %s a customer of another reseller as reseller admin', async (method) => {
+                const response = await send(method, ids.foreign, resellerCreds)
+                expect(response.status).toEqual(HttpStatus.NOT_FOUND)
+                const contract = await db.billing.Contract.findOneByOrFail({id: ids.foreign})
+                expect(contract.external_id).not.toEqual(`e2e-scope-${suffix}`)
+            })
+
+            it.each(['@billing-profiles', '@future-billing-profiles'])('lists %s of its own customers only as reseller admin', async (path) => {
+                const list = (id: number): request.Test => request(app.getHttpServer())
+                    .get(`/api/customers/${id}/${path}`)
+                    .auth(resellerCreds.username, resellerCreds.password)
+                    .set('Accept', 'application/json')
+                expect((await list(ids.own)).status).toEqual(HttpStatus.OK)
+                expect((await list(ids.foreign)).status).toEqual(HttpStatus.NOT_FOUND)
+            })
+
+            it('reads a customer of any reseller as admin without reseller scope', async () => {
+                const response = await send('get', ids.foreign)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.id).toEqual(ids.foreign)
+            })
+
+            it('reads a terminated customer only with include_terminated', async () => {
+                expect((await send('get', ids.terminated)).status).toEqual(HttpStatus.NOT_FOUND)
+                expect((await send('get', ids.terminated, creds, '?include_terminated=false')).status).toEqual(HttpStatus.NOT_FOUND)
+                const response = await send('get', ids.terminated, creds, '?include_terminated=true')
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.status).toEqual(ContractStatus.Terminated)
+            })
+
+            it('does not read a contract that is not a customer', async () => {
+                // seed contract of reseller 1, with billing mappings
+                expect((await send('get', 1)).status).toEqual(HttpStatus.NOT_FOUND)
+            })
+        })
+
         describe('Customer DELETE', () => {
             it('terminate customer by id', async () => {
                 const id = createdCustomerIds[0]
@@ -1039,6 +1141,8 @@ describe('CustomerController', () => {
                 await db.billing.Contract.delete(createdCustomerIds)
             if (fixtureContractIds.length)
                 await db.billing.Contract.delete(fixtureContractIds)
+            if (fixtureContactIds.length)
+                await db.billing.Contact.delete(fixtureContactIds)
             if (emailTemplateIds.length)
                 await db.billing.EmailTemplate.delete(emailTemplateIds)
             if (invoiceTemplateIds.length)
@@ -1057,7 +1161,8 @@ describe('CustomerController', () => {
                 await db.billing.Contract.delete(otherResellerContractId)
         })
 
-        it('delete mock admin', async () => {
+        it('delete mock admins', async () => {
+            await db.billing.Admin.delete({login: resellerCreds.username})
             await db.billing.Admin.delete({login: creds.username})
         })
     })

@@ -12,6 +12,7 @@ import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/inter
 import {billingIntervalError, billingNetworkError, billingOpenIntervalError, billingProfileError} from '~/helpers/billing-mapping.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrors,apiError, checkItems, itemPointer, readFoundIds, throwMissingIds} from '~/helpers/errors.helper'
+import {SearchLogic} from '~/helpers/search-logic.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -70,24 +71,11 @@ export class CustomerService implements CrudService<internal.Customer> {
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Customer[], number]> {
-        const filters: CustomerFilterBy = {}
-        if (sr.user.reseller_id_required)
-            filters.resellerId = sr.user.reseller_id
-        if (sr.query.include_terminated) {
-            filters.showTerminated = true
-            delete sr.query.include_terminated
-        }
-
-        return await this.customerRepository.readAll(sr, filters)
+        return await this.customerRepository.readAll(sr, this.readFilter(sr))
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Customer> {
-        const filters: CustomerFilterBy = {}
-        if (sr.user.reseller_id_required)
-            filters.resellerId = sr.user.reseller_id
-        if (sr.query.include_terminated)
-            filters.showTerminated = true
-        return await this.customerRepository.readById(id, sr, filters)
+        return await this.customerRepository.readById(id, sr, this.readFilter(sr))
     }
 
     async readAllBillingProfiles(customerId: number, sr: ServiceRequest): Promise<[internal.CustomerBillingProfile[], number]> {
@@ -206,6 +194,18 @@ export class CustomerService implements CrudService<internal.Customer> {
     /**
      * Reports every item whose contact is not an active customer contact visible to the user
      */
+    // include_terminated is no search field, so it is taken out of the query
+    private readFilter(sr: ServiceRequest): CustomerFilterBy {
+        const filters: CustomerFilterBy = {}
+        if (sr.user.reseller_id_required)
+            filters.resellerId = sr.user.reseller_id
+        if (sr.query.include_terminated !== undefined) {
+            filters.showTerminated = SearchLogic.isTrue(sr.query.include_terminated)
+            delete sr.query.include_terminated
+        }
+        return filters
+    }
+
     private checkActiveContacts(customers: internal.Customer[] | Dictionary<internal.Customer>, activeContacts: internal.Contact[], sr: ServiceRequest): void {
         const errors = new ApiErrors()
         for (const [key, customer] of Object.entries(customers)) {

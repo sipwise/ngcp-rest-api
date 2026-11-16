@@ -301,10 +301,16 @@ describe('CustomerService', () => {
 
         it('should show terminated customers with include_terminated and drop the query param', async () => {
             const readAll = jest.spyOn(customerMockRepo, 'readAll')
-            const sr = makeSr(admin, {include_terminated: true})
+            const sr = makeSr(admin, {include_terminated: 'true'})
             await service.readAll(sr)
             expect(readAll.mock.calls[0][1]).toStrictEqual({showTerminated: true})
             expect(sr.query.include_terminated).toBeUndefined()
+        })
+
+        it('should hide terminated customers with include_terminated=false', async () => {
+            const readAll = jest.spyOn(customerMockRepo, 'readAll')
+            await service.readAll(makeSr(admin, {include_terminated: 'false'}))
+            expect(readAll.mock.calls[0][1]).toStrictEqual({showTerminated: false})
         })
 
         it('should filter by reseller for a reseller user', async () => {
@@ -319,10 +325,12 @@ describe('CustomerService', () => {
             expect(await service.read(1, makeSr())).toStrictEqual(customerMockRepo.customerDB[1])
         })
 
-        it('should pass include_terminated as filter', async () => {
+        it('should pass include_terminated as filter and drop the query param', async () => {
             const readById = jest.spyOn(customerMockRepo, 'readById')
-            await service.read(1, makeSr(admin, {include_terminated: true}))
+            const sr = makeSr(admin, {include_terminated: 'true'})
+            await service.read(1, sr)
             expect(readById.mock.calls[0][2]).toStrictEqual({showTerminated: true})
+            expect(sr.query.include_terminated).toBeUndefined()
         })
 
         it('should not return a customer of another reseller to a reseller user', async () => {
