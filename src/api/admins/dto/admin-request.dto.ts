@@ -1,8 +1,8 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsBase32, IsBoolean, IsEmail, IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, MaxLength, MinLength} from 'class-validator'
+import {IsBase32, IsBoolean, IsEmail, IsIn, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, MaxLength, MinLength} from 'class-validator'
 import {generate as passwordGenerator} from 'generate-password'
 
-import {RbacRole} from '~/config/constants.config'
+import {RbacRole, adminRoles} from '~/config/constants.config'
 import {IsValidPassword} from '~/decorators/is-valid-password.decorator'
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
@@ -70,8 +70,8 @@ export class AdminRequestDto implements RequestDto {
         password: string
 
     @IsNotEmpty()
-    @IsEnum(RbacRole)
-    @ApiProperty({description: 'Access level of the user', enum: RbacRole})
+    @IsIn(adminRoles)
+    @ApiProperty({description: 'Access level of the user', enum: adminRoles})
         role: RbacRole
 
     @IsBoolean()

@@ -1,7 +1,7 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsBoolean, IsDate, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString} from 'class-validator'
 
-import {RbacRole} from '~/config/constants.config'
+import {RbacRole, adminRoles} from '~/config/constants.config'
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {DateTimeField} from '~/decorators/date-time-field.decorator'
 import {ResponseDto} from '~/dto/response.dto'
@@ -38,10 +38,6 @@ export class AdminResponseDto extends ResponseDto {
     @ApiProperty()
         is_master!: boolean
 
-    @IsBoolean()
-    @ApiProperty()
-        lawful_intercept!: boolean
-
     @IsString()
     @IsNotEmpty()
     @ApiProperty()
@@ -57,7 +53,7 @@ export class AdminResponseDto extends ResponseDto {
         reseller_id?: number
 
     @IsEnum(RbacRole)
-    @ApiProperty()
+    @ApiProperty({enum: adminRoles})
         role!: RbacRole
 
     @IsBoolean()
@@ -90,7 +86,6 @@ export class AdminResponseDto extends ResponseDto {
         this.id = admin.id
         this.is_active = admin.isActive
         this.is_master = admin.isMaster
-        this.lawful_intercept = admin.lawfulIntercept
         this.login = admin.login
         this.read_only = admin.readOnly
         this.role = admin.role

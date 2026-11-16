@@ -945,12 +945,13 @@ describe('AdminController', () => {
         })
 
         describe('Admins role deprecated flags', () => {
-            const flags: [RbacRole, boolean, boolean, boolean][] = [
-                [RbacRole.system, true, false, false],
-                [RbacRole.admin, false, true, false],
-                [RbacRole.reseller, false, false, false],
-                [RbacRole.ccareadmin, false, true, true],
-                [RbacRole.ccare, false, false, true],
+            const flags: [RbacRole, boolean, boolean, boolean, boolean][] = [
+                [RbacRole.system, true, false, false, false],
+                [RbacRole.admin, false, true, false, false],
+                [RbacRole.reseller, false, false, false, false],
+                [RbacRole.ccareadmin, false, true, true, false],
+                [RbacRole.lintercept, false, false, false, true],
+                [RbacRole.ccare, false, false, true, false],
             ]
             const adminOf = (name: string, role: RbacRole): AdminPost => ({
                 billing_data: true,
@@ -967,14 +968,29 @@ describe('AdminController', () => {
                 show_passwords: true,
                 enable_2fa: false,
             })
-            const expectFlags = async (id: number, isSystem: boolean, isSuperuser: boolean, isCcare: boolean): Promise<void> => {
+            const expectFlags = async (
+                id: number,
+                isSystem: boolean,
+                isSuperuser: boolean,
+                isCcare: boolean,
+                lawfulIntercept: boolean,
+            ): Promise<void> => {
                 const row = await db.billing.Admin.findOneByOrFail({id})
-                expect({is_system: row.is_system, is_superuser: row.is_superuser, is_ccare: row.is_ccare})
-                    .toEqual({is_system: isSystem, is_superuser: isSuperuser, is_ccare: isCcare})
+                expect({
+                    is_system: row.is_system,
+                    is_superuser: row.is_superuser,
+                    is_ccare: row.is_ccare,
+                    lawful_intercept: row.lawful_intercept,
+                }).toEqual({
+                    is_system: isSystem,
+                    is_superuser: isSuperuser,
+                    is_ccare: isCcare,
+                    lawful_intercept: lawfulIntercept,
+                })
             }
             let flagsId: number
 
-            for (const [role, isSystem, isSuperuser, isCcare] of flags) {
+            for (const [role, isSystem, isSuperuser, isCcare, lawfulIntercept] of flags) {
                 it(`sets the flags of role ${role} on POST`, async () => {
                     const response = await request(app.getHttpServer())
                         .post('/api/admins')
@@ -984,7 +1000,7 @@ describe('AdminController', () => {
                     expect(response.status).toEqual(201)
                     const {id} = await db.billing.Admin.findOneByOrFail({login: loginOf(`flags_${role}`)})
                     createdAdminIds.push(id)
-                    await expectFlags(id, isSystem, isSuperuser, isCcare)
+                    await expectFlags(id, isSystem, isSuperuser, isCcare, lawfulIntercept)
                     flagsId = id
                 })
             }
@@ -997,7 +1013,7 @@ describe('AdminController', () => {
                     .set('Content-Type', 'application/json')
                     .send({...adminOf('flags_ccare', RbacRole.admin), password: `${strongPassword}_flags`})
                 expect(response.status).toEqual(204)
-                await expectFlags(flagsId, false, true, false)
+                await expectFlags(flagsId, false, true, false, false)
             })
 
             it('recalculates the flags on PATCH role change', async () => {
@@ -1009,7 +1025,19 @@ describe('AdminController', () => {
                     .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(204)
-                await expectFlags(flagsId, false, true, true)
+                await expectFlags(flagsId, false, true, true, false)
+            })
+
+            it('sets lawful_intercept only on PATCH role change to lintercept', async () => {
+                const patch: PatchOperation[] = [{op: 'replace', path: '/role', value: RbacRole.lintercept}]
+                const response = await request(app.getHttpServer())
+                    .patch(`/api/admins/${flagsId}`)
+                    .set(...systemAuthHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send(patch)
+                expect(response.status).toEqual(204)
+                await expectFlags(flagsId, false, false, false, true)
             })
 
             it('does not return the flags', async () => {
@@ -1024,12 +1052,12 @@ describe('AdminController', () => {
                     .set('Accept', 'application/json')
                 expect(list.status).toEqual(200)
                 for (const admin of [item.body, ...list.body.data]) {
-                    for (const key of ['is_system', 'is_superuser', 'is_ccare'])
+                    for (const key of ['is_system', 'is_superuser', 'is_ccare', 'lawful_intercept'])
                         expect(admin).not.toHaveProperty(key)
                 }
             })
 
-            for (const key of ['is_system', 'is_superuser', 'is_ccare']) {
+            for (const key of ['is_system', 'is_superuser', 'is_ccare', 'lawful_intercept']) {
                 it(`rejects ${key} in the POST body`, async () => {
                     const response = await request(app.getHttpServer())
                         .post('/api/admins')
@@ -1044,6 +1072,56 @@ describe('AdminController', () => {
                         .get(`/api/admins?${key}=1`)
                         .set(...systemAuthHeader)
                     expect(response.status).toEqual(400)
+                })
+            }
+        })
+
+        describe('Admins lintercept', () => {
+            const postAdmin = async (auth: [string, string], name: string, role: string, isMaster = false): Promise<request.Response> =>
+                request(app.getHttpServer())
+                    .post('/api/admins')
+                    .auth(...auth)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        billing_data: true,
+                        call_data: false,
+                        can_reset_password: true,
+                        is_active: true,
+                        is_master: isMaster,
+                        email: `${name}@example.com`,
+                        login: loginOf(name),
+                        password: strongPassword,
+                        read_only: false,
+                        reseller_id: 1,
+                        role: role,
+                        show_passwords: true,
+                        enable_2fa: false,
+                    })
+            const created = async (name: string): Promise<void> => {
+                const {id} = await db.billing.Admin.findOneByOrFail({login: loginOf(name)})
+                createdAdminIds.push(id)
+            }
+
+            it('lets a system master create a lintercept admin', async () => {
+                const response = await postAdmin([loginOf('system'), strongPassword], 'li_by_master', RbacRole.lintercept)
+                expect(response.status).toEqual(201)
+                await created('li_by_master')
+            })
+
+            it('rejects creating a lintercept admin by a non-master system admin', async () => {
+                const response = await postAdmin([loginOf('system'), strongPassword], 'li_system_nm', RbacRole.system)
+                expect(response.status).toEqual(201)
+                await created('li_system_nm')
+                const rejected = await postAdmin([loginOf('li_system_nm'), strongPassword], 'li_by_nm', RbacRole.lintercept)
+                expect(rejected.status).toEqual(403)
+                expect(await db.billing.Admin.findOneBy({login: loginOf('li_by_nm')})).toBeNull()
+            })
+
+            for (const role of [RbacRole.subscriber, RbacRole.subscriberadmin]) {
+                it(`rejects role ${role}`, async () => {
+                    const response = await postAdmin([loginOf('system'), strongPassword], `role_${role}`, role)
+                    expect(response.status).toEqual(422)
                 })
             }
         })

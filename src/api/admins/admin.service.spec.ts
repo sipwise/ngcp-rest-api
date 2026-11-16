@@ -192,18 +192,17 @@ describe('AdminService', () => {
             await expect(service.update(updates, localRequest)).rejects.toThrow(ApiErrorException)
         })
 
-        const protectedFields = internal.Admin.create({
-            billingData: false,
+        // values differ from the stored admin 1, otherwise nothing changes
+        const protectedFields = {
+            billingData: true,
             callData: false,
             isActive: false,
             isMaster: false,
-            isSuperuser: false,
-            isSystem: false,
-            lawfulIntercept: false,
             login: 'protectedJest',
+            readOnly: false,
             role: 'reseller',
             showPasswords: false,
-        })
+        }
         Object.keys(protectedFields).map(s => {
             it(`should throw ForbiddenException when updating ${s} on self`, async () => {
                 const id = 1
@@ -337,29 +336,71 @@ describe('AdminService', () => {
     })
 
     describe('role deprecated flags', () => {
-        const flags: [RbacRole, boolean, boolean, boolean][] = [
-            [RbacRole.system, true, false, false],
-            [RbacRole.admin, false, true, false],
-            [RbacRole.reseller, false, false, false],
-            [RbacRole.ccareadmin, false, true, true],
-            [RbacRole.ccare, false, false, true],
+        const flags: [RbacRole, boolean, boolean, boolean, boolean][] = [
+            [RbacRole.system, true, false, false, false],
+            [RbacRole.admin, false, true, false, false],
+            [RbacRole.reseller, false, false, false, false],
+            [RbacRole.ccareadmin, false, true, true, false],
+            [RbacRole.lintercept, false, false, false, true],
+            [RbacRole.ccare, false, false, true, false],
         ]
-        for (const [role, isSystem, isSuperuser, isCcare] of flags) {
+        for (const [role, isSystem, isSuperuser, isCcare, lawfulIntercept] of flags) {
             it(`should set the flags of role ${role} on create`, async () => {
                 const got = (await service.create([internal.Admin.create({login: 'jest', role: role})], sr))[0]
                 const stored = await adminMockRepo.readById(got.id, options)
-                expect(stored).toMatchObject({isSystem, isSuperuser, isCcare})
+                expect(stored).toMatchObject({isSystem, isSuperuser, isCcare, lawfulIntercept})
             })
 
             it(`should set the flags of role ${role} on update`, async () => {
                 const id = 6
                 const updates = new Dictionary<internal.Admin>()
-                updates[id] = internal.Admin.create({login: 'jest', role: role, isSystem: !isSystem, isSuperuser: !isSuperuser, isCcare: !isCcare})
+                updates[id] = internal.Admin.create({login: 'jest', role: role, isSystem: !isSystem, isSuperuser: !isSuperuser, isCcare: !isCcare, lawfulIntercept: !lawfulIntercept})
                 await service.update(updates, sr)
                 const stored = await adminMockRepo.readById(id, options)
-                expect(stored).toMatchObject({isSystem, isSuperuser, isCcare})
+                expect(stored).toMatchObject({isSystem, isSuperuser, isCcare, lawfulIntercept})
             })
         }
+    })
+
+    describe('lintercept admins', () => {
+        const nonMaster = (): ServiceRequest => {
+            const localRequest = deepCopy(sr)
+            localRequest.user.is_master = false
+            return localRequest
+        }
+        const createLintercept = async (): Promise<number> =>
+            (await service.create([internal.Admin.create({login: 'jest_li', role: RbacRole.lintercept})], sr))[0].id
+
+        it('should allow a system master to create, update and delete a lintercept admin', async () => {
+            const id = await createLintercept()
+            const updates = new Dictionary<internal.Admin>()
+            updates[id] = internal.Admin.create({login: 'jest_li', role: RbacRole.lintercept})
+            await expect(service.update(updates, sr)).resolves.toEqual([id])
+            await expect(service.delete([id], sr)).resolves.toEqual([id])
+        })
+
+        it('should reject creating a lintercept admin by a non-master system admin', async () => {
+            await expect(service.create([internal.Admin.create({login: 'jest_li', role: RbacRole.lintercept})], nonMaster()))
+                .rejects.toThrow(ApiErrorException)
+        })
+
+        it('should reject changing the role to lintercept by a non-master system admin', async () => {
+            const updates = new Dictionary<internal.Admin>()
+            updates[2] = internal.Admin.create({login: 'jest', role: RbacRole.lintercept})
+            await expect(service.update(updates, nonMaster())).rejects.toThrow(ApiErrorException)
+        })
+
+        it('should reject changing a lintercept admin by a non-master system admin', async () => {
+            const id = await createLintercept()
+            const updates = new Dictionary<internal.Admin>()
+            updates[id] = internal.Admin.create({login: 'jest_li', role: RbacRole.admin})
+            await expect(service.update(updates, nonMaster())).rejects.toThrow(ApiErrorException)
+        })
+
+        it('should reject deleting a lintercept admin by a non-master system admin', async () => {
+            const id = await createLintercept()
+            await expect(service.delete([id], nonMaster())).rejects.toThrow(ApiErrorException)
+        })
     })
 
     describe('adjust', () => {
@@ -394,7 +435,7 @@ describe('AdminService', () => {
             billingData: true,
             callData: true,
             isActive: true,
-            isMaster: true,
+            isMaster: false,
             login: 'protectedJest',
             role: 'reseller',
             showPasswords: false,

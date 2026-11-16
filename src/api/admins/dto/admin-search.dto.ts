@@ -2,7 +2,7 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 import {AdminResponseDto} from './admin-response.dto'
 
-import {RbacRole} from '~/config/constants.config'
+import {RbacRole, adminRoles} from '~/config/constants.config'
 import {DateTimeField, DateTimeKind} from '~/decorators/date-time-field.decorator'
 import {dateTimeFilter} from '~/helpers/query-builder.helper'
 
@@ -22,14 +22,12 @@ export class AdminSearchDto implements AdminResponseDto {
     @ApiPropertyOptional()
         is_master: boolean
     @ApiPropertyOptional()
-        lawful_intercept: boolean
-    @ApiPropertyOptional()
         login: string
     @ApiPropertyOptional()
         read_only: boolean
     @ApiPropertyOptional()
         reseller_id?: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({enum: adminRoles})
         role: RbacRole
     @ApiPropertyOptional()
         show_passwords: boolean

@@ -30,6 +30,15 @@ export enum RbacRole {
     subscriberadmin = 'subscriberadmin',
 }
 
+export const adminRoles: RbacRole[] = [
+    RbacRole.system,
+    RbacRole.admin,
+    RbacRole.reseller,
+    RbacRole.ccareadmin,
+    RbacRole.ccare,
+    RbacRole.lintercept,
+]
+
 export class ReservedQueryParamsDto {
     @IsOptional()
     @IsNumberString()

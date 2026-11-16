@@ -111,6 +111,8 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             admin.id = id  // TODO: Do we want to set the id here? After validation in controller it should not be possible to receive updates where the id in the update does not equal the key id
             await this.populateAdmin(admin, accessorRole, sr, key)
             const oldAdmin = await this.adminRepo.readById(id, options)
+            if (oldAdmin.role == RbacRole.lintercept && !this.canManageLintercept(sr))
+                throw apiError(this.i18n.t('errors.PERMISSION_DENIED'), itemPointer(sr, key, admin, 'role'), HttpStatus.FORBIDDEN)
             // check for toggle
             if (oldAdmin.enable2fa != admin.enable2fa) {
                 if (admin.enable2fa) {
@@ -157,6 +159,9 @@ export class AdminService { //} implements CrudService<internal.Admin> {
         const options =  this.getAdminOptionsFromServiceRequest(sr)
         const deleteIds = await this.adminRepo.readWhereInIds(ids, options)
         throwMissingIds(sr, ids, deleteIds.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
+        const lintercept = deleteIds.find(admin => admin.role == RbacRole.lintercept)
+        if (lintercept && !this.canManageLintercept(sr))
+            throw apiError(this.i18n.t('errors.PERMISSION_DENIED'), idPointer(sr, lintercept.id), HttpStatus.FORBIDDEN)
         return await this.adminRepo.delete(ids)
     }
 
@@ -174,6 +179,10 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             isMaster: sr.user.is_master,
         }
     }
+    private canManageLintercept(sr: ServiceRequest): boolean {
+        return sr.user.role == RbacRole.system && sr.user.is_master === true
+    }
+
     private async populateAdmin(admin: internal.Admin, accessorRole: internal.AclRole, sr: ServiceRequest, key: number | string): Promise<void> {
         const role = await this.aclRepo.readOneByRole(admin.role, sr)
         await admin.setPermissionFlags()
@@ -190,6 +199,8 @@ export class AdminService { //} implements CrudService<internal.Admin> {
             })
             throw apiError(this.i18n.t('errors.PERMISSION_DENIED'), itemPointer(sr, key, admin, 'role'), HttpStatus.FORBIDDEN)
         }
+        if (admin.role == RbacRole.lintercept && !this.canManageLintercept(sr))
+            throw apiError(this.i18n.t('errors.PERMISSION_DENIED'), itemPointer(sr, key, admin, 'role'), HttpStatus.FORBIDDEN)
 
         if (admin.password) {
             admin.saltedpass = await admin.generateSaltedpass()
@@ -232,7 +243,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
         if (admin.id != selfId)
             return
         const protectedFields: (keyof internal.Admin)[] = ['login', 'role', 'isMaster', 'isActive',
-            'lawfulIntercept', 'readOnly', 'showPasswords', 'callData', 'billingData']
+            'readOnly', 'showPasswords', 'callData', 'billingData']
         for (const field of protectedFields) {
             if (admin[field] != undefined && (oldAdmin[field] == undefined || oldAdmin[field] != admin[field])) {
                 this.log.debug({message: 'Cannot change own property', id: selfId, field: field})
