@@ -1,6 +1,5 @@
 import {Module,forwardRef} from '@nestjs/common'
 import {JournalModule} from 'api/journals/journal.module'
-import {ExpandModule} from 'helpers/expand.module'
 
 import {RewriteRuleSetMariadbRepository} from './repositories/set.mariadb.repository'
 import {RewriteRuleSetRedisRepository} from './repositories/set.redis.repository'
@@ -15,7 +14,6 @@ import {TaskAgentModule} from '~/helpers/task-agent.module'
 @Module({
     imports: [
         forwardRef(() => JournalModule),
-        forwardRef(() => ExpandModule),
         forwardRef(() => TaskAgentModule),
     ],
     controllers: [RewriteRuleSetController],

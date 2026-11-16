@@ -3,7 +3,6 @@ import {Type} from 'class-transformer'
 import {IsEnum, IsInt, IsString, ValidateNested} from 'class-validator'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
-import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory, InvoiceTemplateType} from '~/entities/internal/invoice-template.internal.entity'
@@ -19,7 +18,6 @@ export class InvoiceTemplateResponseDto extends ResponseDto {
     @CanBeNull()
     @IsInt()
     @ApiProperty({nullable: true})
-    @Expandable({controller: 'resellerController', name: 'reseller_id'})
         reseller_id: number | null
 
     @IsString()

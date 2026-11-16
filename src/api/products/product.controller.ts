@@ -12,7 +12,6 @@ import {CrudController} from '~/controllers/crud.controller'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -33,7 +32,6 @@ export class ProductController extends CrudController<never, ProductResponseDto>
     constructor(
         private readonly productService: ProductService,
         private readonly journalService: JournalService,
-        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, productService, journalService)
     }
@@ -48,10 +46,6 @@ export class ProductController extends CrudController<never, ProductResponseDto>
         const sr = new ServiceRequest(req)
         const [products, totalCount] = await this.productService.readAll(sr)
         const responseList = products.map(product => new ProductResponseDto(product))
-        if (sr.query.expand) {
-            const productSearchDtoKeys = Object.keys(new ProductSearchDto())
-            await this.expander.expandObjects(responseList, productSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -64,10 +58,6 @@ export class ProductController extends CrudController<never, ProductResponseDto>
         const sr = new ServiceRequest(req)
         const product = await this.productService.read(id, sr)
         const response = new ProductResponseDto(product)
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const productSearchDtoKeys = Object.keys(new ProductSearchDto())
-            await this.expander.expandObjects([response], productSearchDtoKeys, sr)
-        }
         return response
     }
 }

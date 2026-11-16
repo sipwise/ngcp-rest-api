@@ -119,13 +119,25 @@ GET /api/v2/admins?login=alice,bob,carol*
 
 ### Ressources liées
 
-Les champs de référence tels que `reseller_id` ou `contract_id` peuvent être résolus dans la même requête avec `expand`. L'élément référencé est ajouté sous `<field>_expand`, et un point descend d'un niveau supplémentaire :
+Les champs de référence tels que `reseller_id` ou `contract_id` peuvent être résolus dans la même requête avec `expand`, une liste de champs séparés par des virgules. L'élément référencé est ajouté sous `<field>_expand`, et un point descend d'un niveau supplémentaire. C'est le même élément que la collection référencée vous renvoie, et une collection est résolue avec une lecture par champ. Les champs développables sont indiqués avec le paramètre `expand` de chaque opération, `all` les développe tous :
 
 ```http
 GET /api/v2/resellers/1?expand=contract_id.contact_id
+GET /api/v2/subscribers?expand=customer_id,domain_id
 ```
 
-Un champ qui ne peut pas être développé renvoie 422. Ajoutez `soft_expand=1` pour ignorer ces champs à la place.
+Un champ qui ne peut pas être développé renvoie 422, un élément référencé que vous ne pouvez pas lire 403. Avec `soft_expand=1`, vous obtenez à la place uniquement ce qui peut être développé : ces champs et éléments sont omis. Un chemin mal formé comme `a..b` renvoie 400 dans tous les cas.
+
+`expand` et `soft_expand` ne sont acceptés que sur les requêtes GET avec une réponse JSON, par exemple pas sur les écritures, sous `/auth` ni avec `Accept: text/csv` : ils y renvoient 400, sauf avec `soft_expand=1`.
+
+Les collections peuvent aussi être filtrées selon les champs des éléments référencés : `<field>.<filtre de la collection référencée>=<valeur>`, à n'importe quelle profondeur. Seuls les éléments référencés que vous pouvez lire correspondent, et le filtre est combiné aux autres avec AND, même avec `search_or=1` :
+
+```http
+GET /api/v2/customers?contact_id.email=*@example.com
+GET /api/v2/subscribers?customer_id.contact_id.email=*@example.com&status=active
+```
+
+Un tel filtre renvoie 422 si la collection référencée ne connaît pas le filtre, s'il correspond à trop d'éléments référencés (10000 par défaut) ou si la collection ne peut pas l'appliquer. `order_by` n'accepte pas ces champs.
 
 ### Création et modification de données
 

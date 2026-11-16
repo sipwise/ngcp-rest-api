@@ -11,7 +11,6 @@ import {RbacRole} from '~/config/constants.config'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -29,7 +28,6 @@ export class JournalController {
     constructor(
         private readonly app: AppService,
         private readonly journalService: JournalService,
-        private readonly expander: ExpandHelper,
     ) {
     }
 
@@ -44,10 +42,6 @@ export class JournalController {
         const [journals, totalCount] =
             await this.journalService.readAll(sr)
         const responseList = journals.map(j => new JournalResponseDto(j))
-        if (sr.query.expand) {
-            const journalSearchDtoKeys = Object.keys(new JournalSearchDto())
-            await this.expander.expandObjects(responseList, journalSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -72,10 +66,6 @@ export class JournalController {
         const [journals, totalCount] =
             await this.journalService.readAll(sr, segments.join('/'), resourceId)
         const responseList = journals.map(j => new JournalResponseDto(j))
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const journalSearchDtoKeys = Object.keys(new JournalSearchDto())
-            await this.expander.expandObjects(responseList, journalSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 }

@@ -8,10 +8,8 @@ import {MoreThanOrEqual} from 'typeorm'
 import {HeaderManipulationRuleActionModule} from './action.module'
 import {HeaderManipulationRuleActionResponseDto} from './dto/action-response.dto'
 
-import {HeaderManipulationRuleActionRequestDto} from '~/api/header-manipulations/sets/rules/actions/dto/action-request.dto'
 import {HeaderManipulationRuleModule} from '~/api/header-manipulations/sets/rules/rule.module'
 import {HeaderManipulationSetModule} from '~/api/header-manipulations/sets/set.module'
-import {RewriteRuleSetResponseDto} from '~/api/rewrite-rules/sets/dto/set-response.dto'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
@@ -20,6 +18,7 @@ import {db} from '~/entities'
 import {RwrDpEnum} from '~/enums/rwr-dp.enum'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
@@ -53,8 +52,6 @@ type RuleActionPost = {
     rwr_set_id?: number,
     rwr_dp?: RwrDpEnum,
 }
-
-type RuleActionWithExpand = HeaderManipulationRuleActionRequestDto & {rwr_set_id_expand: RewriteRuleSetResponseDto}
 
 describe('Rule Action', () => {
     let app: INestApplication
@@ -103,6 +100,7 @@ describe('Rule Action', () => {
             new ClassSerializerInterceptor(app.get(Reflector)),
             new TransactionInterceptor(app.get(Reflector)),
             new ResponseValidationInterceptor(),
+            app.get(ExpandInterceptor),
         )
         app.use(bodyParser.json({
             type: ['application/json-patch+json', 'application/json'],
@@ -288,7 +286,7 @@ describe('Rule Action', () => {
         describe('GET', () => {
             it('read created rule action', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/api/header-manipulations/sets/rules/actions/${createdActionIds[0]}?expand=rwr_set_id`)
+                    .get(`/api/header-manipulations/sets/rules/actions/${createdActionIds[0]}`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -296,7 +294,6 @@ describe('Rule Action', () => {
                 expect(action.rule_id).toEqual(createdRuleIds[0])
                 expect(action.header).toEqual('X-Test-Header')
                 expect(action.header_part).toEqual('full')
-                expect((action as unknown as RuleActionWithExpand).rwr_set_id_expand).toBeDefined()
             })
             it('list actions of created rule', async () => {
                 const response = await request(app.getHttpServer())

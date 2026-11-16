@@ -16,7 +16,6 @@ import {
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {DateTimeField} from '~/decorators/date-time-field.decorator'
-import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ContractBillingProfileDefinition, ContractStatus as CustomerStatus} from '~/entities/internal/contract.internal.entity'
@@ -58,7 +57,6 @@ export class CustomerResponseDto extends ResponseDto {
     })
         billing_profile_id?: number
 
-    @Expandable({name: 'contact_id', controller: 'contactController'})
     @IsNumber()
     @ApiProperty({description: 'The contact id this contract belongs to'})
         contact_id: number

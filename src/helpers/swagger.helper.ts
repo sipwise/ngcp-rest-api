@@ -6,6 +6,7 @@ import {SEARCH_QUERY_ORDER_KEY} from '~/decorators/api-search-query.decorator'
 import {ErrorEntryDto, ErrorResponseDto} from '~/dto/error-response.dto'
 import {SIPWISE_LOGO_SVG} from '~/helpers/sipwise-logo'
 import {swaggerAuthCss, swaggerAuthJs} from '~/helpers/swagger-auth.helper'
+import {addExpandDocumentation} from '~/helpers/swagger-expand.helper'
 import {GUIDE_CHAPTERS, guideCodeBlocks, readSwaggerGuide, swaggerGuideCss, swaggerGuideJs} from '~/helpers/swagger-guide.helper'
 import {
     SWAGGER_DEFAULT_LANGUAGE,
@@ -21,6 +22,7 @@ import {
 import {renderSwaggerPdf} from '~/helpers/swagger-pdf.helper'
 import {swaggerSearchCss, swaggerSearchJs} from '~/helpers/swagger-search.helper'
 import {Versions, readVersions} from '~/helpers/swagger-version.helper'
+import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
 import {LoggerService} from '~/logger/logger.service'
 
 const PDF_FILENAME_PREFIX = 'ngcp-api-2-documentation-'
@@ -417,6 +419,8 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string):
 
     const document = SwaggerModule.createDocument(app, docBuilder.build(), {extraModels: [ErrorResponseDto, ErrorEntryDto]})
     sortSearchQueryParameters(document)
+    const expand = app.get(ExpandInterceptor)
+    addExpandDocumentation(document, expand.responseModels(), expand.targetModels())
     addTimezoneParameter(document)
     addErrorResponses(document)
     const versions = readVersions()

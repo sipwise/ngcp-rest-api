@@ -16,7 +16,6 @@ import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/inter
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
-import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const admin: AuthResponseDto = {
@@ -70,7 +69,7 @@ describe('CustomerService', () => {
             internal.Contact.create({reseller_id: 1, status: ContactStatus.Terminated}),
         ], makeSr())
         const module: TestingModule = await Test.createTestingModule({
-            imports: [CustomerModule, ExpandModule, AppModule],
+            imports: [CustomerModule, AppModule],
         })
             .overrideProvider(CustomerMariadbRepository).useValue(customerMockRepo)
             .overrideProvider(ContactMariadbRepository).useValue(contactMockRepo)

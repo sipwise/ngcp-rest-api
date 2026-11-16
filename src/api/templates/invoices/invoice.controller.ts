@@ -42,7 +42,6 @@ import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ValidationFailedException, escapePointerToken} from '~/helpers/errors.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {patchToEntity} from '~/helpers/patch.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
@@ -78,7 +77,6 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
     constructor(
         private readonly invoiceTemplateService: InvoiceTemplateService,
         private readonly journalService: JournalService,
-        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, invoiceTemplateService, journalService)
     }
@@ -122,13 +120,9 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
             req.method,
         })
         const sr = new ServiceRequest(req)
-        const searchDtoKeys = Object.keys(new InvoiceTemplateSearchDto())
         const [response, totalCount] =
             await this.invoiceTemplateService.readAll(sr)
         const responseList = response.map((e) => new InvoiceTemplateResponseDto(e, {url: req.url}))
-        if (sr.query.expand) {
-            await this.expander.expandObjects(responseList, searchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -176,10 +170,6 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
         }
         const template = await this.invoiceTemplateService.read(id, sr)
         const responseItem = new InvoiceTemplateResponseDto(template, {url: req.url, containsResourceId: true})
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const templateSearchDtoKeys = Object.keys(new InvoiceTemplateSearchDto())
-            await this.expander.expandObjects([responseItem], templateSearchDtoKeys, sr)
-        }
         return responseItem
     }
 

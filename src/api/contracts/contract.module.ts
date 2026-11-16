@@ -5,12 +5,10 @@ import {ContractService} from './contract.service'
 import {ContractMariadbRepository} from './repositories/contract.mariadb.repository'
 
 import {JournalModule} from '~/api/journals/journal.module'
-import {ExpandModule} from '~/helpers/expand.module'
 
 @Module({
     imports: [
         forwardRef(() => JournalModule),
-        forwardRef(() => ExpandModule),
     ],
     providers: [
         ContractController,

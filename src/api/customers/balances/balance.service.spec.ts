@@ -11,7 +11,6 @@ import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
-import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const admin: AuthResponseDto = {
@@ -51,7 +50,7 @@ describe('CustomerBalanceService', () => {
     beforeEach(async () => {
         balanceMockRepo = new CustomerBalanceMockRepository()
         const module: TestingModule = await Test.createTestingModule({
-            imports: [CustomerBalanceModule, ExpandModule, AppModule],
+            imports: [CustomerBalanceModule, AppModule],
         })
             .overrideProvider(CustomerBalanceMariadbRepository).useValue(balanceMockRepo)
             .compile()

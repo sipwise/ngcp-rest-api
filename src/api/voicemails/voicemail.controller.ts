@@ -20,7 +20,6 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation, Operation as PatchOperation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -45,7 +44,6 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
     constructor(
         private readonly voicemailService: VoicemailService,
         private readonly journalService: JournalService,
-        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, voicemailService, journalService)
     }
@@ -59,10 +57,6 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
         const [result, totalCount] =
             await this.voicemailService.readAll(sr)
         const responseList = result.map(voicemail => new VoicemailResponseDto(voicemail))
-        if (sr.query.expand) {
-            const voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
-            await this.expander.expandObjects(responseList, voicemailSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -75,10 +69,6 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
         const sr = new ServiceRequest(req)
         const voicemail = await this.voicemailService.read(id, sr)
         const responseItem = new VoicemailResponseDto(voicemail)
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const voicemailSearchDtoKeys = Object.keys(new VoicemailSearchDto())
-            await this.expander.expandObjects([responseItem], voicemailSearchDtoKeys, sr)
-        }
         return responseItem
     }
 

@@ -1,6 +1,7 @@
 import {StreamableFile} from '@nestjs/common'
 
 import {DateTimeKind, dateTimeFields} from '~/decorators/date-time-field.decorator'
+import {EXPAND_SUFFIX} from '~/decorators/expand.decorator'
 import {
     OWNER_TIMEZONE,
     RequestTimezone,
@@ -11,8 +12,6 @@ import {
 
 const MAX_DEPTH = 16
 
-// properties the expand= objects are attached to (ExpandHelper); they don't inherit the parent's owner zone
-const EXPANDED_SUFFIX = '_expand'
 
 interface DateTimeValue {
     target: Record<string, unknown>
@@ -59,7 +58,8 @@ function collect(
         if (kind)
             found.push({target: item, key, kind, ownerZone: zone})
         else
-            collect(item[key], timezone, key.endsWith(EXPANDED_SUFFIX) ? undefined : zone, found, seen, depth + 1)
+            // expanded objects (`<field>_expand`) don't inherit the parent's owner zone
+            collect(item[key], timezone, key.endsWith(EXPAND_SUFFIX) ? undefined : zone, found, seen, depth + 1)
     }
 }
 

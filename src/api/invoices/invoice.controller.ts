@@ -29,7 +29,6 @@ import {Auth} from '~/decorators/auth.decorator'
 import {License} from '~/decorators/license.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -51,7 +50,6 @@ export class InvoiceController extends CrudController<InvoiceRequestDto, Invoice
     constructor(
         private readonly invoiceService: InvoiceService,
         private readonly journalService: JournalService,
-        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, invoiceService, journalService)
     }
@@ -76,10 +74,6 @@ export class InvoiceController extends CrudController<InvoiceRequestDto, Invoice
         const sr = new ServiceRequest(req)
         const [invoices, totalCount] = await this.invoiceService.readAll(sr)
         const responseList = invoices.map((e) => new InvoiceResponseDto(e, {url: req.url}))
-        if (sr.query.expand) {
-            const searchDtoKeys = Object.keys(new InvoiceSearchDto())
-            await this.expander.expandObjects(responseList, searchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -104,10 +98,6 @@ export class InvoiceController extends CrudController<InvoiceRequestDto, Invoice
         }
         const invoice = await this.invoiceService.read(id, sr)
         const responseItem = new InvoiceResponseDto(invoice, {url: req.url, containsResourceId: true})
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const searchDtoKeys = Object.keys(new InvoiceSearchDto())
-            await this.expander.expandObjects([responseItem], searchDtoKeys, sr)
-        }
         return responseItem
     }
 

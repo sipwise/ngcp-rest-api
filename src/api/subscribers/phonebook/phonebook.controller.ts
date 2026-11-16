@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Query, Req, Res, StreamableFile, UnprocessableEntityException, UploadedFile, UseInterceptors, ValidationPipe, forwardRef} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, Res, StreamableFile, UnprocessableEntityException, UploadedFile, UseInterceptors, ValidationPipe} from '@nestjs/common'
 import {FileInterceptor} from '@nestjs/platform-express'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
@@ -35,7 +35,6 @@ import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {csvToDto, handleCsvExport} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -69,8 +68,6 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
 
     constructor(
         private readonly phonebookService: SubscriberPhonebookService,
-        @Inject(forwardRef(() => ExpandHelper))
-        private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
         private readonly i18n: I18nService,
     ) {
@@ -167,10 +164,6 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
         const [entity, totalCount] =
             await this.phonebookService.readAll(sr)
         const responseList = entity.map(e => new SubscriberPhonebookResponseDto(e))
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const setSearchDtoKeys = Object.keys(new SubscriberPhonebookSearchDto())
-            await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -194,10 +187,6 @@ export class SubscriberPhonebookController extends CrudController<SubscriberPhon
         })
         const sr = new ServiceRequest(req)
         const response = new SubscriberPhonebookResponseDto(await this.phonebookService.read(id, sr))
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const setSearchDtoKeys = Object.keys(new SubscriberPhonebookSearchDto())
-            await this.expander.expandObjects([response], setSearchDtoKeys, sr)
-        }
         return response
     }
 

@@ -15,7 +15,6 @@ import {ContactStatus, ContactType} from '~/entities/internal/contact.internal.e
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
-import {ExpandModule} from '~/helpers/expand.module'
 import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -41,7 +40,7 @@ describe('SystemContactService', () => {
     beforeAll(async () => {
         contactMockRepo = new ContactMockRepository()
         const module: TestingModule = await Test.createTestingModule({
-            imports: [SystemContactModule, ExpandModule, AppModule],
+            imports: [SystemContactModule, AppModule],
         })
             .overrideProvider(ContactMariadbRepository).useValue(contactMockRepo)
             .compile()

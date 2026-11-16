@@ -15,6 +15,7 @@ import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorato
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {AuthOptions} from '~/decorators/auth-options.decorator'
 import {Auth} from '~/decorators/auth.decorator'
+import {NoExpand} from '~/decorators/expand.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {sortAndPaginate} from '~/helpers/sort-and-paginate'
@@ -35,6 +36,7 @@ const resourceName = 'auth/tokens'
     RbacRole.subscriberadmin,
 )
 @ApiTags('AuthToken')
+@NoExpand()
 @Controller(resourceName)
 export class AuthTokenController extends CrudController<AuthTokenRequestDto, AuthTokenResponseDto> {
     private readonly log = new LoggerService(AuthTokenController.name)

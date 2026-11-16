@@ -4,11 +4,10 @@ import {VoicemailMariadbRepository} from './repositories/voicemail.mariadb.repos
 import {VoicemailController} from './voicemail.controller'
 import {VoicemailService} from './voicemail.service'
 
-import {ExpandModule} from '~/helpers/expand.module'
 import {InterceptorModule} from '~/interceptors/interceptor.module'
 
 @Module({
-    imports: [InterceptorModule, ExpandModule],
+    imports: [InterceptorModule],
     providers: [VoicemailService, VoicemailMariadbRepository],
     controllers: [VoicemailController],
     exports: [VoicemailService],

@@ -1,6 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
 
-import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {NCOSLevelMode} from '~/entities/internal/ncos-level.internal.entity'
@@ -10,7 +9,6 @@ export class NCOSLevelResponseDto extends ResponseDto {
     @ApiProperty()
         id: number
 
-    @Expandable({name: 'reseller_id', controller: 'resellerController'})
     @ApiProperty()
         reseller_id: number
 

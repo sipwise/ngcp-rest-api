@@ -119,13 +119,25 @@ GET /api/v2/admins?login=alice,bob,carol*
 
 ### Verknüpfte Ressourcen
 
-Referenzfelder wie `reseller_id` oder `contract_id` lassen sich mit `expand` in derselben Anfrage auflösen. Der referenzierte Eintrag wird als `<field>_expand` hinzugefügt, ein Punkt geht eine Ebene tiefer:
+Referenzfelder wie `reseller_id` oder `contract_id` lassen sich mit `expand`, einer kommagetrennten Liste von Feldern, in derselben Anfrage auflösen. Der referenzierte Eintrag wird als `<field>_expand` hinzugefügt, ein Punkt geht eine Ebene tiefer. Es ist derselbe Eintrag, den die referenzierte Collection Ihnen liefert, und eine Collection wird mit einem Lesezugriff pro Feld aufgelöst. Die expandierbaren Felder stehen beim Parameter `expand` jeder Operation, `all` expandiert alle:
 
 ```http
 GET /api/v2/resellers/1?expand=contract_id.contact_id
+GET /api/v2/subscribers?expand=customer_id,domain_id
 ```
 
-Ein Feld, das nicht expandiert werden kann, führt zu 422. Mit `soft_expand=1` werden solche Felder stattdessen übersprungen.
+Ein Feld, das nicht expandiert werden kann, führt zu 422, ein referenzierter Eintrag, den Sie nicht lesen dürfen, zu 403. Mit `soft_expand=1` erhalten Sie stattdessen nur, was expandiert werden kann: solche Felder und Einträge fehlen dann. Ein fehlerhafter Pfad wie `a..b` führt in jedem Fall zu 400.
+
+`expand` und `soft_expand` gibt es nur bei GET-Anfragen mit JSON-Antwort, also z. B. nicht bei schreibenden Anfragen, unter `/auth` oder mit `Accept: text/csv`: dort führen sie zu 400, außer mit `soft_expand=1`.
+
+Collections lassen sich auch nach Feldern referenzierter Einträge filtern: `<field>.<Filter der referenzierten Collection>=<Wert>`, in beliebiger Tiefe. Es treffen nur referenzierte Einträge zu, die Sie lesen dürfen, und der Filter wird mit den übrigen per AND verknüpft, auch mit `search_or=1`:
+
+```http
+GET /api/v2/customers?contact_id.email=*@example.com
+GET /api/v2/subscribers?customer_id.contact_id.email=*@example.com&status=active
+```
+
+Ein solcher Filter führt zu 422, wenn die referenzierte Collection den Filter nicht kennt, wenn er zu viele referenzierte Einträge trifft (standardmäßig 10000) oder wenn die Collection ihn nicht anwenden kann. `order_by` nimmt keine solchen Felder.
 
 ### Daten anlegen und ändern
 

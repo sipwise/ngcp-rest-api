@@ -4,7 +4,6 @@ import {IsBoolean, IsDate, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString} from
 import {RbacRole} from '~/config/constants.config'
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {DateTimeField} from '~/decorators/date-time-field.decorator'
-import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
@@ -67,7 +66,6 @@ export class AdminResponseDto extends ResponseDto {
     @IsOptional()
     @IsInt()
     @ApiProperty()
-    @Expandable({name: 'reseller_id', controller: 'resellerController'})
         reseller_id?: number
 
     @IsEnum(RbacRole)

@@ -13,7 +13,6 @@ import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
-import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
@@ -47,7 +46,7 @@ describe('subscriber phonebookService', () => {
     beforeAll(async () => {
         phonebookMockRepo = new SubscriberPhonebookMockRepository()
         const module: TestingModule = await Test.createTestingModule({
-            imports: [SubscriberPhonebookModule, ExpandModule, AppModule],
+            imports: [SubscriberPhonebookModule, AppModule],
         })
             .overrideProvider(SubscriberPhonebookMariadbRepository).useValue(phonebookMockRepo)
             .compile()

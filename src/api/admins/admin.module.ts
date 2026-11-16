@@ -7,12 +7,10 @@ import {AdminMariadbRepository} from './repositories/admin.mariadb.repository'
 
 import {JournalModule} from '~/api/journals/journal.module'
 import {JournalService} from '~/api/journals/journal.service'
-import {ExpandModule} from '~/helpers/expand.module'
 import {AclRoleRepository} from '~/repositories/acl-role.repository'
 
 @Module({
     imports: [
-        forwardRef(() => ExpandModule),
         forwardRef(() => JournalModule),
     ],
     controllers: [AdminController],

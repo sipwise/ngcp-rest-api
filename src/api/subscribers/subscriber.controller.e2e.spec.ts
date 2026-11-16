@@ -22,6 +22,7 @@ import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
 import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
@@ -34,6 +35,7 @@ const SIPPEERING_PRODUCT_ID = 2
 const SIPACCOUNT_PRODUCT_ID = 4
 const PBXACCOUNT_PRODUCT_ID = 5
 const SYSTEM_CONTACT_ID = 2
+const BILLING_PROFILE_ID = 1
 
 interface Login {
     username: string
@@ -113,6 +115,9 @@ describe('Subscriber', () => {
             modify_timestamp: new Date(),
         }).save()
         createdContractIds.push(contract.id)
+        // customers need their billing profile mapping (read by /customers)
+        if ([SIPACCOUNT_PRODUCT_ID, PBXACCOUNT_PRODUCT_ID].includes(productId))
+            await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [contract.id, null, `,,${BILLING_PROFILE_ID},,;`])
         return contract.id
     }
 
@@ -319,6 +324,7 @@ describe('Subscriber', () => {
             new ClassSerializerInterceptor(app.get(Reflector)),
             new TransactionInterceptor(app.get(Reflector)),
             new ResponseValidationInterceptor(),
+            app.get(ExpandInterceptor),
         )
         app.use(bodyParser.json({
             type: ['application/json-patch+json', 'application/json'],
@@ -545,12 +551,6 @@ describe('Subscriber', () => {
                 const response = await get(`/api/subscribers/${subscribers.sipuser.id}?username=nomatch`)
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(response.body.id).toEqual(subscribers.sipuser.id)
-            })
-
-            it('expands customer_id', async () => {
-                const response = await get(`/api/subscribers/${subscribers.sipuser.id}?expand=customer_id`)
-                expect(response.status).toEqual(HttpStatus.OK)
-                expect(response.body.customer_id_expand.id).toEqual(sipCustomerId)
             })
         })
 

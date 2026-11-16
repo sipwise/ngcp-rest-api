@@ -9,6 +9,7 @@ import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiAcceptHeader} from '~/decorators/api-accept-header.decorator'
 import {Auth} from '~/decorators/auth.decorator'
+import {NoExpand} from '~/decorators/expand.decorator'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -23,6 +24,7 @@ const resourceName = 'auth/otp'
     RbacRole.lintercept,
 )
 @ApiTags('Otp')
+@NoExpand()
 @Controller(resourceName)
 export class AuthOtpController extends CrudController<never, never> {
     private readonly log = new LoggerService(AuthOtpController.name)

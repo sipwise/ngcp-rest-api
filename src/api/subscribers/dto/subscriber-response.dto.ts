@@ -4,7 +4,6 @@ import {IsArray, IsBoolean, IsDate, IsEnum, IsInt, IsOptional, IsString} from 'c
 import {RbacRole} from '~/config/constants.config'
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {DateTimeField} from '~/decorators/date-time-field.decorator'
-import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {
@@ -65,7 +64,6 @@ export class SubscriberResponseDto extends ResponseDto {
     @IsOptional()
     @IsInt()
     @ApiPropertyOptional({description: 'Not shown to subscriber'})
-    @Expandable({name: 'customer_id', controller: 'contractController'})
         customer_id?: number
 
     @IsString()

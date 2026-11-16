@@ -11,7 +11,6 @@ import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import Context from '~/helpers/context.helper'
-import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
@@ -50,7 +49,7 @@ describe('JournalService', () => {
     beforeEach(async () => {
         journalMockRepo = new JournalMockRepository()
         const module: TestingModule = await Test.createTestingModule({
-            imports: [JournalModule, ExpandModule, AppModule],
+            imports: [JournalModule, AppModule],
         })
             .overrideProvider(JournalMariadbRepository).useValue(journalMockRepo)
             .compile()

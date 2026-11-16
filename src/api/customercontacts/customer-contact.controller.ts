@@ -3,14 +3,12 @@ import {
     Controller,
     Delete,
     Get,
-    Inject,
     Param,
     ParseIntPipe,
     Patch,
     Post,
     Put,
     Req,
-    forwardRef,
 } from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
@@ -34,7 +32,6 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation,Operation as PatchOperation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -62,8 +59,6 @@ export class CustomerContactController extends CrudController<CustomerContactReq
     constructor(
         private readonly contactService: CustomerContactService,
         private readonly journalService: JournalService,
-        @Inject(forwardRef(() => ExpandHelper))
-        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, contactService, journalService)
     }
@@ -110,10 +105,6 @@ export class CustomerContactController extends CrudController<CustomerContactReq
             await this.contactService.readAll(sr)
 
         const responseList = contacts.map((con) => new CustomerContactResponseDto(con, sr.user.role))
-        if (sr.query.expand) {
-            const contactSearchDtoKeys = Object.keys(new CustomerContactSearchDto())
-            await this.expander.expandObjects(responseList, contactSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -125,10 +116,6 @@ export class CustomerContactController extends CrudController<CustomerContactReq
         this.log.debug({message: 'fetch customer contact by id', func: this.read.name, url: sr.url, method: sr.method})
         const contact = await this.contactService.read(id, new ServiceRequest(sr))
         const responseItem = new CustomerContactResponseDto(contact, sr.user.role)
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const contactSearchDtoKeys = Object.keys(new CustomerContactSearchDto())
-            await this.expander.expandObjects([responseItem], contactSearchDtoKeys, sr)
-        }
         return responseItem
     }
 

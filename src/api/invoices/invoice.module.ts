@@ -6,12 +6,10 @@ import {InvoiceMariadbRepository} from './repositories/invoice.mariadb.repositor
 
 import {JournalModule} from '~/api/journals/journal.module'
 import {InvoiceTemplateModule} from '~/api/templates/invoices/invoice.module'
-import {ExpandModule} from '~/helpers/expand.module'
 
 @Module({
     imports: [
         forwardRef(() => JournalModule),
-        forwardRef(() => ExpandModule),
         InvoiceTemplateModule,
     ],
     providers: [InvoiceService, InvoiceMariadbRepository],

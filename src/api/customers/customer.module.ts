@@ -6,10 +6,9 @@ import {CustomerMariadbRepository} from './repositories/customer.mariadb.reposit
 
 import {ContactMariadbRepository} from '~/api/contacts/repositories/contact.mariadb.repository'
 import {JournalModule} from '~/api/journals/journal.module'
-import {ExpandModule} from '~/helpers/expand.module'
 
 @Module({
-    imports: [JournalModule, ExpandModule],
+    imports: [JournalModule],
     providers: [CustomerService, CustomerMariadbRepository, ContactMariadbRepository],
     controllers: [CustomerController],
 })

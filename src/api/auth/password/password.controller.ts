@@ -9,6 +9,7 @@ import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorato
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {AuthOptions} from '~/decorators/auth-options.decorator'
 import {Auth} from '~/decorators/auth.decorator'
+import {NoExpand} from '~/decorators/expand.decorator'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {sortAndPaginate} from '~/helpers/sort-and-paginate'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -16,6 +17,7 @@ import {LoggerService} from '~/logger/logger.service'
 
 const resourceName = 'auth/password'
 
+@NoExpand()
 @Controller(resourceName)
 @AuthOptions({skipMaxAge: true})
 @Auth()

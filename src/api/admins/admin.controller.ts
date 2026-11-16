@@ -3,14 +3,12 @@ import {
     Controller,
     Delete,
     Get,
-    Inject,
     Param,
     ParseIntPipe,
     Patch,
     Post,
     Put,
     Req,
-    forwardRef,
 } from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
@@ -35,7 +33,6 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -62,8 +59,6 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         private readonly app: AppService,
         private readonly adminService: AdminService,
         private readonly journalService: JournalService,
-        @Inject(forwardRef(() => ExpandHelper))
-        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, adminService, journalService)
     }
@@ -115,13 +110,9 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
             req.method,
         })
         const sr = new ServiceRequest(req)
-        const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
         const [admins, totalCount] =
             await this.adminService.readAll(sr)
         const responseList = admins.map((adm) => new AdminResponseDto(adm, sr.user.role))
-        if (sr.query.expand) {
-            await this.expander.expandObjects(responseList, adminSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -146,10 +137,6 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         const sr = new ServiceRequest(req)
         const admin = await this.adminService.read(id, sr)
         const responseItem = new AdminResponseDto(admin, sr.user.role)
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const adminSearchDtoKeys = Object.keys(new AdminSearchDto())
-            await this.expander.expandObjects([responseItem], adminSearchDtoKeys, sr)
-        }
         return responseItem
     }
 

@@ -119,13 +119,25 @@ GET /api/v2/admins?login=alice,bob,carol*
 
 ### Related resources
 
-Reference fields such as `reseller_id` or `contract_id` can be resolved in the same request with `expand`. The referenced item is added as `<field>_expand`, and a dot goes one level deeper:
+Reference fields such as `reseller_id` or `contract_id` can be resolved in the same request with `expand`, a comma separated list of fields. The referenced item is added as `<field>_expand`, and a dot goes one level deeper. It is the same item the referenced collection returns to you, and a collection is resolved with one read per field. The expandable fields are listed with the `expand` parameter of each operation, `all` expands all of them:
 
 ```http
 GET /api/v2/resellers/1?expand=contract_id.contact_id
+GET /api/v2/subscribers?expand=customer_id,domain_id
 ```
 
-A field that cannot be expanded returns 422. Add `soft_expand=1` to skip such fields instead.
+A field that cannot be expanded returns 422, a referenced item you may not read 403. With `soft_expand=1` you get only what can be expanded instead: such fields and items are left out. A malformed path such as `a..b` returns 400 in any case.
+
+`expand` and `soft_expand` are accepted on GET requests with a JSON response only, e.g. not on writes, on `/auth` or with `Accept: text/csv`: there they return 400, unless `soft_expand=1` is given.
+
+Collections can also be filtered by the fields of referenced items: `<field>.<filter of the referenced collection>=<value>`, at any depth. Only referenced items you may read match, and the filter is combined with the others with AND, also with `search_or=1`:
+
+```http
+GET /api/v2/customers?contact_id.email=*@example.com
+GET /api/v2/subscribers?customer_id.contact_id.email=*@example.com&status=active
+```
+
+Such a filter returns 422 when the referenced collection does not know the filter, when it matches too many referenced items (10000 by default), or when the collection cannot apply it. `order_by` takes no such fields.
 
 ### Creating and changing data
 

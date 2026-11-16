@@ -2,7 +2,7 @@ import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsEnum, IsInt, IsString} from 'class-validator'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
-import {Expandable} from '~/decorators/expandable.decorator'
+import {Expand} from '~/decorators/expand.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {
@@ -27,8 +27,8 @@ export class ContractResponseDto extends ResponseDto {
         billing_profile_id: number
 
     @IsInt()
+    @Expand('contacts')
     @ApiProperty({description: 'The contact id this contract belongs to'})
-    @Expandable({name: 'contact_id', controller: 'contactController'})
         contact_id?: number
 
     @CanBeNull()

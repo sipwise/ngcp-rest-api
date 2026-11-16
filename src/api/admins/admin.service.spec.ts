@@ -17,7 +17,6 @@ import {internal} from '~/entities'
 import {deepCopy} from '~/helpers/deep-copy.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
-import {ExpandModule} from '~/helpers/expand.module'
 import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {AclRoleMockRepository} from '~/repositories/acl-role.mock.repository'
@@ -54,7 +53,7 @@ describe('AdminService', () => {
         adminMockRepo = new AdminMockRepository()
         adminPasswordJournalMockRepo = new AdminPasswordJournalMockRepository()
         const module: TestingModule = await Test.createTestingModule({
-            imports: [AppModule, AdminModule, ExpandModule],
+            imports: [AppModule, AdminModule],
         })
             .overrideProvider(AclRoleRepository).useValue(aclRoleMockRepo)
             .overrideProvider(AdminMariadbRepository).useValue(adminMockRepo)

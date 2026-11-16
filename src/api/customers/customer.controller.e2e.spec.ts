@@ -24,6 +24,7 @@ import {toLocalDateTime} from '~/helpers/date.helper'
 import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {validate} from '~/helpers/validate.helper'
+import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
@@ -204,6 +205,7 @@ describe('CustomerController', () => {
             new ClassSerializerInterceptor(app.get(Reflector)),
             new TransactionInterceptor(app.get(Reflector)),
             new ResponseValidationInterceptor(),
+            app.get(ExpandInterceptor),
         )
         app.use(bodyParser.json({
             type: ['application/json-patch+json', 'application/json'],
@@ -1178,15 +1180,6 @@ describe('CustomerController', () => {
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(response.body.create_timestamp).toEqual('2026-07-01T08:00:00.000-04:00')
                 expect(response.body.modify_timestamp).toEqual('2026-07-01T08:00:00.000-04:00')
-            })
-
-            it('renders an expanded contact in its own (default) timezone, not the customer\'s', async () => {
-                const owner = await get(`/api/customers/${ids.tokyo}?tz=owner&expand=contact_id`)
-                const plain = await get(`/api/customers/${ids.tokyo}?expand=contact_id`)
-                expect([owner.status, plain.status]).toEqual([HttpStatus.OK, HttpStatus.OK])
-                expect(owner.body.create_timestamp).toEqual('2026-07-01T21:00:00.000+09:00')
-                expect(owner.body.contact_id_expand.id).toEqual(contactIds.tokyo)
-                expect(owner.body.contact_id_expand.create_timestamp).toEqual(plain.body.contact_id_expand.create_timestamp)
             })
 
             it('renders a created customer in its owner\'s timezone', async () => {

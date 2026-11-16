@@ -17,7 +17,6 @@ import {Request} from 'express'
 
 import {FileshareRequestDto} from './dto/fileshare-request.dto'
 import {FileshareResponseDto} from './dto/fileshare-response.dto'
-import {FileshareSearchDto} from './dto/fileshare-search.dto'
 import {FileshareService} from './fileshare.service'
 
 import {JournalService} from '~/api/journals/journal.service'
@@ -29,7 +28,6 @@ import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Public} from '~/decorators/public.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
 import {ValidationFailedException} from '~/helpers/errors.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -45,7 +43,6 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
     constructor(
         private readonly fileshareService: FileshareService,
         private readonly journalService: JournalService,
-        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, fileshareService, journalService)
     }
@@ -81,10 +78,6 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
         const sr = new ServiceRequest(req)
         const [responseList, totalCount] =
             await this.fileshareService.readAll(sr)
-        if (sr.query.expand) {
-            const fileshareSearchDtoKeys = Object.keys(new FileshareSearchDto())
-            await this.expander.expandObjects(responseList, fileshareSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 

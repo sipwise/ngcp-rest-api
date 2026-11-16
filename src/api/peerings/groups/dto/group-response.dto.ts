@@ -2,7 +2,6 @@ import {ApiProperty} from '@nestjs/swagger'
 import {IsInt, IsNotEmpty, IsString} from 'class-validator'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
-import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
@@ -14,7 +13,6 @@ export class PeeringGroupResponseDto extends ResponseDto {
 
     @IsInt()
     @ApiProperty()
-    @Expandable({name: 'contract_id', controller: 'contractController'})
         contract_id: number
 
     @IsString()

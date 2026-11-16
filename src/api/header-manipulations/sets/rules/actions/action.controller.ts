@@ -22,7 +22,6 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {Operation} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -49,7 +48,6 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
 
     constructor(
         private readonly ruleActionService: HeaderManipulationRuleActionService,
-        private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
         super(resourceName, ruleActionService, journalService)
@@ -101,16 +99,15 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         const [entity, totalCount] =
             await this.ruleActionService.readAll(sr)
         const responseList = entity.map(e => new HeaderManipulationRuleActionResponseDto(e))
-        if (sr.query.expand) {
-            const setSearchDtoKeys = Object.keys(new HeaderManipulationRuleActionSearchDto())
-            await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
     @Get('{:setId/}rules{/:ruleId}/actions/:id')
     @ApiParam({name: 'setId', required: false, type: Number})
     @ApiParam({name: 'ruleId', required: false, type: Number})
+    @ApiOkResponse({
+        type: HeaderManipulationRuleActionResponseDto,
+    })
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
@@ -126,10 +123,6 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         })
         const sr = new ServiceRequest(req)
         const response = new HeaderManipulationRuleActionResponseDto(await this.ruleActionService.read(id, sr))
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const setSearchDtoKeys = Object.keys(new HeaderManipulationRuleActionSearchDto())
-            await this.expander.expandObjects([response], setSearchDtoKeys, sr)
-        }
         return response
     }
 

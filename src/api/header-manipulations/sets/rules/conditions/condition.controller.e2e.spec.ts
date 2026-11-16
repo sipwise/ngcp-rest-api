@@ -10,7 +10,6 @@ import {HeaderManipulationRuleConditionResponseDto} from './dto/condition-respon
 
 import {HeaderManipulationRuleModule} from '~/api/header-manipulations/sets/rules/rule.module'
 import {HeaderManipulationSetModule} from '~/api/header-manipulations/sets/set.module'
-import {RewriteRuleSetResponseDto} from '~/api/rewrite-rules/sets/dto/set-response.dto'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
@@ -19,6 +18,7 @@ import {db} from '~/entities'
 import {RwrDpEnum} from '~/enums/rwr-dp.enum'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
@@ -54,8 +54,6 @@ type RuleConditionPost = {
     rwr_set_id?: number
     rwr_dp?: RwrDpEnum
 }
-
-type RuleConditionWithExpand = RuleConditionPost & {rwr_set_id_expand: RewriteRuleSetResponseDto}
 
 describe('Rule Condition', () => {
     let app: INestApplication
@@ -104,6 +102,7 @@ describe('Rule Condition', () => {
             new ClassSerializerInterceptor(app.get(Reflector)),
             new TransactionInterceptor(app.get(Reflector)),
             new ResponseValidationInterceptor(),
+            app.get(ExpandInterceptor),
         )
         app.use(bodyParser.json({
             type: ['application/json-patch+json', 'application/json'],
@@ -292,13 +291,12 @@ describe('Rule Condition', () => {
         describe('GET', () => {
             it('read created rule condition', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/api/header-manipulations/sets/rules/conditions/${createdConditionIds[0]}?expand=rwr_set_id`)
+                    .get(`/api/header-manipulations/sets/rules/conditions/${createdConditionIds[0]}`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const condition: HeaderManipulationRuleConditionResponseDto = response.body
                 expect(condition.rule_id).toEqual(createdRuleIds[0])
-                expect((condition as unknown as RuleConditionWithExpand).rwr_set_id_expand).toBeDefined()
             })
             it('read created rule condition1 values', async () => {
                 const response = await request(app.getHttpServer())

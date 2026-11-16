@@ -13,7 +13,7 @@ import {
     Type,
 } from '@nestjs/common'
 import {ConfigModule} from '@nestjs/config'
-import {HttpAdapterHost} from '@nestjs/core'
+import {DiscoveryModule, HttpAdapterHost} from '@nestjs/core'
 import {ScheduleModule} from '@nestjs/schedule'
 import {AcceptLanguageResolver, CookieResolver, HeaderResolver, I18nModule, QueryResolver} from 'nestjs-i18n'
 
@@ -79,10 +79,10 @@ import {AuthModule} from './auth/auth.module'
 import {AppConfig} from './config/schemas/app.config.schema'
 import {DatabaseModule} from './database/database.module'
 import {RedisModule} from './database/redis.module'
-import {ExpandModule} from './helpers/expand.module'
 import {keepBodyParserErrors} from './helpers/http-exception.filter'
 import {I18nErrorCodeLoader} from './helpers/i18n-loader.helper'
 import {TaskAgentModule} from './helpers/task-agent.module'
+import {ExpandInterceptor} from './interceptors/expand.interceptor'
 import {InterceptorModule} from './interceptors/interceptor.module'
 import {LicenseModule} from './license/license.module'
 import {LicenseService} from './license/license.service'
@@ -140,7 +140,6 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     CustomerSpeedDialModule,
     DatabaseModule,
     DomainModule,
-    ExpandModule,
     FileshareModule,
     NCOSLevelModule,
     NCOSPatternModule,
@@ -181,6 +180,7 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     AuthPasswordModule,
     AuthPasswordChangeModule,
     ScheduleModule.forRoot(),
+    DiscoveryModule,
     TaskAgentModule,
 ]
 if (process.env.NODE_ENV != 'test') {
@@ -204,6 +204,7 @@ if (process.env.NODE_ENV != 'test') {
     providers: [
         AppService,
         DbStateSchedule,
+        ExpandInterceptor,
         FileshareSchedule,
         RedisStateSchedule,
         Logger,

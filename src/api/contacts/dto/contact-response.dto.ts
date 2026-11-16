@@ -4,7 +4,6 @@ import {IsBoolean, IsDate, IsEnum, IsInt, IsString} from 'class-validator'
 import {RbacRole} from '~/config/constants.config'
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {DateTimeField} from '~/decorators/date-time-field.decorator'
-import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
@@ -159,7 +158,6 @@ export class ContactResponseDto extends ResponseDto {
     @CanBeNull()
     @IsInt()
     @ApiProperty()
-    @Expandable({name: 'reseller_id', controller: 'resellerController'})
         reseller_id?: number
 
     @IsEnum(ContactStatus)

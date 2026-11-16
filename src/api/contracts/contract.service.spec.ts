@@ -13,7 +13,6 @@ import {internal} from '~/entities'
 import {ContractStatus, ContractType} from '~/entities/internal/contract.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
-import {ExpandModule} from '~/helpers/expand.module'
 import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -38,7 +37,7 @@ describe('ContractsService', () => {
     beforeAll(async () => {
         contractMockRepo = new ContractMockRepository()
         const module: TestingModule = await Test.createTestingModule({
-            imports: [ContractModule, ExpandModule, AppModule],
+            imports: [ContractModule, AppModule],
         })
             .overrideProvider(ContractMariadbRepository).useValue(contractMockRepo)
             .compile()

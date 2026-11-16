@@ -1,5 +1,6 @@
 import {ApiProperty} from '@nestjs/swagger'
 
+import {Expand} from '~/decorators/expand.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
@@ -9,6 +10,7 @@ export class PeeringGroupServerResponseDto extends ResponseDto {
     @ApiProperty()
         id: number
 
+    @Expand('peerings/groups')
     @ApiProperty()
         group_id: number
 

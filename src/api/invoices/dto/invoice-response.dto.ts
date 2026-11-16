@@ -3,7 +3,7 @@ import {IsDate, IsEnum, IsInt, IsNumber, IsString} from 'class-validator'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {DateTimeField, LocalDateTimeField} from '~/decorators/date-time-field.decorator'
-import {Expandable} from '~/decorators/expandable.decorator'
+import {Expand} from '~/decorators/expand.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {InvoiceGenerator} from '~/entities/internal/invoice.internal.entity'
@@ -16,8 +16,8 @@ export class InvoiceResponseDto extends ResponseDto {
         id: number
 
     @IsInt()
+    @Expand('contracts')
     @ApiProperty({description: 'Contract of the invoice, also for peering and reseller contracts'})
-    @Expandable({name: 'customer_id', controller: 'contractController'})
         customer_id: number
 
     @IsString()

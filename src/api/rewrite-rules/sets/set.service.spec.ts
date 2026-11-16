@@ -14,7 +14,6 @@ import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
-import {ExpandModule} from '~/helpers/expand.module'
 import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
 import {TaskAgentMockHelper} from '~/helpers/task-agent-mock.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -59,7 +58,7 @@ describe('RewriteRuleSet Service', () => {
         rwrMockRepo = new RewriteRuleSetMockRepository()
         redisMockRepo = new RewriteRuleSetMockRedisRepository(new TaskAgentMockHelper())
         const module: TestingModule = await Test.createTestingModule({
-            imports: [AppModule, RewriteRuleSetModule, ExpandModule],
+            imports: [AppModule, RewriteRuleSetModule],
         })
             .overrideProvider(RewriteRuleSetMariadbRepository).useValue(rwrMockRepo)
             .overrideProvider(RewriteRuleSetRedisRepository).useValue(redisMockRepo)

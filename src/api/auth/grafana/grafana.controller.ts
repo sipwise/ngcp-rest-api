@@ -9,6 +9,7 @@ import {AuthGrafanaResponseDto} from './dto/grafana-response.dto'
 import {RbacRole} from '~/config/constants.config'
 import {AuthOptions} from '~/decorators/auth-options.decorator'
 import {Auth} from '~/decorators/auth.decorator'
+import {NoExpand} from '~/decorators/expand.decorator'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -21,6 +22,7 @@ const grafanaAdminUser = 'admin'
 )
 @AuthOptions({skipReadOnly: true})
 @ApiTags('Auth')
+@NoExpand()
 @Controller(resourceName)
 export class AuthGrafanaController {
     private readonly log = new LoggerService(AuthGrafanaController.name)

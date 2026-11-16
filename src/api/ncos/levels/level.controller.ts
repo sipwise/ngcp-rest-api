@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, forwardRef} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'helpers/patch.helper'
@@ -22,7 +22,6 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -47,7 +46,6 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
 
     constructor(
         private readonly ncosLevelService: NCOSLevelService,
-        @Inject(forwardRef(() => ExpandHelper)) private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
         super(resourceName, ncosLevelService, journalService)
@@ -106,10 +104,6 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
             e,
             {url: req.url},
         ))
-        if (sr.query.expand) {
-            const setSearchDtoKeys = Object.keys(new NCOSLevelSearchDto())
-            await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -131,15 +125,10 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
             url: req.url,
             method: req.method,
         })
-        const sr = new ServiceRequest(req)
         const response = new NCOSLevelResponseDto(
             await this.ncosLevelService.read(id, new ServiceRequest(req)),
             {url: req.url, containsResourceId: true},
         )
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const setSearchDtoKeys = Object.keys(new NCOSLevelSearchDto())
-            await this.expander.expandObjects([response], setSearchDtoKeys, sr)
-        }
         return response
     }
 

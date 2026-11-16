@@ -149,6 +149,35 @@ describe('Swagger', () => {
         }))
     })
 
+    it('documents expand per operation and the <field>_expand properties with the target schema', async () => {
+        const json = await request(app.getHttpServer()).get('/api/swagger.json')
+        expect(json.status).toEqual(HttpStatus.OK)
+        const paths = json.body.paths as Record<string, Record<string, OperationObject>>
+        const parameter = (operation: OperationObject, name: string): {description?: string} | undefined =>
+            operation.parameters.find(param => 'name' in param && param.name == name) as {description?: string} | undefined
+
+        const contracts = paths['/contracts'].get
+        expect(parameter(contracts, 'expand').description).toMatch(/^Fields to resolve, comma separated: `contact_id`/)
+        expect(parameter(contracts, 'soft_expand')).toBeDefined()
+        expect(parameter(paths['/contracts/{id}'].patch, 'expand')).toBeUndefined()
+        expect(parameter(paths['/auth/userinfo'].get, 'expand')).toBeUndefined()
+        expect(JSON.stringify(json.body)).not.toContain('x-ngcp-no-expand')
+
+        const schemas = json.body.components.schemas
+        expect(schemas.ContractResponseDto.properties.contact_id.description).toMatch(/\(expandable\)$/)
+        expect(schemas.ContractResponseDto.properties.contact_id_expand).toEqual(expect.objectContaining({
+            allOf: [{$ref: '#/components/schemas/ContactResponseDto'}],
+            nullable: true,
+        }))
+        expect(schemas.SubscriberResponseDto.properties.pbx_group_ids_expand).toEqual(expect.objectContaining({
+            type: 'array',
+            items: {$ref: '#/components/schemas/SubscriberResponseDto'},
+        }))
+        // /auth/* never expands, its response classes keep their plain schema
+        expect(schemas.UserinfoResponseDto.properties).not.toHaveProperty('reseller_id_expand')
+        expect(schemas.UserinfoResponseDto.properties.reseller_id.description ?? '').not.toContain('(expandable)')
+    })
+
     it('serves the localised document and pdf with ?lang=', async () => {
         const json = await request(app.getHttpServer()).get('/api/swagger.json?lang=fr')
         expect(json.status).toEqual(HttpStatus.OK)

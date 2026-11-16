@@ -21,7 +21,6 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {Operation} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -47,7 +46,6 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
 
     constructor(
         private readonly ruleService: RewriteRuleService,
-        private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
         super(resourceName, ruleService, journalService)
@@ -97,9 +95,6 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         const [entity, totalCount] =
             await this.ruleService.readAll(sr)
         const responseList = entity.map(e => new RewriteRuleResponseDto(e))
-        if (sr.query.expand) {
-            await this.expander.expandObjects(responseList, Object.keys(new RewriteRuleSearchDto()), sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -123,9 +118,6 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         const sr = new ServiceRequest(req)
         const rule = await this.ruleService.read(id, sr)
         const responseItem = new RewriteRuleResponseDto(rule)
-        if (sr.query.expand) {
-            await this.expander.expandObjects([responseItem], Object.keys(new RewriteRuleSearchDto()), sr)
-        }
 
         return responseItem
     }

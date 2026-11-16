@@ -15,6 +15,7 @@ import {db} from '~/entities'
 import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
@@ -196,6 +197,7 @@ describe('PBX Group', () => {
             new ClassSerializerInterceptor(app.get(Reflector)),
             new TransactionInterceptor(app.get(Reflector)),
             new ResponseValidationInterceptor(),
+            app.get(ExpandInterceptor),
         )
         app.use(bodyParser.json({
             type: ['application/json-patch+json', 'application/json'],

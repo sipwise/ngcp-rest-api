@@ -8,13 +8,11 @@ import {HeaderManipulationSetMariadbRepository} from '~/api/header-manipulations
 import {HeaderManipulationSetRedisRepository} from '~/api/header-manipulations/sets/repositories/set.redis.repository'
 import {HeaderManipulationRuleMariadbRepository} from '~/api/header-manipulations/sets/rules/repositories/rule.mariadb.repository'
 import {JournalModule} from '~/api/journals/journal.module'
-import {ExpandModule} from '~/helpers/expand.module'
 import {TaskAgentModule} from '~/helpers/task-agent.module'
 
 @Module({
     imports: [
         JournalModule,
-        forwardRef(() => ExpandModule),
         forwardRef(() => TaskAgentModule),
     ],
     controllers: [HeaderManipulationRuleActionController],

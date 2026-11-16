@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, forwardRef} from '@nestjs/common'
+import {Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
@@ -21,7 +21,6 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation,Operation as PatchOperation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -45,8 +44,6 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
     constructor(
         private readonly resellerService: ResellerService,
         private readonly journalService: JournalService,
-        @Inject(forwardRef(() => ExpandHelper))
-        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, resellerService, journalService)
     }
@@ -95,10 +92,6 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
             reseller,
             {url: req.url},
         ))
-        if (sr.query.expand) {
-            const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
-            await this.expander.expandObjects(responseList, resellerSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -114,10 +107,6 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
             reseller,
             {url: req.url, containsResourceId: true},
         )
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const resellerSearchDtoKeys = Object.keys(new ResellerSearchDto())
-            await this.expander.expandObjects([responseItem], resellerSearchDtoKeys, sr)
-        }
         return responseItem
     }
 

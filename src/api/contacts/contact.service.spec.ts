@@ -12,7 +12,6 @@ import {internal} from '~/entities'
 import {ContactType} from '~/entities/internal/contact.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
-import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
@@ -36,7 +35,7 @@ describe('ContactService', () => {
     beforeAll(async () => {
         contactMockRepo = new ContactMockRepository()
         const module: TestingModule = await Test.createTestingModule({
-            imports: [ContactModule, ExpandModule, AppModule],
+            imports: [ContactModule, AppModule],
         })
             .overrideProvider(ContactMariadbRepository).useValue(contactMockRepo)
             .compile()

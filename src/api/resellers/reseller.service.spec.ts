@@ -12,7 +12,6 @@ import {internal} from '~/entities'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
-import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
@@ -36,7 +35,7 @@ describe('ResellerService', () => {
     beforeAll(async () => {
         resellerMockRepo = new ResellerMockRepository()
         const module: TestingModule = await Test.createTestingModule({
-            imports: [ResellerModule, ExpandModule, AppModule],
+            imports: [ResellerModule, AppModule],
         })
             .overrideProvider(ResellerMariadbRepository).useValue(resellerMockRepo)
             .compile()

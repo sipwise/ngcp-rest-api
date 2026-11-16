@@ -1,6 +1,5 @@
-import {ApiHideProperty, ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
-import {ResellerResponseDto} from '~/api/resellers/dto/reseller-response.dto'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
@@ -16,8 +15,6 @@ export class JournalResponseDto extends ResponseDto {
         operation: string
     @ApiProperty()
         reseller_id: number
-    @ApiHideProperty()
-        reseller_id_expand?: ResellerResponseDto
     @ApiProperty()
         resource_id: number
     @ApiProperty()

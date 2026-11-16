@@ -4,6 +4,7 @@ import {IsNumber, IsOptional, ValidateNested} from 'class-validator'
 import {CommonConfig} from './common.config.schema'
 import {CsvConfig} from './csv.config.schema'
 import {DatabaseConfig} from './database.config.schema'
+import {ExpandConfig} from './expand.config.schema'
 import {FeaturesConfig} from './features.config.schema'
 import {FileShareConfig} from './fileshare.config.schema'
 import {GeneralConfig} from './general.config.schema'
@@ -67,6 +68,11 @@ export class AppConfig {
     @ValidateNested()
     @Type(() => PrivilegesConfig)
         privileges: PrivilegesConfig
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => ExpandConfig)
+        expand?: ExpandConfig
 
     @IsNumber()
     @IsOptional()

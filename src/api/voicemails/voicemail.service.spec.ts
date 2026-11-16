@@ -19,7 +19,6 @@ import {internal} from '~/entities'
 import {voicemailSpoolDir} from '~/enums/supported-voicemail-folders.enum'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
-import {ExpandModule} from '~/helpers/expand.module'
 import {postCommitQueueStorage} from '~/helpers/post-commit-queue.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -44,7 +43,7 @@ describe('VoicemailsService', () => {
     beforeAll(async () => {
         voicemailMockRepo = new VoicemailMockRepository()
         const module: TestingModule = await Test.createTestingModule({
-            imports: [VoicemailModule, ExpandModule, AppModule],
+            imports: [VoicemailModule, AppModule],
         })
             .overrideProvider(VoicemailMariadbRepository).useValue(voicemailMockRepo)
             .compile()

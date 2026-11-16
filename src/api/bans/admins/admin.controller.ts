@@ -1,4 +1,4 @@
-import {Controller, Delete, Get, Inject, Param, ParseIntPipe, Req, forwardRef} from '@nestjs/common'
+import {Controller, Delete, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
 import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
@@ -14,7 +14,6 @@ import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -35,7 +34,6 @@ export class BanAdminController extends CrudController<never, BanAdminResponseDt
 
     constructor(
         private readonly banAdminService: BanAdminService,
-        @Inject(forwardRef(() => ExpandHelper)) private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
         super(resourceName)
@@ -54,10 +52,6 @@ export class BanAdminController extends CrudController<never, BanAdminResponseDt
         const sr = new ServiceRequest(req)
         const [entity, totalCount] = await this.banAdminService.readAll(sr)
         const responseList = entity.map(e => new BanAdminResponseDto(e))
-        if (sr.query.expand) {
-            const setSearchDtoKeys = Object.keys(new BanAdminSearchDto())
-            await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
-        }
 
         return [responseList, totalCount]
     }
@@ -76,10 +70,6 @@ export class BanAdminController extends CrudController<never, BanAdminResponseDt
         })
         const sr = new ServiceRequest(req)
         const response = new BanAdminResponseDto(await this.banAdminService.read(id, sr))
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const setSearchDtoKeys = Object.keys(new BanAdminSearchDto())
-            await this.expander.expandObjects([response], setSearchDtoKeys, sr)
-        }
         return response
     }
 

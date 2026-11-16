@@ -1,6 +1,7 @@
 import {ApiPropertyOptional} from '@nestjs/swagger'
 
-import {InvalidParameterException} from '~/helpers/errors.helper'
+import {InvalidParameterException, ValidationFailedException} from '~/helpers/errors.helper'
+import {NestedFilter, nestedFilters} from '~/helpers/nested-filter.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 interface Join {
@@ -24,6 +25,7 @@ export class SearchLogic {
     joins?: Join[]
     aliases?: {[key: string]: string | object}
     searchableFields: string[]
+    nestedFilters: NestedFilter[]
     @ApiPropertyOptional({default: 1})
         page: number
     @ApiPropertyOptional({default: 10})
@@ -42,6 +44,7 @@ export class SearchLogic {
 
         this.joins = joins
         this.aliases = aliases
+        this.nestedFilters = nestedFilters(sr.req)
 
         const [page, rows] = SearchLogic.getPaginationFromServiceRequest(sr)
         this.page = page
@@ -49,6 +52,9 @@ export class SearchLogic {
 
         if (sr.query['order_by'] != null) {
             this.orderBy = sr.query['order_by'].toString()
+            // nested fields (contract_id.status) filter only, the order of their rows can't be kept
+            if (this.orderBy.includes('.'))
+                throw new ValidationFailedException([{parameter: 'order_by', code: 'isIn', message: 'order_by must be a sortable field'}])
             if (!searchableFields.includes(this.orderBy) && this.orderBy !== 'id')
                 throw new InvalidParameterException([{parameter: 'order_by', code: 'isIn', message: 'order_by must be a sortable field'}])
             if (this.aliases && this.orderBy in this.aliases) {

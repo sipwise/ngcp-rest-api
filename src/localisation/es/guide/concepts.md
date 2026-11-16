@@ -119,13 +119,25 @@ GET /api/v2/admins?login=alice,bob,carol*
 
 ### Recursos relacionados
 
-Los campos de referencia como `reseller_id` o `contract_id` pueden resolverse en la misma solicitud con `expand`. El elemento referenciado se añade como `<field>_expand`, y un punto baja un nivel más:
+Los campos de referencia como `reseller_id` o `contract_id` pueden resolverse en la misma solicitud con `expand`, una lista de campos separados por comas. El elemento referenciado se añade como `<field>_expand`, y un punto baja un nivel más. Es el mismo elemento que la colección referenciada le devuelve, y una colección se resuelve con una lectura por campo. Los campos expandibles se indican con el parámetro `expand` de cada operación, `all` los expande todos:
 
 ```http
 GET /api/v2/resellers/1?expand=contract_id.contact_id
+GET /api/v2/subscribers?expand=customer_id,domain_id
 ```
 
-Un campo que no se puede expandir devuelve 422. Añada `soft_expand=1` para omitir esos campos.
+Un campo que no se puede expandir devuelve 422, un elemento referenciado que usted no puede leer 403. Con `soft_expand=1` obtiene en su lugar solo lo que se puede expandir: esos campos y elementos se omiten. Una ruta mal formada como `a..b` devuelve 400 en cualquier caso.
+
+`expand` y `soft_expand` solo se admiten en peticiones GET con respuesta JSON, por ejemplo no en escrituras, en `/auth` ni con `Accept: text/csv`: allí devuelven 400, salvo con `soft_expand=1`.
+
+Las colecciones también pueden filtrarse por los campos de los elementos referenciados: `<field>.<filtro de la colección referenciada>=<valor>`, a cualquier profundidad. Solo coinciden los elementos referenciados que usted puede leer, y el filtro se combina con los demás mediante AND, también con `search_or=1`:
+
+```http
+GET /api/v2/customers?contact_id.email=*@example.com
+GET /api/v2/subscribers?customer_id.contact_id.email=*@example.com&status=active
+```
+
+Un filtro así devuelve 422 si la colección referenciada no conoce el filtro, si coincide con demasiados elementos referenciados (10000 por defecto) o si la colección no puede aplicarlo. `order_by` no admite estos campos.
 
 ### Creación y modificación de datos
 

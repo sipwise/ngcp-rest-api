@@ -1,7 +1,7 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {IsBoolean, IsEnum, IsInt, IsNotEmpty, IsString} from 'class-validator'
 
-import {Expandable} from '~/decorators/expandable.decorator'
+import {Expand} from '~/decorators/expand.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {RewriteRuleDirection, RewriteRuleField} from '~/entities/internal/rewrite-rule.internal.entity'
@@ -13,8 +13,8 @@ export class RewriteRuleResponseDto extends ResponseDto {
         id!: number
 
     @IsInt()
+    @Expand('rewrite-rules/sets')
     @ApiProperty()
-    @Expandable({name: 'set_id', controller: 'rewriteRuleSetController'})
         set_id!: number
 
     @IsString()

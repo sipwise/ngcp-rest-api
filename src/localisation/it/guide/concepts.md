@@ -119,13 +119,25 @@ GET /api/v2/admins?login=alice,bob,carol*
 
 ### Risorse correlate
 
-I campi di riferimento come `reseller_id` o `contract_id` possono essere risolti nella stessa richiesta con `expand`. L'elemento referenziato viene aggiunto come `<field>_expand`, e un punto scende di un livello:
+I campi di riferimento come `reseller_id` o `contract_id` possono essere risolti nella stessa richiesta con `expand`, un elenco di campi separati da virgole. L'elemento referenziato viene aggiunto come `<field>_expand`, e un punto scende di un livello. È lo stesso elemento che la collezione referenziata vi restituisce, e una collezione viene risolta con una lettura per campo. I campi espandibili sono elencati con il parametro `expand` di ogni operazione, `all` li espande tutti:
 
 ```http
 GET /api/v2/resellers/1?expand=contract_id.contact_id
+GET /api/v2/subscribers?expand=customer_id,domain_id
 ```
 
-Un campo che non può essere espanso restituisce 422. Aggiungere `soft_expand=1` per ignorare invece tali campi.
+Un campo che non può essere espanso restituisce 422, un elemento referenziato che non potete leggere 403. Con `soft_expand=1` ottenete invece solo ciò che può essere espanso: tali campi ed elementi vengono omessi. Un percorso malformato come `a..b` restituisce 400 in ogni caso.
+
+`expand` e `soft_expand` sono accettati solo nelle richieste GET con risposta JSON, ad esempio non nelle scritture, sotto `/auth` né con `Accept: text/csv`: lì restituiscono 400, salvo con `soft_expand=1`.
+
+Le collezioni possono anche essere filtrate per i campi degli elementi referenziati: `<field>.<filtro della collezione referenziata>=<valore>`, a qualsiasi profondità. Corrispondono solo gli elementi referenziati che potete leggere, e il filtro viene combinato con gli altri in AND, anche con `search_or=1`:
+
+```http
+GET /api/v2/customers?contact_id.email=*@example.com
+GET /api/v2/subscribers?customer_id.contact_id.email=*@example.com&status=active
+```
+
+Un tale filtro restituisce 422 se la collezione referenziata non conosce il filtro, se corrisponde a troppi elementi referenziati (10000 per impostazione predefinita) o se la collezione non può applicarlo. `order_by` non accetta tali campi.
 
 ### Creazione e modifica dei dati
 

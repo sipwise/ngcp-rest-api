@@ -21,7 +21,6 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation,Operation as PatchOperation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -45,7 +44,6 @@ export class SystemContactController extends CrudController<SystemContactRequest
     constructor(
         private readonly contactService: SystemContactService,
         private readonly journalService: JournalService,
-        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, contactService, journalService)
     }
@@ -90,10 +88,6 @@ export class SystemContactController extends CrudController<SystemContactRequest
         const [contacts, totalCount] =
             await this.contactService.readAll(sr)
         const responseList = contacts.map(contact => new SystemContactResponseDto(contact))
-        if (sr.query.expand) {
-            const contactSearchDtoKeys = Object.keys(new SystemContactSearchDto())
-            await this.expander.expandObjects(responseList, contactSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -106,10 +100,6 @@ export class SystemContactController extends CrudController<SystemContactRequest
         const sr = new ServiceRequest(req)
         const contact = await this.contactService.read(id, sr)
         const response = new SystemContactResponseDto(contact)
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const contactSearchDtoKeys = Object.keys(new SystemContactSearchDto())
-            await this.expander.expandObjects([response], contactSearchDtoKeys, sr)
-        }
         return response
     }
 

@@ -11,7 +11,6 @@ import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
-import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const admin: AuthResponseDto = {
@@ -56,7 +55,7 @@ describe('CustomerSpeedDialService', () => {
     beforeEach(async () => {
         csdMockRepo = new CustomerSpeedDialMockRepository()
         const module: TestingModule = await Test.createTestingModule({
-            imports: [CustomerSpeedDialModule, ExpandModule, AppModule],
+            imports: [CustomerSpeedDialModule, AppModule],
         })
             .overrideProvider(CustomerSpeedDialMariadbRepository).useValue(csdMockRepo)
             .compile()

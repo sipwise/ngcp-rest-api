@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Query, Req, ValidationPipe, forwardRef} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, ValidationPipe} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery,ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
@@ -23,7 +23,6 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -51,7 +50,6 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     constructor(
         private readonly customerService: CustomerService,
         private readonly journalService: JournalService,
-        @Inject(forwardRef(() => ExpandHelper)) private readonly expander: ExpandHelper,
     ) {
         super(resourceName, customerService, journalService)
     }
@@ -147,10 +145,6 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
         const [entity, totalCount] =
             await this.customerService.readAll(sr)
         const responseList = entity.map(e => new CustomerResponseDto(e,{url: req.url}))
-        if (sr.query.expand) {
-            const setSearchDtoKeys = Object.keys(new CustomerSearchDto())
-            await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -175,10 +169,6 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
             await this.customerService.read(id, sr),
             {url: req.url, containsResourceId: true},
         )
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const customerSearchDtoKeys = Object.keys(new CustomerSearchDto())
-            await this.expander.expandObjects([response], customerSearchDtoKeys, sr)
-        }
         return response
     }
 

@@ -62,6 +62,7 @@ function dateTimeFilterValue(parameter: string, value: string, kind: DateTimeFil
 export function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: QueriesDictionary, searchLogic: SearchLogic): void {
     addJoinFilterToQueryBuilder(qb, params, searchLogic)
     addSearchFilterToQueryBuilder(qb, params, searchLogic)
+    addNestedFilterToQueryBuilder(qb, searchLogic)
     addOrderByToQueryBuilder(qb, params, searchLogic)
     addPaginationToQueryBuilder(qb, searchLogic)
     qb.andWhere('1 = 1')
@@ -85,7 +86,9 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
     const orClauses: [string, Record<string, unknown>][] = []
 
     if (!allowUnknownParams) {
-        const unknown = Object.keys(params).filter(field => !reservedQueryParams.includes(field) && !searchLogic.searchableFields.includes(field))
+        const nested = (searchLogic.nestedFilters ?? []).flatMap(filter => filter.parameters)
+        const unknown = Object.keys(params).filter(field => !reservedQueryParams.includes(field)
+            && !searchLogic.searchableFields.includes(field) && !nested.includes(field))
         if (unknown.length) {
             throw new InvalidParameterException(unknown.map(parameter => ({
                 parameter,
@@ -164,6 +167,39 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
     })
     if (orClauses.length)
         qb.andWhere(new Brackets(b => orClauses.forEach(([where, parameters]) => b.orWhere(where, parameters))))
+}
+
+/**
+ * Column of a search field for an id constraint: its `_alias` (`'alias.column'`, a column of the main alias or
+ * the `field` of a complex alias); undefined for `where` and date/time filters
+ */
+function searchFieldColumn<T extends BaseEntity>(qb: SelectQueryBuilder<T>, searchLogic: SearchLogic, searchField: string): string | undefined {
+    if (!searchLogic.searchableFields.includes(searchField))
+        return undefined
+    const propertyAlias = searchLogic.aliases?.[searchField] ?? searchField
+    if (typeof propertyAlias == 'string')
+        return propertyAlias.includes('.') ? propertyAlias : `${qb.alias}.${propertyAlias}`
+    if (isDateTimeFilter(propertyAlias) || 'where' in propertyAlias || typeof propertyAlias['field'] != 'string')
+        return undefined
+    return `${qb.alias}.${propertyAlias['field']}`
+}
+
+/**
+ * Nested filters (contract_id.contact_id.email=foo) come as the resolved ids of their field: always AND,
+ * also with search_or, and no match when no id was found
+ */
+function addNestedFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, searchLogic: SearchLogic): void {
+    for (const filter of searchLogic.nestedFilters ?? []) {
+        const column = searchFieldColumn(qb, searchLogic, filter.field)
+        if (!column)
+            continue
+        const paramKey = `${filter.field}_nested_ids`
+        if (filter.ids.length)
+            qb.andWhere(`${column} IN (:...${paramKey})`, {[paramKey]: filter.ids})
+        else
+            qb.andWhere('1 = 0')
+        filter.applied = true
+    }
 }
 
 export function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, _params: QueriesDictionary, searchLogic: SearchLogic): void {

@@ -4,10 +4,9 @@ import {FileshareController} from './fileshare.controller'
 import {FileshareService} from './fileshare.service'
 
 import {JournalModule} from '~/api/journals/journal.module'
-import {ExpandModule} from '~/helpers/expand.module'
 
 @Module({
-    imports: [JournalModule, ExpandModule],
+    imports: [JournalModule],
     controllers: [FileshareController],
     providers: [FileshareService],
 })

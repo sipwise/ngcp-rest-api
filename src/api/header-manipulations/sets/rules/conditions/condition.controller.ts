@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, forwardRef} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
@@ -23,7 +23,6 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {Operation} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -50,7 +49,6 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
 
     constructor(
         private readonly ruleConditionService: HeaderManipulationRuleConditionService,
-        @Inject(forwardRef(() => ExpandHelper))private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
         super(resourceName, ruleConditionService, journalService)
@@ -111,10 +109,6 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
             {url: req.url},
         ))
 
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const keys = Object.keys(new HeaderManipulationRuleConditionSearchDto())
-            await this.expander.expandObjects(responseList, keys, sr)
-        }
 
         return [responseList, totalCount]
     }
@@ -122,6 +116,9 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
     @Get('{:setId/}rules{/:ruleId}/conditions/:id')
     @ApiParam({name: 'setId', required: false, type: Number})
     @ApiParam({name: 'ruleId', required: false, type: Number})
+    @ApiOkResponse({
+        type: HeaderManipulationRuleConditionResponseDto,
+    })
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
@@ -140,10 +137,6 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
             await this.ruleConditionService.read(id, sr),
             {url: req.url, containsResourceId: true},
         )
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const keys = Object.keys(new HeaderManipulationRuleConditionSearchDto())
-            await this.expander.expandObjects([response], keys, sr)
-        }
 
         return response
     }

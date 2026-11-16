@@ -4,6 +4,7 @@ import {IsBoolean, IsEnum, IsInt, IsNotEmpty, IsString, ValidateNested} from 'cl
 import {UrlReferenceType} from 'enums/url-reference-type.enum'
 import {UrlReference} from 'types/url-reference.type'
 
+import {Expand} from '~/decorators/expand.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {HeaderRuleDirection} from '~/entities/internal/header-rule.internal.entity'
@@ -16,6 +17,7 @@ export class HeaderManipulationRuleResponseDto extends ResponseDto {
         id: number
 
     @IsInt()
+    @Expand('header-manipulations/sets')
     @ApiProperty()
         set_id: number
 

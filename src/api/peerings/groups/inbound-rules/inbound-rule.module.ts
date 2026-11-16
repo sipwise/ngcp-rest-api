@@ -1,6 +1,5 @@
 import {Module,forwardRef} from '@nestjs/common'
 import {JournalModule} from 'api/journals/journal.module'
-import {ExpandModule} from 'helpers/expand.module'
 
 import {PeeringInboundRuleController} from './inbound-rule.controller'
 import {PeeringInboundRuleService} from './inbound-rule.service'
@@ -12,7 +11,6 @@ import {TaskAgentModule} from '~/helpers/task-agent.module'
 @Module({
     imports: [
         JournalModule,
-        forwardRef(() => ExpandModule),
         forwardRef(() => TaskAgentModule),
     ],
     controllers: [PeeringInboundRuleController],

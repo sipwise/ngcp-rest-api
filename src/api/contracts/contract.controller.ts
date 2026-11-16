@@ -2,14 +2,12 @@ import {
     Body,
     Controller,
     Get,
-    Inject,
     Param,
     ParseIntPipe,
     Patch,
     Post,
     Put,
     Req,
-    forwardRef,
 } from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
@@ -32,7 +30,6 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation,Operation as PatchOperation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -55,8 +52,6 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     constructor(
         private readonly contractService: ContractService,
         private readonly journalService: JournalService,
-        @Inject(forwardRef(() => ExpandHelper))
-        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, contractService, journalService)
     }
@@ -96,10 +91,6 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
         const [contracts, totalCount] =
             await this.contractService.readAll(sr)
         const responseList = contracts.map(contract => new ContractResponseDto(contract))
-        if (sr.query.expand) {
-            const contractSearchDtoKeys = Object.keys(new ContractSearchDto())
-            await this.expander.expandObjects(responseList, contractSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -109,14 +100,8 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
     })
     async read(@Param('id', ParseIntPipe) id: number, @Req() req: Request): Promise<ContractResponseDto> {
         this.log.debug({message: 'fetch contract by id', func: this.read.name, url: req.url, method: req.method})
-        const sr = new ServiceRequest(req)
         const contract = await this.contractService.read(id, new ServiceRequest(req))
-        const response = new ContractResponseDto(contract)
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const contractSearchDtoKeys = Object.keys(new ContractSearchDto())
-            await this.expander.expandObjects([response], contractSearchDtoKeys, sr)
-        }
-        return response
+        return new ContractResponseDto(contract)
     }
 
     @Put(':id')

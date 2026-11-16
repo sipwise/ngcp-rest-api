@@ -1,5 +1,5 @@
 
-import {Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, Put, Req, forwardRef} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'fast-json-patch'
@@ -23,7 +23,6 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -46,7 +45,6 @@ export class PeeringGroupController extends CrudController<PeeringGroupRequestDt
 
     constructor(
         private readonly peeringGroupService: PeeringGroupService,
-        @Inject(forwardRef(() => ExpandHelper))private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
         super(resourceName, peeringGroupService, journalService)
@@ -100,10 +98,6 @@ export class PeeringGroupController extends CrudController<PeeringGroupRequestDt
             e,
             {url: req.url},
         ))
-        if (sr.query.expand) {
-            const setSearchDtoKeys = Object.keys(new PeeringGroupSearchDto())
-            await this.expander.expandObjects(responseList, setSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -124,10 +118,6 @@ export class PeeringGroupController extends CrudController<PeeringGroupRequestDt
             await this.peeringGroupService.read(id, sr),
             {url: req.url, containsResourceId: true},
         )
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const setSearchDtoKeys = Object.keys(new PeeringGroupSearchDto())
-            await this.expander.expandObjects([response], setSearchDtoKeys, sr)
-        }
         return response
     }
 

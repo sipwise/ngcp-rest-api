@@ -7,7 +7,6 @@ import {ProductMockRepository} from './repositories/product.mock.repository'
 
 import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
-import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
@@ -31,7 +30,7 @@ describe('ProductService', () => {
     beforeAll(async () => {
         productMockRepo = new ProductMockRepository()
         const module: TestingModule = await Test.createTestingModule({
-            imports: [ProductModule, ExpandModule, AppModule],
+            imports: [ProductModule, AppModule],
         })
             .overrideProvider(ProductMariadbRepository).useValue(productMockRepo)
             .compile()

@@ -3,7 +3,7 @@ import {Type} from 'class-transformer'
 import {IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested} from 'class-validator'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
-import {Expandable} from '~/decorators/expandable.decorator'
+import {Expand} from '~/decorators/expand.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {RwrDpEnum} from '~/enums/rwr-dp.enum'
@@ -17,6 +17,7 @@ export class HeaderManipulationRuleConditionResponseDto extends ResponseDto {
         id: number
 
     @IsInt()
+    @Expand('header-manipulations/sets/rules')
     @ApiProperty()
         rule_id: number
 
@@ -52,7 +53,6 @@ export class HeaderManipulationRuleConditionResponseDto extends ResponseDto {
     @CanBeNull()
     @IsInt()
     @ApiProperty()
-    @Expandable({name: 'rwr_set_id', controller: 'rewriteRuleSetController'})
         rwr_set_id?: number
 
     @IsOptional()

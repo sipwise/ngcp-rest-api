@@ -1,7 +1,6 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {IsInt, IsNotEmpty, IsString} from 'class-validator'
 
-import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
@@ -13,7 +12,6 @@ export class ResellerPhonebookResponseDto extends ResponseDto {
 
     @IsInt()
     @ApiProperty()
-    @Expandable({name:'reseller_id', controller: 'resellerController'})
         reseller_id: number
 
     @IsString()

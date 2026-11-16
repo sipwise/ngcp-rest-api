@@ -7,7 +7,6 @@ import {PbxGroupMemberMockRepository} from './repositories/member.mock.repositor
 
 import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
-import {ExpandModule} from '~/helpers/expand.module'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
@@ -31,7 +30,7 @@ describe('PbxGroupMemberService', () => {
     beforeAll(async () => {
         pbxGroupMemberMockRepo = new PbxGroupMemberMockRepository()
         const module: TestingModule = await Test.createTestingModule({
-            imports: [PbxGroupMemberModule, ExpandModule, AppModule],
+            imports: [PbxGroupMemberModule, AppModule],
         })
             .overrideProvider(PbxGroupMemberMariadbRepository).useValue(pbxGroupMemberMockRepo)
             .compile()

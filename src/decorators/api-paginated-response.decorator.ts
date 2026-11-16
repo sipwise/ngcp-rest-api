@@ -1,6 +1,7 @@
 import {Type,applyDecorators} from '@nestjs/common'
 import {ApiExtraModels, ApiOkResponse, getSchemaPath} from '@nestjs/swagger'
 
+import {ResponseModel} from '~/decorators/response-model.decorator'
 import {PaginatedDto} from '~/dto/paginated.dto'
 
 // TODO: This needs to be any, but we need to find a way to make it a generic. Maybe never type?
@@ -9,6 +10,7 @@ export const ApiPaginatedResponse = <TModel extends Type<any>>(
     model: TModel,
 ): MethodDecorator => {
     return applyDecorators(
+        ResponseModel(model),
         ApiExtraModels(PaginatedDto, model),
         ApiOkResponse({
             schema: {

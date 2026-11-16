@@ -3,7 +3,6 @@ import {Type} from 'class-transformer'
 import {IsInt, IsNotEmpty, IsString, ValidateNested} from 'class-validator'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
-import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {UrlReferenceType} from '~/enums/url-reference-type.enum'
@@ -17,7 +16,6 @@ export class HeaderManipulationSetResponseDto extends ResponseDto {
 
     @IsInt()
     @ApiProperty()
-    @Expandable({name: 'reseller_id', controller: 'resellerController'})
         reseller_id: number
 
     @IsString()

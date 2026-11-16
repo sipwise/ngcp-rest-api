@@ -21,7 +21,6 @@ export class ServiceRequest {
     headers: IncomingHttpHeaders | [undefined]
     query?: ParsedQs
     req: Request
-    isInternalRedirect?: boolean
     returnContent: boolean
     // TODO: remove optional and adjust unit tests
     realm?: string | undefined = 'admin'
@@ -33,7 +32,6 @@ export class ServiceRequest {
         this.headers = req.headers
         this.user = req.user
         this.req = req
-        this.isInternalRedirect = req['isInternalRedirect']
 
         const prefer = req.headers.prefer || ''
         this.returnContent = prefer == 'return=representation'

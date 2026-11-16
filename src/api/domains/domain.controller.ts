@@ -3,12 +3,10 @@ import {
     Controller,
     Delete,
     Get,
-    Inject,
     Param,
     ParseIntPipe,
     Post,
     Req,
-    forwardRef,
 } from '@nestjs/common'
 import {ApiBody, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
@@ -29,7 +27,6 @@ import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Roles} from '~/decorators/roles.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -53,8 +50,6 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
     constructor(
         private readonly domainService: DomainService,
         private readonly journalService: JournalService,
-        @Inject(forwardRef(() => ExpandHelper))
-        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, domainService, journalService)
     }
@@ -97,10 +92,6 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
         const [domains, totalCount] =
             await this.domainService.readAll(sr)
         const responseList = domains.map(dom => new DomainResponseDto(dom))
-        if (sr.query.expand) {
-            const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
-            await this.expander.expandObjects(responseList, domainSearchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -114,10 +105,6 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
         const sr = new ServiceRequest(req)
         const domain = await this.domainService.read(id, sr)
         const responseItem = new DomainResponseDto(domain)
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const domainSearchDtoKeys = Object.keys(new DomainSearchDto())
-            await this.expander.expandObjects([responseItem], domainSearchDtoKeys, sr)
-        }
         return responseItem
     }
 

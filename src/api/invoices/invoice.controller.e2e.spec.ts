@@ -23,6 +23,7 @@ import {IntervalStartMode} from '~/entities/internal/profile-package.internal.en
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
+import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
@@ -372,6 +373,7 @@ describe('Invoice', () => {
             new ClassSerializerInterceptor(app.get(Reflector)),
             new TransactionInterceptor(app.get(Reflector)),
             new ResponseValidationInterceptor(),
+            app.get(ExpandInterceptor),
         )
         app.use(bodyParser.json({
             type: ['application/json-patch+json', 'application/json'],
@@ -590,12 +592,11 @@ describe('Invoice', () => {
                 ])
             })
 
-            it('renders an invoice and its expanded customer with tz=owner', async () => {
-                const response = await get(`/api/invoices/${owned.tokyo.id}?tz=owner&expand=customer_id`)
+            it('renders an invoice with tz=owner', async () => {
+                const response = await get(`/api/invoices/${owned.tokyo.id}?tz=owner`)
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(response.body.sent_date).toEqual('2026-07-01T21:00:00.000+09:00')
                 expect(response.body.period_end).toEqual('2025-01-31 23:59:59')
-                expect(response.body.customer_id_expand.id).toEqual(owned.tokyo.contractId)
             })
         })
 

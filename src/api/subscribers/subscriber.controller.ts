@@ -22,7 +22,6 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -58,7 +57,6 @@ export class SubscriberController extends CrudController<SubscriberRequestDto, S
     constructor(
         private readonly subscriberService: SubscriberService,
         private readonly journalService: JournalService,
-        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, subscriberService, journalService)
     }
@@ -103,10 +101,6 @@ export class SubscriberController extends CrudController<SubscriberRequestDto, S
         const sr = new ServiceRequest(req)
         const [subscribers, totalCount] = await this.subscriberService.readAll(sr)
         const responseList = subscribers.map(s => new SubscriberResponseDto(s, sr.user.role, {url: req.url}))
-        if (sr.query.expand) {
-            const searchDtoKeys = Object.keys(new SubscriberSearchDto())
-            await this.expander.expandObjects(responseList, searchDtoKeys, sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -128,10 +122,6 @@ export class SubscriberController extends CrudController<SubscriberRequestDto, S
             sr.user.role,
             {url: req.url, containsResourceId: true},
         )
-        if (sr.query.expand && !sr.isInternalRedirect) {
-            const searchDtoKeys = Object.keys(new SubscriberSearchDto())
-            await this.expander.expandObjects([response], searchDtoKeys, sr)
-        }
         return response
     }
 

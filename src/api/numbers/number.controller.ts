@@ -1,4 +1,4 @@
-import {Controller, Get, Inject, Param, ParseIntPipe, Req, forwardRef} from '@nestjs/common'
+import {Controller, Get, Param, ParseIntPipe, Req} from '@nestjs/common'
 import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
 
 import {NumberResponseDto} from './dto/number-response.dto'
@@ -11,7 +11,6 @@ import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -33,8 +32,6 @@ export class NumberController extends CrudController<never, NumberResponseDto> {
         private readonly app: AppService,
         private readonly numberService: NumberService,
         private readonly journalService: JournalService,
-        @Inject(forwardRef(() => ExpandHelper))
-        private readonly expander: ExpandHelper,
     ) {
         super(resourceName, numberService, journalService)
     }

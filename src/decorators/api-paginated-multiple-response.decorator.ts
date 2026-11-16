@@ -3,6 +3,7 @@
 import {Type, applyDecorators} from '@nestjs/common'
 import {ApiExtraModels,ApiOkResponse as ApiSwaggerOkResponse, getSchemaPath} from '@nestjs/swagger'
 
+import {ResponseModel} from '~/decorators/response-model.decorator'
 import {PaginatedDto} from '~/dto/paginated.dto'
 
 interface ContentType {
@@ -56,7 +57,9 @@ export const ApiPaginatedMultipleResponse = <TModel extends Type<any>>(
         return acc
     }, {})
 
+    const model = contents.find(content => content.type == 'application/json')?.data.item
     return applyDecorators(
+        ...(model ? [ResponseModel(model)] : []),
         ApiExtraModels(...contents.map(content => content.data)),
         ApiSwaggerOkResponse({
             description,

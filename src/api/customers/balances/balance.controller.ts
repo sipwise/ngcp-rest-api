@@ -21,7 +21,6 @@ import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ExpandHelper} from '~/helpers/expand.helper'
 import {Operation, Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -47,7 +46,6 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
 
     constructor(
         private readonly customerBalanceService: CustomerBalanceService,
-        private readonly expander: ExpandHelper,
         private readonly journalService: JournalService,
     ) {
         super(resourceName, customerBalanceService, journalService)
@@ -70,9 +68,6 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
         const [entity, totalCount] =
             await this.customerBalanceService.readAll(sr)
         const responseList = entity.map(e => new CustomerBalanceResponseDto(e))
-        if (sr.query.expand) {
-            await this.expander.expandObjects(responseList, Object.keys(new CustomerBalanceSearchDto()), sr)
-        }
         return [responseList, totalCount]
     }
 
@@ -96,9 +91,6 @@ export class CustomerBalanceController extends CrudController<CustomerBalanceReq
         const sr = new ServiceRequest(req)
         const rule = await this.customerBalanceService.read(id, sr)
         const responseItem = new CustomerBalanceResponseDto(rule)
-        if (sr.query.expand) {
-            await this.expander.expandObjects([responseItem], Object.keys(new CustomerBalanceSearchDto()), sr)
-        }
 
         return responseItem
     }

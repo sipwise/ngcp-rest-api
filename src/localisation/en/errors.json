@@ -78,10 +78,16 @@
     "message": "Duplicate entry"
   },
   "EXPAND_NOT_POSSIBLE": {
-    "message": "Expanding {field} not allowed or impossible"
+    "message": "Field {field} cannot be expanded"
   },
-  "EXPAND_FAILED": {
-    "message": "Cannot expand field {field}"
+  "EXPAND_FORBIDDEN": {
+    "message": "Expanding {field} is not allowed"
+  },
+  "EXPAND_NOT_SUPPORTED": {
+    "message": "{parameter} is only supported on GET requests with a JSON response"
+  },
+  "EXPAND_INVALID_PATH": {
+    "message": "Invalid path {path}"
   },
   "VALIDATION_FAILED_UNSUPPORTED_ID": {
     "message": "Validation failed (unsupported :id format)"

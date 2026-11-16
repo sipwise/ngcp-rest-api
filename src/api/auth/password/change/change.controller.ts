@@ -11,12 +11,14 @@ import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
 import {AuthOptions} from '~/decorators/auth-options.decorator'
 import {Auth} from '~/decorators/auth.decorator'
+import {NoExpand} from '~/decorators/expand.decorator'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
 const resourceName = 'auth/password/change'
 
 @ApiTags('Auth')
+@NoExpand()
 @Controller(resourceName)
 @AuthOptions({skipMaxAge: true})
 @Auth()
