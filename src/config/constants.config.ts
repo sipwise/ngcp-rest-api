@@ -30,13 +30,6 @@ export enum RbacRole {
     subscriberadmin = 'subscriberadmin',
 }
 
-export interface RbacFlag {
-    is_system: boolean
-    is_superuser: boolean
-    is_ccare: boolean
-    lawful_intercept: boolean
-}
-
 export class ReservedQueryParamsDto {
     @IsOptional()
     @IsNumberString()

@@ -911,6 +911,110 @@ describe('AdminController', () => {
                 expect(patchResponse.body.otp_init).toBe(true)
             })
         })
+
+        describe('Admins role deprecated flags', () => {
+            const flags: [RbacRole, boolean, boolean, boolean][] = [
+                [RbacRole.system, true, false, false],
+                [RbacRole.admin, false, true, false],
+                [RbacRole.reseller, false, false, false],
+                [RbacRole.ccareadmin, false, true, true],
+                [RbacRole.ccare, false, false, true],
+            ]
+            const adminOf = (name: string, role: RbacRole): AdminPost => ({
+                billing_data: true,
+                call_data: false,
+                can_reset_password: true,
+                is_active: true,
+                is_master: false,
+                email: `${name}@example.com`,
+                login: loginOf(name),
+                password: strongPassword,
+                read_only: false,
+                reseller_id: 1,
+                role: role,
+                show_passwords: true,
+                enable_2fa: false,
+            })
+            const expectFlags = async (id: number, isSystem: boolean, isSuperuser: boolean, isCcare: boolean): Promise<void> => {
+                const row = await db.billing.Admin.findOneByOrFail({id})
+                expect({is_system: row.is_system, is_superuser: row.is_superuser, is_ccare: row.is_ccare})
+                    .toEqual({is_system: isSystem, is_superuser: isSuperuser, is_ccare: isCcare})
+            }
+            let flagsId: number
+
+            for (const [role, isSystem, isSuperuser, isCcare] of flags) {
+                it(`sets the flags of role ${role} on POST`, async () => {
+                    const response = await request(app.getHttpServer())
+                        .post('/api/admins')
+                        .set(...systemAuthHeader)
+                        .set('Content-Type', 'application/json')
+                        .send(adminOf(`flags_${role}`, role))
+                    expect(response.status).toEqual(201)
+                    const {id} = await db.billing.Admin.findOneByOrFail({login: loginOf(`flags_${role}`)})
+                    createdAdminIds.push(id)
+                    await expectFlags(id, isSystem, isSuperuser, isCcare)
+                    flagsId = id
+                })
+            }
+
+            it('recalculates the flags on PUT role change', async () => {
+                const response = await request(app.getHttpServer())
+                    .put(`/api/admins/${flagsId}`)
+                    .set(...systemAuthHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({...adminOf('flags_ccare', RbacRole.admin), password: `${strongPassword}_flags`})
+                expect(response.status).toEqual(204)
+                await expectFlags(flagsId, false, true, false)
+            })
+
+            it('recalculates the flags on PATCH role change', async () => {
+                const patch: PatchOperation[] = [{op: 'replace', path: '/role', value: RbacRole.ccareadmin}]
+                const response = await request(app.getHttpServer())
+                    .patch(`/api/admins/${flagsId}`)
+                    .set(...systemAuthHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send(patch)
+                expect(response.status).toEqual(204)
+                await expectFlags(flagsId, false, true, true)
+            })
+
+            it('does not return the flags', async () => {
+                const item = await request(app.getHttpServer())
+                    .get(`/api/admins/${flagsId}`)
+                    .set(...systemAuthHeader)
+                    .set('Accept', 'application/json')
+                expect(item.status).toEqual(200)
+                const list = await request(app.getHttpServer())
+                    .get('/api/admins')
+                    .set(...systemAuthHeader)
+                    .set('Accept', 'application/json')
+                expect(list.status).toEqual(200)
+                for (const admin of [item.body, ...list.body.data]) {
+                    for (const key of ['is_system', 'is_superuser', 'is_ccare'])
+                        expect(admin).not.toHaveProperty(key)
+                }
+            })
+
+            for (const key of ['is_system', 'is_superuser', 'is_ccare']) {
+                it(`rejects ${key} in the POST body`, async () => {
+                    const response = await request(app.getHttpServer())
+                        .post('/api/admins')
+                        .set(...systemAuthHeader)
+                        .set('Content-Type', 'application/json')
+                        .send({...adminOf(`flags_body_${key}`, RbacRole.reseller), [key]: true})
+                    expect(response.status).toEqual(422)
+                })
+
+                it(`rejects ${key} as a query parameter`, async () => {
+                    const response = await request(app.getHttpServer())
+                        .get(`/api/admins?${key}=1`)
+                        .set(...systemAuthHeader)
+                    expect(response.status).toEqual(400)
+                })
+            }
+        })
     })
 
     describe('Admins DELETE', () => {

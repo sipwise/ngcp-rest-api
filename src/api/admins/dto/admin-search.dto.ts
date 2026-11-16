@@ -20,13 +20,7 @@ export class AdminSearchDto implements AdminResponseDto {
     @ApiPropertyOptional()
         is_active: boolean
     @ApiPropertyOptional()
-        is_ccare: boolean
-    @ApiPropertyOptional()
         is_master: boolean
-    @ApiPropertyOptional()
-        is_superuser: boolean
-    @ApiPropertyOptional()
-        is_system: boolean
     @ApiPropertyOptional()
         lawful_intercept: boolean
     @ApiPropertyOptional()

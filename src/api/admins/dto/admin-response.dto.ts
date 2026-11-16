@@ -36,19 +36,7 @@ export class AdminResponseDto extends ResponseDto {
 
     @IsBoolean()
     @ApiProperty()
-        is_ccare!: boolean
-
-    @IsBoolean()
-    @ApiProperty()
         is_master!: boolean
-
-    @IsBoolean()
-    @ApiProperty()
-        is_superuser!: boolean
-
-    @IsBoolean()
-    @ApiProperty()
-        is_system!: boolean
 
     @IsBoolean()
     @ApiProperty()
@@ -101,10 +89,7 @@ export class AdminResponseDto extends ResponseDto {
         this.email = admin.email
         this.id = admin.id
         this.is_active = admin.isActive
-        this.is_ccare = admin.isCcare
         this.is_master = admin.isMaster
-        this.is_superuser = admin.isSuperuser
-        this.is_system = admin.isSystem
         this.lawful_intercept = admin.lawfulIntercept
         this.login = admin.login
         this.read_only = admin.readOnly

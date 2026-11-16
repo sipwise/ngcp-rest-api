@@ -336,6 +336,32 @@ describe('AdminService', () => {
         })
     })
 
+    describe('role deprecated flags', () => {
+        const flags: [RbacRole, boolean, boolean, boolean][] = [
+            [RbacRole.system, true, false, false],
+            [RbacRole.admin, false, true, false],
+            [RbacRole.reseller, false, false, false],
+            [RbacRole.ccareadmin, false, true, true],
+            [RbacRole.ccare, false, false, true],
+        ]
+        for (const [role, isSystem, isSuperuser, isCcare] of flags) {
+            it(`should set the flags of role ${role} on create`, async () => {
+                const got = (await service.create([internal.Admin.create({login: 'jest', role: role})], sr))[0]
+                const stored = await adminMockRepo.readById(got.id, options)
+                expect(stored).toMatchObject({isSystem, isSuperuser, isCcare})
+            })
+
+            it(`should set the flags of role ${role} on update`, async () => {
+                const id = 6
+                const updates = new Dictionary<internal.Admin>()
+                updates[id] = internal.Admin.create({login: 'jest', role: role, isSystem: !isSystem, isSuperuser: !isSuperuser, isCcare: !isCcare})
+                await service.update(updates, sr)
+                const stored = await adminMockRepo.readById(id, options)
+                expect(stored).toMatchObject({isSystem, isSuperuser, isCcare})
+            })
+        }
+    })
+
     describe('adjust', () => {
         it('should update role to admin', async () => {
             const id = 3
@@ -386,7 +412,7 @@ describe('AdminService', () => {
                 await expect(service.update(update, sr)).rejects.toThrow(ApiErrorException)
             })
         })
-        for (const path of ['/is_superuser', '/is_system', '/lawful_intercept']) {
+        for (const path of ['/is_ccare', '/is_superuser', '/is_system', '/lawful_intercept']) {
             it(`should reject patching ${path}, it is not part of the request`, async () => {
                 const oldEntity = await service.read(1, sr)
                 await expect(patchToEntity<internal.Admin, AdminRequestDto>(oldEntity, [{op: 'replace', path: path, value: true}], AdminRequestDto))

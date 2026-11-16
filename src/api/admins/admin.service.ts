@@ -231,7 +231,7 @@ export class AdminService { //} implements CrudService<internal.Admin> {
     private validateUpdate(selfId: number, oldAdmin: internal.Admin, admin: internal.Admin, sr: ServiceRequest, key: number | string): void {
         if (admin.id != selfId)
             return
-        const protectedFields: (keyof internal.Admin)[] = ['login', 'role', 'isMaster', 'isActive', 'isSystem', 'isSuperuser',
+        const protectedFields: (keyof internal.Admin)[] = ['login', 'role', 'isMaster', 'isActive',
             'lawfulIntercept', 'readOnly', 'showPasswords', 'callData', 'billingData']
         for (const field of protectedFields) {
             if (admin[field] != undefined && (oldAdmin[field] == undefined || oldAdmin[field] != admin[field])) {
