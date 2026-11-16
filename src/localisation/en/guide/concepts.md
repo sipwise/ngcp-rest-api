@@ -213,6 +213,72 @@ Content-Type: application/json
 
 A bulk POST without `Prefer` returns 204, so ask for `return=id` or `return=representation` to get the new ids.
 
+### Date/time and timezones
+
+There are two kinds of date/time fields. The schemas below mark each field with `x-timezone`:
+
+| Kind | Fields | Format | Schema |
+| --- | --- | --- | --- |
+| Date/time | `create_timestamp`, `sent_date` and all other instants | RFC 3339 with offset and milliseconds, `2026-12-01T00:00:00.000+01:00` (`…Z` for UTC) | `format: date-time`, `x-timezone: user` |
+| Local (platform) | billing values: customer `billing_profiles` `start`, `stop`, `effective_start_time`; invoice `period_start`, `period_end` | platform time as stored, without offset, `2026-12-01 00:00:00` | `format: local-date-time` or `local-time`, `x-timezone: platform` |
+
+The query parameter `tz` selects the timezone of date/time values, on every route and method:
+
+| `tz` | Date/time values | Local values |
+| --- | --- | --- |
+| not set | the user's timezone | platform time, as stored |
+| IANA name, e.g. `Europe/Vienna`, `UTC` | that timezone | platform time, as stored |
+| `owner` | each item in its owner's timezone (customers, invoices), expanded objects in their own owner's; the user's timezone for other resources | platform time, as stored |
+
+Any other value is rejected with 400 (`errors[].parameter` is `tz`).
+
+The user's timezone is the timezone of the authenticated account:
+
+- subscriber, subscriber admin: subscriber contact, else customer contact, else reseller contact, else the platform's
+- administrator bound to a reseller: reseller contact, else the platform's
+- other administrators and requests without authentication: the platform's
+
+The owner's timezone of customers and invoices is that of the customer contact, else the reseller contact, else the platform's. The `timezone` of contacts and subscribers takes IANA names or null.
+
+```http
+GET /api/v2/customers/7                 "create_timestamp": "2026-11-06T11:31:33.000+01:00"   (system admin)
+GET /api/v2/customers/7                 "create_timestamp": "2026-11-06T05:31:33.000-05:00"   (reseller admin in New York)
+GET /api/v2/customers/7?tz=owner        "create_timestamp": "2026-11-06T19:31:33.000+09:00"   (customer in Tokyo)
+GET /api/v2/customers/7?tz=UTC          "create_timestamp": "2026-11-06T10:31:33.000Z"
+```
+
+Local values mean platform time for everyone and never change with `tz`, so billing works as in rating and invoicing. Invalid or zero dates stored in the database are returned as null.
+
+Billing computations use the customer's billing timezone: the customer's own timezone (as for `tz=owner`) if its profile package has the balance interval start mode `1st_tz` or `create_tz`, else the platform's, as in rating. It sets the month of an invoice `period` and of its serial, the dates and times printed in the invoice PDF, and the start of a new customer's first balance interval. Stored and returned values stay platform time.
+
+Input follows the same rules. A date/time value without an offset, in a request body or a filter, is read in the timezone the response uses for that field; a value with an offset or a zone annotation is taken as is. A local value without an offset is stored as given; with an offset it is converted to platform time:
+
+| Without an offset | With an offset or zone |
+| --- | --- |
+| `2026-12-01 00:00:00`, `2026-12-01 00:00:00.123`, `2026-12-01T00:00:00`, `2026-12-01T00:00` | `2026-12-01T00:00:00Z`, `2026-12-01T00:00:00+09:00`, `+0900`, `+09` |
+| `2026-12-01` (00:00), `2026-12` (first day, 00:00), `20261201T000000`, `20261201` | `2026-12-01T00:00:00[Asia/Tokyo]`, `2026-12-01T00:00:00+09:00[Asia/Tokyo]` |
+
+Up to 9 fractional digits are accepted. Time-only local fields take `18:00:00` or `18:00` without an offset. Week dates, ordinal dates and `24:00:00` are rejected. A date/time value without an offset that does not exist or exists twice in its timezone (daylight saving time changes) is rejected: send it with an offset, e.g. `2026-10-25T02:30:00+01:00`. A local value that cannot be stored as platform time is rejected as well: one without an offset that the platform's clocks skip, or one with an offset that falls into the platform's repeated autumn hour. In query strings, encode the `+` of an offset as `%2B`.
+
+```http
+PUT /api/v2/customers/7    "billing_profiles": [{"profile_id": 2, "start": "2026-12-01 05:00"}]            stored as 2026-12-01 05:00:00
+PUT /api/v2/customers/7    "billing_profiles": [{"profile_id": 2, "start": "2026-12-01T05:00:00+09:00"}]   stored as 2026-11-30 21:00:00
+GET /api/v2/invoices?period_start_ge=2026-12-01                                                          platform time, as listed
+POST /api/v2/invoices      "period": "2026-12"   (customer in Tokyo, 1st_tz package)                     period_start 2026-11-30 16:00:00 (Vienna)
+```
+
+Invalid query values (`tz`, an unparsable or ambiguous filter value, `*` on a date/time filter) return 400 with `errors[].parameter`; invalid body values return 422 with `errors[].pointer`.
+
+Keep the same `tz` for a GET and the PUT or PATCH that follows it, also for PATCH `test` operations, which compare the value as rendered. Integrations and exports that need stable values use `tz=UTC`. Journal entries keep `timestamp` as a Unix epoch number and store `content` in UTC.
+
+Differences from API v1:
+
+- v1 returns `YYYY-MM-DD HH:MM:SS` in server time without an offset; v2 returns RFC 3339 with an offset, in the user's timezone by default. Local values keep the v1 format.
+- v1 supports `tz` on a few resources only, v2 on all of them, also for writes and filters. `use_owner_tz=1` is `tz=owner` (`use_owner_tz` is rejected as an unknown parameter).
+- v1 reads date/time values without an offset in server time, v2 in the user's timezone. Local values are platform time in both.
+- An invalid `tz` returns 400 (v1: 422 or ignored). Filter values with an offset are converted correctly, and date/time values that are ambiguous because of daylight saving time are rejected instead of silently resolved.
+- Invoice periods (`period`), serials and PDF dates follow the customer's billing timezone, and the first balance interval of a customer with a `1st_tz`/`create_tz` package starts at midnight in its timezone (v1: server time or UTC).
+
 ### Errors
 
 Every error has the same JSON body:

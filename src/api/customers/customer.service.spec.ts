@@ -100,7 +100,7 @@ describe('CustomerService', () => {
             expect(append).toHaveBeenCalledWith(created.id, [
                 internal.BillingMapping.create({billingProfileId: 1, networkId: undefined, startDate: undefined, endDate: undefined}),
             ])
-            expect(balance).toHaveBeenCalledWith(created.id)
+            expect(balance).toHaveBeenCalledWith(created.id, created.createTimestamp)
         })
 
         it('should reject an unknown contact', async () => {

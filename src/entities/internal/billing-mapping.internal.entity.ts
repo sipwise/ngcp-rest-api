@@ -20,8 +20,4 @@ export class BillingMapping implements BillingMappingInterface {
         })
         return mapping
     }
-
-    toCSVString(): string {
-        return `${this.billingProfileId},${this.networkId || ''},${this.startDate ? this.startDate.toISOString() : ''},${this.endDate ? this.endDate.toISOString() : ''}`
-    }
 }

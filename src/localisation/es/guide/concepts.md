@@ -213,6 +213,72 @@ Content-Type: application/json
 
 Un POST masivo sin `Prefer` devuelve 204, así que solicite `return=id` o `return=representation` para obtener los nuevos ids.
 
+### Fecha/hora y zonas horarias
+
+Hay dos tipos de campos de fecha/hora. Los esquemas de abajo marcan cada campo con `x-timezone`:
+
+| Tipo | Campos | Formato | Esquema |
+| --- | --- | --- | --- |
+| Fecha/hora | `create_timestamp`, `sent_date` y todos los demás instantes | RFC 3339 con desfase y milisegundos, `2026-12-01T00:00:00.000+01:00` (`…Z` para UTC) | `format: date-time`, `x-timezone: user` |
+| Local (plataforma) | valores de facturación: `billing_profiles` del cliente `start`, `stop`, `effective_start_time`; factura `period_start`, `period_end` | hora de la plataforma tal como se almacena, sin desfase, `2026-12-01 00:00:00` | `format: local-date-time` o `local-time`, `x-timezone: platform` |
+
+El parámetro de consulta `tz` selecciona la zona horaria de los valores de fecha/hora, en todas las rutas y métodos:
+
+| `tz` | Valores de fecha/hora | Valores locales |
+| --- | --- | --- |
+| no definido | la zona horaria del usuario | hora de la plataforma, tal como se almacena |
+| nombre IANA, p. ej. `Europe/Vienna`, `UTC` | esa zona horaria | hora de la plataforma, tal como se almacena |
+| `owner` | cada elemento en la zona horaria de su propietario (clientes, facturas), los objetos expandidos en la de su propio propietario; la zona horaria del usuario en los demás recursos | hora de la plataforma, tal como se almacena |
+
+Cualquier otro valor se rechaza con 400 (`errors[].parameter` es `tz`).
+
+La zona horaria del usuario es la de la cuenta autenticada:
+
+- suscriptor, administrador de suscriptores: contacto del suscriptor, si no contacto del cliente, si no contacto del revendedor, si no la de la plataforma
+- administrador vinculado a un revendedor: contacto del revendedor, si no la de la plataforma
+- otros administradores y solicitudes sin autenticación: la de la plataforma
+
+La zona horaria del propietario de clientes y facturas es la del contacto del cliente, si no la del contacto del revendedor, si no la de la plataforma. El campo `timezone` de contactos y suscriptores admite nombres IANA o null.
+
+```http
+GET /api/v2/customers/7                 "create_timestamp": "2026-11-06T11:31:33.000+01:00"   (system admin)
+GET /api/v2/customers/7                 "create_timestamp": "2026-11-06T05:31:33.000-05:00"   (reseller admin in New York)
+GET /api/v2/customers/7?tz=owner        "create_timestamp": "2026-11-06T19:31:33.000+09:00"   (customer in Tokyo)
+GET /api/v2/customers/7?tz=UTC          "create_timestamp": "2026-11-06T10:31:33.000Z"
+```
+
+Los valores locales significan hora de la plataforma para todos y nunca cambian con `tz`, de modo que la facturación funciona igual que en la tarificación y la emisión de facturas. Las fechas inválidas o cero almacenadas en la base de datos se devuelven como null.
+
+Los cálculos de facturación usan la zona horaria de facturación del cliente: su propia zona horaria (como con `tz=owner`) si su paquete de perfiles tiene el modo de inicio del intervalo de saldo `1st_tz` o `create_tz`, si no la de la plataforma, como en la tarificación. Determina el mes de un `period` de factura y de su número de serie, las fechas y horas impresas en el PDF de la factura y el inicio del primer intervalo de saldo de un cliente nuevo. Los valores almacenados y devueltos siguen siendo hora de la plataforma.
+
+La entrada sigue las mismas reglas. Un valor de fecha/hora sin desfase, en el cuerpo de una solicitud o en un filtro, se lee en la zona horaria que la respuesta usa para ese campo; un valor con desfase o anotación de zona se toma tal cual. Un valor local sin desfase se almacena tal como se da; con desfase se convierte a hora de la plataforma:
+
+| Sin desfase | Con desfase o zona |
+| --- | --- |
+| `2026-12-01 00:00:00`, `2026-12-01 00:00:00.123`, `2026-12-01T00:00:00`, `2026-12-01T00:00` | `2026-12-01T00:00:00Z`, `2026-12-01T00:00:00+09:00`, `+0900`, `+09` |
+| `2026-12-01` (00:00), `2026-12` (primer día, 00:00), `20261201T000000`, `20261201` | `2026-12-01T00:00:00[Asia/Tokyo]`, `2026-12-01T00:00:00+09:00[Asia/Tokyo]` |
+
+Se aceptan hasta 9 dígitos fraccionarios. Los campos locales que solo contienen la hora admiten `18:00:00` o `18:00` sin desfase. Las fechas de semana, las fechas ordinales y `24:00:00` se rechazan. Un valor de fecha/hora sin desfase que no existe o existe dos veces en su zona horaria (cambios de horario de verano) se rechaza: envíelo con desfase, p. ej. `2026-10-25T02:30:00+01:00`. También se rechaza un valor local que no se puede guardar como hora de la plataforma: sin desfase, en la hora que los relojes de la plataforma saltan, o con desfase, en la hora repetida de otoño de la plataforma. En las cadenas de consulta, codifique el `+` de un desfase como `%2B`.
+
+```http
+PUT /api/v2/customers/7    "billing_profiles": [{"profile_id": 2, "start": "2026-12-01 05:00"}]            stored as 2026-12-01 05:00:00
+PUT /api/v2/customers/7    "billing_profiles": [{"profile_id": 2, "start": "2026-12-01T05:00:00+09:00"}]   stored as 2026-11-30 21:00:00
+GET /api/v2/invoices?period_start_ge=2026-12-01                                                          platform time, as listed
+POST /api/v2/invoices      "period": "2026-12"   (customer in Tokyo, 1st_tz package)                     period_start 2026-11-30 16:00:00 (Vienna)
+```
+
+Los valores de consulta inválidos (`tz`, un valor de filtro que no se puede interpretar o es ambiguo, `*` en un filtro de fecha/hora) devuelven 400 con `errors[].parameter`; los valores de cuerpo inválidos devuelven 422 con `errors[].pointer`.
+
+Mantenga el mismo `tz` para un GET y para el PUT o PATCH que lo sigue, también para las operaciones `test` de PATCH, que comparan el valor tal como se muestra. Las integraciones y exportaciones que necesitan valores estables usan `tz=UTC`. Las entradas del diario conservan `timestamp` como número de época Unix y almacenan `content` en UTC.
+
+Diferencias con API v1:
+
+- v1 devuelve `YYYY-MM-DD HH:MM:SS` en hora del servidor sin desfase; v2 devuelve RFC 3339 con desfase, por defecto en la zona horaria del usuario. Los valores locales conservan el formato de v1.
+- v1 admite `tz` solo en unos pocos recursos, v2 en todos, también para escrituras y filtros. `use_owner_tz=1` equivale a `tz=owner` (`use_owner_tz` se rechaza como parámetro desconocido).
+- v1 lee los valores de fecha/hora sin desfase en hora del servidor, v2 en la zona horaria del usuario. Los valores locales son hora de la plataforma en ambas.
+- Un `tz` inválido devuelve 400 (v1: 422 o se ignora). Los valores de filtro con desfase se convierten correctamente, y los valores de fecha/hora que son ambiguos por el horario de verano se rechazan en lugar de resolverse en silencio.
+- Los periodos de factura (`period`), los números de serie y las fechas del PDF siguen la zona horaria de facturación del cliente, y el primer intervalo de saldo de un cliente con un paquete `1st_tz`/`create_tz` empieza a medianoche en su zona horaria (v1: hora del servidor o UTC).
+
 ### Errores
 
 Todos los errores tienen el mismo cuerpo JSON:

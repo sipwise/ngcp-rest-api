@@ -1,5 +1,6 @@
 import {ApiProperty} from '@nestjs/swagger'
 
+import {DateTimeField} from '~/decorators/date-time-field.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
@@ -17,6 +18,7 @@ export class BanRegistrationResponseDto extends ResponseDto {
     @ApiProperty()
         auth_count!: number
 
+    @DateTimeField()
     @ApiProperty()
         last_auth!: Date
 

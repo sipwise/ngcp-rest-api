@@ -3,9 +3,61 @@ import {BaseEntity, Brackets, SelectQueryBuilder} from 'typeorm'
 import {SearchLogic} from './search-logic.helper'
 
 import {reservedQueryParamKeys as reservedQueryParams} from '~/config/constants.config'
+import {DateTimeKind} from '~/decorators/date-time-field.decorator'
 import {isAllowUnknownParams} from '~/helpers/allow-unknown-params.helper'
-import {InvalidParameterException} from '~/helpers/errors.helper'
+import {
+    DateTimeInputError,
+    inputToInstant,
+    inputToPlatformDateTime,
+    inputZone,
+    parseDateTimeInput,
+} from '~/helpers/date-time-input.helper'
+import {InvalidParameterException, errorMessage} from '~/helpers/errors.helper'
+import {platformTimezone} from '~/helpers/timezone.helper'
+import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {QueriesDictionary} from '~/interfaces/service-request.interface'
+
+/**
+ * Search DTO `_alias` entry of a date/time filter: the value is parsed like the field (@DateTimeField():
+ * naive values in the request's zone; @LocalDateTimeField(): compared as stored platform time), wildcards
+ * are rejected. `field` is the column expression, also used by order_by.
+ */
+export interface DateTimeFilter {
+    dateTime: DateTimeKind.DateTime | DateTimeKind.LocalDateTime
+    field: string
+    comparator: '=' | '>=' | '<='
+}
+
+export function dateTimeFilter(
+    kind: DateTimeFilter['dateTime'],
+    field: string,
+    comparator: DateTimeFilter['comparator'] = '=',
+): DateTimeFilter {
+    return {dateTime: kind, field, comparator}
+}
+
+function isDateTimeFilter(alias: unknown): alias is DateTimeFilter {
+    return typeof alias == 'object' && alias != null && 'dateTime' in alias
+}
+
+function filterError(parameter: string, error: ErrorMessage): InvalidParameterException {
+    return new InvalidParameterException([{parameter, code: error.errorCode, message: `${parameter} ${error.message}`}])
+}
+
+function dateTimeFilterValue(parameter: string, value: string, kind: DateTimeFilter['dateTime']): Date | string {
+    if (value.includes('*'))
+        throw filterError(parameter, errorMessage('DATE_TIME_WILDCARD'))
+    try {
+        const input = parseDateTimeInput(value, kind)
+        if (kind == DateTimeKind.DateTime)
+            return new Date(inputToInstant(input, 'plain' in input ? inputZone() : platformTimezone()).epochMilliseconds)
+        return inputToPlatformDateTime(input).toString({smallestUnit: 'second'}).replace('T', ' ')
+    } catch (err) {
+        if (err instanceof DateTimeInputError)
+            throw filterError(parameter, err.error)
+        throw err
+    }
+}
 
 export function configureQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, params: QueriesDictionary, searchLogic: SearchLogic): void {
     addJoinFilterToQueryBuilder(qb, params, searchLogic)
@@ -62,7 +114,13 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
         const conditions: string[] = []
         const parameters: Record<string, unknown> = {}
 
-        if (complexSearch) {
+        if (isDateTimeFilter(propertyAlias)) {
+            values.forEach((value, index) => {
+                const paramKey = `${searchField}_${index}`
+                conditions.push(`${propertyAlias.field} ${propertyAlias.comparator} :${paramKey}`)
+                parameters[paramKey] = dateTimeFilterValue(searchField, value, propertyAlias.dateTime)
+            })
+        } else if (complexSearch) {
             const field = propertyAlias['field']
             const comparator = propertyAlias['comparator']
             const transform = propertyAlias['transform']

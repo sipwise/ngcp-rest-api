@@ -412,6 +412,40 @@ describe('AdminController', () => {
                     }
                 })
             }
+            it('keeps tz in the page links and renders in it', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/api/admins?rows=1&page=2&tz=UTC')
+                    .auth(loginOf('system'), strongPassword)
+                    .set('Accept', 'application/hal+json')
+                expect(response.status).toEqual(200)
+                expect(response.body._links.self.href).toEqual('/api/admins?rows=1&page=2&tz=UTC')
+                expect(response.body._links.prev.href).toEqual('/api/admins?page=1&rows=1&tz=UTC')
+                expect(response.body._links.next.href).toEqual('/api/admins?page=3&rows=1&tz=UTC')
+                const [admin] = response.body._embedded['ngcp:admins']
+                expect(response.body._links['ngcp:admins']).toEqual([{href: `/api/admins/${admin.id}`}])
+                expect(admin.password_last_modify_time).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
+            })
+
+            it('renders tz=owner in the default timezone (no owner support)', async () => {
+                const read = (query: string): request.Test => request(app.getHttpServer())
+                    .get(`/api/admins?login=${loginOf('system')}${query}`)
+                    .auth(loginOf('system'), strongPassword)
+                    .set('Accept', 'application/json')
+                const [owner, plain] = [await read('&tz=owner'), await read('')]
+                expect([owner.status, plain.status]).toEqual([200, 200])
+                expect(owner.body.data[0].password_last_modify_time).toMatch(/\.\d{3}(Z|[+-]\d{2}:\d{2})$/)
+                expect(owner.body.data).toEqual(plain.body.data)
+            })
+
+            it('rejects use_owner_tz as an unknown parameter', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/api/admins?use_owner_tz=1')
+                    .auth(loginOf('system'), strongPassword)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(400)
+                expect(response.body.errors).toEqual([expect.objectContaining({parameter: 'use_owner_tz'})])
+            })
+
             it('hides otp_secret from other users', async () => {
                 const response = await request(app.getHttpServer())
                     .get(`/api/admins?login=${loginOf('2faGeneratedSecret')}`)

@@ -294,8 +294,13 @@ describe('InvoiceTemplateService', () => {
         it('renders the template content to a pdf', async () => {
             const pdf = await service.render(template(), {} as never)
             expect(pdf.toString()).toBe('pdf')
-            expect(renderInvoiceTemplate).toHaveBeenCalledWith('<svg>one</svg>', expect.anything(), InvoiceTemplateCategory.Customer)
+            expect(renderInvoiceTemplate).toHaveBeenCalledWith('<svg>one</svg>', expect.anything(), InvoiceTemplateCategory.Customer, 'Europe/Vienna')
             expect(svgToPdf).toHaveBeenCalledWith('<svg>rendered</svg>')
+        })
+
+        it('renders the dates in the given zone', async () => {
+            await service.render(template(), {} as never, 'Asia/Tokyo')
+            expect(renderInvoiceTemplate).toHaveBeenCalledWith('<svg>one</svg>', expect.anything(), InvoiceTemplateCategory.Customer, 'Asia/Tokyo')
         })
 
         it('maps a render error to UnprocessableEntityException', async () => {
@@ -326,7 +331,7 @@ describe('InvoiceTemplateService', () => {
         it('renders with the example variables of the template', async () => {
             repo.templateDB[3].callDirection = InvoiceTemplateCallDirection.In
             await service.renderPreview(3, makeSr())
-            expect(renderInvoiceTemplate).toHaveBeenCalledWith(defaultSvg.toString(), expect.anything(), InvoiceTemplateCategory.Peer)
+            expect(renderInvoiceTemplate).toHaveBeenCalledWith(defaultSvg.toString(), expect.anything(), InvoiceTemplateCategory.Peer, 'Europe/Vienna')
         })
 
         it('throws NotFoundException for another reseller', async () => {

@@ -1,8 +1,9 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString} from 'class-validator'
+import {IsBoolean, IsDate, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString} from 'class-validator'
 
 import {RbacRole} from '~/config/constants.config'
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
+import {DateTimeField} from '~/decorators/date-time-field.decorator'
 import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
@@ -77,9 +78,10 @@ export class AdminResponseDto extends ResponseDto {
     @ApiProperty()
         show_passwords!: boolean
 
-    @IsString()
+    @DateTimeField()
+    @IsDate()
     @ApiProperty()
-        password_last_modify_time: string
+        password_last_modify_time: Date
 
     @IsBoolean()
     @ApiProperty()
@@ -110,7 +112,7 @@ export class AdminResponseDto extends ResponseDto {
         this.read_only = admin.readOnly
         this.role = admin.role
         this.show_passwords = admin.showPasswords
-        this.password_last_modify_time = admin.saltedpassModifyTimestamp.toISOString()
+        this.password_last_modify_time = admin.saltedpassModifyTimestamp
         this.enable_2fa = admin.enable2fa
         this.otp_init = admin.otpInit
         this.otp_secret_key = admin.otpSecret

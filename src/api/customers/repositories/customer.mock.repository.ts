@@ -103,7 +103,7 @@ export class CustomerMockRepository implements CustomerRepository {
         return Promise.resolve()
     }
 
-    createInitialBalance(_customerId: number): Promise<void> {
+    createInitialBalance(_customerId: number, _create: Date): Promise<void> {
         return Promise.resolve()
     }
 

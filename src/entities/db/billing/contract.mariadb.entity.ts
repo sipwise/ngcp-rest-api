@@ -3,6 +3,7 @@ import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGen
 import {Contact} from './contact.mariadb.entity'
 import {Product} from './product.mariadb.entity'
 import {Reseller} from './reseller.mariadb.entity'
+import {VContractTimezone} from './v-contract-timezone.mariadb.entity'
 import {VoipSubscriber} from './voip-subscriber.mariadb.entity'
 
 import {internal} from '~/entities'
@@ -176,6 +177,9 @@ export class Contract extends BaseEntity {
 
     @OneToMany(()=> VoipPeeringGroup, contractPeeringGroup => contractPeeringGroup.peering_contract_id)
         peeringGroups!: ContractPhonebook[]
+
+    // tz=owner only, mapped by joinContractTimezone()
+    ownerTimezone?: VContractTimezone
 
     toInternal(): internal.Contract {
         const contract = internal.Contract.create({

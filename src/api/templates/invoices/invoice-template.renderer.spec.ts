@@ -18,8 +18,11 @@ import {InvoiceTemplateCategory} from '~/entities/internal/invoice-template.inte
 const defaultTemplate = (category: InvoiceTemplateCategory): string =>
     readFileSync(path.resolve(__dirname, './defaults', `${category}_invoice_template.svg`), 'utf8')
 
-const render = (template: string, category = InvoiceTemplateCategory.Customer): string =>
-    renderInvoiceTemplate(template, toTemplateVars(getInvoiceTemplateVars(category)), category)
+// unit specs run in Europe/Vienna: the platform zone
+const platform = 'Europe/Vienna'
+
+const render = (template: string, category = InvoiceTemplateCategory.Customer, zone = platform): string =>
+    renderInvoiceTemplate(template, toTemplateVars(getInvoiceTemplateVars(category)), category, zone)
 
 describe('InvoiceTemplateRenderer', () => {
     describe('helpers', () => {
@@ -60,7 +63,7 @@ describe('InvoiceTemplateRenderer', () => {
         it('escapes xml special characters of the values', () => {
             const vars = getInvoiceTemplateVars(InvoiceTemplateCategory.Customer)
             vars.rescontact!.company = 'A & <B>'
-            expect(renderInvoiceTemplate('<svg>[% rescontact.company %]</svg>', toTemplateVars(vars), InvoiceTemplateCategory.Customer))
+            expect(renderInvoiceTemplate('<svg>[% rescontact.company %]</svg>', toTemplateVars(vars), InvoiceTemplateCategory.Customer, platform))
                 .toEqual('<svg>A &amp; &lt;B&gt;</svg>')
         })
 
@@ -71,7 +74,7 @@ describe('InvoiceTemplateRenderer', () => {
         it('breaks lists into pages', () => {
             const vars = getInvoiceTemplateVars(InvoiceTemplateCategory.Customer)
             vars.calls = Array.from({length: 150}, () => ({...vars.calls![0]}))
-            const svg = renderInvoiceTemplate(defaultTemplate(InvoiceTemplateCategory.Customer), toTemplateVars(vars), InvoiceTemplateCategory.Customer)
+            const svg = renderInvoiceTemplate(defaultTemplate(InvoiceTemplateCategory.Customer), toTemplateVars(vars), InvoiceTemplateCategory.Customer, platform)
             expect(svg.match(/<svg/g)!.length).toBeGreaterThan(4)
             expect(svg.match(/<svg/g)!.length).toEqual(svg.match(/<\/svg>/g)!.length)
             expect(svg).toContain('Page 6')
@@ -108,16 +111,53 @@ describe('InvoiceTemplateRenderer', () => {
     describe('dates', () => {
         it('formats the weekday names', () => {
             // 2026-09-27 is a Sunday, 2026-09-28 a Monday
-            expect(formatDate(Date.UTC(2026, 8, 27) / 1000, '%A %a %w %u', true)).toEqual('Sunday Sun 0 7')
-            expect(formatDate(Date.UTC(2026, 8, 28) / 1000, '%A %a %w %u', true)).toEqual('Monday Mon 1 1')
-            expect(formatDate(Date.UTC(2026, 9, 3) / 1000, '%A', true)).toEqual('Saturday')
+            expect(formatDate(Date.UTC(2026, 8, 27) / 1000, '%A %a %w %u', 'UTC')).toEqual('Sunday Sun 0 7')
+            expect(formatDate(Date.UTC(2026, 8, 28) / 1000, '%A %a %w %u', 'UTC')).toEqual('Monday Mon 1 1')
+            expect(formatDate(Date.UTC(2026, 9, 3) / 1000, '%A', 'UTC')).toEqual('Saturday')
+        })
+
+        it.each([
+            // 2026-10-25 00:30 UTC: summer time in Vienna, morning in Tokyo, evening before in New York
+            ['Europe/Vienna', '2026-10-25 02:30:00 Sun 298 AM|02'],
+            ['Asia/Tokyo', '2026-10-25 09:30:00 Sun 298 AM|09'],
+            ['America/New_York', '2026-10-24 20:30:00 Sat 297 PM|08'],
+            ['UTC', '2026-10-25 00:30:00 Sun 298 AM|12'],
+        ])('formats a time in %s', (zone, expected) => {
+            expect(formatDate(Date.UTC(2026, 9, 25, 0, 30) / 1000, '%F %T %a %j %p|%I', zone)).toEqual(expected)
+        })
+
+        it('formats both sides of the autumn DST change in the zone', () => {
+            // 00:30 UTC is 02:30 CEST, 01:30 UTC is 02:30 CET
+            expect(formatDate(Date.UTC(2026, 9, 25, 0, 30) / 1000, '%T', platform)).toEqual('02:30:00')
+            expect(formatDate(Date.UTC(2026, 9, 25, 1, 30) / 1000, '%T', platform)).toEqual('02:30:00')
+            expect(formatDate(Date.UTC(2026, 9, 25, 1, 30, 59.9) / 1000, '%T', platform)).toEqual('02:30:59')
+        })
+
+        it('prints the period, the call times and the date of the invoice in the billing zone', () => {
+            const vars = getInvoiceTemplateVars(InvoiceTemplateCategory.Customer)
+            // the 2026-12 period of a Tokyo billing zone (2026-11-30 16:00 Vienna)
+            vars.invoice!.period_start = '2026-12-01T00:00:00.000+09:00'
+            vars.invoice!.period_end = '2026-12-31T23:59:59.000+09:00'
+            vars.calls = [{...vars.calls![0], start_time: Date.UTC(2026, 11, 31, 15, 30) / 1000}]
+            const template = '<svg>[% p_start %] [% p_end %] [% date_now(format=\'%F %T\') %]<!--@calls--></svg>'
+            const now = jest.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 11, 31, 16, 0, 0))
+            try {
+                const tokyo = renderInvoiceTemplate(template, toTemplateVars(vars), InvoiceTemplateCategory.Customer, 'Asia/Tokyo')
+                expect(tokyo).toMatch(/^<svg>2026-12-01 2026-12-31 2027-01-01 01:00:00/)
+                expect(tokyo).toContain('2027-01-01 00:30:00')
+                const vienna = renderInvoiceTemplate(template, toTemplateVars(vars), InvoiceTemplateCategory.Customer, platform)
+                expect(vienna).toMatch(/^<svg>2026-11-30 2026-12-31 2026-12-31 17:00:00/)
+                expect(vienna).toContain('2026-12-31 16:30:00')
+            } finally {
+                now.mockRestore()
+            }
         })
     })
 
     describe('derived variables', () => {
         it('returns the derived values of the invoice variables', () => {
             const vars = toTemplateVars(getInvoiceTemplateVars(InvoiceTemplateCategory.Customer))
-            expect(getDerivedVariables(vars)).toEqual({
+            expect(getDerivedVariables(vars, platform)).toEqual({
                 fixfee: expect.stringMatching(/^\d+\.\d{2}$/),
                 zonefee: expect.stringMatching(/^\d+\.\d{2}$/),
                 netfee: '60.00',
@@ -153,7 +193,7 @@ describe('InvoiceTemplateRenderer', () => {
         it('converts the default templates to a multi page pdf', async () => {
             const vars = getInvoiceTemplateVars(InvoiceTemplateCategory.Customer)
             vars.calls = Array.from({length: 100}, () => ({...vars.calls![0]}))
-            const svg = renderInvoiceTemplate(defaultTemplate(InvoiceTemplateCategory.Customer), toTemplateVars(vars), InvoiceTemplateCategory.Customer)
+            const svg = renderInvoiceTemplate(defaultTemplate(InvoiceTemplateCategory.Customer), toTemplateVars(vars), InvoiceTemplateCategory.Customer, platform)
             const pdf = await svgToPdf(svg)
             expect(pdf.subarray(0, 5).toString('latin1')).toEqual('%PDF-')
             expect(pdf.toString('latin1').match(/\/Type\s*\/Page\b/g)!.length).toBeGreaterThan(3)

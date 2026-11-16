@@ -2,6 +2,7 @@ import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsBoolean, IsDate, IsInt, IsObject, IsOptional, IsString} from 'class-validator'
 
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
+import {DateTimeField} from '~/decorators/date-time-field.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 
@@ -58,6 +59,7 @@ export class UserinfoResponseDto extends ResponseDto {
     @ApiPropertyOptional()
         uuid?: string
 
+    @DateTimeField()
     @IsOptional()
     @IsDate()
     @ApiPropertyOptional()

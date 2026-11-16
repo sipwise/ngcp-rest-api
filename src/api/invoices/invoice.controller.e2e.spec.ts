@@ -19,6 +19,7 @@ import {db} from '~/entities'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory, InvoiceTemplateType} from '~/entities/internal/invoice-template.internal.entity'
 import {InvoiceGenerator} from '~/entities/internal/invoice.internal.entity'
+import {IntervalStartMode} from '~/entities/internal/profile-package.internal.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
@@ -78,6 +79,9 @@ describe('Invoice', () => {
     let cdrCustomerId: number
     let peerId: number
     let terminatedId: number
+    // customer with a 1st_tz profile package and a Tokyo contact
+    let tokyoCustomerId: number
+    let tokyoPackageId: number
     const templates: Record<string, number> = {}
     // invoices: a1, a2, a3 of the reseller's customer, b1 of the other reseller's customer
     const invoices: Record<string, {id: number, serial: string, data: Buffer}> = {}
@@ -232,6 +236,29 @@ describe('Invoice', () => {
             source_provider_id: String(otherResellerContractId), destination_provider_id: String(peerId),
             source_reseller_cost: 77, source_reseller_billing_zone_id: z1,
         })
+
+        const tokyoPackage = await db.billing.ProfilePackage.create({
+            reseller_id: RESELLER_ID,
+            name: `${prefix}-1st_tz`,
+            description: 'e2e',
+            balance_interval_start_mode: IntervalStartMode.FirstTZ,
+        }).save()
+        tokyoPackageId = tokyoPackage.id
+        const tokyoContact = await db.billing.Contact.create({
+            reseller_id: RESELLER_ID,
+            email: `${prefix}-tokyo-billing@example.org`,
+            timezone: 'Asia/Tokyo',
+            create_timestamp: new Date(),
+        }).save()
+        createdContactIds.push(tokyoContact.id)
+        tokyoCustomerId = await createBilledContract(RESELLER_ID, SIPACCOUNT_PRODUCT_ID, tokyoContact.id, {profile_package_id: tokyoPackageId})
+        const tokyoOut = {
+            source_user_id: await createSubscriber(tokyoCustomerId, `${prefix}-t1`), source_account_id: tokyoCustomerId,
+            source_provider_id: String(RESELLER_CONTRACT_ID), source_customer_billing_zone_id: z1,
+        }
+        // 2025-01-01 00:30 in Tokyo (2024 in Europe and America), 2025-02-01 00:30 in Tokyo (January in Europe and America)
+        await createCdr(new Date('2024-12-31T15:30:00Z'), {...tokyoOut, source_customer_cost: 7})
+        await createCdr(new Date('2025-01-31T15:30:00Z'), {...tokyoOut, source_customer_cost: 1000})
 
         await createTemplate('customer', InvoiceTemplateCategory.Customer, InvoiceTemplateCallDirection.InOut, RESELLER_ID)
         await createTemplate('did', InvoiceTemplateCategory.Did, InvoiceTemplateCallDirection.Out, RESELLER_ID)
@@ -494,6 +521,82 @@ describe('Invoice', () => {
                 const response = await get('/api/invoices?unknown=1')
                 expect(response.status).toEqual(HttpStatus.BAD_REQUEST)
             })
+            it.each(['', '&tz=Asia/Tokyo', '&tz=owner'])('finds an invoice by its period values from a GET (as stored, query \'%s\')', async (tz) => {
+                const item = await get(`/api/invoices/${invoices.a2.id}?${tz.slice(1)}`)
+                expect(item.status).toEqual(HttpStatus.OK)
+                const {period_start: start, period_end: end} = item.body as {period_start: string, period_end: string}
+                const response = await get(`/api/invoices?serial=${prefix}*&period_start_ge=${start}&period_end_le=${end}${tz}`)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(ids(response)).toEqual(idsOf('a2'))
+            })
+            it('converts a period filter value with offset to platform time', async () => {
+                // the instant of 2025-02-01 00:00:00 platform time, the period_start of a2
+                const exact = new Date(2025, 1, 1).toISOString()
+                const later = new Date(new Date(2025, 1, 1).getTime() + 1000).toISOString()
+                const including = await get(`/api/invoices?serial=${prefix}*&period_start_ge=${exact}&period_end_le=2025-02-28 23:59:59`)
+                const excluding = await get(`/api/invoices?serial=${prefix}*&period_start_ge=${later}&period_end_le=2025-02-28 23:59:59`)
+                expect([including.status, excluding.status]).toEqual([HttpStatus.OK, HttpStatus.OK])
+                expect(ids(including)).toEqual(idsOf('a2'))
+                expect(ids(excluding)).toEqual([])
+            })
+            it.each([
+                ['a wildcard', 'period_start_ge=2025-*', 'period_start_ge', 'DATE_TIME_WILDCARD'],
+                ['an unparsable value', 'period_end_le=2025-W05', 'period_end_le', 'INVALID_DATE_TIME'],
+            ])('rejects %s in a period filter with 400', async (_name, query, parameter, code) => {
+                const response = await get(`/api/invoices?${query}`)
+                expect(response.status).toEqual(HttpStatus.BAD_REQUEST)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.parameter, e.code])).toEqual([[parameter, code]])
+            })
+        })
+
+        describe('tz=owner', () => {
+            // 2026-07-01 21:00 in Tokyo, 08:00 in New York (DST)
+            const sentDate = new Date('2026-07-01T12:00:00Z')
+            const owned: Record<string, {id: number, contractId: number}> = {}
+
+            beforeAll(async () => {
+                for (const [name, timezone] of [['tokyo', 'Asia/Tokyo'], ['newYork', 'America/New_York']]) {
+                    const contact = await db.billing.Contact.create({
+                        reseller_id: RESELLER_ID,
+                        email: `${prefix}-${name}@example.org`,
+                        timezone: timezone,
+                        create_timestamp: new Date(),
+                    }).save()
+                    createdContactIds.push(contact.id)
+                    const contractId = await createContract(RESELLER_ID, SIPACCOUNT_PRODUCT_ID, contact.id)
+                    const invoice = await db.billing.Invoice.create({
+                        contract_id: contractId,
+                        serial: `tz-${prefix}-${name}`,
+                        period_start: new Date(2025, 0, 1),
+                        period_end: new Date(2025, 0, 31, 23, 59, 59),
+                        amount_net: 0,
+                        amount_vat: 0,
+                        amount_total: 0,
+                        data: Buffer.from('%PDF-1.4'),
+                        sent_date: sentDate,
+                    }).save()
+                    createdInvoiceIds.push(invoice.id)
+                    owned[name] = {id: invoice.id, contractId: contractId}
+                }
+            })
+
+            it('renders each invoice in its owner\'s timezone, local fields as stored', async () => {
+                const response = await get(`/api/invoices?tz=owner&serial=tz-${prefix}-*&order_by=id`)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.total_count).toEqual(2)
+                expect((response.body.data as InvoiceResponseDto[]).map(i => [i.id, i.sent_date, i.period_start])).toEqual([
+                    [owned.tokyo.id, '2026-07-01T21:00:00.000+09:00', '2025-01-01 00:00:00'],
+                    [owned.newYork.id, '2026-07-01T08:00:00.000-04:00', '2025-01-01 00:00:00'],
+                ])
+            })
+
+            it('renders an invoice and its expanded customer with tz=owner', async () => {
+                const response = await get(`/api/invoices/${owned.tokyo.id}?tz=owner&expand=customer_id`)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.sent_date).toEqual('2026-07-01T21:00:00.000+09:00')
+                expect(response.body.period_end).toEqual('2025-01-31 23:59:59')
+                expect(response.body.customer_id_expand.id).toEqual(owned.tokyo.contractId)
+            })
         })
 
         describe('PUT, PATCH', () => {
@@ -629,6 +732,30 @@ describe('Invoice', () => {
                 expect(invoice.amount_net).toBeCloseTo(310.5, 6)
                 expect(new Date(invoice.period_end)).toEqual(new Date(2025, 0, 20, 10, 0, 0))
             })
+            it('creates the invoice of a calendar month in the billing zone of a 1st_tz customer', async () => {
+                const response = await post({customer_id: tokyoCustomerId, template_id: templates.customer, period: '2025-01'})
+                expect(response.status).toEqual(HttpStatus.CREATED)
+                const invoice: InvoiceResponseDto = response.body.data[0]
+                createdInvoiceIds.push(invoice.id)
+                // stored and returned as platform time
+                expect(new Date(invoice.period_start)).toEqual(new Date('2025-01-01T00:00:00+09:00'))
+                expect(new Date(invoice.period_end)).toEqual(new Date('2025-01-31T23:59:59+09:00'))
+                expect(invoice.serial).toEqual(`INV202501${String(invoice.id).padStart(7, '0')}`)
+                expect(invoice.amount_net).toBeCloseTo(7, 6)
+                await expectPdf(invoice.id)
+            })
+            it('converts a period_start with offset to platform time', async () => {
+                const response = await post({
+                    customer_id: cdrCustomerId, template_id: templates.customer,
+                    period_start: '2025-01-09T23:00:00Z', period_end: '2025-01-20T09:00:00Z',
+                })
+                expect(response.status).toEqual(HttpStatus.CREATED)
+                const invoice: InvoiceResponseDto = response.body.data[0]
+                createdInvoiceIds.push(invoice.id)
+                expect(invoice.period_start).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+                expect(new Date(invoice.period_start)).toEqual(new Date('2025-01-09T23:00:00Z'))
+                expect(new Date(invoice.period_end)).toEqual(new Date('2025-01-20T09:00:00Z'))
+            })
             it('lists a call within the customer once in the in_out call list', async () => {
                 const rows = await app.get(InvoiceMariadbRepository).readCalls({
                     contractId: cdrCustomerId,
@@ -682,11 +809,19 @@ describe('Invoice', () => {
                 ['a period_start after period_end', (): Record<string, unknown> => ({
                     customer_id: cdrCustomerId, template_id: templates.customer, period_start: '2025-01-10', period_end: '2025-01-01',
                 }), '/period_end', 'INVOICE_PERIOD_INVALID'],
+                ['a missing period', (): Record<string, unknown> => ({
+                    customer_id: cdrCustomerId, template_id: templates.customer,
+                }), '/period_start', 'INVOICE_PERIOD_REQUIRED'],
             ])('points to the field of %s', async (_name, body, pointer, code) => {
                 const response = await post(body())
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
                 expect(response.body.errorCode).toEqual(code)
                 expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([[pointer, code]])
+            })
+            it('rejects an unparsable period_start with 422', async () => {
+                const response = await post({customer_id: cdrCustomerId, template_id: templates.customer, period_start: '2025-W05'})
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/period_start', 'isDateTime']])
             })
             it('does not keep the invoice when the template fails to render', async () => {
                 const count = await db.billing.Invoice.countBy({contract_id: cdrCustomerId})
@@ -770,6 +905,8 @@ describe('Invoice', () => {
                 await db.billing.Contract.delete(customerContractIds)
             if (createdContactIds.length)
                 await db.billing.Contact.delete(createdContactIds)
+            if (tokyoPackageId)
+                await db.billing.ProfilePackage.delete(tokyoPackageId)
             if (otherResellerId)
                 await db.billing.Reseller.delete(otherResellerId)
             if (otherResellerContractId)

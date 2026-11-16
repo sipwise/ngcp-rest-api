@@ -15,6 +15,9 @@ export class Invoice {
     data?: Buffer
     sentDate?: Date
     generator?: InvoiceGenerator
-    // template the invoice is created with, not stored
+    // template and calendar month (YYYY-MM) the invoice is created with, not stored
+    period?: string
     templateId?: number
+    // zone of the owner for tz=owner, not stored
+    ownerTimezone?: string
 }

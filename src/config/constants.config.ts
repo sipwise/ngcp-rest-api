@@ -72,6 +72,10 @@ export class ReservedQueryParamsDto {
 
     @IsOptional()
     @IsString()
+        tz: string = undefined // timezone of date/time values, validated by TimezoneMiddleware
+
+    @IsOptional()
+    @IsString()
         x_rbw_req_id: string = undefined // reserved for ALE as their unique request identifier to appear in the logs
 
     @IsOptional()

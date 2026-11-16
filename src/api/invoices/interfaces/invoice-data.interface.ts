@@ -1,15 +1,19 @@
 import {internal} from '~/entities'
 import {InvoiceTemplateCallDirection} from '~/entities/internal/invoice-template.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
+import {IntervalStartMode} from '~/entities/internal/profile-package.internal.entity'
 
 /**
- * Contract of an invoice with its contact and the contact of the reseller's contract
+ * Contract of an invoice with its contact and the contact of the reseller's contract, the balance interval
+ * start mode of its profile package and its stored timezone name (v_contract_timezone) for the billing zone
  */
 export interface InvoiceContract {
     contract: internal.Contract
     productClass: ProductClass
     contact: internal.Contact
     resellerContact?: internal.Contact
+    balanceIntervalStartMode?: IntervalStartMode
+    timezone?: string
 }
 
 export enum InvoiceCdrContractType {

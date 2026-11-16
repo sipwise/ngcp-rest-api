@@ -48,7 +48,7 @@ export const derivedVariables = ['fixfee', 'zonefee', 'netfee', 'vatfee', 'allfe
 /**
  * Derived values of the invoice variables, for the did category the zone fee is replaced per did while rendering
  */
-export function getDerivedVariables(vars: Record<string, unknown>): Record<typeof derivedVariables[number], unknown> {
+export function getDerivedVariables(vars: Record<string, unknown>, zone: string): Record<typeof derivedVariables[number], unknown> {
     const invoice = isObject(vars.invoice) ? vars.invoice : {}
     const billprof = isObject(vars.billprof) ? vars.billprof : {}
     const zones = isObject(vars.zones) ? vars.zones : {}
@@ -59,8 +59,8 @@ export function getDerivedVariables(vars: Record<string, unknown>): Record<typeo
         vatfee: moneyFormat(invoice.amount_vat),
         allfee: moneyFormat(invoice.amount_total),
         cur: billprof.currency,
-        p_start: periodDate(invoice.period_start),
-        p_end: periodDate(invoice.period_end),
+        p_start: periodDate(invoice.period_start, zone),
+        p_end: periodDate(invoice.period_end, zone),
     }
 }
 
@@ -95,8 +95,8 @@ const zoneColumns = (category: InvoiceTemplateCategory): Column[] => [
     {name: costField[category], dx: 156, anchor: 'end', format: value => moneyFormat(value, 3)},
 ]
 
-const callColumns: Column[] = [
-    {name: 'start_time', dx: 0, format: value => formatDate(value, '%Y-%m-%d %H:%M:%S')},
+const callColumns = (zone: string): Column[] => [
+    {name: 'start_time', dx: 0, format: value => formatDate(value, '%Y-%m-%d %H:%M:%S', zone)},
     {name: 'duration', dx: 141.175, anchor: 'end', format: timestamp2time},
     {name: 'destination_user_in', dx: 28.35, format: maskNumber},
     {name: 'zone', dx: 113.4},
@@ -135,13 +135,13 @@ function maskNumber(value: unknown): string {
 }
 
 /**
- * Formats the derived date value of the invoice period (ISO strings in UTC)
+ * Formats the derived date value of the invoice period (RFC 3339 strings) in the zone
  */
-function periodDate(value: unknown): string {
+function periodDate(value: unknown, zone: string): string {
     const d = new Date(str(value))
     if (Number.isNaN(d.getTime()))
         return ''
-    return formatDate(d.getTime() / 1000, '%Y-%m-%d', true)
+    return formatDate(d.getTime() / 1000, '%Y-%m-%d', zone)
 }
 
 type Node =
@@ -211,8 +211,9 @@ class Renderer {
         private readonly vars: Values,
         private readonly category: InvoiceTemplateCategory,
         private readonly background: string,
+        private readonly zone: string,
     ) {
-        Object.assign(this.derived, getDerivedVariables(vars))
+        Object.assign(this.derived, getDerivedVariables(vars, zone))
     }
 
     run(nodes: Node[]): string {
@@ -259,7 +260,7 @@ class Renderer {
                 break
             case 'calls':
                 this.list(this.vars.calls, {
-                    startx: 62.37, starty: 184.275, offsety: 14, miny: 113.4, maxy: 737, columns: callColumns,
+                    startx: 62.37, starty: 184.275, offsety: 14, miny: 113.4, maxy: 737, columns: callColumns(this.zone),
                 })
                 break
             case 'advance':
@@ -344,7 +345,7 @@ class Renderer {
     private evaluate(expr: string): string {
         const now = dateNowPattern.exec(expr)
         if (now)
-            return formatDate(Math.floor(Date.now() / 1000), now[1] ?? now[2])
+            return formatDate(Math.floor(Date.now() / 1000), now[1] ?? now[2], this.zone)
         if (pathPattern.test(expr))
             return str(this.lookup(expr))
         throw new InvoiceTemplateRenderError(`unsupported expression '${expr}'`)
@@ -360,7 +361,7 @@ export const pathPattern = /^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*$/
  *
  * @throws InvoiceTemplateRenderError if the template contains unsupported expressions or markers
  */
-export function renderInvoiceLayout(template: string, vars: Values, category: InvoiceTemplateCategory): string {
+export function renderInvoiceLayout(template: string, vars: Values, category: InvoiceTemplateCategory, zone: string): string {
     const {nodes, background} = parseTemplate(template)
-    return new Renderer(vars, category, background).run(nodes)
+    return new Renderer(vars, category, background, zone).run(nodes)
 }

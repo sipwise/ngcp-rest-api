@@ -15,6 +15,7 @@ import {
     invoiceCdrContractType,
     invoiceContractClasses,
     invoiceCostCategory,
+    invoicePeriod,
     invoiceSerial,
     invoiceTemplateVars,
     mergeZones,
@@ -26,6 +27,7 @@ import {InvoiceTemplateService} from '~/api/templates/invoices/invoice.service'
 import {internal} from '~/entities'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory} from '~/entities/internal/invoice-template.internal.entity'
+import {billingTimezone} from '~/helpers/billing.helper'
 import {isShowCallListSuppressions} from '~/helpers/call-list-suppression.helper'
 import {apiError, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
@@ -84,9 +86,15 @@ export class InvoiceService implements CrudService<internal.Invoice> {
      * Creates the invoice of the contract and period with the template, the pdf is stored with the invoice
      */
     private async createInvoice(invoice: internal.Invoice, sr: ServiceRequest, key: number): Promise<internal.Invoice> {
-        this.checkPeriod(invoice, sr, key)
+        if (!invoice.periodStart && !invoice.period)
+            throw apiError(this.i18n.t('errors.INVOICE_PERIOD_REQUIRED'), itemPointer(sr, key, invoice, 'periodStart'))
         const template = await this.readTemplate(invoice, sr, key)
         const contract = await this.readContract(invoice, template, sr, key)
+        const timezone = billingTimezone(contract.balanceIntervalStartMode, contract.timezone)
+        const {start, end} = invoicePeriod(timezone, invoice.period, invoice.periodStart, invoice.periodEnd)
+        invoice.periodStart = start
+        invoice.periodEnd = end
+        this.checkPeriod(invoice, sr, key)
         const billingProfile = await this.invoiceRepo.readActualBillingProfile(contract.contract, invoice.periodStart)
         if (!billingProfile)
             throw new UnprocessableEntityException(this.i18n.t('errors.CONTRACT_BILLING_PROFILE_NOT_FOUND', {args: {id: invoice.contractId}}))
@@ -125,7 +133,7 @@ export class InvoiceService implements CrudService<internal.Invoice> {
         invoice.sentDate = null
         const id = await this.invoiceRepo.create(invoice)
 
-        invoice.serial = invoiceSerial(id, invoice.periodStart)
+        invoice.serial = invoiceSerial(id, invoice.periodStart, timezone)
         const vars = invoiceTemplateVars({
             contract: contract,
             billingProfile: billingProfile,
@@ -137,15 +145,14 @@ export class InvoiceService implements CrudService<internal.Invoice> {
             zones: zones,
             calls: calls,
             didZones: didZoneVars,
+            timezone: timezone,
         })
-        invoice.data = await this.invoiceTemplateService.render(template, vars)
+        invoice.data = await this.invoiceTemplateService.render(template, vars, timezone)
         await this.invoiceRepo.update(id, invoice)
         return await this.invoiceRepo.readById(id, sr)
     }
 
     private checkPeriod(invoice: internal.Invoice, sr: ServiceRequest, key: number): void {
-        if (!invoice.periodStart)
-            throw apiError(this.i18n.t('errors.INVOICE_PERIOD_REQUIRED'), itemPointer(sr, key, invoice, 'periodStart'))
         const start = invoice.periodStart.getTime()
         const end = invoice.periodEnd?.getTime()
         if (Number.isNaN(start) || end === undefined || Number.isNaN(end) || start >= end)

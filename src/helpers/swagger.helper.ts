@@ -417,6 +417,7 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string):
 
     const document = SwaggerModule.createDocument(app, docBuilder.build(), {extraModels: [ErrorResponseDto, ErrorEntryDto]})
     sortSearchQueryParameters(document)
+    addTimezoneParameter(document)
     addErrorResponses(document)
     const versions = readVersions()
     // the start of the server, refers the page to the init script and the pdf of this version
@@ -608,6 +609,29 @@ function errorResponse(description: string, example: Omit<ErrorResponseDto, 'tx'
                 example: {tx: '725d5b49f5674d719db795cf2f81262e', ...example},
             },
         },
+    }
+}
+
+const TIMEZONE_PARAMETER: ParameterObject = {
+    name: 'tz',
+    in: 'query',
+    required: false,
+    description: 'Timezone of the date/time values of the request and the response: an IANA name (e.g. '
+        + '`Europe/Vienna`, `UTC`) or `owner` (each item in its owner\'s timezone). Default: the user\'s timezone. '
+        + 'Local (platform) values are never converted. See "Date/time and timezones" in Concepts.',
+    schema: {type: 'string', example: 'UTC'},
+}
+
+// every route takes tz (TimezoneMiddleware), inline so that the PDF lists it too
+function addTimezoneParameter(document: OpenAPIObject): void {
+    for (const pathItem of Object.values(document.paths)) {
+        for (const method of OPERATION_METHODS) {
+            const operation = pathItem[method]
+            if (!operation)
+                continue
+            operation.parameters = (operation.parameters ?? []).filter(param => '$ref' in param || param.name != 'tz')
+            operation.parameters.push({...TIMEZONE_PARAMETER, schema: {...TIMEZONE_PARAMETER.schema}})
+        }
     }
 }
 

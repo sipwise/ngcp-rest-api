@@ -1,6 +1,8 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
+import {DateTimeField, DateTimeKind} from '~/decorators/date-time-field.decorator'
 import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
+import {dateTimeFilter} from '~/helpers/query-builder.helper'
 
 export class CustomerContactSearchDto {
     @ApiPropertyOptional()
@@ -15,6 +17,7 @@ export class CustomerContactSearchDto {
         comregnum?: string
     @ApiPropertyOptional()
         country?: string
+    @DateTimeField()
     @ApiPropertyOptional()
         create_timestamp: Date
     @ApiPropertyOptional()
@@ -51,6 +54,7 @@ export class CustomerContactSearchDto {
         lastname?: string
     @ApiPropertyOptional()
         mobilenumber?: string
+    @DateTimeField()
     @ApiPropertyOptional()
         modify_timestamp: Date
     @ApiPropertyOptional()
@@ -65,6 +69,7 @@ export class CustomerContactSearchDto {
         status: ContactStatus
     @ApiPropertyOptional()
         street?: string
+    @DateTimeField()
     @ApiPropertyOptional()
         terminate_timestamp?: Date
     @ApiPropertyOptional()
@@ -76,5 +81,8 @@ export class CustomerContactSearchDto {
     @ApiHideProperty()
         _alias = {
             id: 'contact.id',
+            create_timestamp: dateTimeFilter(DateTimeKind.DateTime, 'contact.create_timestamp'),
+            modify_timestamp: dateTimeFilter(DateTimeKind.DateTime, 'contact.modify_timestamp'),
+            terminate_timestamp: dateTimeFilter(DateTimeKind.DateTime, 'contact.terminate_timestamp'),
         }
 }

@@ -2,6 +2,7 @@ import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColum
 
 import {internal} from '~/entities'
 import {Contract} from '~/entities/db/billing/contract.mariadb.entity'
+import {VContractTimezone} from '~/entities/db/billing/v-contract-timezone.mariadb.entity'
 import {InvoiceGenerator} from '~/entities/internal/invoice.internal.entity'
 
 @Entity({
@@ -85,6 +86,9 @@ export class Invoice extends BaseEntity {
     @ManyToOne(() => Contract, contract => contract.id)
     @JoinColumn({name: 'contract_id'})
         contract?: Contract
+
+    // tz=owner only, mapped by joinContractTimezone()
+    ownerTimezone?: VContractTimezone
 
     toInternal(): internal.Invoice {
         const invoice = new internal.Invoice()

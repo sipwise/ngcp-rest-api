@@ -35,3 +35,6 @@ export {VSubscriberContractPhonebook} from './v-subscriber-contract-phonebook.ma
 export {VSubscriberResellerPhonebook} from './v-subscriber-reseller-phonebook.mariadb.entity'
 export {ContractBillingProfileNetwork} from './contract-billing-profile-network.mariadb.entity'
 export {ContractBillingProfileNetworkSchedule} from './contract-billing-profile-network-schedule.mariadb.entity'
+export {VContractTimezone} from './v-contract-timezone.mariadb.entity'
+export {VResellerTimezone} from './v-reseller-timezone.mariadb.entity'
+export {VSubscriberTimezone} from './v-subscriber-timezone.mariadb.entity'

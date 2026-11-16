@@ -1,6 +1,7 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {IsDate, IsInt, IsNotEmpty, IsString} from 'class-validator'
 
+import {DateTimeField} from '~/decorators/date-time-field.decorator'
 import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
@@ -30,6 +31,7 @@ export class BanSubscriberResponseDto extends ResponseDto {
     @ApiProperty()
         last_banned_ip: string
 
+    @DateTimeField()
     @IsDate()
     @IsNotEmpty()
     @ApiProperty()

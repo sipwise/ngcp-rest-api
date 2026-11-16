@@ -24,10 +24,11 @@ import {internal} from '~/entities'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory} from '~/entities/internal/invoice-template.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {CallListSuppression, suppressNumber} from '~/helpers/call-list-suppression.helper'
-import {toLocalDateTime} from '~/helpers/date.helper'
+import {formatDateTime} from '~/helpers/timezone.helper'
 
 /**
- * Pure functions of the invoice creation (periods, serial, zones, amounts, template variables)
+ * Pure functions of the invoice creation (periods, serial, zones, amounts, template variables); the zone
+ * arguments are the billing zone of the contract (billingTimezone)
  */
 
 /**
@@ -54,48 +55,36 @@ export const invoiceCdrContractType: Record<InvoiceTemplateCategory, InvoiceCdrC
     [InvoiceTemplateCategory.Reseller]: InvoiceCdrContractType.Provider,
 }
 
-const dateTimePattern = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/
-
 /**
- * Parses 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM[:SS]' in server local time, Invalid Date if it is not a valid date
+ * Invoice period: a calendar month ('YYYY-MM') in the billing zone or period_start [+ period_end] (platform
+ * time), period_start takes precedence; without period_end the period ends 1 second before start + 1 month
  */
-export function parseLocalDateTime(value: string): Date {
-    const m = dateTimePattern.exec(value)
-    if (!m)
-        return new Date(NaN)
-    const [year, month, day, hour, minute, second] = m.slice(1).map(v => Number(v ?? 0))
-    const date = new Date(year, month - 1, day, hour, minute, second)
-    const valid = date.getFullYear() == year && date.getMonth() == month - 1 && date.getDate() == day &&
-        date.getHours() == hour && date.getMinutes() == minute && date.getSeconds() == second
-    return valid ? date : new Date(NaN)
-}
-
-/**
- * Invoice period in server local time: a calendar month ('YYYY-MM') or period_start [+ period_end],
- * period_start takes precedence; without period_end the period ends 1 second before start + 1 month
- */
-export function invoicePeriod(period?: string, periodStart?: string, periodEnd?: string): {start?: Date, end?: Date} {
+export function invoicePeriod(zone: string, period?: string, periodStart?: Date, periodEnd?: Date): {start?: Date, end?: Date} {
     let start: Date | undefined
+    let end: Date | undefined
     if (periodStart) {
-        start = parseLocalDateTime(periodStart)
+        start = periodStart
+        end = new Date(start.getFullYear(), start.getMonth() + 1, start.getDate(),
+            start.getHours(), start.getMinutes(), start.getSeconds() - 1)
     } else if (period) {
-        start = parseLocalDateTime(`${period}-01`)
+        const month = Temporal.PlainYearMonth.from(period)
+        const startOfMonth = (m: Temporal.PlainYearMonth): Temporal.ZonedDateTime =>
+            m.toPlainDate({day: 1}).toZonedDateTime(zone)
+        start = new Date(startOfMonth(month).epochMilliseconds)
+        end = new Date(startOfMonth(month.add({months: 1})).subtract({seconds: 1}).epochMilliseconds)
     }
     if (!start)
         return {}
-    const end = periodEnd
-        ? parseLocalDateTime(periodEnd)
-        : new Date(start.getFullYear(), start.getMonth() + 1, start.getDate(),
-            start.getHours(), start.getMinutes(), start.getSeconds() - 1)
-    return {start, end}
+    return {start, end: periodEnd ?? end}
 }
 
 /**
- * Serial INV<YYYY><MM><id, 7 digits> of the period start in server local time
+ * Serial INV<YYYY><MM><id, 7 digits> of the period start in the billing zone
  */
-export function invoiceSerial(id: number, periodStart: Date): string {
-    const year = String(periodStart.getFullYear()).padStart(4, '0')
-    const month = String(periodStart.getMonth() + 1).padStart(2, '0')
+export function invoiceSerial(id: number, periodStart: Date, zone: string): string {
+    const start = Temporal.Instant.fromEpochMilliseconds(periodStart.getTime()).toZonedDateTimeISO(zone)
+    const year = String(start.year).padStart(4, '0')
+    const month = String(start.month).padStart(2, '0')
     return `INV${year}${month}${String(id).padStart(7, '0')}`
 }
 
@@ -236,13 +225,6 @@ function contactVars(contact?: internal.Contact): InvoiceTemplateContactVars {
     return vars
 }
 
-/**
- * The template periods are printed in UTC, so the local wall clock is passed as UTC time
- */
-function wallClockIso(date: Date): string {
-    return `${toLocalDateTime(date).replace(' ', 'T')}.000Z`
-}
-
 export interface InvoiceVarsData {
     contract: InvoiceContract
     billingProfile: internal.BillingProfile
@@ -254,6 +236,8 @@ export interface InvoiceVarsData {
     zones: InvoiceTemplateZonesVars
     calls?: InvoiceTemplateCallVars[]
     didZones?: InvoiceTemplateDidZoneVars[]
+    // billing zone of the contract
+    timezone: string
 }
 
 /**
@@ -282,8 +266,8 @@ export function invoiceTemplateVars(data: InvoiceVarsData): InvoiceTemplateVars 
             currency: profile.currency ?? null,
         }),
         invoice: new InvoiceTemplateInvoiceVars({
-            period_start: wallClockIso(data.periodStart),
-            period_end: wallClockIso(data.periodEnd),
+            period_start: formatDateTime(data.periodStart, data.timezone),
+            period_end: formatDateTime(data.periodEnd, data.timezone),
             serial: data.serial,
             amount_net: data.amounts.amountNet,
             amount_vat: data.amounts.amountVat,

@@ -13,6 +13,7 @@ import {internal} from '~/entities'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory} from '~/entities/internal/invoice-template.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
+import {IntervalStartMode} from '~/entities/internal/profile-package.internal.entity'
 import {CallListSuppressionMode} from '~/helpers/call-list-suppression.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -263,7 +264,6 @@ describe('InvoiceService', () => {
         describe('period', () => {
             it.each([
                 ['missing start', {periodStart: undefined}],
-                ['missing end', {periodEnd: undefined}],
                 ['invalid start', {periodStart: new Date('x')}],
                 ['invalid end', {periodEnd: new Date('x')}],
                 ['start after end', {periodStart: periodEnd, periodEnd: periodStart}],
@@ -272,6 +272,50 @@ describe('InvoiceService', () => {
                 const spy = jest.spyOn(repo, 'create')
                 await expect(service.create([newInvoice(data)], makeSr())).rejects.toThrow(ApiErrorException)
                 expect(spy).not.toHaveBeenCalled()
+            })
+
+            it('ends 1 second before period_start + 1 month without period_end', async () => {
+                const [created] = await service.create([newInvoice({periodEnd: undefined})], makeSr())
+                expect(created.periodEnd).toEqual(new Date(2026, 0, 31, 23, 59, 59))
+            })
+
+            it('covers the calendar month of period in the platform zone', async () => {
+                const [created] = await service.create([newInvoice({period: '2026-03', periodStart: undefined, periodEnd: undefined})], makeSr())
+                expect([created.periodStart, created.periodEnd]).toEqual([new Date(2026, 2, 1), new Date(2026, 2, 31, 23, 59, 59)])
+                expect(created.serial).toBe('INV2026030000001')
+                expect(templateService.render.mock.calls[0][2]).toBe('Europe/Vienna')
+            })
+
+            it.each([
+                [IntervalStartMode.FirstTZ, 'Asia/Tokyo'],
+                [IntervalStartMode.CreateTZ, 'Asia/Tokyo'],
+                [IntervalStartMode.First, 'Europe/Vienna'],
+                [IntervalStartMode.Create, 'Europe/Vienna'],
+                [IntervalStartMode.Topup, 'Europe/Vienna'],
+                [undefined, 'Europe/Vienna'],
+            ])('uses the billing zone of a contract with start mode %s: %s', async (mode, zone) => {
+                Object.assign(repo.contractDB[10], {balanceIntervalStartMode: mode, timezone: 'Asia/Tokyo'})
+                const [created] = await service.create([newInvoice({period: '2026-12', periodStart: undefined, periodEnd: undefined})], makeSr())
+                // 2026-12 in Tokyo starts on 2026-11-30 16:00 platform time, the serial keeps its month
+                const start = zone == 'Asia/Tokyo' ? new Date(2026, 10, 30, 16, 0, 0) : new Date(2026, 11, 1)
+                expect(created.periodStart).toEqual(start)
+                expect(created.serial).toBe('INV2026120000001')
+                const [, vars, renderZone] = templateService.render.mock.calls[0]
+                expect(renderZone).toBe(zone)
+                expect(vars.invoice.period_start).toBe(zone == 'Asia/Tokyo' ? '2026-12-01T00:00:00.000+09:00' : '2026-12-01T00:00:00.000+01:00')
+            })
+
+            it('takes the serial month of period_start in the billing zone', async () => {
+                Object.assign(repo.contractDB[10], {balanceIntervalStartMode: IntervalStartMode.FirstTZ, timezone: 'Asia/Tokyo'})
+                // 2026-11-30 16:00 platform time is 2026-12-01 00:00 in Tokyo
+                const [created] = await service.create([newInvoice({periodStart: new Date(2026, 10, 30, 16, 0, 0), periodEnd: undefined})], makeSr())
+                expect(created.serial).toBe('INV2026120000001')
+            })
+
+            it('falls back to the platform zone for a stored localtime zone', async () => {
+                Object.assign(repo.contractDB[10], {balanceIntervalStartMode: IntervalStartMode.FirstTZ, timezone: 'localtime'})
+                const [created] = await service.create([newInvoice({period: '2026-12', periodStart: undefined, periodEnd: undefined})], makeSr())
+                expect(created.periodStart).toEqual(new Date(2026, 11, 1))
             })
         })
 

@@ -213,6 +213,72 @@ Content-Type: application/json
 
 Una POST in blocco senza `Prefer` restituisce 204, quindi richiedere `return=id` o `return=representation` per ottenere i nuovi id.
 
+### Data/ora e fusi orari
+
+Esistono due tipi di campi data/ora. Gli schemi qui sotto contrassegnano ogni campo con `x-timezone`:
+
+| Tipo | Campi | Formato | Schema |
+| --- | --- | --- | --- |
+| Data/ora | `create_timestamp`, `sent_date` e tutti gli altri istanti | RFC 3339 con offset e millisecondi, `2026-12-01T00:00:00.000+01:00` (`…Z` per UTC) | `format: date-time`, `x-timezone: user` |
+| Locale (piattaforma) | valori di fatturazione: `billing_profiles` del cliente `start`, `stop`, `effective_start_time`; fattura `period_start`, `period_end` | ora della piattaforma come memorizzata, senza offset, `2026-12-01 00:00:00` | `format: local-date-time` o `local-time`, `x-timezone: platform` |
+
+Il parametro di query `tz` seleziona il fuso orario dei valori data/ora, su ogni route e metodo:
+
+| `tz` | Valori data/ora | Valori locali |
+| --- | --- | --- |
+| non impostato | il fuso orario dell'utente | ora della piattaforma, come memorizzata |
+| nome IANA, ad es. `Europe/Vienna`, `UTC` | quel fuso orario | ora della piattaforma, come memorizzata |
+| `owner` | ogni elemento nel fuso orario del suo proprietario (clienti, fatture), gli oggetti espansi in quello del proprio proprietario; il fuso orario dell'utente per le altre risorse | ora della piattaforma, come memorizzata |
+
+Qualsiasi altro valore viene rifiutato con 400 (`errors[].parameter` è `tz`).
+
+Il fuso orario dell'utente è quello dell'account autenticato:
+
+- subscriber, subscriber admin: contatto del subscriber, altrimenti contatto del cliente, altrimenti contatto del reseller, altrimenti quello della piattaforma
+- amministratore associato a un reseller: contatto del reseller, altrimenti quello della piattaforma
+- altri amministratori e richieste senza autenticazione: quello della piattaforma
+
+Il fuso orario del proprietario di clienti e fatture è quello del contatto del cliente, altrimenti del contatto del reseller, altrimenti quello della piattaforma. Il campo `timezone` di contatti e subscriber accetta nomi IANA o null.
+
+```http
+GET /api/v2/customers/7                 "create_timestamp": "2026-11-06T11:31:33.000+01:00"   (system admin)
+GET /api/v2/customers/7                 "create_timestamp": "2026-11-06T05:31:33.000-05:00"   (reseller admin in New York)
+GET /api/v2/customers/7?tz=owner        "create_timestamp": "2026-11-06T19:31:33.000+09:00"   (customer in Tokyo)
+GET /api/v2/customers/7?tz=UTC          "create_timestamp": "2026-11-06T10:31:33.000Z"
+```
+
+I valori locali significano ora della piattaforma per tutti e non cambiano mai con `tz`, così la fatturazione funziona come nel rating e nell'emissione delle fatture. Le date non valide o pari a zero memorizzate nel database vengono restituite come null.
+
+I calcoli di fatturazione usano il fuso orario di fatturazione del cliente: il suo fuso orario (come con `tz=owner`) se il suo pacchetto di profili ha la modalità di inizio dell'intervallo di saldo `1st_tz` o `create_tz`, altrimenti quello della piattaforma, come nel rating. Determina il mese di un `period` di fattura e del suo numero di serie, le date e gli orari stampati nel PDF della fattura e l'inizio del primo intervallo di saldo di un nuovo cliente. I valori memorizzati e restituiti restano ora della piattaforma.
+
+L'input segue le stesse regole. Un valore data/ora senza offset, nel corpo di una richiesta o in un filtro, viene letto nel fuso orario che la risposta usa per quel campo; un valore con offset o annotazione di zona viene preso così com'è. Un valore locale senza offset viene memorizzato come fornito; con un offset viene convertito in ora della piattaforma:
+
+| Senza offset | Con offset o zona |
+| --- | --- |
+| `2026-12-01 00:00:00`, `2026-12-01 00:00:00.123`, `2026-12-01T00:00:00`, `2026-12-01T00:00` | `2026-12-01T00:00:00Z`, `2026-12-01T00:00:00+09:00`, `+0900`, `+09` |
+| `2026-12-01` (00:00), `2026-12` (primo giorno, 00:00), `20261201T000000`, `20261201` | `2026-12-01T00:00:00[Asia/Tokyo]`, `2026-12-01T00:00:00+09:00[Asia/Tokyo]` |
+
+Sono accettate fino a 9 cifre frazionarie. I campi locali con solo l'ora accettano `18:00:00` o `18:00` senza offset. Le date settimanali, le date ordinali e `24:00:00` vengono rifiutate. Un valore data/ora senza offset che non esiste o esiste due volte nel suo fuso orario (cambi dell'ora legale) viene rifiutato: inviatelo con un offset, ad es. `2026-10-25T02:30:00+01:00`. Viene rifiutato anche un valore locale che non può essere salvato come ora della piattaforma: senza offset, nell'ora che gli orologi della piattaforma saltano, o con offset, nell'ora ripetuta d'autunno della piattaforma. Nelle query string, codificate il `+` di un offset come `%2B`.
+
+```http
+PUT /api/v2/customers/7    "billing_profiles": [{"profile_id": 2, "start": "2026-12-01 05:00"}]            stored as 2026-12-01 05:00:00
+PUT /api/v2/customers/7    "billing_profiles": [{"profile_id": 2, "start": "2026-12-01T05:00:00+09:00"}]   stored as 2026-11-30 21:00:00
+GET /api/v2/invoices?period_start_ge=2026-12-01                                                          platform time, as listed
+POST /api/v2/invoices      "period": "2026-12"   (customer in Tokyo, 1st_tz package)                     period_start 2026-11-30 16:00:00 (Vienna)
+```
+
+I valori di query non validi (`tz`, un valore di filtro non interpretabile o ambiguo, `*` su un filtro data/ora) restituiscono 400 con `errors[].parameter`; i valori del corpo non validi restituiscono 422 con `errors[].pointer`.
+
+Mantenete lo stesso `tz` per un GET e per il PUT o PATCH che lo segue, anche per le operazioni `test` di PATCH, che confrontano il valore così come è reso. Le integrazioni e le esportazioni che richiedono valori stabili usano `tz=UTC`. Le voci del journal mantengono `timestamp` come numero epoch Unix e memorizzano `content` in UTC.
+
+Differenze rispetto ad API v1:
+
+- v1 restituisce `YYYY-MM-DD HH:MM:SS` nell'ora del server senza offset; v2 restituisce RFC 3339 con offset, per impostazione predefinita nel fuso orario dell'utente. I valori locali mantengono il formato v1.
+- v1 supporta `tz` solo su poche risorse, v2 su tutte, anche per le scritture e i filtri. `use_owner_tz=1` equivale a `tz=owner` (`use_owner_tz` viene rifiutato come parametro sconosciuto).
+- v1 legge i valori data/ora senza offset nell'ora del server, v2 nel fuso orario dell'utente. I valori locali sono ora della piattaforma in entrambe.
+- Un `tz` non valido restituisce 400 (v1: 422 o ignorato). I valori di filtro con offset vengono convertiti correttamente, e i valori data/ora ambigui a causa dell'ora legale vengono rifiutati anziché risolti silenziosamente.
+- I periodi di fattura (`period`), i numeri di serie e le date del PDF seguono il fuso orario di fatturazione del cliente, e il primo intervallo di saldo di un cliente con un pacchetto `1st_tz`/`create_tz` inizia a mezzanotte nel suo fuso orario (v1: ora del server o UTC).
+
 ### Errori
 
 Ogni errore ha lo stesso corpo JSON:

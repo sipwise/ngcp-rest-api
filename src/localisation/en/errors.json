@@ -367,5 +367,29 @@
   },
   "SUBSCRIBER_PBX_PILOT_HAS_SUBSCRIBERS": {
     "message": "Cannot terminate pilot subscriber when other subscribers exist"
+  },
+  "INVALID_TIMEZONE": {
+    "message": "tz must be an IANA time zone name (e.g. Europe/Vienna, UTC) or 'owner'"
+  },
+  "INVALID_DATE_TIME": {
+    "message": "must be a date/time value, e.g. 2026-12-01 00:00:00, 2026-12-01T00:00:00+01:00, 2026-12-01 or 2026-12"
+  },
+  "INVALID_LOCAL_TIME": {
+    "message": "must be a time of day HH:MM[:SS]"
+  },
+  "LOCAL_TIME_OFFSET": {
+    "message": "is a platform time of day and cannot have an offset"
+  },
+  "AMBIGUOUS_DATE_TIME": {
+    "message": "does not exist or exists twice in the timezone {zone} (daylight saving time change); send it with an offset"
+  },
+  "LOCAL_DATE_TIME_NOT_STORABLE": {
+    "message": "cannot be stored as platform time: it falls into a daylight saving time change of the platform timezone {zone}"
+  },
+  "DATE_TIME_WILDCARD": {
+    "message": "does not support wildcards"
+  },
+  "INVALID_TIMEZONE_NAME": {
+    "message": "must be an IANA time zone name (e.g. Europe/Vienna) or null"
   }
 }

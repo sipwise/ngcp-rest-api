@@ -346,6 +346,46 @@ describe('CustomerContact', () => {
                 expect(response.body.create_timestamp).not.toMatch(/^\d{4}-\d{2}-\d{2}$/)
                 expect(response.body.terminate_timestamp).toBeNull()
             })
+            // the repeated autumn hour is left out: naive storage can't tell its two instants apart
+            it.each([
+                ['2026-03-29T00:59:59Z', '2026-03-29T01:59:59.000+01:00'],
+                ['2026-03-29T01:00:00Z', '2026-03-29T03:00:00.000+02:00'],
+                ['2026-10-24T23:59:59Z', '2026-10-25T01:59:59.000+02:00'],
+                ['2026-10-25T02:00:00Z', '2026-10-25T03:00:00.000+01:00'],
+            ])('read the timestamp %s on its side of a DST change', async (instant, rendered) => {
+                await db.billing.Contact.update(createdIds[0], {create_timestamp: new Date(instant)})
+                const response = await request(app.getHttpServer())
+                    .get(`/api/customercontacts/${createdIds[0]}?tz=Europe/Vienna`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.create_timestamp).toEqual(rendered)
+            })
+
+            it.each(['UTC', 'Asia/Tokyo'])('find a contact by the create_timestamp of a GET with tz=%s', async (tz) => {
+                await db.billing.Contact.update(createdIds[0], {create_timestamp: new Date('2026-11-06T10:31:33Z')})
+                const item = await request(app.getHttpServer())
+                    .get(`/api/customercontacts/${createdIds[0]}?tz=${tz}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(item.status).toEqual(200)
+                const response = await request(app.getHttpServer())
+                    .get(`/api/customercontacts?tz=${tz}&id=${createdIds[0]}&create_timestamp=${encodeURIComponent(item.body.create_timestamp)}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.data.map((c: {id: number}) => c.id)).toEqual([createdIds[0]])
+            })
+
+            it('reject a wildcard in a timestamp filter with 400', async () => {
+                const response = await request(app.getHttpServer())
+                    .get('/api/customercontacts?create_timestamp=2026-11-06*')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(400)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.parameter, e.code])).toEqual([['create_timestamp', 'DATE_TIME_WILDCARD']])
+            })
+
             it('fail create with invalid field types', async () => {
                 const tt = [
                     {gender: 'unknown'},
@@ -593,6 +633,27 @@ describe('CustomerContact', () => {
                 expect(response.status).toEqual(422)
                 expect(response.body.errorCode).toEqual('VALIDATION_FAILED')
                 expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/status', 'isEnum']])
+            })
+            it.each(['localtime', 'SYSTEM', 'Mars/Base'])('return 422 for timezone %s', async (timezone) => {
+                const response = await request(app.getHttpServer())
+                    .patch(`/api/customercontacts/${createdIds[0]}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send([{op: 'replace', path: '/timezone', value: timezone}])
+                expect(response.status).toEqual(422)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/timezone', 'isTimezoneName']])
+            })
+            it.each([['America/New_York', 'America/New_York'], [null, null]])('accept timezone %s', async (timezone, stored) => {
+                const response = await request(app.getHttpServer())
+                    .patch(`/api/customercontacts/${createdIds[0]}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .set('Prefer', 'return=representation')
+                    .send([{op: 'replace', path: '/timezone', value: timezone}])
+                expect(response.status).toEqual(200)
+                expect(response.body.timezone).toEqual(stored)
             })
             it('report every failing item of a bulk PATCH', async () => {
                 const response = await request(app.getHttpServer())

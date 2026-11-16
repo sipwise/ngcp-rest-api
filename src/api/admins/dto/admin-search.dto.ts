@@ -3,6 +3,8 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {AdminResponseDto} from './admin-response.dto'
 
 import {RbacRole} from '~/config/constants.config'
+import {DateTimeField, DateTimeKind} from '~/decorators/date-time-field.decorator'
+import {dateTimeFilter} from '~/helpers/query-builder.helper'
 
 export class AdminSearchDto implements AdminResponseDto {
     @ApiPropertyOptional()
@@ -37,8 +39,9 @@ export class AdminSearchDto implements AdminResponseDto {
         role: RbacRole
     @ApiPropertyOptional()
         show_passwords: boolean
+    @DateTimeField()
     @ApiPropertyOptional()
-        password_last_modify_time: string
+        password_last_modify_time: Date
     @ApiPropertyOptional()
         enable_2fa: boolean
     @ApiPropertyOptional()
@@ -48,6 +51,6 @@ export class AdminSearchDto implements AdminResponseDto {
     @ApiHideProperty()
         _alias = {
             id: 'admin.id',
-            password_last_modify_time: 'saltedpass_modify_timestamp',
+            password_last_modify_time: dateTimeFilter(DateTimeKind.DateTime, 'admin.saltedpass_modify_timestamp'),
         }
 }

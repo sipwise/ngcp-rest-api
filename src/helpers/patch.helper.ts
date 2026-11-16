@@ -13,6 +13,8 @@ import {
 } from './errors.helper'
 
 import {RequestDto} from '~/dto/request.dto'
+import {currentRequestTimezone} from '~/helpers/date-time-input.helper'
+import {renderDateTimes} from '~/helpers/date-time-renderer.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 
 export function normalisePatch(patch: core.Operation | core.Operation[]): core.Operation[] {
@@ -84,13 +86,22 @@ function topLevelKey(path: string): string {
  * Applies a JSON Patch to an internal entity through its request dto.
  * 400 malformed patch, 409 patch conflicts with the entity, 422 patched fields fail the request dto validation
  * (also paths outside the request dto). Pointers start with `base` (`/<id>` in bulk PATCH).
+ * The operations apply to the document with its date/time fields rendered as in a response of the request
+ * (tz), so `test` values copied from a GET with the same tz match; patched values are parsed back like a body.
  */
 export async function patchToEntity<T extends {id?: number}, D extends RequestDto>(oldEntity: T, patch: core.Operation[], requestDto: new(oldEntity: T) => D, base = ''): Promise<T> {
     assertJsonPatch(patch, base)
     const patchEntity = Object.assign(Object.create(oldEntity), oldEntity)
-    const dto = applyToDocument(new requestDto(patchEntity), patch, base)
+    const dto = new requestDto(patchEntity)
+    const rendered = new requestDto(patchEntity)
+    const timezone = currentRequestTimezone()
+    if (timezone)
+        await renderDateTimes(rendered, timezone)
+    const document = applyToDocument(rendered, patch, base)
     // only the patched fields are validated, as a request body (nested dtos, dates)
     const keys = new Set(patch.filter(op => op.op != 'test').map(op => topLevelKey(op.path)).filter(key => key != null))
+    for (const key of keys)
+        dto[key] = document[key]
     const values = Object.assign(new requestDto(null), Object.fromEntries([...keys].map(key => [key, dto[key]])))
     const reqDto = plainToInstance(requestDto, values)
     const options = {whitelist: true, forbidNonWhitelisted: true}

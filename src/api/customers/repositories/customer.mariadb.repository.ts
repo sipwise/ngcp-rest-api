@@ -10,11 +10,12 @@ import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/inter
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {Discriminator} from '~/entities/internal/profile-package-set.internal.entity'
 import {andWhereActualBillingMapping, billingMappingsCsv} from '~/helpers/billing-mapping.helper'
-import {initialBalanceInterval} from '~/helpers/billing.helper'
+import {balanceIntervalSettings, billingTimezone, initialBalanceInterval} from '~/helpers/billing.helper'
 import {toLocalDateTime} from '~/helpers/date.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {isOwnerTimezone, joinContractTimezone, storedTimezone} from '~/helpers/timezone.helper'
 import {FilterBy} from '~/interfaces/filter-by.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -22,6 +23,13 @@ import {MariaDbRepository} from '~/repositories/mariadb.repository'
 
 export interface CustomerFilterBy extends FilterBy {
     showTerminated?: boolean
+}
+
+function toInternalCustomer(contract: db.billing.Contract, sr: ServiceRequest): internal.Customer {
+    const customer = contract.toInternalCustomer()
+    if (isOwnerTimezone(sr))
+        customer.ownerTimezone = storedTimezone(contract.ownerTimezone?.name)
+    return customer
 }
 
 @Injectable()
@@ -55,9 +63,20 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         ])
     }
 
-    async createInitialBalance(customerId: number): Promise<void> {
+    async createInitialBalance(customerId: number, create: Date): Promise<void> {
         const profile = await this.readActualBillingProfile(customerId)
-        const {start, end} = initialBalanceInterval(profile, new Date())
+        const contract = await db.billing.Contract.findOneByOrFail({id: customerId})
+        const profilePackage = contract.profile_package_id
+            ? await db.billing.ProfilePackage.findOneBy({id: contract.profile_package_id})
+            : undefined
+        const settings = balanceIntervalSettings(profile, profilePackage && {
+            balanceIntervalStartMode: profilePackage.balance_interval_start_mode,
+            balanceIntervalUnit: profilePackage.balance_interval_unit,
+            balanceIntervalValue: profilePackage.balance_interval_value,
+        })
+        const timezone = await db.billing.VContractTimezone.findOneBy({contract_id: customerId})
+        const zone = billingTimezone(settings.startMode, timezone?.name)
+        const {start, end} = initialBalanceInterval(settings, create, zone)
         const balance = db.billing.ContractBalance.create({
             contract_id: customerId,
             cash_balance: 0,
@@ -120,10 +139,12 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
                 searchDto._alias,
             ),
         )
+        if (isOwnerTimezone(sr))
+            joinContractTimezone(qb, 'contract.id')
         const [result, totalCount] = await qb.getManyAndCount()
         return [await Promise.all(
             result.map(async (d) => {
-                const internal = d.toInternalCustomer()
+                const internal = toInternalCustomer(d, sr)
                 const actualBillingProfileQb = db.billing.VActualBillingProfile.createQueryBuilder('actual_billing_profile')
                 actualBillingProfileQb.where({contract_id: d.id})
                 const actualBillingProfile = await actualBillingProfileQb.getOneOrFail()
@@ -157,8 +178,10 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
                 searchDto._alias,
             ),
         )
+        if (isOwnerTimezone(sr))
+            joinContractTimezone(qb, 'contract.id')
         const result = await qb.getOneOrFail()
-        const internal = result.toInternalCustomer()
+        const internal = toInternalCustomer(result, sr)
 
         const actualBillingProfileQb = db.billing.VActualBillingProfile.createQueryBuilder('actual_billing_profile')
         actualBillingProfileQb.where({contract_id: result.id})
@@ -192,10 +215,10 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         )
         qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
+        if (isOwnerTimezone(sr))
+            joinContractTimezone(qb, 'customer.id')
         const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => {
-            return d.toInternalCustomer()
-        }))
+        return result.map(d => toInternalCustomer(d, sr))
     }
 
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {

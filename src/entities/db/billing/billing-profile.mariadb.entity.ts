@@ -143,7 +143,7 @@ export class BillingProfile extends BaseEntity {
         status!: BillingProfileStatus
 
     @Column({
-        type: 'date',
+        type: 'timestamp',
         nullable: false,
         default: () => 'CURRENT_TIMESTAMP',
         onUpdate: 'CURRENT_TIMESTAMP',
@@ -151,14 +151,14 @@ export class BillingProfile extends BaseEntity {
         modify_timestamp!: Date
 
     @Column({
-        type: 'date',
+        type: 'timestamp',
         nullable: false,
         default: '0000-00-00 00:00:00',
     })
         create_timestamp!: Date
 
     @Column({
-        type: 'date',
+        type: 'timestamp',
         nullable: false,
         default: '0000-00-00 00:00:00',
     })

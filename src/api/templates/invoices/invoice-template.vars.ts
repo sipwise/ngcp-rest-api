@@ -11,6 +11,7 @@ import {
 
 import {RbacRole} from '~/config/constants.config'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory} from '~/entities/internal/invoice-template.internal.entity'
+import {formatDateTime, platformTimezone} from '~/helpers/timezone.helper'
 
 /**
  * Names of the variables available as substitutions
@@ -123,6 +124,8 @@ export function getInvoiceTemplateVars(
         custcontact: contact,
         billprof: new InvoiceTemplateBillingProfileVars(),
         invoice: new InvoiceTemplateInvoiceVars({
+            period_start: formatDateTime(new Date(2026, 8, 1), platformTimezone()),
+            period_end: formatDateTime(new Date(2026, 8, 30, 23, 59, 59), platformTimezone()),
             amount_net: amountNet,
             amount_vat: amountVat,
             amount_total: amountNet + amountVat,

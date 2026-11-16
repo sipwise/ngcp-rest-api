@@ -1,6 +1,8 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
+import {DateTimeField, DateTimeKind} from '~/decorators/date-time-field.decorator'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
+import {dateTimeFilter} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 
 const booleanFilter = (column: string): object => ({
@@ -50,18 +52,24 @@ export class SubscriberSearchDto {
         pbx_extension: string
     @ApiPropertyOptional({description: 'Display name of the subscriber'})
         display_name: string
+    @DateTimeField()
     @ApiPropertyOptional({description: 'Creation time of the subscriber'})
-        create_timestamp: string
+        create_timestamp: Date
+    @DateTimeField()
     @ApiPropertyOptional({description: 'Last modification time of the subscriber'})
-        modify_timestamp: string
+        modify_timestamp: Date
+    @DateTimeField()
     @ApiPropertyOptional({description: 'Subscribers created at or after the value'})
-        create_timestamp_ge: string
+        create_timestamp_ge: Date
+    @DateTimeField()
     @ApiPropertyOptional({description: 'Subscribers created at or before the value'})
-        create_timestamp_le: string
+        create_timestamp_le: Date
+    @DateTimeField()
     @ApiPropertyOptional({description: 'Subscribers modified at or after the value'})
-        modify_timestamp_ge: string
+        modify_timestamp_ge: Date
+    @DateTimeField()
     @ApiPropertyOptional({description: 'Subscribers modified at or before the value'})
-        modify_timestamp_le: string
+        modify_timestamp_le: Date
     @ApiHideProperty()
         _alias = {
             id: 'subscriber.id',
@@ -86,11 +94,11 @@ export class SubscriberSearchDto {
             display_name: conditionFilter(param => 'EXISTS (SELECT 1 FROM provisioning.voip_usr_preferences dn_pref' +
                 ' JOIN provisioning.voip_preferences dn_attr ON dn_attr.id = dn_pref.attribute_id' +
                 ` WHERE dn_pref.subscriber_id = prov.id AND dn_attr.attribute = 'display_name' AND dn_pref.value LIKE :${param})`),
-            create_timestamp: 'prov.create_timestamp',
-            modify_timestamp: 'prov.modify_timestamp',
-            create_timestamp_ge: conditionFilter(param => `prov.create_timestamp >= :${param}`),
-            create_timestamp_le: conditionFilter(param => `prov.create_timestamp <= :${param}`),
-            modify_timestamp_ge: conditionFilter(param => `prov.modify_timestamp >= :${param}`),
-            modify_timestamp_le: conditionFilter(param => `prov.modify_timestamp <= :${param}`),
+            create_timestamp: dateTimeFilter(DateTimeKind.DateTime, 'prov.create_timestamp'),
+            modify_timestamp: dateTimeFilter(DateTimeKind.DateTime, 'prov.modify_timestamp'),
+            create_timestamp_ge: dateTimeFilter(DateTimeKind.DateTime, 'prov.create_timestamp', '>='),
+            create_timestamp_le: dateTimeFilter(DateTimeKind.DateTime, 'prov.create_timestamp', '<='),
+            modify_timestamp_ge: dateTimeFilter(DateTimeKind.DateTime, 'prov.modify_timestamp', '>='),
+            modify_timestamp_le: dateTimeFilter(DateTimeKind.DateTime, 'prov.modify_timestamp', '<='),
         }
 }

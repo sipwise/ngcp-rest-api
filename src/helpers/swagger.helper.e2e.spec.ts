@@ -127,6 +127,28 @@ describe('Swagger', () => {
         }
     })
 
+    it('documents tz on every operation and the timezone kind of date/time fields', async () => {
+        const json = await request(app.getHttpServer()).get('/api/swagger.json')
+        expect(json.status).toEqual(HttpStatus.OK)
+        const paths = json.body.paths as Record<string, Record<string, OperationObject>>
+        for (const operation of Object.values(paths).flatMap(item => Object.values(item))) {
+            const tz = operation.parameters.filter(param => 'name' in param && param.name == 'tz')
+            expect(tz).toEqual([expect.objectContaining({in: 'query', required: false})])
+        }
+        const schemas = json.body.components.schemas
+        expect(schemas.ContactResponseDto.properties.create_timestamp).toEqual(expect.objectContaining({
+            type: 'string',
+            format: 'date-time',
+            'x-timezone': 'user',
+            description: expect.stringMatching(/^Time of creation, null if unknown\. RFC 3339 with offset/),
+        }))
+        expect(schemas.CustomerBillingProfileResponseDto.properties.start).toEqual(expect.objectContaining({
+            type: 'string',
+            format: 'local-date-time',
+            'x-timezone': 'platform',
+        }))
+    })
+
     it('serves the localised document and pdf with ?lang=', async () => {
         const json = await request(app.getHttpServer()).get('/api/swagger.json?lang=fr')
         expect(json.status).toEqual(HttpStatus.OK)

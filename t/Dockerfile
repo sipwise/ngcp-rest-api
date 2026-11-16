@@ -65,7 +65,8 @@ WORKDIR /home/testuser
 #   API_DB_USER, API_DB_PASS     required
 #   API_DB_HOST, API_REDIS_HOST  default: $NGCP_SYSTEM_IP
 #   API_DB_PORT, API_REDIS_PORT  default: 3306, 6379
-#   TZ                           must match the DB time zone, default: UTC
+#   TZ                           must be the DB host's time zone (the run stops if the UTC offsets
+#                                differ), default: UTC
 #
 # Inside docker:
 #   su - testuser

@@ -10,6 +10,7 @@ import {
 import {getDerivedVariables} from '~/api/templates/invoices/invoice-layout'
 import {InvoiceTemplateSubstitutionVars} from '~/api/templates/invoices/invoice-template.vars'
 import {ResponseDto} from '~/dto/response.dto'
+import {platformTimezone} from '~/helpers/timezone.helper'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class InvoiceTemplateAuxVars {
@@ -74,7 +75,7 @@ export class InvoiceTemplateVarsResponseDto extends ResponseDto {
         this.custcontact = vars.custcontact
         this.billprof = vars.billprof
         this.invoice = vars.invoice
-        Object.assign(this, getDerivedVariables(vars as unknown as Record<string, unknown>))
+        Object.assign(this, getDerivedVariables(vars as unknown as Record<string, unknown>, platformTimezone()))
         this.aux = new InvoiceTemplateAuxVars()
         this['date_now()'] = 'date_now(format=\'%Y-%m-%d\')'
     }

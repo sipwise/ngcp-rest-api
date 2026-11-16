@@ -19,6 +19,7 @@ import {BillingProfileStatus} from '~/entities/internal/billing-profile.internal
 import {ContractBillingProfileDefinition, ContractStatus, ContractStatus as CustomerStatus} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
 import {Discriminator} from '~/entities/internal/profile-package-set.internal.entity'
+import {IntervalStartMode} from '~/entities/internal/profile-package.internal.entity'
 import {toLocalDateTime} from '~/helpers/date.helper'
 import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
@@ -116,11 +117,12 @@ describe('CustomerController', () => {
         return profile.id
     }
 
-    const createPackage = async (name: string, profileId: number): Promise<number> => {
+    const createPackage = async (name: string, profileId: number, startMode?: IntervalStartMode): Promise<number> => {
         const pkg = await db.billing.ProfilePackage.create({
             reseller_id: RESELLER_ID,
             name: `e2e ${name} ${suffix}`,
             description: 'e2e',
+            balance_interval_start_mode: startMode,
         }).save()
         packageIds.push(pkg.id)
         await appService.db.getRepository(db.billing.PackageProfileSet).insert({
@@ -157,9 +159,9 @@ describe('CustomerController', () => {
     const readMappings = (contractId: number): Promise<db.billing.ContractBillingProfileNetwork[]> =>
         db.billing.ContractBillingProfileNetwork.find({where: {contract_id: contractId}, order: {id: 'ASC'}})
 
-    const putProfiles = (contractId: number, billingProfiles: object[]): request.Test =>
+    const putProfiles = (contractId: number, billingProfiles: object[], query = ''): request.Test =>
         request(app.getHttpServer())
-            .put(`/api/customers/${contractId}`)
+            .put(`/api/customers/${contractId}${query}`)
             .set(...authHeader)
             .set('Accept', 'application/json')
             .set('Content-Type', 'application/json')
@@ -488,6 +490,74 @@ describe('CustomerController', () => {
                 expect(response.status).toEqual(HttpStatus.NO_CONTENT)
             })
 
+            it.each(['', '?tz=Asia/Tokyo', '?tz=owner'])('stores a start without offset as given (platform time) with query \'%s\'', async (query) => {
+                const start = at(5 * DAY)
+                const response = await putProfiles(contractId, [{profile_id: profileB, start: toLocalDateTime(start)}], query)
+                expect(response.status).toEqual(HttpStatus.NO_CONTENT)
+
+                const mapping = (await readMappings(contractId)).find(m => m.billing_profile_id == profileB)
+                expect(mapping?.start_date?.getTime()).toEqual(start.getTime())
+            })
+
+            it.each([
+                ['UTC', (d: Date): string => d.toISOString()],
+                ['+09:00', (d: Date): string => Temporal.Instant.fromEpochMilliseconds(d.getTime())
+                    .toZonedDateTimeISO('Asia/Tokyo').toString({timeZoneName: 'never'})],
+                ['[Asia/Tokyo]', (d: Date): string => Temporal.Instant.fromEpochMilliseconds(d.getTime())
+                    .toZonedDateTimeISO('Asia/Tokyo').toString({offset: 'never'})],
+            ])('converts a start with %s offset to platform time', async (_name, format) => {
+                const start = at(5 * DAY)
+                const response = await putProfiles(contractId, [{profile_id: profileB, start: format(start)}], '?tz=America/New_York')
+                expect(response.status).toEqual(HttpStatus.NO_CONTENT)
+
+                const mapping = (await readMappings(contractId)).find(m => m.billing_profile_id == profileB)
+                expect(mapping?.start_date?.getTime()).toEqual(start.getTime())
+            })
+
+            it.each([
+                ['a week date', '2027-W49-2', 'isDateTime'],
+                ['an ordinal date', '2027-335', 'isDateTime'],
+                ['24:00', '2027-12-01T24:00:00', 'isDateTime'],
+                ['an offset not matching the zone', '2027-12-01T00:00:00+01:00[Asia/Tokyo]', 'isDateTime'],
+                ['a number', 1796083200, 'isDateTime'],
+            ])('rejects %s with 422', async (_name, start, code) => {
+                const response = await putProfiles(contractId, [{profile_id: profileB, start: toLocalDateTime(at(5 * DAY))}, {profile_id: profileB, start}])
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/billing_profiles/1/start', code]])
+            })
+
+            // platform zone dependent: hour steps of 2027 where the offset changes (none in UTC)
+            const transitions = ((): {gap?: Date, overlap?: Date} => {
+                const result: {gap?: Date, overlap?: Date} = {}
+                for (let t = Date.UTC(2027, 0, 1); t < Date.UTC(2028, 0, 1); t += 3600 * 1000) {
+                    const change = new Date(t + 3600 * 1000).getTimezoneOffset() - new Date(t).getTimezoneOffset()
+                    if (change < 0)
+                        result.gap ??= new Date(t + 3600 * 1000)
+                    else if (change > 0)
+                        result.overlap ??= new Date(t + 3600 * 1000)
+                }
+                return result
+            })()
+
+            ;(transitions.gap ? it : it.skip)('rejects a start without offset in the platform\'s DST gap with 422', async () => {
+                // 30 min after the transition, as wall clock of the offset before it: skipped by the clocks
+                const offsetBefore = new Date(transitions.gap.getTime() - 3600 * 1000).getTimezoneOffset()
+                const gapWallClock = new Date(transitions.gap.getTime() + (30 - offsetBefore) * 60 * 1000)
+                    .toISOString().slice(0, 19).replace('T', ' ')
+                const response = await putProfiles(contractId, [{profile_id: profileB, start: gapWallClock}])
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/billing_profiles/0/start', 'isDateTime']])
+                expect(response.body.errors[0].message).toMatch(/cannot be stored as platform time/)
+            })
+
+            ;(transitions.overlap ? it : it.skip)('rejects a start with offset in the platform\'s repeated hour with 422', async () => {
+                // the second pass of the repeated hour, sent as UTC
+                const repeated = new Date(transitions.overlap.getTime() + 30 * 60 * 1000)
+                const response = await putProfiles(contractId, [{profile_id: profileB, start: repeated.toISOString()}])
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/billing_profiles/0/start', 'isDateTime']])
+            })
+
             // the failing profile is the second one, the pointer names it and its field (request names: profile_id, start, stop)
             it.each([
                 ['a start in the past', (): object => ({profile_id: profileB, start: toLocalDateTime(at(-DAY))}), '/start', 'START_DATE_NOT_IN_FUTURE'],
@@ -507,6 +577,8 @@ describe('CustomerController', () => {
 
         describe('Customer billing profile lists', () => {
             let contractId: number
+            let futureStart: Date
+            let futureStop: Date
 
             const getList = (path: string): request.Test =>
                 request(app.getHttpServer())
@@ -515,9 +587,11 @@ describe('CustomerController', () => {
                     .set('Accept', 'application/json')
 
             beforeAll(async () => {
+                futureStart = at(5 * DAY)
+                futureStop = at(6 * DAY)
                 contractId = await createContract([
                     {profileId: profileA},
-                    {profileId: profileB, start: at(5 * DAY), end: at(6 * DAY)},
+                    {profileId: profileB, start: futureStart, end: futureStop},
                     {profileId: profileTerminated, start: at(8 * DAY)},
                     {profileId: profileC, networkId: networkTerminated, start: at(9 * DAY)},
                 ])
@@ -543,6 +617,15 @@ describe('CustomerController', () => {
                 const {data: profiles, total_count: count} = response.body
                 expect(count).toEqual(profiles.length)
                 expect(profiles.map((p: {profile_id: number}) => p.profile_id)).toEqual([profileB])
+            })
+
+            it.each(['Asia/Tokyo', 'owner'])('lists start, stop and effective_start_time in platform time as stored with tz=%s', async (tz) => {
+                const response = await getList(`@future-billing-profiles?tz=${tz}`)
+                expect(response.status).toEqual(HttpStatus.OK)
+                const [profile] = response.body.data
+                expect(profile.start).toEqual(toLocalDateTime(futureStart))
+                expect(profile.stop).toEqual(toLocalDateTime(futureStop))
+                expect(profile.effective_start_time).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
             })
 
             it('derives billing_profile_definition id without terminated profiles', async () => {
@@ -579,6 +662,41 @@ describe('CustomerController', () => {
 
                 const mapping = (await readMappings(contractId)).find(m => m.billing_profile_id == profileB)
                 expect(mapping?.start_date?.getTime()).toEqual(start.getTime())
+            })
+
+            it('converts a patched start with offset to platform time', async () => {
+                const contractId = await createContract([{profileId: profileA}])
+                const start = at(5 * DAY)
+                const response = await request(app.getHttpServer())
+                    .patch(`/api/customers/${contractId}?tz=Asia/Tokyo`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send([
+                        {op: 'replace', path: '/billing_profile_definition', value: ContractBillingProfileDefinition.Profiles},
+                        {op: 'remove', path: '/billing_profile_id'},
+                        {op: 'add', path: '/billing_profiles', value: [{profile_id: profileB, start: start.toISOString()}]},
+                    ])
+                expect(response.status).toEqual(HttpStatus.NO_CONTENT)
+
+                const mapping = (await readMappings(contractId)).find(m => m.billing_profile_id == profileB)
+                expect(mapping?.start_date?.getTime()).toEqual(start.getTime())
+            })
+
+            it('rejects an unparsable patched start with 422 and a pointer', async () => {
+                const contractId = await createContract([{profileId: profileA}])
+                const response = await request(app.getHttpServer())
+                    .patch(`/api/customers/${contractId}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send([
+                        {op: 'replace', path: '/billing_profile_definition', value: ContractBillingProfileDefinition.Profiles},
+                        {op: 'remove', path: '/billing_profile_id'},
+                        {op: 'add', path: '/billing_profiles', value: [{profile_id: profileB, start: '2027-W49-2'}]},
+                    ])
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/billing_profiles/0/start', 'isDateTime']])
             })
         })
 
@@ -1009,6 +1127,152 @@ describe('CustomerController', () => {
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
                 const contract = await db.billing.Contract.findOneByOrFail({id: templateCustomerId})
                 expect(contract[field]).toEqual(ownTemplates[field])
+            })
+        })
+
+        describe('Customer tz=owner', () => {
+            // 2026-07-01 21:00 in Tokyo, 08:00 in New York (DST)
+            const createdAt = new Date('2026-07-01T12:00:00Z')
+            const ids: Record<string, number> = {}
+            const contactIds: Record<string, number> = {}
+
+            const get = (path: string): request.Test =>
+                request(app.getHttpServer())
+                    .get(path)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+
+            beforeAll(async () => {
+                for (const [name, timezone] of [['tokyo', 'Asia/Tokyo'], ['newYork', 'America/New_York'], ['none', null]]) {
+                    const contact = await db.billing.Contact.create({
+                        reseller_id: RESELLER_ID,
+                        email: `e2e-owner-${name}-${suffix}@example.org`,
+                        timezone: timezone,
+                        create_timestamp: createdAt,
+                        modify_timestamp: createdAt,
+                    }).save()
+                    fixtureContactIds.push(contact.id)
+                    contactIds[name] = contact.id
+                    ids[name] = await createContract([{profileId: profileA}], createdAt, undefined, contact.id)
+                }
+            })
+
+            it('renders each item of a collection in its owner\'s timezone, also across pages', async () => {
+                const query = `tz=owner&id=${ids.tokyo},${ids.newYork},${ids.none}&order_by=id&rows=2`
+                const page1 = await get(`/api/customers?${query}&page=1`)
+                const page2 = await get(`/api/customers?${query}&page=2`)
+                const reference = await get(`/api/customers/${ids.none}`)
+                expect([page1.status, page2.status, reference.status]).toEqual([HttpStatus.OK, HttpStatus.OK, HttpStatus.OK])
+                expect(page1.body.total_count).toEqual(3)
+                const items = [...page1.body.data, ...page2.body.data] as CustomerResponseDto[]
+                expect(items.map(c => [c.id, c.create_timestamp])).toEqual([
+                    [ids.tokyo, '2026-07-01T21:00:00.000+09:00'],
+                    [ids.newYork, '2026-07-01T08:00:00.000-04:00'],
+                    // reseller 1 contact, else platform: the same chain as the admin's own (reseller 1) timezone
+                    [ids.none, reference.body.create_timestamp],
+                ])
+            })
+
+            it('renders an item in its owner\'s timezone', async () => {
+                const response = await get(`/api/customers/${ids.newYork}?tz=owner`)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.create_timestamp).toEqual('2026-07-01T08:00:00.000-04:00')
+                expect(response.body.modify_timestamp).toEqual('2026-07-01T08:00:00.000-04:00')
+            })
+
+            it('renders an expanded contact in its own (default) timezone, not the customer\'s', async () => {
+                const owner = await get(`/api/customers/${ids.tokyo}?tz=owner&expand=contact_id`)
+                const plain = await get(`/api/customers/${ids.tokyo}?expand=contact_id`)
+                expect([owner.status, plain.status]).toEqual([HttpStatus.OK, HttpStatus.OK])
+                expect(owner.body.create_timestamp).toEqual('2026-07-01T21:00:00.000+09:00')
+                expect(owner.body.contact_id_expand.id).toEqual(contactIds.tokyo)
+                expect(owner.body.contact_id_expand.create_timestamp).toEqual(plain.body.contact_id_expand.create_timestamp)
+            })
+
+            it('renders a created customer in its owner\'s timezone', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/customers?tz=owner')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send({
+                        contact_id: contactIds.tokyo,
+                        billing_profile_definition: ContractBillingProfileDefinition.ID,
+                        billing_profile_id: profileA,
+                        status: ContractStatus.Active,
+                        type: CustomerType.SipAccount,
+                    })
+                expect(response.status).toEqual(HttpStatus.CREATED)
+                const customer: CustomerResponseDto = response.body.data[0]
+                fixtureContractIds.push(customer.id)
+                expect(customer.create_timestamp).toMatch(/\+09:00$/)
+            })
+        })
+
+        describe('Customer POST initial balance', () => {
+            let contactId: number
+
+            const postCustomer = async (packageId?: number): Promise<CustomerResponseDto> => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/customers?tz=UTC')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send({
+                        contact_id: contactId,
+                        status: ContractStatus.Active,
+                        type: CustomerType.SipAccount,
+                        ...packageId
+                            ? {billing_profile_definition: ContractBillingProfileDefinition.Package, profile_package_id: packageId}
+                            : {billing_profile_definition: ContractBillingProfileDefinition.ID, billing_profile_id: profileA},
+                    })
+                expect(response.status).toEqual(HttpStatus.CREATED)
+                const customer: CustomerResponseDto = response.body.data[0]
+                fixtureContractIds.push(customer.id)
+                return customer
+            }
+
+            const balance = async (contractId: number): Promise<[number, number]> => {
+                const balances = await db.billing.ContractBalance.findBy({contract_id: contractId})
+                expect(balances.length).toEqual(1)
+                return [balances[0].start.getTime(), balances[0].end.getTime()]
+            }
+
+            beforeAll(async () => {
+                const contact = await db.billing.Contact.create({
+                    reseller_id: RESELLER_ID,
+                    email: `e2e-balance-${suffix}@example.org`,
+                    timezone: 'Asia/Tokyo',
+                    create_timestamp: new Date(),
+                    modify_timestamp: new Date(),
+                }).save()
+                fixtureContactIds.push(contact.id)
+                contactId = contact.id
+            })
+
+            it.each([
+                ['without a package', undefined, 'platform', 'month'],
+                [IntervalStartMode.First, IntervalStartMode.First, 'platform', 'month'],
+                [IntervalStartMode.FirstTZ, IntervalStartMode.FirstTZ, 'Asia/Tokyo', 'month'],
+                [IntervalStartMode.Create, IntervalStartMode.Create, 'platform', 'day'],
+                [IntervalStartMode.CreateTZ, IntervalStartMode.CreateTZ, 'Asia/Tokyo', 'day'],
+            ])('starts the first balance interval %s in the billing zone', async (_name, mode, zone, truncate) => {
+                const packageId = mode ? await createPackage(`balance ${mode}`, profileA, mode) : undefined
+                const customer = await postCustomer(packageId)
+                const created = Temporal.Instant.from(customer.create_timestamp as unknown as string)
+                    .toZonedDateTimeISO(zone == 'platform' ? Temporal.Now.timeZoneId() : zone)
+                const start = truncate == 'month' ? created.with({day: 1}).startOfDay() : created.startOfDay()
+                const end = start.add({months: 1}).subtract({seconds: 1})
+                expect(await balance(customer.id)).toEqual([start.epochMilliseconds, end.epochMilliseconds])
+            })
+
+            it('starts a topup balance at the creation without end', async () => {
+                const customer = await postCustomer(await createPackage('balance topup', profileA, IntervalStartMode.Topup))
+                const [start, end] = await balance(customer.id)
+                expect(start).toEqual(Math.floor(new Date(customer.create_timestamp).getTime() / 1000) * 1000)
+                expect(end).toEqual(new Date(9999, 11, 31, 23, 59, 59).getTime())
             })
         })
 

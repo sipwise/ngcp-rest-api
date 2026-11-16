@@ -146,7 +146,7 @@ describe('Ban Registrations', () => {
         describe('GET', () => {
             it('read ban registrations filtered by username and domain', async () => {
                 const response = await request(app.getHttpServer())
-                    .get(`/api/bans/registrations?username=${bannedUsername}&domain=${bannedDomain}`)
+                    .get(`/api/bans/registrations?username=${bannedUsername}&domain=${bannedDomain}&tz=UTC`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -173,8 +173,9 @@ describe('Ban Registrations', () => {
                     username: bannedUsername,
                     domain: bannedDomain,
                     auth_count: 3,
-                    last_auth: new Date(lastAuth * 1000).toISOString(),
+                    last_auth: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.000([+-]\d{2}:\d{2}|Z)$/),
                 })
+                expect(new Date(response.body.last_auth).getTime()).toEqual(lastAuth * 1000)
             })
 
             it('read unknown ban registration returns 404', async () => {

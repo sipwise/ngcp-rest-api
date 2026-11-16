@@ -20,6 +20,7 @@ import {db} from '~/entities'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
+import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
@@ -559,7 +560,9 @@ describe('Subscriber', () => {
                 ['webusername', (): string => `webusername=${subscribers.seat.webusername}`, ['seat']],
                 ['customer_id', (): string => `customer_id=${pbxCustomerId}`, ['pilot', 'seat', 'group']],
                 ['status', (): string => 'status=locked', ['sipuser']],
-                ['create_timestamp', (): string => 'create_timestamp=2001-02-03*', ['sipadmin']],
+                ['create_timestamp', (): string => `create_timestamp=${new Date(2001, 1, 3, 10).toISOString()}`, ['sipadmin']],
+                ['create_timestamp without offset in tz', (): string =>
+                    `tz=UTC&create_timestamp=${new Date(2001, 1, 3, 10).toISOString().slice(0, 19).replace('T', ' ')}`, ['sipadmin']],
                 ['customer_external_id', (): string => `customer_external_id=${prefix}-cext`, ['sipadmin', 'sipuser']],
                 ['subscriber_external_id', (): string => `subscriber_external_id=${prefix}-sext`, ['sipadmin']],
                 ['is_pbx_group true', (): string => 'is_pbx_group=true', ['group']],
@@ -598,6 +601,40 @@ describe('Subscriber', () => {
 
             it('rejects an unknown filter with 400', async () => {
                 expect((await list('lock=3')).status).toEqual(HttpStatus.BAD_REQUEST)
+            })
+
+            it.each(['Asia/Tokyo', 'owner'])('finds a subscriber by the timestamps of a GET with tz=%s', async (tz) => {
+                const item = await get(`/api/subscribers/${subscribers.sipadmin.id}?tz=${tz}`)
+                expect(item.status).toEqual(HttpStatus.OK)
+                const created = encodeURIComponent(item.body.create_timestamp)
+                const modified = encodeURIComponent(item.body.modify_timestamp)
+                for (const query of [
+                    `create_timestamp=${created}`,
+                    `modify_timestamp=${modified}`,
+                    `create_timestamp_ge=${created}&create_timestamp_le=${created}`,
+                    `modify_timestamp_ge=${modified}&modify_timestamp_le=${modified}`,
+                ]) {
+                    const response = await list(`tz=${tz}&${query}`)
+                    expect(response.status).toEqual(HttpStatus.OK)
+                    expect(ids(response)).toEqual(idsOf('sipadmin'))
+                }
+            })
+
+            it.each([
+                ['a wildcard', 'create_timestamp=2001-02-03*', 'create_timestamp', 'DATE_TIME_WILDCARD'],
+                ['a wildcard in a range filter', 'modify_timestamp_ge=2001*', 'modify_timestamp_ge', 'DATE_TIME_WILDCARD'],
+                ['an unparsable value', 'create_timestamp_le=2001-02-30', 'create_timestamp_le', 'INVALID_DATE_TIME'],
+                ['a time in the DST gap', 'tz=Europe/Vienna&create_timestamp_ge=2027-03-28 02:30', 'create_timestamp_ge', 'AMBIGUOUS_DATE_TIME'],
+                ['a time in the repeated DST hour', 'tz=Europe/Vienna&modify_timestamp_le=2026-10-25 02:30', 'modify_timestamp_le', 'AMBIGUOUS_DATE_TIME'],
+            ])('rejects %s in a timestamp filter with 400', async (_name, query, parameter, code) => {
+                const response = await list(query)
+                expect(response.status).toEqual(HttpStatus.BAD_REQUEST)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.parameter, e.code])).toEqual([[parameter, code]])
+            })
+
+            it('accepts a DST time with an explicit offset in a timestamp filter', async () => {
+                const response = await list(`tz=Europe/Vienna&create_timestamp_ge=${encodeURIComponent('2026-10-25T02:30:00+01:00')}`)
+                expect(response.status).toEqual(HttpStatus.OK)
             })
         })
 
@@ -893,6 +930,18 @@ describe('Subscriber', () => {
                 expect(response.body).toMatchObject({display_name: 'W Sip 2', status: 'locked', lock: '4', timezone: null, email: `${prefix}-wsip@example.org`})
                 const journal = await get(`/api/subscribers/${created.wsip}/journal`)
                 expect(journal.body.total_count).toEqual(2)
+            })
+
+            it.each(['localtime', 'SYSTEM', 'Mars/Base', '+01:00'])('rejects timezone %s with 422', async (timezone) => {
+                const response = await patch('wsip', [{op: 'replace', path: '/timezone', value: timezone}])
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/timezone', 'isTimezoneName']])
+            })
+
+            it('stores a timezone in its canonical case', async () => {
+                const response = await patch('wsip', [{op: 'replace', path: '/timezone', value: 'asia/tokyo'}])
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.timezone).toEqual('Asia/Tokyo')
             })
 
             it('keeps the lock when unlocking without a lock level', async () => {

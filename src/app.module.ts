@@ -90,6 +90,7 @@ import {ContentTypeMiddleware} from './middleware/content-type.middleware'
 import {ContextMiddleware} from './middleware/context.middleware'
 import {LoggerMiddleware} from './middleware/logger.middleware'
 import {StateMiddleware} from './middleware/state.middleware'
+import {TimezoneMiddleware} from './middleware/timezone.middleware'
 import {DbStateSchedule} from './schedules/dbstate.schedule'
 import {FileshareSchedule} from './schedules/fileshare.schedule'
 import {RedisStateSchedule} from './schedules/redisstate.schedule'
@@ -217,7 +218,7 @@ export class AppModule implements NestModule, OnModuleInit {
     }
 
     configure(consumer: MiddlewareConsumer): void {
-        consumer.apply(ContentTypeMiddleware, ContextMiddleware, LoggerMiddleware, StateMiddleware).forRoutes({
+        consumer.apply(ContentTypeMiddleware, ContextMiddleware, LoggerMiddleware, StateMiddleware, TimezoneMiddleware).forRoutes({
             path: '*',
             method: RequestMethod.ALL,
         })

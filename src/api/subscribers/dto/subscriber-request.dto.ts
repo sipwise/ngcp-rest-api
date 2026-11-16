@@ -17,6 +17,7 @@ import {
     ValidateNested,
 } from 'class-validator'
 
+import {IsTimezoneName} from '~/decorators/is-timezone-name.decorator'
 import {IsValidPassword} from '~/decorators/is-valid-password.decorator'
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
@@ -156,6 +157,7 @@ export class SubscriberRequestDto implements RequestDto {
 
     @IsOptional()
     @IsString()
+    @IsTimezoneName()
     @MaxLength(80)
     @ApiPropertyOptional({nullable: true})
         timezone?: string | null

@@ -1,7 +1,7 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-import {Type} from 'class-transformer'
-import {IsDate, IsNumber, IsOptional} from 'class-validator'
+import {IsNumber, IsOptional} from 'class-validator'
 
+import {LocalDateTimeField} from '~/decorators/date-time-field.decorator'
 import {RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
 import {DtoFields, withDtoFields} from '~/helpers/dto-fields.helper'
@@ -19,16 +19,14 @@ export class CustomerBillingProfileRequestDto {
     @IsNumber()
         network_id?: number
 
+    @LocalDateTimeField()
     @ApiPropertyOptional()
     @IsOptional()
-    @Type(() => Date)
-    @IsDate()
         start?: Date
 
+    @LocalDateTimeField()
     @ApiPropertyOptional()
     @IsOptional()
-    @Type(() => Date)
-    @IsDate()
         stop?: Date
 
     constructor(entity: internal.CustomerBillingProfile, _options?: ResponseDtoOptions) {

@@ -168,6 +168,8 @@ export class TransformInterceptor implements NestInterceptor {
         const url = req.url.endsWith('/')
             ? req.url.slice(0, -1)
             : req.url
+        const [urlPathWithSlash, urlQuery] = url.split('?')
+        const urlPath = urlPathWithSlash.replace(/\/$/, '')
 
         const resName = this.getResourceName(path)
 
@@ -184,7 +186,7 @@ export class TransformInterceptor implements NestInterceptor {
             resource = halson('')
                 .addLink('self', req.originalUrl)
             data.map(async (row) => {
-                const link = url + (row.id ? '/' + row.id : '')
+                const link = urlPath + (row.id ? '/' + row.id : '')
                 if (data.length == 1) {
                     await resource.addLink(`ngcp:${resName}`, [{href: `${link}`}])
                 } else {
@@ -192,15 +194,15 @@ export class TransformInterceptor implements NestInterceptor {
                 }
                 await resource.addEmbed(`ngcp:${resName}`, [row])
             })
-            resource.addLink('collection', url)
+            resource.addLink('collection', urlPath)
             resource['total_count'] = totalCount
 
             const pageCount = Math.ceil(totalCount / +rows)
             if (+page > 1) {
-                resource.addLink('prev', `${url}?page=${+page - 1}&rows=${rows}`)
+                resource.addLink('prev', this.pageLink(urlPath, urlQuery, +page - 1, rows))
             }
             if (+page < pageCount) {
-                resource.addLink('next', `${url}?page=${+page + 1}&rows=${rows}`)
+                resource.addLink('next', this.pageLink(urlPath, urlQuery, +page + 1, rows))
             }
             return resource
         } else if (data && 'id' in data) {
@@ -214,6 +216,17 @@ export class TransformInterceptor implements NestInterceptor {
                 .addLink('collection', url)
         }
         return resource
+    }
+
+    /**
+     * Link to another page of the collection, keeping the other query parameters (filters, tz)
+     */
+    private pageLink(urlPath: string, urlQuery: string | undefined, page: number, rows: string): string {
+        const query = new URLSearchParams(urlQuery)
+        query.delete(this.pageName)
+        query.delete(this.perPageName)
+        const others = query.toString()
+        return `${urlPath}?${this.pageName}=${page}&${this.perPageName}=${rows}${others ? '&' + others : ''}`
     }
 
     private async generateDataLinks(req: any, res: any, data: any): Promise<CreateResponseDto<any>> {

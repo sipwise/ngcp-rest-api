@@ -1,6 +1,7 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, Length, MaxLength} from 'class-validator'
 
+import {IsTimezoneName} from '~/decorators/is-timezone-name.decorator'
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
 import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal.entity'
@@ -173,6 +174,7 @@ export class SystemContactRequestDto implements RequestDto {
 
     @IsOptional()
     @IsString()
+    @IsTimezoneName()
     @MaxLength(80)
     @ApiPropertyOptional()
         timezone?: string

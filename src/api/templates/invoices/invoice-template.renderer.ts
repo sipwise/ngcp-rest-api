@@ -32,8 +32,8 @@ export function preprocessSvg(svg: string): string {
  *
  * @throws InvoiceTemplateRenderError if the template contains unsupported expressions or markers
  */
-export function renderInvoiceTemplate(template: string, vars: Record<string, unknown>, category: InvoiceTemplateCategory): string {
-    return renderInvoiceLayout(preprocessSvg(template), vars, category)
+export function renderInvoiceTemplate(template: string, vars: Record<string, unknown>, category: InvoiceTemplateCategory, zone: string): string {
+    return renderInvoiceLayout(preprocessSvg(template), vars, category, zone)
 }
 
 const escapeXml = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')

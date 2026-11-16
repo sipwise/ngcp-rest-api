@@ -1,6 +1,8 @@
 import {Request} from 'express'
 import {v4 as uuidv4} from 'uuid'
 
+import type {RequestTimezone} from '~/helpers/timezone.helper'
+
 /**
  * Context allows to store additional data for a Request without modifying the request itself. This allows us to use
  * strong typing for Requests
@@ -15,6 +17,8 @@ export default class Context {
      * Sets start time when Context is initialised in middleware
      */
     public startTime = Date.now()
+
+    public timezone?: RequestTimezone
 
     /**
      * Sets a uuid v4 value for transaction id txid

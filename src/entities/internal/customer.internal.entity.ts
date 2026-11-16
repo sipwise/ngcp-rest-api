@@ -28,6 +28,7 @@ interface CustomerInternalEntity {
     maxSubscribers?: number
     modifyTimestamp?: Date
     orderId?: number
+    ownerTimezone?: string
     passresetEmailTemplateId?: number
     productId?: number
     profilePackageId?: number
@@ -58,6 +59,7 @@ export class Customer implements CustomerInternalEntity {
     maxSubscribers?: number
     modifyTimestamp?: Date
     orderId?: number
+    ownerTimezone?: string
     passresetEmailTemplateId?: number
     productId?: number
     profilePackageId?: number

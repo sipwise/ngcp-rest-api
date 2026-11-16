@@ -65,7 +65,7 @@ export class CustomerService implements CrudService<internal.Customer> {
         await Promise.all(createdCustomers.map(async customer => {
             const cust = createdCustomersDictionary[customer.id]
             await this.customerRepository.appendBillingMappings(cust.id, cust.createBillingMappings)
-            await this.customerRepository.createInitialBalance(cust.id)
+            await this.customerRepository.createInitialBalance(cust.id, cust.createTimestamp)
         }))
         return createdCustomers
     }

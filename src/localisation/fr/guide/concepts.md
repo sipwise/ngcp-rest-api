@@ -213,6 +213,72 @@ Content-Type: application/json
 
 Un POST en masse sans `Prefer` renvoie 204 ; demandez donc `return=id` ou `return=representation` pour obtenir les nouveaux id.
 
+### Date/heure et fuseaux horaires
+
+Il existe deux types de champs date/heure. Les schémas ci-dessous marquent chaque champ avec `x-timezone` :
+
+| Type | Champs | Format | Schéma |
+| --- | --- | --- | --- |
+| Date/heure | `create_timestamp`, `sent_date` et tous les autres instants | RFC 3339 avec décalage et millisecondes, `2026-12-01T00:00:00.000+01:00` (`…Z` pour UTC) | `format: date-time`, `x-timezone: user` |
+| Local (plateforme) | valeurs de facturation : `billing_profiles` du client `start`, `stop`, `effective_start_time` ; facture `period_start`, `period_end` | heure de la plateforme telle que stockée, sans décalage, `2026-12-01 00:00:00` | `format: local-date-time` ou `local-time`, `x-timezone: platform` |
+
+Le paramètre de requête `tz` sélectionne le fuseau horaire des valeurs date/heure, sur chaque route et chaque méthode :
+
+| `tz` | Valeurs date/heure | Valeurs locales |
+| --- | --- | --- |
+| non défini | le fuseau horaire de l'utilisateur | heure de la plateforme, telle que stockée |
+| nom IANA, p. ex. `Europe/Vienna`, `UTC` | ce fuseau horaire | heure de la plateforme, telle que stockée |
+| `owner` | chaque élément dans le fuseau horaire de son propriétaire (clients, factures), les objets développés dans celui de leur propre propriétaire ; le fuseau horaire de l'utilisateur pour les autres ressources | heure de la plateforme, telle que stockée |
+
+Toute autre valeur est rejetée avec 400 (`errors[].parameter` vaut `tz`).
+
+Le fuseau horaire de l'utilisateur est celui du compte authentifié :
+
+- abonné, administrateur d'abonnés : contact de l'abonné, sinon contact du client, sinon contact du revendeur, sinon celui de la plateforme
+- administrateur lié à un revendeur : contact du revendeur, sinon celui de la plateforme
+- autres administrateurs et requêtes sans authentification : celui de la plateforme
+
+Le fuseau horaire du propriétaire des clients et des factures est celui du contact du client, sinon du contact du revendeur, sinon celui de la plateforme. Le champ `timezone` des contacts et des abonnés accepte des noms IANA ou null.
+
+```http
+GET /api/v2/customers/7                 "create_timestamp": "2026-11-06T11:31:33.000+01:00"   (system admin)
+GET /api/v2/customers/7                 "create_timestamp": "2026-11-06T05:31:33.000-05:00"   (reseller admin in New York)
+GET /api/v2/customers/7?tz=owner        "create_timestamp": "2026-11-06T19:31:33.000+09:00"   (customer in Tokyo)
+GET /api/v2/customers/7?tz=UTC          "create_timestamp": "2026-11-06T10:31:33.000Z"
+```
+
+Les valeurs locales représentent l'heure de la plateforme pour tout le monde et ne changent jamais avec `tz`, de sorte que la facturation fonctionne comme pour la tarification et l'émission des factures. Les dates invalides ou nulles stockées dans la base de données sont renvoyées comme null.
+
+Les calculs de facturation utilisent le fuseau horaire de facturation du client : son propre fuseau (comme pour `tz=owner`) si son forfait de profils a le mode de début d'intervalle de solde `1st_tz` ou `create_tz`, sinon celui de la plateforme, comme pour la tarification. Il détermine le mois d'une `period` de facture et de son numéro de série, les dates et heures imprimées dans le PDF de la facture et le début du premier intervalle de solde d'un nouveau client. Les valeurs stockées et renvoyées restent en heure de la plateforme.
+
+La saisie suit les mêmes règles. Une valeur date/heure sans décalage, dans un corps de requête ou un filtre, est lue dans le fuseau horaire que la réponse utilise pour ce champ ; une valeur avec décalage ou annotation de zone est prise telle quelle. Une valeur locale sans décalage est stockée telle que fournie ; avec un décalage, elle est convertie en heure de la plateforme :
+
+| Sans décalage | Avec décalage ou zone |
+| --- | --- |
+| `2026-12-01 00:00:00`, `2026-12-01 00:00:00.123`, `2026-12-01T00:00:00`, `2026-12-01T00:00` | `2026-12-01T00:00:00Z`, `2026-12-01T00:00:00+09:00`, `+0900`, `+09` |
+| `2026-12-01` (00:00), `2026-12` (premier jour, 00:00), `20261201T000000`, `20261201` | `2026-12-01T00:00:00[Asia/Tokyo]`, `2026-12-01T00:00:00+09:00[Asia/Tokyo]` |
+
+Jusqu'à 9 chiffres décimaux sont acceptés. Les champs locaux contenant uniquement l'heure acceptent `18:00:00` ou `18:00` sans décalage. Les dates de semaine, les dates ordinales et `24:00:00` sont rejetées. Une valeur date/heure sans décalage qui n'existe pas ou existe deux fois dans son fuseau horaire (changements d'heure d'été) est rejetée : envoyez-la avec un décalage, p. ex. `2026-10-25T02:30:00+01:00`. Une valeur locale qui ne peut pas être enregistrée en heure de la plateforme est également rejetée : sans décalage, dans l'heure que les horloges de la plateforme sautent, ou avec décalage, dans l'heure répétée d'automne de la plateforme. Dans les chaînes de requête, encodez le `+` d'un décalage en `%2B`.
+
+```http
+PUT /api/v2/customers/7    "billing_profiles": [{"profile_id": 2, "start": "2026-12-01 05:00"}]            stored as 2026-12-01 05:00:00
+PUT /api/v2/customers/7    "billing_profiles": [{"profile_id": 2, "start": "2026-12-01T05:00:00+09:00"}]   stored as 2026-11-30 21:00:00
+GET /api/v2/invoices?period_start_ge=2026-12-01                                                          platform time, as listed
+POST /api/v2/invoices      "period": "2026-12"   (customer in Tokyo, 1st_tz package)                     period_start 2026-11-30 16:00:00 (Vienna)
+```
+
+Les valeurs de requête invalides (`tz`, une valeur de filtre non analysable ou ambiguë, `*` sur un filtre date/heure) renvoient 400 avec `errors[].parameter` ; les valeurs de corps invalides renvoient 422 avec `errors[].pointer`.
+
+Conservez le même `tz` pour un GET et pour le PUT ou PATCH qui le suit, y compris pour les opérations PATCH `test`, qui comparent la valeur telle qu'elle est restituée. Les intégrations et exports qui ont besoin de valeurs stables utilisent `tz=UTC`. Les entrées du journal conservent `timestamp` sous forme de nombre d'époque Unix et stockent `content` en UTC.
+
+Différences avec API v1 :
+
+- v1 renvoie `YYYY-MM-DD HH:MM:SS` à l'heure du serveur sans décalage ; v2 renvoie du RFC 3339 avec décalage, par défaut dans le fuseau horaire de l'utilisateur. Les valeurs locales conservent le format v1.
+- v1 prend en charge `tz` sur quelques ressources seulement, v2 sur toutes, y compris pour les écritures et les filtres. `use_owner_tz=1` correspond à `tz=owner` (`use_owner_tz` est rejeté comme paramètre inconnu).
+- v1 lit les valeurs date/heure sans décalage à l'heure du serveur, v2 dans le fuseau horaire de l'utilisateur. Les valeurs locales sont à l'heure de la plateforme dans les deux.
+- Un `tz` invalide renvoie 400 (v1 : 422 ou ignoré). Les valeurs de filtre avec décalage sont converties correctement, et les valeurs date/heure ambiguës à cause de l'heure d'été sont rejetées au lieu d'être résolues silencieusement.
+- Les périodes de facture (`period`), les numéros de série et les dates du PDF suivent le fuseau horaire de facturation du client, et le premier intervalle de solde d'un client avec un forfait `1st_tz`/`create_tz` commence à minuit dans son fuseau (v1 : heure du serveur ou UTC).
+
 ### Erreurs
 
 Toutes les erreurs ont le même corps JSON :

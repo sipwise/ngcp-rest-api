@@ -3,6 +3,7 @@ import {IsBoolean, IsDate, IsEnum, IsInt, IsString} from 'class-validator'
 
 import {RbacRole} from '~/config/constants.config'
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
+import {DateTimeField} from '~/decorators/date-time-field.decorator'
 import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
@@ -46,6 +47,7 @@ export class CustomerContactResponseDto extends ResponseDto {
     @ApiProperty()
         country?: string
 
+    @DateTimeField()
     @CanBeNull()
     @IsDate()
     @ApiProperty({type: Date, nullable: true, description: 'Time of creation, null if unknown'})
@@ -136,6 +138,7 @@ export class CustomerContactResponseDto extends ResponseDto {
     @ApiProperty()
         mobilenumber?: string
 
+    @DateTimeField()
     @CanBeNull()
     @IsDate()
     @ApiProperty({type: Date, nullable: true, description: 'Time of the last modification'})
@@ -170,6 +173,7 @@ export class CustomerContactResponseDto extends ResponseDto {
     @ApiProperty()
         street?: string
 
+    @DateTimeField()
     @CanBeNull()
     @IsDate()
     @ApiProperty({type: Date, nullable: true, description: 'Time of termination'})

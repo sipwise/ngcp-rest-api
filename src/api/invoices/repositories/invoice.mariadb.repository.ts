@@ -24,6 +24,7 @@ import {
 } from '~/helpers/call-list-suppression.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {isOwnerTimezone, joinContractTimezone, storedTimezone} from '~/helpers/timezone.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -42,6 +43,13 @@ const callSides: Record<InvoiceTemplateCallDirection, InvoiceCallSide[]> = {
     [InvoiceTemplateCallDirection.In]: [InvoiceCallSide.Destination],
     [InvoiceTemplateCallDirection.Out]: [InvoiceCallSide.Source],
     [InvoiceTemplateCallDirection.InOut]: [InvoiceCallSide.Destination, InvoiceCallSide.Source],
+}
+
+function toInternalInvoice(invoice: db.billing.Invoice, sr: ServiceRequest): internal.Invoice {
+    const result = invoice.toInternal()
+    if (isOwnerTimezone(sr))
+        result.ownerTimezone = storedTimezone(invoice.ownerTimezone?.name)
+    return result
 }
 
 const epoch = (date: Date): number => Math.floor(date.getTime() / 1000)
@@ -128,21 +136,21 @@ export class InvoiceMariadbRepository extends MariaDbRepository implements Invoi
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.Invoice[], number]> {
         const qb = await this.createSearchQueryBuilder(sr, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
-        return [result.map(d => d.toInternal()), totalCount]
+        return [result.map(d => toInternalInvoice(d, sr)), totalCount]
     }
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Invoice> {
         const qb = await this.createSearchQueryBuilder(sr, filterBy)
         qb.andWhere({id: id})
         const result = await qb.getOneOrFail()
-        return result.toInternal()
+        return toInternalInvoice(result, sr)
     }
 
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Invoice[]> {
         const qb = await this.createSearchQueryBuilder(sr, filterBy)
         qb.andWhereInIds(ids)
         const result = await qb.getMany()
-        return result.map(d => d.toInternal())
+        return result.map(d => toInternalInvoice(d, sr))
     }
 
     async readDataById(id: number, filterBy?: FilterBy): Promise<internal.Invoice> {
@@ -176,11 +184,17 @@ export class InvoiceMariadbRepository extends MariaDbRepository implements Invoi
             .getOne()
         if (!contract)
             return undefined
+        const profilePackage = contract.profile_package_id
+            ? await db.billing.ProfilePackage.findOneBy({id: contract.profile_package_id})
+            : undefined
+        const timezone = await db.billing.VContractTimezone.findOneBy({contract_id: contractId})
         return {
             contract: contract.toInternal(),
             productClass: contract.product.class as ProductClass,
             contact: contract.contact.toInternal(),
             resellerContact: contract.contact.reseller?.contract?.contact?.toInternal(),
+            balanceIntervalStartMode: profilePackage?.balance_interval_start_mode,
+            timezone: timezone?.name ?? undefined,
         }
     }
 
@@ -257,6 +271,8 @@ export class InvoiceMariadbRepository extends MariaDbRepository implements Invoi
         const qb = db.billing.Invoice.createQueryBuilder('invoice')
         qb.innerJoin('invoice.contract', 'contract')
         qb.innerJoin('contract.contact', 'contact')
+        if (isOwnerTimezone(sr))
+            joinContractTimezone(qb, 'invoice.contract_id')
         const searchDto = new InvoiceSearchDto()
         configureQueryBuilder(
             qb,

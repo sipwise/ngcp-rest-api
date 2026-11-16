@@ -40,20 +40,16 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'Jul
 const pad2 = (n: number): string => String(n).padStart(2, '0')
 
 /**
- * Formats a unix timestamp (seconds) with a strftime format, the unsupported conversions are kept as they are
+ * Formats a unix timestamp (seconds) in the zone with a strftime format, the unsupported conversions are kept
+ * as they are
  *
  * Supported: %Y %y %m %d %e %H %I %M %S %p %j %a %A %b %B %u %w %F %T %R %D %%
  */
-export function formatDate(epoch: unknown, format: string, utc = false): string {
-    const date = new Date(num(epoch) * 1000)
-    const year = utc ? date.getUTCFullYear() : date.getFullYear()
-    const month = utc ? date.getUTCMonth() : date.getMonth()
-    const day = utc ? date.getUTCDate() : date.getDate()
-    const hour = utc ? date.getUTCHours() : date.getHours()
-    const minute = utc ? date.getUTCMinutes() : date.getMinutes()
-    const second = utc ? date.getUTCSeconds() : date.getSeconds()
-    const weekday = utc ? date.getUTCDay() : date.getDay() // Sunday = 0
-    const dayOfYear = Math.round((Date.UTC(year, month, day) - Date.UTC(year, 0, 1)) / 86400000) + 1
+export function formatDate(epoch: unknown, format: string, zone: string): string {
+    const date = Temporal.Instant.fromEpochMilliseconds(Math.trunc(num(epoch) * 1000)).toZonedDateTimeISO(zone)
+    const {year, day, hour, minute, second, dayOfYear} = date
+    const month = date.month - 1
+    const weekday = date.dayOfWeek % 7 // Sunday = 0
 
     return format.replace(/%([a-zA-Z%])/g, (conversion, c: string) => {
         switch (c) {

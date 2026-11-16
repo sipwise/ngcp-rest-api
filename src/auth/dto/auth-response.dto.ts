@@ -1,3 +1,4 @@
+import {DateTimeField} from '~/decorators/date-time-field.decorator'
 import {internal} from '~/entities'
 
 export class AuthResponseDto {
@@ -13,7 +14,8 @@ export class AuthResponseDto {
     is_master: boolean
     uuid?: string
     customer_id?: number
-    password_modified_timestamp?: Date
+    @DateTimeField()
+        password_modified_timestamp?: Date
     enable_2fa?: boolean
     otp_init?: boolean
     otp_secret_key?: string

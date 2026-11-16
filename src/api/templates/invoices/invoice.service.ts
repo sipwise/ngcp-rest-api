@@ -31,6 +31,7 @@ import {internal} from '~/entities'
 import {InvoiceTemplateCategory} from '~/entities/internal/invoice-template.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException,apiError, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
+import {platformTimezone} from '~/helpers/timezone.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -89,12 +90,12 @@ export class InvoiceTemplateService implements CrudService<internal.InvoiceTempl
     }
 
     /**
-     * Renders the template with the given variables to a pdf
+     * Renders the template with the given variables to a pdf, dates and times are printed in the zone
      */
-    async render(template: internal.InvoiceTemplate, vars: InvoiceTemplateVars): Promise<Buffer> {
+    async render(template: internal.InvoiceTemplate, vars: InvoiceTemplateVars, zone = platformTimezone()): Promise<Buffer> {
         const content = await this.readContent(template)
         try {
-            const svg = renderInvoiceTemplate(content.toString('utf8'), toTemplateVars(vars), template.category)
+            const svg = renderInvoiceTemplate(content.toString('utf8'), toTemplateVars(vars), template.category, zone)
             return await svgToPdf(svg)
         } catch (err) {
             if (err instanceof InvoiceTemplateRenderError) {

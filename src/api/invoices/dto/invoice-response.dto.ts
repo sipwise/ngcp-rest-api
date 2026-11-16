@@ -2,10 +2,12 @@ import {ApiProperty} from '@nestjs/swagger'
 import {IsDate, IsEnum, IsInt, IsNumber, IsString} from 'class-validator'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
+import {DateTimeField, LocalDateTimeField} from '~/decorators/date-time-field.decorator'
 import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {InvoiceGenerator} from '~/entities/internal/invoice.internal.entity'
+import {setOwnerTimezone} from '~/helpers/timezone.helper'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class InvoiceResponseDto extends ResponseDto {
@@ -22,10 +24,12 @@ export class InvoiceResponseDto extends ResponseDto {
     @ApiProperty({example: 'INV2026010000042'})
         serial: string
 
+    @LocalDateTimeField()
     @IsDate()
     @ApiProperty({type: Date})
         period_start: Date
 
+    @LocalDateTimeField()
     @IsDate()
     @ApiProperty({type: Date})
         period_end: Date
@@ -42,6 +46,7 @@ export class InvoiceResponseDto extends ResponseDto {
     @ApiProperty({description: 'Total amount in cents'})
         amount_total: number
 
+    @DateTimeField()
     @CanBeNull()
     @IsDate()
     @ApiProperty({type: Date, nullable: true, description: 'Time the invoice was sent by email'})
@@ -66,5 +71,6 @@ export class InvoiceResponseDto extends ResponseDto {
         this.amount_total = entity.amountTotal
         this.sent_date = entity.sentDate ?? null
         this.generator = entity.generator ?? null
+        setOwnerTimezone(this, entity.ownerTimezone)
     }
 }

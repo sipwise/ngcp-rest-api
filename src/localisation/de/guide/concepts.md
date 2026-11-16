@@ -213,6 +213,72 @@ Content-Type: application/json
 
 Ein Bulk-POST ohne `Prefer` liefert 204; fordern Sie daher `return=id` oder `return=representation` an, um die neuen ids zu erhalten.
 
+### Datum/Uhrzeit und Zeitzonen
+
+Es gibt zwei Arten von Datum/Uhrzeit-Feldern. Die Schemas unten kennzeichnen jedes Feld mit `x-timezone`:
+
+| Art | Felder | Format | Schema |
+| --- | --- | --- | --- |
+| Datum/Uhrzeit | `create_timestamp`, `sent_date` und alle anderen Zeitpunkte | RFC 3339 mit Offset und Millisekunden, `2026-12-01T00:00:00.000+01:00` (`…Z` für UTC) | `format: date-time`, `x-timezone: user` |
+| Lokal (Plattform) | Abrechnungswerte: Customer `billing_profiles` `start`, `stop`, `effective_start_time`; Rechnung `period_start`, `period_end` | Plattformzeit wie gespeichert, ohne Offset, `2026-12-01 00:00:00` | `format: local-date-time` oder `local-time`, `x-timezone: platform` |
+
+Der Query-Parameter `tz` wählt die Zeitzone der Datum/Uhrzeit-Werte, bei jeder Route und Methode:
+
+| `tz` | Datum/Uhrzeit-Werte | Lokale Werte |
+| --- | --- | --- |
+| nicht gesetzt | die Zeitzone des Benutzers | Plattformzeit, wie gespeichert |
+| IANA-Name, z. B. `Europe/Vienna`, `UTC` | diese Zeitzone | Plattformzeit, wie gespeichert |
+| `owner` | jeder Eintrag in der Zeitzone seines Eigentümers (Customers, Rechnungen), expandierte Objekte in der ihres eigenen Eigentümers; die Zeitzone des Benutzers bei anderen Ressourcen | Plattformzeit, wie gespeichert |
+
+Jeder andere Wert wird mit 400 abgelehnt (`errors[].parameter` ist `tz`).
+
+Die Zeitzone des Benutzers ist die Zeitzone des authentifizierten Accounts:
+
+- Subscriber, Subscriber-Admin: Subscriber-Kontakt, sonst Customer-Kontakt, sonst Reseller-Kontakt, sonst die der Plattform
+- Administrator, der an einen Reseller gebunden ist: Reseller-Kontakt, sonst die der Plattform
+- andere Administratoren und Anfragen ohne Authentifizierung: die der Plattform
+
+Die Zeitzone des Eigentümers von Customers und Rechnungen ist die des Customer-Kontakts, sonst des Reseller-Kontakts, sonst die der Plattform. Das Feld `timezone` von Kontakten und Subscribern akzeptiert IANA-Namen oder null.
+
+```http
+GET /api/v2/customers/7                 "create_timestamp": "2026-11-06T11:31:33.000+01:00"   (system admin)
+GET /api/v2/customers/7                 "create_timestamp": "2026-11-06T05:31:33.000-05:00"   (reseller admin in New York)
+GET /api/v2/customers/7?tz=owner        "create_timestamp": "2026-11-06T19:31:33.000+09:00"   (customer in Tokyo)
+GET /api/v2/customers/7?tz=UTC          "create_timestamp": "2026-11-06T10:31:33.000Z"
+```
+
+Lokale Werte bedeuten für alle Plattformzeit und ändern sich nie mit `tz`, sodass die Abrechnung wie beim Rating und bei der Rechnungsstellung funktioniert. Ungültige oder Null-Datumswerte in der Datenbank werden als null zurückgegeben.
+
+Abrechnungsberechnungen verwenden die Abrechnungszeitzone des Kunden: seine eigene Zeitzone (wie bei `tz=owner`), wenn sein Profilpaket den Startmodus des Guthabenintervalls `1st_tz` oder `create_tz` hat, sonst die der Plattform, wie beim Rating. Sie bestimmt den Monat eines Rechnungs-`period` und seiner Seriennummer, die im Rechnungs-PDF gedruckten Datums- und Uhrzeitwerte und den Beginn des ersten Guthabenintervalls eines neuen Kunden. Gespeicherte und zurückgegebene Werte bleiben Plattformzeit.
+
+Die Eingabe folgt denselben Regeln. Ein Datum/Uhrzeit-Wert ohne Offset, in einem Request-Body oder einem Filter, wird in der Zeitzone gelesen, die die Antwort für dieses Feld verwendet; ein Wert mit Offset oder Zonenangabe wird unverändert übernommen. Ein lokaler Wert ohne Offset wird wie angegeben gespeichert; mit Offset wird er in Plattformzeit umgerechnet:
+
+| Ohne Offset | Mit Offset oder Zone |
+| --- | --- |
+| `2026-12-01 00:00:00`, `2026-12-01 00:00:00.123`, `2026-12-01T00:00:00`, `2026-12-01T00:00` | `2026-12-01T00:00:00Z`, `2026-12-01T00:00:00+09:00`, `+0900`, `+09` |
+| `2026-12-01` (00:00), `2026-12` (erster Tag, 00:00), `20261201T000000`, `20261201` | `2026-12-01T00:00:00[Asia/Tokyo]`, `2026-12-01T00:00:00+09:00[Asia/Tokyo]` |
+
+Bis zu 9 Nachkommastellen werden akzeptiert. Lokale Felder nur mit Uhrzeit nehmen `18:00:00` oder `18:00` ohne Offset. Wochendaten, Ordinaldaten und `24:00:00` werden abgelehnt. Ein Datum/Uhrzeit-Wert ohne Offset, der in seiner Zeitzone nicht existiert oder doppelt vorkommt (Sommerzeitwechsel), wird abgelehnt: Senden Sie ihn mit Offset, z. B. `2026-10-25T02:30:00+01:00`. Ebenso abgelehnt wird ein lokaler Wert, der sich nicht als Plattformzeit speichern lässt: ohne Offset in der Zeit, die die Uhren der Plattform überspringen, oder mit Offset in der doppelten Herbststunde der Plattform. In Query-Strings wird das `+` eines Offsets als `%2B` kodiert.
+
+```http
+PUT /api/v2/customers/7    "billing_profiles": [{"profile_id": 2, "start": "2026-12-01 05:00"}]            stored as 2026-12-01 05:00:00
+PUT /api/v2/customers/7    "billing_profiles": [{"profile_id": 2, "start": "2026-12-01T05:00:00+09:00"}]   stored as 2026-11-30 21:00:00
+GET /api/v2/invoices?period_start_ge=2026-12-01                                                          platform time, as listed
+POST /api/v2/invoices      "period": "2026-12"   (customer in Tokyo, 1st_tz package)                     period_start 2026-11-30 16:00:00 (Vienna)
+```
+
+Ungültige Query-Werte (`tz`, ein nicht auswertbarer oder mehrdeutiger Filterwert, `*` bei einem Datum/Uhrzeit-Filter) liefern 400 mit `errors[].parameter`; ungültige Body-Werte liefern 422 mit `errors[].pointer`.
+
+Verwenden Sie für ein GET und das darauf folgende PUT oder PATCH dasselbe `tz`, auch bei PATCH-`test`-Operationen, die den Wert so vergleichen, wie er dargestellt wird. Integrationen und Exporte, die stabile Werte benötigen, verwenden `tz=UTC`. Journal-Einträge behalten `timestamp` als Unix-Epoch-Zahl und speichern `content` in UTC.
+
+Unterschiede zu API v1:
+
+- v1 liefert `YYYY-MM-DD HH:MM:SS` in Serverzeit ohne Offset; v2 liefert RFC 3339 mit Offset, standardmäßig in der Zeitzone des Benutzers. Lokale Werte behalten das v1-Format.
+- v1 unterstützt `tz` nur bei wenigen Ressourcen, v2 bei allen, auch bei Schreibzugriffen und Filtern. `use_owner_tz=1` entspricht `tz=owner` (`use_owner_tz` wird als unbekannter Parameter abgelehnt).
+- v1 liest Datum/Uhrzeit-Werte ohne Offset in Serverzeit, v2 in der Zeitzone des Benutzers. Lokale Werte sind in beiden Plattformzeit.
+- Ein ungültiges `tz` liefert 400 (v1: 422 oder ignoriert). Filterwerte mit Offset werden korrekt umgerechnet, und Datum/Uhrzeit-Werte, die wegen der Sommerzeit mehrdeutig sind, werden abgelehnt, statt stillschweigend aufgelöst zu werden.
+- Rechnungszeiträume (`period`), Seriennummern und PDF-Datumswerte folgen der Abrechnungszeitzone des Kunden, und das erste Guthabenintervall eines Kunden mit einem `1st_tz`/`create_tz`-Paket beginnt um Mitternacht in seiner Zeitzone (v1: Serverzeit oder UTC).
+
 ### Fehler
 
 Jeder Fehler hat denselben JSON-Body:

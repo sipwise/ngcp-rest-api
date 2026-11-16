@@ -33,6 +33,7 @@ module.exports =
     maxWorkers: 6,
     testRunner: 'jest-circus/runner',
     testEnvironment: '../jest-e2e-env-runtime.ts',
+    globalSetup: '../jest-e2e-global-setup.js',
     moduleNameMapper: {
         '^~/(.*)$': '<rootDir>/$1',
     },

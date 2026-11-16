@@ -6,9 +6,13 @@ import {
     InternalServerErrorException,
     NestInterceptor,
 } from '@nestjs/common'
+import {Request} from 'express'
 import {Observable} from 'rxjs'
 import {catchError,switchMap} from 'rxjs/operators'
 
+import {prepareInputTimezone} from '~/helpers/date-time-input.helper'
+import {renderDateTimes} from '~/helpers/date-time-renderer.helper'
+import {requestTimezone} from '~/helpers/timezone.helper'
 import {validate} from '~/helpers/validate.helper'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -16,33 +20,22 @@ import {LoggerService} from '~/logger/logger.service'
 export class ResponseValidationInterceptor implements NestInterceptor {
     private readonly log = new LoggerService(ResponseValidationInterceptor.name)
 
-    intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-        const _ctx = context.switchToHttp()
+    async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
+        const req = context.switchToHttp().getRequest<Request>()
+        await prepareInputTimezone(req)
 
         return next.handle().pipe(
             switchMap(async (data) => {
-                if (Array.isArray(data) && data.length > 0) {
-                    const dto = data[0]
-                    if (typeof dto !== 'object') {
-                        return data
-                    }
-                    const validationErrors = await validate(dto)
-                    if (validationErrors.length > 0) {
-                        this.log.error({message: 'Response validation failed', validationErrors})
-                        throw new InternalServerErrorException()
-                    }
+                const dto = Array.isArray(data) && data.length > 0 ? data[0] : data
+                if (typeof dto !== 'object')
                     return data
-                } else {
-                    if (typeof data !== 'object') {
-                        return data
-                    }
-                    const validationErrors = await validate(data)
-                    if (validationErrors.length > 0) {
-                        this.log.error({message: 'Response validation failed', validationErrors})
-                        throw new InternalServerErrorException()
-                    }
-                    return data
+                const validationErrors = await validate(dto)
+                if (validationErrors.length > 0) {
+                    this.log.error({message: 'Response validation failed', validationErrors})
+                    throw new InternalServerErrorException()
                 }
+                await renderDateTimes(data, requestTimezone(req))
+                return data
             }),
             catchError((err) => {
                 throw err

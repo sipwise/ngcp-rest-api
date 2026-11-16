@@ -15,12 +15,14 @@ import {
 
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
+import {DateTimeField} from '~/decorators/date-time-field.decorator'
 import {Expandable} from '~/decorators/expandable.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ContractBillingProfileDefinition, ContractStatus as CustomerStatus} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
 import {UrlReferenceType} from '~/enums/url-reference-type.enum'
+import {setOwnerTimezone} from '~/helpers/timezone.helper'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
 import {UrlReference} from '~/types/url-reference.type'
 
@@ -29,6 +31,7 @@ export class CustomerResponseDto extends ResponseDto {
     @ApiProperty()
         id: number
 
+    @DateTimeField()
     @IsOptional()
     @CanBeNull()
     @IsDate()
@@ -66,6 +69,7 @@ export class CustomerResponseDto extends ResponseDto {
     @ApiPropertyOptional({description: 'A non-unique external ID e.g., provided by a 3rd party provisioning'})
         external_id?: string
 
+    @DateTimeField()
     @IsDate()
     @ApiProperty()
         create_timestamp: Date
@@ -88,6 +92,7 @@ export class CustomerResponseDto extends ResponseDto {
     @ApiPropertyOptional()
         max_subscribers?: number
 
+    @DateTimeField()
     @IsDate()
     @ApiProperty()
         modify_timestamp: Date
@@ -120,6 +125,7 @@ export class CustomerResponseDto extends ResponseDto {
     @ApiPropertyOptional({description: 'The type of contract'})
         type: CustomerType
 
+    @DateTimeField()
     @CanBeNull()
     @IsDate()
     @ApiProperty()
@@ -170,5 +176,6 @@ export class CustomerResponseDto extends ResponseDto {
         this.type = entity.type
         this.terminate_timestamp = entity.terminateTimestamp
         this.vat_rate = entity.vatRate
+        setOwnerTimezone(this, entity.ownerTimezone)
     }
 }

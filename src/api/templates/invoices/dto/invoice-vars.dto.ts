@@ -116,9 +116,9 @@ export class InvoiceTemplateBillingProfileVars {
 }
 
 export class InvoiceTemplateInvoiceVars {
-    @ApiProperty({description: 'Invoice period start (DateTime)', example: '2026-09-01T00:00:00.000Z'})
+    @ApiProperty({description: 'Invoice period start, RFC 3339 in the billing timezone of the contract', example: '2026-09-01T00:00:00.000Z'})
         period_start: string = '2026-09-01T00:00:00.000Z'
-    @ApiProperty({description: 'Invoice period end (DateTime)', example: '2026-09-30T23:59:59.000Z'})
+    @ApiProperty({description: 'Invoice period end, RFC 3339 in the billing timezone of the contract', example: '2026-09-30T23:59:59.000Z'})
         period_end: string = '2026-09-30T23:59:59.000Z'
     @ApiProperty({example: 'INV2026090000001'})
         serial: string = 'INV2026090000001'

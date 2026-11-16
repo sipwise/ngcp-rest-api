@@ -64,7 +64,7 @@ export class VoipNumber extends BaseEntity {
         ported!: boolean
 
     @Column({
-        type: 'date',
+        type: 'timestamp',
         nullable: false,
         default: () => 'CURRENT_TIMESTAMP',
         onUpdate: 'CURRENT_TIMESTAMP',
