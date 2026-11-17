@@ -29,21 +29,7 @@ export class PeeringGroupService implements CrudService<internal.VoipPeeringGrou
     }
 
     async create(entities: internal.VoipPeeringGroup[], sr: ServiceRequest): Promise<internal.VoipPeeringGroup[]> {
-        const contractIds = entities.map(e => e.peeringContractId)
-        const contracts = await db.billing.Contract.find({
-            where: {
-                id: In(contractIds),
-                product: {class: In([
-                    ProductClass.PstnPeering,
-                    ProductClass.SipPeering,
-                ])},
-            },
-        })
-        const validIds = new Set(contracts.map(c => c.id))
-        const missing = entities.filter(e => !validIds.has(e.peeringContractId))
-        if (missing.length > 0) {
-            throw new NotFoundException()
-        }
+        await this.validateContracts(entities)
         const created = await this.peeringGroupRepo.create(entities)
         return this.peeringGroupRepo.readWhereInIds(created, sr)
     }
@@ -68,22 +54,10 @@ export class PeeringGroupService implements CrudService<internal.VoipPeeringGrou
             throw new UnprocessableEntityException(message)
         }
 
-        // check if contract exists
-        const contractIds = groups.map(g => g.peeringContractId)
-        const contracts = await db.billing.Contract.find({
-            where: {
-                id: In(contractIds),
-                product: {class: In([
-                    ProductClass.PstnPeering,
-                    ProductClass.SipPeering,
-                ])},
-            },
-        })
-        const validIds = new Set(contracts.map(c => c.id))
-        const missing = groups.filter(g => !validIds.has(g.peeringContractId))
-        if (missing.length > 0) {
-            throw new NotFoundException()
-        }
+        const oldContractIds = new Map(groups.map(group => [group.id, group.peeringContractId]))
+        await this.validateContracts(Object.keys(updates)
+            .filter(id => updates[id].peeringContractId != oldContractIds.get(+id))
+            .map(id => updates[id]))
 
         return await this.peeringGroupRepo.update(updates, sr)
     }
@@ -104,6 +78,24 @@ export class PeeringGroupService implements CrudService<internal.VoipPeeringGrou
         }
 
         return await this.peeringGroupRepo.delete(ids, sr)
+    }
+
+    private async validateContracts(groups: internal.VoipPeeringGroup[]): Promise<void> {
+        if (!groups.length)
+            return
+        const contractIds = groups.map(group => group.peeringContractId).filter(id => id != null)
+        const contracts = contractIds.length ? await db.billing.Contract.find({
+            where: {
+                id: In(contractIds),
+                product: {class: In([
+                    ProductClass.PstnPeering,
+                    ProductClass.SipPeering,
+                ])},
+            },
+        }) : []
+        const validIds = new Set(contracts.map(contract => contract.id))
+        if (groups.some(group => !validIds.has(group.peeringContractId)))
+            throw new UnprocessableEntityException(this.i18n.t('errors.PEERING_CONTRACT_INVALID'))
     }
 
     async reloadKamProxyAfterCommit(sr: ServiceRequest): Promise<void> {

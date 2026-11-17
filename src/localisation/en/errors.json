@@ -290,5 +290,9 @@
   "PEERING_RESELLER_CONTRACT_PREPAID_PROFILE": {
     "message": "Peering/reseller contract can't be connected to a prepaid billing profile",
     "code": 10083
+  },
+  "PEERING_CONTRACT_INVALID": {
+    "message": "contract_id must be a sippeering or pstnpeering contract",
+    "code": 10084
   }
 }
