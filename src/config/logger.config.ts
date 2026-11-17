@@ -6,7 +6,10 @@ export const winstonLoggerConfig: LoggerOptions = {
     // TODO: Set level when template supports log_level setting
     // level: process.env.NODE_ENV == 'development' ? 'debug' : config.common.log_level,
     level: 'debug',
-    levels: winston.config.syslog.levels,
+    levels: {
+        ...winston.config.syslog.levels,
+        warn: winston.config.syslog.levels.warning, // alias so nest-winston/TypeORM/@nestjs/common .warn() calls work
+    },
     format: winston.format.simple(),
     transports: [
         process.env.NODE_ENV == 'production' &&
