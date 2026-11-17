@@ -13,6 +13,7 @@ import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
+import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
@@ -40,6 +41,9 @@ describe('Peering Group', () => {
     const createdContractIds: number[] = []
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
+    const nonPeeringContractId = 1
+    const suffix = `${process.env.JEST_WORKER_ID}_${Date.now()}`
+    const invalidContract = (pointer: string): [string, string][] => [[pointer, 'PEERING_CONTRACT_INVALID']]
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -176,18 +180,46 @@ describe('Peering Group', () => {
                 expect(response.status).toEqual(201)
                 createdPeeringGroupIds.push(+response.body.data[0].id)
             })
-            it('fail create group with non existing system contract', async () => {
+            it('fail create group with non-peering contract', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/api/peerings/groups')
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        name: 'test_peeringGroup3',
-                        description: 'test_peeringGroup3 description',
-                        contract_id: 1,
+                        name: `test_peeringGroupInvalid_${suffix}`,
+                        contract_id: nonPeeringContractId,
                     })
-                expect(response.status).toEqual(404)
+                expect(response.status).toEqual(422)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual(invalidContract('/contract_id'))
+            })
+            it('fail create group with unknown contract', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/peerings/groups')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        name: `test_peeringGroupInvalid_${suffix}`,
+                        contract_id: 999999999,
+                    })
+                expect(response.status).toEqual(422)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual(invalidContract('/contract_id'))
+            })
+            it('fail create groups bulk with one non-peering contract', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/peerings/groups')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send([
+                        {name: `test_peeringGroupBulk1_${suffix}`, contract_id: createdContractIds[0]},
+                        {name: `test_peeringGroupBulk2_${suffix}`, contract_id: nonPeeringContractId},
+                    ])
+                expect(response.status).toEqual(422)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual(invalidContract('/1/contract_id'))
+                const created = await db.provisioning.VoipPeeringGroup.findOneBy({name: `test_peeringGroupBulk1_${suffix}`})
+                expect(created).toBeNull()
             })
             it('fail duplicate group', async () => {
                 const contract = await db.billing.Contract.create({
@@ -358,6 +390,61 @@ describe('Peering Group', () => {
                     expect(group.description).toEqual(`bulk${n}`)
                 }
             })
+            it('fail update group to non-peering contract', async () => {
+                const response = await request(app.getHttpServer())
+                    .put(`/api/peerings/groups/${createdPeeringGroupIds[0]}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({name: 'bulk_put_test_peeringGroup1', contract_id: nonPeeringContractId})
+                expect(response.status).toEqual(422)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual(invalidContract('/contract_id'))
+            })
+            it('fail update group bulk to unknown contract', async () => {
+                const id = createdPeeringGroupIds[1]
+                const response = await request(app.getHttpServer())
+                    .put('/api/peerings/groups')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        [createdPeeringGroupIds[0]]: {name: 'bulk_put_test_peeringGroup1', description: 'bulk1', contract_id: createdContractIds[3]},
+                        [id]: {name: 'bulk_put_test_peeringGroup2', description: 'bulk2', contract_id: 999999999},
+                    })
+                expect(response.status).toEqual(422)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual(invalidContract(`/${id}/contract_id`))
+            })
+            it('update group kept on a non-peering contract', async () => {
+                const legacy = await db.provisioning.VoipPeeringGroup.create({
+                    name: `test_peeringGroupLegacy_${suffix}`,
+                    priority: 1,
+                    peering_contract_id: nonPeeringContractId,
+                }).save()
+                createdPeeringGroupIds.push(legacy.id)
+                const keep = await request(app.getHttpServer())
+                    .put(`/api/peerings/groups/${legacy.id}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({name: `renamed_test_peeringGroupLegacy_${suffix}`, priority: 3, contract_id: nonPeeringContractId})
+                expect(keep.status).toEqual(204)
+                const move = await request(app.getHttpServer())
+                    .put(`/api/peerings/groups/${legacy.id}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({name: `renamed_test_peeringGroupLegacy_${suffix}`, priority: 3, contract_id: createdContractIds[0]})
+                expect(move.status).toEqual(204)
+                const response = await request(app.getHttpServer())
+                    .get(`/api/peerings/groups/${legacy.id}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                const group: PeeringGroupResponseDto = response.body
+                expect(group.name).toEqual(`renamed_test_peeringGroupLegacy_${suffix}`)
+                expect(group.priority).toEqual(3)
+                expect(group.contract_id).toEqual(createdContractIds[0])
+            })
             it('update non-existing group', async () => {
                 const response = await request(app.getHttpServer())
                     .put('/api/peerings/groups/999911111122')
@@ -424,6 +511,16 @@ describe('Peering Group', () => {
                 expect(second.status).toEqual(200)
                 expect(second.body.name).toEqual('bulk_patch_test_peeringGroup2')
                 expect(second.body.description).toEqual('bulk2')
+            })
+            it('fail adjust group to non-peering contract', async () => {
+                const response = await request(app.getHttpServer())
+                    .patch(`/api/peerings/groups/${createdPeeringGroupIds[0]}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send([{op: 'replace', path: '/contract_id', value: nonPeeringContractId}])
+                expect(response.status).toEqual(422)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual(invalidContract('/contract_id'))
             })
             it('adjust non-existing group', async () => {
                 const response = await request(app.getHttpServer())

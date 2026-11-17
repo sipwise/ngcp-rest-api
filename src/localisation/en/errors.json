@@ -47,6 +47,9 @@
   "CONTRACT_NOT_FOUND": {
     "message": "Invalid contract_id"
   },
+  "PEERING_CONTRACT_INVALID": {
+    "message": "contract_id must be a sippeering or pstnpeering contract"
+  },
   "CONTACT_CONTRACT_INVALID_LINK": {
     "message": "The contract_id links to a customer contact"
   },

@@ -1,6 +1,6 @@
 
 
-import {Inject, Injectable, NotFoundException} from '@nestjs/common'
+import {Inject, Injectable} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 import {In} from 'typeorm'
 
@@ -10,7 +10,7 @@ import {PeeringGroupRedisRepository} from './repositories/group.redis.repository
 import {db, internal} from '~/entities'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {throwMissingIds} from '~/helpers/errors.helper'
+import {apiError, checkItems, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -28,21 +28,7 @@ export class PeeringGroupService implements CrudService<internal.VoipPeeringGrou
     }
 
     async create(entities: internal.VoipPeeringGroup[], sr: ServiceRequest): Promise<internal.VoipPeeringGroup[]> {
-        const contractIds = entities.map(e => e.peeringContractId)
-        const contracts = await db.billing.Contract.find({
-            where: {
-                id: In(contractIds),
-                product: {class: In([
-                    ProductClass.PstnPeering,
-                    ProductClass.SipPeering,
-                ])},
-            },
-        })
-        const validIds = new Set(contracts.map(c => c.id))
-        const missing = entities.filter(e => !validIds.has(e.peeringContractId))
-        if (missing.length > 0) {
-            throw new NotFoundException()
-        }
+        await checkItems(entities, (entity, key) => this.validateContract(entity, sr, key))
         const created = await this.peeringGroupRepo.create(entities)
         return this.peeringGroupRepo.readWhereInIds(created, sr)
     }
@@ -61,22 +47,11 @@ export class PeeringGroupService implements CrudService<internal.VoipPeeringGrou
 
         throwMissingIds(sr, ids, groups.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
-        // check if contract exists
-        const contractIds = groups.map(g => g.peeringContractId)
-        const contracts = await db.billing.Contract.find({
-            where: {
-                id: In(contractIds),
-                product: {class: In([
-                    ProductClass.PstnPeering,
-                    ProductClass.SipPeering,
-                ])},
-            },
+        const oldContractIds = new Map(groups.map(group => [group.id, group.peeringContractId]))
+        await checkItems(updates, async (group, key) => {
+            if (group.peeringContractId != oldContractIds.get(+key))
+                await this.validateContract(group, sr, key)
         })
-        const validIds = new Set(contracts.map(c => c.id))
-        const missing = groups.filter(g => !validIds.has(g.peeringContractId))
-        if (missing.length > 0) {
-            throw new NotFoundException()
-        }
 
         return await this.peeringGroupRepo.update(updates, sr)
     }
@@ -91,6 +66,20 @@ export class PeeringGroupService implements CrudService<internal.VoipPeeringGrou
         }
 
         return await this.peeringGroupRepo.delete(ids, sr)
+    }
+
+    private async validateContract(group: internal.VoipPeeringGroup, sr: ServiceRequest, key: number | string): Promise<void> {
+        const contract = group.peeringContractId != null && await db.billing.Contract.findOne({
+            where: {
+                id: group.peeringContractId,
+                product: {class: In([
+                    ProductClass.PstnPeering,
+                    ProductClass.SipPeering,
+                ])},
+            },
+        })
+        if (!contract)
+            throw apiError(this.i18n.t('errors.PEERING_CONTRACT_INVALID'), itemPointer(sr, key, group, 'peeringContractId'))
     }
 
     async reloadKamProxyAfterCommit(sr: ServiceRequest): Promise<void> {

@@ -3,8 +3,11 @@ import {IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, MaxLength} from 'cl
 
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
+import {DtoFields, withDtoFields} from '~/helpers/dto-fields.helper'
 
 export class PeeringGroupRequestDto implements RequestDto {
+    static readonly dtoFields: DtoFields<internal.VoipPeeringGroup, PeeringGroupRequestDto> = {peeringContractId: 'contract_id'}
+
     @ApiProperty({description: 'System Contract Id', example: 1})
     @IsPositive()
     @IsInt()
@@ -63,6 +66,6 @@ export class PeeringGroupRequestDto implements RequestDto {
             if (entity.timeSetId === undefined)
                 entity.timeSetId = null
         }
-        return entity
+        return withDtoFields(entity, PeeringGroupRequestDto.dtoFields)
     }
 }
