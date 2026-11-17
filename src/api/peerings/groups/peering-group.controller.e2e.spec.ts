@@ -121,7 +121,7 @@ describe('Peering Group', () => {
                 createdIds.push(+response.body[0].id)
                 await db.billing.Contract.delete(contract.id)
             })
-            it('fail create group with non existing system contract', async () => {
+            it('fail create group with non-peering contract', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/peerings/groups')
                     .set(...authHeader)
@@ -130,7 +130,7 @@ describe('Peering Group', () => {
                         description: 'test_peeringGroup3 description',
                         contract_id: 1,
                     })
-                expect(response.status).toEqual(404)
+                expect(response.status).toEqual(422)
             })
             it('fail duplicate group', async () => {
                 const contract = await db.billing.Contract.create({
@@ -263,6 +263,29 @@ describe('Peering Group', () => {
                 const group: PeeringGroupResponseDto = response.body
                 expect(group.name).toEqual('renamed_test_peeringGroup2')
                 await db.billing.Contract.delete(group.contract_id)
+            })
+            it('fail update group to non-peering contract', async () => {
+                const response = await request(app.getHttpServer())
+                    .put(`/peerings/groups/${createdIds[0]}`)
+                    .set(...authHeader)
+                    .send({name: 'renamed_test_peeringGroup1DefaultPriority', contract_id: 1})
+                expect(response.status).toEqual(422)
+            })
+            it('update group kept on a non-peering contract', async () => {
+                const legacy = await db.provisioning.VoipPeeringGroup.create({
+                    name: `test_peeringGroupLegacy_${Date.now()}`,
+                    priority: 1,
+                    peering_contract_id: 1,
+                }).save()
+                createdIds.push(legacy.id)
+                const response = await request(app.getHttpServer())
+                    .put(`/peerings/groups/${legacy.id}`)
+                    .set(...authHeader)
+                    .send({name: `renamed_${legacy.name}`, priority: 3, contract_id: 1})
+                expect(response.status).toEqual(200)
+                const group: PeeringGroupResponseDto = response.body
+                expect(group.name).toEqual(`renamed_${legacy.name}`)
+                expect(group.priority).toEqual(3)
             })
             it('update non-existing group', async () => {
                 const response = await request(app.getHttpServer())
