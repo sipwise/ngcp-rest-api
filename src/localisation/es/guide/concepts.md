@@ -139,6 +139,43 @@ GET /api/v2/subscribers?customer_id.contact_id.email=*@example.com&status=active
 
 Un filtro así devuelve 422 si la colección referenciada no conoce el filtro, si coincide con demasiados elementos referenciados (10000 por defecto) o si la colección no puede aplicarlo. `order_by` no admite estos campos.
 
+### Campos diferidos
+
+Los campos de lista de un elemento pueden contener muchas entradas, por ejemplo los `alias_numbers` de un suscriptor o los `billing_profiles` de un cliente. Por defecto se devuelven como un enlace con el número de entradas:
+
+```json
+{
+  "id": 5,
+  "alias_numbers": {"type": "link", "url": "/api/v2/subscribers/5/@alias_numbers", "total_count": 3}
+}
+```
+
+El enlace apunta al campo como colección: la ruta del elemento, `/@` y el nombre del campo. Se lee solo con GET y se pagina, ordena y filtra como cualquier otra colección, con los filtros indicados en su operación. Las entradas que son valores simples, como los ids de `pbx_group_ids`, se devuelven allí como `{"value": 12}` y se filtran y ordenan por `value`. Estas colecciones existen solo por elemento, no hay `/subscribers/@alias_numbers`.
+
+```http
+GET /api/v2/subscribers/5/@alias_numbers?order_by=sn&rows=100&page=2
+GET /api/v2/subscribers/5/@pbx_group_ids?value=12
+```
+
+`inline` devuelve en su lugar los campos diferidos como datos, en elementos individuales y en colecciones. Los campos diferidos de una respuesta se indican con el parámetro `inline` de su operación.
+
+| Valor | Devuelto como datos |
+| --- | --- |
+| nombres de campos, separados por comas | los campos nombrados |
+| `all` | todos los campos diferidos |
+| `auto` | por elemento, cada campo con 1000 entradas como máximo, en el orden de la página mientras la respuesta no supere 10000 entradas incluidas; los demás siguen siendo enlaces |
+
+```http
+GET /api/v2/subscribers/5?inline=alias_numbers
+GET /api/v2/subscribers?customer_id=3&inline=auto
+```
+
+Un campo nombrado, o incluido por `all`, con más de 1000 entradas devuelve 422 con la URL de su colección: léalo allí, página a página. Lo mismo ocurre con campos nombrados que juntos tienen más de 10000 entradas en una respuesta (cuentan todos los elementos de una lista y los elementos expandidos): lea menos filas o use `auto`. Los límites son los ajustes de plataforma `performance.lazy_load.inline_max_items` (1000 por defecto) y `performance.lazy_load.inline_max_hard_limit` (10000 por defecto). Un nombre que no es un campo diferido de la respuesta devuelve 422, `all` y `auto` juntos 400. Algunos campos son solo enlaces (`vars` y `preview` de las plantillas de factura): no tienen `total_count` y no pueden incluirse.
+
+Las escrituras con `Prefer: return=representation` devuelven sus elementos como GET, por lo que también admiten `inline`. Un enlace no es un valor: PUT reemplaza el elemento completo y rechaza con 422 un enlace devuelto. Lea el elemento con `inline=all` antes de modificarlo con PUT, o modifique campos sueltos con PATCH. No todos los campos incluidos tienen la forma de la solicitud: quite `effective_start_time` de las entradas de los `billing_profiles` de un cliente y envíe los `values` de las condiciones como cadenas simples en lugar de objetos `{"id", "value"}`.
+
+`expand` de un campo diferido lo incluye, con los mismos límites. `expand=all` omite los campos diferidos que no están incluidos, que conservan su enlace. `all` y `auto` se aplican también a los elementos expandidos, por ejemplo `expand=customer_id&inline=auto` devuelve los `billing_profiles` del cliente como datos. En una colección `@<field>`, `inline` y `expand` se refieren a los campos de sus entradas; las colecciones de valores simples no admiten `expand` (400).
+
 ### Creación y modificación de datos
 
 Cada método actúa sobre un elemento o, en la ruta de la colección, sobre varios elementos en una sola solicitud:

@@ -3,6 +3,7 @@ import {Type} from 'class-transformer'
 import {IsEnum, IsInt, IsString, ValidateNested} from 'class-validator'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
+import {LinkOnly} from '~/decorators/lazy.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory, InvoiceTemplateType} from '~/entities/internal/invoice-template.internal.entity'
@@ -36,11 +37,13 @@ export class InvoiceTemplateResponseDto extends ResponseDto {
     @ApiProperty({enum: InvoiceTemplateCategory, example: InvoiceTemplateCategory.Customer})
         category: InvoiceTemplateCategory
 
+    @LinkOnly()
     @ValidateNested()
     @Type(() => UrlReference)
     @ApiProperty({description: 'Link to the variables and functions supported by the category of the template (`GET .../:id/@vars`)'})
         vars: UrlReference
 
+    @LinkOnly()
     @ValidateNested()
     @Type(() => UrlReference)
     @ApiProperty({description: 'Link to the pdf preview of the template rendered with example values (`GET .../:id/@preview`)'})

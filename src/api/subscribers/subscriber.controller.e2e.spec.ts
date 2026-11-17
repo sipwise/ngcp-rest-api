@@ -23,6 +23,7 @@ import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal
 import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
+import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
@@ -274,15 +275,16 @@ describe('Subscriber', () => {
      * Creates a subscriber as admin (or the given login) and remembers its id
      */
     const createViaApi = async (name: string, body: object, user: Login = creds): Promise<SubscriberResponseDto> => {
-        const response = await send('post', '/api/subscribers', body, user)
+        const response = await send('post', '/api/subscribers?inline=all', body, user)
         expect(response.status).toEqual(HttpStatus.CREATED)
         const subscriber: SubscriberResponseDto = response.body.data[0]
         created[name] = subscriber.id
         return subscriber
     }
 
+    // the whole subscriber, its lists inline
     const read = async (name: string): Promise<SubscriberResponseDto> => {
-        const response = await get(`/api/subscribers/${created[name]}`)
+        const response = await get(`/api/subscribers/${created[name]}?inline=all`)
         expect(response.status).toEqual(HttpStatus.OK)
         const subscriber: SubscriberResponseDto = response.body
         return subscriber
@@ -322,6 +324,7 @@ describe('Subscriber', () => {
             }),
             new LoggingInterceptor(),
             new ClassSerializerInterceptor(app.get(Reflector)),
+            app.get(LazyFieldInterceptor),
             new TransactionInterceptor(app.get(Reflector)),
             new ResponseValidationInterceptor(),
             app.get(ExpandInterceptor),
@@ -464,10 +467,7 @@ describe('Subscriber', () => {
                     profile_set_id: null,
                     profile_id: null,
                     primary_number: {cc: 43, ac: '99', sn: `${snBase}10`, number_id: s.primaryNumberId},
-                    alias_numbers: [
-                        {cc: 43, ac: '99', sn: `${snBase}11`, number_id: s.aliasNumberIds[0], is_devid: false},
-                        {cc: 43, ac: '99', sn: `${snBase}12`, number_id: s.aliasNumberIds[1], is_devid: true},
-                    ],
+                    alias_numbers: {type: 'link', url: `/api/subscribers/${s.id}/@alias_numbers`, total_count: 2},
                     display_name: 'Sip Admin',
                     create_timestamp: expect.any(String),
                     modify_timestamp: expect.any(String),
@@ -475,8 +475,48 @@ describe('Subscriber', () => {
                 expect(new Date(response.body.create_timestamp)).toEqual(new Date(2001, 1, 3, 10))
             })
 
+            it.each(['alias_numbers', 'auto'])('returns the alias numbers without the primary number with inline=%s', async (inline) => {
+                const s = subscribers.sipadmin
+                const response = await get(`/api/subscribers/${s.id}?inline=${inline}`)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.alias_numbers).toEqual([
+                    {cc: 43, ac: '99', sn: `${snBase}11`, number_id: s.aliasNumberIds[0], is_devid: false},
+                    {cc: 43, ac: '99', sn: `${snBase}12`, number_id: s.aliasNumberIds[1], is_devid: true},
+                ])
+            })
+
+            it('links the lists of every listed subscriber with their own counts', async () => {
+                const response = await list(`id=${subscribers.sipadmin.id},${subscribers.seat.id}`)
+                expect(response.status).toEqual(HttpStatus.OK)
+                const [sipadmin, seat] = response.body.data as Record<string, unknown>[]
+                expect(sipadmin.alias_numbers).toEqual({type: 'link', url: `/api/subscribers/${subscribers.sipadmin.id}/@alias_numbers`, total_count: 2})
+                expect(seat.alias_numbers).toEqual({type: 'link', url: `/api/subscribers/${subscribers.seat.id}/@alias_numbers`, total_count: 0})
+                expect(seat.pbx_group_ids).toEqual({type: 'link', url: `/api/subscribers/${subscribers.seat.id}/@pbx_group_ids`, total_count: 1})
+            })
+
+            it('returns the pbx groups as a collection of values', async () => {
+                const response = await get(`/api/subscribers/${subscribers.seat.id}/@pbx_group_ids`)
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.data).toEqual([{value: subscribers.group.id}])
+                expect(response.body.total_count).toEqual(1)
+                const members = await get(`/api/subscribers/${subscribers.group.id}/@pbx_groupmember_ids`)
+                expect(members.body.data).toEqual([{value: subscribers.seat.id}])
+            })
+
+            it('filters the pbx groups by value in the database, 400 for other filters', async () => {
+                const url = `/api/subscribers/${subscribers.seat.id}/@pbx_group_ids`
+                expect((await get(`${url}?value=${subscribers.group.id}&order_by=value`)).body.total_count).toEqual(1)
+                expect((await get(`${url}?value=${subscribers.pilot.id}`)).body.total_count).toEqual(0)
+                expect((await get(`${url}?username=x`)).status).toEqual(HttpStatus.BAD_REQUEST)
+            })
+
+            it('returns 404 for a list the subscriber does not show', async () => {
+                const response = await get(`/api/subscribers/${subscribers.sipadmin.id}/@pbx_group_ids`)
+                expect(response.status).toEqual(HttpStatus.NOT_FOUND)
+            })
+
             it('returns the pbx fields of the pilot, seat and group', async () => {
-                const pilot = (await get(`/api/subscribers/${subscribers.pilot.id}`)).body
+                const pilot = (await get(`/api/subscribers/${subscribers.pilot.id}?inline=all`)).body
                 expect(pilot).toMatchObject({
                     is_pbx_pilot: true, is_pbx_group: false, pbx_extension: null, pbx_group_ids: [],
                     ext_range_min: 100, ext_range_max: 299, email: null, timezone: null, lock: null, display_name: null,
@@ -484,14 +524,14 @@ describe('Subscriber', () => {
                 expect(pilot).not.toHaveProperty('pbx_hunt_policy')
                 expect(pilot).not.toHaveProperty('pbx_groupmember_ids')
 
-                const seat = (await get(`/api/subscribers/${subscribers.seat.id}`)).body
+                const seat = (await get(`/api/subscribers/${subscribers.seat.id}?inline=all`)).body
                 expect(seat).toMatchObject({
                     is_pbx_pilot: false, is_pbx_group: false, pbx_extension: '101', display_name: 'Seat',
                     pbx_group_ids: [subscribers.group.id], administrative: false,
                 })
                 expect(seat).not.toHaveProperty('ext_range_min')
 
-                const group = (await get(`/api/subscribers/${subscribers.group.id}`)).body
+                const group = (await get(`/api/subscribers/${subscribers.group.id}?inline=all`)).body
                 expect(group).toMatchObject({
                     is_pbx_group: true, pbx_extension: '200', pbx_hunt_policy: 'serial', pbx_hunt_timeout: 10,
                     pbx_hunt_cancel_mode: 'bye', pbx_groupmember_ids: [subscribers.seat.id], primary_number: null, alias_numbers: [],
@@ -551,6 +591,89 @@ describe('Subscriber', () => {
                 const response = await get(`/api/subscribers/${subscribers.sipuser.id}?username=nomatch`)
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(response.body.id).toEqual(subscribers.sipuser.id)
+            })
+        })
+
+        describe('GET alias numbers', () => {
+            const aliases = (query: string, user: Login = creds): request.Test =>
+                get(`/api/subscribers/${subscribers.sipadmin.id}/@alias_numbers${query}`, user)
+
+            const sns = (response: request.Response): string[] =>
+                (response.body.data as {sn: string}[]).map(number => number.sn)
+
+            it('returns the alias numbers without the primary number', async () => {
+                const s = subscribers.sipadmin
+                const response = await aliases('')
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.data).toEqual([
+                    {cc: 43, ac: '99', sn: `${snBase}11`, number_id: s.aliasNumberIds[0], is_devid: false},
+                    {cc: 43, ac: '99', sn: `${snBase}12`, number_id: s.aliasNumberIds[1], is_devid: true},
+                ])
+                expect(response.body.total_count).toEqual(2)
+            })
+
+            it.each([
+                ['sn', (): string => `?sn=${snBase}12`, ['12']],
+                ['the whole number with a wildcard', (): string => `?number=4399${snBase}1*`, ['11', '12']],
+                ['the whole number', (): string => `?number=4399${snBase}11`, ['11']],
+                ['the primary number', (): string => `?number=4399${snBase}10`, []],
+                ['device ids', (): string => '?is_devid=true', ['12']],
+                ['other aliases', (): string => '?is_devid=false', ['11']],
+            ])('filters by %s', async (_case, query, expected) => {
+                const response = await aliases(query())
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(sns(response)).toEqual(expected.map(sn => `${snBase}${sn}`))
+            })
+
+            it('embeds them as ngcp:alias_numbers in HAL, without item links', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/subscribers/${subscribers.sipadmin.id}/@alias_numbers`)
+                    .auth(creds.username, creds.password)
+                    .set('Accept', 'application/hal+json')
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body._embedded['ngcp:alias_numbers']).toHaveLength(2)
+                expect(response.body._links).not.toHaveProperty('ngcp:alias_numbers')
+            })
+
+            it('orders and pages in the database', async () => {
+                const ordered = await aliases('?order_by=sn&order_by_direction=desc')
+                expect(sns(ordered)).toEqual([`${snBase}12`, `${snBase}11`])
+                // number_id is also the default order
+                expect(sns(await aliases('?order_by=number_id&order_by_direction=desc'))).toEqual([`${snBase}12`, `${snBase}11`])
+                const page = await aliases('?order_by=sn&rows=1&page=2')
+                expect(sns(page)).toEqual([`${snBase}12`])
+                expect(page.body.total_count).toEqual(2)
+            })
+
+            it.each([
+                ['an unknown filter', '?username=x'],
+                ['a non-boolean is_devid', '?is_devid=maybe'],
+                ['order_by on a filter without column', '?order_by=number'],
+            ])('rejects %s with 400', async (_case, query) => {
+                expect((await aliases(query)).status).toEqual(HttpStatus.BAD_REQUEST)
+            })
+
+            it.each([
+                ['reseller', (): Login => resellerCreds],
+                ['subscriberadmin of the customer', (): Login => subscriberLogin('sipadmin')],
+            ])('returns them to the %s', async (_role, login) => {
+                const response = await aliases('', login())
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.total_count).toEqual(2)
+            })
+
+            it.each([
+                ['subscriber of the customer', (): Login => subscriberLogin('sipuser')],
+                ['subscriberadmin of another customer', (): Login => subscriberLogin('pilot')],
+            ])('returns 404 to the %s', async (_role, login) => {
+                const response = await aliases('', login())
+                expect(response.status).toEqual(HttpStatus.NOT_FOUND)
+                expect(response.body.errorCode).toEqual('SUBSCRIBER_NOT_FOUND')
+            })
+
+            it('returns 404 for a subscriber of another reseller to a reseller', async () => {
+                const response = await get(`/api/subscribers/${subscribers.other.id}/@alias_numbers`, resellerCreds)
+                expect(response.status).toEqual(HttpStatus.NOT_FOUND)
             })
         })
 
@@ -837,7 +960,7 @@ describe('Subscriber', () => {
 
         describe('POST PBX', () => {
             it('creates the pilot and a seat in one request, the seat number derived', async () => {
-                const response = await send('post', '/api/subscribers', [
+                const response = await send('post', '/api/subscribers?inline=pbx_group_ids', [
                     sipBody('wpilot', {
                         customer_id: wPbxCustomerId,
                         is_pbx_pilot: true,
@@ -917,8 +1040,8 @@ describe('Subscriber', () => {
         })
 
         describe('PUT and PATCH', () => {
-            const patch = (name: string, ops: object[], user: Login = creds): request.Test =>
-                send('patch', `/api/subscribers/${created[name]}`, ops, user)
+            const patch = (name: string, ops: object[], user: Login = creds, query = ''): request.Test =>
+                send('patch', `/api/subscribers/${created[name]}${query}`, ops, user)
 
             it('patches fields and writes a journal entry', async () => {
                 const response = await patch('wsip', [
@@ -960,7 +1083,7 @@ describe('Subscriber', () => {
             })
 
             it('replaces with PUT: omitted fields are reset, aliases released', async () => {
-                const response = await send('put', `/api/subscribers/${created.wsip}`, sipBody('wsip', {primary_number: wNumber('100')}))
+                const response = await send('put', `/api/subscribers/${created.wsip}?inline=alias_numbers`, sipBody('wsip', {primary_number: wNumber('100')}))
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(response.body).toMatchObject({
                     status: 'active', lock: null, email: null, display_name: null, external_id: null, alias_numbers: [],
@@ -971,7 +1094,7 @@ describe('Subscriber', () => {
             })
 
             it('claims a released number for another subscriber', async () => {
-                const response = await patch('wbulk1', [{op: 'add', path: '/alias_numbers/-', value: wNumber('101')}])
+                const response = await patch('wbulk1', [{op: 'add', path: '/alias_numbers/-', value: wNumber('101')}], creds, '?inline=alias_numbers')
                 expect(response.status).toEqual(HttpStatus.OK)
                 expect(response.body.alias_numbers).toEqual([expect.objectContaining(wNumber('101'))])
             })
@@ -1054,11 +1177,11 @@ describe('Subscriber', () => {
                 })
 
                 it('assigns a pool number to a seat and revokes it back to the pilot', async () => {
-                    const assigned = await patch('wseat', [{op: 'add', path: '/alias_numbers/-', value: wNumber('502')}], wLogin('wpilot'))
+                    const assigned = await patch('wseat', [{op: 'add', path: '/alias_numbers/-', value: wNumber('502')}], wLogin('wpilot'), '?inline=alias_numbers')
                     expect(assigned.status).toEqual(HttpStatus.OK)
                     expect(assigned.body.alias_numbers).toEqual([expect.objectContaining(wNumber('502'))])
                     expect((await read('wpilot')).alias_numbers.map(n => n.sn)).toEqual([wNumber('503').sn])
-                    const revoked = await patch('wseat', [{op: 'remove', path: '/alias_numbers/0'}], wLogin('wpilot'))
+                    const revoked = await patch('wseat', [{op: 'remove', path: '/alias_numbers/0'}], wLogin('wpilot'), '?inline=alias_numbers')
                     expect(revoked.body.alias_numbers).toEqual([])
                     expect((await read('wpilot')).alias_numbers.map(n => n.sn).sort()).toEqual([wNumber('502').sn, wNumber('503').sn])
                 })
@@ -1071,7 +1194,7 @@ describe('Subscriber', () => {
 
                 it('changes the groups of a seat', async () => {
                     const response = await patch('wseat', [{op: 'replace', path: '/pbx_group_ids', value: []}], wLogin('wpilot'))
-                    expect(response.body.pbx_group_ids).toEqual([])
+                    expect(response.body.pbx_group_ids).toEqual({type: 'link', url: `/api/subscribers/${created.wseat}/@pbx_group_ids`, total_count: 0})
                     expect((await read('wgroup')).pbx_groupmember_ids).toEqual([created.wseat2])
                 })
 

@@ -1,6 +1,7 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {Type} from 'class-transformer'
 import {
+    IsArray,
     IsBoolean,
     IsDate,
     IsDecimal,
@@ -13,6 +14,7 @@ import {
     ValidateNested,
 } from 'class-validator'
 
+import {CustomerBillingProfileResponseDto} from './customer-billing-profile-response.dto'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {DateTimeField} from '~/decorators/date-time-field.decorator'
@@ -20,10 +22,9 @@ import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {ContractBillingProfileDefinition, ContractStatus as CustomerStatus} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
-import {UrlReferenceType} from '~/enums/url-reference-type.enum'
+import {lazyArray} from '~/helpers/lazy-field.helper'
 import {setOwnerTimezone} from '~/helpers/timezone.helper'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
-import {UrlReference} from '~/types/url-reference.type'
 
 export class CustomerResponseDto extends ResponseDto {
     @IsInt()
@@ -133,15 +134,17 @@ export class CustomerResponseDto extends ResponseDto {
     @ApiProperty({description: 'VAT rate, e.g., 0.19000000000000'})
         vat_rate?: number
 
+    @IsArray()
     @ValidateNested({each: true})
-    @Type(() => UrlReference)
-    @ApiProperty()
-        billing_profiles: UrlReference
+    @Type(() => CustomerBillingProfileResponseDto)
+    @ApiProperty({type: [CustomerBillingProfileResponseDto], description: 'Billing profile schedule'})
+        billing_profiles: CustomerBillingProfileResponseDto[]
 
+    @IsArray()
     @ValidateNested({each: true})
-    @Type(() => UrlReference)
-    @ApiProperty()
-        future_billing_profiles: UrlReference
+    @Type(() => CustomerBillingProfileResponseDto)
+    @ApiProperty({type: [CustomerBillingProfileResponseDto], description: 'Billing profiles of the schedule that start in the future'})
+        future_billing_profiles: CustomerBillingProfileResponseDto[]
 
     constructor(entity: internal.Customer, options?: ResponseDtoOptions) {
         super(options)
@@ -150,16 +153,16 @@ export class CustomerResponseDto extends ResponseDto {
         this.id = entity.id
         this.activate_timestamp = entity.activateTimestamp
         this.add_vat = entity.addVat
-        this.billing_profiles = {
-            type: UrlReferenceType.Link,
-            url: `${this.resourceUrl}/${entity.id}/@billing-profiles`,
-        }
+        this.billing_profiles = lazyArray(
+            entity.billingProfiles?.map(profile => new CustomerBillingProfileResponseDto(profile)),
+            entity.lazyCounts?.billingProfiles,
+        )
         this.billing_profile_definition = entity.billingProfileDefinition
         this.billing_profile_id = entity.billingProfileId
-        this.future_billing_profiles = {
-            type: UrlReferenceType.Link,
-            url: `${this.resourceUrl}/${entity.id}/@future-billing-profiles`,
-        }
+        this.future_billing_profiles = lazyArray(
+            entity.futureBillingProfiles?.map(profile => new CustomerBillingProfileResponseDto(profile)),
+            entity.lazyCounts?.futureBillingProfiles,
+        )
         this.contact_id = entity.contactId
         this.external_id = entity.externalId
         this.create_timestamp = entity.createTimestamp

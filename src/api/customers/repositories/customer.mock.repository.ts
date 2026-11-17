@@ -10,6 +10,8 @@ import {ContactStatus} from '~/entities/internal/contact.internal.entity'
 import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {memoryFieldSource} from '~/helpers/lazy-field.helper'
+import {LazyFieldSources} from '~/interfaces/lazy-field-source.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export class CustomerMockRepository implements CustomerRepository {
@@ -22,6 +24,10 @@ export class CustomerMockRepository implements CustomerRepository {
     readonly defaultEmailTemplates: internal.EmailTemplate[]
     readonly resellerEmailTemplates: {[key: number]: internal.EmailTemplate[]}
     readonly invoiceTemplateResellerIds: {[key: number]: number}
+    readonly lazyFields: LazyFieldSources = {
+        billing_profiles: memoryFieldSource('billingProfiles', id => this.customerDB[id]),
+        future_billing_profiles: memoryFieldSource('futureBillingProfiles', id => this.customerDB[id]),
+    }
 
     constructor() {
         this.customerDB = {
@@ -127,6 +133,10 @@ export class CustomerMockRepository implements CustomerRepository {
         return Promise.resolve(customer)
     }
 
+    readBareById(id: number, sr: ServiceRequest, filterBy?: CustomerFilterBy): Promise<internal.Customer> {
+        return this.readById(id, sr, filterBy)
+    }
+
     readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: CustomerFilterBy): Promise<internal.Customer[]> {
         return Promise.resolve(ids.map(id => this.customerDB[id]).filter(c => c && this.matches(c, filterBy)))
     }
@@ -143,14 +153,6 @@ export class CustomerMockRepository implements CustomerRepository {
 
     delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
         return Promise.resolve(ids)
-    }
-
-    readAllBillingProfiles(_customerId: number, _sr: ServiceRequest, _filterBy?: CustomerFilterBy): Promise<[internal.CustomerBillingProfile[], number]> {
-        return Promise.resolve([[] as internal.CustomerBillingProfile[], 0])
-    }
-
-    readFutureBillingProfiles(_customerId: number, _sr: ServiceRequest, _filterBy?: CustomerFilterBy): Promise<[internal.CustomerBillingProfile[], number]> {
-        return Promise.resolve([[] as internal.CustomerBillingProfile[], 0])
     }
 
     readBillingProfile(profileId: number, _sr: ServiceRequest): Promise<internal.BillingProfile> {

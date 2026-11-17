@@ -2,11 +2,13 @@ import {Injectable} from '@nestjs/common'
 import {SelectQueryBuilder} from 'typeorm'
 
 import {HeaderManipulationRuleConditionSearchDto} from '~/api/header-manipulations/sets/rules/conditions/dto/condition-search.dto'
+import {HeaderManipulationRuleConditionValueSearchDto} from '~/api/header-manipulations/sets/rules/conditions/dto/condition-value-search.dto'
 import {HeaderManipulationRuleConditionRepository} from '~/api/header-manipulations/sets/rules/conditions/interfaces/condition.repository'
 import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {configureQueryBuilder} from '~/helpers/query-builder.helper'
+import {configureQueryBuilder, sqlFieldSource} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {LazyFieldSources} from '~/interfaces/lazy-field-source.interface'
 import {QueriesDictionary, ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -16,11 +18,22 @@ export interface FilterBy {
     setId?: number
     resellerId?: number
     showSubscriberConditions?: boolean
+    // billing id of the subscriber whose set holds the condition (readBareById)
+    subscriberId?: number
 }
 
 @Injectable()
 export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRepository implements HeaderManipulationRuleConditionRepository {
     private readonly log = new LoggerService(HeaderManipulationRuleConditionMariadbRepository.name)
+    readonly lazyFields: LazyFieldSources = {
+        values: sqlFieldSource({
+            property: 'storedValues',
+            rows: ids => this.valuesQueryBuilder(ids),
+            itemId: 'value.condition_id',
+            search: HeaderManipulationRuleConditionValueSearchDto,
+            toInternal: values => values.map(value => value.toInternal()),
+        }),
+    }
 
     async create(entities: internal.HeaderRuleCondition[]): Promise<number[]> {
         await this.addRewruleRuleSetDpidToEntities(entities)
@@ -93,6 +106,23 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         return result.toInternal()
     }
 
+    async readBareById(id: number, filterBy?: FilterBy): Promise<internal.HeaderRuleCondition> {
+        const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
+        qb.andWhere({id: id})
+        qb.innerJoin('headerRuleCondition.rule', 'headerRule')
+        qb.innerJoin('headerRule.set', 'headerRuleSet')
+        this.addFilterBy(qb, filterBy)
+        if (filterBy?.subscriberId !== undefined) {
+            // a non-numeric id (NaN) matches no set
+            const subscriberId = Number.isInteger(filterBy.subscriberId)
+                ? await this.billingToProvisioning(filterBy.subscriberId)
+                : null
+            qb.andWhere('headerRuleSet.subscriber_id = :subscriberId', {subscriberId})
+        }
+        const result = await qb.getOneOrFail()
+        return result.toInternal()
+    }
+
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleCondition[]> {
         const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
         const searchDto  = new HeaderManipulationRuleConditionSearchDto()
@@ -161,28 +191,11 @@ export class HeaderManipulationRuleConditionMariadbRepository extends MariaDbRep
         return ids
     }
 
-    async readConditionValues(conditionId: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRuleConditionValue[], number]> {
-        const qb = db.provisioning.VoipHeaderRuleCondition.createQueryBuilder('headerRuleCondition')
-        qb.where({id: conditionId})
-        qb.innerJoin('headerRuleCondition.rule', 'headerRule')
-        qb.innerJoin('headerRule.set', 'headerRuleSet')
-        this.addFilterBy(qb, filterBy)
-        await qb.getOneOrFail()
-        const qbValues = db.provisioning.VoipHeaderRuleConditionValue.createQueryBuilder('headerRuleConditionValue')
-        const searchDto  = new HeaderManipulationRuleConditionSearchDto()
-        configureQueryBuilder(qbValues, sr.query, new SearchLogic(sr,
-            Object.keys(searchDto),
-            undefined,
-            searchDto._alias,
-        ))
-        qbValues.andWhere({condition_id: conditionId})
-
-        const [result, totalCount] = await qbValues.getManyAndCount()
-        return [await Promise.all(
-            result.map(async (d) =>
-                d.toInternal(),
-            ),
-        ), totalCount]
+    private valuesQueryBuilder(conditionIds: number[]): Promise<SelectQueryBuilder<db.provisioning.VoipHeaderRuleConditionValue>> {
+        const qb = db.provisioning.VoipHeaderRuleConditionValue.createQueryBuilder('value')
+            .where('value.condition_id IN (:...conditionIds)', {conditionIds})
+            .orderBy('value.id', 'ASC')
+        return Promise.resolve(qb)
     }
 
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipHeaderRuleCondition>, filterBy: FilterBy): void {

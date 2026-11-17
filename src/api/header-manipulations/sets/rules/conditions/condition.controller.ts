@@ -5,7 +5,6 @@ import {Request} from 'express'
 import {HeaderManipulationRuleConditionService} from './condition.service'
 import {HeaderManipulationRuleConditionRequestDto} from './dto/condition-request.dto'
 import {HeaderManipulationRuleConditionResponseDto} from './dto/condition-response.dto'
-import {HeaderManipulationRuleConditionValueResponseDto} from './dto/condition-value-response.dto'
 
 import {HeaderManipulationRuleConditionSearchDto} from '~/api/header-manipulations/sets/rules/conditions/dto/condition-search.dto'
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
@@ -17,6 +16,7 @@ import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorato
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
+import {lazyFieldItems} from '~/decorators/lazy.decorator'
 import {License} from '~/decorators/license.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
@@ -139,6 +139,29 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
         )
 
         return response
+    }
+
+    @Get('{:setId/}rules{/:ruleId}/conditions/:id/@:field')
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiParam({name: 'ruleId', required: false, type: Number})
+    async readField(
+        @Param('id', ParseIntPipe) id: number,
+        @Param('field') field: string,
+        @Req() req: Request,
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
+        @Param('ruleId', new ParseIntIdPipe({allowUndefined: true})) _ruleId: number,
+    ): Promise<[object[], number]> {
+        this.log.debug({
+            message: 'read header rule condition field by id',
+            id: id,
+            func: this.readField.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const [items, totalCount] = await this.ruleConditionService.readField(id, field, sr,
+            condition => new HeaderManipulationRuleConditionResponseDto(condition))
+        return [lazyFieldItems(HeaderManipulationRuleConditionResponseDto, field, items), totalCount]
     }
 
     @Put('{:setId/}rules{/:ruleId}/conditions/:id')
@@ -285,31 +308,6 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
             await this.journalService.writeJournal(sr, deletedId, {})
         }
         return deletedIds
-    }
-
-    @Get('{:setId/}rules{/:ruleId}/conditions/:id/@values')
-    @ApiParam({name: 'setId', required: false, type: Number})
-    @ApiParam({name: 'ruleId', required: false, type: Number})
-    @ApiSearchQuery(SearchLogic, HeaderManipulationRuleConditionSearchDto)
-    @ApiPaginatedResponse(HeaderManipulationRuleConditionValueResponseDto)
-    async readConditionValues(
-        @Param('id', ParseIntPipe) id: number,
-        @Req() req: Request,
-        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
-        @Param('ruleId', new ParseIntIdPipe({allowUndefined: true})) _ruleId: number,
-    ): Promise<[HeaderManipulationRuleConditionValueResponseDto[], number]> {
-        this.log.debug({
-            message: 'read header rule condition values',
-            id: id,
-            func: this.read.name,
-            url: req.url,
-            method: req.method,
-        })
-
-        const [entity, totalCount] =
-            await this.ruleConditionService.readAllConditionValues(id, new ServiceRequest(req))
-        const responseList = entity.map(e => new HeaderManipulationRuleConditionValueResponseDto(e))
-        return [responseList, totalCount]
     }
 
     @Get('{:setId/}rules{/:ruleId}/conditions/:id/journal')

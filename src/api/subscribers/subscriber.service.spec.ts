@@ -1,7 +1,9 @@
 import {ForbiddenException, NotFoundException} from '@nestjs/common'
 import {Test, TestingModule} from '@nestjs/testing'
+import {Request} from 'express'
 import {I18nService} from 'nestjs-i18n'
 
+import {SubscriberResponseDto} from './dto/subscriber-response.dto'
 import {SubscriberCustomer} from './interfaces/subscriber.repository'
 import {SubscriberMariadbRepository} from './repositories/subscriber.mariadb.repository'
 import {SubscriberMockRepository} from './repositories/subscriber.mock.repository'
@@ -18,6 +20,7 @@ import {internal} from '~/entities'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
 import {ApiErrorException} from '~/helpers/errors.helper'
+import {setInlineRequest} from '~/helpers/lazy-field.helper'
 import {postCommitQueueStorage} from '~/helpers/post-commit-queue.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LicenseService} from '~/license/license.service'
@@ -161,6 +164,45 @@ describe('SubscriberService', () => {
             const err = await service.read(id, makeSr(u)).catch((e: unknown) => e)
             expect(err).toBeInstanceOf(NotFoundException)
             expect((err as NotFoundException).message).toBe('errors.SUBSCRIBER_NOT_FOUND')
+        })
+    })
+
+    describe('lazy fields', () => {
+        const alias = {numberId: 7, cc: 43, ac: '1', sn: '2000', isDevId: false}
+        const toResponse = (role: string) => (subscriber: internal.Subscriber): object => new SubscriberResponseDto(subscriber, role)
+
+        it('read loads the lazy fields the request inlines and counts the others', async () => {
+            repo.subscriberDB[1].aliasNumbers = [alias]
+            repo.subscriberDB[1].pbxGroupIds = [5, 6]
+            const req = {method: 'GET'} as Request
+            setInlineRequest(req, {all: false, auto: false, fields: new Set(['alias_numbers']), budget: {used: 0}, expand: new Map()})
+            const subscriber = await service.read(1, {...makeSr(admin), req})
+            expect(subscriber.aliasNumbers).toEqual([alias])
+            expect(subscriber.pbxGroupIds).toBeUndefined()
+            expect(subscriber.lazyCounts).toEqual({aliasNumbers: 1, pbxGroupIds: 2, pbxGroupmemberIds: 0})
+        })
+
+        it('readField reads a page of a lazy field of a subscriber within the scope', async () => {
+            repo.subscriberDB[1].aliasNumbers = [alias]
+            const u = user(RbacRole.subscriber, {id: 1, customer_id: 10})
+            expect(await service.readField(1, 'alias_numbers', makeSr(u), toResponse(u.role))).toEqual([[alias], 1])
+        })
+
+        it.each([
+            ['reseller', user(RbacRole.reseller, {reseller_id: 1}), 4],
+            ['subscriberadmin', user(RbacRole.subscriberadmin, {id: 1, customer_id: 10}), 3],
+            ['subscriber', user(RbacRole.subscriber, {id: 2, customer_id: 10}), 1],
+        ])('readField: %s gets 404 SUBSCRIBER_NOT_FOUND outside its scope', async (_name, u, id) => {
+            const err = await service.readField(id, 'alias_numbers', makeSr(u), toResponse(u.role)).catch((e: unknown) => e)
+            expect(err).toBeInstanceOf(NotFoundException)
+            expect((err as NotFoundException).message).toBe('errors.SUBSCRIBER_NOT_FOUND')
+        })
+
+        it('readField is 404 for a field the response leaves out', async () => {
+            // pbx_group_ids: PBX subscribers other than groups only
+            const err = await service.readField(1, 'pbx_group_ids', makeSr(admin), toResponse(admin.role)).catch((e: unknown) => e)
+            expect(err).toBeInstanceOf(NotFoundException)
+            expect((err as NotFoundException).message).not.toBe('errors.SUBSCRIBER_NOT_FOUND')
         })
     })
 

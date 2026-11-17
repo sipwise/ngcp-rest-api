@@ -4,6 +4,7 @@ import {
 } from './contract.internal.entity'
 
 import {internal} from '~/entities'
+import {LazyCounts} from '~/interfaces/lazy-field-source.interface'
 
 export enum CustomerType {
     SipAccount = 'sipaccount',
@@ -45,7 +46,10 @@ export class Customer implements CustomerInternalEntity {
     activateTimestamp?: Date
     addVat?: boolean
     billingProfileDefinition?: ContractBillingProfileDefinition
+    // requested schedule on writes; on reads the schedule, undefined when not loaded (lazy, not inlined)
     billingProfiles?: internal.CustomerBillingProfile[]
+    futureBillingProfiles?: internal.CustomerBillingProfile[]
+    lazyCounts?: LazyCounts
     billingProfileId?: number
     contactId?: number
     createTimestamp?: Date

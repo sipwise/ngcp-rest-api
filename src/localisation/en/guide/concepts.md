@@ -139,6 +139,43 @@ GET /api/v2/subscribers?customer_id.contact_id.email=*@example.com&status=active
 
 Such a filter returns 422 when the referenced collection does not know the filter, when it matches too many referenced items (10000 by default), or when the collection cannot apply it. `order_by` takes no such fields.
 
+### Lazy fields
+
+List fields of an item can hold many entries, e.g. the `alias_numbers` of a subscriber or the `billing_profiles` of a customer. By default they are returned as a link with the number of entries:
+
+```json
+{
+  "id": 5,
+  "alias_numbers": {"type": "link", "url": "/api/v2/subscribers/5/@alias_numbers", "total_count": 3}
+}
+```
+
+The link points to the field as a collection: the item path, `/@` and the field name. It is read with GET only and pages, sorts and filters like any other collection, with the filters listed with its operation. Entries that are plain values, such as the ids in `pbx_group_ids`, are returned as `{"value": 12}` there and are filtered and sorted by `value`. These collections exist per item only, there is no `/subscribers/@alias_numbers`.
+
+```http
+GET /api/v2/subscribers/5/@alias_numbers?order_by=sn&rows=100&page=2
+GET /api/v2/subscribers/5/@pbx_group_ids?value=12
+```
+
+`inline` returns lazy fields as data instead, on single items and on collections. The lazy fields of a response are listed with the `inline` parameter of its operation.
+
+| Value | Returned as data |
+| --- | --- |
+| field names, comma separated | the named fields |
+| `all` | every lazy field |
+| `auto` | per item, each field with at most 1000 entries, in page order while the response stays within 10000 inlined entries; the others stay links |
+
+```http
+GET /api/v2/subscribers/5?inline=alias_numbers
+GET /api/v2/subscribers?customer_id=3&inline=auto
+```
+
+A named field, or one inlined by `all`, with more than 1000 entries returns 422 with the url of its collection: read it from there, page by page. So do named fields that together have more than 10000 entries in one response (all items of a list and expanded items count): read fewer rows or use `auto`. The limits are the platform settings `performance.lazy_load.inline_max_items` (default 1000) and `performance.lazy_load.inline_max_hard_limit` (default 10000). A name that is not a lazy field of the response returns 422, `all` and `auto` together 400. Some fields are links only (`vars` and `preview` of invoice templates): they have no `total_count` and cannot be inlined.
+
+Write requests with `Prefer: return=representation` return their items like GET, so they take `inline` as well. A link is not a value: PUT replaces the whole item and rejects a link it gets back with 422. Read the item with `inline=all` before changing it with PUT, or change single fields with PATCH. Not every inlined field has the shape of the request: drop `effective_start_time` from the entries of customer `billing_profiles`, and send condition `values` as plain strings instead of `{"id", "value"}` objects.
+
+`expand` of a lazy field inlines it, with the same limits. `expand=all` skips lazy fields that are not inlined, they keep their link. `all` and `auto` also apply to expanded items, e.g. `expand=customer_id&inline=auto` returns the customer's `billing_profiles` as data. On a `@<field>` collection, `inline` and `expand` refer to the fields of its entries; collections of plain values take no `expand` (400).
+
 ### Creating and changing data
 
 Every method works on one item or, on the collection path, on several items in one request:

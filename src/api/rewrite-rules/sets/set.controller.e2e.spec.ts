@@ -17,6 +17,7 @@ import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
 import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
+import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
@@ -82,6 +83,7 @@ describe('Rule Set', () => {
             }),
             new LoggingInterceptor(),
             new ClassSerializerInterceptor(app.get(Reflector)),
+            app.get(LazyFieldInterceptor),
             new TransactionInterceptor(app.get(Reflector)),
             new ResponseValidationInterceptor(),
             app.get(ExpandInterceptor),

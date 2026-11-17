@@ -19,6 +19,7 @@ import {db} from '~/entities'
 import {InvoiceTemplateCallDirection, InvoiceTemplateCategory, InvoiceTemplateType} from '~/entities/internal/invoice-template.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
+import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
@@ -98,6 +99,7 @@ describe('InvoiceTemplate', () => {
             }),
             new LoggingInterceptor(),
             new ClassSerializerInterceptor(app.get(Reflector)),
+            app.get(LazyFieldInterceptor),
             new TransactionInterceptor(app.get(Reflector)),
             new ResponseValidationInterceptor(),
             app.get(ExpandInterceptor),
@@ -190,8 +192,8 @@ describe('InvoiceTemplate', () => {
                 expect(template.type).toEqual(InvoiceTemplateType.SVG)
                 expect(template.call_direction).toEqual(InvoiceTemplateCallDirection.InOut)
                 expect(template.category).toEqual(InvoiceTemplateCategory.Customer)
-                expect(template.vars.url).toMatch(new RegExp(`/templates/invoices/${template.id}/@vars$`))
-                expect(template.preview.url).toMatch(new RegExp(`/templates/invoices/${template.id}/@preview$`))
+                expect(template.vars).toEqual({type: 'link', url: `/api/templates/invoices/${template.id}/@vars`})
+                expect(template.preview).toEqual({type: 'link', url: `/api/templates/invoices/${template.id}/@preview`})
                 createdIds.push(template.id)
             })
             it('creates invoice template from json with the default content', async () => {
@@ -399,6 +401,14 @@ describe('InvoiceTemplate', () => {
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(404)
+            })
+            it('rejects inline of the link-only vars with 422', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/templates/invoices/${createdIds[0]}?inline=vars`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(422)
+                expect(response.body.errors).toEqual([expect.objectContaining({parameter: 'inline', code: 'INLINE_NOT_POSSIBLE'})])
             })
             it('reads all variables supported by the customer category', async () => {
                 const response = await request(app.getHttpServer())

@@ -9,6 +9,7 @@ import {map} from 'rxjs/operators'
 
 import {AppService} from '~/app.service'
 import {CreateResponseDto} from '~/dto/create-response.dto'
+import {lazyFieldRequest} from '~/helpers/lazy-field.helper'
 
 /**
  * Defines the names of query parameters for pagination
@@ -171,7 +172,9 @@ export class TransformInterceptor implements NestInterceptor {
         const [urlPathWithSlash, urlQuery] = url.split('?')
         const urlPath = urlPathWithSlash.replace(/\/$/, '')
 
-        const resName = this.getResourceName(path)
+        // `<item>/@<field>` collections: their items are no resources of their own
+        const lazyField = lazyFieldRequest(req)?.field
+        const resName = lazyField ?? this.getResourceName(path)
 
         let resource
 
@@ -187,10 +190,12 @@ export class TransformInterceptor implements NestInterceptor {
                 .addLink('self', req.originalUrl)
             data.map(async (row) => {
                 const link = urlPath + (row.id ? '/' + row.id : '')
-                if (data.length == 1) {
-                    await resource.addLink(`ngcp:${resName}`, [{href: `${link}`}])
-                } else {
-                    await resource.addLink(`ngcp:${resName}`, `${link}`)
+                if (lazyField === undefined) {
+                    if (data.length == 1) {
+                        await resource.addLink(`ngcp:${resName}`, [{href: `${link}`}])
+                    } else {
+                        await resource.addLink(`ngcp:${resName}`, `${link}`)
+                    }
                 }
                 await resource.addEmbed(`ngcp:${resName}`, [row])
             })

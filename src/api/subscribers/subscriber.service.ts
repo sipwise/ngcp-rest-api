@@ -42,11 +42,13 @@ import {SubscriberNumber} from '~/entities/internal/subscriber.internal.entity'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException, ApiErrors, apiError, idPointer, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
+import {applyLazyFields, mergeLazyFields, readLazyField} from '~/helpers/lazy-field.helper'
 import {generatePassword, isPasswordInJournal, passwordJournalHash, saltedPassword} from '~/helpers/password.helper'
 import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ErrorMessage} from '~/interfaces/error-message.interface'
+import {LazyFieldSources} from '~/interfaces/lazy-field-source.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LicenseCounter, LicenseService} from '~/license/license.service'
 import {LoggerService} from '~/logger/logger.service'
@@ -85,6 +87,7 @@ const subscriberRoles: string[] = [
 @Injectable()
 export class SubscriberService implements CrudService<internal.Subscriber> {
     private readonly log = new LoggerService(SubscriberService.name)
+    readonly lazyFields: LazyFieldSources
 
     constructor(
         @Inject(I18nService) private readonly i18n: I18nService,
@@ -93,17 +96,32 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
         @Inject(AppService) private readonly app: AppService,
         @Inject(LicenseService) private readonly license: LicenseService,
     ) {
+        this.lazyFields = mergeLazyFields(subscriberRepo.lazyFields)
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Subscriber[], number]> {
-        return await this.subscriberRepo.readAll(sr, this.roleScope(sr))
+        const [subscribers, totalCount] = await this.subscriberRepo.readAll(sr, this.roleScope(sr))
+        await applyLazyFields(subscribers, this.lazyFields, sr)
+        return [subscribers, totalCount]
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Subscriber> {
         const subscriber = await this.subscriberRepo.readById(id, this.roleScope(sr))
         if (!subscriber)
             throw new NotFoundException(this.i18n.t('errors.SUBSCRIBER_NOT_FOUND'))
+        await applyLazyFields([subscriber], this.lazyFields, sr)
         return subscriber
+    }
+
+    /**
+     * A page of a lazy field of the subscriber (`<item>/@<field>`)
+     * @param toResponse response DTO of the subscriber for the caller, 404 when it hides the field
+     */
+    async readField(id: number, field: string, sr: ServiceRequest, toResponse: (subscriber: internal.Subscriber) => object): Promise<[unknown[], number]> {
+        const subscriber = await this.subscriberRepo.readBareById(id, this.roleScope(sr))
+        if (!subscriber)
+            throw new NotFoundException(this.i18n.t('errors.SUBSCRIBER_NOT_FOUND'))
+        return await readLazyField(subscriber, field, this.lazyFields, sr, toResponse)
     }
 
     /**
@@ -131,6 +149,7 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
             ids.push(await this.createSubscriber(subscriber, key, ctx, sr))
         })
         const created = await this.subscriberRepo.readWhereInIds(ids, {})
+        await applyLazyFields(created, this.lazyFields)
         return ids.map(id => created.find(subscriber => subscriber.id == id))
     }
 
@@ -146,7 +165,7 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
         throwMissingIds(sr, ids, found.map(s => s.id), this.i18n.t('errors.SUBSCRIBER_NOT_FOUND'))
         const ctx = await this.lockAndReadCustomers(found.map(s => s.customerId), {}, sr, createPrimaryAcli)
         await this.writeInRequestOrder(updates, async (subscriber, key) => {
-            const old = await this.subscriberRepo.readById(+key, scope)
+            const old = await this.withLazyFields(await this.subscriberRepo.readById(+key, scope))
             await this.updateSubscriber(subscriber, old, key, ctx, sr)
         })
         return ids
@@ -171,6 +190,15 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
         runOnTransactionCommit(async () => await this.subscriberRedisRepo.removeLocations(aors))
         runOnTransactionCommit(async () => await this.subscriberRedisRepo.reloadTrustedHosts())
         return unique
+    }
+
+    /**
+     * Subscriber read for a write path, with all its lazy fields (old values, number pools)
+     */
+    private async withLazyFields(subscriber: internal.Subscriber | undefined): Promise<internal.Subscriber | undefined> {
+        if (subscriber)
+            await applyLazyFields([subscriber], this.lazyFields)
+        return subscriber
     }
 
     private roleScope(sr: ServiceRequest): SubscriberScope {
@@ -198,7 +226,7 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
         const unlocked = await this.subscriberRepo.readCustomers(ids, scope.resellerId)
         await this.subscriberRepo.lockContracts([...unlocked.map(c => c.resellerContractId), ...unlocked.map(c => c.id)])
         const customers = await this.subscriberRepo.readCustomers(ids, scope.resellerId)
-        const caller = subscriberRoles.includes(sr.user.role) ? await this.subscriberRepo.readById(sr.user.id, {}) : undefined
+        const caller = subscriberRoles.includes(sr.user.role) ? await this.withLazyFields(await this.subscriberRepo.readById(sr.user.id, {})) : undefined
         return {
             customers: new Map(customers.map(c => [c.id, c])),
             caller,
@@ -238,7 +266,7 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
             throw apiError(this.i18n.t('errors.SUBSCRIBER_CUSTOMER_INVALID'), at('customerId'))
         await this.checkWriteAccess(customer, ctx, sr, at())
         const pbx = customer.productClass == ProductClass.PbxAccount
-        const pilot = pbx ? await this.subscriberRepo.readPilot(customer.id) : undefined
+        const pilot = pbx ? await this.withLazyFields(await this.subscriberRepo.readPilot(customer.id)) : undefined
         const subscriberadmin = sr.user.role == RbacRole.subscriberadmin
         const poolOwner = subscriberadmin ? pbx ? pilot : ctx.caller : undefined
         const domain = await this.resolveDomain(s, customer, sr, ctx, pilot, at)
@@ -428,7 +456,7 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
         s.pbxGroupmemberIds ??= []
 
         const pbx = customer.productClass == ProductClass.PbxAccount
-        const pilot = pbx ? old.isPbxPilot ? old : await this.subscriberRepo.readPilot(customer.id) : undefined
+        const pilot = pbx ? old.isPbxPilot ? old : await this.withLazyFields(await this.subscriberRepo.readPilot(customer.id)) : undefined
         const poolOwner = sr.user.role == RbacRole.subscriberadmin ? pbx ? pilot : ctx.caller : undefined
         if (s.webusername && s.webusername != old.webusername
             && await this.subscriberRepo.existsWebusername(s.webusername, old.provisioningDomainId, old.provisioningId))
@@ -519,7 +547,7 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
      */
     private async terminateSubscriber(id: number, scope: SubscriberScope, ctx: WriteContext, sr: ServiceRequest): Promise<string[]> {
         const pointer = idPointer(sr, id)
-        const s = await this.subscriberRepo.readById(id, scope)
+        const s = await this.withLazyFields(await this.subscriberRepo.readById(id, scope))
         throwMissingIds(sr, [id], s ? [id] : [], this.i18n.t('errors.SUBSCRIBER_NOT_FOUND'))
         const customer = ctx.customers.get(s.customerId)
         if (!customer)
@@ -534,7 +562,7 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
         const pbx = customer.productClass == ProductClass.PbxAccount
         if (pbx && s.isPbxPilot && await this.subscriberRepo.countActive(customer.id) > 1)
             throw apiError(this.i18n.t('errors.SUBSCRIBER_PBX_PILOT_HAS_SUBSCRIBERS'), pointer)
-        const pilot = pbx && !s.isPbxPilot ? await this.subscriberRepo.readPilot(customer.id) : undefined
+        const pilot = pbx && !s.isPbxPilot ? await this.withLazyFields(await this.subscriberRepo.readPilot(customer.id)) : undefined
         const owner = pilot ? {id: pilot.id, provisioningId: pilot.provisioningId, provisioningDomainId: pilot.provisioningDomainId} : undefined
         await this.subscriberRepo.terminate({
             subscriber: s,

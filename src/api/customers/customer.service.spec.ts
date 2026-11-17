@@ -3,6 +3,7 @@ import {Test, TestingModule} from '@nestjs/testing'
 
 import {CustomerModule} from './customer.module'
 import {CustomerService} from './customer.service'
+import {CustomerResponseDto} from './dto/customer-response.dto'
 import {CustomerMariadbRepository} from './repositories/customer.mariadb.repository'
 import {CustomerMockRepository} from './repositories/customer.mock.repository'
 
@@ -337,19 +338,20 @@ describe('CustomerService', () => {
         })
     })
 
-    describe('billing profiles', () => {
-        it('should filter all billing profiles by customer and reseller', async () => {
-            const read = jest.spyOn(customerMockRepo, 'readAllBillingProfiles')
+    describe('readField', () => {
+        const toResponse = (customer: internal.Customer): object => new CustomerResponseDto(customer)
+
+        it('should read a page of a lazy field of a customer in the reseller scope', async () => {
+            const schedule = [profile({id: 1})]
+            customerMockRepo.customerDB[1].billingProfiles = schedule
+            const readBareById = jest.spyOn(customerMockRepo, 'readBareById')
             const sr = makeSr(resellerUser)
-            await service.readAllBillingProfiles(1, sr)
-            expect(read).toHaveBeenCalledWith(1, sr, {customerId: 1, resellerId: 1})
+            expect(await service.readField(1, 'billing_profiles', sr, toResponse)).toEqual([schedule, 1])
+            expect(readBareById).toHaveBeenCalledWith(1, sr, {resellerId: 1})
         })
 
-        it('should filter future billing profiles by customer only for an admin', async () => {
-            const read = jest.spyOn(customerMockRepo, 'readFutureBillingProfiles')
-            const sr = makeSr()
-            await service.readFutureBillingProfiles(1, sr)
-            expect(read).toHaveBeenCalledWith(1, sr, {customerId: 1})
+        it('should not read a field of a customer of another reseller', async () => {
+            await expect(service.readField(2, 'billing_profiles', makeSr(resellerUser), toResponse)).rejects.toThrow(NotFoundException)
         })
     })
 

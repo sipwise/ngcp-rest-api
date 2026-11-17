@@ -1,5 +1,8 @@
 
+import {HeaderRuleConditionValue} from './header-rule-condition-value.internal.entity'
+
 import {RwrDpEnum} from '~/enums/rwr-dp.enum'
+import {LazyCounts} from '~/interfaces/lazy-field-source.interface'
 
 export enum HeaderRuleConditionMatchType {
     Header = 'header',
@@ -40,6 +43,10 @@ export class HeaderRuleCondition {
     rwrDpId: number
     rwrDp?: RwrDpEnum
     enabled: boolean
+    // requested values of a write
     values?: string[]
+    // stored values of a read, undefined when not loaded (lazy, not inlined)
+    storedValues?: HeaderRuleConditionValue[]
+    lazyCounts?: LazyCounts
 }
 

@@ -1,6 +1,8 @@
 import {Injectable} from '@nestjs/common'
 import {Brackets, In, InsertResult, Not, SelectQueryBuilder} from 'typeorm'
 
+import {SubscriberAliasNumberSearchDto} from '~/api/subscribers/dto/subscriber-alias-number-search.dto'
+import {SubscriberPbxIdSearchDto} from '~/api/subscribers/dto/subscriber-pbx-id-search.dto'
 import {SubscriberSearchDto} from '~/api/subscribers/dto/subscriber-search.dto'
 import {
     SubscriberCustomer,
@@ -20,11 +22,12 @@ import {numberString} from '~/api/subscribers/subscriber.rules'
 import {db, internal} from '~/entities'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
-import {SubscriberNumber} from '~/entities/internal/subscriber.internal.entity'
+import {SubscriberAliasNumber, SubscriberNumber} from '~/entities/internal/subscriber.internal.entity'
 import {VoipNumberStatus} from '~/entities/internal/voip-number.internal.entity'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
-import {configureQueryBuilder} from '~/helpers/query-builder.helper'
+import {configureQueryBuilder, sqlFieldSource} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {LazyFieldSources} from '~/interfaces/lazy-field-source.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -46,6 +49,11 @@ function insertedId(result: InsertResult): number {
     return (result.identifiers[0] as {id: number}).id
 }
 
+// number ids per is_devid lookup of the inlined alias numbers
+const DEVID_CHUNK_SIZE = 1000
+
+type PbxMembershipSide = 'subscriber_id' | 'group_id'
+
 interface Target {
     id: number
     provisioningId: number
@@ -56,6 +64,29 @@ interface Target {
 export class SubscriberMariadbRepository extends MariaDbRepository implements SubscriberRepository {
     private readonly log = new LoggerService(SubscriberMariadbRepository.name)
     private readonly attributeIdCache = new Map<string, number>()
+    readonly lazyFields: LazyFieldSources = {
+        alias_numbers: sqlFieldSource({
+            property: 'aliasNumbers',
+            rows: ids => this.aliasNumbersQueryBuilder(ids),
+            itemId: 'number.subscriber_id',
+            search: SubscriberAliasNumberSearchDto,
+            toInternal: numbers => this.toAliasNumbers(numbers),
+        }),
+        pbx_group_ids: sqlFieldSource({
+            property: 'pbxGroupIds',
+            rows: ids => this.pbxMembershipsQueryBuilder('subscriber_id', ids),
+            itemId: 'owner.id',
+            search: SubscriberPbxIdSearchDto,
+            toInternal: memberships => this.readPbxTargetIds(memberships, 'group_id'),
+        }),
+        pbx_groupmember_ids: sqlFieldSource({
+            property: 'pbxGroupmemberIds',
+            rows: ids => this.pbxMembershipsQueryBuilder('group_id', ids),
+            itemId: 'owner.id',
+            search: SubscriberPbxIdSearchDto,
+            toInternal: memberships => this.readPbxTargetIds(memberships, 'subscriber_id'),
+        }),
+    }
 
     async readAll(sr: ServiceRequest, scope: SubscriberScope): Promise<[internal.Subscriber[], number]> {
         const qb = await this.createBaseQueryBuilder(scope)
@@ -67,12 +98,14 @@ export class SubscriberMariadbRepository extends MariaDbRepository implements Su
     }
 
     async readById(id: number, scope: SubscriberScope): Promise<internal.Subscriber | undefined> {
-        const qb = await this.createBaseQueryBuilder(scope)
-        qb.andWhere('subscriber.id = :id', {id})
-        const result = await qb.getOne()
+        const result = await this.readRow(id, scope)
         if (!result)
             return undefined
         return (await this.toInternalWithDetails([result]))[0]
+    }
+
+    async readBareById(id: number, scope: SubscriberScope): Promise<internal.Subscriber | undefined> {
+        return (await this.readRow(id, scope))?.toInternal()
     }
 
     async readWhereInIds(ids: number[], scope: SubscriberScope): Promise<internal.Subscriber[]> {
@@ -82,6 +115,12 @@ export class SubscriberMariadbRepository extends MariaDbRepository implements Su
         qb.andWhereInIds(ids)
         qb.addOrderBy('subscriber.id', 'ASC')
         return await this.toInternalWithDetails(await qb.getMany())
+    }
+
+    private async readRow(id: number, scope: SubscriberScope): Promise<db.billing.VoipSubscriber | null> {
+        const qb = await this.createBaseQueryBuilder(scope)
+        qb.andWhere('subscriber.id = :id', {id})
+        return await qb.getOne()
     }
 
     private createBaseQueryBuilder(scope: SubscriberScope): Promise<SelectQueryBuilder<db.billing.VoipSubscriber>> {
@@ -110,43 +149,54 @@ export class SubscriberMariadbRepository extends MariaDbRepository implements Su
     }
 
     /**
-     * Maps the rows and adds alias numbers, preferences, pbx groups and extension ranges, with a fixed number of
-     * queries for all rows
+     * Maps the rows and adds preferences and extension ranges, with a fixed number of queries for all rows; the lazy
+     * fields are left to the service
      */
     private async toInternalWithDetails(rows: db.billing.VoipSubscriber[]): Promise<internal.Subscriber[]> {
         const subscribers: internal.Subscriber[] = rows.map((row): internal.Subscriber => row.toInternal())
         if (!subscribers.length)
             return subscribers
-        await this.addAliasNumbers(subscribers)
         await this.addPreferences(subscribers)
-        const pbx = subscribers.filter(s => s.isPbxAccount)
-        await this.addPbxGroups(pbx)
-        await this.addExtensionRanges(pbx.filter(s => s.administrative))
+        await this.addExtensionRanges(subscribers.filter(s => s.isPbxAccount && s.administrative))
         return subscribers
     }
 
-    private async addAliasNumbers(subscribers: internal.Subscriber[]): Promise<void> {
-        const byId = new Map(subscribers.map(s => [s.id, s]))
-        const numbers = await db.billing.VoipNumber.find({
-            where: {subscriber_id: In([...byId.keys()])},
-            order: {id: 'ASC'},
-        })
-        const devIdAliases = await db.provisioning.VoipDBAlias.find({
-            where: {subscriber_id: In(subscribers.map(s => s.provisioningId)), is_devid: true},
-        })
-        const devIds = new Set(devIdAliases.map(alias => `${alias.subscriber_id}:${alias.username}`))
-        for (const number of numbers) {
-            const subscriber = byId.get(number.subscriber_id)
-            if (number.id == subscriber.primaryNumber?.numberId)
-                continue
-            subscriber.aliasNumbers.push({
-                numberId: number.id,
-                cc: number.cc,
-                ac: number.ac,
-                sn: number.sn,
-                isDevId: devIds.has(`${subscriber.provisioningId}:${number.cc}${number.ac}${number.sn}`),
-            })
+    /**
+     * Numbers of the subscribers other than their primary numbers
+     */
+    private aliasNumbersQueryBuilder(subscriberIds: number[]): Promise<SelectQueryBuilder<db.billing.VoipNumber>> {
+        const qb = db.billing.VoipNumber.createQueryBuilder('number')
+            .innerJoin(db.billing.VoipSubscriber, 'owner', 'owner.id = number.subscriber_id')
+            .where('number.subscriber_id IN (:...subscriberIds)', {subscriberIds})
+            .andWhere('(owner.primary_number_id IS NULL OR number.id != owner.primary_number_id)')
+            .orderBy('number.id', 'ASC')
+        return Promise.resolve(qb)
+    }
+
+    /**
+     * Alias numbers with is_devid, looked up for these numbers only
+     */
+    private async toAliasNumbers(numbers: db.billing.VoipNumber[]): Promise<SubscriberAliasNumber[]> {
+        const devIdNumbers = new Set<number>()
+        for (let i = 0; i < numbers.length; i += DEVID_CHUNK_SIZE) {
+            const ids = numbers.slice(i, i + DEVID_CHUNK_SIZE).map(number => number.id)
+            const devIds = await db.billing.VoipNumber.createQueryBuilder('number')
+                .select('number.id', 'id')
+                .innerJoin(db.billing.VoipSubscriber, 'billing', 'billing.id = number.subscriber_id')
+                .innerJoin(db.provisioning.VoipSubscriber, 'prov', 'prov.uuid = billing.uuid')
+                .innerJoin(db.provisioning.VoipDBAlias, 'devid', 'devid.subscriber_id = prov.id'
+                    + ' AND devid.is_devid = 1 AND devid.username = CONCAT(number.cc, number.ac, number.sn)')
+                .where('number.id IN (:...ids)', {ids})
+                .getRawMany<{id: number}>()
+            devIds.forEach(row => devIdNumbers.add(+row.id))
         }
+        return numbers.map(number => ({
+            numberId: number.id,
+            cc: number.cc,
+            ac: number.ac,
+            sn: number.sn,
+            isDevId: devIdNumbers.has(number.id),
+        }))
     }
 
     private async addPreferences(subscribers: internal.Subscriber[]): Promise<void> {
@@ -167,28 +217,26 @@ export class SubscriberMariadbRepository extends MariaDbRepository implements Su
     }
 
     /**
-     * Groups of the members and members of the groups, as billing ids in membership order
+     * PBX memberships in membership order by the billing id of one side (`owner`): the member (`subscriber_id`)
+     * for its groups, the group (`group_id`) for its members; `target` is the billing row of the other side
      */
-    private async addPbxGroups(subscribers: internal.Subscriber[]): Promise<void> {
-        if (!subscribers.length)
-            return
-        const byProvisioningId = new Map(subscribers.map(s => [s.provisioningId, s]))
-        const ids = [...byProvisioningId.keys()]
-        const memberships = await db.provisioning.VoipPbxGroup.find({
-            where: [{subscriber_id: In(ids)}, {group_id: In(ids)}],
-            order: {id: 'ASC'},
-        })
+    private pbxMembershipsQueryBuilder(owner: PbxMembershipSide, ids: number[]): Promise<SelectQueryBuilder<db.provisioning.VoipPbxGroup>> {
+        const target: PbxMembershipSide = owner == 'subscriber_id' ? 'group_id' : 'subscriber_id'
+        const qb = db.provisioning.VoipPbxGroup.createQueryBuilder('membership')
+            .innerJoin(db.provisioning.VoipSubscriber, 'owner_prov', `owner_prov.id = membership.${owner}`)
+            .innerJoin(db.billing.VoipSubscriber, 'owner', 'owner.uuid = owner_prov.uuid')
+            .innerJoin(db.provisioning.VoipSubscriber, 'target_prov', `target_prov.id = membership.${target}`)
+            .innerJoin(db.billing.VoipSubscriber, 'target', 'target.uuid = target_prov.uuid')
+            .where('owner.id IN (:...ids)', {ids})
+            .orderBy('membership.id', 'ASC')
+        return Promise.resolve(qb)
+    }
+
+    private async readPbxTargetIds(memberships: db.provisioning.VoipPbxGroup[], target: PbxMembershipSide): Promise<number[]> {
         if (!memberships.length)
-            return
-        const billingIds = await this.readBillingIds(memberships.flatMap(m => [m.group_id, m.subscriber_id]))
-        for (const membership of memberships) {
-            const groupId = billingIds.get(membership.group_id)
-            const memberId = billingIds.get(membership.subscriber_id)
-            if (groupId == undefined || memberId == undefined)
-                continue
-            byProvisioningId.get(membership.subscriber_id)?.pbxGroupIds.push(groupId)
-            byProvisioningId.get(membership.group_id)?.pbxGroupmemberIds.push(memberId)
-        }
+            return []
+        const billingIds = await this.readBillingIds(memberships.map(membership => membership[target]))
+        return memberships.map(membership => billingIds.get(membership[target]))
     }
 
     private async addExtensionRanges(subscribers: internal.Subscriber[]): Promise<void> {

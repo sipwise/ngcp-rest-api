@@ -19,6 +19,7 @@ import {RwrDpEnum} from '~/enums/rwr-dp.enum'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
+import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
@@ -100,6 +101,7 @@ describe('Rule Condition', () => {
             }),
             new LoggingInterceptor(),
             new ClassSerializerInterceptor(app.get(Reflector)),
+            app.get(LazyFieldInterceptor),
             new TransactionInterceptor(app.get(Reflector)),
             new ResponseValidationInterceptor(),
             app.get(ExpandInterceptor),
@@ -307,6 +309,29 @@ describe('Rule Condition', () => {
                 const conditions = response.body
                 expect(conditions.data.length).toEqual(3)
                 expect(conditions.data[0].value).toEqual('foo')
+            })
+            it('links the values of condition1 with their count', async () => {
+                const url = `/api/header-manipulations/sets/rules/conditions/${createdConditionIds[0]}`
+                const response = await request(app.getHttpServer())
+                    .get(url)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.values).toEqual({type: 'link', url: `${url}/@values`, total_count: 3})
+            })
+            it('returns the values of condition1 inline as @values does', async () => {
+                const url = `/api/header-manipulations/sets/rules/conditions/${createdConditionIds[0]}`
+                const response = await request(app.getHttpServer())
+                    .get(`${url}?inline=values`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                const values = await request(app.getHttpServer())
+                    .get(`${url}/@values`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.body.values).toEqual(values.body.data)
+                expect(response.body.values.map((v: {value: string}) => v.value)).toEqual(['foo', 'bar', 'baz'])
             })
             it('list conditions of created rule', async () => {
                 const response = await request(app.getHttpServer())

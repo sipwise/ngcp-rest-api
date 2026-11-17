@@ -11,6 +11,8 @@ import {
 } from '~/api/subscribers/interfaces/subscriber.repository'
 import {internal} from '~/entities'
 import {SubscriberNumber} from '~/entities/internal/subscriber.internal.entity'
+import {memoryFieldSource} from '~/helpers/lazy-field.helper'
+import {LazyFieldSources} from '~/interfaces/lazy-field-source.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export class SubscriberMockRepository implements SubscriberRepository {
@@ -21,6 +23,11 @@ export class SubscriberMockRepository implements SubscriberRepository {
     readonly profileDB: {[key: number]: SubscriberProfileRow} = {}
     readonly plans: SubscriberWritePlan[] = []
     readonly terminatePlans: SubscriberTerminatePlan[] = []
+    readonly lazyFields: LazyFieldSources = {
+        alias_numbers: memoryFieldSource('aliasNumbers', id => this.subscriberDB[id]),
+        pbx_group_ids: memoryFieldSource('pbxGroupIds', id => this.subscriberDB[id]),
+        pbx_groupmember_ids: memoryFieldSource('pbxGroupmemberIds', id => this.subscriberDB[id]),
+    }
 
     async readAll(_sr: ServiceRequest, scope: SubscriberScope): Promise<[internal.Subscriber[], number]> {
         const rows = this.visible(scope)
@@ -33,6 +40,10 @@ export class SubscriberMockRepository implements SubscriberRepository {
 
     async readWhereInIds(ids: number[], scope: SubscriberScope): Promise<internal.Subscriber[]> {
         return this.visible(scope).filter(s => ids.includes(s.id))
+    }
+
+    async readBareById(id: number, scope: SubscriberScope): Promise<internal.Subscriber | undefined> {
+        return this.readById(id, scope)
     }
 
     async readPilot(customerId: number): Promise<internal.Subscriber | undefined> {

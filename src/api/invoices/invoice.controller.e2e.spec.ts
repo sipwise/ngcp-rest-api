@@ -24,6 +24,7 @@ import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
+import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
@@ -371,6 +372,7 @@ describe('Invoice', () => {
             }),
             new LoggingInterceptor(),
             new ClassSerializerInterceptor(app.get(Reflector)),
+            app.get(LazyFieldInterceptor),
             new TransactionInterceptor(app.get(Reflector)),
             new ResponseValidationInterceptor(),
             app.get(ExpandInterceptor),

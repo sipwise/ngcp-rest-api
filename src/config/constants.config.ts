@@ -69,6 +69,10 @@ export class ReservedQueryParamsDto {
         soft_expand: string = undefined // return 200 regardless on an invalid expand
 
     @IsOptional()
+    @IsString()
+        inline: string = undefined // lazy fields returned inline instead of as links
+
+    @IsOptional()
     @IsBooleanString()
         allow_unknown_params: boolean = undefined // when provided, unknown params are ignored
 

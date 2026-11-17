@@ -20,10 +20,12 @@ import {
     swaggerLanguage,
     swaggerUiTranslateJs,
 } from '~/helpers/swagger-i18n.helper'
+import {addLazyFieldDocumentation, addLazyFieldOperations} from '~/helpers/swagger-lazy-field.helper'
 import {renderSwaggerPdf} from '~/helpers/swagger-pdf.helper'
 import {swaggerSearchCss, swaggerSearchJs} from '~/helpers/swagger-search.helper'
 import {Versions, readVersions} from '~/helpers/swagger-version.helper'
 import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
+import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
 import {LoggerService} from '~/logger/logger.service'
 
 const PDF_FILENAME_PREFIX = 'ngcp-api-2-documentation-'
@@ -419,9 +421,12 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string):
     }
 
     const document = SwaggerModule.createDocument(app, docBuilder.build(), {extraModels: [ErrorResponseDto, ErrorEntryDto]})
+    addLazyFieldOperations(document, app.get(LazyFieldInterceptor).lazyFieldRoutes())
     sortSearchQueryParameters(document)
     const expand = app.get(ExpandInterceptor)
-    addExpandDocumentation(document, expand.responseModels(), expand.targetModels())
+    const models = expand.responseModels()
+    addExpandDocumentation(document, models, expand.targetModels())
+    addLazyFieldDocumentation(document, models)
     addTimezoneParameter(document)
     addErrorResponses(document)
     const versions = readVersions()

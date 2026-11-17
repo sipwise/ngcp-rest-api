@@ -139,6 +139,43 @@ GET /api/v2/subscribers?customer_id.contact_id.email=*@example.com&status=active
 
 Un tale filtro restituisce 422 se la collezione referenziata non conosce il filtro, se corrisponde a troppi elementi referenziati (10000 per impostazione predefinita) o se la collezione non può applicarlo. `order_by` non accetta tali campi.
 
+### Campi differiti
+
+I campi lista di un elemento possono contenere molte voci, ad esempio gli `alias_numbers` di un abbonato o i `billing_profiles` di un cliente. Per impostazione predefinita vengono restituiti come link con il numero di voci:
+
+```json
+{
+  "id": 5,
+  "alias_numbers": {"type": "link", "url": "/api/v2/subscribers/5/@alias_numbers", "total_count": 3}
+}
+```
+
+Il link punta al campo come collezione: il percorso dell'elemento, `/@` e il nome del campo. Si legge solo con GET e supporta paginazione, ordinamento e filtri come ogni altra collezione, con i filtri indicati nella sua operazione. Le voci che sono valori semplici, come gli id in `pbx_group_ids`, vi vengono restituite come `{"value": 12}` e si filtrano e ordinano per `value`. Queste collezioni esistono solo per singolo elemento, non esiste `/subscribers/@alias_numbers`.
+
+```http
+GET /api/v2/subscribers/5/@alias_numbers?order_by=sn&rows=100&page=2
+GET /api/v2/subscribers/5/@pbx_group_ids?value=12
+```
+
+`inline` restituisce invece i campi differiti come dati, sia per i singoli elementi sia per le collezioni. I campi differiti di una risposta sono indicati nel parametro `inline` della sua operazione.
+
+| Valore | Restituito come dati |
+| --- | --- |
+| nomi di campi, separati da virgole | i campi indicati |
+| `all` | tutti i campi differiti |
+| `auto` | per elemento, ogni campo con al massimo 1000 voci, nell'ordine della pagina finché la risposta resta entro 10000 voci incluse; gli altri restano link |
+
+```http
+GET /api/v2/subscribers/5?inline=alias_numbers
+GET /api/v2/subscribers?customer_id=3&inline=auto
+```
+
+Un campo indicato, o incluso da `all`, con più di 1000 voci restituisce 422 con l'URL della sua collezione: leggetelo lì, pagina per pagina. Lo stesso vale per campi indicati che insieme hanno più di 10000 voci in una risposta (contano tutti gli elementi di una lista e gli elementi espansi): leggete meno righe o usate `auto`. I limiti sono le impostazioni di piattaforma `performance.lazy_load.inline_max_items` (predefinito 1000) e `performance.lazy_load.inline_max_hard_limit` (predefinito 10000). Un nome che non è un campo differito della risposta restituisce 422, `all` e `auto` insieme 400. Alcuni campi sono solo link (`vars` e `preview` dei modelli di fattura): non hanno `total_count` e non possono essere inclusi.
+
+Le scritture con `Prefer: return=representation` restituiscono i loro elementi come GET, quindi accettano anche `inline`. Un link non è un valore: PUT sostituisce l'intero elemento e rifiuta con 422 un link rimandato. Leggete l'elemento con `inline=all` prima di modificarlo con PUT, oppure modificate singoli campi con PATCH. Non tutti i campi inclusi hanno la forma della richiesta: togliete `effective_start_time` dalle voci dei `billing_profiles` di un cliente e inviate i `values` delle condizioni come semplici stringhe invece che come oggetti `{"id", "value"}`.
+
+`expand` di un campo differito lo include, con gli stessi limiti. `expand=all` salta i campi differiti non inclusi, che mantengono il loro link. `all` e `auto` valgono anche per gli elementi espansi, ad esempio `expand=customer_id&inline=auto` restituisce i `billing_profiles` del cliente come dati. In una collezione `@<field>`, `inline` ed `expand` si riferiscono ai campi delle sue voci; le collezioni di valori semplici non accettano `expand` (400).
+
 ### Creazione e modifica dei dati
 
 Ogni metodo opera su un singolo elemento oppure, sul percorso della collezione, su più elementi con un'unica richiesta:

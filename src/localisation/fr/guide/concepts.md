@@ -139,6 +139,43 @@ GET /api/v2/subscribers?customer_id.contact_id.email=*@example.com&status=active
 
 Un tel filtre renvoie 422 si la collection référencée ne connaît pas le filtre, s'il correspond à trop d'éléments référencés (10000 par défaut) ou si la collection ne peut pas l'appliquer. `order_by` n'accepte pas ces champs.
 
+### Champs différés
+
+Les champs de liste d'un élément peuvent contenir de nombreuses entrées, par exemple les `alias_numbers` d'un abonné ou les `billing_profiles` d'un client. Par défaut, ils sont renvoyés sous forme de lien avec le nombre d'entrées :
+
+```json
+{
+  "id": 5,
+  "alias_numbers": {"type": "link", "url": "/api/v2/subscribers/5/@alias_numbers", "total_count": 3}
+}
+```
+
+Le lien pointe vers le champ en tant que collection : le chemin de l'élément, `/@` et le nom du champ. Elle se lit uniquement avec GET et se pagine, se trie et se filtre comme toute autre collection, avec les filtres indiqués pour son opération. Les entrées qui sont des valeurs simples, comme les identifiants de `pbx_group_ids`, y sont renvoyées sous la forme `{"value": 12}` et sont filtrées et triées par `value`. Ces collections n'existent que par élément, il n'y a pas de `/subscribers/@alias_numbers`.
+
+```http
+GET /api/v2/subscribers/5/@alias_numbers?order_by=sn&rows=100&page=2
+GET /api/v2/subscribers/5/@pbx_group_ids?value=12
+```
+
+`inline` renvoie à la place les champs différés sous forme de données, pour un élément comme pour une collection. Les champs différés d'une réponse sont indiqués avec le paramètre `inline` de son opération.
+
+| Valeur | Renvoyé sous forme de données |
+| --- | --- |
+| noms de champs, séparés par des virgules | les champs nommés |
+| `all` | tous les champs différés |
+| `auto` | par élément, chaque champ d'au plus 1000 entrées, dans l'ordre de la page tant que la réponse ne dépasse pas 10000 entrées incluses ; les autres restent des liens |
+
+```http
+GET /api/v2/subscribers/5?inline=alias_numbers
+GET /api/v2/subscribers?customer_id=3&inline=auto
+```
+
+Un champ nommé, ou inclus par `all`, de plus de 1000 entrées renvoie 422 avec l'URL de sa collection : lisez-le là, page par page. De même pour des champs nommés qui ont ensemble plus de 10000 entrées dans une réponse (tous les éléments d'une liste et les éléments développés comptent) : lisez moins de lignes ou utilisez `auto`. Les limites sont les paramètres de plateforme `performance.lazy_load.inline_max_items` (1000 par défaut) et `performance.lazy_load.inline_max_hard_limit` (10000 par défaut). Un nom qui n'est pas un champ différé de la réponse renvoie 422, `all` et `auto` ensemble 400. Certains champs ne sont que des liens (`vars` et `preview` des modèles de facture) : ils n'ont pas de `total_count` et ne peuvent pas être inclus.
+
+Les écritures avec `Prefer: return=representation` renvoient leurs éléments comme GET et acceptent donc aussi `inline`. Un lien n'est pas une valeur : PUT remplace l'élément entier et rejette un lien renvoyé avec 422. Lisez l'élément avec `inline=all` avant de le modifier avec PUT, ou modifiez des champs isolés avec PATCH. Tous les champs inclus n'ont pas la forme de la requête : retirez `effective_start_time` des entrées des `billing_profiles` d'un client, et envoyez les `values` des conditions comme simples chaînes au lieu d'objets `{"id", "value"}`.
+
+`expand` d'un champ différé l'inclut, avec les mêmes limites. `expand=all` ignore les champs différés qui ne sont pas inclus, ils gardent leur lien. `all` et `auto` s'appliquent aussi aux éléments développés, par exemple `expand=customer_id&inline=auto` renvoie les `billing_profiles` du client sous forme de données. Sur une collection `@<field>`, `inline` et `expand` portent sur les champs de ses entrées ; les collections de valeurs simples n'acceptent pas `expand` (400).
+
 ### Création et modification de données
 
 Chaque méthode s'applique à un élément ou, sur le chemin de la collection, à plusieurs éléments en une seule requête :

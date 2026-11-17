@@ -16,7 +16,7 @@ import {
 } from '~/decorators/expand.decorator'
 import {primaryRef} from '~/helpers/swagger-pdf.helper'
 
-function schemaName(model: Type<unknown>): string {
+export function schemaName(model: Type<unknown>): string {
     return getSchemaPath(model).split('/').pop()
 }
 
@@ -80,7 +80,10 @@ function addExpandProperties(
     return expandable
 }
 
-function responseSchemaName(operation: OperationObject): string | undefined {
+/**
+ * Schema name of the response data of an operation, the item schema of a paginated response
+ */
+export function responseSchemaName(operation: OperationObject): string | undefined {
     for (const code of ['200', '201']) {
         const response = operation.responses?.[code]
         if (!response || '$ref' in response)

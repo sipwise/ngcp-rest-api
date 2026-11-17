@@ -13,10 +13,11 @@ import {andWhereActualBillingMapping, billingMappingsCsv} from '~/helpers/billin
 import {balanceIntervalSettings, billingTimezone, initialBalanceInterval} from '~/helpers/billing.helper'
 import {toLocalDateTime} from '~/helpers/date.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {configureQueryBuilder} from '~/helpers/query-builder.helper'
+import {configureQueryBuilder, sqlFieldSource} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {isOwnerTimezone, joinContractTimezone, storedTimezone} from '~/helpers/timezone.helper'
 import {FilterBy} from '~/interfaces/filter-by.interface'
+import {LazyFieldSources} from '~/interfaces/lazy-field-source.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -35,6 +36,20 @@ function toInternalCustomer(contract: db.billing.Contract, sr: ServiceRequest): 
 @Injectable()
 export class CustomerMariadbRepository extends MariaDbRepository implements CustomerRepository {
     private readonly log = new LoggerService(CustomerMariadbRepository.name)
+    readonly lazyFields: LazyFieldSources = {
+        billing_profiles: sqlFieldSource({
+            property: 'billingProfiles',
+            rows: ids => this.billingProfilesQueryBuilder(ids),
+            itemId: 'billingProfiles.contract_id',
+            toInternal: rows => rows.map(row => row.toInternalCustomerBillingProfile()),
+        }),
+        future_billing_profiles: sqlFieldSource({
+            property: 'futureBillingProfiles',
+            rows: ids => this.billingProfilesQueryBuilder(ids, new Date()),
+            itemId: 'billingProfiles.contract_id',
+            toInternal: rows => rows.map(row => row.toInternalCustomerBillingProfile()),
+        }),
+    }
 
     constructor(
         @Inject(AppService) private readonly app: AppService,
@@ -150,7 +165,7 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
                 const actualBillingProfile = await actualBillingProfileQb.getOneOrFail()
                 internal.billingProfileId = actualBillingProfile.billing_profile_id
                 if (!internal.profilePackageId) {
-                    const profileCount = await (await this.billingProfilesQueryBuilder(d.id)).getCount()
+                    const profileCount = await (await this.billingProfilesQueryBuilder([d.id])).getCount()
                     if (profileCount === 1) {
                         internal.billingProfileDefinition = ContractBillingProfileDefinition.ID
                     } else {
@@ -188,7 +203,7 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         const actualBillingProfile = await actualBillingProfileQb.getOneOrFail()
         internal.billingProfileId = actualBillingProfile.billing_profile_id
         if (!internal.profilePackageId) {
-            const profileCount = await (await this.billingProfilesQueryBuilder(result.id)).getCount()
+            const profileCount = await (await this.billingProfilesQueryBuilder([result.id])).getCount()
             if (profileCount === 1) {
                 internal.billingProfileDefinition = ContractBillingProfileDefinition.ID
             } else {
@@ -198,6 +213,12 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
             internal.billingProfileDefinition = ContractBillingProfileDefinition.Package
         }
         return internal
+    }
+
+    async readBareById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Customer> {
+        const qb = await this.createQueryBuilder(filterBy)
+        qb.andWhere({id: id})
+        return toInternalCustomer(await qb.getOneOrFail(), sr)
     }
 
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Customer[]> {
@@ -254,16 +275,6 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         return ids
     }
 
-    async readAllBillingProfiles(customerId: number, _sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.CustomerBillingProfile[], number]> {
-        const customerQb = await this.createQueryBuilder(filterBy)
-        customerQb.andWhere({id: customerId})
-        await customerQb.getOneOrFail()
-
-        const qb = await this.billingProfilesQueryBuilder(customerId)
-        const [result, totalCount] = await qb.getManyAndCount()
-        return [result.map((d) => d.toInternalCustomerBillingProfile()), totalCount]
-    }
-
     async readBillingProfile(profileId: number, _sr: ServiceRequest): Promise<internal.BillingProfile> {
         // a null id would be ignored in the where clause and return the first row
         if (profileId == undefined)
@@ -294,22 +305,16 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         return profile?.toInternal()
     }
 
-    async readFutureBillingProfiles(customerId: number, _sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.CustomerBillingProfile[], number]> {
-        const customerQb = await this.createQueryBuilder(filterBy)
-        customerQb.andWhere({id: customerId})
-        await customerQb.getOneOrFail()
-
-        const qb = await this.billingProfilesQueryBuilder(customerId)
-        qb.andWhere('billingProfiles.start_date > :now', {now: new Date()})
-        const [result, totalCount] = await qb.getManyAndCount()
-        return [result.map((d) => d.toInternalCustomerBillingProfile()), totalCount]
-    }
-
-    // no end markers (+0.001), no terminated profiles/networks
-    private billingProfilesQueryBuilder(customerId: number): Promise<SelectQueryBuilder<db.billing.VContractBillingProfileNetworkSchedule>> {
+    /**
+     * Billing profile schedule of the customers, only the profiles starting after `startAfter` if given; no end
+     * markers (+0.001), no terminated profiles/networks
+     */
+    private billingProfilesQueryBuilder(customerIds: number[], startAfter?: Date): Promise<SelectQueryBuilder<db.billing.VContractBillingProfileNetworkSchedule>> {
         const qb = db.billing.VContractBillingProfileNetworkSchedule.createQueryBuilder('billingProfiles')
         // no joins: the view has no primary column for getCount()
-        qb.where('billingProfiles.contract_id = :customerId', {customerId: customerId})
+        qb.where('billingProfiles.contract_id IN (:...customerIds)', {customerIds})
+        if (startAfter)
+            qb.andWhere('billingProfiles.start_date > :startAfter', {startAfter})
         qb.andWhere('FLOOR(billingProfiles.effective_start_time) = billingProfiles.effective_start_time')
         qb.andWhere('billingProfiles.billing_profile_id NOT IN (SELECT id FROM billing.billing_profiles WHERE status = :terminated)',
             {terminated: BillingProfileStatus.Terminated})

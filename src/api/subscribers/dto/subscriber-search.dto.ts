@@ -10,7 +10,7 @@ const booleanFilter = (column: string): object => ({
     where: (param: string): string => `${column} = :${param}`,
 })
 
-const conditionFilter = (where: (param: string) => string): object => ({
+export const conditionFilter = (where: (param: string) => string): object => ({
     format: (args: string[]): string => args[0],
     where,
 })

@@ -1,6 +1,7 @@
 import {internal} from '~/entities'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {SubscriberNumber} from '~/entities/internal/subscriber.internal.entity'
+import {LazyFieldSources} from '~/interfaces/lazy-field-source.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 /**
@@ -117,9 +118,17 @@ export interface SubscriberTerminatePlan {
 }
 
 export interface SubscriberRepository {
+    // sources of alias_numbers, pbx_group_ids, pbx_groupmember_ids; the reads leave these fields unset
+    readonly lazyFields: LazyFieldSources
+
     readAll(sr: ServiceRequest, scope: SubscriberScope): Promise<[internal.Subscriber[], number]>
 
     readById(id: number, scope: SubscriberScope): Promise<internal.Subscriber | undefined>
+
+    /**
+     * The subscriber's own rows without details (preferences, extension ranges)
+     */
+    readBareById(id: number, scope: SubscriberScope): Promise<internal.Subscriber | undefined>
 
     readWhereInIds(ids: number[], scope: SubscriberScope): Promise<internal.Subscriber[]>
 

@@ -13,6 +13,7 @@ import {
     SubscriberPbxHuntPolicy,
 } from '~/entities/internal/subscriber.internal.entity'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
+import {lazyArray} from '~/helpers/lazy-field.helper'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class SubscriberNumberResponseDto {
@@ -224,7 +225,10 @@ export class SubscriberResponseDto extends ResponseDto {
             this.profile_set_id = entity.profileSetId
         this.profile_id = entity.profileId
         this.primary_number = entity.primaryNumber ? new SubscriberNumberResponseDto(entity.primaryNumber) : null
-        this.alias_numbers = entity.aliasNumbers.map(number => new SubscriberAliasNumberResponseDto(number))
+        this.alias_numbers = lazyArray(
+            entity.aliasNumbers?.map(number => new SubscriberAliasNumberResponseDto(number)),
+            entity.lazyCounts?.aliasNumbers,
+        )
         this.display_name = entity.displayName
         if (entity.isPbxAccount) {
             this.is_pbx_pilot = entity.isPbxPilot
@@ -234,9 +238,9 @@ export class SubscriberResponseDto extends ResponseDto {
                 this.pbx_hunt_policy = entity.pbxHuntPolicy
                 this.pbx_hunt_timeout = entity.pbxHuntTimeout
                 this.pbx_hunt_cancel_mode = entity.pbxHuntCancelMode
-                this.pbx_groupmember_ids = entity.pbxGroupmemberIds
+                this.pbx_groupmember_ids = lazyArray(entity.pbxGroupmemberIds, entity.lazyCounts?.pbxGroupmemberIds)
             } else {
-                this.pbx_group_ids = entity.pbxGroupIds
+                this.pbx_group_ids = lazyArray(entity.pbxGroupIds, entity.lazyCounts?.pbxGroupIds)
             }
             if (entity.administrative) {
                 this.ext_range_min = entity.extRangeMin

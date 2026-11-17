@@ -10,6 +10,7 @@ import {FileShareConfig} from './fileshare.config.schema'
 import {GeneralConfig} from './general.config.schema'
 import {MultiSiteConfig} from './multisite.config.schema'
 import {NumberManagementConfig} from './numbermanagement.config.schema'
+import {PerformanceConfig} from './performance.config.schema'
 import {PrivilegesConfig} from './privileges.config.schema'
 import {RedisConfig} from './redis.config.schema'
 import {SecurityConfig} from './security.config.schema'
@@ -73,6 +74,11 @@ export class AppConfig {
     @ValidateNested()
     @Type(() => ExpandConfig)
         expand?: ExpandConfig
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => PerformanceConfig)
+        performance?: PerformanceConfig
 
     @IsNumber()
     @IsOptional()

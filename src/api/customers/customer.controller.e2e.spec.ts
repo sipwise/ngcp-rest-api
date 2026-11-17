@@ -25,6 +25,7 @@ import {ErrorEntry} from '~/helpers/errors.helper'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {validate} from '~/helpers/validate.helper'
 import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
+import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
@@ -203,6 +204,7 @@ describe('CustomerController', () => {
             }),
             new LoggingInterceptor(),
             new ClassSerializerInterceptor(app.get(Reflector)),
+            app.get(LazyFieldInterceptor),
             new TransactionInterceptor(app.get(Reflector)),
             new ResponseValidationInterceptor(),
             app.get(ExpandInterceptor),
@@ -584,7 +586,7 @@ describe('CustomerController', () => {
 
             const getList = (path: string): request.Test =>
                 request(app.getHttpServer())
-                    .get(`/api/customers/${contractId}/${path}`)
+                    .get(`/api/customers/${contractId}${path}`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
 
@@ -600,7 +602,7 @@ describe('CustomerController', () => {
             })
 
             it('lists whole-second schedules ordered by effective start time, without terminated profiles/networks', async () => {
-                const response = await getList('@billing-profiles')
+                const response = await getList('/@billing_profiles')
                 expect(response.status).toEqual(HttpStatus.OK)
                 const {data: profiles, total_count: count} = response.body
                 expect(count).toEqual(profiles.length)
@@ -614,15 +616,53 @@ describe('CustomerController', () => {
             })
 
             it('lists only future billing profiles', async () => {
-                const response = await getList('@future-billing-profiles')
+                const response = await getList('/@future_billing_profiles')
                 expect(response.status).toEqual(HttpStatus.OK)
                 const {data: profiles, total_count: count} = response.body
                 expect(count).toEqual(profiles.length)
                 expect(profiles.map((p: {profile_id: number}) => p.profile_id)).toEqual([profileB])
             })
 
+            it('pages the billing profiles', async () => {
+                const all = (await getList('/@billing_profiles')).body
+                const response = await getList('/@billing_profiles?rows=1&page=2')
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.data).toEqual([all.data[1]])
+                expect(response.body.total_count).toEqual(all.total_count)
+            })
+
+            it('rejects filters on the billing profiles with 400', async () => {
+                const response = await getList(`/@billing_profiles?profile_id=${profileA}`)
+                expect(response.status).toEqual(HttpStatus.BAD_REQUEST)
+            })
+
+            it('links the billing profiles of the customer with their counts', async () => {
+                const response = await getList('')
+                expect(response.status).toEqual(HttpStatus.OK)
+                const count = (await getList('/@billing_profiles')).body.total_count
+                expect(response.body.billing_profiles).toEqual({type: 'link', url: `/api/customers/${contractId}/@billing_profiles`, total_count: count})
+                expect(response.body.future_billing_profiles).toEqual({type: 'link', url: `/api/customers/${contractId}/@future_billing_profiles`, total_count: 1})
+            })
+
+            it('returns the billing profiles inline as the collections do', async () => {
+                const response = await getList('?inline=billing_profiles,future_billing_profiles')
+                expect(response.status).toEqual(HttpStatus.OK)
+                expect(response.body.billing_profiles).toEqual((await getList('/@billing_profiles')).body.data)
+                expect(response.body.future_billing_profiles).toEqual((await getList('/@future_billing_profiles')).body.data)
+            })
+
+            it('inlines the billing profiles of listed customers with inline=auto', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/customers?id=${contractId}&inline=auto`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(HttpStatus.OK)
+                const [customer] = response.body.data
+                expect(customer.future_billing_profiles.map((p: {profile_id: number}) => p.profile_id)).toEqual([profileB])
+            })
+
             it.each(['Asia/Tokyo', 'owner'])('lists start, stop and effective_start_time in platform time as stored with tz=%s', async (tz) => {
-                const response = await getList(`@future-billing-profiles?tz=${tz}`)
+                const response = await getList(`/@future_billing_profiles?tz=${tz}`)
                 expect(response.status).toEqual(HttpStatus.OK)
                 const [profile] = response.body.data
                 expect(profile.start).toEqual(toLocalDateTime(futureStart))
@@ -788,14 +828,17 @@ describe('CustomerController', () => {
                 }
 
                 const response = await request(app.getHttpServer())
-                    .post('/api/customers')
+                    .post('/api/customers?inline=billing_profiles')
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .set('Prefer', 'return=representation')
                     .send(customer)
                 expect(response.status).toEqual(HttpStatus.CREATED)
-                createdCustomerIds.push(+response.body.data[0].id)
+                const [created] = response.body.data
+                createdCustomerIds.push(+created.id)
+                expect(created.billing_profiles.map((p: {profile_id: number}) => p.profile_id)).toEqual([1])
+                expect(created.future_billing_profiles).toEqual({type: 'link', url: `/api/customers/${created.id}/@future_billing_profiles`, total_count: 0})
             })
 
             it('create a single Customer with billing_profile_definition_id', async () => {
@@ -1340,7 +1383,7 @@ describe('CustomerController', () => {
                 expect(contract.external_id).not.toEqual(`e2e-scope-${suffix}`)
             })
 
-            it.each(['@billing-profiles', '@future-billing-profiles'])('lists %s of its own customers only as reseller admin', async (path) => {
+            it.each(['@billing_profiles', '@future_billing_profiles'])('lists %s of its own customers only as reseller admin', async (path) => {
                 const list = (id: number): request.Test => request(app.getHttpServer())
                     .get(`/api/customers/${id}/${path}`)
                     .auth(resellerCreds.username, resellerCreds.password)

@@ -16,6 +16,7 @@ import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voi
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
+import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
 import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
@@ -182,6 +183,7 @@ describe('PBX User', () => {
             }),
             new LoggingInterceptor(),
             new ClassSerializerInterceptor(app.get(Reflector)),
+            app.get(LazyFieldInterceptor),
             new TransactionInterceptor(app.get(Reflector)),
             new ResponseValidationInterceptor(),
             app.get(ExpandInterceptor),

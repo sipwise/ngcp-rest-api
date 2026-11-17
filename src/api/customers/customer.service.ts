@@ -12,8 +12,10 @@ import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/inter
 import {billingIntervalError, billingNetworkError, billingOpenIntervalError, billingProfileError} from '~/helpers/billing-mapping.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrors,apiError, checkItems, itemPointer, readFoundIds, throwMissingIds} from '~/helpers/errors.helper'
+import {applyLazyFields, mergeLazyFields, readLazyField} from '~/helpers/lazy-field.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
+import {LazyFieldSources} from '~/interfaces/lazy-field-source.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -21,6 +23,7 @@ import {LoggerService} from '~/logger/logger.service'
 export class CustomerService implements CrudService<internal.Customer> {
     private readonly log = new LoggerService(CustomerService.name)
     private defaultEmailTemplates: internal.EmailTemplate[]
+    readonly lazyFields: LazyFieldSources
 
     constructor(
         @Inject(CustomerMariadbRepository) private readonly customerRepository: CustomerMariadbRepository,
@@ -28,6 +31,7 @@ export class CustomerService implements CrudService<internal.Customer> {
         @Inject(AppService) private readonly app: AppService,
         @Inject(I18nService) private readonly i18n: I18nService,
     ) {
+        this.lazyFields = mergeLazyFields(customerRepository.lazyFields)
     }
 
     async create(entities: internal.Customer[], sr: ServiceRequest): Promise<internal.Customer[]> {
@@ -59,39 +63,38 @@ export class CustomerService implements CrudService<internal.Customer> {
             const customer = entities[index]
             createdCustomersDictionary[id] = {...customer, id, createBillingMappings: customer.createBillingMappings}
         })
-        const createdCustomers = await this.customerRepository.readWhereInIds(createdIds, sr, undefined)
-        if (createdCustomers.length !== createdIds.length)
-            throw new UnprocessableEntityException(this.i18n.t('errors.CUSTOMER_CREATION_FAILED'))
-        await Promise.all(createdCustomers.map(async customer => {
-            const cust = createdCustomersDictionary[customer.id]
+        await Promise.all(createdIds.map(async id => {
+            const cust = createdCustomersDictionary[id]
             await this.customerRepository.appendBillingMappings(cust.id, cust.createBillingMappings)
             await this.customerRepository.createInitialBalance(cust.id, cust.createTimestamp)
         }))
+        // read after the mappings, the representation shows the billing profile schedule
+        const createdCustomers = await this.customerRepository.readWhereInIds(createdIds, sr, undefined)
+        if (createdCustomers.length !== createdIds.length)
+            throw new UnprocessableEntityException(this.i18n.t('errors.CUSTOMER_CREATION_FAILED'))
+        await applyLazyFields(createdCustomers, this.lazyFields, sr)
         return createdCustomers
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Customer[], number]> {
-        return await this.customerRepository.readAll(sr, this.readFilter(sr))
+        const [customers, totalCount] = await this.customerRepository.readAll(sr, this.readFilter(sr))
+        await applyLazyFields(customers, this.lazyFields, sr)
+        return [customers, totalCount]
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.Customer> {
-        return await this.customerRepository.readById(id, sr, this.readFilter(sr))
+        const customer = await this.customerRepository.readById(id, sr, this.readFilter(sr))
+        await applyLazyFields([customer], this.lazyFields, sr)
+        return customer
     }
 
-    async readAllBillingProfiles(customerId: number, sr: ServiceRequest): Promise<[internal.CustomerBillingProfile[], number]> {
-        const CustomerFilterBy: CustomerFilterBy = {customerId}
-        if (sr.user.reseller_id_required)
-            CustomerFilterBy.resellerId = sr.user.reseller_id
-
-        return await this.customerRepository.readAllBillingProfiles(customerId, sr, CustomerFilterBy)
-    }
-
-    async readFutureBillingProfiles(customerId: number, sr: ServiceRequest): Promise<[internal.CustomerBillingProfile[], number]> {
-        const CustomerFilterBy: CustomerFilterBy = {customerId}
-        if (sr.user.reseller_id_required)
-            CustomerFilterBy.resellerId = sr.user.reseller_id
-
-        return await this.customerRepository.readFutureBillingProfiles(customerId, sr, CustomerFilterBy)
+    /**
+     * A page of a lazy field of the customer (`<item>/@<field>`)
+     * @param toResponse response DTO of the customer for the caller, 404 when it hides the field
+     */
+    async readField(id: number, field: string, sr: ServiceRequest, toResponse: (customer: internal.Customer) => object): Promise<[unknown[], number]> {
+        const customer = await this.customerRepository.readBareById(id, sr, this.readFilter(sr))
+        return await readLazyField(customer, field, this.lazyFields, sr, toResponse)
     }
 
     async terminate(ids: number[], sr: ServiceRequest): Promise<number[]> {
@@ -130,7 +133,7 @@ export class CustomerService implements CrudService<internal.Customer> {
 
     async update(updates: Dictionary<internal.Customer>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => +id)
-        throwMissingIds(sr, ids, await readFoundIds(ids, id => this.read(id, sr)), this.i18n.t('errors.ENTRY_NOT_FOUND'))
+        throwMissingIds(sr, ids, await readFoundIds(ids, id => this.customerRepository.readById(id, sr, this.readFilter(sr))), this.i18n.t('errors.ENTRY_NOT_FOUND'))
         const contactIds = [...new Set(Object.values(updates).map(e => e.contactId))]
         const activeContacts = await this.contactRepository.readActiveContactsInIds(contactIds, {
             type: ContactType.CustomerContact,
@@ -144,7 +147,7 @@ export class CustomerService implements CrudService<internal.Customer> {
             await this.checkTemplates(resource, activeContacts.find(c => c.id === resource.contactId), sr, id)
             resource.productId = await this.readProductId(resource, sr, id)
             const customerId = +id
-            const oldEntity = await this.read(customerId, sr)
+            const oldEntity = await this.customerRepository.readById(customerId, sr, this.readFilter(sr))
             const contact = activeContacts.find(c => c.id === resource.contactId)
             const profileDef = resource.billingProfileDefinition || ContractBillingProfileDefinition.ID
             let mappingsToCreate: internal.BillingMapping[] = []

@@ -92,6 +92,15 @@
   "EXPAND_INVALID_PATH": {
     "message": "Invalid path {path}"
   },
+  "INLINE_NOT_POSSIBLE": {
+    "message": "Field {field} cannot be inlined"
+  },
+  "INLINE_TOO_LARGE": {
+    "message": "Field {field} cannot be inlined, {count} items are more than the {max} allowed per {scope}, read them from {url} or use inline=auto"
+  },
+  "INLINE_INVALID": {
+    "message": "Invalid value {value}, expected a comma list of field names, all or auto"
+  },
   "VALIDATION_FAILED_UNSUPPORTED_ID": {
     "message": "Validation failed (unsupported :id format)"
   },

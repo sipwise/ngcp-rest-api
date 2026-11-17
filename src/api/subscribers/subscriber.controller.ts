@@ -17,6 +17,7 @@ import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorato
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
+import {lazyFieldItems} from '~/decorators/lazy.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
@@ -123,6 +124,25 @@ export class SubscriberController extends CrudController<SubscriberRequestDto, S
             {url: req.url, containsResourceId: true},
         )
         return response
+    }
+
+    @Get(':id/@:field')
+    async readField(
+        @Param('id', ParseIntPipe) id: number,
+        @Param('field') field: string,
+        @Req() req: Request,
+    ): Promise<[object[], number]> {
+        this.log.debug({
+            message: 'fetch subscriber field by id',
+            id: id,
+            func: this.readField.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const [items, totalCount] = await this.subscriberService.readField(id, field, sr,
+            subscriber => new SubscriberResponseDto(subscriber, sr.user.role))
+        return [lazyFieldItems(SubscriberResponseDto, field, items), totalCount]
     }
 
     @Get(':id/journal')

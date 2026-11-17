@@ -9,14 +9,17 @@ import {HeaderManipulationRuleMariadbRepository} from '~/api/header-manipulation
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrors, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
+import {applyLazyFields, mergeLazyFields, readLazyField} from '~/helpers/lazy-field.helper'
 import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
+import {LazyFieldSources} from '~/interfaces/lazy-field-source.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
 @Injectable()
 export class HeaderManipulationRuleConditionService implements CrudService<internal.HeaderRuleCondition> {
     private readonly log = new LoggerService(HeaderManipulationRuleConditionService.name)
+    readonly lazyFields: LazyFieldSources
 
     constructor(
         @Inject(I18nService) private readonly i18n: I18nService,
@@ -25,6 +28,7 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
         @Inject(HeaderManipulationSetMariadbRepository) private readonly ruleSetRepo: HeaderManipulationSetMariadbRepository,
         @Inject(HeaderManipulationSetRedisRepository) private readonly ruleSetRedisRepo: HeaderManipulationSetRedisRepository,
     ) {
+        this.lazyFields = mergeLazyFields(ruleConditionRepo.lazyFields)
     }
 
     async create(entities: internal.HeaderRuleCondition[], sr: ServiceRequest): Promise<internal.HeaderRuleCondition[]> {
@@ -43,7 +47,9 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
         rules.forEach(async rule => await this.invalidateRuleSetAfterCommit(rule.setId, sr))
 
         const createdIds = await this.ruleConditionRepo.create(entities)
-        return await this.ruleConditionRepo.readWhereInIds(createdIds, sr)
+        const created = await this.ruleConditionRepo.readWhereInIds(createdIds, sr)
+        await applyLazyFields(created, this.lazyFields, sr)
+        return created
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.HeaderRuleCondition[], number]> {
@@ -54,7 +60,9 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
         if (sr.query.subscriber_id)
             filterBy.showSubscriberConditions = true
 
-        return await this.ruleConditionRepo.readAll(sr, filterBy)
+        const [conditions, totalCount] = await this.ruleConditionRepo.readAll(sr, filterBy)
+        await applyLazyFields(conditions, this.lazyFields, sr)
+        return [conditions, totalCount]
     }
 
     async read(id: number, sr: ServiceRequest): Promise<internal.HeaderRuleCondition> {
@@ -65,7 +73,9 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
         if (sr.query.subscriber_id)
             filterBy.showSubscriberConditions = true
 
-        return await this.ruleConditionRepo.readById(id, sr, filterBy)
+        const condition = await this.ruleConditionRepo.readById(id, sr, filterBy)
+        await applyLazyFields([condition], this.lazyFields, sr)
+        return condition
     }
 
     async update(updates: Dictionary<internal.HeaderRuleCondition>, sr: ServiceRequest): Promise<number[]> {
@@ -104,15 +114,29 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
         return await this.ruleConditionRepo.delete(ids,sr)
     }
 
-    async readAllConditionValues(conditionId: number, sr: ServiceRequest): Promise<[internal.HeaderRuleConditionValue[], number]> {
+    /**
+     * A page of a lazy field of the condition (`<item>/@<field>`)
+     * @param toResponse response DTO of the condition for the caller, 404 when it hides the field
+     */
+    async readField(
+        id: number,
+        field: string,
+        sr: ServiceRequest,
+        toResponse: (condition: internal.HeaderRuleCondition) => object,
+    ): Promise<[unknown[], number]> {
         const filterBy = this.getFiltersFromServiceRequest(sr)
         if (sr.user.reseller_id_required)
             filterBy.resellerId = sr.user.reseller_id
 
-        if (sr.query.subscriber_id)
+        // subscriber_id selects a condition of the subscriber's set, as on the item read; it filters no field
+        const {subscriber_id: subscriberId, ...query} = sr.query
+        if (subscriberId) {
             filterBy.showSubscriberConditions = true
+            filterBy.subscriberId = +subscriberId
+        }
 
-        return await this.ruleConditionRepo.readConditionValues(conditionId, sr, filterBy)
+        const condition = await this.ruleConditionRepo.readBareById(id, filterBy)
+        return await readLazyField(condition, field, this.lazyFields, {...sr, query}, toResponse)
     }
 
     private getFiltersFromServiceRequest(sr: ServiceRequest): FilterBy {

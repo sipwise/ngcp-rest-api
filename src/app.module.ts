@@ -84,6 +84,7 @@ import {I18nErrorCodeLoader} from './helpers/i18n-loader.helper'
 import {TaskAgentModule} from './helpers/task-agent.module'
 import {ExpandInterceptor} from './interceptors/expand.interceptor'
 import {InterceptorModule} from './interceptors/interceptor.module'
+import {LazyFieldInterceptor} from './interceptors/lazy-field.interceptor'
 import {LicenseModule} from './license/license.module'
 import {LicenseService} from './license/license.service'
 import {ContentTypeMiddleware} from './middleware/content-type.middleware'
@@ -206,6 +207,7 @@ if (process.env.NODE_ENV != 'test') {
         DbStateSchedule,
         ExpandInterceptor,
         FileshareSchedule,
+        LazyFieldInterceptor,
         RedisStateSchedule,
         Logger,
         LicenseService,

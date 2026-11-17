@@ -10,6 +10,7 @@ import {AppService} from './app.service'
 import {HttpExceptionFilter} from './helpers/http-exception.filter'
 import {createSwaggerDocument} from './helpers/swagger.helper'
 import {ExpandInterceptor} from './interceptors/expand.interceptor'
+import {LazyFieldInterceptor} from './interceptors/lazy-field.interceptor'
 import {LoggingInterceptor} from './interceptors/logging.interceptor'
 import {ResponseValidationInterceptor} from './interceptors/response-validation.interceptor'
 import {TransactionInterceptor} from './interceptors/transaction.interceptor'
@@ -61,6 +62,7 @@ async function bootstrap(): Promise<void> {
         }),
         new LoggingInterceptor(),
         new ClassSerializerInterceptor(app.get(Reflector)),
+        app.get(LazyFieldInterceptor),
         new TransactionInterceptor(app.get(Reflector)),
         new ResponseValidationInterceptor(),
         app.get(ExpandInterceptor),

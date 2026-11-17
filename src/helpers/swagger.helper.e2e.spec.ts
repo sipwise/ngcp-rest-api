@@ -178,6 +178,77 @@ describe('Swagger', () => {
         expect(schemas.UserinfoResponseDto.properties.reseller_id.description ?? '').not.toContain('(expandable)')
     })
 
+    it('documents lazy fields as link or data, inline and one @<field> operation per field', async () => {
+        const json = await request(app.getHttpServer()).get('/api/swagger.json')
+        expect(json.status).toEqual(HttpStatus.OK)
+        const paths = json.body.paths as Record<string, Record<string, OperationObject>>
+        const parameterNames = (operation: OperationObject): string[] =>
+            operation.parameters.map(param => 'name' in param ? param.name : '')
+        const link = {$ref: '#/components/schemas/LazyFieldLink'}
+
+        const schemas = json.body.components.schemas
+        expect(schemas.LazyFieldLink.required).toEqual(['type', 'url'])
+        expect(schemas.SubscriberResponseDto.properties.alias_numbers.oneOf).toEqual([
+            link,
+            {type: 'array', items: {$ref: '#/components/schemas/SubscriberAliasNumberResponseDto'}},
+        ])
+        expect(schemas.SubscriberResponseDto.properties.pbx_group_ids.description).toMatch(/\(expandable\)$/)
+        expect(schemas.InvoiceTemplateResponseDto.properties.vars.allOf).toEqual([link])
+
+        const inline = paths['/subscribers'].get.parameters.find(param => 'name' in param && param.name == 'inline')
+        expect(inline).toEqual(expect.objectContaining({
+            in: 'query',
+            description: expect.stringMatching(/^Lazy fields .*: `alias_numbers`, `pbx_group_ids`, `pbx_groupmember_ids`\./),
+        }))
+        expect(inline).toEqual(expect.objectContaining({
+            description: expect.stringMatching(/at most \d+ items, in page order while the response holds at most \d+ inlined items/),
+        }))
+        expect(parameterNames(paths['/subscribers/{id}'].get)).toContain('inline')
+        expect(parameterNames(paths['/templates/invoices/{id}'].get)).not.toContain('inline')
+        expect(parameterNames(paths['/subscribers/{id}'].put)).not.toContain('inline')
+
+        expect(Object.keys(paths).filter(path => path.includes('@{field}'))).toEqual([])
+        expect(Object.keys(paths).filter(path => path.startsWith('/subscribers/{subscriberId}/@')).sort()).toEqual([
+            '/subscribers/{subscriberId}/@alias_numbers',
+            '/subscribers/{subscriberId}/@pbx_group_ids',
+            '/subscribers/{subscriberId}/@pbx_groupmember_ids',
+        ])
+        const aliasNumbers = paths['/subscribers/{subscriberId}/@alias_numbers'].get
+        expect(aliasNumbers.operationId).toEqual('SubscriberController_readField_alias_numbers')
+        expect(parameterNames(aliasNumbers)).toEqual(expect.arrayContaining(['subscriberId', 'page', 'rows', 'order_by', 'number', 'is_devid']))
+        expect(parameterNames(aliasNumbers)).not.toContain('field')
+        expect(JSON.stringify((aliasNumbers.responses['200'] as ResponseObject).content['application/json'].schema))
+            .toContain('"items":{"$ref":"#/components/schemas/SubscriberAliasNumberResponseDto"}')
+        const groupIds = paths['/subscribers/{subscriberId}/@pbx_group_ids'].get
+        expect(JSON.stringify((groupIds.responses['200'] as ResponseObject).content['application/json'].schema))
+            .toContain('"items":{"type":"object","required":["value"],"properties":{"value":{"type":"number"}}}')
+        expect(parameterNames(groupIds)).toContain('value')
+        expect(parameterNames(groupIds)).not.toContain('expand')
+        expect(parameterNames(paths['/customers/{customerId}/@billing_profiles'].get)).toEqual(['customerId', 'page', 'rows', 'tz'])
+        const conditionValues = paths['/header-manipulations/sets/{setId}/rules/{ruleId}/conditions/{conditionId}/@values'].get
+        const queryNames = conditionValues.parameters.filter(param => 'in' in param && param.in == 'query').map(param => 'name' in param ? param.name : '')
+        expect(queryNames).toEqual(expect.arrayContaining(['id', 'value', 'page', 'rows', 'order_by']))
+        expect(queryNames).not.toContain('match_name')
+        // link-only fields keep their own operations
+        expect(paths['/templates/invoices/{id}/@vars'].get.operationId).toEqual('InvoiceTemplateController_readVars')
+    })
+
+    it('documents no parameter twice in an operation', async () => {
+        const json = await request(app.getHttpServer()).get('/api/swagger.json')
+        expect(json.status).toEqual(HttpStatus.OK)
+        const paths = json.body.paths as Record<string, Record<string, OperationObject>>
+        const duplicates: string[] = []
+        for (const [path, item] of Object.entries(paths)) {
+            for (const [method, operation] of Object.entries(item)) {
+                const names = operation.parameters.map(param => 'name' in param ? param.name : param.$ref)
+                const repeated = names.filter((name, index) => names.indexOf(name) != index)
+                if (repeated.length)
+                    duplicates.push(`${method.toUpperCase()} ${path}: ${repeated.join(', ')}`)
+            }
+        }
+        expect(duplicates).toEqual([])
+    })
+
     it('serves the localised document and pdf with ?lang=', async () => {
         const json = await request(app.getHttpServer()).get('/api/swagger.json?lang=fr')
         expect(json.status).toEqual(HttpStatus.OK)

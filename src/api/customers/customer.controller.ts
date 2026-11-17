@@ -1,9 +1,8 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, ValidationPipe} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery,ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse,ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {CustomerService} from './customer.service'
-import {CustomerBillingProfileResponseDto} from './dto/customer-billing-profile-response.dto'
 import {CustomerQueryDto} from './dto/customer-query.dto'
 import {CustomerRequestDto} from './dto/customer-request.dto'
 import {CustomerResponseDto} from './dto/customer-response.dto'
@@ -18,6 +17,7 @@ import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorato
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
+import {lazyFieldItems} from '~/decorators/lazy.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
@@ -52,50 +52,6 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
         private readonly journalService: JournalService,
     ) {
         super(resourceName, customerService, journalService)
-    }
-
-    /* Customer billing profiles */
-
-    @Get(':id/@billing-profiles')
-    @ApiQuery({type: SearchLogic})
-    @ApiPaginatedResponse(CustomerBillingProfileResponseDto)
-    async readAllBillingProfiles(
-        @Param('id', ParseIntPipe) id: number,
-        @Req() req: Request,
-    ): Promise<[CustomerBillingProfileResponseDto[], number]> {
-        this.log.debug({
-            message: 'read customer billing profiles by id',
-            id: id,
-            func: this.read.name,
-            url: req.url,
-            method: req.method,
-        })
-
-        const [entity, totalCount] =
-            await this.customerService.readAllBillingProfiles(id, new ServiceRequest(req))
-        const responseList = entity.map(e => new CustomerBillingProfileResponseDto(e))
-        return [responseList, totalCount]
-    }
-
-    @Get(':id/@future-billing-profiles')
-    @ApiQuery({type: SearchLogic})
-    @ApiPaginatedResponse(CustomerBillingProfileResponseDto)
-    async readFutureBillingProfiles(
-        @Param('id', ParseIntPipe) id: number,
-        @Req() req: Request,
-    ): Promise<[CustomerBillingProfileResponseDto[], number]> {
-        this.log.debug({
-            message: 'read customer billing profiles by id',
-            id: id,
-            func: this.read.name,
-            url: req.url,
-            method: req.method,
-        })
-
-        const [entity, totalCount] =
-            await this.customerService.readFutureBillingProfiles(id, new ServiceRequest(req))
-        const responseList = entity.map(e => new CustomerBillingProfileResponseDto(e))
-        return [responseList, totalCount]
     }
 
     /* Customers */
@@ -170,6 +126,25 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
             {url: req.url, containsResourceId: true},
         )
         return response
+    }
+
+    @Get(':id/@:field')
+    async readField(
+        @Param('id', ParseIntPipe) id: number,
+        @Param('field') field: string,
+        @Req() req: Request,
+    ): Promise<[object[], number]> {
+        this.log.debug({
+            message: 'read customer field by id',
+            id: id,
+            func: this.readField.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const [items, totalCount] = await this.customerService.readField(id, field, sr,
+            customer => new CustomerResponseDto(customer))
+        return [lazyFieldItems(CustomerResponseDto, field, items), totalCount]
     }
 
     @Put(':id')

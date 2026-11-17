@@ -15,7 +15,8 @@ import {
 import {InvalidParameterException, errorMessage} from '~/helpers/errors.helper'
 import {platformTimezone} from '~/helpers/timezone.helper'
 import {ErrorMessage} from '~/interfaces/error-message.interface'
-import {QueriesDictionary} from '~/interfaces/service-request.interface'
+import {LazyFieldSource} from '~/interfaces/lazy-field-source.interface'
+import {QueriesDictionary, ServiceRequest} from '~/interfaces/service-request.interface'
 
 /**
  * Search DTO `_alias` entry of a date/time filter: the value is parsed like the field (@DateTimeField():
@@ -237,4 +238,78 @@ export function addOrderByToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBu
 export function addPaginationToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, searchLogic: SearchLogic): void {
     qb.limit(searchLogic.rows)
     qb.offset(searchLogic.rows * (searchLogic.page - 1))
+}
+
+/**
+ * Number of rows of the query per value of `column` (e.g. the items of lazy fields per owner of a page), in one
+ * grouped query; owners without rows are missing from the map
+ */
+export async function countPerId<T extends BaseEntity>(qb: SelectQueryBuilder<T>, column: string): Promise<Map<number, number>> {
+    const rows = await qb
+        .select(column, 'id')
+        .addSelect('COUNT(*)', 'count')
+        .groupBy(column)
+        .orderBy()
+        .getRawMany<{id: number, count: string}>()
+    return new Map(rows.map((row): [number, number] => [+row.id, +row.count]))
+}
+
+interface SearchDto {
+    _alias?: Record<string, string | object>
+}
+
+export interface SqlFieldSourceOptions<R extends BaseEntity, T> {
+    // property of the internal entity holding the loaded items
+    property: string
+    // the rows of the field's items of the entities, in their default order
+    rows: (itemIds: number[]) => Promise<SelectQueryBuilder<R>>
+    // column of the rows holding the id of the entity owning them
+    itemId: string
+    search?: new () => SearchDto
+    // maps the rows of a page or of a load, one item per row in the same order
+    toInternal: (rows: R[]) => T[] | Promise<T[]>
+}
+
+const ITEM_ID_COLUMN = 'lazy_item_id'
+
+/**
+ * Source of a lazy field stored in MariaDB: one grouped count per page of entities, one load of all inlined
+ * entities, and `@<field>` pages filtered, ordered and paged in SQL (the requested order_by first, the default
+ * order of the rows as tiebreaker)
+ */
+export function sqlFieldSource<R extends BaseEntity, T>(options: SqlFieldSourceOptions<R, T>): LazyFieldSource<T> {
+    const {property, rows, itemId, search, toInternal} = options
+    return {
+        property,
+        search,
+        count: async (itemIds: number[]): Promise<Map<number, number>> => await countPerId(await rows(itemIds), itemId),
+        load: async (itemIds: number[]): Promise<Map<number, T[]>> => {
+            const qb = await rows(itemIds)
+            const {entities, raw} = await qb.addSelect(itemId, ITEM_ID_COLUMN).getRawAndEntities<Record<string, unknown>>()
+            // raw rows and entities match one to one as long as no row repeats an entity
+            if (entities.length != raw.length)
+                throw new Error(`lazy field ${property}: rows repeat entities`)
+            const items = await toInternal(entities)
+            const byId = new Map<number, T[]>()
+            items.forEach((item, index) => {
+                const id = +raw[index][ITEM_ID_COLUMN]
+                if (!byId.has(id))
+                    byId.set(id, [])
+                byId.get(id).push(item)
+            })
+            return byId
+        },
+        page: async (id: number, sr: ServiceRequest): Promise<[T[], number]> => {
+            const qb = await rows([id])
+            const defaultOrder = qb.expressionMap.orderBys
+            qb.orderBy()
+            const searchDto: SearchDto = search ? new search() : {}
+            configureQueryBuilder(qb, sr.query, new SearchLogic(sr, Object.keys(searchDto), undefined, searchDto._alias))
+            const requestedOrder = qb.expressionMap.orderBys
+            const tiebreakers = Object.entries(defaultOrder).filter(([sort]) => !(sort in requestedOrder))
+            qb.orderBy({...requestedOrder, ...Object.fromEntries(tiebreakers)})
+            const [page, totalCount] = await qb.getManyAndCount()
+            return [await toInternal(page), totalCount]
+        },
+    }
 }

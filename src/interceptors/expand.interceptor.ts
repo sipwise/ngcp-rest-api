@@ -27,6 +27,7 @@ import {
     modelFieldTarget,
     modelFields,
 } from '~/decorators/expand.decorator'
+import {lazyField} from '~/decorators/lazy.decorator'
 import {responseModel} from '~/decorators/response-model.decorator'
 import {isAllowUnknownParams} from '~/helpers/allow-unknown-params.helper'
 import {
@@ -36,6 +37,15 @@ import {
     errorMessage,
     isErrorListException,
 } from '~/helpers/errors.helper'
+import {
+    InlineRequest,
+    NO_INLINE,
+    childInlineRequest,
+    inlineRequest,
+    isInlined,
+    lazyFieldRequest,
+    setInlineRequest,
+} from '~/helpers/lazy-field.helper'
 import {NestedFilter, nestedFilters, setNestedFilters} from '~/helpers/nested-filter.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {QueriesDictionary} from '~/interfaces/service-request.interface'
@@ -176,7 +186,7 @@ function invalidPathError(path: string, parameter: string): ApiErrorException {
     return new ApiErrorException([{parameter, code: error.errorCode, message: error.message}], HttpStatus.BAD_REQUEST)
 }
 
-function isObject(value: unknown): value is ResponseObject {
+export function isObject(value: unknown): value is ResponseObject {
     return typeof value == 'object' && value != null && !Array.isArray(value)
         && !(value instanceof Date) && !Buffer.isBuffer(value) && !(value instanceof StreamableFile)
 }
@@ -188,7 +198,7 @@ function isId(value: unknown): value is number | string {
 /**
  * Response objects of a handler result: `[objects, count]`, a list or a single object
  */
-function responseObjects(data: unknown): ResponseObject[] {
+export function responseObjects(data: unknown): ResponseObject[] {
     if (Array.isArray(data)) {
         const list: unknown[] = data.length == 2 && Array.isArray(data[0]) && typeof data[1] == 'number'
             ? data[0]
@@ -217,10 +227,17 @@ function nestedObjects(objects: ResponseObject[], field: ExpandField): ResponseO
 
 /**
  * Read of a target collection as the caller: a GET of the collection that inherits user and headers from
- * `req` (Object.create) and has its own url, query and params. The nested filters of the read are its own,
- * not those of `req`.
+ * `req` (Object.create) and has its own url, query and params. The nested filters and inlined lazy fields of
+ * the read are its own, not those of `req`.
  */
-function subRequest(req: Request, url: string, query: Query, filters: NestedFilter[] = []): Request {
+function subRequest(
+    req: Request,
+    url: string,
+    query: Query,
+    filters: NestedFilter[] = [],
+    // null: none set (requests without lazy field handling load everything)
+    inline: InlineRequest | null = NO_INLINE,
+): Request {
     const subQuery = {...query}
     if (typeof req.query?.tz == 'string')
         subQuery.tz = req.query.tz
@@ -233,6 +250,8 @@ function subRequest(req: Request, url: string, query: Query, filters: NestedFilt
         body: {value: undefined, enumerable: true},
     })
     setNestedFilters(sub, filters)
+    if (inline)
+        setInlineRequest(sub, inline)
     return sub
 }
 
@@ -242,6 +261,22 @@ function isNestedFilterKey(key: string): boolean {
 
 function isJsonType(type: string): boolean {
     return type == 'application/json' || type.endsWith('+json')
+}
+
+/**
+ * Whether the response is JSON. Routes that also produce other types (`text/csv`, `application/pdf`;
+ * @ApiAcceptHeader, @ApiProduces) negotiate them from the Accept header, as their handlers do.
+ */
+export function respondsWithJson(reflector: Reflector, context: ExecutionContext, req: Request): boolean {
+    const routes = [context.getHandler(), context.getClass()]
+    const types = [
+        ...reflector.getAllAndOverride<string[]>('validAccepts', routes) ?? [],
+        ...reflector.getAllAndOverride<string[]>(DECORATORS.API_PRODUCES, routes) ?? [],
+    ].filter(type => type != '*/*')
+    if (types.every(isJsonType))
+        return true
+    const negotiated = req.accepts(types)
+    return typeof negotiated == 'string' && isJsonType(negotiated)
 }
 
 function notSupportedError(parameters: string[]): ApiErrorException {
@@ -369,15 +404,18 @@ export class ExpandInterceptor implements NestInterceptor, OnModuleInit {
         if (context.getType() != 'http')
             return next.handle()
         const req = context.switchToHttp().getRequest<Request>()
-        if (this.reflector.get<boolean>(NO_EXPAND_KEY, context.getClass()) || !ALLOWED_EXPAND_METHODS.includes(req.method)) {
+        // `<item>/@<field>` collections expand the fields of their item class; scalar items have none
+        const field = lazyFieldRequest(req)
+        if (this.reflector.get<boolean>(NO_EXPAND_KEY, context.getClass()) || !ALLOWED_EXPAND_METHODS.includes(req.method)
+            || field && !field.itemClass) {
             assertNoExpandParameters(req)
             return next.handle()
         }
-        const model = responseModel(context.getHandler())
+        const model = field ? field.itemClass : responseModel(context.getHandler())
         const filterQuery = this.nestedFilterQuery(req, model)
         const softExpand = SearchLogic.isTrue(req.query.soft_expand)
         let expandRequest = parseExpand(req.query.expand)
-        if (expandRequest && (!model || !this.respondsWithJson(context, req))) {
+        if (expandRequest && (!model || !respondsWithJson(this.reflector, context, req))) {
             if (!softExpand)
                 throw notSupportedError(['expand'])
             expandRequest = undefined
@@ -398,22 +436,6 @@ export class ExpandInterceptor implements NestInterceptor, OnModuleInit {
                 return data
             }),
         )
-    }
-
-    /**
-     * Whether the response is JSON. Routes that also produce other types (`text/csv`, `application/pdf`;
-     * @ApiAcceptHeader, @ApiProduces) negotiate them from the Accept header, as their handlers do.
-     */
-    private respondsWithJson(context: ExecutionContext, req: Request): boolean {
-        const routes = [context.getHandler(), context.getClass()]
-        const types = [
-            ...this.reflector.getAllAndOverride<string[]>('validAccepts', routes) ?? [],
-            ...this.reflector.getAllAndOverride<string[]>(DECORATORS.API_PRODUCES, routes) ?? [],
-        ].filter(type => type != '*/*')
-        if (types.every(isJsonType))
-            return true
-        const negotiated = req.accepts(types)
-        return typeof negotiated == 'string' && isJsonType(negotiated)
     }
 
     // expand
@@ -462,14 +484,15 @@ export class ExpandInterceptor implements NestInterceptor, OnModuleInit {
 
     /**
      * `expand=all`: the id fields of the response class whose target the caller may read, besides the requested
-     * ones; optional, so ids out of the caller's scope become null
+     * ones and lazy fields that are not inlined; optional, so ids out of the caller's scope become null
      */
     private async allFields(model: Type<unknown>, requested: PathTree, req: Request): Promise<ExpandField[]> {
         const fields: ExpandField[] = []
         for (const field of modelFields(model)) {
             const targetPath = modelFieldTarget(model, field)
             const target = targetPath ? this.targets.get(targetPath) : undefined
-            if (target && !requested.has(field) && await this.isAllowed(target, req))
+            const notInlined = lazyField(model, field) && !isInlined(req, field)
+            if (target && !requested.has(field) && !notInlined && await this.isAllowed(target, req))
                 fields.push({field, path: field, target, optional: true, children: []})
         }
         return fields
@@ -507,7 +530,7 @@ export class ExpandInterceptor implements NestInterceptor, OnModuleInit {
         let objectsById = new Map<string, ResponseObject>()
         if (ids.length) {
             if (await this.isAllowed(field.target, req))
-                objectsById = await this.readByIds(field.target, ids, req)
+                objectsById = await this.readByIds(field, ids, req)
             else if (!field.optional)
                 throw expandError('EXPAND_FORBIDDEN', field.path)
         }
@@ -643,12 +666,20 @@ export class ExpandInterceptor implements NestInterceptor, OnModuleInit {
         return !target.licenses.length || await this.licenseService.areLicensesActive(target.licenses)
     }
 
-    private async readByIds(target: ExpandTarget, ids: string[], req: Request): Promise<Map<string, ResponseObject>> {
+    /**
+     * The objects of the ids from the field's target, as the caller; their lazy fields are inlined as the expanded
+     * level of the request asks for (`all`, `auto`, `expand` paths below the field)
+     */
+    private async readByIds(field: ExpandField, ids: string[], req: Request): Promise<Map<string, ResponseObject>> {
         const objectsById = new Map<string, ResponseObject>()
+        const target = field.target
         const url = this.targetUrl(target)
+        const inline = inlineRequest(req)
+        const subInline = inline ? childInlineRequest(inline, field.path.split('.')) : null
         for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
             const chunk = ids.slice(i, i + CHUNK_SIZE)
-            const result = await target.readAll(subRequest(req, url, {id: chunk.join(','), page: '1', rows: `${chunk.length}`}))
+            const query = {id: chunk.join(','), page: '1', rows: `${chunk.length}`}
+            const result = await target.readAll(subRequest(req, url, query, [], subInline))
             for (const object of responseObjects(result))
                 objectsById.set(String(object.id), object)
         }

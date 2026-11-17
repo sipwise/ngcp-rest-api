@@ -1,15 +1,16 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {Type} from 'class-transformer'
-import {IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested} from 'class-validator'
+import {IsArray, IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested} from 'class-validator'
+
+import {HeaderManipulationRuleConditionValueResponseDto} from './condition-value-response.dto'
 
 import {CanBeNull} from '~/decorators/can-be-null.decorator'
 import {Expand} from '~/decorators/expand.decorator'
 import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {RwrDpEnum} from '~/enums/rwr-dp.enum'
-import {UrlReferenceType} from '~/enums/url-reference-type.enum'
+import {lazyArray} from '~/helpers/lazy-field.helper'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
-import {UrlReference} from '~/types/url-reference.type'
 
 export class HeaderManipulationRuleConditionResponseDto extends ResponseDto {
     @IsInt()
@@ -64,10 +65,11 @@ export class HeaderManipulationRuleConditionResponseDto extends ResponseDto {
     @ApiProperty()
         enabled: boolean
 
+    @IsArray()
     @ValidateNested({each: true})
-    @Type(() => UrlReference)
-    @ApiProperty()
-        values: UrlReference
+    @Type(() => HeaderManipulationRuleConditionValueResponseDto)
+    @ApiProperty({type: [HeaderManipulationRuleConditionValueResponseDto]})
+        values: HeaderManipulationRuleConditionValueResponseDto[]
 
     constructor(entity?: internal.HeaderRuleCondition, options?: ResponseDtoOptions) {
         super(options)
@@ -84,9 +86,9 @@ export class HeaderManipulationRuleConditionResponseDto extends ResponseDto {
         this.rwr_set_id = entity.rwrSetId
         this.rwr_dp = entity.rwrDp
         this.enabled = entity.enabled
-        this.values = {
-            type: UrlReferenceType.Link,
-            url: `${this.resourceUrl}/${entity.id}/@values`,
-        }
+        this.values = lazyArray(
+            entity.storedValues?.map(value => new HeaderManipulationRuleConditionValueResponseDto(value)),
+            entity.lazyCounts?.storedValues,
+        )
     }
 }

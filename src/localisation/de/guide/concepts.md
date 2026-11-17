@@ -139,6 +139,43 @@ GET /api/v2/subscribers?customer_id.contact_id.email=*@example.com&status=active
 
 Ein solcher Filter führt zu 422, wenn die referenzierte Collection den Filter nicht kennt, wenn er zu viele referenzierte Einträge trifft (standardmäßig 10000) oder wenn die Collection ihn nicht anwenden kann. `order_by` nimmt keine solchen Felder.
 
+### Lazy-Felder
+
+Listenfelder eines Eintrags können viele Einträge enthalten, z. B. die `alias_numbers` eines Subscribers oder die `billing_profiles` eines Kunden. Standardmäßig werden sie als Link mit der Anzahl der Einträge geliefert:
+
+```json
+{
+  "id": 5,
+  "alias_numbers": {"type": "link", "url": "/api/v2/subscribers/5/@alias_numbers", "total_count": 3}
+}
+```
+
+Der Link zeigt auf das Feld als Collection: Pfad des Eintrags, `/@` und Feldname. Sie wird nur mit GET gelesen und unterstützt Paging, Sortieren und Filtern wie jede andere Collection, mit den Filtern, die bei ihrer Operation aufgeführt sind. Einträge, die einfache Werte sind, etwa die IDs in `pbx_group_ids`, werden dort als `{"value": 12}` geliefert und nach `value` gefiltert und sortiert. Diese Collections gibt es nur pro Eintrag, ein `/subscribers/@alias_numbers` gibt es nicht.
+
+```http
+GET /api/v2/subscribers/5/@alias_numbers?order_by=sn&rows=100&page=2
+GET /api/v2/subscribers/5/@pbx_group_ids?value=12
+```
+
+`inline` liefert Lazy-Felder stattdessen als Daten, bei einzelnen Einträgen und bei Collections. Die Lazy-Felder einer Antwort sind beim Parameter `inline` ihrer Operation aufgeführt.
+
+| Wert | Als Daten geliefert |
+| --- | --- |
+| Feldnamen, kommagetrennt | die genannten Felder |
+| `all` | jedes Lazy-Feld |
+| `auto` | pro Eintrag jedes Feld mit höchstens 1000 Einträgen, in Seitenreihenfolge, solange die Antwort höchstens 10000 eingebettete Einträge hat; die übrigen bleiben Links |
+
+```http
+GET /api/v2/subscribers/5?inline=alias_numbers
+GET /api/v2/subscribers?customer_id=3&inline=auto
+```
+
+Ein genanntes oder durch `all` eingebettetes Feld mit mehr als 1000 Einträgen führt zu 422 mit der URL seiner Collection: lesen Sie es dort seitenweise. Ebenso genannte Felder, die zusammen mehr als 10000 Einträge in einer Antwort haben (alle Einträge einer Liste und expandierte Einträge zählen): lesen Sie weniger Zeilen oder verwenden Sie `auto`. Die Limits sind die Plattform-Einstellungen `performance.lazy_load.inline_max_items` (Standard 1000) und `performance.lazy_load.inline_max_hard_limit` (Standard 10000). Ein Name, der kein Lazy-Feld der Antwort ist, führt zu 422, `all` und `auto` zusammen zu 400. Manche Felder sind nur Links (`vars` und `preview` von Rechnungsvorlagen): sie haben kein `total_count` und lassen sich nicht einbetten.
+
+Schreibende Anfragen mit `Prefer: return=representation` liefern ihre Einträge wie GET, daher nehmen auch sie `inline`. Ein Link ist kein Wert: PUT ersetzt den ganzen Eintrag und lehnt einen zurückgeschickten Link mit 422 ab. Lesen Sie den Eintrag mit `inline=all`, bevor Sie ihn mit PUT ändern, oder ändern Sie einzelne Felder mit PATCH. Nicht jedes eingebettete Feld hat die Form der Anfrage: entfernen Sie `effective_start_time` aus den Einträgen der Kunden-`billing_profiles` und senden Sie die `values` von Conditions als einfache Strings statt als `{"id", "value"}`-Objekte.
+
+`expand` eines Lazy-Felds bettet es ein, mit denselben Limits. `expand=all` überspringt Lazy-Felder, die nicht eingebettet sind, sie behalten ihren Link. `all` und `auto` gelten auch für expandierte Einträge, z. B. liefert `expand=customer_id&inline=auto` die `billing_profiles` des Kunden als Daten. Bei einer `@<field>`-Collection beziehen sich `inline` und `expand` auf die Felder ihrer Einträge; Collections einfacher Werte nehmen kein `expand` (400).
+
 ### Daten anlegen und ändern
 
 Jede Methode arbeitet auf einem Eintrag oder, auf dem Collection-Pfad, auf mehreren Einträgen in einer Anfrage:
