@@ -30,6 +30,8 @@ module.exports =
         'src',
     ],
     slowTestThreshold: 15,
+    // each worker loads the whole app (up to ~1 GB)
+    maxWorkers: 4,
     moduleNameMapper: {
         '^~/(.*)$': '<rootDir>/$1',
     },

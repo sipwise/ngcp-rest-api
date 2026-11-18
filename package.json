@@ -21,7 +21,7 @@
     "start:debug": "NODE_ENV=development nest start --debug --watch",
     "start:prod": "node prod/server",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest --clearCache && NODE_OPTIONS='--experimental-vm-modules --no-warnings=ExperimentalWarning' jest --detectOpenHandles --forceExit --config jest-unit.config.js",
+    "test": "jest --clearCache && NODE_OPTIONS='--experimental-vm-modules --no-warnings=ExperimentalWarning' jest --forceExit --config jest-unit.config.js",
     "test:watch": "jest --clearCache && NODE_OPTIONS='--experimental-vm-modules --no-warnings=ExperimentalWarning' jest --config jest-unit.config.js --watch",
     "test:cov": "jest --clearCache && NODE_OPTIONS='--experimental-vm-modules --no-warnings=ExperimentalWarning' jest --config jest-unit.config.js --coverage",
     "test:debug": "node --experimental-vm-modules --config jest-unit.config.js --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
