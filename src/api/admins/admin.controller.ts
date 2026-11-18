@@ -24,6 +24,7 @@ import {AppService} from '~/app.service'
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
+import {ApiOneOrManyBody} from '~/decorators/api-one-or-many-body.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
@@ -64,11 +65,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
     }
 
     @Post()
-    @ApiBody({
-        type: AdminRequestDto,
-        isArray: true,
-        required: true,
-    })
+    @ApiOneOrManyBody(AdminRequestDto)
     @ApiCreatedResponse(AdminResponseDto)
     @Transactional()
     async create(

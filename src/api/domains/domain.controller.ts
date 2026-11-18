@@ -8,7 +8,7 @@ import {
     Post,
     Req,
 } from '@nestjs/common'
-import {ApiBody, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {DomainService} from './domain.service'
@@ -21,6 +21,7 @@ import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
+import {ApiOneOrManyBody} from '~/decorators/api-one-or-many-body.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
@@ -57,10 +58,7 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
 
     @Post()
     @ApiCreatedResponse(DomainResponseDto)
-    @ApiBody({
-        type: DomainRequestDto,
-        isArray: true,
-    })
+    @ApiOneOrManyBody(DomainRequestDto)
     @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: DomainRequestDto})) createDto: DomainRequestDto[],

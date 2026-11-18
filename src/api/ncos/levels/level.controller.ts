@@ -13,6 +13,7 @@ import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
+import {ApiOneOrManyBody} from '~/decorators/api-one-or-many-body.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
@@ -54,10 +55,7 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
 
     @Post()
     @ApiCreatedResponse(NCOSLevelResponseDto)
-    @ApiBody({
-        type: NCOSLevelRequestDto,
-        isArray: true,
-    })
+    @ApiOneOrManyBody(NCOSLevelRequestDto)
     @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: NCOSLevelRequestDto})) createDto: NCOSLevelRequestDto[],

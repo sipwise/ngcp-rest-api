@@ -1,8 +1,18 @@
 import {Type,applyDecorators} from '@nestjs/common'
-import {ApiExtraModels, ApiOkResponse, getSchemaPath} from '@nestjs/swagger'
+import {ApiExtraModels, ApiOkResponse, ReferenceObject, SchemaObject, getSchemaPath} from '@nestjs/swagger'
 
 import {ResponseModel} from '~/decorators/response-model.decorator'
-import {PaginatedDto} from '~/dto/paginated.dto'
+
+export function paginatedSchema(items: SchemaObject | ReferenceObject): SchemaObject {
+    return {
+        type: 'object',
+        required: ['total_count', 'data'],
+        properties: {
+            total_count: {type: 'integer', description: 'Number of items matching the request, on all pages'},
+            data: {type: 'array', items, description: 'The items of the page'},
+        },
+    }
+}
 
 // TODO: This needs to be any, but we need to find a way to make it a generic. Maybe never type?
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -11,22 +21,9 @@ export const ApiPaginatedResponse = <TModel extends Type<any>>(
 ): MethodDecorator => {
     return applyDecorators(
         ResponseModel(model),
-        ApiExtraModels(PaginatedDto, model),
+        ApiExtraModels(model),
         ApiOkResponse({
-            schema: {
-                title: `PaginatedResponseOf${model.name}`,
-                allOf: [
-                    {$ref: getSchemaPath(PaginatedDto)},
-                    {
-                        properties: {
-                            data: {
-                                type: 'array',
-                                items: {$ref: getSchemaPath(model)},
-                            },
-                        },
-                    },
-                ],
-            },
+            schema: paginatedSchema({$ref: getSchemaPath(model)}),
         }),
     )
 }

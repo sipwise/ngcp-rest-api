@@ -1,5 +1,4 @@
 import {Type} from '@nestjs/common'
-import {getSchemaPath} from '@nestjs/swagger'
 import {
     OpenAPIObject,
     OperationObject,
@@ -8,9 +7,9 @@ import {
     SchemaObject,
 } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
 
+import {paginatedSchema} from '~/decorators/api-paginated-response.decorator'
 import {SEARCH_QUERY_ORDER_KEY, SearchQueryParam, searchQueryParams} from '~/decorators/api-search-query.decorator'
 import {lazyFields} from '~/decorators/lazy.decorator'
-import {PaginatedDto} from '~/dto/paginated.dto'
 import {inlineMaxHardLimit, inlineMaxItems} from '~/helpers/lazy-field.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {responseSchemaName, schemaName} from '~/helpers/swagger-expand.helper'
@@ -97,12 +96,7 @@ function fieldOperation(route: OperationObject, itemParam: string, field: string
                 description: '',
                 content: {
                     'application/json': {
-                        schema: {
-                            allOf: [
-                                {$ref: getSchemaPath(PaginatedDto)},
-                                {properties: {data: {type: 'array', items: itemSchema(property)}}},
-                            ],
-                        },
+                        schema: paginatedSchema(itemSchema(property)),
                     },
                 },
             },

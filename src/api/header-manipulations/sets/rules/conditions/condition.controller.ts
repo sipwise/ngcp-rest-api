@@ -12,6 +12,7 @@ import {JournalService} from '~/api/journals/journal.service'
 import {License as LicenseType, RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
+import {ApiOneOrManyBody} from '~/decorators/api-one-or-many-body.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
@@ -57,10 +58,7 @@ export class HeaderManipulationRuleConditionController extends CrudController<He
 
     @Post('{:setId/}rules{/:ruleId}/conditions')
     @ApiCreatedResponse(HeaderManipulationRuleConditionResponseDto)
-    @ApiBody({
-        type: HeaderManipulationRuleConditionRequestDto,
-        isArray: true,
-    })
+    @ApiOneOrManyBody(HeaderManipulationRuleConditionRequestDto)
     @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: HeaderManipulationRuleConditionRequestDto})) createDto: HeaderManipulationRuleConditionRequestDto[],

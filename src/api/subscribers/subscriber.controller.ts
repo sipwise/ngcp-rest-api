@@ -13,6 +13,7 @@ import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
+import {ApiOneOrManyBody} from '~/decorators/api-one-or-many-body.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
@@ -66,7 +67,7 @@ export class SubscriberController extends CrudController<SubscriberRequestDto, S
     @Post()
     @ApiQuery(createPrimaryAcliQuery)
     @ApiCreatedResponse(SubscriberResponseDto)
-    @ApiBody({type: SubscriberRequestDto, isArray: true})
+    @ApiOneOrManyBody(SubscriberRequestDto)
     @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: SubscriberRequestDto})) createDto: SubscriberRequestDto[],
@@ -250,7 +251,7 @@ export class SubscriberController extends CrudController<SubscriberRequestDto, S
     @Patch()
     @ApiQuery(createPrimaryAcliQuery)
     @ApiConsumes('application/json-patch+json')
-    @ApiBody({type: PatchDto})
+    @ApiPutBody(PatchDto)
     @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<Operation[]>,

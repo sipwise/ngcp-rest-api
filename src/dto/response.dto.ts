@@ -1,9 +1,11 @@
+import {ApiHideProperty} from '@nestjs/swagger'
 import {Exclude} from 'class-transformer'
 
 import {prepareUrlReference} from '~/helpers/uri.helper'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export abstract class ResponseDto {
+    @ApiHideProperty()
     @Exclude()
     readonly resourceUrl?: string = ''
     constructor(options?: ResponseDtoOptions) {

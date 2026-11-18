@@ -150,6 +150,9 @@ export function schemaLabel(schema?: Schema): string {
         const props = Object.entries(schema.properties).map(([name, prop]) => `${name}: ${schemaLabel(prop)}`)
         return `{${props.join(', ')}}`
     }
+    // bulk PUT/PATCH bodies: the items keyed by id
+    if (typeof schema.additionalProperties == 'object')
+        return `{<id>: ${schemaLabel(schema.additionalProperties)}}`
     if (schema.items)
         return `${schemaLabel(schema.items)}[]`
     const type = Array.isArray(schema.type) ? schema.type.join(' | ') : schema.type ?? 'any'
@@ -168,6 +171,7 @@ export function primaryRef(schema?: Schema): string | undefined {
         ...(schema.allOf ?? schema.oneOf ?? schema.anyOf ?? []),
         ...Object.values(schema.properties ?? {}),
         ...(schema.items ? [schema.items] : []),
+        ...(typeof schema.additionalProperties == 'object' ? [schema.additionalProperties] : []),
     ]
     return nested.map(s => primaryRef(s)).filter(Boolean).pop()
 }

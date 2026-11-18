@@ -1,5 +1,7 @@
 import {Type, applyDecorators} from '@nestjs/common'
-import {ApiExtraModels, ApiOperation, getSchemaPath} from '@nestjs/swagger'
+import {ApiExtraModels, ApiOperation} from '@nestjs/swagger'
+
+import {oneOrManySchema} from '~/decorators/api-one-or-many-body.decorator'
 
 export function ApiJsonOrCsvBody(model: Type<unknown>, csvExample: string): MethodDecorator {
     return applyDecorators(
@@ -9,7 +11,7 @@ export function ApiJsonOrCsvBody(model: Type<unknown>, csvExample: string): Meth
                 required: true,
                 content: {
                     'application/json': {
-                        schema: {type: 'array', items: {$ref: getSchemaPath(model)}},
+                        schema: oneOrManySchema(model),
                     },
                     'multipart/form-data': {
                         schema: {

@@ -5,7 +5,7 @@ import {Test} from '@nestjs/testing'
 import request from 'supertest'
 
 import {AppModule} from '~/app.module'
-import {readSwaggerStrings} from '~/helpers/swagger-i18n.helper'
+import {SWAGGER_LANGUAGES, SwaggerLanguage, readLocalisationFile, readSwaggerStrings} from '~/helpers/swagger-i18n.helper'
 import {createSwaggerDocument} from '~/helpers/swagger.helper'
 
 describe('Swagger', () => {
@@ -140,7 +140,10 @@ describe('Swagger', () => {
         const bodySchema = (operation: OperationObject, type = 'application/json'): Record<string, unknown> =>
             (operation.requestBody as RequestBodyObject).content[type].schema as Record<string, unknown>
         const collection = paths['/customercontacts']
-        expect(bodySchema(collection.post)).toEqual(expect.objectContaining({type: 'array', maxItems: 10000}))
+        expect(bodySchema(collection.post).oneOf).toEqual([
+            {$ref: '#/components/schemas/CustomerContactRequestDto'},
+            {type: 'array', items: {$ref: '#/components/schemas/CustomerContactRequestDto'}, maxItems: 10000},
+        ])
         expect(bodySchema(collection.put)).toEqual(expect.objectContaining({type: 'object', maxProperties: 10000}))
         expect(bodySchema(collection.patch, 'application/json-patch+json')).toEqual(expect.objectContaining({type: 'object', maxProperties: 10000}))
         for (const operation of [collection.post, collection.put, collection.patch]) {
@@ -152,6 +155,76 @@ describe('Swagger', () => {
         expect(bodySchema(item.patch, 'application/json-patch+json').maxItems).toBeUndefined()
         expect(item.patch.responses['413']).toBeUndefined()
         expect(collection.get.responses['413']).toBeUndefined()
+    })
+
+    it('documents the answer of a POST and collections as plain objects of their items', async () => {
+        const json = await request(app.getHttpServer()).get('/api/swagger.json')
+        expect(json.status).toEqual(HttpStatus.OK)
+        const paths = json.body.paths as Record<string, Record<string, OperationObject>>
+        const responseSchema = (operation: OperationObject, code: string): Record<string, unknown> =>
+            (operation.responses[code] as ResponseObject).content['application/json'].schema as Record<string, unknown>
+        const subscriber = {$ref: '#/components/schemas/SubscriberResponseDto'}
+
+        const created = responseSchema(paths['/subscribers'].post, '201')
+        expect(created).toEqual(expect.objectContaining({type: 'object', required: ['total_count']}))
+        expect(created).not.toHaveProperty('allOf')
+        expect(created.properties).toEqual({
+            total_count: expect.objectContaining({type: 'integer'}),
+            data: expect.objectContaining({type: 'array', items: subscriber}),
+            links: expect.objectContaining({type: 'array', items: {type: 'string'}}),
+            ids: expect.objectContaining({type: 'array', items: {type: 'integer'}}),
+        })
+        const tokenIds = (responseSchema(paths['/auth/tokens'].post, '201').properties as Record<string, unknown>).ids
+        expect(tokenIds).toEqual(expect.objectContaining({items: {type: 'string'}}))
+
+        const collection = responseSchema(paths['/subscribers'].get, '200')
+        expect(collection).toEqual(expect.objectContaining({type: 'object', required: ['total_count', 'data']}))
+        expect(collection.properties).toEqual({
+            total_count: expect.objectContaining({type: 'integer'}),
+            data: expect.objectContaining({type: 'array', items: subscriber}),
+        })
+
+        const schemas = json.body.components.schemas
+        expect(schemas).not.toHaveProperty('PaginatedDto')
+        expect(schemas).not.toHaveProperty('CreateResponseDto')
+        expect(schemas.SubscriberResponseDto.properties).not.toHaveProperty('resourceUrl')
+    })
+
+    it('documents one-or-many POST bodies and bulk PUT/PATCH bodies keyed by id', async () => {
+        const json = await request(app.getHttpServer()).get('/api/swagger.json')
+        expect(json.status).toEqual(HttpStatus.OK)
+        const paths = json.body.paths as Record<string, Record<string, OperationObject>>
+        const bodySchema = (operation: OperationObject, type = 'application/json'): Record<string, unknown> =>
+            (operation.requestBody as RequestBodyObject).content[type].schema as Record<string, unknown>
+        const item = {$ref: '#/components/schemas/SubscriberRequestDto'}
+        const patch = {$ref: '#/components/schemas/PatchDto'}
+
+        const subscribers = paths['/subscribers']
+        expect(bodySchema(subscribers.post).oneOf).toEqual([item, expect.objectContaining({type: 'array', items: item})])
+        expect(bodySchema(subscribers.put)).toEqual(expect.objectContaining({type: 'object', additionalProperties: item}))
+        expect(bodySchema(subscribers.patch, 'application/json-patch+json'))
+            .toEqual(expect.objectContaining({type: 'object', additionalProperties: {type: 'array', items: patch}}))
+        expect(bodySchema(paths['/subscribers/{id}'].patch, 'application/json-patch+json')).toEqual({type: 'array', items: patch})
+        expect(bodySchema(paths['/customers/{customerId}/phonebook'].post).oneOf).toHaveLength(2)
+
+        const postBodies = Object.values(paths)
+            .map(pathItem => (pathItem.post?.requestBody as RequestBodyObject | undefined)?.content['application/json']?.schema)
+        expect(postBodies.filter(schema => schema && 'type' in schema && schema.type == 'array')).toEqual([])
+        expect(json.body.components.schemas.PatchDto.properties).toHaveProperty('from')
+    })
+
+    it('shows the schemas as flat tables, with their labels in every language', async () => {
+        const page = await request(app.getHttpServer()).get('/api/')
+        expect(page.text).toContain('window.ngcpSchemaTablePlugin = ')
+        expect(page.text).toContain('options.plugins = [...(options.plugins || []), window.ngcpSchemaTablePlugin]')
+        const keys = Object.keys(readSwaggerStrings('en').page).filter(key => key.startsWith('schema'))
+        expect(keys.length).toBeGreaterThan(10)
+        for (const lang of Object.keys(SWAGGER_LANGUAGES) as SwaggerLanguage[]) {
+            const strings = (JSON.parse(readLocalisationFile(lang, 'swagger-page.json')) as {page: Record<string, string>}).page
+            expect(keys.filter(key => !strings[key])).toEqual([])
+        }
+        const init = await request(app.getHttpServer()).get('/api/swagger-ui-init.js?lang=de')
+        expect(init.text).toContain(JSON.stringify(readSwaggerStrings('de').page.schemaItemOf))
     })
 
     it('documents tz on every operation and the timezone kind of date/time fields', async () => {

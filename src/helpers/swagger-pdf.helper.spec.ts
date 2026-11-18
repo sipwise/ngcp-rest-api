@@ -19,10 +19,12 @@ const document: OpenAPIObject = {
                     200: {
                         description: 'the admins',
                         content: {'application/json': {schema: {
-                            allOf: [
-                                {$ref: '#/components/schemas/PaginatedDto'},
-                                {properties: {data: {type: 'array', items: {$ref: '#/components/schemas/AdminResponseDto'}}}},
-                            ],
+                            type: 'object',
+                            required: ['total_count', 'data'],
+                            properties: {
+                                total_count: {type: 'integer'},
+                                data: {type: 'array', items: {$ref: '#/components/schemas/AdminResponseDto'}},
+                            },
                         }}},
                     },
                 },
@@ -48,7 +50,6 @@ const document: OpenAPIObject = {
     },
     components: {
         schemas: {
-            PaginatedDto: {type: 'object', properties: {total_count: {type: 'number'}}, required: ['total_count']},
             AdminResponseDto: {
                 type: 'object',
                 properties: {
@@ -70,12 +71,21 @@ describe('swagger-pdf.helper', () => {
             expect(schemaLabel({type: 'string', format: 'date-time'})).toBe('string <date-time>')
             expect(schemaLabel({type: 'array'})).toBe('array')
             expect(schemaLabel({oneOf: [{type: 'string'}, {type: 'number'}]})).toBe('string | number')
+            expect(schemaLabel({type: 'object', additionalProperties: {$ref: '#/components/schemas/AdminResponseDto'}}))
+                .toBe('{<id>: AdminResponseDto}')
             expect(schemaLabel(undefined)).toBe('')
         })
 
         it('returns the data item of a paginated response', () => {
             const schema = document.paths['/api/admins'].get.responses[200]['content']['application/json'].schema
-            expect(schemaLabel(schema)).toBe('PaginatedDto & {data: AdminResponseDto[]}')
+            expect(schemaLabel(schema)).toBe('{total_count: integer, data: AdminResponseDto[]}')
+            expect(primaryRef(schema)).toBe('AdminResponseDto')
+        })
+
+        it('returns the items of a body keyed by id', () => {
+            const items = {$ref: '#/components/schemas/AdminResponseDto'}
+            const schema = {type: 'object' as const, additionalProperties: {type: 'array' as const, items}}
+            expect(schemaLabel(schema)).toBe('{<id>: AdminResponseDto[]}')
             expect(primaryRef(schema)).toBe('AdminResponseDto')
         })
     })

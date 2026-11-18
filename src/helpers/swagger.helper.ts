@@ -34,6 +34,7 @@ import {
 } from '~/helpers/swagger-i18n.helper'
 import {addLazyFieldDocumentation, addLazyFieldOperations} from '~/helpers/swagger-lazy-field.helper'
 import {renderSwaggerPdf} from '~/helpers/swagger-pdf.helper'
+import {swaggerSchemaTableCss, swaggerSchemaTableJs} from '~/helpers/swagger-schema-table.helper'
 import {swaggerSearchCss, swaggerSearchJs} from '~/helpers/swagger-search.helper'
 import {Versions, readVersions} from '~/helpers/swagger-version.helper'
 import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
@@ -48,8 +49,8 @@ const PDF_USAGE_CURL_FILENAME_PREFIX = 'ngcp-api-2-documentation-curl-'
 // in the document of the page (swagger-ui-init.js), not in swagger.json and swagger.yaml
 const PAGE_DATA = 'x-ngcp-page'
 
-// takes the page data out of the document (window.ngcpPage, the strings by window.ngcpText) and resets
-// auth that might come with the browser
+// takes the page data out of the document (window.ngcpPage, the strings by window.ngcpText), adds the swagger ui
+// plugins and resets auth that might come with the browser
 const pageInitJs = `
 (function () {
     window.ngcpPage = null
@@ -63,6 +64,7 @@ const pageInitJs = `
             delete info['${PAGE_DATA}']
             document.documentElement.lang = window.ngcpPage.lang
         }
+        options.plugins = [...(options.plugins || []), window.ngcpSchemaTablePlugin]
         options.onComplete = function () {
             window.ui.preauthorizeBasic('basicAuth', '123', '123')
             window.ui.preauthorizeApiKey('bearerAuth', '123')
@@ -289,6 +291,7 @@ const MONOSPACE_ELEMENTS = [
     '.response-col_status .response-undocumented', '.response-col_links .response-undocumented',
     '.json-schema-2020-12__attribute', '.json-schema-2020-12__constraint', '.json-schema-2020-12-property .json-schema-2020-12__title',
     '.json-schema-2020-12-json-viewer__value--warning', '.json-schema-2020-12-keyword__value--warning',
+    '.ngcp-schema-field', '.ngcp-schema-type',
 ].join(', ')
 const fontsCss = `
 .swagger-ui, .swagger-ui * { font-family: Arimo, sans-serif !important }
@@ -451,7 +454,8 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string):
     SwaggerModule.setup(api_prefix, app, document, {
         customCss: `
             .swagger-ui .topbar { display: none }
-        ` + fontsCss + headerCss + buttonsCss + swaggerGuideCss + swaggerSearchCss + languageSwitchCss + swaggerAuthCss + stickyHeaderCss,
+        ` + fontsCss + headerCss + buttonsCss + swaggerGuideCss + swaggerSearchCss + languageSwitchCss + swaggerAuthCss + stickyHeaderCss
+            + swaggerSchemaTableCss,
 
         customCssUrl: './' + (api_prefix.split('/')[1] ? api_prefix.split('/')[1]+'/' : '') + 'css/swagger-fonts.css',
         customSiteTitle: 'NGCP API 2.1',
@@ -467,7 +471,7 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string):
         // bytecode compiled prod bundle, so onComplete is injected as a plain js string instead
         customJsStr: [
             pageInitJs, versionsJs, swaggerAuthJs, stickyHeaderJs, swaggerUiTranslateJs, pdfDownloadButtonJs, themeSwitchJs, languageSwitchJs, swaggerGuideJs, swaggerSearchJs,
-            scrollTopJs,
+            scrollTopJs, swaggerSchemaTableJs,
         ],
         jsonDocumentUrl: api_prefix + '/swagger.json',
         yamlDocumentUrl: api_prefix + '/swagger.yaml',
@@ -667,12 +671,13 @@ const JSON_MEDIA_TYPES = [
     'application/json-patch+json',
 ]
 
-// the item limit of a bulk body: POST arrays, PUT/PATCH objects keyed by id (single item PATCH bodies are arrays)
-function bulkBodyLimit(method: string, max: number, schema?: SchemaObject): SchemaObject | undefined {
-    if (method == 'post' && schema?.type == 'array')
-        return {maxItems: max}
+// the body with the item limit of a bulk body: the array of a one-or-many POST, PUT/PATCH objects keyed by id
+// (single item PATCH bodies are arrays)
+function withBulkBodyLimit(method: string, max: number, schema?: SchemaObject): SchemaObject | undefined {
+    if (method == 'post' && schema?.oneOf)
+        return {...schema, oneOf: schema.oneOf.map(s => 'type' in s && s.type == 'array' ? {...s, maxItems: max} : s)}
     if ((method == 'put' || method == 'patch') && schema?.type == 'object')
-        return {maxProperties: max}
+        return {...schema, maxProperties: max}
     return undefined
 }
 
@@ -697,10 +702,10 @@ function addRequestLimits(document: OpenAPIObject): void {
             }
             const content = (operation.requestBody as RequestBodyObject)?.content ?? {}
             for (const type of JSON_MEDIA_TYPES) {
-                const limit = bulkBodyLimit(method, max, content[type]?.schema as SchemaObject)
-                if (!limit)
+                const limited = withBulkBodyLimit(method, max, content[type]?.schema as SchemaObject)
+                if (!limited)
                     continue
-                content[type].schema = {...content[type].schema, ...limit}
+                content[type].schema = limited
                 operation.responses['413'] ??= bulkTooLarge
             }
         }

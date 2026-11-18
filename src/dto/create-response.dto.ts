@@ -1,15 +1,6 @@
-import {ApiProperty} from '@nestjs/swagger'
-
 export class CreateResponseDto<TData> {
-    @ApiProperty()
-        total_count: number
-
-    @ApiProperty()
-        data?: TData[]
-
-    @ApiProperty()
-        links?: string[]
-
-    @ApiProperty()
-        ids?: string[]
+    total_count: number
+    data?: TData[]
+    links?: string[]
+    ids?: string[]
 }

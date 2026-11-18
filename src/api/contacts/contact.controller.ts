@@ -23,6 +23,7 @@ import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
+import {ApiOneOrManyBody} from '~/decorators/api-one-or-many-body.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
@@ -61,10 +62,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
 
     @Post()
     @ApiCreatedResponse(ContactResponseDto)
-    @ApiBody({
-        type: ContactRequestDto,
-        isArray: true,
-    })
+    @ApiOneOrManyBody(ContactRequestDto)
     @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: ContactRequestDto})) entity: ContactRequestDto[],

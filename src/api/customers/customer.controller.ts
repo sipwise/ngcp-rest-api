@@ -13,6 +13,7 @@ import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
+import {ApiOneOrManyBody} from '~/decorators/api-one-or-many-body.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
@@ -59,10 +60,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
 
     @Post()
     @ApiCreatedResponse(CustomerResponseDto)
-    @ApiBody({
-        type: CustomerRequestDto,
-        isArray: true,
-    })
+    @ApiOneOrManyBody(CustomerRequestDto)
     @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: CustomerRequestDto})) createDto: CustomerRequestDto[],
@@ -219,7 +217,7 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
 
     @Patch()
     @ApiConsumes('application/json-patch+json')
-    @ApiBody({type: PatchDto})
+    @ApiPutBody(PatchDto)
     @Transactional()
     async adjustMany(
         @Body(new ParseIdDictionary({items: PatchDto, valueIsArray: true})) patches: Dictionary<Operation[]>,

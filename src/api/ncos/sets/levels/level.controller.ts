@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Req} from '@nestjs/common'
-import {ApiBody, ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
+import {ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {NCOSSetLevelRequestDto} from './dto/level-request.dto'
@@ -12,6 +12,7 @@ import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
+import {ApiOneOrManyBody} from '~/decorators/api-one-or-many-body.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
@@ -46,10 +47,7 @@ export class NCOSSetLevelController extends CrudController<NCOSSetLevelRequestDt
 
     @Post('{:setId/}levels')
     @ApiCreatedResponse(NCOSSetLevelResponseDto)
-    @ApiBody({
-        type: NCOSSetLevelRequestDto,
-        isArray: true,
-    })
+    @ApiOneOrManyBody(NCOSSetLevelRequestDto)
     @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: NCOSSetLevelRequestDto})) createDto: NCOSSetLevelRequestDto[],

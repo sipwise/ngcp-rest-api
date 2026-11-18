@@ -12,6 +12,7 @@ import {RewriteRuleSearchDto} from '~/api/rewrite-rules/sets/rules/dto/rule-sear
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
+import {ApiOneOrManyBody} from '~/decorators/api-one-or-many-body.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
@@ -54,10 +55,7 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
 
     @Post('{:setId/}rules')
     @ApiCreatedResponse(RewriteRuleResponseDto)
-    @ApiBody({
-        type: RewriteRuleRequestDto,
-        isArray: true,
-    })
+    @ApiOneOrManyBody(RewriteRuleRequestDto)
     @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: RewriteRuleRequestDto})) createDto: RewriteRuleRequestDto[],

@@ -12,6 +12,7 @@ import {JournalService} from '~/api/journals/journal.service'
 import {RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
+import {ApiOneOrManyBody} from '~/decorators/api-one-or-many-body.decorator'
 import {ApiPaginatedResponse} from '~/decorators/api-paginated-response.decorator'
 import {ApiPutBody} from '~/decorators/api-put-body.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
@@ -53,10 +54,7 @@ export class PeeringGroupServerController extends CrudController<PeeringGroupSer
 
     @Post('{:groupId/}servers')
     @ApiCreatedResponse(PeeringGroupServerResponseDto)
-    @ApiBody({
-        type: PeeringGroupServerRequestDto,
-        isArray: true,
-    })
+    @ApiOneOrManyBody(PeeringGroupServerRequestDto)
     @Transactional()
     async create(
         @Body(new ParseOneOrManyPipe({items: PeeringGroupServerRequestDto})) createDto: PeeringGroupServerRequestDto[],

@@ -3,8 +3,8 @@
 import {Type, applyDecorators} from '@nestjs/common'
 import {ApiExtraModels,ApiOkResponse as ApiSwaggerOkResponse, getSchemaPath} from '@nestjs/swagger'
 
+import {paginatedSchema} from '~/decorators/api-paginated-response.decorator'
 import {ResponseModel} from '~/decorators/response-model.decorator'
-import {PaginatedDto} from '~/dto/paginated.dto'
 
 interface ContentType {
   type: string;
@@ -35,19 +35,7 @@ export const ApiPaginatedMultipleResponse = <TModel extends Type<any>>(
 
             case 'application/json':
                 acc[type] = {
-                    schema: {
-                        allOf: [
-                            {$ref: getSchemaPath(PaginatedDto)},
-                            {
-                                properties: {
-                                    data: {
-                                        type: 'array',
-                                        items: {$ref: getSchemaPath(data.item)},
-                                    },
-                                },
-                            },
-                        ],
-                    },
+                    schema: paginatedSchema({$ref: getSchemaPath(data.item)}),
                 }
                 break
             default:

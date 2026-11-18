@@ -213,7 +213,7 @@ export const swaggerUiTranslateJs = `
 (function () {
     const SKIP = '.renderedMarkdown, pre, code, textarea, input, select, .opblock-summary-path, .opblock-summary-description, '
         + '.parameter__name, .parameter__type, .parameter__in, .prop-type, .model-title, .opblock-tag, .info, '
-        + '.guide-panels, .guide-nav, .search-box, .download-pdf, .language-switch, .theme-switch, .scroll-top'
+        + '.guide-panels, .guide-nav, .search-box, .download-pdf, .language-switch, .theme-switch, .scroll-top, .ngcp-schema'
     const ALLOW = '.parameter__enum, .parameter__default, .opblock-section-request-body .opblock-title'
     const ATTRIBUTES = ['title', 'aria-label', 'placeholder']
     const labels = () => (window.ngcpPage || {}).swaggerUi || {}
