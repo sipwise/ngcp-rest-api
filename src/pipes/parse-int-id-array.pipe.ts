@@ -2,6 +2,7 @@ import {ArgumentMetadata, Injectable, Optional, PipeTransform} from '@nestjs/com
 
 import {paramOrBodyFromBody} from '~/decorators/param-or-body.decorator'
 import {parameterException} from '~/helpers/errors.helper'
+import {checkWriteLimit} from '~/helpers/request-limits.helper'
 import {isIntId} from '~/pipes/parse-int-id.pipe'
 
 interface ParseIntArrayPipeOptions {
@@ -18,7 +19,7 @@ export class ParseIntIdArrayPipe implements PipeTransform {
         this.options = options || {}
     }
 
-    async transform(value: unknown, metadata: ArgumentMetadata): Promise<number[]> {
+    transform(value: unknown, metadata: ArgumentMetadata): number[] {
         if (!Array.isArray(value) && this.options.allowUndefined) {
             return undefined
         }
@@ -26,6 +27,7 @@ export class ParseIntIdArrayPipe implements PipeTransform {
         const fromBody = value != null && typeof value == 'object' && paramOrBodyFromBody.has(value)
         if (!Array.isArray(value))
             throw parameterException(name, 'isArray', `${name} must be an array`, fromBody ? '' : undefined)
+        checkWriteLimit(value.length)
         const index = value.findIndex(val => !isIntId(val))
         if (index >= 0)
             throw parameterException(name, 'isInt', `${name} must be an integer number`, fromBody ? `/${index}` : undefined)

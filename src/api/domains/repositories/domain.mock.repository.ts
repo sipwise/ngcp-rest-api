@@ -35,9 +35,10 @@ export class DomainMockRepository implements DomainRepository {
         return Promise.resolve(ids)
     }
 
-    async delete(id: number, _sr: ServiceRequest): Promise<number> {
-        this.throwErrorIfIdNotExists(id)
-        return Promise.resolve(id)
+    async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
+        for (const id of ids)
+            this.throwErrorIfIdNotExists(id)
+        return Promise.resolve(ids)
     }
 
     async readAll(_sr: ServiceRequest): Promise<[internal.Domain[], number]> {
@@ -46,12 +47,13 @@ export class DomainMockRepository implements DomainRepository {
         return Promise.resolve(domains)
     }
 
-    async readByDomain(domain: string, _sr: ServiceRequest): Promise<internal.Domain> {
-        return Promise.resolve((Object.values(this.db) as internal.Domain[]).find(d => d.domain == domain))
+    async readExistingNames(names: string[]): Promise<string[]> {
+        const existing = (Object.values(this.db) as internal.Domain[]).map(domain => domain.domain)
+        return Promise.resolve(names.filter(name => existing.includes(name)))
     }
 
-    async readResellerById(id: number, _sr: ServiceRequest): Promise<internal.Reseller> {
-        return Promise.resolve(this.resellerIds.includes(id) ? {id: id} as internal.Reseller : undefined)
+    async readExistingResellerIds(ids: number[]): Promise<number[]> {
+        return Promise.resolve(ids.filter(id => this.resellerIds.includes(id)))
     }
 
     async readById(id: number, _sr: ServiceRequest): Promise<internal.Domain> {

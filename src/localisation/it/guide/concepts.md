@@ -99,7 +99,7 @@ HTTP/1.1 204 No Content
 
 | Parametro | Significato |
 | --- | --- |
-| `page`, `rows` | Numero di pagina, a partire da 1, e dimensione della pagina (predefinita 10). |
+| `page`, `rows` | Numero di pagina, a partire da 1, e dimensione della pagina (predefinita 10, al massimo 10000). |
 | `order_by`, `order_by_direction` | Campo di ordinamento e `asc` (predefinito) o `desc`. |
 | qualsiasi campo della collezione | Filtro. I valori devono corrispondere esattamente, `*` è un carattere jolly e la virgola separa le alternative. |
 | `search_or=true` | Combina più filtri con OR anziché AND. |
@@ -261,6 +261,18 @@ Content-Type: application/json
 ```
 
 Una POST in blocco senza `Prefer` restituisce 204, quindi richiedere `return=id` o `return=representation` per ottenere i nuovi id.
+
+### Limiti delle richieste
+
+Ogni richiesta è limitata, così che una singola richiesta non possa trattenere le altre:
+
+| Limite | Predefinito | Oltre |
+| --- | --- | --- |
+| `rows` di una richiesta GET | 10000 | 400 |
+| Elementi di una richiesta in blocco: array POST, PUT o PATCH per id, id DELETE, righe CSV | 10000 | 413 `BULK_TOO_LARGE` |
+| Corpo della richiesta, JSON o file CSV | 20 MB | 413 `PAYLOAD_TOO_LARGE` |
+
+I limiti sono le impostazioni di piattaforma `performance.read_limit`, `performance.write_limit` e `performance.body_limit`. Una richiesta in blocco oltre il limite di elementi viene rifiutata prima della validazione dei suoi elementi e non ne viene scritto nulla: suddividetela in più richieste. `rows` non aveva prima un limite superiore: leggete le collezioni grandi pagina per pagina.
 
 ### Data/ora e fusi orari
 

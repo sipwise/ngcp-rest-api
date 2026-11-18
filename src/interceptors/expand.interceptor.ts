@@ -48,6 +48,7 @@ import {
 } from '~/helpers/lazy-field.helper'
 import {NestedFilter, nestedFilters, setNestedFilters} from '~/helpers/nested-filter.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {forEachYield} from '~/helpers/yield.helper'
 import {QueriesDictionary} from '~/interfaces/service-request.interface'
 import {LicenseService} from '~/license/license.service'
 
@@ -538,7 +539,7 @@ export class ExpandInterceptor implements NestInterceptor, OnModuleInit {
             throw expandError('EXPAND_FORBIDDEN', field.path)
 
         const name = `${field.field}${EXPAND_SUFFIX}`
-        for (const object of referencing) {
+        await forEachYield(referencing, object => {
             const value = object[field.field]
             if (value === null)
                 object[name] = null
@@ -546,7 +547,7 @@ export class ExpandInterceptor implements NestInterceptor, OnModuleInit {
                 object[name] = value.map(String).filter(id => objectsById.has(id)).map(id => objectsById.get(id))
             else if (objectsById.has(String(value)))
                 object[name] = objectsById.get(String(value))
-        }
+        })
         return [...objectsById.values()]
     }
 

@@ -34,7 +34,7 @@ export class RewriteRuleController extends CrudController<never, RewriteRuleBase
     @Get()
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(RewriteRuleBaseResponseDto)
-    async readAll(@Req() req: Request): Promise<[RewriteRuleBaseResponseDto[], number]> {
+    readAll(@Req() req: Request): Promise<[RewriteRuleBaseResponseDto[], number]> {
         this.log.debug({
             message: 'read rewrite rules base',
             func: this.readAll.name,
@@ -44,6 +44,6 @@ export class RewriteRuleController extends CrudController<never, RewriteRuleBase
         const sr = new ServiceRequest(req)
         const response = [new RewriteRuleBaseResponseDto({url: req.url})]
         const sortedResponse = sortAndPaginate<RewriteRuleBaseResponseDto>(response, sr, 'resourceUrl')
-        return [sortedResponse, response.length]
+        return Promise.resolve([sortedResponse, response.length])
     }
 }

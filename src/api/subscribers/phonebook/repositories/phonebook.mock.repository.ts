@@ -142,8 +142,8 @@ export class SubscriberPhonebookMockRepository implements SubscriberPhonebookRep
         return this.readById(+id, options)
     }
 
-    purge(_subscriberId: number, _sr: ServiceRequest): Promise<number> {
-        return Promise.resolve(_subscriberId)
+    purge(_subscriberIds: number[], _sr: ServiceRequest): Promise<void> {
+        return Promise.resolve()
     }
 
     getAllowedSubscriberIds(ids: number[], filterBy: SubscriberPhonebookOptions['filterBy'], _sr: ServiceRequest): Promise<number[]> {

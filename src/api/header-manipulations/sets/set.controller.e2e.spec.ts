@@ -1,28 +1,20 @@
-import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
-import {Reflector} from '@nestjs/core'
+import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import bodyParser from 'body-parser'
 import request from 'supertest'
 import {In, MoreThanOrEqual} from 'typeorm'
+import {v4 as uuidv4} from 'uuid'
 
 import {HeaderManipulationSetResponseDto} from './dto/set-response.dto'
 import {HeaderManipulationSetModule} from './set.module'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
+import {setupApp} from '~/app.setup'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
-import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
-import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
-import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
-import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
-import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
-import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
-import {TransformInterceptor} from '~/interceptors/transform.interceptor'
-import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type RuleSetPost = {
     name: string
@@ -41,6 +33,13 @@ describe('Rule Set', () => {
     const startedAt = Date.now() / 1000
     const suffix = `_${process.env.JEST_WORKER_ID}_${Date.now().toString(36).slice(-4)}`
     const resellerCreds = {username: `hm_set_reseller_${Date.now().toString(36)}`, password: 'FFFooobarbaz123!!!'}
+    const subscriberUsername = `hm_set_sub${suffix}`
+    let subscriberContractId: number
+    let subscriberBillingDomainId: number
+    let subscriberProvisioningDomainId: number
+    let billingSubscriberId: number
+    let provisioningSubscriberId: number
+    let subscriberSetId: number
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -56,31 +55,7 @@ describe('Rule Set', () => {
         app = moduleRef.createNestApplication()
 
         app.setGlobalPrefix('api')
-        app.useGlobalPipes(new ValidateInputPipe({
-            forbidUnknownValues: false,
-            whitelist: true,
-            forbidNonWhitelisted: true,
-            transform: true,
-            disableErrorMessages: true,
-        }))
-        app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(
-            new TransformInterceptor({
-                pageName: AppService.config.common.api_default_query_page_name,
-                perPageName: AppService.config.common.api_default_query_rows_name,
-            }),
-            new LoggingInterceptor(),
-            new ClassSerializerInterceptor(app.get(Reflector)),
-            app.get(LazyFieldInterceptor),
-            new TransactionInterceptor(app.get(Reflector)),
-            new ResponseValidationInterceptor(),
-            app.get(ExpandInterceptor),
-        )
-        app.use(bodyParser.json({
-            type: ['application/json-patch+json', 'application/json'],
-        }))
-        app.getHttpAdapter().getInstance().disable('x-powered-by')
-        app.getHttpAdapter().getInstance().set('json spaces', 2)
+        setupApp(app)
 
         await app.init()
 
@@ -124,7 +99,7 @@ describe('Rule Set', () => {
     })
 
     it('mock authService.compareBcryptPassword', async () => {
-        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(async () => true)
+        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(() => Promise.resolve(true))
         expect(await authService.compareBcryptPassword('123', '456')).toBe(true)
     })
 
@@ -532,6 +507,59 @@ describe('Rule Set', () => {
                 expect(response.body.reseller_id).toEqual(1)
             })
         })
+        describe('subscriber sets', () => {
+            it('create a subscriber', async () => {
+                const domain = `hm-set${suffix.replaceAll('_', '-')}.test`
+                subscriberContractId = (await db.billing.Contract.create({contact_id: 1, product_id: 4}).save()).id
+                subscriberBillingDomainId = (await db.billing.Domain.create({domain, reseller_id: 1}).save()).id
+                subscriberProvisioningDomainId = (await db.provisioning.VoipDomain.create({domain}).save()).id
+                const uuid = uuidv4()
+                billingSubscriberId = (await db.billing.VoipSubscriber.insert({ // insert instead of create to avoid a cyclic dependency error
+                    contract_id: subscriberContractId,
+                    uuid: uuid,
+                    username: subscriberUsername,
+                    domain_id: subscriberBillingDomainId,
+                    status: 'active',
+                })).identifiers[0].id
+                provisioningSubscriberId = (await db.provisioning.VoipSubscriber.insert({
+                    username: subscriberUsername,
+                    domain_id: subscriberProvisioningDomainId,
+                    uuid: uuid,
+                    password: uuidv4().slice(0, 16),
+                    account_id: subscriberContractId,
+                })).identifiers[0].id
+            })
+            it('create a set of the subscriber', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/header-manipulations/sets')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send({name: `test_subscriber_set${suffix}`, reseller_id: 1, description: 'subscriber set', subscriber_id: billingSubscriberId})
+                expect(response.status).toEqual(201)
+                subscriberSetId = +response.body.data[0].id
+                expect(response.body.data[0].subscriber_id).toEqual(billingSubscriberId)
+            })
+            it('list the sets of the subscriber', async () => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/header-manipulations/sets?subscriber_id=${billingSubscriberId}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                const sets: HeaderManipulationSetResponseDto[] = response.body.data
+                expect(sets.map(set => [set.id, set.subscriber_id])).toEqual([[subscriberSetId, billingSubscriberId]])
+            })
+            it('fail to create a set of an unknown subscriber', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/header-manipulations/sets')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({name: `test_unknown_subscriber_set${suffix}`, reseller_id: 1, description: 'x', subscriber_id: 2147483647})
+                expect(response.status).toEqual(404)
+            })
+        })
     })
 
     describe('Rule Set DELETE', () => {
@@ -552,6 +580,20 @@ describe('Rule Set', () => {
                 .set(...authHeader)
                 .set('Accept', 'application/json')
             expect(response.status).toEqual(204)
+        })
+        it('delete the subscriber set fixtures', async () => {
+            if (subscriberSetId)
+                await db.provisioning.VoipHeaderRuleSet.delete(subscriberSetId)
+            if (provisioningSubscriberId)
+                await db.provisioning.VoipSubscriber.delete(provisioningSubscriberId)
+            if (billingSubscriberId)
+                await db.billing.VoipSubscriber.delete(billingSubscriberId)
+            if (subscriberBillingDomainId)
+                await db.billing.Domain.delete(subscriberBillingDomainId)
+            if (subscriberProvisioningDomainId)
+                await db.provisioning.VoipDomain.delete(subscriberProvisioningDomainId)
+            if (subscriberContractId)
+                await db.billing.Contract.delete(subscriberContractId)
         })
         it('delete created journals', async () => {
             await db.billing.Journal.delete({username: In([creds.username, resellerCreds.username]), timestamp: MoreThanOrEqual(startedAt)})

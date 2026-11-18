@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common'
 import {MariaDbRepository} from 'repositories/mariadb.repository'
-import {SelectQueryBuilder} from 'typeorm'
+import {In, SelectQueryBuilder} from 'typeorm'
 
 import {DomainSearchDto} from '~/api/domains/dto/domain-search.dto'
 import {DomainRepository} from '~/api/domains/interfaces/domain.repository'
@@ -8,6 +8,7 @@ import {db, internal} from '~/entities'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {XmlDispatcher} from '~/helpers/xml-dispatcher'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -31,7 +32,7 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
         const xmlDispatcher = new XmlDispatcher()
 
         for (const domain of domains) {
-            await xmlDispatcher.sipDomainReload(domain.domain)
+            xmlDispatcher.sipDomainReload(domain.domain)
         }
 
         return resultBilling.identifiers.map((obj: {id: number}) => obj.id)
@@ -62,7 +63,7 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
     async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Domain[]> {
         const qb = await this.createBaseQueryBuilder(sr)
         const created = await qb.andWhereInIds(ids).getMany()
-        return await Promise.all(created.map(async (domain) => domain.toInternal()))
+        return await mapYield(created, (domain) => domain.toInternal())
     }
 
     async readById(id: number, sr: ServiceRequest): Promise<internal.Domain> {
@@ -76,34 +77,33 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
         return (await qb.getOneOrFail()).toInternal()
     }
 
-    async readByDomain(domain: string, sr: ServiceRequest): Promise<internal.Domain> {
-        this.log.debug({
-            message: 'read domain by domain name',
-            func: this.readByDomain.name,
-            user: sr.user.username,
-        })
-        const result = await db.billing.Domain.findOne({where: {domain: domain}})
-        return result?.toInternal()
+    // names of `names` that exist as domains, as stored
+    async readExistingNames(names: string[]): Promise<string[]> {
+        if (!names.length)
+            return []
+        const domains = await db.billing.Domain.find({select: {domain: true}, where: {domain: In(names)}})
+        return domains.map(domain => domain.domain)
     }
 
-    async readResellerById(id: number, _sr: ServiceRequest): Promise<internal.Reseller> {
-        const reseller = await db.billing.Reseller.findOneBy({id: id})
-        if (reseller)
-            return reseller.toInternal()
-        return undefined
+    // ids of `ids` that are resellers, unset ids are left out
+    async readExistingResellerIds(ids: number[]): Promise<number[]> {
+        const resellerIds = ids.filter(id => id != null)
+        if (!resellerIds.length)
+            return []
+        const resellers = await db.billing.Reseller.find({select: {id: true}, where: {id: In(resellerIds)}})
+        return resellers.map(reseller => reseller.id)
     }
 
-    async delete(id: number, _sr: ServiceRequest): Promise<number> {
-        const domain = await db.billing.Domain.findOneByOrFail({id: id})
-        await db.billing.Domain.delete(id)
-
-        const provDomain = await db.provisioning.VoipDomain.findOneOrFail({where: {domain: domain.domain}})
-        await db.provisioning.VoipDomain.delete(provDomain.id)
+    async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
+        const domains = await db.billing.Domain.find({select: {domain: true}, where: {id: In(ids)}})
+        const names = domains.map(domain => domain.domain)
+        await db.billing.Domain.delete(ids)
+        await db.provisioning.VoipDomain.delete({domain: In(names)})
 
         const xmlDispatcher = new XmlDispatcher()
-
-        await xmlDispatcher.sipDomainReload(domain.domain)
-        return domain.id
+        for (const name of names)
+            xmlDispatcher.sipDomainReload(name)
+        return ids
     }
 
     private async createBaseQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Domain>> {

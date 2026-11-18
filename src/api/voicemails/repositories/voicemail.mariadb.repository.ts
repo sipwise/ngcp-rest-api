@@ -6,6 +6,7 @@ import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -51,7 +52,7 @@ export class VoicemailMariadbRepository extends MariaDbRepository implements Voi
         const qb = await this.createBaseQueryBuilder(sr)
         qb.andWhereInIds(ids)
         const voicemails = await qb.getMany()
-        return await Promise.all(voicemails.map(async (voicemail) => voicemail.toInternal()))
+        return await mapYield(voicemails, (voicemail) => voicemail.toInternal())
     }
 
 
@@ -114,18 +115,18 @@ export class VoicemailMariadbRepository extends MariaDbRepository implements Voi
         qb.groupBy('v.dir')
         const result = await qb.getRawMany()
         const mCount = new MessagesCount()
-        result.map(async (entry) => {
+        for (const entry of result) {
             const dir = entry['dir']
             const dir_count = entry['dir_count']
             if (dir.endsWith('INBOX'))
                 mCount.new_messages = dir_count
             else if (dir.endsWith('Old'))
                 mCount.old_messages = dir_count
-        })
+        }
         return mCount
     }
 
-    private async createBaseQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.kamailio.VoicemailSpool>> {
+    private createBaseQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.kamailio.VoicemailSpool>> {
         const qb = db.kamailio.VoicemailSpool.createQueryBuilder('voicemail')
         qb.leftJoinAndSelect('voicemail.billingSubscriber', 'bSubscriber')
         qb.leftJoinAndSelect('voicemail.provisioningSubscriber', 'pSubscriber')
@@ -134,6 +135,6 @@ export class VoicemailMariadbRepository extends MariaDbRepository implements Voi
             qb.innerJoin('contract.contact', 'contact')
             qb.andWhere('contact.reseller_id = :reseller_id', {reseller_id: sr.user.reseller_id})
         }
-        return qb
+        return Promise.resolve(qb)
     }
 }

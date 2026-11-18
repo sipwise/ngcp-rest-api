@@ -5,11 +5,12 @@
 import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestjs/common'
 import halson from 'halson'
 import {Observable} from 'rxjs'
-import {map} from 'rxjs/operators'
+import {mergeMap} from 'rxjs/operators'
 
 import {AppService} from '~/app.service'
 import {CreateResponseDto} from '~/dto/create-response.dto'
 import {lazyFieldRequest} from '~/helpers/lazy-field.helper'
+import {forEachYield} from '~/helpers/yield.helper'
 
 /**
  * Defines the names of query parameters for pagination
@@ -53,9 +54,9 @@ export class TransformInterceptor implements NestInterceptor {
      *
      * @returns data JSON or HAL+JSON
      */
-    async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
+    intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
         const ctx = context.switchToHttp()
-        return next.handle().pipe(map((data: any) => {
+        return next.handle().pipe(mergeMap(async (data: any) => {
             const req = ctx.getRequest()
             const res = ctx.getResponse()
             const config = AppService.config
@@ -137,7 +138,7 @@ export class TransformInterceptor implements NestInterceptor {
         return accept.length == 1 && accept[0] === 'application/json' ? false : true
     }
 
-    private async generateOpenAPIResource(_req: any, res: any, data: any): Promise<CreateResponseDto<any>> {
+    private generateOpenAPIResource(_req: any, res: any, data: any): CreateResponseDto<any> {
         const response: CreateResponseDto<any> = new CreateResponseDto<any>()
 
         res.setHeader('content-type', 'application/json')
@@ -188,10 +189,10 @@ export class TransformInterceptor implements NestInterceptor {
             }
             resource = halson('')
                 .addLink('self', req.originalUrl)
-            for (const row of data) {
+            await forEachYield(data, (row: any) => {
                 if (lazyField !== undefined || !this.hasId(row)) {
                     resource.addEmbed(`ngcp:${resName}`, [row])
-                    continue
+                    return
                 }
                 const link = `${urlPath}/${row.id}`
                 if (data.length == 1) {
@@ -200,7 +201,7 @@ export class TransformInterceptor implements NestInterceptor {
                     resource.addLink(`ngcp:${resName}`, link)
                 }
                 resource.addEmbed(`ngcp:${resName}`, [halson(row).addLink('self', link)])
-            }
+            })
             resource.addLink('collection', urlPath)
             resource['total_count'] = totalCount
 
@@ -244,18 +245,15 @@ export class TransformInterceptor implements NestInterceptor {
 
         const total_count = data.length
         resource.total_count = total_count
-        resource.links = []
 
         if (total_count > 0 && !('id' in data[0]))
             return
 
-        await Promise.all(data.map(async e =>
-            resource.links.push(`${path}/${e.id}`),
-        ))
+        resource.links = data.map((e: any) => `${path}/${e.id}`)
 
         return req.method == 'GET' && this.expectedHAL(req)
             ? await this.generateHALResource(req, res, resource)
-            : await this.generateOpenAPIResource(req, res, resource)
+            : this.generateOpenAPIResource(req, res, resource)
     }
 
     private async generateDataIds(req: any, res: any, data: any): Promise<CreateResponseDto<any>> {
@@ -266,18 +264,15 @@ export class TransformInterceptor implements NestInterceptor {
 
         const total_count = data.length
         resource.total_count = total_count
-        resource.ids = []
 
         if (total_count > 0 && !('id' in data[0]))
             return
 
-        await Promise.all(data.map(async e =>
-            resource.ids.push(e.id),
-        ))
+        resource.ids = data.map((e: any) => e.id)
 
         return req.method == 'GET' && this.expectedHAL(req)
             ? await this.generateHALResource(req, res, resource)
-            : await this.generateOpenAPIResource(req, res, resource)
+            : this.generateOpenAPIResource(req, res, resource)
     }
 
     private removeResourceId(path: string, url: string): string {

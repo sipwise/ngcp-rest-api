@@ -6,7 +6,8 @@ import {ContactMariadbRepository} from '~/api/contacts/repositories/contact.mari
 import {internal} from '~/entities'
 import {ContactType} from '~/entities/internal/contact.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ApiErrors, itemPointer, readFoundIds, throwMissingIds} from '~/helpers/errors.helper'
+import {ApiErrors, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
+import {forEachYield} from '~/helpers/yield.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -67,14 +68,13 @@ export class SystemContactService implements CrudService<internal.Contact> {
             user: sr.user.username,
         })
         const options = this.getContactOptionsFromServiceRequest(sr)
-        throwMissingIds(sr, ids, await readFoundIds(ids, id => this.contactRepo.readById(id, options)), this.i18n.t('errors.ENTRY_NOT_FOUND'))
+        const oldContacts = new Map((await this.contactRepo.readWhereInIds(ids, options)).map(contact => [contact.id, contact]))
+        throwMissingIds(sr, ids, [...oldContacts.keys()], this.i18n.t('errors.ENTRY_NOT_FOUND'))
         const errors = new ApiErrors()
-        for (const id of ids) {
-            const contact = updates[id]
-            const oldContact = await this.contactRepo.readById(id, options)
-            if (contact.reseller_id || oldContact.reseller_id)
+        await forEachYield(ids, id => {
+            if (updates[id].reseller_id || oldContacts.get(id).reseller_id)
                 errors.add(this.i18n.t('errors.CONTACT_IS_CUSTOMER_CONTACT'), itemPointer(sr, id))
-        }
+        })
         errors.throwIfAny()
         return await this.contactRepo.update(updates, options)
     }

@@ -73,8 +73,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         const csd = createDto.map(dial => dial.toInternal())
         const created = await this.customerSpeedDialService.create(csd, sr)
         const response = created.map((dial) => new CustomerSpeedDialResponseDto(dial))
-        for (const entry of response)
-            await this.journalService.writeJournal(sr, entry.id, entry)
+        await this.journalService.writeJournals(sr, response.map(entry => ({id: entry.id, data: entry})))
         return response
     }
 
@@ -200,9 +199,7 @@ export class CustomerSpeedDialController extends CrudController<CustomerSpeedDia
         })
         const sr = new ServiceRequest(req)
         const deletedIds = await this.customerSpeedDialService.delete(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
-        }
+        await this.journalService.writeJournals(sr, deletedIds.map(id => ({id, data: {}})))
         return deletedIds
     }
 

@@ -1,14 +1,13 @@
 import {randomUUID} from 'crypto'
 
-import {ClassSerializerInterceptor, HttpStatus, INestApplication} from '@nestjs/common'
-import {Reflector} from '@nestjs/core'
+import {HttpStatus, INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import bodyParser from 'body-parser'
 import request from 'supertest'
 import {In} from 'typeorm'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
+import {setupApp} from '~/app.setup'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
@@ -22,14 +21,6 @@ import {
 import {HeaderRuleDirection} from '~/entities/internal/header-rule.internal.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
-import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
-import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
-import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
-import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
-import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
-import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
-import {TransformInterceptor} from '~/interceptors/transform.interceptor'
-import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 const RESELLER_ID = 1
 const RESELLER_PRODUCT_ID = 3
@@ -193,31 +184,7 @@ describe('Lazy fields', () => {
         app = moduleRef.createNestApplication()
 
         app.setGlobalPrefix('api')
-        app.useGlobalPipes(new ValidateInputPipe({
-            forbidUnknownValues: false,
-            whitelist: true,
-            forbidNonWhitelisted: true,
-            transform: true,
-            disableErrorMessages: true,
-        }))
-        app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(
-            new TransformInterceptor({
-                pageName: AppService.config.common.api_default_query_page_name,
-                perPageName: AppService.config.common.api_default_query_rows_name,
-            }),
-            new LoggingInterceptor(),
-            new ClassSerializerInterceptor(app.get(Reflector)),
-            app.get(LazyFieldInterceptor),
-            new TransactionInterceptor(app.get(Reflector)),
-            new ResponseValidationInterceptor(),
-            app.get(ExpandInterceptor),
-        )
-        app.use(bodyParser.json({
-            type: ['application/json-patch+json', 'application/json'],
-        }))
-        app.getHttpAdapter().getInstance().disable('x-powered-by')
-        app.getHttpAdapter().getInstance().set('json spaces', 2)
+        setupApp(app)
 
         await app.init()
 
@@ -282,7 +249,7 @@ describe('Lazy fields', () => {
 
     describe('', () => { // main tests block
         it('mock authService.compareBcryptPassword', async () => {
-            jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(async () => true)
+            jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(() => Promise.resolve(true))
             expect(await authService.compareBcryptPassword('123', '456')).toBe(true)
         })
 
@@ -426,6 +393,12 @@ describe('Lazy fields', () => {
                 expect(page.body.data.map((number: {number_id: number}) => number.number_id)).toEqual(bigNumberIds.slice(2400))
                 const filtered = await get(`${url}?sn=${snBase}1249*`)
                 expect(filtered.body.total_count).toEqual(10)
+            })
+
+            it('rejects rows above performance.read_limit with 400', async () => {
+                const response = await get(`/api/subscribers/${subscribers.big.id}/@alias_numbers?rows=10001`)
+                expect(response.status).toEqual(HttpStatus.BAD_REQUEST)
+                expect(errors(response)).toEqual([{parameter: 'rows', code: 'max'}])
             })
 
             it('returns 404 for fields that are not lazy and for unknown fields', async () => {

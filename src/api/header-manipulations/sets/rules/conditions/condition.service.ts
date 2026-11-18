@@ -44,7 +44,7 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
             errors.throwIfAny()
         }
 
-        rules.forEach(async rule => await this.invalidateRuleSetAfterCommit(rule.setId, sr))
+        this.invalidateRuleSetsAfterCommit(rules.map(rule => rule.setId), sr)
 
         const createdIds = await this.ruleConditionRepo.create(entities)
         const created = await this.ruleConditionRepo.readWhereInIds(createdIds, sr)
@@ -91,7 +91,7 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
 
         const rules = await this.ruleRepo.readWhereInIds(conditions.map(condition => condition.ruleId), sr)
 
-        rules.forEach(async rule => await this.invalidateRuleSetAfterCommit(rule.setId, sr))
+        this.invalidateRuleSetsAfterCommit(rules.map(rule => rule.setId), sr)
 
         const resetValues: boolean = sr.req.method == 'PUT'
         return await this.ruleConditionRepo.update(updates, sr, resetValues)
@@ -109,7 +109,7 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
 
         const rules = await this.ruleRepo.readWhereInIds(conditions.map(condition => condition.ruleId), sr)
 
-        rules.forEach(async rule => await this.invalidateRuleSetAfterCommit(rule.setId, sr))
+        this.invalidateRuleSetsAfterCommit(rules.map(rule => rule.setId), sr)
 
         return await this.ruleConditionRepo.delete(ids,sr)
     }
@@ -151,9 +151,8 @@ export class HeaderManipulationRuleConditionService implements CrudService<inter
         return filterBy
     }
 
-    // TODO: required for mocking, as esbuild-jest has issues with jest mock
-    // patterns and will be reviewed after packages upgrade
-    async invalidateRuleSetAfterCommit(setId: number, sr: ServiceRequest): Promise<void> {
-        runOnTransactionCommit(async () => await this.ruleSetRedisRepo.invalidateRuleSet(setId, sr))
+    private invalidateRuleSetsAfterCommit(setIds: number[], sr: ServiceRequest): void {
+        for (const setId of new Set(setIds))
+            runOnTransactionCommit(async () => await this.ruleSetRedisRepo.invalidateRuleSet(setId, sr))
     }
 }

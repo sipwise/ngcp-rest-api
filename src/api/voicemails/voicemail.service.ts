@@ -70,7 +70,7 @@ export class VoicemailService implements CrudService<internal.Voicemail> {
         ]
 
         await execFileAsync('/usr/bin/ngcp-vmnotify', args, {cwd: '/usr/bin', shell: false, timeout: 5 * 1000},
-        ).then(async (_ret) => {
+        ).then((_ret) => {
             return true
         }).catch(error => {
             this.log.error(`execFileAsync ${error.cmd} error: ${error.stdout}, ${error.stderr}`)

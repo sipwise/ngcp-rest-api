@@ -15,7 +15,7 @@ import {ServiceRequest} from '~/interfaces/service-request.interface'
 export class AuthUserinfoController {
     @Get('auth/userinfo')
     @ApiOkResponse({type: UserinfoResponseDto})
-    async userinfo(@Req() req: Request): Promise<UserinfoResponseDto> {
+    userinfo(@Req() req: Request): UserinfoResponseDto {
         const sr = new ServiceRequest(req)
         return new UserinfoResponseDto(sr.user)
     }

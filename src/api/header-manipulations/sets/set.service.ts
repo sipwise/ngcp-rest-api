@@ -80,7 +80,7 @@ export class HeaderManipulationSetService implements CrudService<internal.Header
 
         throwMissingIds(sr, ids, sets.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
-        ids.forEach(async setId => await this.invalidateRuleSetAfterCommit(setId, sr))
+        this.invalidateRuleSetsAfterCommit(ids, sr)
 
         return await this.ruleSetRepo.delete(ids, sr)
     }
@@ -92,9 +92,8 @@ export class HeaderManipulationSetService implements CrudService<internal.Header
             entity.resellerId = sr.user.reseller_id
     }
 
-    // TODO: required for mocking, as esbuild-jest has issues with jest mock
-    // patterns and will be reviewed after packages upgrade
-    async invalidateRuleSetAfterCommit(setId: number, sr: ServiceRequest): Promise<void> {
-        runOnTransactionCommit(async () => await this.ruleSetRedisRepo.invalidateRuleSet(setId, sr))
+    private invalidateRuleSetsAfterCommit(setIds: number[], sr: ServiceRequest): void {
+        for (const setId of new Set(setIds))
+            runOnTransactionCommit(async () => await this.ruleSetRedisRepo.invalidateRuleSet(setId, sr))
     }
 }

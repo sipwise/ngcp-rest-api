@@ -113,9 +113,7 @@ export class InvoiceController extends CrudController<InvoiceRequestDto, Invoice
         this.log.debug({message: 'delete invoices by ids', id: ids, func: this.delete.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const deletedIds = await this.invoiceService.delete(ids.map(Number), sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
-        }
+        await this.journalService.writeJournals(sr, deletedIds.map(id => ({id, data: {}})))
         return deletedIds
     }
 

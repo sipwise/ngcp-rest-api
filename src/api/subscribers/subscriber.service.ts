@@ -114,6 +114,15 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
     }
 
     /**
+     * The subscribers in the caller's scope, ordered by id; ids out of scope are left out
+     */
+    async readMany(ids: number[], sr: ServiceRequest): Promise<internal.Subscriber[]> {
+        const subscribers = await this.subscriberRepo.readWhereInIds(ids, this.roleScope(sr))
+        await applyLazyFields(subscribers, this.lazyFields, sr)
+        return subscribers
+    }
+
+    /**
      * A page of a lazy field of the subscriber (`<item>/@<field>`)
      * @param toResponse response DTO of the subscriber for the caller, 404 when it hides the field
      */
@@ -150,7 +159,8 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
         })
         const created = await this.subscriberRepo.readWhereInIds(ids, {})
         await applyLazyFields(created, this.lazyFields)
-        return ids.map(id => created.find(subscriber => subscriber.id == id))
+        const createdById = new Map(created.map(subscriber => [subscriber.id, subscriber]))
+        return ids.map(id => createdById.get(id))
     }
 
     /**

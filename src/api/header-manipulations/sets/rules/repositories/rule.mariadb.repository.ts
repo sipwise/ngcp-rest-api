@@ -7,6 +7,7 @@ import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {QueriesDictionary, ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -23,10 +24,10 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
 
     async create(entities: internal.HeaderRule[]): Promise<number[]> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
-        const values = await Promise.all(entities.map(async entity => new db.provisioning.VoipHeaderRule().fromInternal(entity)))
+        const values = await mapYield(entities, entity => new db.provisioning.VoipHeaderRule().fromInternal(entity))
         const result = await qb.insert().values(values).execute()
 
-        return await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRule[], number]> {
@@ -45,11 +46,7 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
         qb.innerJoin('headerRule.set', 'headerRuleSet')
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(
-            result.map(async (d) =>
-                d.toInternal(),
-            ),
-        ), totalCount]
+        return [await mapYield(result, d => d.toInternal()), totalCount]
     }
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRule> {
@@ -72,30 +69,24 @@ export class HeaderManipulationRuleMariadbRepository extends MariaDbRepository i
         return result.toInternal()
     }
 
-    async readCountInSet(setId: number, _sr: ServiceRequest): Promise<number> {
-        const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
-        qb.where('set_id = :setId', {setId: setId})
-        return await qb.getCount()
+    // ids of the sets of `setIds` that have rules
+    async readSetIdsWithRules(setIds: number[]): Promise<number[]> {
+        if (!setIds.length)
+            return []
+        const rows = await db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
+            .select('DISTINCT headerRule.set_id', 'setId')
+            .where('headerRule.set_id IN (:...setIds)', {setIds})
+            .getRawMany<{setId: number}>()
+        return rows.map(row => row.setId)
     }
 
-    async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRule[]> {
+    async readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRule[]> {
         const qb = db.provisioning.VoipHeaderRule.createQueryBuilder('headerRule')
-        const searchDto  = new HeaderManipulationRuleSearchDto()
-        configureQueryBuilder(
-            qb,
-            await this.configureSrQuery(sr),
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
         qb.innerJoin('headerRule.set', 'headerRuleSet')
         qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => d.toInternal()))
+        return await mapYield(result, (d) => d.toInternal())
     }
 
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {

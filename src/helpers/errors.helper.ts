@@ -14,6 +14,7 @@ import {EntityNotFoundError, QueryFailedError, TypeORMError} from 'typeorm'
 import {config} from '~/config/main.config'
 import {dtoFieldName} from '~/helpers/dto-fields.helper'
 import {obfuscatePasswordValidationErrors} from '~/helpers/password-obfuscator.helper'
+import {forEachYield} from '~/helpers/yield.helper'
 import {ErrorMessage} from '~/interfaces/error-message.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import errors from '~/localisation/en/errors.json'
@@ -281,20 +282,25 @@ export function apiError(error: ErrorMessage, pointer: string, status?: number):
 }
 
 /**
- * Runs a check per item (concurrently) and reports the first API error of every failing item, in request
+ * Runs a check per item, one after the other, and reports the first API error of every failing item, in request
  * order. Other errors are rethrown.
  * @param items request items, array (POST) or dictionary by id (PUT/PATCH)
  * @param check check of one item, gets its index or id
  */
-export async function checkItems<T>(items: T[] | Record<string, T>, check: (item: T, key: number | string) => Promise<void>): Promise<void> {
+export async function checkItems<T>(items: T[] | Record<string, T>, check: (item: T, key: number | string) => void | Promise<void>): Promise<void> {
     const keys: (number | string)[] = Array.isArray(items) ? items.map((_, index) => index) : Object.keys(items)
-    const results = await Promise.allSettled(keys.map(key => check(items[key], key)))
-    const failed: unknown[] = results.filter(result => result.status == 'rejected').map(result => (result as PromiseRejectedResult).reason as unknown)
-    const other = failed.find(err => !(err instanceof ApiErrorException))
-    if (other)
-        throw other
+    const failed: ApiErrorException[] = []
+    await forEachYield(keys, async key => {
+        try {
+            await check(items[key], key)
+        } catch (err) {
+            if (!(err instanceof ApiErrorException))
+                throw err
+            failed.push(err)
+        }
+    })
     if (failed.length)
-        throw new ApiErrorException((failed as ApiErrorException[]).flatMap(err => err.errorList), (failed[0] as ApiErrorException).getStatus())
+        throw new ApiErrorException(failed.flatMap(err => err.errorList), failed[0].getStatus())
 }
 
 /**
@@ -367,24 +373,4 @@ export function throwMissingIds(sr: ServiceRequest, ids: (number | string)[], fo
     if (isSingleItemRequest(sr))
         throw new NotFoundException()
     throw new ApiErrorException(missing.map(id => ({pointer: idPointer(sr, id), code: error.errorCode, message: error.message})))
-}
-
-/**
- * Ids that can be read, with the caller's scoped read of one item: ids failing with 404 (unknown or out of the
- * user's scope) are left out, other errors are rethrown
- * @param ids requested ids
- * @param read read of one item
- */
-export async function readFoundIds<T extends number | string>(ids: T[], read: (id: T) => Promise<unknown>): Promise<T[]> {
-    const found: T[] = []
-    for (const id of ids) {
-        try {
-            await read(id)
-            found.push(id)
-        } catch (err) {
-            if (!(err instanceof NotFoundException))
-                throw err
-        }
-    }
-    return found
 }

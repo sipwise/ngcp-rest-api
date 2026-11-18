@@ -9,6 +9,7 @@ import {
     formatLocalDateTime,
     formatLocalTime,
 } from '~/helpers/timezone.helper'
+import {forEachYield} from '~/helpers/yield.helper'
 
 const MAX_DEPTH = 16
 
@@ -71,14 +72,16 @@ function collect(
  */
 export async function renderDateTimes(data: unknown, timezone: RequestTimezone): Promise<void> {
     const found: DateTimeValue[] = []
-    collect(data, timezone, undefined, found, new WeakSet(), 0)
+    const seen = new WeakSet<object>()
+    // the items of collections (`[items, count]`, arrays) one by one, so that large responses yield
+    await forEachYield([data].flat(2), root => collect(root, timezone, undefined, found, seen, 0))
     const needsDefaultZone = found.some(({target, key, kind, ownerZone}) =>
         kind == DateTimeKind.DateTime && !ownerZone && target[key] != null)
     const defaultZone = needsDefaultZone ? await timezone.defaultZone() : undefined
-    for (const {target, key, kind, ownerZone} of found) {
+    await forEachYield(found, ({target, key, kind, ownerZone}) => {
         const value = target[key]
         if (value == null)
-            continue
+            return
         switch (kind) {
             case DateTimeKind.DateTime:
                 target[key] = formatDateTime(value, ownerZone ?? defaultZone)
@@ -90,5 +93,5 @@ export async function renderDateTimes(data: unknown, timezone: RequestTimezone):
                 target[key] = formatLocalTime(value)
                 break
         }
-    }
+    })
 }

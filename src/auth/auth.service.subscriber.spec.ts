@@ -56,7 +56,7 @@ describe('subscriber authentication', () => {
         preferenceRepo = {findOne: jest.fn().mockResolvedValue(null)}
         const app = {dbRepo: jest.fn(entity => entity === db.provisioning.VoipUsrPreference ? preferenceRepo : subscriberRepo)}
         service = new AuthService(app as unknown as AppService, undefined, undefined)
-        compare = jest.spyOn(service, 'compareBcryptPassword').mockImplementation(async (pass: string) => pass === 'good')
+        compare = jest.spyOn(service, 'compareBcryptPassword').mockImplementation((pass: string) => Promise.resolve(pass === 'good'))
     })
 
     afterEach(() => {

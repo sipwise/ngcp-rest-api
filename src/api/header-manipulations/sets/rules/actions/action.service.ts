@@ -40,7 +40,7 @@ export class HeaderManipulationRuleActionService implements CrudService<internal
             errors.throwIfAny()
         }
 
-        rules.forEach(async rule => await this.invalidateRuleSetAfterCommit(rule.setId, sr))
+        this.invalidateRuleSetsAfterCommit(rules.map(rule => rule.setId), sr)
 
         const createdIds = await this.ruleActionRepo.create(entities)
         return await this.ruleActionRepo.readWhereInIds(createdIds, sr)
@@ -81,7 +81,7 @@ export class HeaderManipulationRuleActionService implements CrudService<internal
 
         const rules = await this.ruleRepo.readWhereInIds(actions.map(action => action.ruleId), sr)
 
-        rules.forEach(async rule => await this.invalidateRuleSetAfterCommit(rule.setId, sr))
+        this.invalidateRuleSetsAfterCommit(rules.map(rule => rule.setId), sr)
 
         return await this.ruleActionRepo.update(updates, sr)
     }
@@ -104,7 +104,7 @@ export class HeaderManipulationRuleActionService implements CrudService<internal
 
         const rules = await this.ruleRepo.readWhereInIds(actions.map(action => action.ruleId), sr)
 
-        rules.forEach(async rule => await this.invalidateRuleSetAfterCommit(rule.setId, sr))
+        this.invalidateRuleSetsAfterCommit(rules.map(rule => rule.setId), sr)
 
         return await this.ruleActionRepo.delete(ids,sr)
     }
@@ -121,9 +121,8 @@ export class HeaderManipulationRuleActionService implements CrudService<internal
         return filterBy
     }
 
-    // TODO: required for mocking, as esbuild-jest has issues with jest mock
-    // patterns and will be reviewed after packages upgrade
-    async invalidateRuleSetAfterCommit(setId: number, sr: ServiceRequest): Promise<void> {
-        runOnTransactionCommit(async () => await this.ruleSetRedisRepo.invalidateRuleSet(setId, sr))
+    private invalidateRuleSetsAfterCommit(setIds: number[], sr: ServiceRequest): void {
+        for (const setId of new Set(setIds))
+            runOnTransactionCommit(async () => await this.ruleSetRedisRepo.invalidateRuleSet(setId, sr))
     }
 }

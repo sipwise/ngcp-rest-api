@@ -7,6 +7,7 @@ import {BanSubscriberRepository} from '~/api/bans/subscribers/interfaces/subscri
 import {db, internal} from '~/entities'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -37,7 +38,7 @@ export class BanSubscriberMariadbRepository extends MariaDbRepository implements
         )
         this.addFilterBy(qb, options.filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(result.map(async (subscriber) => subscriber.toInternalBanSubscriber())), totalCount]
+        return [await mapYield(result, (subscriber) => subscriber.toInternalBanSubscriber()), totalCount]
     }
 
     async readById(id: number, options: BanSubscriberOptions, _sr: ServiceRequest): Promise<internal.BanSubscriber> {
@@ -50,25 +51,14 @@ export class BanSubscriberMariadbRepository extends MariaDbRepository implements
         return subscriber.toInternalBanSubscriber()
     }
 
-    async readWhereInIds(ids: number[], options:BanSubscriberOptions, sr: ServiceRequest): Promise<internal.BanSubscriber[]> {
+    async readWhereInIds(ids: number[], options:BanSubscriberOptions, _sr: ServiceRequest): Promise<internal.BanSubscriber[]> {
         const qb = db.provisioning.VoipSubscriber.createQueryBuilder('pSubscriber')
         qb.where('ban_increment_stage > 0')
         qb.leftJoinAndSelect('pSubscriber.billing_voip_subscriber', 'bSubscriber')
-        const searchDto = new BanSubscriberSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
         qb.andWhere('bSubscriber.id IN (:ids)', {ids: ids})
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => d.toInternalBanSubscriber()))
+        return await mapYield(result, (d) => d.toInternalBanSubscriber())
     }
 
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, filterBy: BanSubscriberOptions['filterBy']): void {

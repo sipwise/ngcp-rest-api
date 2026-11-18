@@ -29,22 +29,32 @@ export function billingMappingsCsv(mappings: internal.BillingMapping[]): string 
 }
 
 /**
+ * Latest effective_start_time (epoch seconds) of the mapping active at the time; times before the contract
+ * creation use the creation time
+ */
+export function actualBillingMappingEpoch(
+    contract: Pick<internal.Contract, 'create_timestamp' | 'modify_timestamp'>,
+    at: Date,
+): number {
+    const createdAt = contract.create_timestamp ?? contract.modify_timestamp
+    if (createdAt && at < createdAt)
+        at = createdAt
+    return Math.floor(at.getTime() / 1000)
+}
+
+/**
  * Restricts a ContractBillingProfileNetworkSchedule query (alias cbpns, joined profileNetwork as profile_network)
- * to the mapping of the contract active at the time, latest first; times before the contract creation
- * use the creation time
+ * to the mapping of the contract active at the time, latest first (`actualBillingMappingEpoch`)
  */
 export function andWhereActualBillingMapping<T>(
     qb: SelectQueryBuilder<T>,
     contract: Pick<internal.Contract, 'id' | 'create_timestamp' | 'modify_timestamp'>,
     at: Date,
 ): SelectQueryBuilder<T> {
-    const createdAt = contract.create_timestamp ?? contract.modify_timestamp
-    if (createdAt && at < createdAt)
-        at = createdAt
     return qb
         .andWhere('profile_network.contract_id = :contract_id', {contract_id: contract.id})
         .andWhere('profile_network.base = 1')
-        .andWhere('cbpns.effective_start_time <= :epoch', {epoch: Math.floor(at.getTime() / 1000)})
+        .andWhere('cbpns.effective_start_time <= :epoch', {epoch: actualBillingMappingEpoch(contract, at)})
         .orderBy('cbpns.effective_start_time', 'DESC')
 }
 

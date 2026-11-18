@@ -1,9 +1,21 @@
 import {NestApplication} from '@nestjs/core'
-import {DocumentBuilder, OpenAPIObject, ParameterObject, ReferenceObject, ResponseObject, SwaggerModule, getSchemaPath} from '@nestjs/swagger'
+import {
+    DocumentBuilder,
+    OpenAPIObject,
+    ParameterObject,
+    ReferenceObject,
+    RequestBodyObject,
+    ResponseObject,
+    SchemaObject,
+    SwaggerModule,
+    getSchemaPath,
+} from '@nestjs/swagger'
 import {NextFunction, Request, Response} from 'express'
 
 import {SEARCH_QUERY_ORDER_KEY} from '~/decorators/api-search-query.decorator'
 import {ErrorEntryDto, ErrorResponseDto} from '~/dto/error-response.dto'
+import {errorMessage} from '~/helpers/errors.helper'
+import {readLimit, writeLimit} from '~/helpers/request-limits.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {SIPWISE_LOGO_SVG} from '~/helpers/sipwise-logo'
 import {swaggerAuthCss, swaggerAuthJs} from '~/helpers/swagger-auth.helper'
@@ -428,6 +440,7 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string):
     addExpandDocumentation(document, models, expand.targetModels())
     addLazyFieldDocumentation(document, models)
     addTimezoneParameter(document)
+    addRequestLimits(document)
     addErrorResponses(document)
     const versions = readVersions()
     // the start of the server, refers the page to the init script and the pdf of this version
@@ -645,6 +658,51 @@ function addTimezoneParameter(document: OpenAPIObject): void {
                 continue
             operation.parameters = (operation.parameters ?? []).filter(param => '$ref' in param || param.name != 'tz')
             operation.parameters.push({...TIMEZONE_PARAMETER, schema: {...TIMEZONE_PARAMETER.schema}})
+        }
+    }
+}
+
+const JSON_MEDIA_TYPES = [
+    'application/json',
+    'application/json-patch+json',
+]
+
+// the item limit of a bulk body: POST arrays, PUT/PATCH objects keyed by id (single item PATCH bodies are arrays)
+function bulkBodyLimit(method: string, max: number, schema?: SchemaObject): SchemaObject | undefined {
+    if (method == 'post' && schema?.type == 'array')
+        return {maxItems: max}
+    if ((method == 'put' || method == 'patch') && schema?.type == 'object')
+        return {maxProperties: max}
+    return undefined
+}
+
+// performance.read_limit on `rows` (ReadLimitMiddleware), write_limit on bulk bodies (checkWriteLimit) with their 413
+function addRequestLimits(document: OpenAPIObject): void {
+    const max = writeLimit()
+    const bulkTooLarge = errorResponse(`More than ${max} items, or a request body above the size limit`, {
+        statusCode: 413,
+        path: '/api/v2/customercontacts',
+        method: 'POST',
+        error: 'Payload Too Large',
+        ...errorMessage('BULK_TOO_LARGE', {count: max + 1, max}),
+    })
+    for (const pathItem of Object.values(document.paths)) {
+        for (const method of OPERATION_METHODS) {
+            const operation = pathItem[method]
+            if (!operation)
+                continue
+            for (const param of operation.parameters ?? []) {
+                if ('in' in param && param.in == 'query' && param.name == 'rows')
+                    param.schema = {...param.schema, maximum: readLimit()}
+            }
+            const content = (operation.requestBody as RequestBodyObject)?.content ?? {}
+            for (const type of JSON_MEDIA_TYPES) {
+                const limit = bulkBodyLimit(method, max, content[type]?.schema as SchemaObject)
+                if (!limit)
+                    continue
+                content[type].schema = {...content[type].schema, ...limit}
+                operation.responses['413'] ??= bulkTooLarge
+            }
         }
     }
 }

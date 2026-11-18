@@ -14,7 +14,6 @@ import {ResellerPhonebookService} from './phonebook.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
-import {AppService} from '~/app.service'
 import {License as LicenseType, RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiAcceptHeader} from '~/decorators/api-accept-header.decorator'
@@ -35,8 +34,10 @@ import {csvToDto, handleCsvExport} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
+import {bodyLimit} from '~/helpers/request-limits.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {FileMimeTypePipe} from '~/pipes/parse-file-mimetype.pipe'
@@ -72,7 +73,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
     @ApiJsonOrCsvBody(ResellerPhonebookRequestDto, ResellerPhonebookTextCsvExampleRequest)
     @UseInterceptors(FileInterceptor('file', {
         limits: {
-            fileSize: AppService.config.fileshare.limits.upload_size || null,
+            fileSize: bodyLimit(),
         },
     }))
     @ApiContentTypeHeader('application/json', 'multipart/form-data')
@@ -100,19 +101,17 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
                     throw new UnprocessableEntityException(this.i18n.t('errors.FILE_MIME_TYPE_NOT_SUPPORTED'))
             }
             validateResellerId(createDto, sr)
-            const phonebook = await Promise.all(createDto.map(async set => set.toInternal()))
+            const phonebook = await mapYield(createDto, set => set.toInternal())
             const created = await this.phonebookService.importCsv(phonebook, sr)
-            const response = await Promise.all(created.map(async phonebook => new ResellerPhonebookResponseDto(phonebook)))
-            for (const entry of response)
-                await this.journalService.writeJournal(sr, entry.id, entry)
+            const response = await mapYield(created, phonebook => new ResellerPhonebookResponseDto(phonebook))
+            await this.journalService.writeJournals(sr, response.map(entry => ({id: entry.id, data: entry})))
             return response
         }
         validateResellerId(createDto, sr)
-        const phonebook = await Promise.all(createDto.map(async set => set.toInternal()))
+        const phonebook = await mapYield(createDto, set => set.toInternal())
         const created = await this.phonebookService.create(phonebook, sr)
-        const response = await Promise.all(created.map(async phonebook => new ResellerPhonebookResponseDto(phonebook)))
-        for (const entry of response)
-            await this.journalService.writeJournal(sr, entry.id, entry)
+        const response = await mapYield(created, phonebook => new ResellerPhonebookResponseDto(phonebook))
+        await this.journalService.writeJournals(sr, response.map(entry => ({id: entry.id, data: entry})))
         return response
     }
 
@@ -296,9 +295,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
         })
         const sr = new ServiceRequest(req)
         const deletedIds = await this.phonebookService.delete(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
-        }
+        await this.journalService.writeJournals(sr, deletedIds.map(id => ({id, data: {}})))
         return deletedIds
     }
 

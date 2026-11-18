@@ -1,6 +1,7 @@
 import {HttpStatus, Inject, Injectable} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
 
+import {ResellerContract} from './interfaces/reseller.repository'
 import {ResellerMariadbRepository} from './repositories/reseller.mariadb.repository'
 
 import {AppService} from '~/app.service'
@@ -26,18 +27,17 @@ export class ResellerService implements CrudService<internal.Reseller> {
     }
 
     async create(resellers: internal.Reseller[], sr: ServiceRequest): Promise<internal.Reseller[]> {
-        await checkItems(resellers, async (reseller, key) => {
-            await this.validateContract(reseller, sr, key)
-            const existingReseller = await this.resellerRepo.readByName(reseller.name, sr)
+        const contracts = await this.readContracts(resellers.map(reseller => reseller.contract_id))
+        const existing = await this.readByNames(resellers.map(reseller => reseller.name))
+        await checkItems(resellers, (reseller, key) => {
+            this.validateContract(reseller, contracts, sr, key)
+            const existingReseller = existing.get(reseller.name.toLowerCase())
             if (existingReseller != undefined && existingReseller.status != ResellerStatus.Terminated)
                 throw apiError(this.i18n.t('errors.NAME_EXISTS', {args: {name: existingReseller.name}}), itemPointer(sr, key, reseller, 'name'))
         })
         // a terminated reseller of the same name is renamed
-        for (const reseller of resellers) {
-            const existingReseller = await this.resellerRepo.readByName(reseller.name, sr)
-            if (existingReseller != undefined)
-                await this.resellerRepo.renameReseller(existingReseller.id, existingReseller.name)
-        }
+        if (existing.size)
+            await this.resellerRepo.renameResellers([...existing.values()].map(reseller => reseller.id))
         const createdIds = await this.resellerRepo.create(resellers, sr)
         await this.resellerRepo.createEmailTemplates(createdIds)
 
@@ -63,29 +63,42 @@ export class ResellerService implements CrudService<internal.Reseller> {
         const resellers = await this.resellerRepo.readWhereInIds(ids)
         throwMissingIds(sr, ids, resellers.map(reseller => reseller.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
         this.log.debug({message: 'update reseller by ids', func: this.update.name, user: sr.user.username, ids: ids})
-        await checkItems(updates, async (reseller, key) => {
-            const oldReseller = await this.resellerRepo.read(+key, sr)
-            await this.validateUpdate(oldReseller, reseller, sr, key)
+        const oldResellers = new Map(resellers.map(reseller => [reseller.id, reseller]))
+        const contractChanges = ids.filter(id => updates[id].contract_id != oldResellers.get(id).contract_id)
+        const nameChanges = ids.filter(id => updates[id].name != oldResellers.get(id).name)
+        const contracts = await this.readContracts(contractChanges.map(id => updates[id].contract_id))
+        const existing = await this.readByNames(nameChanges.map(id => updates[id].name))
+        await checkItems(updates, (reseller, key) => {
+            const oldReseller = oldResellers.get(+key)
+            if (sr.user.reseller_id_required && sr.user.reseller_id != reseller.id)
+                throw apiError(this.i18n.t('errors.RESELLER_CHANGE_UNASSOCIATED_FORBIDDEN'), itemPointer(sr, key), HttpStatus.FORBIDDEN)
+            if (oldReseller.contract_id != reseller.contract_id)
+                this.validateContract(reseller, contracts, sr, key)
+            if (oldReseller.name != reseller.name && existing.has(reseller.name.toLowerCase()))
+                throw apiError(this.i18n.t('errors.RESELLER_NAME_EXISTS'), itemPointer(sr, key, reseller, 'name'))
         })
         return await this.resellerRepo.update(updates, sr)
     }
 
-    private async validateUpdate(oldReseller: internal.Reseller, newReseller: internal.Reseller, sr: ServiceRequest, key: number | string): Promise<void> {
-        if (sr.user.reseller_id_required && sr.user.reseller_id != newReseller.id)
-            throw apiError(this.i18n.t('errors.RESELLER_CHANGE_UNASSOCIATED_FORBIDDEN'), itemPointer(sr, key), HttpStatus.FORBIDDEN)
-        if (oldReseller.contract_id != newReseller.contract_id)
-            await this.validateContract(newReseller, sr, key)
-        if (oldReseller.name != newReseller.name && await this.resellerRepo.readByName(newReseller.name, sr) != undefined)
-            throw apiError(this.i18n.t('errors.RESELLER_NAME_EXISTS'), itemPointer(sr, key, newReseller, 'name'))
+    private async readContracts(contractIds: number[]): Promise<Map<number, ResellerContract>> {
+        const contracts = await this.resellerRepo.readResellerContracts([...new Set(contractIds)])
+        return new Map(contracts.map(contract => [contract.id, contract]))
     }
 
-    private async validateContract(reseller: internal.Reseller, sr: ServiceRequest, key: number | string): Promise<void> {
+    // resellers by lowercase name, names compare case-insensitively as in the db
+    private async readByNames(names: string[]): Promise<Map<string, internal.Reseller>> {
+        const resellers = await this.resellerRepo.readByNames([...new Set(names)])
+        return new Map(resellers.map(reseller => [reseller.name.toLowerCase(), reseller]))
+    }
+
+    private validateContract(reseller: internal.Reseller, contracts: Map<number, ResellerContract>, sr: ServiceRequest, key: number | string): void {
         const pointer = itemPointer(sr, key, reseller, 'contract_id')
-        if (!await this.resellerRepo.contractExists(reseller.contract_id))
+        const contract = contracts.get(reseller.contract_id)
+        if (!contract)
             throw apiError(this.i18n.t('errors.CONTRACT_NOT_FOUND'), pointer)
-        if (await this.resellerRepo.resellerWithContractExists(reseller.contract_id))
+        if (contract.hasReseller)
             throw apiError(this.i18n.t('errors.RESELLER_CONTRACT_EXISTS'), pointer)
-        if (!await this.resellerRepo.contractHasSystemContact(reseller.contract_id))
+        if (!contract.hasSystemContact)
             throw apiError(this.i18n.t('errors.CONTACT_CONTRACT_INVALID_LINK'), pointer)
     }
 }

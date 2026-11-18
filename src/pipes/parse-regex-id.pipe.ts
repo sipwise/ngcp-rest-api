@@ -17,7 +17,7 @@ export class ParseRegexPipe implements PipeTransform {
         this.options = options
     }
 
-    async transform(value: unknown, metadata: ArgumentMetadata): Promise<string | undefined> {
+    transform(value: unknown, metadata: ArgumentMetadata): string | undefined {
         if (value == null || value === '') {
             return undefined
         }

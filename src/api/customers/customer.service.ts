@@ -11,7 +11,7 @@ import {ContactStatus, ContactType} from '~/entities/internal/contact.internal.e
 import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {billingIntervalError, billingNetworkError, billingOpenIntervalError, billingProfileError} from '~/helpers/billing-mapping.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ApiErrors,apiError, checkItems, itemPointer, readFoundIds, throwMissingIds} from '~/helpers/errors.helper'
+import {ApiErrors,apiError, checkItems, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {applyLazyFields, mergeLazyFields, readLazyField} from '~/helpers/lazy-field.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
@@ -58,16 +58,11 @@ export class CustomerService implements CrudService<internal.Customer> {
         for (const customer of entities)
             await this.assignDefaultEmailTemplates(customer)
         const createdIds = await this.customerRepository.create(entities, sr)
-        const createdCustomersDictionary = new Dictionary<internal.Customer>()
-        createdIds.forEach((id, index) => {
-            const customer = entities[index]
-            createdCustomersDictionary[id] = {...customer, id, createBillingMappings: customer.createBillingMappings}
-        })
-        await Promise.all(createdIds.map(async id => {
-            const cust = createdCustomersDictionary[id]
-            await this.customerRepository.appendBillingMappings(cust.id, cust.createBillingMappings)
-            await this.customerRepository.createInitialBalance(cust.id, cust.createTimestamp)
-        }))
+        for (const [index, id] of createdIds.entries())
+            entities[index].id = id
+        for (const customer of entities)
+            await this.customerRepository.appendBillingMappings(customer.id, customer.createBillingMappings)
+        await this.customerRepository.createInitialBalances(entities)
         // read after the mappings, the representation shows the billing profile schedule
         const createdCustomers = await this.customerRepository.readWhereInIds(createdIds, sr, undefined)
         if (createdCustomers.length !== createdIds.length)
@@ -133,7 +128,8 @@ export class CustomerService implements CrudService<internal.Customer> {
 
     async update(updates: Dictionary<internal.Customer>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => +id)
-        throwMissingIds(sr, ids, await readFoundIds(ids, id => this.customerRepository.readById(id, sr, this.readFilter(sr))), this.i18n.t('errors.ENTRY_NOT_FOUND'))
+        const oldCustomers = new Map((await this.customerRepository.readByIds(ids, sr, this.readFilter(sr))).map(customer => [customer.id, customer]))
+        throwMissingIds(sr, ids, [...oldCustomers.keys()], this.i18n.t('errors.ENTRY_NOT_FOUND'))
         const contactIds = [...new Set(Object.values(updates).map(e => e.contactId))]
         const activeContacts = await this.contactRepository.readActiveContactsInIds(contactIds, {
             type: ContactType.CustomerContact,
@@ -147,7 +143,7 @@ export class CustomerService implements CrudService<internal.Customer> {
             await this.checkTemplates(resource, activeContacts.find(c => c.id === resource.contactId), sr, id)
             resource.productId = await this.readProductId(resource, sr, id)
             const customerId = +id
-            const oldEntity = await this.customerRepository.readById(customerId, sr, this.readFilter(sr))
+            const oldEntity = oldCustomers.get(customerId)
             const contact = activeContacts.find(c => c.id === resource.contactId)
             const profileDef = resource.billingProfileDefinition || ContractBillingProfileDefinition.ID
             let mappingsToCreate: internal.BillingMapping[] = []
@@ -183,13 +179,10 @@ export class CustomerService implements CrudService<internal.Customer> {
 
         await this.customerRepository.update(updates, sr)
 
-        const appendPromises = appendActions.map(action => {
-            if (action.mappings.length > 0 || action.deleteMappings) {
-                return this.customerRepository.appendBillingMappings(action.id, action.mappings, now, action.deleteMappings)
-            }
-            return Promise.resolve()
-        })
-        await Promise.all(appendPromises)
+        for (const action of appendActions) {
+            if (action.mappings.length > 0 || action.deleteMappings)
+                await this.customerRepository.appendBillingMappings(action.id, action.mappings, now, action.deleteMappings)
+        }
 
         return Object.keys(updates).map(id => +id)
     }
@@ -376,7 +369,7 @@ export class CustomerService implements CrudService<internal.Customer> {
         return [profile, network]
     }
 
-    private async checkPermissions(resellerId: number, sr: ServiceRequest): Promise<void> {
+    private checkPermissions(resellerId: number, sr: ServiceRequest): void {
         if (sr.user.resellerId && sr.user.reseller_id != resellerId) {
             throw new NotFoundException()
         }

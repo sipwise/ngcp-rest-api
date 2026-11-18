@@ -1,5 +1,4 @@
 import {Inject, Injectable} from '@nestjs/common'
-import * as asyncLib from 'async'
 import {v5 as uuidv5} from 'uuid'
 
 import {AppService} from '~/app.service'
@@ -46,19 +45,17 @@ export class BanIpRedisRepository {
 
         const entries: {[key: string]: internal.BanIp} = {}
 
-        let ipMatch: RegExpMatchArray | null
-
-        await asyncLib.forEach(lines, async (line) => {
+        for (const line of lines) {
             let entryId: string
             let ip: string
 
-            ipMatch = line.match(/name:\s+([^\s]+)/)
+            const ipMatch = line.match(/name:\s+([^\s]+)/)
             if (ipMatch) {
                 ip = ipMatch[1]
                 entryId = uuidv5(ip, uuidNS)
 
                 if (id && entryId != id) {
-                    return
+                    continue
                 }
 
                 if (filter?.ip) {
@@ -67,15 +64,15 @@ export class BanIpRedisRepository {
                             ? wildcardStringToRegexp(filter.ip)
                             : undefined
                     if (rx && !rx.test(ip))
-                        return
+                        continue
                     if (!rx && ip != filter.ip)
-                        return
+                        continue
                 }
 
                 if (filter?.id) {
                     const ids = filter.id.split(',').map(v => v.trim())
                     if (!ids.includes(entryId))
-                        return
+                        continue
                 }
 
                 if (!entries[entryId]) {
@@ -85,36 +82,25 @@ export class BanIpRedisRepository {
                     }
                 }
             }
-        })
+        }
 
-        const parsedEntries: internal.BanIp[] = []
-
-        await Promise.all(Object.values(entries).map(async (entry) => {
-            if (entry.ip)
-                parsedEntries.push(entry)
-        }))
-
-        return parsedEntries
+        return Object.values(entries).filter(entry => entry.ip)
     }
 
     async deleteBannedIp(id: string): Promise<void> {
         const bannedIps = await this.readBannedIps(id)
 
-        asyncLib.some(bannedIps, async (entry) => {
-            if (entry.id != id) {
-                return false
-            }
+        const entry = bannedIps.find(e => e.id == id)
+        if (!entry)
+            return
 
-            const {publishChannel, feedbackChannel, request} = this.taskAgentHelper.buildRequest({
-                feedbackChannel: 'ngcp-rest-api-ban-ip-delete',
-                task: 'kam_lb_security_ban_delete',
-                dst: '*|state=active;role=proxy',
-                data: JSON.stringify({extra_args: `ipban ${entry.ip}`}),
-            })
-
-            await this.taskAgentHelper.invokeTask(publishChannel, feedbackChannel, request)
-
-            return true
+        const {publishChannel, feedbackChannel, request} = this.taskAgentHelper.buildRequest({
+            feedbackChannel: 'ngcp-rest-api-ban-ip-delete',
+            task: 'kam_lb_security_ban_delete',
+            dst: '*|state=active;role=proxy',
+            data: JSON.stringify({extra_args: `ipban ${entry.ip}`}),
         })
+
+        await this.taskAgentHelper.invokeTask(publishChannel, feedbackChannel, request)
     }
 }

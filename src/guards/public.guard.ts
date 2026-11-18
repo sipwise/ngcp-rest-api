@@ -6,7 +6,7 @@ export class PublicGuard implements CanActivate {
     constructor(private readonly reflector: Reflector) {
     }
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
+    canActivate(context: ExecutionContext): boolean {
         const isPublicMethod = this.reflector.get<boolean>(
             'isPublic',
             context.getHandler(),

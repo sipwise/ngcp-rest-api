@@ -53,8 +53,8 @@ export class CustomerSpeedDialMockRepository implements CustomerSpeedDialReposit
         return Promise.resolve([result, result.length])
     }
 
-    async readWhereInIds(ids: number[], _sr: ServiceRequest): Promise<internal.CustomerSpeedDial[]> {
-        return Promise.resolve(ids.map(id => this.csdDB[id]).filter(c => c))
+    async readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.CustomerSpeedDial[]> {
+        return Promise.resolve(ids.map(id => this.csdDB[id]).filter(c => c && this.matches(c, filterBy)))
     }
 
     async readById(id: number, _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.CustomerSpeedDial> {
@@ -77,13 +77,13 @@ export class CustomerSpeedDialMockRepository implements CustomerSpeedDialReposit
         return Promise.resolve(ids)
     }
 
-    async checkCustomerExistsAndCustomerReseller(customerId: number, resellerId: number, checkReseller: boolean): Promise<boolean> {
-        if (!(customerId in this.resellerOfCustomer))
-            return Promise.resolve(false)
-        return Promise.resolve(!checkReseller || this.resellerOfCustomer[customerId] == resellerId)
+    async readCustomerResellerIds(customerIds: number[]): Promise<Map<number, number>> {
+        const known = customerIds.filter(id => id in this.resellerOfCustomer)
+        return Promise.resolve(new Map(known.map(id => [id, this.resellerOfCustomer[id]])))
     }
 
-    async readSubscriberDomain(customerId: number, options: {isPilot: boolean}): Promise<string> {
-        return Promise.resolve(options.isPilot ? this.pilotDomains[customerId] : this.subscriberDomains[customerId])
+    async readSubscriberDomains(customerIds: number[], options: {isPilot: boolean}): Promise<Map<number, string>> {
+        const domains = options.isPilot ? this.pilotDomains : this.subscriberDomains
+        return Promise.resolve(new Map(customerIds.filter(id => domains[id]).map(id => [id, domains[id]])))
     }
 }

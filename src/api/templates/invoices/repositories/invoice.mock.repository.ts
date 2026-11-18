@@ -28,44 +28,44 @@ export class InvoiceTemplateMockRepository implements InvoiceTemplateRepository 
         return Object.values(this.templateDB).filter(t => !filterBy?.resellerId || t.resellerId == filterBy.resellerId)
     }
 
-    async create(entities: internal.InvoiceTemplate[]): Promise<number[]> {
-        return entities.map(e => {
+    create(entities: internal.InvoiceTemplate[]): Promise<number[]> {
+        return Promise.resolve(entities.map(e => {
             const id = this.nextId++
             this.templateDB[id] = Object.assign(new internal.InvoiceTemplate(), e, {id})
             return id
-        })
+        }))
     }
 
-    async readAll(_sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.InvoiceTemplate[], number]> {
+    readAll(_sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.InvoiceTemplate[], number]> {
         const rows = this.visible(filterBy)
-        return [rows, rows.length]
+        return Promise.resolve([rows, rows.length])
     }
 
-    async readById(id: number, _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.InvoiceTemplate> {
+    readById(id: number, _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.InvoiceTemplate> {
         const template = this.visible(filterBy).find(t => t.id == id)
         if (!template)
             throw new NotFoundException()
-        return template
+        return Promise.resolve(template)
     }
 
-    async readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.InvoiceTemplate[]> {
-        return this.visible(filterBy).filter(t => ids.includes(t.id))
+    readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.InvoiceTemplate[]> {
+        return Promise.resolve(this.visible(filterBy).filter(t => ids.includes(t.id)))
     }
 
-    async readByResellerAndName(resellerId: number | null, name: string): Promise<internal.InvoiceTemplate | undefined> {
-        return Object.values(this.templateDB).find(t => t.name == name && (resellerId ? t.resellerId == resellerId : !t.resellerId))
+    readByResellerAndName(resellerId: number | null, name: string): Promise<internal.InvoiceTemplate | undefined> {
+        return Promise.resolve(Object.values(this.templateDB).find(t => t.name == name && (resellerId ? t.resellerId == resellerId : !t.resellerId)))
     }
 
-    async update(updates: Dictionary<internal.InvoiceTemplate>, _sr: ServiceRequest): Promise<number[]> {
-        return Object.keys(updates).map(key => {
+    update(updates: Dictionary<internal.InvoiceTemplate>, _sr: ServiceRequest): Promise<number[]> {
+        return Promise.resolve(Object.keys(updates).map(key => {
             const id = parseInt(key)
             Object.assign(this.templateDB[id], updates[key])
             return id
-        })
+        }))
     }
 
-    async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
+    delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
         ids.forEach(id => delete this.templateDB[id])
-        return ids
+        return Promise.resolve(ids)
     }
 }

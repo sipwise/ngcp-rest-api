@@ -1,5 +1,5 @@
 import {Injectable} from '@nestjs/common'
-import {SelectQueryBuilder} from 'typeorm'
+import {In, SelectQueryBuilder} from 'typeorm'
 
 import {ResellerPhonebookSearchDto} from '~/api/resellers/phonebook/dto/phonebook-search.dto'
 import {ResellerPhonebookOptions} from '~/api/resellers/phonebook/interfaces/phonebook-options.interface'
@@ -8,6 +8,7 @@ import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -18,10 +19,10 @@ export class ResellerPhonebookMariadbRepository extends MariaDbRepository implem
 
     async create(entities: internal.ResellerPhonebook[], _sr: ServiceRequest): Promise<number[]> {
         const qb = db.billing.ResellerPhonebook.createQueryBuilder('phonebook')
-        const values = await Promise.all(entities.map(async entity => new db.billing.ResellerPhonebook().fromInternal(entity)))
+        const values = await mapYield(entities, entity => new db.billing.ResellerPhonebook().fromInternal(entity))
         const result = await qb.insert().values(values).execute()
 
-        return await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async readAll(options: ResellerPhonebookOptions, sr: ServiceRequest): Promise<[internal.ResellerPhonebook[], number]> {
@@ -39,11 +40,7 @@ export class ResellerPhonebookMariadbRepository extends MariaDbRepository implem
         )
         this.addFilterBy(qb, options.filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(
-            result.map(async (d) =>
-                d.toInternal(),
-            ),
-        ), totalCount]
+        return [await mapYield(result, d => d.toInternal()), totalCount]
     }
 
     async readById(id: number, options: ResellerPhonebookOptions, sr: ServiceRequest): Promise<internal.ResellerPhonebook> {
@@ -75,9 +72,8 @@ export class ResellerPhonebookMariadbRepository extends MariaDbRepository implem
         return ids
     }
 
-    async purge(resellerId: number, _sr: ServiceRequest): Promise<number> {
-        await db.billing.ResellerPhonebook.delete({reseller_id: resellerId})
-        return resellerId
+    async purge(resellerIds: number[], _sr: ServiceRequest): Promise<void> {
+        await db.billing.ResellerPhonebook.delete({reseller_id: In(resellerIds)})
     }
 
     async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
@@ -101,26 +97,15 @@ export class ResellerPhonebookMariadbRepository extends MariaDbRepository implem
         qb.andWhere('phonebook.number IN (:...numbers)', {numbers: number})
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => d.id))
+        return result.map((d) => d.id)
     }
 
-    async readWhereInIds(ids: number[], options: ResellerPhonebookOptions, sr: ServiceRequest): Promise<internal.ResellerPhonebook[]> {
+    async readWhereInIds(ids: number[], options: ResellerPhonebookOptions, _sr: ServiceRequest): Promise<internal.ResellerPhonebook[]> {
         const qb = db.billing.ResellerPhonebook.createQueryBuilder('phonebook')
-        const searchDto  = new ResellerPhonebookSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
         qb.andWhereInIds(ids)
         this.addFilterBy(qb, options.filterBy)
         const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => d.toInternal()))
+        return await mapYield(result, (d) => d.toInternal())
     }
 
     async readExistingIds(ids: number[], options: ResellerPhonebookOptions): Promise<number[]> {

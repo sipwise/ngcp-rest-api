@@ -48,9 +48,8 @@ export class BanAdminService implements CrudService<internal.BanAdmin> {
         const idsToDelete = await this.banAdminRepo.readWhereInIds(adminIds, this.getAdminOptionsFromServiceRequest(sr), sr)
         throwMissingIds(sr, ids, idsToDelete.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
-        await Promise.all(idsToDelete.map(async admin => {
+        for (const admin of idsToDelete)
             await this.authService.removeAdminBan(admin.id, sr)
-        }))
 
         return adminIds
     }

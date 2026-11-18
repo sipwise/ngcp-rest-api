@@ -33,7 +33,7 @@ export class AuthPasswordController extends CrudController<never, PasswordRespon
     @Get()
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(PasswordResponseDto)
-    async readAll(@Req() req: Request): Promise<[PasswordResponseDto[], number]> {
+    readAll(@Req() req: Request): Promise<[PasswordResponseDto[], number]> {
         this.log.debug({
             message: 'read all password routes',
             func: this.readAll.name,
@@ -43,6 +43,6 @@ export class AuthPasswordController extends CrudController<never, PasswordRespon
         const sr = new ServiceRequest(req)
         const response = [new PasswordResponseDto({url: req.url})]
         const sortedResponse = sortAndPaginate<PasswordResponseDto>(response, sr, 'resourceUrl')
-        return [sortedResponse, response.length]
+        return Promise.resolve([sortedResponse, response.length])
     }
 }

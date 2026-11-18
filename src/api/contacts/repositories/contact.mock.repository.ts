@@ -66,45 +66,21 @@ export class ContactMockRepository implements ContactRepository {
         return Promise.resolve(ids)
     }
 
-    hasContactActiveContract(contactId: number, _sr: ServiceRequest): Promise<boolean> {
-        this.throwErrorIfIdNotExists(this.contactDB, contactId)
-        for (const key of Object.keys(this.contractDB)) {
-            const id: number = +key
-            const contract: internal.Contract = this.contractDB[id]
-            if (contract.contact_id == contactId) {
-                return Promise.resolve(contract.status == ContractStatus.Active)
-            }
-        }
-        return Promise.resolve(false)
+    readIdsWithActiveContract(ids: number[]): Promise<number[]> {
+        return Promise.resolve(this.contractContactIds(ids, contract => contract.status != ContractStatus.Terminated))
     }
 
-    hasContactActiveSubscriber(contactId: number, _sr: ServiceRequest): Promise<boolean> {
-        this.throwErrorIfIdNotExists(this.contactDB, contactId)
-        // TODO: implement once we have internal.VoipSubscriber
-        // for (const key of Object.keys(this.contractsDB)) {
-        //     const id: number = +key
-        //     const subscriber: internal.VoipSubscriber = this.subscriberDB[id]
-        //     if (subscriber.contact_id == contactId) {
-        //         return Promise.resolve(subscriber.status == ContractStatus.Active)
-        //     }
-        // }
-        return Promise.resolve(false)
+    readIdsWithTerminatedContract(ids: number[]): Promise<number[]> {
+        return Promise.resolve(this.contractContactIds(ids, contract => contract.status == ContractStatus.Terminated))
     }
 
-    hasContactTerminatedContract(contactId: number, _sr: ServiceRequest): Promise<boolean> {
-        this.throwErrorIfIdNotExists(this.contactDB, contactId)
-        for (const key of Object.keys(this.contractDB)) {
-            const id: number = +key
-            const contract: internal.Contract = this.contractDB[id]
-            if (contract.contact_id == contactId) {
-                return Promise.resolve(contract.status == ContractStatus.Terminated)
-            }
-        }
-        return Promise.resolve(false)
+    // TODO: implement once we have internal.VoipSubscriber
+    readIdsWithActiveSubscriber(_ids: number[]): Promise<number[]> {
+        return Promise.resolve<number[]>([])
     }
 
-    hasContactTerminatedSubscriber(_contactId: number, _sr: ServiceRequest): Promise<boolean> {
-        return Promise.resolve(false)
+    readIdsWithTerminatedSubscriber(_ids: number[]): Promise<number[]> {
+        return Promise.resolve<number[]>([])
     }
 
     readAll(_sr: ServiceRequest, _options?: ContactOptions): Promise<[internal.Contact[], number]> {
@@ -134,12 +110,16 @@ export class ContactMockRepository implements ContactRepository {
     }
 
 
-    async readWhereInIds(ids: number[], options: ContactOptions): Promise<internal.Contact[]> {
-        const contacts: internal.Contact[] = []
-        for(const id of ids) {
-            contacts.push(await this.readById(id, options))
-        }
-        return Promise.resolve(contacts)
+    readWhereInIds(ids: number[], options?: ContactOptions): Promise<internal.Contact[]> {
+        return Promise.resolve(ids.map(id => this.contactDB[id]).filter(contact => {
+            if (!contact)
+                return false
+            if (options?.type === ContactType.CustomerContact)
+                return contact.reseller_id != undefined
+            if (options?.type === ContactType.SystemContact)
+                return contact.reseller_id == undefined
+            return true
+        }))
     }
 
     readActiveContactsInIds(ids: number[], options?: ContactOptions): Promise<internal.Contact[]> {
@@ -154,13 +134,14 @@ export class ContactMockRepository implements ContactRepository {
         }))
     }
 
-    readResellerById(id: number, _sr: ServiceRequest): Promise<internal.Reseller> {
-        return Promise.resolve(this.resellerDB[id])
+    readExistingResellerIds(ids: number[]): Promise<number[]> {
+        return Promise.resolve(ids.filter(id => this.resellerDB[id] != undefined))
     }
 
-    terminate(id: number, _sr: ServiceRequest): Promise<number> {
-        this.throwErrorIfIdNotExists(this.contactDB, id)
-        return Promise.resolve(1)
+    terminate(ids: number[], _sr: ServiceRequest): Promise<number[]> {
+        for (const id of ids)
+            this.throwErrorIfIdNotExists(this.contactDB, id)
+        return Promise.resolve(ids)
     }
 
     update(updates: Dictionary<internal.Contact>, _options: ContactOptions): Promise<number[]> {
@@ -172,6 +153,11 @@ export class ContactMockRepository implements ContactRepository {
             this.contactDB[id] = contact
         }
         return Promise.resolve(ids)
+    }
+
+    private contractContactIds(ids: number[], matches: (contract: internal.Contract) => boolean): number[] {
+        const contracts = Object.values(this.contractDB) as internal.Contract[]
+        return ids.filter(id => contracts.some(contract => contract.contact_id == id && matches(contract)))
     }
 
     private getNextId(db: unknown): number {

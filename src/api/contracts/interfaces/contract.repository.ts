@@ -9,11 +9,13 @@ export interface ContractRepository {
 
     read(id: number, sr: ServiceRequest): Promise<internal.Contract>
 
-    readActiveSystemContact(id: number, sr: ServiceRequest): Promise<internal.Contact>
+    readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Contract[]>
 
-    readProductByType(type: string, sr: ServiceRequest): Promise<internal.Product>
+    readActiveSystemContactIds(ids: number[]): Promise<number[]>
 
-    readBillingProfile(id: number, sr: ServiceRequest): Promise<internal.BillingProfile>
+    readProductsByTypes(types: string[]): Promise<internal.Product[]>
+
+    readBillingProfiles(ids: number[]): Promise<internal.BillingProfile[]>
 
     appendBillingMappings(contractId: number, mappings: internal.BillingMapping[], sr: ServiceRequest): Promise<void>
 

@@ -45,7 +45,7 @@ export class XmlDispatcher {
 
     // }
 
-    async sipDomainReload(_domain: string): Promise<void> {
+    sipDomainReload(_domain: string): void {
         const reloadCommand = `
 <?xml version="1.0" ?>
 <methodCall>

@@ -10,6 +10,7 @@ import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrors, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
+import {forEachYield} from '~/helpers/yield.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -29,30 +30,26 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
     async create(entities: internal.RewriteRule[], sr: ServiceRequest): Promise<internal.RewriteRule[]> {
         if (sr.user.reseller_id_required) {
             const sets = await this.ruleSetRepo.readWhereInIds(entities.map(entity => entity.setId), sr)
+            const foreignSetIds = new Set(sets.filter(set => set.resellerId != sr.user.reseller_id).map(set => set.id))
             const errors = new ApiErrors()
-            entities.forEach((entity, index) => {
-                if (sets.some(set => set.id == entity.setId && set.resellerId != sr.user.reseller_id))
+            await forEachYield(entities, (entity, index) => {
+                if (foreignSetIds.has(entity.setId))
                     errors.add(this.i18n.t('errors.ENTRY_NOT_FOUND'), itemPointer(sr, index, entity, 'setId'))
             })
             errors.throwIfAny()
         }
 
-        // TODO: Can this be done in a single query?
-        const maxPriorities = []
-        for (const entity of entities) {
-            if (!entity.priority) {
-                if (!maxPriorities[entity.setId]) {
-                    maxPriorities[entity.setId] = await this.ruleRepo.readMaxPriorityInSet(entity.setId, sr)
-                }
-                entity.priority = maxPriorities[entity.setId] + 1
-            }
-
+        const unprioritizedSetIds = entities.filter(entity => !entity.priority).map(entity => entity.setId)
+        const maxPriorities = await this.ruleRepo.readMaxPriorities([...new Set(unprioritizedSetIds)])
+        await forEachYield(entities, entity => {
+            if (!entity.priority)
+                entity.priority = (maxPriorities.get(entity.setId) ?? 0) + 1
             this.deflateMatchReplacePatterns(entity)
-        }
+        })
 
         const createdIds = await this.ruleRepo.create(entities)
 
-        await this.reloadDialPlanAfterCommit(sr)
+        this.reloadDialPlanAfterCommit(sr)
 
         return await this.ruleRepo.readWhereInIds(createdIds, sr)
     }
@@ -101,7 +98,7 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
 
         const updatedIds = await this.ruleRepo.update(updates, sr)
 
-        await this.reloadDialPlanAfterCommit(sr)
+        this.reloadDialPlanAfterCommit(sr)
 
         return updatedIds
     }
@@ -118,14 +115,14 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
 
         const deletedIds = await this.ruleRepo.delete(ids,sr)
 
-        await this.reloadDialPlanAfterCommit(sr)
+        this.reloadDialPlanAfterCommit(sr)
 
         return deletedIds
     }
 
     // TODO: required for mocking, as esbuild-jest has issues with jest mock"
     // patterns and will be reviewed after packages upgrade
-    async reloadDialPlanAfterCommit(sr: ServiceRequest): Promise<void> {
+    reloadDialPlanAfterCommit(sr: ServiceRequest): void {
         runOnTransactionCommit(async () => await this.ruleRedisRepo.reloadDialPlan(sr))
     }
 

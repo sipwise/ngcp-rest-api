@@ -6,6 +6,7 @@ import {PbxGroupMemberRepository} from '~/api/pbx/groups/members/interfaces/memb
 import {RbacRole} from '~/config/constants.config'
 import {db, internal} from '~/entities'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -41,9 +42,7 @@ export class PbxGroupMemberMariadbRepository extends MariaDbRepository implement
 
         const result = await query.getRawMany()
 
-        const transformed = await Promise.all(result.map(async group => {
-            return this.rawToInternalPbxGroupMember(group)
-        }))
+        const transformed = await mapYield(result, group => this.rawToInternalPbxGroupMember(group))
 
         return [transformed, totalCount]
     }
@@ -61,7 +60,7 @@ export class PbxGroupMemberMariadbRepository extends MariaDbRepository implement
         return this.rawToInternalPbxGroupMember(result)
     }
 
-    private async generateBaseQuery(sr: ServiceRequest, _searchLogic?: SearchLogic): Promise<SelectQueryBuilder<db.provisioning.VoipSubscriber>> {
+    private generateBaseQuery(sr: ServiceRequest, _searchLogic?: SearchLogic): Promise<SelectQueryBuilder<db.provisioning.VoipSubscriber>> {
         const memberSubQuery = db.provisioning.VoipSubscriber.createQueryBuilder('sm')
             .select([
                 'bm.id AS member_subscriberId',
@@ -99,7 +98,7 @@ export class PbxGroupMemberMariadbRepository extends MariaDbRepository implement
 
         this.addPermissionFilterToQueryBuilder(query, sr)
 
-        return query
+        return Promise.resolve(query)
     }
 
     private addSearchFilterToQueryBuilder(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, searchLogic: SearchLogic, sr: ServiceRequest): void {

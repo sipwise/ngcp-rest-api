@@ -31,9 +31,9 @@ export class PeeringGroupServerService implements CrudService<internal.VoipPeeri
         this.checkSiteIds(entities, sr)
 
         const created = await this.peeringGroupServerRepo.create(entities)
-        await this.reloadKamProxyLcrAfterCommit(sr)
+        this.reloadKamProxyLcrAfterCommit(sr)
         if (this.requiresDispatcherReload(entities)) {
-            await this.reloadKamProxyDispatcherAfterCommit(sr)
+            this.reloadKamProxyDispatcherAfterCommit(sr)
         }
         return this.peeringGroupServerRepo.readWhereInIds(created, sr)
     }
@@ -57,10 +57,10 @@ export class PeeringGroupServerService implements CrudService<internal.VoipPeeri
         this.checkSiteIds(updates, sr)
 
         // Always reload LCR
-        await this.reloadKamProxyLcrAfterCommit(sr)
+        this.reloadKamProxyLcrAfterCommit(sr)
 
         if (this.requiresDispatcherReloadOnUpdate(servers, updates)) {
-            await this.reloadKamProxyDispatcherAfterCommit(sr)
+            this.reloadKamProxyDispatcherAfterCommit(sr)
         }
 
         return this.peeringGroupServerRepo.update(updates, sr)
@@ -79,20 +79,20 @@ export class PeeringGroupServerService implements CrudService<internal.VoipPeeri
         const servers = await this.peeringGroupServerRepo.readWhereInIds(ids, sr)
         throwMissingIds(sr, ids, servers.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
-        await this.reloadKamProxyLcrAfterCommit(sr)
+        this.reloadKamProxyLcrAfterCommit(sr)
         if (this.requiresDispatcherReload(servers)) {
-            await this.reloadKamProxyDispatcherAfterCommit(sr)
+            this.reloadKamProxyDispatcherAfterCommit(sr)
         }
         return await this.peeringGroupServerRepo.delete(ids, sr)
     }
 
-    async reloadKamProxyLcrAfterCommit(sr: ServiceRequest): Promise<void> {
+    reloadKamProxyLcrAfterCommit(sr: ServiceRequest): void {
         runOnTransactionCommit(async () => {
             await this.serverRedisRepo.reloadKamProxLcr(sr)
         })
     }
 
-    async reloadKamProxyDispatcherAfterCommit(sr: ServiceRequest): Promise<void> {
+    reloadKamProxyDispatcherAfterCommit(sr: ServiceRequest): void {
         runOnTransactionCommit(async () => {
             await this.serverRedisRepo.reloadKamProxDispatcher(sr)
         })

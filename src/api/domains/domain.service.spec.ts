@@ -165,11 +165,11 @@ describe('DomainService', () => {
             await expect(service.delete([2, 3], sr)).resolves.toStrictEqual([2, 3])
         })
 
-        it('deletes domains one by one by id', async () => {
+        it('deletes all domains in one call', async () => {
             const spy = jest.spyOn(domainMockRepo, 'delete')
             await service.delete([1, 2], sr)
-            expect(spy).toHaveBeenNthCalledWith(1, 1, sr)
-            expect(spy).toHaveBeenNthCalledWith(2, 2, sr)
+            expect(spy).toHaveBeenCalledTimes(1)
+            expect(spy).toHaveBeenCalledWith([1, 2], sr)
         })
     })
 

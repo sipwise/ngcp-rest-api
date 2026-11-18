@@ -1,5 +1,5 @@
 import {Injectable} from '@nestjs/common'
-import {SelectQueryBuilder} from 'typeorm'
+import {EntityNotFoundError, SelectQueryBuilder} from 'typeorm'
 
 import {HeaderManipulationSetSearchDto} from '~/api/header-manipulations/sets/dto/set-search.dto'
 import {HeaderManipulationSetRepository} from '~/api/header-manipulations/sets/interfaces/set.repository'
@@ -7,6 +7,7 @@ import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {QueriesDictionary, ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -22,13 +23,15 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
 
     async create(entities: internal.HeaderRuleSet[]): Promise<number[]> {
         const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
-        const values = await Promise.all(entities.map(async entity => {
-            entity.subscriberId = await this.billingToProvisioning(entity.subscriberId)
+        const provisioningIds = await this.billingToProvisioningIds(entities.map(entity => entity.subscriberId))
+        const values = await mapYield(entities, entity => {
+            if (entity.subscriberId)
+                entity.subscriberId = provisioningIds.get(entity.subscriberId)
             return new db.provisioning.VoipHeaderRuleSet().fromInternal(entity)
-        }))
+        })
         const result = await qb.insert().values(values).execute()
 
-        return await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.HeaderRuleSet[], number]> {
@@ -46,12 +49,7 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
         )
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(
-            result.map(async (d) => {
-                d.subscriber_id = await this.provisioningToBilling(d.subscriber_id)
-                return d.toInternal()
-            }),
-        ), totalCount]
+        return [await this.toInternalSets(result), totalCount]
     }
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleSet> {
@@ -69,31 +67,15 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
         )
         qb.andWhere({id: id})
         this.addFilterBy(qb, filterBy)
-        const result = await qb.getOneOrFail()
-        result.subscriber_id = await this.provisioningToBilling(result.subscriber_id)
-        return result.toInternal()
+        const [set] = await this.toInternalSets([await qb.getOneOrFail()])
+        return set
     }
 
-    async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleSet[]> {
+    async readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleSet[]> {
         const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
-        const searchDto  = new HeaderManipulationSetSearchDto()
-        configureQueryBuilder(
-            qb,
-            await this.configureSrQuery(sr),
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
         qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
-        const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => {
-            d.subscriber_id = await this.provisioningToBilling(d.subscriber_id)
-            return d.toInternal()
-        }))
+        return await this.toInternalSets(await qb.getMany())
     }
 
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
@@ -114,28 +96,27 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
         return await qb.getCount()
     }
 
-    async readBySubscriberId(subscriberId: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.HeaderRuleSet[]> {
-        const qb = db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
-        const searchDto  = new HeaderManipulationSetSearchDto()
-        configureQueryBuilder(
-            qb,
-            await this.configureSrQuery(sr),
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
-        qb.andWhere('subscriber_id = :id', {
-            id: await this.billingToProvisioning(subscriberId),
-        })
-        this.addFilterBy(qb, filterBy)
-        const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => {
-            d.subscriber_id = await this.provisioningToBilling(d.subscriber_id)
-            return d.toInternal()
-        }))
+    /**
+     * Id of the set of each billing subscriber of `subscriberIds` that has one (the lowest id if several); an
+     * unknown subscriber is not found
+     */
+    async readIdsBySubscriberIds(subscriberIds: number[]): Promise<Map<number, number>> {
+        const provisioningIds = await this.billingToProvisioningIds(subscriberIds)
+        if (!provisioningIds.size)
+            return new Map()
+        const rows = await db.provisioning.VoipHeaderRuleSet.createQueryBuilder('headerRuleSet')
+            .select('headerRuleSet.subscriber_id', 'subscriberId')
+            .addSelect('MIN(headerRuleSet.id)', 'id')
+            .where('headerRuleSet.subscriber_id IN (:...ids)', {ids: [...provisioningIds.values()]})
+            .groupBy('headerRuleSet.subscriber_id')
+            .getRawMany<{subscriberId: number, id: number}>()
+        const setIds = new Map(rows.map(row => [row.subscriberId, row.id]))
+        const result = new Map<number, number>()
+        for (const [billingId, provisioningId] of provisioningIds) {
+            if (setIds.has(provisioningId))
+                result.set(billingId, setIds.get(provisioningId))
+        }
+        return result
     }
 
     async update(updates: Dictionary<internal.HeaderRuleSet>, _sr: ServiceRequest): Promise<number[]> {
@@ -154,25 +135,59 @@ export class HeaderManipulationSetMariadbRepository extends MariaDbRepository im
     }
 
     private async billingToProvisioning(billingSubscriberId: number | null | undefined): Promise<number> {
-        if (!billingSubscriberId) {
+        if (!billingSubscriberId)
             return billingSubscriberId
-        }
-        const qb = db.billing.VoipSubscriber.createQueryBuilder('bVoipSubscriber')
-        qb.where({id: billingSubscriberId})
-        qb.leftJoinAndSelect('bVoipSubscriber.provisioningVoipSubscriber', 'provisioningVoipSubscriber')
-        const subscriber = await qb.getOneOrFail()
-        return subscriber.provisioningVoipSubscriber.id
+        return (await this.billingToProvisioningIds([billingSubscriberId])).get(billingSubscriberId)
     }
 
-    private async provisioningToBilling(provisioningSubscriberId: number | null | undefined): Promise<number> {
-        if (!provisioningSubscriberId) {
-            return provisioningSubscriberId
-        }
-        const qb = db.provisioning.VoipSubscriber.createQueryBuilder('pVoipSubscriber')
-        qb.leftJoinAndSelect('pVoipSubscriber.billing_voip_subscriber', 'billing_voip_subscriber')
-        qb.where({id: provisioningSubscriberId})
-        const subscriber = await qb.getOneOrFail()
-        return subscriber.billing_voip_subscriber.id
+    /**
+     * Provisioning subscriber ids of the billing subscriber ids (empty ones skipped); an unknown id is not found
+     */
+    private async billingToProvisioningIds(billingSubscriberIds: number[]): Promise<Map<number, number>> {
+        const ids = [...new Set(billingSubscriberIds.filter(id => id))]
+        if (!ids.length)
+            return new Map()
+        const subscribers = await db.billing.VoipSubscriber.createQueryBuilder('bVoipSubscriber')
+            .innerJoin('bVoipSubscriber.provisioningVoipSubscriber', 'provisioningVoipSubscriber')
+            .select(['bVoipSubscriber.id', 'provisioningVoipSubscriber.id'])
+            .whereInIds(ids)
+            .getMany()
+        const provisioningIds = new Map(subscribers.map(subscriber => [subscriber.id, subscriber.provisioningVoipSubscriber.id]))
+        const unknownId = ids.find(id => !provisioningIds.has(id))
+        if (unknownId)
+            throw new EntityNotFoundError(db.billing.VoipSubscriber, {id: unknownId})
+        return provisioningIds
+    }
+
+    /**
+     * Billing subscriber ids of the provisioning subscriber ids (empty ones skipped); an unknown id is not found
+     */
+    private async provisioningToBillingIds(provisioningSubscriberIds: number[]): Promise<Map<number, number>> {
+        const ids = [...new Set(provisioningSubscriberIds.filter(id => id))]
+        if (!ids.length)
+            return new Map()
+        const subscribers = await db.provisioning.VoipSubscriber.createQueryBuilder('pVoipSubscriber')
+            .innerJoin('pVoipSubscriber.billing_voip_subscriber', 'billing_voip_subscriber')
+            .select(['pVoipSubscriber.id', 'billing_voip_subscriber.id'])
+            .whereInIds(ids)
+            .getMany()
+        const billingIds = new Map(subscribers.map(subscriber => [subscriber.id, subscriber.billing_voip_subscriber.id]))
+        const unknownId = ids.find(id => !billingIds.has(id))
+        if (unknownId)
+            throw new EntityNotFoundError(db.provisioning.VoipSubscriber, {id: unknownId})
+        return billingIds
+    }
+
+    /**
+     * Internal sets with billing subscriber ids
+     */
+    private async toInternalSets(sets: db.provisioning.VoipHeaderRuleSet[]): Promise<internal.HeaderRuleSet[]> {
+        const billingIds = await this.provisioningToBillingIds(sets.map(set => set.subscriber_id))
+        return await mapYield(sets, set => {
+            if (set.subscriber_id)
+                set.subscriber_id = billingIds.get(set.subscriber_id)
+            return set.toInternal()
+        })
     }
 
     private async configureSrQuery(sr: ServiceRequest): Promise<QueriesDictionary> {

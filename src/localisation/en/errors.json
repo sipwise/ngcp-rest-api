@@ -101,6 +101,9 @@
   "INLINE_INVALID": {
     "message": "Invalid value {value}, expected a comma list of field names, all or auto"
   },
+  "BULK_TOO_LARGE": {
+    "message": "{count} items are more than the {max} allowed per request"
+  },
   "VALIDATION_FAILED_UNSUPPORTED_ID": {
     "message": "Validation failed (unsupported :id format)"
   },

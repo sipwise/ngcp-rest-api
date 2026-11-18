@@ -1,14 +1,15 @@
 import {Injectable} from '@nestjs/common'
-import {IsNull, SelectQueryBuilder} from 'typeorm'
+import {In, IsNull, SelectQueryBuilder} from 'typeorm'
 
 import {ResellerSearchDto} from '~/api/resellers/dto/reseller-search.dto'
-import {ResellerRepository} from '~/api/resellers/interfaces/reseller.repository'
+import {ResellerContract, ResellerRepository} from '~/api/resellers/interfaces/reseller.repository'
 import {AppService} from '~/app.service'
 import {db, internal} from '~/entities'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -73,13 +74,15 @@ export class ResellerMariadbRepository extends MariaDbRepository implements Rese
     async readWhereInIds(ids: number[]): Promise<internal.Reseller[]> {
         const qb = db.billing.Reseller.createQueryBuilder('reseller')
         const created = await qb.andWhereInIds(ids).getMany()
-        return await Promise.all(created.map(async (reseller) => reseller.toInternal()))
+        return await mapYield(created, (reseller) => reseller.toInternal())
     }
 
 
-    async readByName(name: string, sr: ServiceRequest): Promise<internal.Reseller> {
-        this.log.debug({message: 'read reseller by id', func: this.readByName.name, user: sr.user.username, name: name})
-        return await db.billing.Reseller.findOne({where: {name: name}})
+    async readByNames(names: string[]): Promise<internal.Reseller[]> {
+        if (!names.length)
+            return []
+        const resellers = await db.billing.Reseller.findBy({name: In(names)})
+        return await mapYield(resellers, reseller => reseller.toInternal())
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Reseller[], number]> {
@@ -109,33 +112,31 @@ export class ResellerMariadbRepository extends MariaDbRepository implements Rese
         return ids
     }
 
-    async resellerWithContractExists(contractId: number): Promise<boolean> {
-        const resellers = await db.billing.Reseller.find({where: {contract_id: contractId}})
-        return resellers.length != 0
+    async readResellerContracts(contractIds: number[]): Promise<ResellerContract[]> {
+        if (!contractIds.length)
+            return []
+        const rows = await db.billing.Contract.createQueryBuilder('contract')
+            .leftJoin('contract.contact', 'contact')
+            .leftJoin(db.billing.Reseller, 'reseller', 'reseller.contract_id = contract.id')
+            .select('contract.id', 'id')
+            .addSelect('contact.id IS NOT NULL AND contact.reseller_id IS NULL', 'hasSystemContact')
+            .addSelect('reseller.id IS NOT NULL', 'hasReseller')
+            .where('contract.id IN (:...ids)', {ids: contractIds})
+            .getRawMany<{id: number, hasSystemContact: number, hasReseller: number}>()
+        return rows.map(row => ({id: row.id, hasSystemContact: row.hasSystemContact == 1, hasReseller: row.hasReseller == 1}))
     }
 
-    async contractExists(contractId: number): Promise<boolean> {
-        const contract = await db.billing.Contract.findOneBy({id: contractId})
-        return contract != undefined
+    async renameResellers(ids: number[]): Promise<void> {
+        await db.billing.Reseller.createQueryBuilder()
+            .update()
+            .set({name: () => 'CONCAT(\'old_\', id, \'_\', name)'})
+            .whereInIds(ids)
+            .execute()
     }
 
-    async contractHasSystemContact(contractId: number): Promise<boolean> {
-        const contract = await db.billing.Contract.findOne({
-            where: {
-                id: contractId,
-            },
-            relations: {contact: true},
-        })
-        return contract.contact.reseller_id == undefined
-    }
-
-    async renameReseller(id: number, name: string): Promise<void> {
-        await db.billing.Reseller.update(id, {name: `old_${id}_${name}`})
-    }
-
-    private async createBaseQueryBuilder(_sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Reseller>> {
+    private createBaseQueryBuilder(_sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Reseller>> {
         const qb = db.billing.Reseller.createQueryBuilder('reseller')
-        return qb
+        return Promise.resolve(qb)
     }
 
     private async createReadAllQueryBuilder(sr: ServiceRequest): Promise<SelectQueryBuilder<db.billing.Reseller>> {

@@ -9,21 +9,21 @@ export interface ContactRepository {
 
     delete(ids: number[], sr: ServiceRequest): Promise<number[]>
 
-    terminate(id: number, sr: ServiceRequest): Promise<number>
+    terminate(ids: number[], sr: ServiceRequest): Promise<number[]>
 
     readById(id: number, options: ContactOptions): Promise<internal.Contact>
 
     readWhereInIds(ids: number[], options: ContactOptions): Promise<internal.Contact[]>
 
-    readResellerById(id: number, sr: ServiceRequest): Promise<internal.Reseller>
+    readExistingResellerIds(ids: number[]): Promise<number[]>
 
-    hasContactActiveContract(contactId: number, sr: ServiceRequest): Promise<boolean>
+    readIdsWithActiveContract(ids: number[]): Promise<number[]>
 
-    hasContactTerminatedContract(contactId: number, sr: ServiceRequest): Promise<boolean>
+    readIdsWithTerminatedContract(ids: number[]): Promise<number[]>
 
-    hasContactActiveSubscriber(contactId: number, sr: ServiceRequest): Promise<boolean>
+    readIdsWithActiveSubscriber(ids: number[]): Promise<number[]>
 
-    hasContactTerminatedSubscriber(contactId: number, sr: ServiceRequest): Promise<boolean>
+    readIdsWithTerminatedSubscriber(ids: number[]): Promise<number[]>
 
     readAll(sr: ServiceRequest, options?: ContactOptions): Promise<[internal.Contact[], number]>
 

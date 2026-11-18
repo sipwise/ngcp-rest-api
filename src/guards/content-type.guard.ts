@@ -6,7 +6,7 @@ export class ContentTypeGuard implements CanActivate {
     constructor(private readonly reflector: Reflector) {
     }
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
+    canActivate(context: ExecutionContext): boolean {
         const request = context.switchToHttp().getRequest()
         let contentType:string | undefined = request.headers['content-type']
         if (!contentType || contentType.length === 0)

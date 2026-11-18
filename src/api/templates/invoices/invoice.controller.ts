@@ -103,8 +103,7 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
         validateResellerId([createDto], sr, {required: false})
         const created = await this.invoiceTemplateService.create([createDto.toInternal()], sr, file)
         const response = created.map((e) => new InvoiceTemplateResponseDto(e, {url: req.url}))
-        for (const entry of response)
-            await this.journalService.writeJournal(sr, entry.id, entry)
+        await this.journalService.writeJournals(sr, response.map(entry => ({id: entry.id, data: entry})))
         return response
     }
 
@@ -252,7 +251,7 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
         const sr = new ServiceRequest(req)
         const patch = req.is('multipart/form-data')
             ? this.multipartToPatch(body, file)
-            : await new ParsePatchPipe().transform(body, {type: 'body'})
+            : new ParsePatchPipe().transform(body, {type: 'body'})
         validatePatchResellerId(new Dictionary(id.toString(), patch), sr, {required: false})
         const oldEntity = await this.invoiceTemplateService.read(id, sr)
         const entity = patch.length
@@ -285,9 +284,7 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
         })
         const sr = new ServiceRequest(req)
         const deletedIds = await this.invoiceTemplateService.delete(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
-        }
+        await this.journalService.writeJournals(sr, deletedIds.map(id => ({id, data: {}})))
         return deletedIds
     }
 

@@ -49,9 +49,8 @@ export class BanSubscriberService implements CrudService<internal.BanSubscriber>
         )
         throwMissingIds(sr, ids, idsToDelete.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
-        await Promise.all(idsToDelete.map(async subscriber => {
-            await this.authService.removeSubscriberBan(subscriber.id,sr)
-        }))
+        for (const subscriber of idsToDelete)
+            await this.authService.removeSubscriberBan(subscriber.id, sr)
 
         return ids
     }

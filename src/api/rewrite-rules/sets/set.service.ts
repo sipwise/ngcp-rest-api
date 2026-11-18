@@ -32,7 +32,7 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
         this.assignUserResellerId(entities, sr)
         const created = await this.ruleSetRepo.create(entities)
 
-        await this.reloadDialPlanAfterCommit(sr)
+        this.reloadDialPlanAfterCommit(sr)
 
         return await this.ruleSetRepo.readWhereInIds(created, sr)
     }
@@ -82,12 +82,10 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
 
         this.assignUserResellerId(Object.values(updates), sr)
         const updatedIds = await this.ruleSetRepo.update(updates, sr)
-        await Promise.all(
-            updatedIds.map(id => this.ruleSetRepo.cleanSets(id, sr)),
-        )
+        await this.ruleSetRepo.cleanSets(updatedIds, sr)
         if (rules && rules.length > 0) {
             await this.ruleSetRepo.createRules(rules)
-            await this.reloadDialPlanAfterCommit(sr)
+            this.reloadDialPlanAfterCommit(sr)
         }
         return updatedIds
 
@@ -106,7 +104,7 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
 
         const deletedIds = await this.ruleSetRepo.delete(ids, sr)
 
-        await this.reloadDialPlanAfterCommit(sr)
+        this.reloadDialPlanAfterCommit(sr)
 
         return deletedIds
     }
@@ -121,14 +119,12 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
 
         throwMissingIds(sr, ids, sets.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
-        await Promise.all(
-            ids.map(id => this.ruleSetRepo.cleanSets(id, sr)),
-        )
+        await this.ruleSetRepo.cleanSets(ids, sr)
     }
 
     // TODO: required for mocking, as esbuild-jest has issues with jest mock
     // patterns and will be reviewed after packages upgrade
-    async reloadDialPlanAfterCommit(sr: ServiceRequest): Promise<void> {
+    reloadDialPlanAfterCommit(sr: ServiceRequest): void {
         runOnTransactionCommit(async () => await this.ruleSetRedisRepo.reloadDialPlan(sr))
     }
 

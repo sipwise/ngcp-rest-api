@@ -7,6 +7,7 @@ import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {FilterBy} from '~/interfaces/filter-by.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -42,28 +43,15 @@ export class CustomerSpeedDialMariadbRepository extends MariaDbRepository implem
         )
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(
-            result.map(async (d) =>
-                d.toInternal(),
-            ),
-        ), totalCount]
+        return [await mapYield(result, d => d.toInternal()), totalCount]
     }
 
-    async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.CustomerSpeedDial[]> {
+    async readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.CustomerSpeedDial[]> {
         const qb = db.provisioning.VoipContractSpeedDial.createQueryBuilder('csd')
-        const searchDto = new CustomerSpeedDialSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
-        const created = await qb.andWhereInIds(ids).getMany()
-        return await Promise.all(created.map(async (csd) => csd.toInternal()))
+        qb.andWhereInIds(ids)
+        this.addFilterBy(qb, filterBy)
+        const created = await qb.getMany()
+        return await mapYield(created, (csd) => csd.toInternal())
     }
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.CustomerSpeedDial> {
@@ -102,36 +90,32 @@ export class CustomerSpeedDialMariadbRepository extends MariaDbRepository implem
         return ids
     }
 
-    async checkCustomerExistsAndCustomerReseller(customerId: number, resellerId: number, checkReseller: boolean): Promise<boolean> {
-        const contract = await db.billing.Contract.findOne({
-            where: {
-                id: customerId,
-            },
-            relations: {
-                contact: true,
-            },
-        })
-        if (!contract)
-            return false
-        if (checkReseller && contract.contact.reseller_id != resellerId)
-            return false
-        return true
+    // reseller id of each customer of `customerIds` that exists
+    async readCustomerResellerIds(customerIds: number[]): Promise<Map<number, number>> {
+        if (!customerIds.length)
+            return new Map()
+        const rows = await db.billing.Contract.createQueryBuilder('contract')
+            .leftJoin('contract.contact', 'contact')
+            .select('contract.id', 'id')
+            .addSelect('contact.reseller_id', 'resellerId')
+            .where('contract.id IN (:...ids)', {ids: customerIds})
+            .getRawMany<{id: number, resellerId: number}>()
+        return new Map(rows.map(row => [row.id, row.resellerId]))
     }
 
-    async readSubscriberDomain(customerId: number, options: SpeedDialOptions): Promise<string> {
-        const subscriber = await db.provisioning.VoipSubscriber.findOne({
-            where: {
-                account_id: customerId,
-                is_pbx_pilot: options.isPilot,
-            },
-            relations: {
-                domain: true,
-            },
-        })
-        if (subscriber)
-            return subscriber.domain.domain
-
-        return undefined
+    // domain of a (non-)pilot subscriber of each customer of `customerIds` that has one
+    async readSubscriberDomains(customerIds: number[], options: SpeedDialOptions): Promise<Map<number, string>> {
+        if (!customerIds.length)
+            return new Map()
+        const rows = await db.provisioning.VoipSubscriber.createQueryBuilder('subscriber')
+            .innerJoin('subscriber.domain', 'domain')
+            .select('subscriber.account_id', 'customerId')
+            .addSelect('MIN(domain.domain)', 'domain')
+            .where('subscriber.account_id IN (:...ids)', {ids: customerIds})
+            .andWhere('subscriber.is_pbx_pilot = :isPilot', {isPilot: options.isPilot})
+            .groupBy('subscriber.account_id')
+            .getRawMany<{customerId: number, domain: string}>()
+        return new Map(rows.map(row => [row.customerId, row.domain]))
     }
 
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipContractSpeedDial>, filterBy: FilterBy): void {

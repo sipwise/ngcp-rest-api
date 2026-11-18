@@ -75,8 +75,7 @@ export class ResellerController extends CrudController<ResellerRequestDto, Resel
             reseller,
             {url: req.url},
         ))
-        for (const entry of response)
-            await this.journalService.writeJournal(sr, entry.id, entry)
+        await this.journalService.writeJournals(sr, response.map(entry => ({id: entry.id, data: entry})))
         return response
     }
 

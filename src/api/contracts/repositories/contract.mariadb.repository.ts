@@ -33,7 +33,7 @@ export class ContractMariadbRepository extends MariaDbRepository implements Cont
         return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
-    async delete(_id: number, _sr: ServiceRequest): Promise<number> {
+    delete(_id: number, _sr: ServiceRequest): Promise<number> {
         throw new MethodNotAllowedException()
     }
 
@@ -48,12 +48,13 @@ export class ContractMariadbRepository extends MariaDbRepository implements Cont
         return (await this.setActualBillingProfiles([contract]))[0]
     }
 
-    async readBillingProfile(id: number, _sr: ServiceRequest): Promise<internal.BillingProfile> {
-        // an undefined id would be ignored in the where clause and return the first row
-        if (id == undefined)
-            return undefined
-        const profile = await db.billing.BillingProfile.findOneBy({id: id})
-        return profile != undefined ? profile.toInternal() : undefined
+    // unset ids are left out
+    async readBillingProfiles(ids: number[]): Promise<internal.BillingProfile[]> {
+        const profileIds = ids.filter(id => id != null)
+        if (!profileIds.length)
+            return []
+        const profiles = await db.billing.BillingProfile.findBy({id: In(profileIds)})
+        return profiles.map(profile => profile.toInternal())
     }
 
     async appendBillingMappings(contractId: number, mappings: internal.BillingMapping[], _sr: ServiceRequest): Promise<void> {
@@ -65,30 +66,27 @@ export class ContractMariadbRepository extends MariaDbRepository implements Cont
         ])
     }
 
-    async readActiveSystemContact(id: number, sr: ServiceRequest): Promise<internal.Contact> {
-        this.log.debug({
-            message: 'read active system contact by id',
-            func: this.readActiveSystemContact.name,
-            user: sr.user.username,
-            id: id,
+    // ids of `ids` that are active system contacts
+    async readActiveSystemContactIds(ids: number[]): Promise<number[]> {
+        const contactIds = ids.filter(id => id != null)
+        if (!contactIds.length)
+            return []
+        const contacts = await db.billing.Contact.find({
+            select: {id: true},
+            where: {
+                id: In(contactIds),
+                status: Not<ContactStatus.Terminated>(ContactStatus.Terminated),
+                reseller_id: IsNull(),
+            },
         })
-        const contact = await db.billing.Contact.findOneBy({
-            id: id,
-            status: Not<ContactStatus.Terminated>(ContactStatus.Terminated),
-            reseller_id: IsNull(),
-        })
-        return contact != undefined ? contact.toInternal() : undefined
+        return contacts.map(contact => contact.id)
     }
 
-    async readProductByType(type: string, sr: ServiceRequest): Promise<internal.Product> {
-        this.log.debug({
-            message: 'read product by type',
-            func: this.readProductByType.name,
-            user: sr.user.username,
-            type: type,
-        })
-        const product = await db.billing.Product.findOneBy({class: <ProductClass>type})
-        return product != undefined ? product.toInternal() : undefined
+    async readProductsByTypes(types: string[]): Promise<internal.Product[]> {
+        if (!types.length)
+            return []
+        const products = await db.billing.Product.findBy({class: In(types as ProductClass[])})
+        return products.map(product => product.toInternal())
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.Contract[], number]> {
@@ -114,19 +112,8 @@ export class ContractMariadbRepository extends MariaDbRepository implements Cont
         return [await this.setActualBillingProfiles(result.map(r => r.toInternal())), totalCount]
     }
 
-    async readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Contract[]> {
+    async readWhereInIds(ids: number[], _sr: ServiceRequest): Promise<internal.Contract[]> {
         const qb = db.billing.Contract.createQueryBuilder('contract')
-        const searchDto = new ContractSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
         qb.leftJoinAndSelect('contract.product', 'product')
         const created = await qb.andWhereInIds(ids).getMany()
         return await this.setActualBillingProfiles(created.map(contract => contract.toInternal()))

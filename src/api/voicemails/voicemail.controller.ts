@@ -84,9 +84,7 @@ export class VoicemailController extends CrudController<VoicemailRequestDto, Voi
         this.log.debug({message: 'delete voicemail by id', func: this.delete.name, url: req.url, method: req.method})
         const sr = new ServiceRequest(req)
         const deletedIds = await this.voicemailService.delete(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
-        }
+        await this.journalService.writeJournals(sr, deletedIds.map(id => ({id, data: {}})))
         return deletedIds
     }
 

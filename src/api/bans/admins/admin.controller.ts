@@ -91,9 +91,7 @@ export class BanAdminController extends CrudController<never, BanAdminResponseDt
         })
         const sr = new ServiceRequest(req)
         const deletedIds = await this.banAdminService.delete(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
-        }
+        await this.journalService.writeJournals(sr, deletedIds.map(id => ({id, data: {}})))
         return deletedIds
     }
 }

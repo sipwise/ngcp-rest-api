@@ -110,11 +110,11 @@ class OwnerController {
 
     @Get()
     @ResponseModel(OwnerDto)
-    async readAll(req: Request): Promise<[OwnerDto[], number]> {
+    readAll(req: Request): Promise<[OwnerDto[], number]> {
         ownerReads.push(isInlined(req, 'entries'))
         const ids = `${req.query.id}`.split(',').map(Number)
         const found = ids.filter(id => owners.has(id)).map(id => new OwnerDto(id, [...owners.get(id).entries]))
-        return [found, found.length]
+        return Promise.resolve([found, found.length])
     }
 
     @Get(':id')
@@ -211,7 +211,7 @@ function expandInterceptor(): ExpandInterceptor {
         return wrapper(TargetController)
     })
     const discovery = {getControllers: () => [wrapper(OwnerController), ...globalTargets]} as unknown as DiscoveryService
-    const licenses = {areLicensesActive: async (): Promise<boolean> => true} as unknown as LicenseService
+    const licenses = {areLicensesActive: (): Promise<boolean> => Promise.resolve(true)} as unknown as LicenseService
     const interceptor = new ExpandInterceptor(discovery, new Reflector(), licenses, appConfig)
     interceptor.onModuleInit()
     return interceptor
@@ -326,7 +326,7 @@ describe('LazyFieldInterceptor', () => {
             [{a: '1'}],
             ['all,auto'],
         ])('rejects %j with 400', async value => {
-            const err = await caught((async (): Promise<unknown> => parseInline(value))()) as ApiErrorException
+            const err = await caught(Promise.resolve().then(() => parseInline(value))) as ApiErrorException
             expect(err.getStatus()).toEqual(HttpStatus.BAD_REQUEST)
             expect(err.errorList[0]).toMatchObject({parameter: 'inline', code: 'INLINE_INVALID'})
         })

@@ -86,8 +86,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
         const admins = createDto.map(admin => admin.toInternal())
         const created = await this.adminService.create(admins, sr)
         const response = created.map((adm) => new AdminResponseDto(adm, sr.user.role))
-        for (const entry of response)
-            await this.journalService.writeJournal(sr, entry.id, entry)
+        await this.journalService.writeJournals(sr, response.map(entry => ({id: entry.id, data: entry})))
         return response
     }
 
@@ -244,9 +243,7 @@ export class AdminController extends CrudController<AdminRequestDto, AdminRespon
 
         this.log.debug({message: 'delete admin by id', func: this.delete.name, url: req.url, method: req.method})
         const deletedIds = await this.adminService.delete(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
-        }
+        await this.journalService.writeJournals(sr, deletedIds.map(id => ({id, data: {}})))
         return deletedIds
     }
 

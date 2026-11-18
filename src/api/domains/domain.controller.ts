@@ -77,8 +77,7 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
         const domains = createDto.map(domain => domain.toInternal())
         const created = await this.domainService.create(domains, sr)
         const response = created.map((domain) => new DomainResponseDto(domain))
-        for (const entry of response)
-            await this.journalService.writeJournal(sr, entry.id, entry)
+        await this.journalService.writeJournals(sr, response.map(entry => ({id: entry.id, data: entry})))
         return response
     }
 
@@ -121,9 +120,7 @@ export class DomainController extends CrudController<DomainRequestDto, DomainRes
 
         const sr = new ServiceRequest(req)
         const deletedIds = await this.domainService.delete(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
-        }
+        await this.journalService.writeJournals(sr, deletedIds.map(id => ({id, data: {}})))
         return deletedIds
     }
 

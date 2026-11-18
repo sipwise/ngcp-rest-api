@@ -76,9 +76,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
         const contacts = entity.map(contact => contact.toInternal())
         const created = await this.contactService.create(contacts, sr)
         const response = created.map(contact => new ContactResponseDto(contact, sr.user.role))
-        for(const entry of response) {
-            await this.journalService.writeJournal(sr, entry.id, entry)
-        }
+        await this.journalService.writeJournals(sr, response.map(entry => ({id: entry.id, data: entry})))
         return response
     }
 
@@ -199,9 +197,7 @@ export class ContactController extends CrudController<ContactRequestDto, Contact
         const sr = new ServiceRequest(req)
         this.log.debug({message: 'delete contacts by id', func: this.delete.name, url: req.url, method: req.method})
         const deletedIds = await this.contactService.delete(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
-        }
+        await this.journalService.writeJournals(sr, deletedIds.map(id => ({id, data: {}})))
         return deletedIds
     }
 

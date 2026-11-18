@@ -15,7 +15,7 @@ export class LicenseGuard implements CanActivate {
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const isPublic = new PublicGuard(this.reflector)
-        if (await isPublic.canActivate(context))
+        if (isPublic.canActivate(context))
             return true
 
         const controllerLicenses = this.reflector.get<string[]>('licenses', context.getClass())

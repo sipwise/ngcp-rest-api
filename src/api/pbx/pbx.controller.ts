@@ -37,7 +37,7 @@ export class PbxController extends CrudController<never, PbxResponseDto> {
     @Get()
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(PbxResponseDto)
-    async readAll(@Req() req: Request): Promise<[PbxResponseDto[], number]> {
+    readAll(@Req() req: Request): Promise<[PbxResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all pbx',
             func: this.readAll.name,
@@ -49,6 +49,6 @@ export class PbxController extends CrudController<never, PbxResponseDto> {
         const sr = new ServiceRequest(req)
         const response = [new PbxResponseDto({url: req.url})]
         const sortedResponse = sortAndPaginate<PbxResponseDto>(response, sr, 'resourceUrl')
-        return [sortedResponse, response.length]
+        return Promise.resolve([sortedResponse, response.length])
     }
 }

@@ -22,11 +22,7 @@ export class NCOSSetLevelService implements CrudService<internal.NCOSSetLevel> {
     }
 
     async create(entities: internal.NCOSSetLevel[], sr: ServiceRequest): Promise<internal.NCOSSetLevel[]> {
-        const setIds = [...new Set(entities.map(entity => entity.ncosSetId))]
-        for (const setId of setIds) {
-            const ncosSet = await this.ncosSetRepo.readById(setId, sr)
-            await this.checkPermissions(ncosSet.resellerId, sr)
-        }
+        await this.checkSetPermissions(entities.map(entity => entity.ncosSetId), sr)
 
         const createdIds = await this.ncosSetLevelRepo.create(entities)
 
@@ -53,11 +49,7 @@ export class NCOSSetLevelService implements CrudService<internal.NCOSSetLevel> {
         const entities = await this.ncosSetLevelRepo.readWhereInIds(ids, sr)
         throwMissingIds(sr, ids, entities.map(entity => entity.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
-        const setIds = [...new Set(entities.map(entity => entity.ncosSetId))]
-        for (const setId of setIds) {
-            const ncosSet = await this.ncosSetRepo.readById(setId, sr)
-            await this.checkPermissions(ncosSet.resellerId, sr)
-        }
+        await this.checkSetPermissions(entities.map(entity => entity.ncosSetId), sr)
 
         return await this.ncosSetLevelRepo.delete(ids, sr)
     }
@@ -70,7 +62,16 @@ export class NCOSSetLevelService implements CrudService<internal.NCOSSetLevel> {
         return filterBy
     }
 
-    private async checkPermissions(resellerId: number, sr: ServiceRequest): Promise<void> {
+    private async checkSetPermissions(setIds: number[], sr: ServiceRequest): Promise<void> {
+        const uniqueIds = [...new Set(setIds)]
+        const sets = await this.ncosSetRepo.readWhereInIds(uniqueIds, sr)
+        if (sets.length != uniqueIds.length)
+            throw new NotFoundException()
+        for (const set of sets)
+            this.checkPermissions(set.resellerId, sr)
+    }
+
+    private checkPermissions(resellerId: number, sr: ServiceRequest): void {
         if (sr.user.resellerId && sr.user.reseller_id != resellerId) {
             throw new NotFoundException()
         }

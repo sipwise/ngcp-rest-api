@@ -18,6 +18,7 @@ import {Auth} from '~/decorators/auth.decorator'
 import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
@@ -62,11 +63,10 @@ export class NCOSSetLevelController extends CrudController<NCOSSetLevelRequestDt
         })
         const sr = new ServiceRequest(req)
         const reqDtoOptions = {parentId: +sr.params['setId']}
-        const entities = await Promise.all(createDto.map(async dto => dto.toInternal(reqDtoOptions)))
+        const entities = await mapYield(createDto, dto => dto.toInternal(reqDtoOptions))
         const created = await this.ncosSetLevelService.create(entities, sr)
-        const response = await Promise.all(created.map(async entity => new NCOSSetLevelResponseDto(entity)))
-        for (const entry of response)
-            await this.journalService.writeJournal(sr, entry.id, entry)
+        const response = await mapYield(created, entity => new NCOSSetLevelResponseDto(entity))
+        await this.journalService.writeJournals(sr, response.map(entry => ({id: entry.id, data: entry})))
         return response
     }
 
@@ -130,9 +130,7 @@ export class NCOSSetLevelController extends CrudController<NCOSSetLevelRequestDt
         })
         const sr = new ServiceRequest(req)
         const deletedIds = await this.ncosSetLevelService.delete(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
-        }
+        await this.journalService.writeJournals(sr, deletedIds.map(id => ({id, data: {}})))
         return deletedIds
     }
 

@@ -34,7 +34,7 @@ export class ClearCallCounterRedisRepository {
             publishChannel,
             feedbackChannel,
             request,
-            async (d, result) => {
+            (d, result) => {
                 if (typeof d === 'string') {
                     const calls = d.split('\n')
                     const rx = /^CallID:\[(.+)\]\s+/
@@ -48,6 +48,7 @@ export class ClearCallCounterRedisRepository {
                 if (typeof d === 'object' && d && 'CallID' in d) {
                     result.push((d as { CallID: string }).CallID)
                 }
+                return Promise.resolve()
             },
         )
         return stuckCallIds

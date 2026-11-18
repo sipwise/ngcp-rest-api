@@ -1,7 +1,9 @@
 import {ArgumentMetadata, ParseArrayOptions, PipeTransform, Type, ValidationPipe} from '@nestjs/common'
 
 import {ErrorEntry, ValidationFailedException} from '~/helpers/errors.helper'
+import {checkWriteLimit} from '~/helpers/request-limits.helper'
 import {createItemValidationPipe, validateItem} from '~/helpers/validate.helper'
+import {mapYield} from '~/helpers/yield.helper'
 
 /**
  * Validates an object or an array of objects (bulk POST) against `items`; every failing item is reported,
@@ -22,10 +24,11 @@ export class ParseOneOrManyPipe implements PipeTransform {
     async transform(value: unknown, _metadata: ArgumentMetadata): Promise<unknown[]> {
         const isArray = Array.isArray(value)
         const items: unknown[] = isArray ? value : [value]
+        checkWriteLimit(items.length)
         const errors: ErrorEntry[] = []
-        const result: unknown[] = []
-        for (const [index, item] of items.entries())
-            result.push(await validateItem(this.validationPipe, item, this.options.items as Type<unknown>, isArray ? `/${index}` : '', errors))
+        const result = await mapYield(items, (item, index) =>
+            validateItem(this.validationPipe, item, this.options.items as Type<unknown>, isArray ? `/${index}` : '', errors),
+        )
         if (errors.length)
             throw new ValidationFailedException(errors)
         return result

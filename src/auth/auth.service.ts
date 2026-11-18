@@ -314,11 +314,11 @@ export class AuthService {
      *
      * @returns JSON Web Token together with its creation and expiry timestamps
      */
-    async signJwt(user: AuthResponseDto, expiresIn?: number): Promise<{
+    signJwt(user: AuthResponseDto, expiresIn?: number): {
         access_token: string;
         created_at: string;
         expires_at: string;
-    }> {
+    } {
         const payload = ['subscriber', 'subscriberadmin'].includes(user.role)
             ? {username: user.username, subscriber_uuid: user.uuid}
             : {username: user.username, id: user.id}
@@ -344,9 +344,9 @@ export class AuthService {
      *
      * @returns JSON Web Token
      */
-    async signAuthJwt(token: internal.AuthToken, user: AuthResponseDto): Promise<{
+    signAuthJwt(token: internal.AuthToken, user: AuthResponseDto): {
         access_token: string;
-    }> {
+    } {
         const payload =
         ['subscriber', 'subscriberadmin'].includes(user.role)
             ? {
@@ -525,7 +525,7 @@ export class AuthService {
         }
     }
 
-    async isPasswordExpired(passwordModified: Date): Promise<boolean> {
+    isPasswordExpired(passwordModified: Date): boolean {
         if (this.app.config.security.password.web_max_age_days > 0) {
             const diff = Math.abs(new Date().getTime() - passwordModified.getTime())
             const diffDays = Math.ceil(diff / (1000 * 3600 * 24))

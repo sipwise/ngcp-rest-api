@@ -6,6 +6,7 @@ import {NCOSSetLevelRepository} from '~/api/ncos/sets/levels/interfaces/level.re
 import {db, internal} from '~/entities'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -21,13 +22,9 @@ export class NCOSSetLevelMariadbRepository extends MariaDbRepository implements 
 
     async create(entities: internal.NCOSSetLevel[]): Promise<number[]> {
         const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
-        const values = await Promise.all(
-            entities.map(
-                async entity => new db.billing.NCOSSetLevel().fromInternal(entity),
-            ),
-        )
+        const values = await mapYield(entities, entity => new db.billing.NCOSSetLevel().fromInternal(entity))
         const result = await qb.insert().values(values).execute()
-        return await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.NCOSSetLevel[], number]> {
@@ -46,11 +43,7 @@ export class NCOSSetLevelMariadbRepository extends MariaDbRepository implements 
         )
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(
-            result.map(async (d) =>
-                d.toInternal(),
-            ),
-        ), totalCount]
+        return [await mapYield(result, d => d.toInternal()), totalCount]
     }
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.NCOSSetLevel> {
@@ -73,24 +66,13 @@ export class NCOSSetLevelMariadbRepository extends MariaDbRepository implements 
         return result.toInternal()
     }
 
-    async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.NCOSSetLevel[]> {
+    async readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.NCOSSetLevel[]> {
         const qb = db.billing.NCOSSetLevel.createQueryBuilder('ncosSetLevel')
         qb.innerJoinAndSelect('ncosSetLevel.level', 'level')
-        const searchDto  = new NCOSSetLevelSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
         qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => d.toInternal()))
+        return await mapYield(result, (d) => d.toInternal())
     }
 
     async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {

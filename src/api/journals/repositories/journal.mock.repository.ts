@@ -29,15 +29,12 @@ export class JournalMockRepository implements JournalRepository {
         }
     }
 
-    create(journal: internal.Journal): Promise<number> {
-        const id = Math.max(...Object.keys(this.journalDB).map(Number)) + 1
-        journal.id = id
-        this.journalDB[id] = journal
-        return Promise.resolve(id)
-    }
-
-    read(id: number, _sr: ServiceRequest): Promise<internal.Journal> {
-        return Promise.resolve(this.journalDB[id])
+    create(journals: internal.Journal[]): Promise<void> {
+        for (const journal of journals) {
+            journal.id = Math.max(...Object.keys(this.journalDB).map(Number)) + 1
+            this.journalDB[journal.id] = journal
+        }
+        return Promise.resolve()
     }
 
     readAll(_sr: ServiceRequest, resourceName?: string, resourceId?: number | string, _resourceVerified?: boolean): Promise<[internal.Journal[], number]> {

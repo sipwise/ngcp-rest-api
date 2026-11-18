@@ -2,6 +2,13 @@ import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
+// a contract a reseller may be created with, if it has a system contact and no reseller yet
+export interface ResellerContract {
+    id: number
+    hasSystemContact: boolean
+    hasReseller: boolean
+}
+
 export interface ResellerRepository {
     createEmailTemplates(resellerId: number): Promise<void>
 
@@ -13,17 +20,13 @@ export interface ResellerRepository {
 
     read(id: number, sr: ServiceRequest): Promise<internal.Reseller>
 
-    readByName(name: string, sr: ServiceRequest): Promise<internal.Reseller>
+    readByNames(names: string[]): Promise<internal.Reseller[]>
 
     readAll(sr: ServiceRequest): Promise<[internal.Reseller[], number]>
 
     update(updates: Dictionary<internal.Reseller>, sr: ServiceRequest): Promise<number[]>
 
-    resellerWithContractExists(contractId: number): Promise<boolean>
+    readResellerContracts(contractIds: number[]): Promise<ResellerContract[]>
 
-    contractExists(contractId: number): Promise<boolean>
-
-    contractHasSystemContact(contractId: number): Promise<boolean>
-
-    renameReseller(id: number, name: string): Promise<void>
+    renameResellers(ids: number[]): Promise<void>
 }

@@ -10,7 +10,9 @@ export interface DomainRepository {
 
     readWhereInIds(ids: number[], sr: ServiceRequest): Promise<internal.Domain[]>
 
-    readByDomain(domain: string, sr: ServiceRequest): Promise<internal.Domain>
+    readExistingNames(names: string[]): Promise<string[]>
 
-    delete(id: number, sr: ServiceRequest): Promise<number>
+    readExistingResellerIds(ids: number[]): Promise<number[]>
+
+    delete(ids: number[], sr: ServiceRequest): Promise<number[]>
 }

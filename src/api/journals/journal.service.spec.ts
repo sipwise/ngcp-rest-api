@@ -98,18 +98,6 @@ describe('JournalService', () => {
         })
     })
 
-    describe('create', () => {
-        it('stores the journal and returns it', async () => {
-            const journal = internal.Journal.create({
-                content_format: 'json', operation: 'create', reseller_id: 1, resource_id: 1, resource_name: 'x',
-                role: 'admin', role_id: 1, timestamp: 1, tx_id: 'tx', user_id: 1, username: 'u',
-            })
-            const got = await service.create(journal, sr)
-            expect(got.id).toBeDefined()
-            expect(got.resource_name).toEqual('x')
-        })
-    })
-
     describe('resourceName', () => {
         it('strips prefix, parameters and trailing journal from the route', () => {
             sr.req = makeReq('GET', '/api/customers/:customerId/phonebook/:id/journal')
@@ -185,6 +173,15 @@ describe('JournalService', () => {
             sr.req = makeReq('POST')
             await service.writeJournal(sr, 1, 'abc')
             expect((await lastJournal()).content).toEqual(Buffer.from('abc').toString('base64'))
+        })
+
+        it('writes one entry per resource in one repository call', async () => {
+            sr.req = makeReq('POST')
+            const spy = jest.spyOn(journalMockRepo, 'create')
+            await expect(service.writeJournals(sr, [{id: 5, data: {a: 1}}, {id: 6, data: {a: 2}}])).resolves.toBe(true)
+            expect(spy).toHaveBeenCalledTimes(1)
+            const [journals] = await journalMockRepo.readAll(sr, 'customers/phonebook')
+            expect(journals.slice(-2).map(j => [j.resource_id, j.content])).toStrictEqual([[5, '{"a":1}'], [6, '{"a":2}']])
         })
 
         it('defaults the content format to json and sets the credentials header', async () => {

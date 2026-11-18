@@ -21,14 +21,14 @@ export class AuthJwtController {
 
     @ApiTags('Auth')
     @Post('auth/jwt')
-    async login(
+    login(
         @Body() dto: AuthJwtRequestDto,
         @Req() req: Request,
-    ): Promise<{
+    ): {
         access_token: string;
         created_at: string;
         expires_at: string;
-    }> {
+    } {
         const sr = new ServiceRequest(req)
         return this.authService.signJwt(sr.user, dto.expires_in)
     }

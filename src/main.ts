@@ -1,22 +1,13 @@
 import {readFileSync} from 'fs'
 
-import {ClassSerializerInterceptor} from '@nestjs/common'
-import {NestApplication, NestFactory, Reflector} from '@nestjs/core'
-import bodyParser from 'body-parser'
+import {NestApplication, NestFactory} from '@nestjs/core'
 
 import {AppClusterService} from './app-cluster.service'
 import {AppModule} from './app.module'
 import {AppService} from './app.service'
-import {HttpExceptionFilter} from './helpers/http-exception.filter'
+import {setupApp} from './app.setup'
 import {createSwaggerDocument} from './helpers/swagger.helper'
-import {ExpandInterceptor} from './interceptors/expand.interceptor'
-import {LazyFieldInterceptor} from './interceptors/lazy-field.interceptor'
-import {LoggingInterceptor} from './interceptors/logging.interceptor'
-import {ResponseValidationInterceptor} from './interceptors/response-validation.interceptor'
-import {TransactionInterceptor} from './interceptors/transaction.interceptor'
-import {TransformInterceptor} from './interceptors/transform.interceptor'
 import {LoggerService} from './logger/logger.service'
-import {ValidateInputPipe} from './pipes/validate.pipe'
 
 async function bootstrap(): Promise<void> {
     const config = AppService.config
@@ -43,40 +34,7 @@ async function bootstrap(): Promise<void> {
 
     createSwaggerDocument(app, api_prefix)
 
-    app.useGlobalPipes(
-        new ValidateInputPipe({
-            forbidUnknownValues: false,
-            whitelist: true,
-            forbidNonWhitelisted: true,
-            transform: true,
-            disableErrorMessages: true,
-        }),
-    )
-
-    app.useGlobalFilters(new HttpExceptionFilter())
-
-    app.useGlobalInterceptors(
-        new TransformInterceptor({
-            pageName: config.common.api_default_query_page_name,
-            perPageName: config.common.api_default_query_rows_name,
-        }),
-        new LoggingInterceptor(),
-        new ClassSerializerInterceptor(app.get(Reflector)),
-        app.get(LazyFieldInterceptor),
-        new TransactionInterceptor(app.get(Reflector)),
-        new ResponseValidationInterceptor(),
-        app.get(ExpandInterceptor),
-    )
-
-    app.use(bodyParser.json({
-        type: ['application/json-patch+json', 'application/json'],
-    }))
-
-    // disable x-powered-by header
-    app.getHttpAdapter().getInstance().disable('x-powered-by')
-
-    // return formatted json
-    app.getHttpAdapter().getInstance().set('json spaces', 2)
+    setupApp(app)
 
     await app.listen(config.common.api_port, process.env.NODE_ENV == 'development'
         ? '0.0.0.0'

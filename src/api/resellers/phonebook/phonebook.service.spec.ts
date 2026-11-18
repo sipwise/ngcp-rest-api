@@ -282,7 +282,7 @@ describe('phonebookService', () => {
             jest.spyOn(phonebookMockRepo, 'create').mockResolvedValue([1])
             const req = makeSr(user, {purge_existing: 'true'})
             await service.importCsv([makeEntity(1, '5'), makeEntity(1, '6'), makeEntity(2, '7')], req)
-            expect(purge.mock.calls.map(c => c[0]).sort()).toStrictEqual([1, 2])
+            expect(purge.mock.calls.map(c => c[0])).toStrictEqual([[1, 2]])
             expect(req.query['purge_existing']).toBeUndefined()
         })
         it('should purge only the own reseller for a reseller user', async () => {
@@ -290,7 +290,7 @@ describe('phonebookService', () => {
             jest.spyOn(phonebookMockRepo, 'create').mockResolvedValue([1])
             await service.importCsv([makeEntity(7, '5'), makeEntity(8, '6')], makeSr(resellerUser, {purge_existing: 'true'}))
             expect(purge).toHaveBeenCalledTimes(1)
-            expect(purge.mock.calls[0][0]).toBe(1)
+            expect(purge.mock.calls[0][0]).toStrictEqual([1])
         })
         it('should not purge for purge_existing=false and drop the flag', async () => {
             const purge = jest.spyOn(phonebookMockRepo, 'purge')

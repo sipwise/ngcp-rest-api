@@ -1,5 +1,5 @@
 import {UnprocessableEntityException} from '@nestjs/common'
-import {Not, SelectQueryBuilder} from 'typeorm'
+import {In, ObjectLiteral, SelectQueryBuilder} from 'typeorm'
 
 import {ContactSearchDto} from '~/api/contacts/dto/contact-search.dto'
 import {ContactOptions} from '~/api/contacts/interfaces/contact-options.interface'
@@ -13,6 +13,7 @@ import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -27,6 +28,16 @@ function searchDtoByType(type?: ContactType): ContactSearchDto | CustomerContact
         default:
             return new ContactSearchDto()
     }
+}
+
+// contact ids among `ids` referenced by a row of the query builder's table (contracts, subscribers)
+async function referencedContactIds(qb: SelectQueryBuilder<ObjectLiteral>, ids: number[]): Promise<number[]> {
+    if (!ids.length)
+        return []
+    const rows = await qb.select(`DISTINCT ${qb.alias}.contact_id`, 'id')
+        .andWhere(`${qb.alias}.contact_id IN (:...ids)`, {ids})
+        .getRawMany<{id: number}>()
+    return rows.map(row => row.id)
 }
 
 export class ContactMariadbRepository extends MariaDbRepository implements ContactRepository {
@@ -50,28 +61,22 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
         return ids
     }
 
-    async terminate(id: number, sr: ServiceRequest): Promise<number> {
-        this.log.debug({
-            message: 'terminate contact by id',
-            func: this.terminate.name,
-            contactId: id,
-            user: sr.user.username,
-        })
-        await db.billing.Contact.update(id, {status: ContactStatus.Terminated})
-        return 0
+    async terminate(ids: number[], _sr: ServiceRequest): Promise<number[]> {
+        await db.billing.Contact.update({id: In(ids)}, {status: ContactStatus.Terminated})
+        return ids
     }
 
     async readWhereInIds(ids: number[], options?: ContactOptions): Promise<internal.Contact[]> {
         const qb = await this.createBaseQueryBuilder(options)
         const contacts = await qb.andWhereInIds(ids).getMany()
-        return await Promise.all(contacts.map(async (contact) => contact.toInternal()))
+        return await mapYield(contacts, (contact) => contact.toInternal())
     }
 
     async readActiveContactsInIds(ids: number[], options?: ContactOptions): Promise<internal.Contact[]> {
         const qb = await this.createBaseQueryBuilder(options)
         qb.andWhere('contact.status = :status', {status: ContactStatus.Active})
         const contacts = await qb.andWhereInIds(ids).getMany()
-        return await Promise.all(contacts.map(async (contact) => contact.toInternal()))
+        return await mapYield(contacts, (contact) => contact.toInternal())
     }
 
     async readById(id: number, options?: ContactOptions): Promise<internal.Contact> {
@@ -81,72 +86,37 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
         return result.toInternal()
     }
 
-    async readResellerById(id: number, _sr: ServiceRequest): Promise<db.billing.Reseller> { // TODO: change type to internal.Reseller
-        return await db.billing.Reseller.findOneBy({id: id})
+    // ids of `ids` that are resellers, unset ids are left out
+    async readExistingResellerIds(ids: number[]): Promise<number[]> {
+        const resellerIds = ids.filter(id => id != null)
+        if (!resellerIds.length)
+            return []
+        const resellers = await db.billing.Reseller.find({select: {id: true}, where: {id: In(resellerIds)}})
+        return resellers.map(reseller => reseller.id)
     }
 
-    async hasContactActiveContract(contactId: number, sr: ServiceRequest): Promise<boolean> {
-        this.log.debug({
-            message: 'check whether contact has active contract',
-            contactId: contactId,
-            func: this.hasContactActiveContract.name,
-            user: sr.user.username,
-        })
-        const contracts = await db.billing.Contract.find({
-            where: {
-                status: Not<ContractStatus.Terminated>(ContractStatus.Terminated),
-                contact_id: contactId,
-            },
-        })
-        return contracts.length != 0
+    async readIdsWithActiveContract(ids: number[]): Promise<number[]> {
+        const qb = db.billing.Contract.createQueryBuilder('contract')
+            .where('contract.status != :status', {status: ContractStatus.Terminated})
+        return await referencedContactIds(qb, ids)
     }
 
-    async hasContactTerminatedContract(contactId: number, sr: ServiceRequest): Promise<boolean> {
-        this.log.debug({
-            message: 'check whether contact has terminated contract',
-            contactId: contactId,
-            func: this.hasContactActiveContract.name,
-            user: sr.user.username,
-        })
-        const contracts = await db.billing.Contract.find({
-            where: {
-                status: ContractStatus.Terminated,
-                contact_id: contactId,
-            },
-        })
-        return contracts.length != 0
+    async readIdsWithTerminatedContract(ids: number[]): Promise<number[]> {
+        const qb = db.billing.Contract.createQueryBuilder('contract')
+            .where('contract.status = :status', {status: ContractStatus.Terminated})
+        return await referencedContactIds(qb, ids)
     }
 
-    async hasContactActiveSubscriber(contactId: number, sr: ServiceRequest): Promise<boolean> {
-        this.log.debug({
-            message: 'check whether contact has active subscribers',
-            contactId: contactId,
-            func: this.hasContactActiveSubscriber.name,
-            user: sr.user.username,
-        })
-        const subscribers = await db.billing.VoipSubscriber.find({
-            where: {
-                status: Not(VoipSubscriberStatus.Terminated),
-                contact_id: contactId,
-            },
-        })
-        return subscribers.length != 0
+    async readIdsWithActiveSubscriber(ids: number[]): Promise<number[]> {
+        const qb = db.billing.VoipSubscriber.createQueryBuilder('subscriber')
+            .where('subscriber.status != :status', {status: VoipSubscriberStatus.Terminated})
+        return await referencedContactIds(qb, ids)
     }
 
-    async hasContactTerminatedSubscriber(contactId: number, sr: ServiceRequest): Promise<boolean> {
-        this.log.debug({
-            message: 'check whether contact has active subscribers',
-            contactId: contactId,
-            func: this.hasContactTerminatedSubscriber.name,
-            user: sr.user.username,
-        })
-        const subscribers = await db.billing.VoipSubscriber.find({
-            where: {
-                status: VoipSubscriberStatus.Terminated,
-                contact_id: contactId,
-            },
-        })
-        return subscribers.length != 0
+    async readIdsWithTerminatedSubscriber(ids: number[]): Promise<number[]> {
+        const qb = db.billing.VoipSubscriber.createQueryBuilder('subscriber')
+            .where('subscriber.status = :status', {status: VoipSubscriberStatus.Terminated})
+        return await referencedContactIds(qb, ids)
     }
 
     async readAll(sr: ServiceRequest, options?: ContactOptions): Promise<[internal.Contact[], number]> {
@@ -192,13 +162,13 @@ export class ContactMariadbRepository extends MariaDbRepository implements Conta
         return ids
     }
 
-    private async createBaseQueryBuilder(options: ContactOptions): Promise<SelectQueryBuilder<db.billing.Contact>> {
+    private createBaseQueryBuilder(options: ContactOptions): Promise<SelectQueryBuilder<db.billing.Contact>> {
         const qb = db.billing.Contact.createQueryBuilder('contact')
         if (options) {
             this.addPermissionFilterToQueryBuilder(qb, options)
             this.addFilterByType(qb, options.type)
         }
-        return qb
+        return Promise.resolve(qb)
     }
 
     private addPermissionFilterToQueryBuilder(qb: SelectQueryBuilder<db.billing.Contact>, options: ContactOptions): void {

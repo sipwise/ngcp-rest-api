@@ -65,7 +65,7 @@ export class Admin implements AdminInterface {
         return admin
     }
 
-    async setPermissionFlags(): Promise<void> {
+    setPermissionFlags(): void {
         switch (this.role) {
             case RbacRole.system:
                 this.isSystem = true

@@ -24,7 +24,7 @@ export class AuthTokenService {
             id: token.id,
             user: sr.user.username,
         })
-        const jwt = await this.authService.signAuthJwt(token, sr.user)
+        const jwt = this.authService.signAuthJwt(token, sr.user)
         return {
             ...(await this.authTokenRepo.create(token, sr)),
             jwt: jwt.access_token,

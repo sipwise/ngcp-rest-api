@@ -73,8 +73,8 @@ export class RewriteRuleSetMockRepository implements RewriteRuleSetRepository {
         return Promise.resolve(ids.filter(id => this.db[id] != undefined && this.matches(this.db[id], filterBy)).map(id => this.db[id]))
     }
 
-    async cleanSets(id: number, _sr: ServiceRequest): Promise<void> {
-        this.cleaned.push(id)
+    async cleanSets(ids: number[], _sr: ServiceRequest): Promise<void> {
+        this.cleaned.push(...ids)
         return Promise.resolve()
     }
 

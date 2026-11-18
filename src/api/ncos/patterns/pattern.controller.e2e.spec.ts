@@ -1,7 +1,5 @@
-import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
-import {Reflector} from '@nestjs/core'
+import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import bodyParser from 'body-parser'
 import request from 'supertest'
 import {MoreThanOrEqual} from 'typeorm'
 
@@ -10,19 +8,12 @@ import {NCOSPatternModule} from './pattern.module'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
+import {setupApp} from '~/app.setup'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
-import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
-import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
-import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
-import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
-import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
-import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
-import {TransformInterceptor} from '~/interceptors/transform.interceptor'
-import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type NCOSPatternPost = {
     ncos_level_id: number
@@ -52,31 +43,7 @@ describe('NCOS Pattern', () => {
         app = moduleRef.createNestApplication()
 
         app.setGlobalPrefix('api')
-        app.useGlobalPipes(new ValidateInputPipe({
-            forbidUnknownValues: false,
-            whitelist: true,
-            forbidNonWhitelisted: true,
-            transform: true,
-            disableErrorMessages: true,
-        }))
-        app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(
-            new TransformInterceptor({
-                pageName: AppService.config.common.api_default_query_page_name,
-                perPageName: AppService.config.common.api_default_query_rows_name,
-            }),
-            new LoggingInterceptor(),
-            new ClassSerializerInterceptor(app.get(Reflector)),
-            app.get(LazyFieldInterceptor),
-            new TransactionInterceptor(app.get(Reflector)),
-            new ResponseValidationInterceptor(),
-            app.get(ExpandInterceptor),
-        )
-        app.use(bodyParser.json({
-            type: ['application/json-patch+json', 'application/json'],
-        }))
-        app.getHttpAdapter().getInstance().disable('x-powered-by')
-        app.getHttpAdapter().getInstance().set('json spaces', 2)
+        setupApp(app)
 
         await app.init()
 
@@ -121,7 +88,7 @@ describe('NCOS Pattern', () => {
     })
 
     it('mock authService.compareBcryptPassword', async () => {
-        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(async () => true)
+        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(() => Promise.resolve(true))
         expect(await authService.compareBcryptPassword('123', '456')).toBe(true)
     })
 

@@ -85,19 +85,19 @@ describe('CustomerSpeedDialService', () => {
         })
 
         it('completes a plain destination with the domain of the pilot subscriber', async () => {
-            const spy = jest.spyOn(csdMockRepo, 'readSubscriberDomain')
+            const spy = jest.spyOn(csdMockRepo, 'readSubscriberDomains')
             const [result] = await service.create([newCsd({contractId: 1, destination: '4311'})], makeSr())
             expect(result.destination).toEqual('sip:4311@pilot.example.org')
             expect(spy).toHaveBeenCalledTimes(1)
-            expect(spy).toHaveBeenCalledWith(1, {isPilot: true})
+            expect(spy).toHaveBeenCalledWith([1], {isPilot: true})
         })
 
         it('falls back to the domain of a non-pilot subscriber', async () => {
-            const spy = jest.spyOn(csdMockRepo, 'readSubscriberDomain')
+            const spy = jest.spyOn(csdMockRepo, 'readSubscriberDomains')
             const [result] = await service.create([newCsd({contractId: 2, destination: '4312'})], makeSr())
             expect(result.destination).toEqual('sip:4312@sub2.example.org')
-            expect(spy).toHaveBeenNthCalledWith(1, 2, {isPilot: true})
-            expect(spy).toHaveBeenNthCalledWith(2, 2, {isPilot: false})
+            expect(spy).toHaveBeenNthCalledWith(1, [2], {isPilot: true})
+            expect(spy).toHaveBeenNthCalledWith(2, [2], {isPilot: false})
         })
 
         it('treats a destination only containing sip: later in the string as plain', async () => {
@@ -148,7 +148,7 @@ describe('CustomerSpeedDialService', () => {
             const [result, count] = await service.readAll(makeSr())
             expect(count).toEqual(3)
             expect(result.length).toEqual(3)
-            expect(spy).toHaveBeenCalledWith(expect.anything())
+            expect(spy).toHaveBeenCalledWith(expect.anything(), undefined)
         })
 
         it.each([['reseller', resellerUser], ['ccare', ccareUser]])('filters by reseller for %s', async (_role, user) => {

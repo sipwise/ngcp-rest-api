@@ -125,13 +125,11 @@ export class ContractMockRepository implements ContractRepository {
         return Promise.resolve(this.contractDB[id])
     }
 
-    readActiveSystemContact(id: number, _sr: ServiceRequest): Promise<internal.Contact> {
-        const contact = this.contactDB[+id]
-        if (contact == undefined)
-            return Promise.resolve(undefined)
-        if (contact.status == ContactStatus.Active && contact.reseller_id == undefined)
-            return Promise.resolve(contact)
-        return Promise.resolve(undefined)
+    readActiveSystemContactIds(ids: number[]): Promise<number[]> {
+        return Promise.resolve(ids.filter(id => {
+            const contact = this.contactDB[+id]
+            return contact != undefined && contact.status == ContactStatus.Active && contact.reseller_id == undefined
+        }))
     }
 
     readAll(_sr: ServiceRequest): Promise<[internal.Contract[], number]> {
@@ -141,33 +139,20 @@ export class ContractMockRepository implements ContractRepository {
     }
 
     readWhereInIds(ids: number[], _sr: ServiceRequest): Promise<internal.Contract[]> {
-        const contracts: internal.Contract[] = []
-        for (const id of ids) {
-            this.throwErrorIfIdNotExists(this.contractDB, id)
-            contracts.push(this.contractDB[id])
-        }
-        return Promise.resolve(contracts)
+        return Promise.resolve(ids.filter(id => this.contractDB[id] != undefined).map(id => this.contractDB[id]))
     }
 
-    readProductByType(type: string, _sr: ServiceRequest): Promise<internal.Product> {
-        for (const key of Object.keys(this.productDB)) {
-            const id: number = +key
-            const product: internal.Product = this.productDB[id]
-            if (product.class == type) {
-                return Promise.resolve(product)
-            }
-        }
-        return Promise.resolve(undefined)
+    readProductsByTypes(types: string[]): Promise<internal.Product[]> {
+        const products = Object.values(this.productDB) as internal.Product[]
+        return Promise.resolve(products.filter(product => types.includes(product.class)))
     }
 
-    readBillingProfile(id: number, _sr: ServiceRequest): Promise<internal.BillingProfile> {
-        if (id != 1)
-            return Promise.resolve(undefined)
-        return Promise.resolve(internal.BillingProfile.create({
-            id: 1,
+    readBillingProfiles(ids: number[]): Promise<internal.BillingProfile[]> {
+        return Promise.resolve(ids.filter(id => id == 1).map(id => internal.BillingProfile.create({
+            id,
             status: BillingProfileStatus.Active,
             prepaid: false,
-        } as internal.BillingProfile))
+        } as internal.BillingProfile)))
     }
 
     appendBillingMappings(contractId: number, mappings: internal.BillingMapping[], _sr: ServiceRequest): Promise<void> {

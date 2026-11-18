@@ -100,17 +100,18 @@ export class AdminService { //} implements CrudService<internal.Admin> {
 
     async update(updates: Dictionary<internal.Admin>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
-        const admins = await this.adminRepo.readWhereInIds(ids, this.getAdminOptionsFromServiceRequest(sr))
+        const options = this.getAdminOptionsFromServiceRequest(sr)
+        const admins = await this.adminRepo.readWhereInIds(ids, options)
         throwMissingIds(sr, ids, admins.map(admin => admin.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
+        const oldAdmins = new Map(admins.map(admin => [admin.id, admin]))
         const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr)
-        const options = this.getAdminOptionsFromServiceRequest(sr)
 
         await checkItems(updates, async (admin, key) => {
             const id = +key
             admin.id = id  // TODO: Do we want to set the id here? After validation in controller it should not be possible to receive updates where the id in the update does not equal the key id
             await this.populateAdmin(admin, accessorRole, sr, key)
-            const oldAdmin = await this.adminRepo.readById(id, options)
+            const oldAdmin = oldAdmins.get(id)
             if (oldAdmin.role == RbacRole.lintercept && !this.canManageLintercept(sr))
                 throw apiError(this.i18n.t('errors.PERMISSION_DENIED'), itemPointer(sr, key, admin, 'role'), HttpStatus.FORBIDDEN)
             // check for toggle
@@ -185,11 +186,11 @@ export class AdminService { //} implements CrudService<internal.Admin> {
 
     private async populateAdmin(admin: internal.Admin, accessorRole: internal.AclRole, sr: ServiceRequest, key: number | string): Promise<void> {
         const role = await this.aclRepo.readOneByRole(admin.role, sr)
-        await admin.setPermissionFlags()
+        admin.setPermissionFlags()
         admin.roleId = role.id
         admin.roleData = role
 
-        if (!await accessorRole.hasPermission(role.id, sr.user.is_master)) {
+        if (!accessorRole.hasPermission(role.id, sr.user.is_master)) {
             this.log.debug({
                 message: 'check user permission level',
                 success: false,

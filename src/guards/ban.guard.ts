@@ -20,7 +20,7 @@ export class BanGuard implements CanActivate {
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const publicGuard = new PublicGuard(this.reflector)
-        if (await publicGuard.canActivate(context))
+        if (publicGuard.canActivate(context))
             return true // Public routes are allowed to pass
 
         const request = context.switchToHttp().getRequest<Request>()

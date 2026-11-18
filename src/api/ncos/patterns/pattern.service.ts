@@ -22,10 +22,7 @@ export class NCOSPatternService implements CrudService<internal.NCOSPattern> {
     }
 
     async create(entities: internal.NCOSPattern[], sr: ServiceRequest): Promise<internal.NCOSPattern[]> {
-        const levelIds = new Set<number>()
-        await Promise.all(entities.map(async entity => {
-            levelIds.add(entity.ncosLevelId)
-        }))
+        const levelIds = new Set(entities.map(entity => entity.ncosLevelId))
 
         await this.hasAccessToLevels(levelIds, sr)
 

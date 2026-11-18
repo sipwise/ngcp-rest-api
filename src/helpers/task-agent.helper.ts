@@ -45,15 +45,21 @@ export class TaskAgentHelper {
     async subscribeToFeedback(feedbackChannel: string, callback: MessageCallback): Promise<void> {
         await this.app.redisPubSub.subscribe(feedbackChannel)
         if (this.onMessageInit) {
-            this.app.redisPubSub.on('message', async (channel: string, message: string): Promise<void> => {
-                if (channel in this.subs) {
-                    const response: TaskAgentResponse = JSON.parse(message)
-                    await this.subs[channel](response)
-                }
+            this.app.redisPubSub.on('message', (channel: string, message: string): void => {
+                this.handleFeedback(channel, message).catch((err: Error) => {
+                    this.log.error(`Task agent feedback failed on channel=${channel}: ${err}`)
+                })
             })
             this.onMessageInit = false
         }
         this.subs[feedbackChannel] = callback
+    }
+
+    private async handleFeedback(channel: string, message: string): Promise<void> {
+        if (channel in this.subs) {
+            const response: TaskAgentResponse = JSON.parse(message)
+            await this.subs[channel](response)
+        }
     }
 
     @HandleRedisErrors

@@ -127,7 +127,7 @@ function collection(path: string, rows: Row[], options: CollectionOptions = {}):
     @Controller(path)
     class FakeController {
         @Get()
-        async readAll(req: Request): Promise<[Row[], number]> {
+        readAll(req: Request): Promise<[Row[], number]> {
             const query = req.query as Record<string, string>
             queries.push({...query, method: req.method, params: req.params, url: req.url})
             let found = rows.filter(row => options.scope?.(row) ?? true)
@@ -151,7 +151,7 @@ function collection(path: string, rows: Row[], options: CollectionOptions = {}):
             const page = found
                 .slice(0, +(query.rows ?? 10))
                 .map(row => Object.assign(Object.create(Object.getPrototypeOf(row)), row) as Row)
-            return [page, found.length]
+            return Promise.resolve([page, found.length])
         }
     }
     if (options.model !== null) {
@@ -175,7 +175,7 @@ function interceptorFor(collections: Collection[], licenseActive = true): Expand
     const discovery = {
         getControllers: () => [...collections, ...globalTargets].map(c => ({instance: c.controller, metatype: c.type})),
     } as unknown as DiscoveryService
-    const licenses = {areLicensesActive: async (): Promise<boolean> => licenseActive} as unknown as LicenseService
+    const licenses = {areLicensesActive: (): Promise<boolean> => Promise.resolve(licenseActive)} as unknown as LicenseService
     const interceptor = new ExpandInterceptor(discovery, new Reflector(), licenses, appConfig)
     interceptor.onModuleInit()
     return interceptor
@@ -277,13 +277,13 @@ describe('ExpandInterceptor', () => {
         })
 
         it.each(['a..b', '.a', 'a.'])('rejects the empty path segment in %s with 400', async value => {
-            const err = await expandError((async (): Promise<unknown> => parseExpand(value))())
+            const err = await expandError(Promise.resolve().then(() => parseExpand(value)))
             expect(err.getStatus()).toEqual(HttpStatus.BAD_REQUEST)
             expect(err.errorList[0]).toMatchObject({parameter: 'expand', code: 'EXPAND_INVALID_PATH', message: `Invalid path ${value}`})
         })
 
         it('rejects non-string values with 400', async () => {
-            const err = await expandError((async (): Promise<unknown> => parseExpand({a: '1'}))())
+            const err = await expandError(Promise.resolve().then(() => parseExpand({a: '1'})))
             expect(err.getStatus()).toEqual(HttpStatus.BAD_REQUEST)
             expect(err.errorList[0].code).toEqual('EXPAND_INVALID_PATH')
         })

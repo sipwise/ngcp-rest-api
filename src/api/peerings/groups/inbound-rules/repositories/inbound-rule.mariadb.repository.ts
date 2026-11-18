@@ -1,5 +1,5 @@
 import {Injectable} from '@nestjs/common'
-import {SelectQueryBuilder} from 'typeorm'
+import {In, SelectQueryBuilder} from 'typeorm'
 
 import {PeeringInboundRuleSearchDto} from '~/api/peerings/groups/inbound-rules/dto/inbound-rule-search.dto'
 import {PeeringInboundRuleRepository} from '~/api/peerings/groups/inbound-rules/interfaces/inbound-rule.repository'
@@ -7,6 +7,7 @@ import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -21,10 +22,10 @@ export class PeeringInboundRuleMariadbRepository extends MariaDbRepository imple
 
     async create(entities: internal.VoipPeeringInboundRule[]): Promise<number[]> {
         const qb = db.provisioning.VoipPeeringInboundRule.createQueryBuilder('rule')
-        const values = await Promise.all(entities.map(async entity => new db.provisioning.VoipPeeringInboundRule().fromInternal(entity)))
+        const values = await mapYield(entities, entity => new db.provisioning.VoipPeeringInboundRule().fromInternal(entity))
         const result = await qb.insert().values(values).execute()
 
-        return await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.VoipPeeringInboundRule[], number]> {
@@ -42,11 +43,7 @@ export class PeeringInboundRuleMariadbRepository extends MariaDbRepository imple
         )
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(
-            result.map(async (d) =>
-                d.toInternal(),
-            ),
-        ), totalCount]
+        return [await mapYield(result, d => d.toInternal()), totalCount]
     }
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.VoipPeeringInboundRule> {
@@ -68,23 +65,12 @@ export class PeeringInboundRuleMariadbRepository extends MariaDbRepository imple
         return result.toInternal()
     }
 
-    async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.VoipPeeringInboundRule[]> {
+    async readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.VoipPeeringInboundRule[]> {
         const qb = db.provisioning.VoipPeeringInboundRule.createQueryBuilder('rule')
-        const searchDto  = new PeeringInboundRuleSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
         qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => d.toInternal()))
+        return await mapYield(result, (d) => d.toInternal())
     }
 
     async update(updates: Dictionary<internal.VoipPeeringInboundRule>, _sr: ServiceRequest): Promise<number[]> {
@@ -110,27 +96,19 @@ export class PeeringInboundRuleMariadbRepository extends MariaDbRepository imple
         }
     }
 
-    async setGroupInboundRulesCount(groupId: number): Promise<void> {
-        const group = await db.provisioning.VoipPeeringGroup.findOneOrFail({
-            where: {
-                id: groupId,
-            },
-        })
-        group.has_inbound_rules = true
-        await db.provisioning.VoipPeeringGroup.update(groupId, group)
-    }
-
-    async refreshGroupInboundRulesCount(groupId: number): Promise<void> {
-        const group = await db.provisioning.VoipPeeringGroup.findOneOrFail({
-            where: {
-                id: groupId,
-            },
-        })
-        const remainingRulesCount = await db.provisioning.VoipPeeringInboundRule.countBy({
-            group_id: groupId,
-        })
-
-        group.has_inbound_rules = remainingRulesCount > 0
-        await db.provisioning.VoipPeeringGroup.update(groupId, group)
+    // sets `has_inbound_rules` of the groups from their current rules
+    async refreshGroupsHaveInboundRules(groupIds: number[]): Promise<void> {
+        if (!groupIds.length)
+            return
+        const rows = await db.provisioning.VoipPeeringInboundRule.createQueryBuilder('rule')
+            .select('DISTINCT rule.group_id', 'groupId')
+            .where('rule.group_id IN (:...groupIds)', {groupIds})
+            .getRawMany<{groupId: number}>()
+        const withRules = new Set(rows.map(row => row.groupId))
+        const withoutRules = groupIds.filter(id => !withRules.has(id))
+        if (withRules.size)
+            await db.provisioning.VoipPeeringGroup.update({id: In([...withRules])}, {has_inbound_rules: true})
+        if (withoutRules.length)
+            await db.provisioning.VoipPeeringGroup.update({id: In(withoutRules)}, {has_inbound_rules: false})
     }
 }

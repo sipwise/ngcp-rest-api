@@ -5,7 +5,7 @@ import {Reflector} from '@nestjs/core'
 export class ApiAcceptHeaderGuard implements CanActivate {
     constructor(private readonly reflector: Reflector) {}
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
+    canActivate(context: ExecutionContext): boolean {
         const request = context.switchToHttp().getRequest()
         const accept: string | undefined = request.headers['accept']
 

@@ -99,7 +99,7 @@ HTTP/1.1 204 No Content
 
 | Parameter | Meaning |
 | --- | --- |
-| `page`, `rows` | Page number, starting at 1, and page size (default 10). |
+| `page`, `rows` | Page number, starting at 1, and page size (default 10, at most 10000). |
 | `order_by`, `order_by_direction` | Sort field and `asc` (default) or `desc`. |
 | any field of the collection | Filter. Values match exactly, `*` is a wildcard and a comma separates alternatives. |
 | `search_or=true` | Combine several filters with OR instead of AND. |
@@ -261,6 +261,18 @@ Content-Type: application/json
 ```
 
 A bulk POST without `Prefer` returns 204, so ask for `return=id` or `return=representation` to get the new ids.
+
+### Request limits
+
+Each request is limited, so that one request cannot hold up the others:
+
+| Limit | Default | Above it |
+| --- | --- | --- |
+| `rows` of a GET request | 10000 | 400 |
+| Items of a bulk request: POST array, PUT or PATCH by id, DELETE ids, CSV rows | 10000 | 413 `BULK_TOO_LARGE` |
+| Request body, JSON or CSV file | 20 MB | 413 `PAYLOAD_TOO_LARGE` |
+
+The limits are the platform settings `performance.read_limit`, `performance.write_limit` and `performance.body_limit`. A bulk request above the item limit is rejected before its items are validated and nothing of it is written: split it into several requests. `rows` had no upper limit before: read larger collections page by page.
 
 ### Date/time and timezones
 

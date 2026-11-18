@@ -147,7 +147,7 @@ export class InvoiceMariadbRepository extends MariaDbRepository implements Invoi
     }
 
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Invoice[]> {
-        const qb = await this.createSearchQueryBuilder(sr, filterBy)
+        const qb = await this.createBaseQueryBuilder(sr, filterBy)
         qb.andWhereInIds(ids)
         const result = await qb.getMany()
         return result.map(d => toInternalInvoice(d, sr))
@@ -267,12 +267,18 @@ export class InvoiceMariadbRepository extends MariaDbRepository implements Invoi
         return ids
     }
 
-    private async createSearchQueryBuilder(sr: ServiceRequest, filterBy?: FilterBy): Promise<SelectQueryBuilder<db.billing.Invoice>> {
+    private async createBaseQueryBuilder(sr: ServiceRequest, filterBy?: FilterBy): Promise<SelectQueryBuilder<db.billing.Invoice>> {
         const qb = db.billing.Invoice.createQueryBuilder('invoice')
         qb.innerJoin('invoice.contract', 'contract')
         qb.innerJoin('contract.contact', 'contact')
         if (isOwnerTimezone(sr))
             joinContractTimezone(qb, 'invoice.contract_id')
+        await this.addFilterBy(qb, filterBy)
+        return qb
+    }
+
+    private async createSearchQueryBuilder(sr: ServiceRequest, filterBy?: FilterBy): Promise<SelectQueryBuilder<db.billing.Invoice>> {
+        const qb = await this.createBaseQueryBuilder(sr, filterBy)
         const searchDto = new InvoiceSearchDto()
         configureQueryBuilder(
             qb,
@@ -284,12 +290,12 @@ export class InvoiceMariadbRepository extends MariaDbRepository implements Invoi
                 searchDto._alias,
             ),
         )
-        await this.addFilterBy(qb, filterBy)
         return qb
     }
 
-    private async addFilterBy(qb: SelectQueryBuilder<db.billing.Invoice>, filterBy?: FilterBy): Promise<void> {
+    private addFilterBy(qb: SelectQueryBuilder<db.billing.Invoice>, filterBy?: FilterBy): Promise<void> {
         if (filterBy?.resellerId)
             qb.andWhere('contact.reseller_id = :resellerId', {resellerId: filterBy.resellerId})
+        return Promise.resolve()
     }
 }

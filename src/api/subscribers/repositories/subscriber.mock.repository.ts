@@ -29,65 +29,65 @@ export class SubscriberMockRepository implements SubscriberRepository {
         pbx_groupmember_ids: memoryFieldSource('pbxGroupmemberIds', id => this.subscriberDB[id]),
     }
 
-    async readAll(_sr: ServiceRequest, scope: SubscriberScope): Promise<[internal.Subscriber[], number]> {
+    readAll(_sr: ServiceRequest, scope: SubscriberScope): Promise<[internal.Subscriber[], number]> {
         const rows = this.visible(scope)
-        return [rows, rows.length]
+        return Promise.resolve([rows, rows.length])
     }
 
-    async readById(id: number, scope: SubscriberScope): Promise<internal.Subscriber | undefined> {
-        return this.visible(scope).find(s => s.id == id)
+    readById(id: number, scope: SubscriberScope): Promise<internal.Subscriber | undefined> {
+        return Promise.resolve(this.visible(scope).find(s => s.id == id))
     }
 
-    async readWhereInIds(ids: number[], scope: SubscriberScope): Promise<internal.Subscriber[]> {
-        return this.visible(scope).filter(s => ids.includes(s.id))
+    readWhereInIds(ids: number[], scope: SubscriberScope): Promise<internal.Subscriber[]> {
+        return Promise.resolve(this.visible(scope).filter(s => ids.includes(s.id)))
     }
 
     async readBareById(id: number, scope: SubscriberScope): Promise<internal.Subscriber | undefined> {
         return this.readById(id, scope)
     }
 
-    async readPilot(customerId: number): Promise<internal.Subscriber | undefined> {
-        return this.visible({customerId}).find(s => s.isPbxPilot)
+    readPilot(customerId: number): Promise<internal.Subscriber | undefined> {
+        return Promise.resolve(this.visible({customerId}).find(s => s.isPbxPilot))
     }
 
-    async readByCustomer(customerId: number): Promise<internal.Subscriber[]> {
-        return this.visible({customerId})
+    readByCustomer(customerId: number): Promise<internal.Subscriber[]> {
+        return Promise.resolve(this.visible({customerId}))
     }
 
-    async readCustomers(ids: number[], resellerId?: number): Promise<SubscriberCustomer[]> {
-        return Object.values(this.customerDB).filter(c => ids.includes(c.id) && (resellerId == undefined || c.resellerId == resellerId))
+    readCustomers(ids: number[], resellerId?: number): Promise<SubscriberCustomer[]> {
+        return Promise.resolve(Object.values(this.customerDB).filter(c => ids.includes(c.id) && (resellerId == undefined || c.resellerId == resellerId)))
     }
 
-    async lockContracts(_ids: number[]): Promise<void> {
-        return
+    lockContracts(_ids: number[]): Promise<void> {
+        return Promise.resolve()
     }
 
-    async readDomain(domain: {id?: number, name?: string}): Promise<SubscriberDomain | undefined> {
-        return Object.values(this.domainDB).find(d => domain.id != undefined ? d.id == domain.id : d.domain == domain.name)
+    readDomain(domain: {id?: number, name?: string}): Promise<SubscriberDomain | undefined> {
+        return Promise.resolve(Object.values(this.domainDB).find(d => domain.id != undefined ? d.id == domain.id : d.domain == domain.name))
     }
 
-    async countActive(customerId: number): Promise<number> {
-        return this.visible({customerId}).length
+    countActive(customerId: number): Promise<number> {
+        return Promise.resolve(this.visible({customerId}).length)
     }
 
-    async countActiveByReseller(resellerId: number): Promise<number> {
-        return this.visible({resellerId}).length
+    countActiveByReseller(resellerId: number): Promise<number> {
+        return Promise.resolve(this.visible({resellerId}).length)
     }
 
-    async existsUsername(username: string, domainId: number): Promise<boolean> {
-        return this.visible({}).some(s => s.username == username && s.domainId == domainId)
+    existsUsername(username: string, domainId: number): Promise<boolean> {
+        return Promise.resolve(this.visible({}).some(s => s.username == username && s.domainId == domainId))
     }
 
-    async existsWebusername(webusername: string, provisioningDomainId: number, excludeProvisioningId?: number): Promise<boolean> {
+    existsWebusername(webusername: string, provisioningDomainId: number, excludeProvisioningId?: number): Promise<boolean> {
         const domain = Object.values(this.domainDB).find(d => d.provisioningId == provisioningDomainId)
-        return this.visible({}).some(s => s.webusername == webusername && s.domainId == domain?.id && s.provisioningId != excludeProvisioningId)
+        return Promise.resolve(this.visible({}).some(s => s.webusername == webusername && s.domainId == domain?.id && s.provisioningId != excludeProvisioningId))
     }
 
-    async extensionInUse(customerId: number, extension: string, excludeId?: number): Promise<boolean> {
-        return this.visible({customerId}).some(s => s.pbxExtension == extension && s.id != excludeId)
+    extensionInUse(customerId: number, extension: string, excludeId?: number): Promise<boolean> {
+        return Promise.resolve(this.visible({customerId}).some(s => s.pbxExtension == extension && s.id != excludeId))
     }
 
-    async readNumbers(numbers: SubscriberNumber[]): Promise<SubscriberNumberRow[]> {
+    readNumbers(numbers: SubscriberNumber[]): Promise<SubscriberNumberRow[]> {
         const rows: SubscriberNumberRow[] = []
         for (const subscriber of this.visible({})) {
             for (const number of [subscriber.primaryNumber, ...subscriber.aliasNumbers].filter(n => n != null)) {
@@ -95,40 +95,40 @@ export class SubscriberMockRepository implements SubscriberRepository {
                     rows.push({id: number.numberId, cc: number.cc, ac: number.ac, sn: number.sn, subscriberId: subscriber.id})
             }
         }
-        return rows
+        return Promise.resolve(rows)
     }
 
-    async readAliasOwners(_usernames: string[]): Promise<Map<string, number[]>> {
-        return new Map()
+    readAliasOwners(_usernames: string[]): Promise<Map<string, number[]>> {
+        return Promise.resolve(new Map<string, number[]>())
     }
 
-    async readRefs(ids: number[], customerId: number, groups: boolean): Promise<SubscriberRef[]> {
-        return this.visible({customerId})
+    readRefs(ids: number[], customerId: number, groups: boolean): Promise<SubscriberRef[]> {
+        return Promise.resolve(this.visible({customerId})
             .filter(s => ids.includes(s.id) && (groups ? s.isPbxGroup : !s.isPbxGroup && !s.isPbxPilot))
-            .map(s => ({id: s.id, provisioningId: s.provisioningId, uri: `sip:${s.username}@${s.domain}`}))
+            .map(s => ({id: s.id, provisioningId: s.provisioningId, uri: `sip:${s.username}@${s.domain}`})))
     }
 
-    async readProfileSet(id: number): Promise<{id: number, resellerId: number} | undefined> {
-        return this.profileSetDB[id]
+    readProfileSet(id: number): Promise<{id: number, resellerId: number} | undefined> {
+        return Promise.resolve(this.profileSetDB[id])
     }
 
-    async readProfiles(setId: number): Promise<SubscriberProfileRow[]> {
-        return Object.values(this.profileDB).filter(p => p.setId == setId)
+    readProfiles(setId: number): Promise<SubscriberProfileRow[]> {
+        return Promise.resolve(Object.values(this.profileDB).filter(p => p.setId == setId))
     }
 
-    async readProfileAttributeIds(_profileId: number): Promise<number[]> {
-        return []
+    readProfileAttributeIds(_profileId: number): Promise<number[]> {
+        return Promise.resolve<number[]>([])
     }
 
-    async readPreferences(_provisioningId: number, _attributes: string[]): Promise<Map<string, string[]>> {
-        return new Map()
+    readPreferences(_provisioningId: number, _attributes: string[]): Promise<Map<string, string[]>> {
+        return Promise.resolve(new Map<string, string[]>())
     }
 
-    async readPasswordJournal(_provisioningId: number, _web: boolean): Promise<string[]> {
-        return []
+    readPasswordJournal(_provisioningId: number, _web: boolean): Promise<string[]> {
+        return Promise.resolve<string[]>([])
     }
 
-    async create(plan: SubscriberWritePlan): Promise<number> {
+    create(plan: SubscriberWritePlan): Promise<number> {
         const id = Math.max(0, ...Object.keys(this.subscriberDB).map(Number)) + 1
         const customer = this.customerDB[plan.subscriber.customerId]
         this.subscriberDB[id] = Object.assign(new internal.Subscriber(), plan.subscriber, {
@@ -141,21 +141,23 @@ export class SubscriberMockRepository implements SubscriberRepository {
             pbxGroupmemberIds: plan.subscriber.pbxGroupmemberIds ?? [],
         })
         this.plans.push(plan)
-        return id
+        return Promise.resolve(id)
     }
 
-    async update(plan: SubscriberWritePlan): Promise<void> {
+    update(plan: SubscriberWritePlan): Promise<void> {
         this.subscriberDB[plan.subscriber.id] = Object.assign(new internal.Subscriber(), this.subscriberDB[plan.subscriber.id], plan.subscriber)
         this.plans.push(plan)
+        return Promise.resolve()
     }
 
-    async terminate(plan: SubscriberTerminatePlan): Promise<void> {
+    terminate(plan: SubscriberTerminatePlan): Promise<void> {
         delete this.subscriberDB[plan.subscriber.id]
         this.terminatePlans.push(plan)
+        return Promise.resolve()
     }
 
-    async setCustomerPreference(_customerId: number, _attribute: string, _value: string): Promise<void> {
-        return
+    setCustomerPreference(_customerId: number, _attribute: string, _value: string): Promise<void> {
+        return Promise.resolve()
     }
 
     private visible(scope: SubscriberScope): internal.Subscriber[] {

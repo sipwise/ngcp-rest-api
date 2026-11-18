@@ -127,9 +127,7 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
 
         const sr = new ServiceRequest(req)
         const deletedIds = await this.fileshareService.delete(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, 0, deletedId)
-        }
+        await this.journalService.writeJournals(sr, deletedIds.map(id => ({id: 0, data: id})))
         return deletedIds
     }
 

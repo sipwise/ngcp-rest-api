@@ -2,13 +2,11 @@
 
 import {Inject, Injectable} from '@nestjs/common'
 import {I18nService} from 'nestjs-i18n'
-import {In} from 'typeorm'
 
 import {PeeringGroupMariadbRepository} from './repositories/group.mariadb.repository'
 import {PeeringGroupRedisRepository} from './repositories/group.redis.repository'
 
-import {db, internal} from '~/entities'
-import {ProductClass} from '~/entities/internal/product.internal.entity'
+import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {apiError, checkItems, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
@@ -28,7 +26,8 @@ export class PeeringGroupService implements CrudService<internal.VoipPeeringGrou
     }
 
     async create(entities: internal.VoipPeeringGroup[], sr: ServiceRequest): Promise<internal.VoipPeeringGroup[]> {
-        await checkItems(entities, (entity, key) => this.validateContract(entity, sr, key))
+        const contractIds = new Set(await this.peeringGroupRepo.readPeeringContractIds(entities.map(entity => entity.peeringContractId)))
+        await checkItems(entities, (entity, key) => this.validateContract(entity, contractIds, sr, key))
         const created = await this.peeringGroupRepo.create(entities)
         return this.peeringGroupRepo.readWhereInIds(created, sr)
     }
@@ -48,9 +47,10 @@ export class PeeringGroupService implements CrudService<internal.VoipPeeringGrou
         throwMissingIds(sr, ids, groups.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         const oldContractIds = new Map(groups.map(group => [group.id, group.peeringContractId]))
-        await checkItems(updates, async (group, key) => {
+        const contractIds = new Set(await this.peeringGroupRepo.readPeeringContractIds(Object.values(updates).map(group => group.peeringContractId)))
+        await checkItems(updates, (group, key) => {
             if (group.peeringContractId != oldContractIds.get(+key))
-                await this.validateContract(group, sr, key)
+                this.validateContract(group, contractIds, sr, key)
         })
 
         return await this.peeringGroupRepo.update(updates, sr)
@@ -62,27 +62,18 @@ export class PeeringGroupService implements CrudService<internal.VoipPeeringGrou
 
         const reloadKamailioRequired = await this.peeringGroupRepo.hasEnabledOrProbedServerInGroups(ids, sr)
         if (reloadKamailioRequired) {
-            await this.reloadKamProxyAfterCommit(sr)
+            this.reloadKamProxyAfterCommit(sr)
         }
 
         return await this.peeringGroupRepo.delete(ids, sr)
     }
 
-    private async validateContract(group: internal.VoipPeeringGroup, sr: ServiceRequest, key: number | string): Promise<void> {
-        const contract = group.peeringContractId != null && await db.billing.Contract.findOne({
-            where: {
-                id: group.peeringContractId,
-                product: {class: In([
-                    ProductClass.PstnPeering,
-                    ProductClass.SipPeering,
-                ])},
-            },
-        })
-        if (!contract)
+    private validateContract(group: internal.VoipPeeringGroup, peeringContractIds: Set<number>, sr: ServiceRequest, key: number | string): void {
+        if (!peeringContractIds.has(group.peeringContractId))
             throw apiError(this.i18n.t('errors.PEERING_CONTRACT_INVALID'), itemPointer(sr, key, group, 'peeringContractId'))
     }
 
-    async reloadKamProxyAfterCommit(sr: ServiceRequest): Promise<void> {
+    reloadKamProxyAfterCommit(sr: ServiceRequest): void {
         runOnTransactionCommit(async () => {
             await this.peeringGroupRedisRepo.reloadKamProxLcr(sr)
             await this.peeringGroupRedisRepo.reloadKamProxDispatcher(sr)

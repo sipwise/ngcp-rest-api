@@ -29,7 +29,7 @@ export class BanController extends CrudController<never, BanResponseDto> {
     @Get()
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(BanResponseDto)
-    async readAll(@Req() req: Request): Promise<[BanResponseDto[], number]> {
+    readAll(@Req() req: Request): Promise<[BanResponseDto[], number]> {
         this.log.debug({
             message: 'read all ban routes',
             func: this.readAll.name,
@@ -39,6 +39,6 @@ export class BanController extends CrudController<never, BanResponseDto> {
         const sr = new ServiceRequest(req)
         const response = [new BanResponseDto({url: req.url})]
         const sortedResponse = sortAndPaginate<BanResponseDto>(response, sr, 'resourceUrl')
-        return [sortedResponse, response.length]
+        return Promise.resolve([sortedResponse, response.length])
     }
 }

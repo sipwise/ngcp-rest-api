@@ -1,7 +1,5 @@
-import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
-import {Reflector} from '@nestjs/core'
+import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import bodyParser from 'body-parser'
 import request from 'supertest'
 import {MoreThanOrEqual} from 'typeorm'
 
@@ -12,19 +10,12 @@ import {HeaderManipulationRuleModule} from '~/api/header-manipulations/sets/rule
 import {HeaderManipulationSetModule} from '~/api/header-manipulations/sets/set.module'
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
+import {setupApp} from '~/app.setup'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {RwrDpEnum} from '~/enums/rwr-dp.enum'
-import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
-import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
-import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
-import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
-import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
-import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
-import {TransformInterceptor} from '~/interceptors/transform.interceptor'
-import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type RuleSetPost = {
     name: string
@@ -86,31 +77,7 @@ describe('Rule Condition', () => {
         app = moduleRef.createNestApplication()
 
         app.setGlobalPrefix('api')
-        app.useGlobalPipes(new ValidateInputPipe({
-            forbidUnknownValues: false,
-            whitelist: true,
-            forbidNonWhitelisted: true,
-            transform: true,
-            disableErrorMessages: true,
-        }))
-        app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(
-            new TransformInterceptor({
-                pageName: AppService.config.common.api_default_query_page_name,
-                perPageName: AppService.config.common.api_default_query_rows_name,
-            }),
-            new LoggingInterceptor(),
-            new ClassSerializerInterceptor(app.get(Reflector)),
-            app.get(LazyFieldInterceptor),
-            new TransactionInterceptor(app.get(Reflector)),
-            new ResponseValidationInterceptor(),
-            app.get(ExpandInterceptor),
-        )
-        app.use(bodyParser.json({
-            type: ['application/json-patch+json', 'application/json'],
-        }))
-        app.getHttpAdapter().getInstance().disable('x-powered-by')
-        app.getHttpAdapter().getInstance().set('json spaces', 2)
+        setupApp(app)
 
         await app.init()
 
@@ -154,7 +121,7 @@ describe('Rule Condition', () => {
     })
 
     it('mock authService.compareBcryptPassword', async () => {
-        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(async () => true)
+        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(() => Promise.resolve(true))
         expect(await authService.compareBcryptPassword('123', '456')).toBe(true)
     })
 
@@ -287,6 +254,39 @@ describe('Rule Condition', () => {
                     .send(condition2)
                 expect(response.status).toEqual(201)
                 createdConditionIds.push(+response.body.data[0].id)
+            })
+
+            it('create conditions in bulk, each with its own values', async () => {
+                const condition = (matchName: string, values: string[]): RuleConditionPost => ({
+                    rule_id: createdRuleIds[0],
+                    match_type: 'header',
+                    match_part: 'full',
+                    match_name: matchName,
+                    expression: 'is',
+                    expression_negation: false,
+                    value_type: 'input',
+                    enabled: true,
+                    values,
+                })
+                const response = await request(app.getHttpServer())
+                    .post('/api/header-manipulations/sets/rules/conditions')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send([condition('BulkA', ['a1', 'a2']), condition('BulkB', ['b1'])])
+                expect(response.status).toEqual(201)
+                const created: HeaderManipulationRuleConditionResponseDto[] = response.body.data
+                createdConditionIds.push(...created.map(c => +c.id))
+                for (const [matchName, expected] of [['BulkA', ['a1', 'a2']], ['BulkB', ['b1']]] as [string, string[]][]) {
+                    const id = created.find(c => c.match_name == matchName).id
+                    const values = await request(app.getHttpServer())
+                        .get(`/api/header-manipulations/sets/rules/conditions/${id}/@values`)
+                        .set(...authHeader)
+                        .set('Accept', 'application/json')
+                    expect(values.status).toEqual(200)
+                    expect(values.body.data.map((v: {value: string}) => v.value)).toEqual(expected)
+                }
             })
         })
 

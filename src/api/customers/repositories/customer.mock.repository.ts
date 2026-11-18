@@ -109,7 +109,7 @@ export class CustomerMockRepository implements CustomerRepository {
         return Promise.resolve()
     }
 
-    createInitialBalance(_customerId: number, _create: Date): Promise<void> {
+    createInitialBalances(_customers: internal.Customer[]): Promise<void> {
         return Promise.resolve()
     }
 
@@ -135,6 +135,10 @@ export class CustomerMockRepository implements CustomerRepository {
 
     readBareById(id: number, sr: ServiceRequest, filterBy?: CustomerFilterBy): Promise<internal.Customer> {
         return this.readById(id, sr, filterBy)
+    }
+
+    readByIds(ids: number[], sr: ServiceRequest, filterBy?: CustomerFilterBy): Promise<internal.Customer[]> {
+        return this.readWhereInIds(ids, sr, filterBy)
     }
 
     readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: CustomerFilterBy): Promise<internal.Customer[]> {

@@ -1,7 +1,5 @@
-import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
-import {Reflector} from '@nestjs/core'
+import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import bodyParser from 'body-parser'
 import request from 'supertest'
 import {In} from 'typeorm'
 
@@ -10,22 +8,16 @@ import {CustomerContactResponseDto} from './dto/customer-contact-response.dto'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
+import {setupApp} from '~/app.setup'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {ContactStatus} from '~/entities/internal/contact.internal.entity'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ErrorEntry} from '~/helpers/errors.helper'
-import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
+import {bodyLimit} from '~/helpers/request-limits.helper'
 import {validate} from '~/helpers/validate.helper'
-import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
-import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
-import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
-import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
-import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
-import {TransformInterceptor} from '~/interceptors/transform.interceptor'
-import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 const SIPACCOUNT_PRODUCT_ID = 4
 
@@ -61,31 +53,7 @@ describe('CustomerContact', () => {
         app = moduleRef.createNestApplication()
 
         app.setGlobalPrefix('api')
-        app.useGlobalPipes(new ValidateInputPipe({
-            forbidUnknownValues: false,
-            whitelist: true,
-            forbidNonWhitelisted: true,
-            transform: true,
-            disableErrorMessages: true,
-        }))
-        app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(
-            new TransformInterceptor({
-                pageName: AppService.config.common.api_default_query_page_name,
-                perPageName: AppService.config.common.api_default_query_rows_name,
-            }),
-            new LoggingInterceptor(),
-            new ClassSerializerInterceptor(app.get(Reflector)),
-            app.get(LazyFieldInterceptor),
-            new TransactionInterceptor(app.get(Reflector)),
-            new ResponseValidationInterceptor(),
-            app.get(ExpandInterceptor),
-        )
-        app.use(bodyParser.json({
-            type: ['application/json-patch+json', 'application/json'],
-        }))
-        app.getHttpAdapter().getInstance().disable('x-powered-by')
-        app.getHttpAdapter().getInstance().set('json spaces', 2)
+        setupApp(app)
 
         await app.init()
 
@@ -130,7 +98,7 @@ describe('CustomerContact', () => {
     })
 
     it('mock authService.compareBcryptPassword', async () => {
-        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(async () => true)
+        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(() => Promise.resolve(true))
         expect(await authService.compareBcryptPassword('123', '456')).toBe(true)
     })
 
@@ -868,6 +836,71 @@ describe('CustomerContact', () => {
                 expect(response.body.errorCode).toEqual('NOT_FOUND')
                 expect(response.body.error).toEqual('Not Found')
                 expect(response.body.errors).toBeUndefined()
+            })
+        })
+
+        describe('request limits', () => {
+            const performance = AppService.config.performance
+            const get = (url: string): request.Test => request(app.getHttpServer())
+                .get(url)
+                .set(...authHeader)
+                .set('Accept', 'application/json')
+            const send = (method: 'post' | 'put' | 'patch' | 'delete', body: object): request.Test => request(app.getHttpServer())[method]('/api/customercontacts')
+                .set(...authHeader)
+                .set('Accept', 'application/json')
+                .set('Content-Type', method == 'patch' ? 'application/json-patch+json' : 'application/json')
+                .send(body)
+
+            it('reject rows above performance.read_limit with 400', async () => {
+                const above = await get('/api/customercontacts?rows=10001')
+                expect(above.status).toEqual(400)
+                expect(above.body.errorCode).toEqual('INVALID_PARAMETER')
+                expect(above.body.errors).toEqual([{parameter: 'rows', code: 'max', message: 'rows must not be greater than 10000'}])
+                AppService.config.performance = {...performance, read_limit: 2}
+                try {
+                    expect((await get('/api/customercontacts?rows=2')).status).toEqual(200)
+                    const lowered = await get('/api/customercontacts?rows=3')
+                    expect(lowered.status).toEqual(400)
+                    expect(lowered.body.errors[0].message).toEqual('rows must not be greater than 2')
+                } finally {
+                    AppService.config.performance = performance
+                }
+            })
+            it('reject bulk requests above performance.write_limit with 413 before validating the items', async () => {
+                AppService.config.performance = {...performance, write_limit: 2}
+                try {
+                    const post = await send('post', [{}, {}, {}])
+                    expect(post.status).toEqual(413)
+                    expect(post.body).toEqual({
+                        tx: expect.any(String),
+                        statusCode: 413,
+                        path: '/api/customercontacts',
+                        method: 'POST',
+                        error: 'Payload Too Large',
+                        errorCode: 'BULK_TOO_LARGE',
+                        message: '3 items are more than the 2 allowed per request',
+                    })
+                    const ids = [999911111122, 999911111123, 999911111124]
+                    const bulks: ['put' | 'patch' | 'delete', object][] = [
+                        ['put', Object.fromEntries(ids.map(id => [id, {}]))],
+                        ['patch', Object.fromEntries(ids.map(id => [id, []]))],
+                        ['delete', ids],
+                    ]
+                    for (const [method, body] of bulks) {
+                        const response = await send(method, body)
+                        expect([method, response.status, response.body.errorCode]).toEqual([method, 413, 'BULK_TOO_LARGE'])
+                    }
+                    const atLimit = await send('post', [{}, {}])
+                    expect(atLimit.status).toEqual(422)
+                    expect(atLimit.body.errorCode).toEqual('VALIDATION_FAILED')
+                } finally {
+                    AppService.config.performance = performance
+                }
+            })
+            it('reject a body above performance.body_limit with 413', async () => {
+                const response = await send('post', {firstname: 'x'.repeat(bodyLimit())})
+                expect(response.status).toEqual(413)
+                expect(response.body.errorCode).toEqual('PAYLOAD_TOO_LARGE')
             })
         })
 

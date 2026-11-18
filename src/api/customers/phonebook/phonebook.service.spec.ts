@@ -314,7 +314,7 @@ describe('customer phonebookService', () => {
             jest.spyOn(phonebookMockRepo, 'create').mockResolvedValue([1])
             const req = makeSr(user, {purge_existing: 'true'})
             await service.importCsv([makeEntity(1, '5'), makeEntity(1, '6'), makeEntity(2, '7')], req)
-            expect(purge.mock.calls.map(c => c[0]).sort()).toStrictEqual([1, 2])
+            expect(purge.mock.calls.map(c => c[0])).toStrictEqual([[1, 2]])
             expect(req.query['purge_existing']).toBeUndefined()
         })
         it('should not purge for purge_existing=false and drop the flag', async () => {

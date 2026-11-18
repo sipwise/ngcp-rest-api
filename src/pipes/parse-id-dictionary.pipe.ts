@@ -18,7 +18,9 @@ import {
     mergeErrorListExceptions,
 } from '~/helpers/errors.helper'
 import {Operation, assertJsonPatch, normalisePatch} from '~/helpers/patch.helper'
+import {checkWriteLimit} from '~/helpers/request-limits.helper'
 import {createItemValidationPipe, validateItem} from '~/helpers/validate.helper'
+import {forEachYield, mapYield} from '~/helpers/yield.helper'
 import {isIntId} from '~/pipes/parse-int-id.pipe'
 
 interface ParseIdDictionaryOptions extends Omit<
@@ -49,16 +51,18 @@ export class ParseIdDictionary implements PipeTransform {
     async transform(value: unknown, _metadata: ArgumentMetadata): Promise<Dictionary<unknown>> {
         if (value == null || typeof value != 'object' || Array.isArray(value))
             throw new ValidationFailedException([{pointer: '', code: 'isObject', message: 'body must be an object of items keyed by id'}])
+        const entries = Object.entries(value)
+        checkWriteLimit(entries.length)
 
         const errors: ErrorEntry[] = []
         const patchErrors: ErrorListException[] = []
         const dict = new Dictionary<unknown>()
 
-        for (const [key, item] of Object.entries(value)) {
+        await forEachYield(entries, async ([key, item]) => {
             const pointer = `/${escapePointerToken(key)}`
             if (!isIntId(key)) {
                 errors.push({pointer, code: 'isInt', message: 'key must be an integer id'})
-                continue
+                return
             }
             if (this.options.items == PatchDto) {
                 try {
@@ -69,21 +73,18 @@ export class ParseIdDictionary implements PipeTransform {
                         throw err
                     patchErrors.push(err)
                 }
-                continue
+                return
             }
             if (this.options.valueIsArray) {
                 if (!Array.isArray(item)) {
                     errors.push({pointer, code: 'isArray', message: 'value must be an array'})
-                    continue
+                    return
                 }
-                const instances = []
-                for (const [index, element] of item.entries())
-                    instances.push(await this.toInstance(element, `${pointer}/${index}`, errors))
-                dict[key] = instances
-                continue
+                dict[key] = await mapYield(item, (element, index) => this.toInstance(element, `${pointer}/${index}`, errors))
+                return
             }
             dict[key] = await this.toInstance(item, pointer, errors)
-        }
+        })
 
         if (errors.length)
             patchErrors.push(new ValidationFailedException(errors))

@@ -99,7 +99,7 @@ HTTP/1.1 204 No Content
 
 | Parámetro | Significado |
 | --- | --- |
-| `page`, `rows` | Número de página, a partir de 1, y tamaño de página (predeterminado 10). |
+| `page`, `rows` | Número de página, a partir de 1, y tamaño de página (predeterminado 10, como máximo 10000). |
 | `order_by`, `order_by_direction` | Campo de ordenación y `asc` (predeterminado) o `desc`. |
 | cualquier campo de la colección | Filtro. Los valores deben coincidir exactamente, `*` es un comodín y una coma separa alternativas. |
 | `search_or=true` | Combina varios filtros con OR en lugar de AND. |
@@ -261,6 +261,18 @@ Content-Type: application/json
 ```
 
 Un POST masivo sin `Prefer` devuelve 204, así que solicite `return=id` o `return=representation` para obtener los nuevos ids.
+
+### Límites de las solicitudes
+
+Cada solicitud está limitada, para que una sola solicitud no pueda retener a las demás:
+
+| Límite | Predeterminado | Por encima |
+| --- | --- | --- |
+| `rows` de una solicitud GET | 10000 | 400 |
+| Elementos de una solicitud masiva: array POST, PUT o PATCH por id, ids de DELETE, filas CSV | 10000 | 413 `BULK_TOO_LARGE` |
+| Cuerpo de la solicitud, JSON o archivo CSV | 20 MB | 413 `PAYLOAD_TOO_LARGE` |
+
+Los límites son los ajustes de plataforma `performance.read_limit`, `performance.write_limit` y `performance.body_limit`. Una solicitud masiva por encima del límite de elementos se rechaza antes de validar sus elementos y no se escribe nada de ella: divídala en varias solicitudes. `rows` no tenía límite superior antes: lea las colecciones grandes página a página.
 
 ### Fecha/hora y zonas horarias
 

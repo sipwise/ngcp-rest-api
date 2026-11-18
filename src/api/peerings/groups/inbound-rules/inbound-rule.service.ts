@@ -25,11 +25,10 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
 
     async create(entities: internal.VoipPeeringInboundRule[], sr: ServiceRequest): Promise<internal.VoipPeeringInboundRule[]> {
         const created = await this.ruleRepo.create(entities)
-        for (const groupId of new Set(entities.map(entity => entity.groupId)))
-            await this.ruleRepo.setGroupInboundRulesCount(groupId)
-        await this.reloadKamProxyLcrAfterCommit(sr)
+        await this.ruleRepo.refreshGroupsHaveInboundRules([...new Set(entities.map(entity => entity.groupId))])
+        this.reloadKamProxyLcrAfterCommit(sr)
         if (this.requiresDispatcherReload(entities)) {
-            await this.reloadKamProxyDispatcherAfterCommit(sr)
+            this.reloadKamProxyDispatcherAfterCommit(sr)
         }
         return this.ruleRepo.readWhereInIds(created, sr)
     }
@@ -51,10 +50,10 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
         throwMissingIds(sr, ids, rules.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         // Always reload LCR
-        await this.reloadKamProxyLcrAfterCommit(sr)
+        this.reloadKamProxyLcrAfterCommit(sr)
 
         if (this.requiresDispatcherReloadOnUpdate(rules, updates)) {
-            await this.reloadKamProxyDispatcherAfterCommit(sr)
+            this.reloadKamProxyDispatcherAfterCommit(sr)
         }
 
         const result = await this.ruleRepo.update(updates, sr)
@@ -67,8 +66,7 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
                 movedGroupIds.add(groupId)
             }
         }
-        for (const groupId of movedGroupIds)
-            await this.ruleRepo.refreshGroupInboundRulesCount(groupId)
+        await this.ruleRepo.refreshGroupsHaveInboundRules([...movedGroupIds])
 
         return result
     }
@@ -78,27 +76,26 @@ export class PeeringInboundRuleService implements CrudService<internal.VoipPeeri
         throwMissingIds(sr, ids, rules.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         // Always reload LCR
-        await this.reloadKamProxyLcrAfterCommit(sr)
+        this.reloadKamProxyLcrAfterCommit(sr)
 
         if (this.requiresDispatcherReload(rules)) {
-            await this.reloadKamProxyDispatcherAfterCommit(sr)
+            this.reloadKamProxyDispatcherAfterCommit(sr)
         }
 
         const result = await this.ruleRepo.delete(ids, sr)
 
-        for (const groupId of new Set(rules.map(rule => rule.groupId)))
-            await this.ruleRepo.refreshGroupInboundRulesCount(groupId)
+        await this.ruleRepo.refreshGroupsHaveInboundRules([...new Set(rules.map(rule => rule.groupId))])
 
         return result
     }
 
-    async reloadKamProxyLcrAfterCommit(sr: ServiceRequest): Promise<void> {
+    reloadKamProxyLcrAfterCommit(sr: ServiceRequest): void {
         runOnTransactionCommit(async () => {
             await this.ruleRedisRepo.reloadKamProxLcr(sr)
         })
     }
 
-    async reloadKamProxyDispatcherAfterCommit(sr: ServiceRequest): Promise<void> {
+    reloadKamProxyDispatcherAfterCommit(sr: ServiceRequest): void {
         runOnTransactionCommit(async () => {
             await this.ruleRedisRepo.reloadKamProxDispatcher(sr)
         })

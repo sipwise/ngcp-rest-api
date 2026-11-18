@@ -26,7 +26,7 @@ export class ParseUUIDPipe implements PipeTransform {
         this.options = options || {}
     }
 
-    async transform(value: unknown, metadata: ArgumentMetadata): Promise<string> {
+    transform(value: unknown, metadata: ArgumentMetadata): string {
         if (value == undefined && this.options.allowUndefined) {
             return undefined
         }

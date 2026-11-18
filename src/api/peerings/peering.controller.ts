@@ -33,7 +33,7 @@ export class PeeringController extends CrudController<never, PeeringResponseDto>
     @Get()
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(PeeringResponseDto)
-    async readAll(@Req() req: Request): Promise<[PeeringResponseDto[], number]> {
+    readAll(@Req() req: Request): Promise<[PeeringResponseDto[], number]> {
         this.log.debug({
             message: 'read all peerings',
             func: this.readAll.name,
@@ -43,6 +43,6 @@ export class PeeringController extends CrudController<never, PeeringResponseDto>
         const sr = new ServiceRequest(req)
         const response = [new PeeringResponseDto({url: req.url})]
         const sortedResponse = sortAndPaginate<PeeringResponseDto>(response, sr, 'resourceUrl')
-        return [sortedResponse, response.length]
+        return Promise.resolve([sortedResponse, response.length])
     }
 }

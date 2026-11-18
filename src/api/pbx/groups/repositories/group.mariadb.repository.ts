@@ -6,6 +6,7 @@ import {PbxGroupRepository} from '~/api/pbx/groups/interfaces/group.repository'
 import {RbacRole} from '~/config/constants.config'
 import {db, internal} from '~/entities'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -35,9 +36,7 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
         const result = await query.getRawMany()
         const totalCount = await query.getCount()
 
-        const transformed = await Promise.all(result.map(async group => {
-            return this.rawToInternalPbxGroup(group)
-        }))
+        const transformed = await mapYield(result, group => this.rawToInternalPbxGroup(group))
 
         return [transformed, totalCount]
     }
@@ -54,7 +53,7 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
         return this.rawToInternalPbxGroup(result)
     }
 
-    private async generateBaseQuery(sr: ServiceRequest, _searchLogic?: SearchLogic): Promise<SelectQueryBuilder<db.provisioning.VoipSubscriber>> {
+    private generateBaseQuery(sr: ServiceRequest, _searchLogic?: SearchLogic): Promise<SelectQueryBuilder<db.provisioning.VoipSubscriber>> {
         const query = db.provisioning.VoipSubscriber.createQueryBuilder('sg')
             .select('sg.username', 'group_name')
             .addSelect('sg.pbx_hunt_policy')
@@ -70,7 +69,7 @@ export class PbxGroupMariadbRepository extends MariaDbRepository implements PbxG
 
         this.addPermissionFilterToQueryBuilder(query, sr)
 
-        return query
+        return Promise.resolve(query)
     }
 
     private addSearchFilterToQueryBuilder(qb: SelectQueryBuilder<db.provisioning.VoipSubscriber>, searchLogic: SearchLogic, sr: ServiceRequest): void {

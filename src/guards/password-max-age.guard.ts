@@ -18,9 +18,9 @@ export class PasswordMaxAgeGuard implements CanActivate {
     ) {
     }
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
+    canActivate(context: ExecutionContext): boolean {
         const publicGuard = new PublicGuard(this.reflector)
-        if (await publicGuard.canActivate(context))
+        if (publicGuard.canActivate(context))
             return true
 
         const handlerSkipMaxAge = this.reflector.get<boolean>('skipMaxAge', context.getHandler())
@@ -36,7 +36,7 @@ export class PasswordMaxAgeGuard implements CanActivate {
             throw new UnauthorizedException()
 
         if (sr.user.password_modified_timestamp) {
-            const expired = await this.authService.isPasswordExpired(sr.user.password_modified_timestamp)
+            const expired = this.authService.isPasswordExpired(sr.user.password_modified_timestamp)
             if (expired)
                 throw new ForbiddenException(errorMessage('PASSWORD_EXPIRED'))
         }

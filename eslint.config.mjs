@@ -93,7 +93,11 @@ const defaultOptions = {
         '@typescript-eslint/no-empty-interface': 'error',
         '@typescript-eslint/no-unsafe-return': 'error',
         '@typescript-eslint/prefer-readonly': 'warn',
-        '@typescript-eslint/await-thenable': 'warn',
+        '@typescript-eslint/await-thenable': 'error',
+        '@typescript-eslint/no-floating-promises': 'error',
+        '@typescript-eslint/no-misused-promises': 'error',
+        'require-await': 'off',
+        '@typescript-eslint/require-await': 'error',
     },
 }
 

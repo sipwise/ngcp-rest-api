@@ -77,8 +77,7 @@ export class ContractController extends CrudController<ContractRequestDto, Contr
         const contracts = createDto.map(contract => contract.toInternal())
         const created = await this.contractService.create(contracts, sr)
         const response = created.map((contract) => new ContractResponseDto(contract))
-        for (const entry of response)
-            await this.journalService.writeJournal(sr, entry.id, entry)
+        await this.journalService.writeJournals(sr, response.map(entry => ({id: entry.id, data: entry})))
         return response
     }
 

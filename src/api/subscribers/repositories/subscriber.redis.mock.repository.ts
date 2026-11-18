@@ -2,11 +2,13 @@ export class SubscriberRedisMockRepository {
     readonly removedLocations: string[][] = []
     trustedHostsReloads = 0
 
-    async removeLocations(aors: string[]): Promise<void> {
+    removeLocations(aors: string[]): Promise<void> {
         this.removedLocations.push(aors)
+        return Promise.resolve()
     }
 
-    async reloadTrustedHosts(): Promise<void> {
+    reloadTrustedHosts(): Promise<void> {
         this.trustedHostsReloads++
+        return Promise.resolve()
     }
 }

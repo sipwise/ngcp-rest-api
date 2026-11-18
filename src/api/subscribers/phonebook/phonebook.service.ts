@@ -1,5 +1,4 @@
 import {Inject, Injectable, NotFoundException, StreamableFile} from '@nestjs/common'
-import * as asyncLib from 'async'
 import {I18nService} from 'nestjs-i18n'
 
 import {SubscriberPhonebookView} from './dto/phonebook-query.dto'
@@ -30,14 +29,10 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
     }
 
     async create(entities: internal.SubscriberPhonebook[], sr: ServiceRequest): Promise<internal.SubscriberPhonebook[]> {
-        const subscriberIds: {[id: number]: number} = {}
-
-        await asyncLib.forEach(entities, async entity => {
-            if (sr.user.role == 'subscriberadmin' || sr.user.role == 'subscriber') {
+        if (sr.user.role == 'subscriberadmin' || sr.user.role == 'subscriber') {
+            for (const entity of entities)
                 entity.subscriberId = entity.subscriberId || sr.user.id
-            }
-            subscriberIds[entity.subscriberId] = entity.subscriberId
-        })
+        }
 
         const options = this.getSubscriberPhonebookOptionsFromServiceRequest(sr)
         await this.checkAllowedSubscribers(entities, sr)
@@ -143,7 +138,7 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
     }
 
     async importCsv(entities: internal.SubscriberPhonebook[], sr: ServiceRequest): Promise<internal.SubscriberPhonebook[]> {
-        await this.validateCsvData(entities)
+        this.validateCsvData(entities)
         const _options = this.getSubscriberPhonebookOptionsFromServiceRequest(sr)
 
         await this.checkAllowedSubscribers(entities, sr, (row, entity) => rowPointer(+row, entity, 'subscriberId'))
@@ -151,10 +146,7 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
         if (sr.query && sr.query['purge_existing']) {
             if (SearchLogic.isTrue(sr.query['purge_existing'])) {
                 delete sr.query['purge_existing']
-                const promises = Array.from(subscribers).map(async subscriber => {
-                    await this.phonebookRepo.purge(subscriber, sr)
-                })
-                await Promise.all(promises)
+                await this.phonebookRepo.purge([...subscribers], sr)
             } else {
                 delete sr.query['purge_existing']
             }
@@ -202,7 +194,7 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
         errors.throwIfAny()
     }
 
-    private async validateCsvData(entities: internal.SubscriberPhonebook[]): Promise<void> {
+    private validateCsvData(entities: internal.SubscriberPhonebook[]): void {
         const seen = new Set<string>()
         const errors = new ApiErrors()
         entities.forEach((entity, row) => {

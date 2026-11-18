@@ -36,7 +36,7 @@ export class TemplateController extends CrudController<never, TemplateResponseDt
     @Get()
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(TemplateResponseDto)
-    async readAll(@Req() req: Request): Promise<[TemplateResponseDto[], number]> {
+    readAll(@Req() req: Request): Promise<[TemplateResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all templates',
             func: this.readAll.name,
@@ -48,6 +48,6 @@ export class TemplateController extends CrudController<never, TemplateResponseDt
         const sr = new ServiceRequest(req)
         const response = [new TemplateResponseDto({url: req.url})]
         const sortedResponse = sortAndPaginate<TemplateResponseDto>(response, sr, 'resourceUrl')
-        return [sortedResponse, response.length]
+        return Promise.resolve([sortedResponse, response.length])
     }
 }

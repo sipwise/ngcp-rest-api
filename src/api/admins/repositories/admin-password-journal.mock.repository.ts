@@ -19,10 +19,11 @@ export class AdminPasswordJournalMockRepository implements AdminPasswordJournalR
         }
     }
 
-    async keepLastNPasswords(adminId: number, n: number): Promise<void> {
+    keepLastNPasswords(adminId: number, n: number): Promise<void> {
         const journals = Object.values(this.db).filter(journal => journal.admin_id === adminId)
         const journalsToDelete = journals.slice(0, -n)
         journalsToDelete.forEach(journal => delete this.db[journal.id])
+        return Promise.resolve()
     }
 
     async create(journals: internal.AdminPasswordJournal[]): Promise<number[]> {
@@ -33,9 +34,9 @@ export class AdminPasswordJournalMockRepository implements AdminPasswordJournalR
         return Promise.resolve([nextId])
     }
 
-    async readLastNPasswords(adminId: number, n: number): Promise<internal.AdminPasswordJournal[]> {
+    readLastNPasswords(adminId: number, n: number): Promise<internal.AdminPasswordJournal[]> {
         const journals = Object.values(this.db).filter(journal => journal.admin_id === adminId)
-        return journals.slice(-n) as internal.AdminPasswordJournal[]
+        return Promise.resolve(journals.slice(-n) as internal.AdminPasswordJournal[])
     }
 
     private getNextId(): number {

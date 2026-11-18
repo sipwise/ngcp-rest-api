@@ -18,23 +18,23 @@ describe('ReadOnlyGuard', () => {
 
     const guard = new ReadOnlyGuard(new Reflector())
 
-    it('allows non read-only users', async () => {
-        expect(await guard.canActivate(mockContext('POST', false))).toBe(true)
+    it('allows non read-only users', () => {
+        expect(guard.canActivate(mockContext('POST', false))).toBe(true)
     })
 
-    it('allows GET for read-only users', async () => {
-        expect(await guard.canActivate(mockContext('GET', true))).toBe(true)
+    it('allows GET for read-only users', () => {
+        expect(guard.canActivate(mockContext('GET', true))).toBe(true)
     })
 
-    it('denies POST for read-only users', async () => {
-        expect(await guard.canActivate(mockContext('POST', true))).toBe(false)
+    it('denies POST for read-only users', () => {
+        expect(guard.canActivate(mockContext('POST', true))).toBe(false)
     })
 
-    it('allows POST for read-only users when skipReadOnly is set on the handler', async () => {
-        expect(await guard.canActivate(mockContext('POST', true, true))).toBe(true)
+    it('allows POST for read-only users when skipReadOnly is set on the handler', () => {
+        expect(guard.canActivate(mockContext('POST', true, true))).toBe(true)
     })
 
-    it('allows POST for read-only users when skipReadOnly is set on the class', async () => {
-        expect(await guard.canActivate(mockContext('POST', true, true, true))).toBe(true)
+    it('allows POST for read-only users when skipReadOnly is set on the class', () => {
+        expect(guard.canActivate(mockContext('POST', true, true, true))).toBe(true)
     })
 })

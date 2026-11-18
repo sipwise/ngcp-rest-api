@@ -92,16 +92,13 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
     async importCsv(entities: internal.ResellerPhonebook[], sr: ServiceRequest): Promise<internal.ResellerPhonebook[]> {
         const _options = this.getResellerPhonebookOptionsFromServiceRequest(sr)
         this.assignUserResellerId(entities, sr)
-        await this.validateCsvData(entities)
+        this.validateCsvData(entities)
 
         const resellers = new Set(entities.map(entity => entity.resellerId))
         if (sr.query && sr.query['purge_existing']) {
             if (SearchLogic.isTrue(sr.query['purge_existing'])) {
                 delete sr.query['purge_existing']
-                const promises = Array.from(resellers).map(async reseller => {
-                    await this.phonebookRepo.purge(reseller, sr)
-                })
-                await Promise.all(promises)
+                await this.phonebookRepo.purge([...resellers], sr)
             }
             else {
                 delete sr.query['purge_existing']
@@ -135,7 +132,7 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
             entity.resellerId = sr.user.reseller_id
     }
 
-    private async validateCsvData(entities: internal.ResellerPhonebook[]): Promise<void> {
+    private validateCsvData(entities: internal.ResellerPhonebook[]): void {
         const seen = new Set<string>()
         const errors = new ApiErrors()
         entities.forEach((entity, row) => {

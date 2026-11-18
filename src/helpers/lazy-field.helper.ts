@@ -3,6 +3,7 @@ import {Request} from 'express'
 
 import {AppService} from '~/app.service'
 import {LazyField} from '~/decorators/lazy.decorator'
+import {forEachYield} from '~/helpers/yield.helper'
 import {LazyFieldSource, LazyFieldSources, LazyItem} from '~/interfaces/lazy-field-source.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -149,16 +150,18 @@ export async function applyLazyFields(items: LazyItem[], sources: LazyFieldSourc
     const ids = items.map(item => item.id)
     for (const source of Object.values(sources)) {
         const counts = await source.count(ids)
-        for (const item of items)
+        await forEachYield(items, item => {
             item.lazyCounts = {...item.lazyCounts, [source.property]: counts.get(item.id) ?? 0}
+        })
     }
     const inlined = inlinedItems(items, sources, sr?.req)
     for (const [field, source] of Object.entries(sources)) {
         const fieldItems = inlined.get(field)
         const loaded = fieldItems.length ? await source.load(fieldItems.map(item => item.id)) : new Map<number, unknown[]>()
         const isLoaded = new Set(fieldItems)
-        for (const item of items)
+        await forEachYield(items, item => {
             item[source.property] = isLoaded.has(item) ? loaded.get(item.id) ?? [] : undefined
+        })
     }
 }
 
@@ -236,8 +239,8 @@ export function memoryFieldSource(property: string, read: (id: number) => object
     const items = (id: number): unknown[] => (read(id) as Record<string, unknown[]>)?.[property] ?? []
     return {
         property,
-        count: async ids => new Map(ids.map(id => [id, items(id).length])),
-        load: async ids => new Map(ids.map(id => [id, items(id)])),
-        page: async id => [items(id), items(id).length],
+        count: ids => Promise.resolve(new Map(ids.map(id => [id, items(id).length]))),
+        load: ids => Promise.resolve(new Map(ids.map(id => [id, items(id)]))),
+        page: id => Promise.resolve([items(id), items(id).length]),
     }
 }

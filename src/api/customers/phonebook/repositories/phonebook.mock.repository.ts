@@ -141,8 +141,8 @@ export class CustomerPhonebookMockRepository implements CustomerPhonebookReposit
         return this.readById(+id, options)
     }
 
-    purge(_customerId: number, _sr: ServiceRequest): Promise<number> {
-        return Promise.resolve(_customerId)
+    purge(_customerIds: number[], _sr: ServiceRequest): Promise<void> {
+        return Promise.resolve()
     }
 
     private getNextId(): number {

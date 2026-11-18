@@ -5,11 +5,11 @@ import {JournalMariadbRepository} from './repositories/journal.mariadb.repositor
 
 import {AppService} from '~/app.service'
 import {RbacRole} from '~/config/constants.config'
-import {HandleDbErrors} from '~/decorators/handle-db-errors.decorator'
 import {internal} from '~/entities'
 import Context from '~/helpers/context.helper'
 import {obfuscatePasswordJSON} from '~/helpers/password-obfuscator.helper'
 import {extractResourceName} from '~/helpers/uri.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 
@@ -38,16 +38,6 @@ export class JournalService {
     }
 
     /**
-     * Creates a new `Journal` entry in the database
-     * @param journal Journal to be created
-     */
-    @HandleDbErrors
-    async create(journal: internal.Journal, sr: ServiceRequest): Promise<internal.Journal> {
-        const createdId = await this.journalRepo.create(journal)
-        return await this.journalRepo.read(createdId, sr)
-    }
-
-    /**
      * Find all `Journal` entries. Allows to provide search filters for `resourceName` and `resourceId`.
      * Journals are admin-only, subscriber roles get 403.
      * @param resourceName Name of the resource
@@ -70,15 +60,6 @@ export class JournalService {
     }
 
     /**
-     * Find one `Journal` by ID
-     * @param id ID of Journal
-     */
-    @HandleDbErrors
-    async read(_id: number): Promise<internal.Journal> {
-        return
-    }
-
-    /**
      * Returns the journal resource name of the requested route, e.g. `customers/phonebook` for
      * `/customers/phonebook/:id` and `/customers/phonebook/:id/journal`
      */
@@ -87,6 +68,13 @@ export class JournalService {
     }
 
     public async writeJournal(sr: ServiceRequest, id: number, data: unknown): Promise<boolean> {
+        return await this.writeJournals(sr, [{id, data}])
+    }
+
+    /**
+     * One journal entry per resource of the request, `data` is its content
+     */
+    public async writeJournals(sr: ServiceRequest, entries: {id: number, data: unknown}[]): Promise<boolean> {
         // Set content format and default to json
         // TODO: Check if this even worked before as the 'content-type' was wrongly started with a capital letter
         let cf = contentFormat[sr.headers['content-type']]
@@ -102,37 +90,37 @@ export class JournalService {
             return false
         }
 
-        const resourceId = id
-
         const resourceName = this.resourceName(sr)
 
         const ctx = Context.get(sr.req)
 
-        // create new Journal entry
-        const entry = internal.Journal.create({
+        const journals = await mapYield(entries, entry => internal.Journal.create({
             reseller_id: sr.user.reseller_id,
             role_id: sr.user.role_data ? sr.user.role_data.id : null,
             role: sr.user.role,
             user_id: sr.user.id,
             tx_id: ctx.txid,
-            content: Object.keys(data).length > 0
-                ? isObject(data) || Array.isArray(data)
-                    ? JSON.stringify(data, obfuscatePasswordJSON)
-                    : Buffer.from(data as string).toString('base64') // TODO: Check if this is correct
-                : '',
+            content: journalContent(entry.data),
             content_format: cf,
             operation: op,
-            resource_id: resourceId,
+            resource_id: entry.id,
             resource_name: resourceName,
             timestamp: ctx.startTime / 1000,
             username: sr['user'] !== undefined ? sr.user.username : '',
-        })
+        }))
 
-        this.log.debug('write journal entry')
+        this.log.debug('write journal entries')
 
-        // write Journal entry to database
-        await this.create(entry, sr)
+        await this.journalRepo.create(journals)
 
         return true
     }
+}
+
+function journalContent(data: unknown): string {
+    if (Object.keys(data).length == 0)
+        return ''
+    if (isObject(data) || Array.isArray(data))
+        return JSON.stringify(data, obfuscatePasswordJSON)
+    return Buffer.from(data as string).toString('base64') // TODO: Check if this is correct
 }

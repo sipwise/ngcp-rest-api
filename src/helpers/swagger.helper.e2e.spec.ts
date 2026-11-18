@@ -1,6 +1,6 @@
 import {HttpStatus} from '@nestjs/common'
 import {NestApplication} from '@nestjs/core'
-import {OperationObject, ResponseObject} from '@nestjs/swagger'
+import {OperationObject, RequestBodyObject, ResponseObject} from '@nestjs/swagger'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
 
@@ -125,6 +125,33 @@ describe('Swagger', () => {
             for (const code of ['4XX', '5XX'])
                 expect((operation.responses[code] as ResponseObject).content['application/json'].schema).toEqual({$ref: '#/components/schemas/ErrorResponse'})
         }
+    })
+
+    it('documents the request limits: rows maximum, bulk body items and their 413', async () => {
+        const json = await request(app.getHttpServer()).get('/api/swagger.json')
+        expect(json.status).toEqual(HttpStatus.OK)
+        const paths = json.body.paths as Record<string, Record<string, OperationObject>>
+        const rows = Object.values(paths).flatMap(item => Object.values(item))
+            .flatMap(operation => operation.parameters.filter(param => 'name' in param && param.name == 'rows'))
+        expect(rows.length).toBeGreaterThan(50)
+        for (const param of rows)
+            expect(param).toEqual(expect.objectContaining({schema: expect.objectContaining({maximum: 10000})}))
+
+        const bodySchema = (operation: OperationObject, type = 'application/json'): Record<string, unknown> =>
+            (operation.requestBody as RequestBodyObject).content[type].schema as Record<string, unknown>
+        const collection = paths['/customercontacts']
+        expect(bodySchema(collection.post)).toEqual(expect.objectContaining({type: 'array', maxItems: 10000}))
+        expect(bodySchema(collection.put)).toEqual(expect.objectContaining({type: 'object', maxProperties: 10000}))
+        expect(bodySchema(collection.patch, 'application/json-patch+json')).toEqual(expect.objectContaining({type: 'object', maxProperties: 10000}))
+        for (const operation of [collection.post, collection.put, collection.patch]) {
+            const tooLarge = (operation.responses['413'] as ResponseObject).content['application/json']
+            expect(tooLarge.schema).toEqual({$ref: '#/components/schemas/ErrorResponse'})
+            expect(tooLarge.example).toEqual(expect.objectContaining({errorCode: 'BULK_TOO_LARGE'}))
+        }
+        const item = paths['/customercontacts/{id}']
+        expect(bodySchema(item.patch, 'application/json-patch+json').maxItems).toBeUndefined()
+        expect(item.patch.responses['413']).toBeUndefined()
+        expect(collection.get.responses['413']).toBeUndefined()
     })
 
     it('documents tz on every operation and the timezone kind of date/time fields', async () => {

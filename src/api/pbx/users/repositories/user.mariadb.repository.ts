@@ -7,6 +7,7 @@ import {PbxUserRepository} from '~/api/pbx/users/interfaces/user.repository'
 import {db, internal} from '~/entities'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -36,7 +37,7 @@ export class PbxUserMariadbRepository extends MariaDbRepository implements PbxUs
         )
         this.addFilterBy(qb, options.filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(result.map(async (pbxUser) => pbxUser.toInternalPbxUser())), totalCount]
+        return [await mapYield(result, (pbxUser) => pbxUser.toInternalPbxUser()), totalCount]
     }
 
     async readById(id: number, options: PbxUserOptions, _sr: ServiceRequest): Promise<internal.PbxUser> {

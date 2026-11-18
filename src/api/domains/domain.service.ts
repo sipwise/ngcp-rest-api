@@ -5,6 +5,7 @@ import {DomainMariadbRepository} from './repositories/domain.mariadb.repository'
 
 import {internal} from '~/entities'
 import {ApiErrors, idPointer, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
+import {forEachYield} from '~/helpers/yield.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -22,18 +23,21 @@ export class DomainService implements CrudService<internal.Domain> {
 
     async create(domains: internal.Domain[], sr: ServiceRequest): Promise<internal.Domain[]> {
         if (sr.user.reseller_id_required) {
-            if (!await this.domainRepo.readResellerById(sr.user.reseller_id, sr))
+            if (!(await this.domainRepo.readExistingResellerIds([sr.user.reseller_id])).length)
                 throw new UnprocessableEntityException(this.i18n.t('errors.RESELLER_ID_INVALID'))
             for (const domain of domains)
                 domain.reseller_id = sr.user.reseller_id
         }
+        const resellerIds = new Set(await this.domainRepo.readExistingResellerIds(domains.map(domain => domain.reseller_id)))
+        // names compare case-insensitively, as in the db
+        const existingNames = new Set((await this.domainRepo.readExistingNames(domains.map(domain => domain.domain))).map(name => name.toLowerCase()))
         const errors = new ApiErrors()
-        for (const [index, domain] of domains.entries()) {
-            if (!sr.user.reseller_id_required && !await this.domainRepo.readResellerById(domain.reseller_id, sr))
+        await forEachYield(domains, (domain, index) => {
+            if (!resellerIds.has(domain.reseller_id))
                 errors.add(this.i18n.t('errors.RESELLER_ID_INVALID'), itemPointer(sr, index, domain, 'reseller_id'))
-            if (await this.domainRepo.readByDomain(domain.domain, sr))
+            if (existingNames.has(domain.domain.toLowerCase()))
                 errors.add(this.i18n.t('errors.DOMAIN_ALREADY_EXISTS', {args: {domain: domain.domain}}), itemPointer(sr, index, domain, 'domain'))
-        }
+        })
         errors.throwIfAny()
         const createdIds = await this.domainRepo.create(domains, sr)
         return await this.domainRepo.readWhereInIds(createdIds, sr)
@@ -71,9 +75,6 @@ export class DomainService implements CrudService<internal.Domain> {
                 errors.add(this.i18n.t('errors.DOMAIN_DOES_NOT_BELONG_TO_RESELLER'), idPointer(sr, domain.id))
         }
         errors.throwIfAny(HttpStatus.FORBIDDEN)
-        const deletedIds: number[] = []
-        for (const domain of domains)
-            deletedIds.push(await this.domainRepo.delete(domain.id, sr))
-        return deletedIds
+        return await this.domainRepo.delete(ids, sr)
     }
 }

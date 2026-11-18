@@ -34,7 +34,7 @@ export class NCOSController extends CrudController<never, NCOSResponseDto> {
     @Get()
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(NCOSResponseDto)
-    async readAll(@Req() req: Request): Promise<[NCOSResponseDto[], number]> {
+    readAll(@Req() req: Request): Promise<[NCOSResponseDto[], number]> {
         this.log.debug({
             message: 'read all ncos',
             func: this.readAll.name,
@@ -44,6 +44,6 @@ export class NCOSController extends CrudController<never, NCOSResponseDto> {
         const sr = new ServiceRequest(req)
         const response = [new NCOSResponseDto({url: req.url})]
         const sortedResponse = sortAndPaginate<NCOSResponseDto>(response, sr, 'resourceUrl')
-        return [sortedResponse, response.length]
+        return Promise.resolve([sortedResponse, response.length])
     }
 }

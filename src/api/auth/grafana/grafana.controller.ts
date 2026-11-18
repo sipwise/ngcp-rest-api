@@ -53,11 +53,11 @@ export class AuthGrafanaController {
             },
         },
     })
-    async grafana(
+    grafana(
         @Body() dto: AuthGrafanaRequestDto,
         @Req() req: Request,
         @Res({passthrough: true}) res: Response,
-    ): Promise<AuthGrafanaResponseDto> {
+    ): AuthGrafanaResponseDto {
         this.log.debug({
             message: 'grafana auth',
             func: this.grafana.name,

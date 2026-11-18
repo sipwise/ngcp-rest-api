@@ -2,11 +2,14 @@ import {Readable} from 'stream'
 
 import {StreamableFile, UnprocessableEntityException} from '@nestjs/common'
 import {plainToInstance} from 'class-transformer'
+import {ValidationError} from 'class-validator'
 import {Response} from 'express'
 import * as Papa from 'papaparse'
 
 import {ErrorEntry, ValidationFailedException, formatValidationErrors} from './errors.helper'
+import {checkWriteLimit} from './request-limits.helper'
 import {validate} from './validate.helper'
+import {mapYield} from './yield.helper'
 
 import {errorMessage} from '~/helpers/errors.helper'
 
@@ -18,44 +21,40 @@ export interface CsvOptions {
  *
  */
 export async function csvToDto<T extends object>(file: Express.Multer.File, dtoClass: new () => T): Promise<T[] | null> {
-    return new Promise((resolve, reject) => {
+    const result = await new Promise<Papa.ParseResult<object>>((resolve, reject) => {
         const stream = Readable.from(file.buffer.toString('utf-8'))
-        stream.on('error', (error) => {
-            reject(error)
-        })
+        stream.on('error', reject)
         Papa.parse(stream, {
             header: true,
             skipEmptyLines: true,
             delimiter: ',',
             encoding: 'utf-8',
-            complete: async (result) => {
-                try {
-                    const rows = result.data
-                    if (!rows || rows.length === 0) {
-                        resolve(null)
-                        return
-                    }
-
-                    const dtos = rows.map(row => plainToInstance(dtoClass, row))
-                    const errors: ErrorEntry[] = []
-                    const rowErrors = await Promise.all(dtos.map(dto => validate(dto)))
-                    rowErrors.forEach((validationErrors, row) => {
-                        errors.push(...formatValidationErrors(validationErrors, `/${row}`))
-                    })
-                    if (errors.length > 0) {
-                        reject(new ValidationFailedException(errors))
-                    } else {
-                        resolve(dtos)
-                    }
-                } catch {
-                    reject(new UnprocessableEntityException(errorMessage('CSV_MALFORMED')))
-                }
-            },
-            error: (error) => {
-                reject(error)
-            },
+            complete: resolve,
+            error: reject,
         })
     })
+
+    const rows = result.data
+    if (!rows || rows.length === 0)
+        return null
+    checkWriteLimit(rows.length)
+
+    let dtos: T[]
+    let rowErrors: ValidationError[][]
+    try {
+        dtos = await mapYield(rows, row => plainToInstance(dtoClass, row))
+        rowErrors = await mapYield(dtos, dto => validate(dto))
+    } catch {
+        throw new UnprocessableEntityException(errorMessage('CSV_MALFORMED'))
+    }
+
+    const errors: ErrorEntry[] = []
+    rowErrors.forEach((validationErrors, row) => {
+        errors.push(...formatValidationErrors(validationErrors, `/${row}`))
+    })
+    if (errors.length > 0)
+        throw new ValidationFailedException(errors)
+    return dtos
 }
 
 /**
@@ -65,7 +64,7 @@ export async function csvToDto<T extends object>(file: Express.Multer.File, dtoC
 export async function dtoToCsv<T extends object>(dtos: T[], options?: CsvOptions): Promise<string> {
     const useNumericBooleans = options?.numericBooleans || false
     const mappedDtos = useNumericBooleans
-        ? dtos.map(dto => {
+        ? await mapYield(dtos, dto => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const result: Record<string, any> = {}
             for (const [key, value] of Object.entries(dto)) {

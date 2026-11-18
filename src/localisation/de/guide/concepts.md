@@ -99,7 +99,7 @@ HTTP/1.1 204 No Content
 
 | Parameter | Bedeutung |
 | --- | --- |
-| `page`, `rows` | Seitennummer, beginnend bei 1, und Seitengröße (Standard 10). |
+| `page`, `rows` | Seitennummer, beginnend bei 1, und Seitengröße (Standard 10, höchstens 10000). |
 | `order_by`, `order_by_direction` | Sortierfeld und `asc` (Standard) oder `desc`. |
 | jedes Feld der Collection | Filter. Werte müssen exakt übereinstimmen, `*` ist ein Platzhalter, ein Komma trennt Alternativen. |
 | `search_or=true` | Mehrere Filter mit OR statt AND verknüpfen. |
@@ -261,6 +261,18 @@ Content-Type: application/json
 ```
 
 Ein Bulk-POST ohne `Prefer` liefert 204; fordern Sie daher `return=id` oder `return=representation` an, um die neuen ids zu erhalten.
+
+### Anfragelimits
+
+Jede Anfrage ist begrenzt, damit eine einzelne Anfrage die anderen nicht aufhält:
+
+| Limit | Standard | Darüber |
+| --- | --- | --- |
+| `rows` einer GET-Anfrage | 10000 | 400 |
+| Einträge einer Bulk-Anfrage: POST-Array, PUT oder PATCH nach ID, DELETE-IDs, CSV-Zeilen | 10000 | 413 `BULK_TOO_LARGE` |
+| Request-Body, JSON oder CSV-Datei | 20 MB | 413 `PAYLOAD_TOO_LARGE` |
+
+Die Limits sind die Plattform-Einstellungen `performance.read_limit`, `performance.write_limit` und `performance.body_limit`. Eine Bulk-Anfrage über dem Eintragslimit wird abgelehnt, bevor ihre Einträge validiert werden, und nichts davon wird geschrieben: teilen Sie sie auf mehrere Anfragen auf. `rows` hatte bisher keine Obergrenze: lesen Sie größere Collections seitenweise.
 
 ### Datum/Uhrzeit und Zeitzonen
 

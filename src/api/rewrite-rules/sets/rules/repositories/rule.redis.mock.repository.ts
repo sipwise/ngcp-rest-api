@@ -12,7 +12,7 @@ export class RewriteRuleMockRedisRepository {
     ) {
     }
 
-    async reloadDialPlan(_sr: ServiceRequest): Promise<void> {
+    reloadDialPlan(_sr: ServiceRequest): Promise<void> {
         const {publishChannel, request} = this.taskAgentHelper.buildRequest({
             feedbackChannel: 'ngcp-rest-api-dialplan-reload',
             task: 'kam_proxy_dialplan_reload',
@@ -20,5 +20,6 @@ export class RewriteRuleMockRedisRepository {
         })
         this.log.debug(`publish to task agent '${publishChannel}': ${JSON.stringify(request)}`)
         this.log.debug('All task agents completed successfully')
+        return Promise.resolve()
     }
 }

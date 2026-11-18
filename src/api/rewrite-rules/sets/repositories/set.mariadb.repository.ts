@@ -1,5 +1,5 @@
 import {Injectable} from '@nestjs/common'
-import {SelectQueryBuilder} from 'typeorm'
+import {In, SelectQueryBuilder} from 'typeorm'
 
 import {RewriteRuleSetSearchDto} from '~/api/rewrite-rules/sets/dto/set-search.dto'
 import {RewriteRuleSetRepository} from '~/api/rewrite-rules/sets/interfaces/set.repository'
@@ -7,6 +7,7 @@ import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -21,11 +22,9 @@ export class RewriteRuleSetMariadbRepository extends MariaDbRepository implement
 
     async create(entities: internal.RewriteRuleSet[]): Promise<number[]> {
         const qb = db.provisioning.VoipRewriteRuleSet.createQueryBuilder('rewriteRuleSet')
-        const values = await Promise.all(entities.map(async entity => {
-            return new db.provisioning.VoipRewriteRuleSet().fromInternal(entity)
-        }))
+        const values = await mapYield(entities, entity => new db.provisioning.VoipRewriteRuleSet().fromInternal(entity))
         const result = await qb.insert().values(values).execute()
-        return await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.RewriteRuleSet[], number]> {
@@ -43,11 +42,7 @@ export class RewriteRuleSetMariadbRepository extends MariaDbRepository implement
         )
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(
-            result.map(async (d) => {
-                return d.toInternal()
-            }),
-        ), totalCount]
+        return [await mapYield(result, d => d.toInternal()), totalCount]
     }
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.RewriteRuleSet> {
@@ -69,25 +64,12 @@ export class RewriteRuleSetMariadbRepository extends MariaDbRepository implement
         return result.toInternal()
     }
 
-    async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.RewriteRuleSet[]> {
+    async readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.RewriteRuleSet[]> {
         const qb = db.provisioning.VoipRewriteRuleSet.createQueryBuilder('rewriteRuleSet')
-        const searchDto  = new RewriteRuleSetSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
         qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => {
-            return d.toInternal()
-        }))
+        return await mapYield(result, d => d.toInternal())
     }
 
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
@@ -123,18 +105,15 @@ export class RewriteRuleSetMariadbRepository extends MariaDbRepository implement
         return ids
     }
 
-    async cleanSets(id: number, _sr: ServiceRequest): Promise<void> {
-        const rules = await db.provisioning.VoipRewriteRule.findBy({set_id: id})
-        await Promise.all(rules.map(async rule => {
-            await rule.remove()
-        }))
+    async cleanSets(ids: number[], _sr: ServiceRequest): Promise<void> {
+        await db.provisioning.VoipRewriteRule.delete({set_id: In(ids)})
     }
 
     async createRules(entities: internal.RewriteRule[]): Promise<number[]> {
         const qb = db.provisioning.VoipRewriteRule.createQueryBuilder('rewriteRule')
-        const values = await Promise.all(entities.map(async entity => new db.provisioning.VoipRewriteRule().fromInternal(entity)))
+        const values = await mapYield(entities, entity => new db.provisioning.VoipRewriteRule().fromInternal(entity))
         const result = await qb.insert().values(values).execute()
-        return await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipRewriteRuleSet>, filterBy: FilterBy): void {

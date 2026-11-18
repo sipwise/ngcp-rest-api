@@ -115,16 +115,16 @@ describe('ResellerService', () => {
 
     describe('create (terminated name, side effects)', () => {
         it('renames a terminated reseller with the same name and creates the new one', async () => {
-            jest.spyOn(resellerMockRepo, 'readByName').mockResolvedValue(
-                internal.Reseller.create({id: 77, contract_id: 1, name: 'old', status: ResellerStatus.Terminated}))
-            const renameSpy = jest.spyOn(resellerMockRepo, 'renameReseller')
+            jest.spyOn(resellerMockRepo, 'readByNames').mockResolvedValue([
+                internal.Reseller.create({id: 77, contract_id: 1, name: 'old', status: ResellerStatus.Terminated})])
+            const renameSpy = jest.spyOn(resellerMockRepo, 'renameResellers')
             const templatesSpy = jest.spyOn(resellerMockRepo, 'createEmailTemplates')
             const result = await service.create([internal.Reseller.create({
                 contract_id: 6,
                 name: 'old',
                 status: ResellerStatus.Active,
             })], sr)
-            expect(renameSpy).toHaveBeenCalledWith(77, 'old')
+            expect(renameSpy).toHaveBeenCalledWith([77])
             expect(templatesSpy).toHaveBeenCalledWith([result[0].id])
         })
 
@@ -163,18 +163,18 @@ describe('ResellerService', () => {
         })
 
         it('updates without validation when contract and name are unchanged', async () => {
-            const contractSpy = jest.spyOn(resellerMockRepo, 'contractExists')
-            const nameSpy = jest.spyOn(resellerMockRepo, 'readByName')
+            const contractSpy = jest.spyOn(resellerMockRepo, 'readResellerContracts')
+            const nameSpy = jest.spyOn(resellerMockRepo, 'readByNames')
             const updates = upd(1, {contract_id: 1, name: 'reseller1', status: ResellerStatus.Active})
             await expect(service.update(updates, sr)).resolves.toEqual([1])
-            expect(contractSpy).not.toHaveBeenCalled()
-            expect(nameSpy).not.toHaveBeenCalled()
+            expect(contractSpy).toHaveBeenCalledWith([])
+            expect(nameSpy).toHaveBeenCalledWith([])
             expect(updateSpy).toHaveBeenCalledWith(updates, sr)
         })
 
         it('throws 422 when the new name exists', async () => {
-            jest.spyOn(resellerMockRepo, 'readByName').mockResolvedValue(
-                internal.Reseller.create({id: 2, contract_id: 2, name: 'taken'} as internal.Reseller))
+            jest.spyOn(resellerMockRepo, 'readByNames').mockResolvedValue([
+                internal.Reseller.create({id: 2, contract_id: 2, name: 'taken'} as internal.Reseller)])
             await expect(service.update(upd(1, {contract_id: 1, name: 'taken'}), sr)).rejects.toThrow(ApiErrorException)
             expect(updateSpy).not.toHaveBeenCalled()
         })

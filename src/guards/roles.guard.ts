@@ -8,9 +8,9 @@ export class RolesGuard implements CanActivate {
     constructor(private readonly reflector: Reflector) {
     }
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
+    canActivate(context: ExecutionContext): boolean {
         const isPublic = new PublicGuard(this.reflector)
-        if (await isPublic.canActivate(context))
+        if (isPublic.canActivate(context))
             return true
         const roles = this.reflector.getAllAndMerge<string[]>('rbacroles', [
             context.getHandler(),

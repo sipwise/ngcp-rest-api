@@ -96,12 +96,12 @@ describe('InvoiceService', () => {
             5: newTemplate(5, InvoiceTemplateCategory.Customer, 2),
         }
         templateService = {
-            read: jest.fn(async (id: number) => {
+            read: jest.fn((id: number) => {
                 if (!templates[id])
                     throw new NotFoundException()
-                return templates[id]
+                return Promise.resolve(templates[id])
             }),
-            render: jest.fn(async () => Buffer.from('pdf')),
+            render: jest.fn(() => Promise.resolve(Buffer.from('pdf'))),
         }
         const module: TestingModule = await Test.createTestingModule({
             providers: [

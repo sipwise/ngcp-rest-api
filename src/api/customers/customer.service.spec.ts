@@ -91,7 +91,7 @@ describe('CustomerService', () => {
     describe('create', () => {
         it('should create a customer with a billing profile mapping and an initial balance', async () => {
             const append = jest.spyOn(customerMockRepo, 'appendBillingMappings')
-            const balance = jest.spyOn(customerMockRepo, 'createInitialBalance')
+            const balance = jest.spyOn(customerMockRepo, 'createInitialBalances')
             const [created] = await service.create([newCustomer({type: CustomerType.PbxAccount})], makeSr())
             expect(created.productId).toBe(5)
             expect(created.createTimestamp).toBeInstanceOf(Date)
@@ -100,7 +100,7 @@ describe('CustomerService', () => {
             expect(append).toHaveBeenCalledWith(created.id, [
                 internal.BillingMapping.create({billingProfileId: 1, networkId: undefined, startDate: undefined, endDate: undefined}),
             ])
-            expect(balance).toHaveBeenCalledWith(created.id, created.createTimestamp)
+            expect(balance).toHaveBeenCalledWith([expect.objectContaining({id: created.id, createTimestamp: created.createTimestamp})])
         })
 
         it('should reject an unknown contact', async () => {

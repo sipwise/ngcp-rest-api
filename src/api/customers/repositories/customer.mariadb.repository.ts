@@ -1,5 +1,5 @@
 import {Inject, Injectable} from '@nestjs/common'
-import {IsNull, SelectQueryBuilder} from 'typeorm'
+import {EntityNotFoundError, In, IsNull, SelectQueryBuilder} from 'typeorm'
 
 import {CustomerSearchDto} from '~/api/customers/dto/customer-search.dto'
 import {CustomerRepository} from '~/api/customers/interfaces/customer.repository'
@@ -9,13 +9,14 @@ import {BillingProfileStatus} from '~/entities/internal/billing-profile.internal
 import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {Discriminator} from '~/entities/internal/profile-package-set.internal.entity'
-import {andWhereActualBillingMapping, billingMappingsCsv} from '~/helpers/billing-mapping.helper'
+import {actualBillingMappingEpoch, andWhereActualBillingMapping, billingMappingsCsv} from '~/helpers/billing-mapping.helper'
 import {balanceIntervalSettings, billingTimezone, initialBalanceInterval} from '~/helpers/billing.helper'
 import {toLocalDateTime} from '~/helpers/date.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder, sqlFieldSource} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {isOwnerTimezone, joinContractTimezone, storedTimezone} from '~/helpers/timezone.helper'
+import {forEachYield, mapYield} from '~/helpers/yield.helper'
 import {FilterBy} from '~/interfaces/filter-by.interface'
 import {LazyFieldSources} from '~/interfaces/lazy-field-source.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -78,27 +79,56 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         ])
     }
 
-    async createInitialBalance(customerId: number, create: Date): Promise<void> {
-        const profile = await this.readActualBillingProfile(customerId)
-        const contract = await db.billing.Contract.findOneByOrFail({id: customerId})
-        const profilePackage = contract.profile_package_id
-            ? await db.billing.ProfilePackage.findOneBy({id: contract.profile_package_id})
-            : undefined
-        const settings = balanceIntervalSettings(profile, profilePackage && {
-            balanceIntervalStartMode: profilePackage.balance_interval_start_mode,
-            balanceIntervalUnit: profilePackage.balance_interval_unit,
-            balanceIntervalValue: profilePackage.balance_interval_value,
+    /**
+     * Initial balances of new customers, from the billing profile active now and their profile package
+     */
+    async createInitialBalances(customers: internal.Customer[]): Promise<void> {
+        const ids = customers.map(customer => customer.id)
+        const contracts = await db.billing.Contract.findBy({id: In(ids)})
+        const contractById = new Map(contracts.map(contract => [contract.id, contract]))
+        const packageIds = contracts.map(contract => contract.profile_package_id).filter(id => id != undefined)
+        const packages = packageIds.length ? await db.billing.ProfilePackage.findBy({id: In(packageIds)}) : []
+        const packageById = new Map(packages.map(profilePackage => [profilePackage.id, profilePackage]))
+        const timezones = await db.billing.VContractTimezone.findBy({contract_id: In(ids)})
+        const timezoneById = new Map(timezones.map(timezone => [timezone.contract_id, timezone.name]))
+        const profileById = await this.readActualBillingProfiles(contracts, new Date())
+        const balances = await mapYield(customers, customer => {
+            const profilePackage = packageById.get(contractById.get(customer.id).profile_package_id)
+            const settings = balanceIntervalSettings(profileById.get(customer.id), profilePackage && {
+                balanceIntervalStartMode: profilePackage.balance_interval_start_mode,
+                balanceIntervalUnit: profilePackage.balance_interval_unit,
+                balanceIntervalValue: profilePackage.balance_interval_value,
+            })
+            const zone = billingTimezone(settings.startMode, timezoneById.get(customer.id))
+            const {start, end} = initialBalanceInterval(settings, customer.createTimestamp, zone)
+            return db.billing.ContractBalance.create({
+                contract_id: customer.id,
+                cash_balance: 0,
+                start: start,
+                end: end,
+            })
         })
-        const timezone = await db.billing.VContractTimezone.findOneBy({contract_id: customerId})
-        const zone = billingTimezone(settings.startMode, timezone?.name)
-        const {start, end} = initialBalanceInterval(settings, create, zone)
-        const balance = db.billing.ContractBalance.create({
-            contract_id: customerId,
-            cash_balance: 0,
-            start: start,
-            end: end,
+        await db.billing.ContractBalance.insert(balances)
+    }
+
+    /**
+     * `readActualBillingProfile` of several contracts, per contract id
+     */
+    private async readActualBillingProfiles(contracts: db.billing.Contract[], at: Date): Promise<Map<number, internal.BillingProfile>> {
+        const epochs = new Map(contracts.map(contract => [contract.id, actualBillingMappingEpoch(contract, at)]))
+        const qb = db.billing.ContractBillingProfileNetworkSchedule.createQueryBuilder('cbpns')
+        qb.innerJoinAndSelect('cbpns.profileNetwork', 'profile_network')
+        qb.innerJoinAndSelect('profile_network.billingProfile', 'billing_profile')
+        qb.where('profile_network.contract_id IN (:...ids)', {ids: [...epochs.keys()]})
+        qb.andWhere('profile_network.base = 1')
+        qb.orderBy('cbpns.effective_start_time', 'DESC')
+        const profiles = new Map<number, internal.BillingProfile>()
+        await forEachYield(await qb.getMany(), schedule => {
+            const contractId = schedule.profileNetwork.contract_id
+            if (!profiles.has(contractId) && +schedule.effective_start_time <= epochs.get(contractId))
+                profiles.set(contractId, schedule.profileNetwork.billingProfile.toInternal())
         })
-        await db.billing.ContractBalance.insert(balance)
+        return profiles
     }
 
     async readActualBillingProfile(contractId: number, at: Date = new Date()): Promise<internal.BillingProfile> {
@@ -157,26 +187,9 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         if (isOwnerTimezone(sr))
             joinContractTimezone(qb, 'contract.id')
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(
-            result.map(async (d) => {
-                const internal = toInternalCustomer(d, sr)
-                const actualBillingProfileQb = db.billing.VActualBillingProfile.createQueryBuilder('actual_billing_profile')
-                actualBillingProfileQb.where({contract_id: d.id})
-                const actualBillingProfile = await actualBillingProfileQb.getOneOrFail()
-                internal.billingProfileId = actualBillingProfile.billing_profile_id
-                if (!internal.profilePackageId) {
-                    const profileCount = await (await this.billingProfilesQueryBuilder([d.id])).getCount()
-                    if (profileCount === 1) {
-                        internal.billingProfileDefinition = ContractBillingProfileDefinition.ID
-                    } else {
-                        internal.billingProfileDefinition = ContractBillingProfileDefinition.Profiles
-                    }
-                } else {
-                    internal.billingProfileDefinition = ContractBillingProfileDefinition.Package
-                }
-                return internal
-            }),
-        ), totalCount]
+        const customers = await mapYield(result, contract => toInternalCustomer(contract, sr))
+        await this.assignBillingProfileDetails(customers)
+        return [customers, totalCount]
     }
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Customer> {
@@ -195,24 +208,69 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         )
         if (isOwnerTimezone(sr))
             joinContractTimezone(qb, 'contract.id')
-        const result = await qb.getOneOrFail()
-        const internal = toInternalCustomer(result, sr)
+        const customer = toInternalCustomer(await qb.getOneOrFail(), sr)
+        await this.assignBillingProfileDetails([customer])
+        return customer
+    }
 
-        const actualBillingProfileQb = db.billing.VActualBillingProfile.createQueryBuilder('actual_billing_profile')
-        actualBillingProfileQb.where({contract_id: result.id})
-        const actualBillingProfile = await actualBillingProfileQb.getOneOrFail()
-        internal.billingProfileId = actualBillingProfile.billing_profile_id
-        if (!internal.profilePackageId) {
-            const profileCount = await (await this.billingProfilesQueryBuilder([result.id])).getCount()
-            if (profileCount === 1) {
-                internal.billingProfileDefinition = ContractBillingProfileDefinition.ID
-            } else {
-                internal.billingProfileDefinition = ContractBillingProfileDefinition.Profiles
-            }
-        } else {
-            internal.billingProfileDefinition = ContractBillingProfileDefinition.Package
+    /**
+     * Customers of the ids as `readById` reads one, without search parameters; unknown ids are left out
+     */
+    async readByIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Customer[]> {
+        const qb = await this.createQueryBuilder(filterBy)
+        qb.andWhereInIds(ids)
+        if (isOwnerTimezone(sr))
+            joinContractTimezone(qb, 'contract.id')
+        const customers = await mapYield(await qb.getMany(), contract => toInternalCustomer(contract, sr))
+        await this.assignBillingProfileDetails(customers)
+        return customers
+    }
+
+    /**
+     * Sets the actual billing profile and the profile definition of the customers; one without an actual
+     * billing profile is not found
+     */
+    private async assignBillingProfileDetails(customers: internal.Customer[]): Promise<void> {
+        if (!customers.length)
+            return
+        const ids = customers.map(customer => customer.id)
+        const actualProfiles = await db.billing.VActualBillingProfile.createQueryBuilder('actual_billing_profile')
+            .where('actual_billing_profile.contract_id IN (:...ids)', {ids})
+            .getMany()
+        const actualProfileIds = new Map<number, number>()
+        for (const row of actualProfiles) {
+            if (!actualProfileIds.has(row.contract_id))
+                actualProfileIds.set(row.contract_id, row.billing_profile_id)
         }
-        return internal
+        const profileCounts = await this.countBillingProfiles(
+            customers.filter(customer => !customer.profilePackageId).map(customer => customer.id),
+        )
+        for (const customer of customers) {
+            if (!actualProfileIds.has(customer.id))
+                throw new EntityNotFoundError(db.billing.VActualBillingProfile, {contract_id: customer.id})
+            customer.billingProfileId = actualProfileIds.get(customer.id)
+            if (customer.profilePackageId)
+                customer.billingProfileDefinition = ContractBillingProfileDefinition.Package
+            else if (profileCounts.get(customer.id) === 1)
+                customer.billingProfileDefinition = ContractBillingProfileDefinition.ID
+            else
+                customer.billingProfileDefinition = ContractBillingProfileDefinition.Profiles
+        }
+    }
+
+    /**
+     * Number of billing profiles of each customer (`billingProfilesQueryBuilder`), per customer id
+     */
+    private async countBillingProfiles(customerIds: number[]): Promise<Map<number, number>> {
+        if (!customerIds.length)
+            return new Map()
+        const qb = await this.billingProfilesQueryBuilder(customerIds)
+        const rows = await qb.select('billingProfiles.contract_id', 'contract_id')
+            .addSelect('COUNT(*)', 'count')
+            .groupBy('billingProfiles.contract_id')
+            .orderBy()
+            .getRawMany<{contract_id: number, count: string}>()
+        return new Map(rows.map(row => [row.contract_id, +row.count]))
     }
 
     async readBareById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Customer> {
@@ -223,17 +281,6 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
 
     async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Customer[]> {
         const qb = db.billing.Contract.createQueryBuilder('customer')
-        const searchDto  = new CustomerSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
         qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
         if (isOwnerTimezone(sr))

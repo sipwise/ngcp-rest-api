@@ -99,7 +99,7 @@ HTTP/1.1 204 No Content
 
 | Paramètre | Signification |
 | --- | --- |
-| `page`, `rows` | Numéro de page, à partir de 1, et taille de page (10 par défaut). |
+| `page`, `rows` | Numéro de page, à partir de 1, et taille de page (10 par défaut, au plus 10000). |
 | `order_by`, `order_by_direction` | Champ de tri et `asc` (par défaut) ou `desc`. |
 | tout champ de la collection | Filtre. Les valeurs doivent correspondre exactement, `*` est un caractère générique et une virgule sépare les alternatives. |
 | `search_or=true` | Combine plusieurs filtres avec OR au lieu de AND. |
@@ -261,6 +261,18 @@ Content-Type: application/json
 ```
 
 Un POST en masse sans `Prefer` renvoie 204 ; demandez donc `return=id` ou `return=representation` pour obtenir les nouveaux id.
+
+### Limites des requêtes
+
+Chaque requête est limitée, afin qu'une seule requête ne puisse pas retenir les autres :
+
+| Limite | Par défaut | Au-delà |
+| --- | --- | --- |
+| `rows` d'une requête GET | 10000 | 400 |
+| Éléments d'une requête en masse : tableau POST, PUT ou PATCH par id, ids DELETE, lignes CSV | 10000 | 413 `BULK_TOO_LARGE` |
+| Corps de la requête, JSON ou fichier CSV | 20 Mo | 413 `PAYLOAD_TOO_LARGE` |
+
+Les limites sont les paramètres de plateforme `performance.read_limit`, `performance.write_limit` et `performance.body_limit`. Une requête en masse au-delà de la limite d'éléments est rejetée avant la validation de ses éléments et rien n'en est écrit : répartissez-la sur plusieurs requêtes. `rows` n'avait pas de limite supérieure auparavant : lisez les grandes collections page par page.
 
 ### Date/heure et fuseaux horaires
 

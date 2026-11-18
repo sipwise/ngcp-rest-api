@@ -9,6 +9,7 @@ import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -47,7 +48,7 @@ export class AdminMariadbRepository extends MariaDbRepository implements AdminRe
         // eslint-disable-next-line @typescript-eslint/await-thenable
         await this.addPermissionCheckToQueryBuilder(qb, options)
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(result.map(async (adm) => adm.toInternal())), totalCount]
+        return [await mapYield(result, (adm) => adm.toInternal()), totalCount]
     }
 
     async readById(id: number, options: AdminOptions): Promise<internal.Admin> {

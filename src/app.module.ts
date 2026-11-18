@@ -90,6 +90,7 @@ import {LicenseService} from './license/license.service'
 import {ContentTypeMiddleware} from './middleware/content-type.middleware'
 import {ContextMiddleware} from './middleware/context.middleware'
 import {LoggerMiddleware} from './middleware/logger.middleware'
+import {ReadLimitMiddleware} from './middleware/read-limit.middleware'
 import {StateMiddleware} from './middleware/state.middleware'
 import {TimezoneMiddleware} from './middleware/timezone.middleware'
 import {DbStateSchedule} from './schedules/dbstate.schedule'
@@ -221,7 +222,7 @@ export class AppModule implements NestModule, OnModuleInit {
     }
 
     configure(consumer: MiddlewareConsumer): void {
-        consumer.apply(ContentTypeMiddleware, ContextMiddleware, LoggerMiddleware, StateMiddleware, TimezoneMiddleware).forRoutes({
+        consumer.apply(ContentTypeMiddleware, ContextMiddleware, LoggerMiddleware, StateMiddleware, TimezoneMiddleware, ReadLimitMiddleware).forRoutes({
             path: '*',
             method: RequestMethod.ALL,
         })

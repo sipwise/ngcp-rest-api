@@ -6,7 +6,7 @@ import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export class AclRoleMockRepository {
 
-    async readOneByRole(role: string, _req: ServiceRequest): Promise<internal.AclRole> {
+    readOneByRole(role: string, _req: ServiceRequest): Promise<internal.AclRole> {
         const system = internal.AclRole.create({id: 1, role: 'system', is_acl: false})
         const admin = internal.AclRole.create({id: 3, role: 'admin', is_acl: false})
         const reseller = internal.AclRole.create({id: 5, role: 'reseller', is_acl: false})
@@ -17,21 +17,21 @@ export class AclRoleMockRepository {
         switch (role) {
             case system.role:
                 system.has_access_to = [system, admin, reseller, ccareadmin, ccare, lintercept]
-                return system
+                return Promise.resolve(system)
             case admin.role:
                 admin.has_access_to = [deepCopy<internal.AclRole>(admin), reseller, ccareadmin, ccare]
-                return admin
+                return Promise.resolve(admin)
             case reseller.role:
                 reseller.has_access_to = [reseller, ccareadmin, ccare]
-                return reseller
+                return Promise.resolve(reseller)
             case ccareadmin.role:
                 ccareadmin.has_access_to = [ccareadmin, ccare]
-                return ccareadmin
+                return Promise.resolve(ccareadmin)
             case ccare.role:
                 ccare.has_access_to = [ccare]
-                return ccare
+                return Promise.resolve(ccare)
             case lintercept.role:
-                return lintercept
+                return Promise.resolve(lintercept)
         }
         throw new NotFoundException()
     }

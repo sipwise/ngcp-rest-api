@@ -5,7 +5,7 @@ import {NCOSSetMariadbRepository} from './repositories/set.mariadb.repository'
 
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {readFoundIds, throwMissingIds} from '~/helpers/errors.helper'
+import {throwMissingIds} from '~/helpers/errors.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -44,15 +44,11 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
 
     async update(updates: Dictionary<internal.NCOSSet>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
-        const revokes: number[] = []
-        throwMissingIds(sr, ids, await readFoundIds(ids, id => this.ncosSetRepo.readById(id, sr)), this.i18n.t('errors.ENTRY_NOT_FOUND'))
-        for (const id of ids) {
-            const entity = updates[id]
-            const oldEntity = await this.ncosSetRepo.readById(id, sr)
-            await this.checkPermissions(oldEntity.resellerId, sr)
-            if (oldEntity.exposeToCustomer && !entity.exposeToCustomer)
-                revokes.push(id)
-        }
+        const oldSets = new Map((await this.ncosSetRepo.readWhereInIds(ids, sr)).map(set => [set.id, set]))
+        throwMissingIds(sr, ids, [...oldSets.keys()], this.i18n.t('errors.ENTRY_NOT_FOUND'))
+        for (const set of oldSets.values())
+            this.checkPermissions(set.resellerId, sr)
+        const revokes = ids.filter(id => oldSets.get(id).exposeToCustomer && !updates[id].exposeToCustomer)
         if (revokes.length)
             await this.ncosSetRepo.revokeNCOSSetPreferences(revokes)
         this.assignUserResellerId(Object.values(updates), sr)
@@ -63,13 +59,13 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
         const sets = await this.ncosSetRepo.readWhereInIds(ids, sr)
         throwMissingIds(sr, ids, sets.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
         for (const set of sets) {
-            await this.checkPermissions(set.resellerId, sr)
+            this.checkPermissions(set.resellerId, sr)
         }
         await this.ncosSetRepo.deleteNCOSSetPreferences(ids)
         return await this.ncosSetRepo.delete(ids, sr)
     }
 
-    private async checkPermissions(resellerId: number, sr: ServiceRequest): Promise<void> {
+    private checkPermissions(resellerId: number, sr: ServiceRequest): void {
         if (sr.user.reseller_id_required && sr.user.reseller_id != resellerId) {
             throw new NotFoundException()
         }

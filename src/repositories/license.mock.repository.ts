@@ -61,8 +61,8 @@ export class LicenseMockRepository {
         this.counts = {}
     }
 
-    async readCount(kind: 'max' | 'current', name: LicenseCounter): Promise<number> {
-        return this.counts[`${kind}_${name}`] ?? -1
+    readCount(kind: 'max' | 'current', name: LicenseCounter): Promise<number> {
+        return Promise.resolve(this.counts[`${kind}_${name}`] ?? -1)
     }
 
     setCount(kind: 'max' | 'current', name: LicenseCounter, value: number): void {

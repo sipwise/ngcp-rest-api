@@ -19,7 +19,7 @@ export class ParseIntIdPipe implements PipeTransform {
         this.options = options || {}
     }
 
-    async transform(value: unknown, metadata: ArgumentMetadata): Promise<number> {
+    transform(value: unknown, metadata: ArgumentMetadata): number {
         if (value == undefined && this.options.allowUndefined) {
             return undefined
         }

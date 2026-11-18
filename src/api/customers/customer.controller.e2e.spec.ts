@@ -1,7 +1,5 @@
-import {ClassSerializerInterceptor, HttpStatus, INestApplication} from '@nestjs/common'
-import {Reflector} from '@nestjs/core'
+import {HttpStatus, INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import bodyParser from 'body-parser'
 import request from 'supertest'
 import {In} from 'typeorm'
 
@@ -11,6 +9,7 @@ import {CustomerMariadbRepository} from './repositories/customer.mariadb.reposit
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
+import {setupApp} from '~/app.setup'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
@@ -22,15 +21,7 @@ import {Discriminator} from '~/entities/internal/profile-package-set.internal.en
 import {IntervalStartMode} from '~/entities/internal/profile-package.internal.entity'
 import {toLocalDateTime} from '~/helpers/date.helper'
 import {ErrorEntry} from '~/helpers/errors.helper'
-import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {validate} from '~/helpers/validate.helper'
-import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
-import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
-import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
-import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
-import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
-import {TransformInterceptor} from '~/interceptors/transform.interceptor'
-import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type BillingProfilePost = {
     profile_id: number | null,
@@ -189,31 +180,7 @@ describe('CustomerController', () => {
         app = moduleRef.createNestApplication()
 
         app.setGlobalPrefix('api')
-        app.useGlobalPipes(new ValidateInputPipe({
-            forbidUnknownValues: false,
-            whitelist: true,
-            forbidNonWhitelisted: true,
-            transform: true,
-            disableErrorMessages: true,
-        }))
-        app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(
-            new TransformInterceptor({
-                pageName: AppService.config.common.api_default_query_page_name,
-                perPageName: AppService.config.common.api_default_query_rows_name,
-            }),
-            new LoggingInterceptor(),
-            new ClassSerializerInterceptor(app.get(Reflector)),
-            app.get(LazyFieldInterceptor),
-            new TransactionInterceptor(app.get(Reflector)),
-            new ResponseValidationInterceptor(),
-            app.get(ExpandInterceptor),
-        )
-        app.use(bodyParser.json({
-            type: ['application/json-patch+json', 'application/json'],
-        }))
-        app.getHttpAdapter().getInstance().disable('x-powered-by')
-        app.getHttpAdapter().getInstance().set('json spaces', 2)
+        setupApp(app)
 
         await app.init()
 
@@ -315,7 +282,7 @@ describe('CustomerController', () => {
     })
 
     it('mock authService.compareBcryptPassword', async () => {
-        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(async () => true)
+        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(() => Promise.resolve(true))
         expect(await authService.compareBcryptPassword('123', '456')).toBe(true)
     })
 
@@ -1302,6 +1269,44 @@ describe('CustomerController', () => {
                 const start = truncate == 'month' ? created.with({day: 1}).startOfDay() : created.startOfDay()
                 const end = start.add({months: 1}).subtract({seconds: 1})
                 expect(await balance(customer.id)).toEqual([start.epochMilliseconds, end.epochMilliseconds])
+            })
+
+            it('creates the balance of each customer of a bulk POST from its own profile and package', async () => {
+                const packageId = await createPackage('balance bulk', profileA, IntervalStartMode.Create)
+                const response = await request(app.getHttpServer())
+                    .post('/api/customers?tz=UTC')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send([
+                        {contact_id: contactId, status: ContractStatus.Active, type: CustomerType.SipAccount,
+                            billing_profile_definition: ContractBillingProfileDefinition.ID, billing_profile_id: profileA},
+                        {contact_id: contactId, status: ContractStatus.Active, type: CustomerType.SipAccount,
+                            billing_profile_definition: ContractBillingProfileDefinition.Package, profile_package_id: packageId},
+                    ])
+                expect(response.status).toEqual(HttpStatus.CREATED)
+                const [plain, packaged]: CustomerResponseDto[] = response.body.data
+                fixtureContractIds.push(plain.id, packaged.id)
+                const created = Temporal.Instant.from(plain.create_timestamp as unknown as string)
+                    .toZonedDateTimeISO(Temporal.Now.timeZoneId())
+                expect((await balance(plain.id))[0]).toEqual(created.with({day: 1}).startOfDay().epochMilliseconds)
+                expect((await balance(packaged.id))[0]).toEqual(created.startOfDay().epochMilliseconds)
+
+                const list = await request(app.getHttpServer())
+                    .get(`/api/customers?contact_id=${contactId}&rows=100`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(list.status).toEqual(HttpStatus.OK)
+                const byId = new Map<number, CustomerResponseDto>(list.body.data.map((c: CustomerResponseDto) => [c.id, c]))
+                expect(byId.get(plain.id)).toMatchObject({
+                    billing_profile_definition: ContractBillingProfileDefinition.ID,
+                    billing_profile_id: profileA,
+                })
+                expect(byId.get(packaged.id)).toMatchObject({
+                    billing_profile_definition: ContractBillingProfileDefinition.Package,
+                    billing_profile_id: profileA,
+                })
             })
 
             it('starts a topup balance at the creation without end', async () => {

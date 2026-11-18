@@ -28,63 +28,64 @@ export class InvoiceMockRepository implements InvoiceRepository {
         return Object.values(this.invoiceDB).filter(i => !filterBy?.resellerId || i.resellerId == filterBy.resellerId)
     }
 
-    async readAll(_sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.Invoice[], number]> {
+    readAll(_sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.Invoice[], number]> {
         const rows = this.visible(filterBy)
-        return [rows, rows.length]
+        return Promise.resolve([rows, rows.length])
     }
 
-    async readById(id: number, _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Invoice> {
+    readById(id: number, _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Invoice> {
         const invoice = this.visible(filterBy).find(i => i.id == id)
         if (!invoice)
             throw new NotFoundException()
-        return invoice
+        return Promise.resolve(invoice)
     }
 
-    async readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Invoice[]> {
-        return this.visible(filterBy).filter(i => ids.includes(i.id))
+    readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.Invoice[]> {
+        return Promise.resolve(this.visible(filterBy).filter(i => ids.includes(i.id)))
     }
 
     async readDataById(id: number, filterBy?: FilterBy): Promise<internal.Invoice> {
         return await this.readById(id, undefined, filterBy)
     }
 
-    async create(invoice: internal.Invoice): Promise<number> {
+    create(invoice: internal.Invoice): Promise<number> {
         const id = this.nextId++
         this.invoiceDB[id] = Object.assign(new internal.Invoice(), invoice, {id})
-        return id
+        return Promise.resolve(id)
     }
 
-    async update(id: number, invoice: internal.Invoice): Promise<void> {
+    update(id: number, invoice: internal.Invoice): Promise<void> {
         this.invoiceDB[id].serial = invoice.serial
         this.invoiceDB[id].data = invoice.data
+        return Promise.resolve()
     }
 
-    async readContract(contractId: number): Promise<InvoiceContract | undefined> {
-        return this.contractDB[contractId]
+    readContract(contractId: number): Promise<InvoiceContract | undefined> {
+        return Promise.resolve(this.contractDB[contractId])
     }
 
-    async readActualBillingProfile(_contract: internal.Contract, _at: Date): Promise<internal.BillingProfile | undefined> {
-        return this.billingProfile
+    readActualBillingProfile(_contract: internal.Contract, _at: Date): Promise<internal.BillingProfile | undefined> {
+        return Promise.resolve(this.billingProfile)
     }
 
-    async readZones(_q: InvoiceCdrQuery): Promise<InvoiceZoneRow[]> {
-        return this.zones
+    readZones(_q: InvoiceCdrQuery): Promise<InvoiceZoneRow[]> {
+        return Promise.resolve(this.zones)
     }
 
-    async readDidZones(_q: InvoiceCdrQuery): Promise<InvoiceDidZoneRow[]> {
-        return this.didZoneRows
+    readDidZones(_q: InvoiceCdrQuery): Promise<InvoiceDidZoneRow[]> {
+        return Promise.resolve(this.didZoneRows)
     }
 
-    async readCalls(_q: InvoiceCdrQuery, _showSuppressions: boolean): Promise<InvoiceCallRow[]> {
-        return this.calls
+    readCalls(_q: InvoiceCdrQuery, _showSuppressions: boolean): Promise<InvoiceCallRow[]> {
+        return Promise.resolve(this.calls)
     }
 
-    async readCallListSuppressions(ids: number[]): Promise<CallListSuppression[]> {
-        return this.suppressions.filter(s => ids.includes(s.id))
+    readCallListSuppressions(ids: number[]): Promise<CallListSuppression[]> {
+        return Promise.resolve(this.suppressions.filter(s => ids.includes(s.id)))
     }
 
-    async delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
+    delete(ids: number[], _sr: ServiceRequest): Promise<number[]> {
         ids.forEach(id => delete this.invoiceDB[id])
-        return ids
+        return Promise.resolve(ids)
     }
 }

@@ -7,7 +7,7 @@ import {Operation, assertJsonPatch, normalisePatch} from '~/helpers/patch.helper
  */
 @Injectable()
 export class ParsePatchPipe implements PipeTransform {
-    async transform(value: unknown, _metadata: ArgumentMetadata): Promise<Operation[]> {
+    transform(value: unknown, _metadata: ArgumentMetadata): Operation[] {
         assertJsonPatch(value)
         return normalisePatch(value as Operation[])
     }

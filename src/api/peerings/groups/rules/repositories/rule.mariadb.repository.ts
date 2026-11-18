@@ -7,6 +7,7 @@ import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -21,10 +22,10 @@ export class PeeringRuleMariadbRepository extends MariaDbRepository implements P
 
     async create(entities: internal.VoipPeeringRule[]): Promise<number[]> {
         const qb = db.provisioning.VoipPeeringRule.createQueryBuilder('rule')
-        const values = await Promise.all(entities.map(async entity => new db.provisioning.VoipPeeringRule().fromInternal(entity)))
+        const values = await mapYield(entities, entity => new db.provisioning.VoipPeeringRule().fromInternal(entity))
         const result = await qb.insert().values(values).execute()
 
-        return await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.VoipPeeringRule[], number]> {
@@ -42,11 +43,7 @@ export class PeeringRuleMariadbRepository extends MariaDbRepository implements P
         )
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(
-            result.map(async (d) =>
-                d.toInternal(),
-            ),
-        ), totalCount]
+        return [await mapYield(result, d => d.toInternal()), totalCount]
     }
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.VoipPeeringRule> {
@@ -68,23 +65,12 @@ export class PeeringRuleMariadbRepository extends MariaDbRepository implements P
         return result.toInternal()
     }
 
-    async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.VoipPeeringRule[]> {
+    async readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.VoipPeeringRule[]> {
         const qb = db.provisioning.VoipPeeringRule.createQueryBuilder('rule')
-        const searchDto  = new PeeringRuleSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
         qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => d.toInternal()))
+        return await mapYield(result, (d) => d.toInternal())
     }
 
     async update(updates: Dictionary<internal.VoipPeeringRule>, _sr: ServiceRequest): Promise<number[]> {

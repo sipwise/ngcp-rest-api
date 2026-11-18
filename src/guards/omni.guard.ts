@@ -18,7 +18,7 @@ export class OmniGuard extends AuthGuard(['jwt', 'cert-header', 'basic']) {
         if (request.user && request.user.role) // already authenticated
             return true
         const publicGuard = new PublicGuard(this.reflector)
-        if (await publicGuard.canActivate(context))
+        if (publicGuard.canActivate(context))
             return true
 
         const allowBodyCredentials = this.reflector.getAllAndOverride<boolean>(

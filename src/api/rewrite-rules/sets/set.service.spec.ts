@@ -65,7 +65,7 @@ describe('RewriteRuleSet Service', () => {
             .compile()
         service = module.get<RewriteRuleSetService>(RewriteRuleSetService)
 
-        reloadSpy = jest.spyOn(service, 'reloadDialPlanAfterCommit').mockImplementation(() => Promise.resolve())
+        reloadSpy = jest.spyOn(service, 'reloadDialPlanAfterCommit').mockImplementation(() => undefined)
 
         sr = {returnContent: true, headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
     })

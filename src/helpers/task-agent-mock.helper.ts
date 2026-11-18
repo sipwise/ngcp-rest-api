@@ -47,7 +47,7 @@ export class TaskAgentMockHelper {
         return {publishChannel, feedbackChannel, request}
     }
 
-    async invokeTask(
+    invokeTask(
         publishChannel:string,
         feedbackChannel: string,
         request: TaskAgentRequest,
@@ -56,5 +56,6 @@ export class TaskAgentMockHelper {
         this.log.debug(`publishChannel: ${publishChannel}, feedbackChannel: ${feedbackChannel}, request: ${JSON.stringify(request)}, handleOnData: ${handleOnData.name}`)
         this.log.debug(`publish to task agent '${publishChannel}': ${JSON.stringify(request)}`)
         this.log.debug('All task agents completed successfully')
+        return Promise.resolve()
     }
 }

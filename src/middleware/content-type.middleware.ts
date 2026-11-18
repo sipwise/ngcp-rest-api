@@ -2,6 +2,8 @@ import {HttpException, HttpStatus, Injectable, NestMiddleware} from '@nestjs/com
 import bodyParser from 'body-parser'
 import {NextFunction, Request, Response} from 'express'
 
+import {bodyLimit} from '~/helpers/request-limits.helper'
+
 function hasRequestBody(req: Request): boolean {
     const contentLength = req.headers['content-length']
     return req.headers['transfer-encoding'] === 'chunked' || (!!contentLength && contentLength !== '0')
@@ -15,7 +17,7 @@ function hasRequestBody(req: Request): boolean {
  */
 @Injectable()
 export class ContentTypeMiddleware implements NestMiddleware {
-    private readonly parseJson = bodyParser.json({type: () => true})
+    private readonly parseJson = bodyParser.json({type: () => true, limit: bodyLimit()})
 
     use(req: Request, res: Response, next: NextFunction): void {
         if (req.headers['content-type'] || !hasRequestBody(req)) {
@@ -24,14 +26,14 @@ export class ContentTypeMiddleware implements NestMiddleware {
         }
 
         this.parseJson(req, res, (err) => {
-            if (err) {
+            if (err?.type == 'entity.parse.failed') {
                 next(new HttpException({
                     error: 'Unsupported Media Type',
                     message: `No Content-Type header was provided, so 'application/json' was assumed, but the request body is not valid JSON: ${err.message}`,
                 }, HttpStatus.UNSUPPORTED_MEDIA_TYPE))
                 return
             }
-            next()
+            next(err)
         })
     }
 }

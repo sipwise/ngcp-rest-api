@@ -1,6 +1,6 @@
 import {NotFoundException} from '@nestjs/common'
 
-import {ResellerRepository} from '~/api/resellers/interfaces/reseller.repository'
+import {ResellerContract, ResellerRepository} from '~/api/resellers/interfaces/reseller.repository'
 import {db, internal} from '~/entities'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
@@ -32,14 +32,6 @@ export class ResellerMockRepository implements ResellerRepository {
             5: internal.Contract.create({id: 5, status: ContractStatus.Active, contact_id: 1}),
             6: internal.Contract.create({id: 6, status: ContractStatus.Active, contact_id: 1}),
         }
-    }
-
-    contractExists(contractId: number): Promise<boolean> {
-        return Promise.resolve(this.contractDB[contractId] != undefined)
-    }
-
-    contractHasSystemContact(contractId: number): Promise<boolean> {
-        return Promise.resolve(this.contractDB[contractId].contact_id != undefined)
     }
 
     create(resellers: internal.Reseller[], _sr: ServiceRequest): Promise<number[]> {
@@ -83,29 +75,23 @@ export class ResellerMockRepository implements ResellerRepository {
     }
 
 
-    readByName(name: string, _sr: ServiceRequest): Promise<internal.Reseller> {
-        for (const key of Object.keys(this.resellerDB)) {
-            const id: number = +key
-            const reseller: internal.Reseller = this.resellerDB[id]
-            if (reseller.name == name) {
-                return Promise.resolve(reseller)
-            }
-        }
-        return Promise.resolve(undefined)
+    readByNames(names: string[]): Promise<internal.Reseller[]> {
+        const lowerNames = names.map(name => name.toLowerCase())
+        const resellers = Object.values(this.resellerDB) as internal.Reseller[]
+        return Promise.resolve(resellers.filter(reseller => lowerNames.includes(reseller.name.toLowerCase())))
     }
 
-    renameReseller(_id: number, _name: string): Promise<void> {
-        return Promise.resolve(undefined)
+    readResellerContracts(contractIds: number[]): Promise<ResellerContract[]> {
+        const resellers = Object.values(this.resellerDB) as internal.Reseller[]
+        return Promise.resolve(contractIds.filter(id => this.contractDB[id] != undefined).map(id => ({
+            id,
+            hasSystemContact: this.contractDB[id].contact_id != undefined,
+            hasReseller: resellers.some(reseller => reseller.contract_id == id),
+        })))
     }
 
-    resellerWithContractExists(contractId: number): Promise<boolean> {
-        for (const id of Object.keys(this.resellerDB)) {
-            const reseller: internal.Reseller = this.resellerDB[id]
-            if (reseller.contract_id == contractId) {
-                return Promise.resolve(true)
-            }
-        }
-        return Promise.resolve(false)
+    renameResellers(_ids: number[]): Promise<void> {
+        return Promise.resolve(undefined)
     }
 
     terminate(_id: number, _sr: ServiceRequest): Promise<number> {

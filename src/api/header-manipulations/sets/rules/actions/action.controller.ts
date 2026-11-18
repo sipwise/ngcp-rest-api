@@ -25,6 +25,7 @@ import {Dictionary} from '~/helpers/dictionary.helper'
 import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {Operation} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
@@ -71,11 +72,10 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const actions = await Promise.all(createDto.map(async action => action.toInternal()))
+        const actions = await mapYield(createDto, action => action.toInternal())
         const created = await this.ruleActionService.create(actions, sr)
-        const response = await Promise.all(created.map(async action => new HeaderManipulationRuleActionResponseDto(action)))
-        for (const entry of response)
-            await this.journalService.writeJournal(sr, entry.id, entry)
+        const response = await mapYield(created, action => new HeaderManipulationRuleActionResponseDto(action))
+        await this.journalService.writeJournals(sr, response.map(entry => ({id: entry.id, data: entry})))
         return response
     }
 
@@ -261,9 +261,7 @@ export class HeaderManipulationRuleActionController extends CrudController<Heade
         })
         const sr = new ServiceRequest(req)
         const deletedIds = await this.ruleActionService.delete(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
-        }
+        await this.journalService.writeJournals(sr, deletedIds.map(id => ({id, data: {}})))
         return deletedIds
     }
 

@@ -13,7 +13,7 @@ import {METHOD_METADATA, PATH_METADATA} from '@nestjs/common/constants'
 import {ApplicationConfig, DiscoveryService, MetadataScanner, Reflector} from '@nestjs/core'
 import {Request} from 'express'
 import {Observable} from 'rxjs'
-import {map} from 'rxjs/operators'
+import {mergeMap} from 'rxjs/operators'
 
 import {isObject, parseExpand, respondsWithJson, responseObjects} from './expand.interceptor'
 
@@ -31,6 +31,7 @@ import {
     placeholderCount,
     setInlineRequest,
 } from '~/helpers/lazy-field.helper'
+import {forEachYield} from '~/helpers/yield.helper'
 import {LazyFieldSources} from '~/interfaces/lazy-field-source.interface'
 import {QueriesDictionary} from '~/interfaces/service-request.interface'
 
@@ -259,11 +260,12 @@ export class LazyFieldInterceptor implements NestInterceptor, OnModuleInit {
         setInlineRequest(req, inline)
         if (!model)
             return next.handle()
-        return next.handle().pipe(map((data: unknown) => {
+        return next.handle().pipe(mergeMap(async (data: unknown) => {
             const isCollection = Array.isArray(data)
             const path = requestPath(req)
-            for (const object of responseObjects(data))
-                this.renderObject(object, model, inline, isCollection ? `${path}/${object.id}` : path)
+            await forEachYield(responseObjects(data), object =>
+                this.renderObject(object, model, inline, isCollection ? `${path}/${object.id}` : path),
+            )
             return data
         }))
     }

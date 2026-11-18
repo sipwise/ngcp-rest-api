@@ -7,6 +7,7 @@ import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -22,9 +23,9 @@ export class RewriteRuleMariadbRepository extends MariaDbRepository implements R
 
     async create(entities: internal.RewriteRule[]): Promise<number[]> {
         const qb = db.provisioning.VoipRewriteRule.createQueryBuilder('rewriteRule')
-        const values = await Promise.all(entities.map(async entity => new db.provisioning.VoipRewriteRule().fromInternal(entity)))
+        const values = await mapYield(entities, entity => new db.provisioning.VoipRewriteRule().fromInternal(entity))
         const result = await qb.insert().values(values).execute()
-        return await Promise.all(result.identifiers.map(async (obj: {id: number}) => obj.id))
+        return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.RewriteRule[], number]> {
@@ -43,11 +44,7 @@ export class RewriteRuleMariadbRepository extends MariaDbRepository implements R
         qb.innerJoin('rewriteRule.set', 'rewriteRuleSet')
         this.addFilterBy(qb, filterBy)
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(
-            result.map(async (d) =>
-                d.toInternal(),
-            ),
-        ), totalCount]
+        return [await mapYield(result, d => d.toInternal()), totalCount]
     }
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.RewriteRule> {
@@ -76,24 +73,13 @@ export class RewriteRuleMariadbRepository extends MariaDbRepository implements R
         return await qb.getCount()
     }
 
-    async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.RewriteRule[]> {
+    async readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.RewriteRule[]> {
         const qb = db.provisioning.VoipRewriteRule.createQueryBuilder('rewriteRule')
-        const searchDto  = new RewriteRuleSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
         qb.innerJoin('rewriteRule.set', 'rewriteRuleSet')
         qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => d.toInternal()))
+        return await mapYield(result, (d) => d.toInternal())
     }
 
     async readCountOfIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<number> {
@@ -130,12 +116,17 @@ export class RewriteRuleMariadbRepository extends MariaDbRepository implements R
         return ids
     }
 
-    async readMaxPriorityInSet(setId: number, _sr: ServiceRequest): Promise<number> {
-        const qb = db.provisioning.VoipRewriteRule.createQueryBuilder('rewriteRule')
-        qb.select('MAX(priority)', 'max')
-        qb.where('set_id = :setId', {setId: setId})
-        const result = await qb.getRawOne()
-        return result.max as number || 0
+    // highest rule priority of each set of `setIds` that has rules
+    async readMaxPriorities(setIds: number[]): Promise<Map<number, number>> {
+        if (!setIds.length)
+            return new Map()
+        const rows = await db.provisioning.VoipRewriteRule.createQueryBuilder('rewriteRule')
+            .select('rewriteRule.set_id', 'setId')
+            .addSelect('MAX(rewriteRule.priority)', 'max')
+            .where('rewriteRule.set_id IN (:...setIds)', {setIds})
+            .groupBy('rewriteRule.set_id')
+            .getRawMany<{setId: number, max: number}>()
+        return new Map(rows.map(row => [row.setId, +row.max]))
     }
 
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipRewriteRule>, filterBy: FilterBy): void {

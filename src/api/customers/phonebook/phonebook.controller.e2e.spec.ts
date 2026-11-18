@@ -1,8 +1,6 @@
 
-import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
-import {Reflector} from '@nestjs/core'
+import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import bodyParser from 'body-parser'
 import request from 'supertest'
 import {In, MoreThanOrEqual} from 'typeorm'
 import {v4 as uuidv4} from 'uuid'
@@ -12,6 +10,7 @@ import {CustomerPhonebookModule} from './phonebook.module'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
+import {setupApp} from '~/app.setup'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
@@ -19,15 +18,7 @@ import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voi
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {ErrorEntry} from '~/helpers/errors.helper'
-import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
-import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
-import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
-import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
-import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
-import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
-import {TransformInterceptor} from '~/interceptors/transform.interceptor'
-import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 type PhonebookPost = {
     name: string
@@ -70,31 +61,7 @@ describe('Customer Phonebook', () => {
         app = moduleRef.createNestApplication()
 
         app.setGlobalPrefix('api')
-        app.useGlobalPipes(new ValidateInputPipe({
-            forbidUnknownValues: false,
-            whitelist: true,
-            forbidNonWhitelisted: true,
-            transform: true,
-            disableErrorMessages: true,
-        }))
-        app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(
-            new TransformInterceptor({
-                pageName: AppService.config.common.api_default_query_page_name,
-                perPageName: AppService.config.common.api_default_query_rows_name,
-            }),
-            new LoggingInterceptor(),
-            new ClassSerializerInterceptor(app.get(Reflector)),
-            app.get(LazyFieldInterceptor),
-            new TransactionInterceptor(app.get(Reflector)),
-            new ResponseValidationInterceptor(),
-            app.get(ExpandInterceptor),
-        )
-        app.use(bodyParser.json({
-            type: ['application/json-patch+json', 'application/json'],
-        }))
-        app.getHttpAdapter().getInstance().disable('x-powered-by')
-        app.getHttpAdapter().getInstance().set('json spaces', 2)
+        setupApp(app)
 
         await app.init()
 
@@ -139,7 +106,7 @@ describe('Customer Phonebook', () => {
     })
 
     it('mock authService.compareBcryptPassword', async () => {
-        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(async () => true)
+        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(() => Promise.resolve(true))
         expect(await authService.compareBcryptPassword('123', '456')).toBe(true)
     })
 
@@ -250,6 +217,28 @@ describe('Customer Phonebook', () => {
                 expect(response.status).toEqual(422)
                 expect(response.body.errorCode).toEqual('DUPLICATE_IN_CSV')
                 expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/2/number', 'DUPLICATE_IN_CSV']])
+            })
+            it('rejects a csv import above performance.write_limit with 413 before validating the rows', async () => {
+                const csvContent = [
+                    'customer_id,name,number',
+                    'x,,',
+                    'x,,',
+                    'x,,',
+                ].join('\n')
+                const performance = AppService.config.performance
+                AppService.config.performance = {...performance, write_limit: 2}
+                try {
+                    const response = await request(app.getHttpServer())
+                        .post('/api/customers/phonebook')
+                        .set(...authHeader)
+                        .set('Accept', 'application/json')
+                        .attach('file', Buffer.from(csvContent), 'customer_phonebook_test.csv')
+                    expect(response.status).toEqual(413)
+                    expect(response.body.errorCode).toEqual('BULK_TOO_LARGE')
+                    expect(response.body.message).toEqual('3 items are more than the 2 allowed per request')
+                } finally {
+                    AppService.config.performance = performance
+                }
             })
         })
 

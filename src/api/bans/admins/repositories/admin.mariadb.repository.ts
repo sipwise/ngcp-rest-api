@@ -7,6 +7,7 @@ import {BanAdminRepository} from '~/api/bans/admins/interfaces/admin.repository'
 import {db, internal} from '~/entities'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {MariaDbRepository} from '~/repositories/mariadb.repository'
@@ -43,7 +44,7 @@ export class BanAdminMariadbRepository extends MariaDbRepository implements BanA
         // eslint-disable-next-line @typescript-eslint/await-thenable
         await this.addPermissionCheckToQueryBuilder(qb, options)
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(result.map(async (adm) => adm.toBanAdminInternal())), totalCount]
+        return [await mapYield(result, (adm) => adm.toBanAdminInternal()), totalCount]
     }
 
     async readById(id: number, options: BanAdminOptions, _sr: ServiceRequest): Promise<internal.BanAdmin> {
@@ -54,23 +55,12 @@ export class BanAdminMariadbRepository extends MariaDbRepository implements BanA
         return admin.toBanAdminInternal()
     }
 
-    async readWhereInIds(ids: number[], options: BanAdminOptions, sr: ServiceRequest): Promise<internal.BanAdmin[]> {
+    async readWhereInIds(ids: number[], options: BanAdminOptions, _sr: ServiceRequest): Promise<internal.BanAdmin[]> {
         const qb = db.billing.Admin.createQueryBuilder('admin')
-        const searchDto = new BanAdminSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
         qb.andWhereInIds(ids)
         this.addPermissionCheckToQueryBuilder(qb, options)
         const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => d.toBanAdminInternal()))
+        return await mapYield(result, (d) => d.toBanAdminInternal())
     }
 
     private addPermissionCheckToQueryBuilder(qb: SelectQueryBuilder<db.billing.Admin>, options: BanAdminOptions): void {

@@ -1,5 +1,4 @@
 import {Inject, Injectable} from '@nestjs/common'
-import * as asyncLib from 'async'
 import {v5 as uuidv5} from 'uuid'
 
 import {AppService} from '~/app.service'
@@ -49,24 +48,21 @@ export class BanRegistrationRedisRepository {
 
         const entries: {[key: string]: internal.BanRegistration} = {}
 
-        let userDomMatchCount: RegExpMatchArray | null
-        let userDomMatchLast: RegExpMatchArray | null
-
-        await asyncLib.forEach(lines, async (line) => {
+        for (const line of lines) {
             let entryId: string
             let username: string
             let domain: string
             let authCount: number
             let lastAuth: number
 
-            userDomMatchCount = line.match(/name:\s+([^\s@]+)@([^:]+)::auth_count/)
+            const userDomMatchCount = line.match(/name:\s+([^\s@]+)@([^:]+)::auth_count/)
             if (userDomMatchCount) {
                 username = userDomMatchCount[1]
                 domain = userDomMatchCount[2]
                 entryId = uuidv5(`${username}:${domain}`, uuidNS)
 
                 if (id && entryId != id) {
-                    return
+                    continue
                 }
 
                 if (filter?.username) {
@@ -75,9 +71,9 @@ export class BanRegistrationRedisRepository {
                             ? wildcardStringToRegexp(filter.username)
                             : undefined
                     if (rx && !rx.test(username))
-                        return
+                        continue
                     if (!rx && username != filter.username)
-                        return
+                        continue
                 }
 
                 if (filter?.domain) {
@@ -86,15 +82,15 @@ export class BanRegistrationRedisRepository {
                             ? wildcardStringToRegexp(filter.domain)
                             : undefined
                     if (rx && !rx.test(domain))
-                        return
+                        continue
                     if (!rx && domain != filter.domain)
-                        return
+                        continue
                 }
 
                 if (filter?.id) {
                     const ids = filter.id.split(',').map(v => v.trim())
                     if (!ids.includes(entryId))
-                        return
+                        continue
                 }
 
                 if (!entries[entryId]) {
@@ -108,14 +104,14 @@ export class BanRegistrationRedisRepository {
                 }
             }
 
-            userDomMatchLast = line.match(/name:\s+([^\s@]+)@([^:]+)::last_auth/)
+            const userDomMatchLast = line.match(/name:\s+([^\s@]+)@([^:]+)::last_auth/)
             if (userDomMatchLast) {
                 username = userDomMatchLast[1]
                 domain = userDomMatchLast[2]
                 entryId = uuidv5(`${username}:${domain}`, uuidNS)
 
                 if (id && entryId != id) {
-                    return
+                    continue
                 }
 
                 if (filter?.username) {
@@ -124,9 +120,9 @@ export class BanRegistrationRedisRepository {
                             ? wildcardStringToRegexp(filter.username)
                             : undefined
                     if (rx && !rx.test(username))
-                        return
+                        continue
                     if (!rx && username != filter.username)
-                        return
+                        continue
                 }
 
                 if (filter?.domain) {
@@ -135,15 +131,15 @@ export class BanRegistrationRedisRepository {
                             ? wildcardStringToRegexp(filter.domain)
                             : undefined
                     if (rx && !rx.test(domain))
-                        return
+                        continue
                     if (!rx && domain != filter.domain)
-                        return
+                        continue
                 }
 
                 if (filter?.id) {
                     const ids = filter.id.split(',').map(v => v.trim())
                     if (!ids.includes(entryId))
-                        return
+                        continue
                 }
 
                 if (!entries[entryId]) {
@@ -193,37 +189,25 @@ export class BanRegistrationRedisRepository {
                     entries[entryId].lastAuth = new Date(lastAuth * 1000)
                 }
             }
-        })
+        }
 
-        const parsedEntries: internal.BanRegistration[] = []
-
-        await Promise.all(Object.values(entries).map(async (entry) => {
-            if (entry.username && entry.domain && entry.authCount && entry.lastAuth)
-                parsedEntries.push(entry)
-        }))
-
-        return parsedEntries
+        return Object.values(entries).filter(entry => entry.username && entry.domain && entry.authCount && entry.lastAuth)
     }
 
     async deleteBannedRegistration(id: string): Promise<void> {
         const bannedRegs = await this.readBannedRegistrations(id)
 
-        asyncLib.some(bannedRegs, async entry => {
-            if (entry.id != id) {
-                return false
-            }
+        const entry = bannedRegs.find(e => e.id == id)
+        if (!entry)
+            return
 
-            const {publishChannel, feedbackChannel, request} = this.taskAgentHelper.buildRequest({
-                feedbackChannel: 'ngcp-rest-api-ban-regs-delete',
-                task: 'kam_lb_security_ban_delete',
-                dst: '*|state=active;role=proxy',
-                data: JSON.stringify({extra_args: `auth ${entry.username}@${entry.domain}::auth_count`}),
-            })
-
-            await this.taskAgentHelper.invokeTask(publishChannel, feedbackChannel, request)
-
-            return true
+        const {publishChannel, feedbackChannel, request} = this.taskAgentHelper.buildRequest({
+            feedbackChannel: 'ngcp-rest-api-ban-regs-delete',
+            task: 'kam_lb_security_ban_delete',
+            dst: '*|state=active;role=proxy',
+            data: JSON.stringify({extra_args: `auth ${entry.username}@${entry.domain}::auth_count`}),
         })
+
+        await this.taskAgentHelper.invokeTask(publishChannel, feedbackChannel, request)
     }
 }
-

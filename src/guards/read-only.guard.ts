@@ -8,7 +8,7 @@ export class ReadOnlyGuard implements CanActivate {
     ) {
     }
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
+    canActivate(context: ExecutionContext): boolean {
         const request = context.switchToHttp().getRequest()
         if (!request.user || !request.user.readOnly) {
             return true

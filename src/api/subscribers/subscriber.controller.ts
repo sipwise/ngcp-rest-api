@@ -25,6 +25,7 @@ import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {Operation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
@@ -81,8 +82,7 @@ export class SubscriberController extends CrudController<SubscriberRequestDto, S
         const subscribers = createDto.map(dto => Object.assign(new SubscriberRequestDto(), dto).toInternal())
         const created = await this.subscriberService.create(subscribers, sr)
         const response = created.map(subscriber => new SubscriberResponseDto(subscriber, sr.user.role))
-        for (const entry of response)
-            await this.journalService.writeJournal(sr, entry.id, entry)
+        await this.journalService.writeJournals(sr, response.map(entry => ({id: entry.id, data: entry})))
         return response
     }
 
@@ -208,11 +208,11 @@ export class SubscriberController extends CrudController<SubscriberRequestDto, S
         for (const id of Object.keys(updates))
             subscribers[id] = Object.assign(new SubscriberRequestDto(), updates[id]).toInternal({id: +id})
         const ids = await this.subscriberService.update(subscribers, sr)
-        for (const id of ids)
-            await this.journalService.writeJournal(sr, id, new SubscriberResponseDto(
-                await this.subscriberService.read(id, sr),
-                sr.user.role,
-            ))
+        const journals = await mapYield(await this.subscriberService.readMany(ids, sr), subscriber => ({
+            id: subscriber.id,
+            data: new SubscriberResponseDto(subscriber, sr.user.role),
+        }))
+        await this.journalService.writeJournals(sr, journals)
         return ids
     }
 
@@ -267,11 +267,11 @@ export class SubscriberController extends CrudController<SubscriberRequestDto, S
         for (const id of Object.keys(updates))
             updates[id] = this.removedToNull(updates[id])
         const ids = await this.subscriberService.update(updates, sr)
-        for (const id of ids)
-            await this.journalService.writeJournal(sr, id, new SubscriberResponseDto(
-                await this.subscriberService.read(id, sr),
-                sr.user.role,
-            ))
+        const journals = await mapYield(await this.subscriberService.readMany(ids, sr), subscriber => ({
+            id: subscriber.id,
+            data: new SubscriberResponseDto(subscriber, sr.user.role),
+        }))
+        await this.journalService.writeJournals(sr, journals)
         return ids
     }
 
@@ -293,8 +293,7 @@ export class SubscriberController extends CrudController<SubscriberRequestDto, S
         })
         const sr = new ServiceRequest(req)
         const terminated = await this.subscriberService.terminate(ids, sr)
-        for (const id of terminated)
-            await this.journalService.writeJournal(sr, id, {})
+        await this.journalService.writeJournals(sr, terminated.map(id => ({id, data: {}})))
         return terminated
     }
 

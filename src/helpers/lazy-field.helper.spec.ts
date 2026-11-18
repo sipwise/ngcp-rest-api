@@ -33,17 +33,17 @@ function source(property: 'entries' | 'tags', calls: string[]): LazyFieldSource 
     const items = (id: number): string[] => stored[id]?.[property] ?? []
     return {
         property,
-        count: async (ids): Promise<Map<number, number>> => {
+        count: (ids): Promise<Map<number, number>> => {
             calls.push(`count ${property} ${ids}`)
-            return new Map(ids.filter(id => items(id).length).map(id => [id, items(id).length]))
+            return Promise.resolve(new Map(ids.filter(id => items(id).length).map(id => [id, items(id).length])))
         },
-        load: async (ids): Promise<Map<number, unknown[]>> => {
+        load: (ids): Promise<Map<number, unknown[]>> => {
             calls.push(`load ${property} ${ids}`)
-            return new Map(ids.filter(id => items(id).length).map(id => [id, items(id)]))
+            return Promise.resolve(new Map(ids.filter(id => items(id).length).map(id => [id, items(id)])))
         },
-        page: async (id): Promise<[unknown[], number]> => {
+        page: (id): Promise<[unknown[], number]> => {
             calls.push(`page ${property} ${id}`)
-            return [items(id).slice(0, 1), items(id).length]
+            return Promise.resolve([items(id).slice(0, 1), items(id).length])
         },
     }
 }

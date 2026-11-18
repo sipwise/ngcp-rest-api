@@ -25,6 +25,7 @@ import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
@@ -68,16 +69,13 @@ export class PeeringGroupController extends CrudController<PeeringGroupRequestDt
             method: req.method,
         })
         const sr = new ServiceRequest(req)
-        const groups = await Promise.all(createDto.map(async set => set.toInternal()))
+        const groups = await mapYield(createDto, set => set.toInternal())
         const created = await this.peeringGroupService.create(groups, sr)
-        const response = await Promise.all(created.map(
-            async set => new PeeringGroupResponseDto(
-                set,
-                {url: req.url},
-            ),
+        const response = await mapYield(created, set => new PeeringGroupResponseDto(
+            set,
+            {url: req.url},
         ))
-        for (const entry of response)
-            await this.journalService.writeJournal(sr, entry.id, entry)
+        await this.journalService.writeJournals(sr, response.map(entry => ({id: entry.id, data: entry})))
         return response
     }
 
@@ -238,9 +236,7 @@ export class PeeringGroupController extends CrudController<PeeringGroupRequestDt
         })
         const sr = new ServiceRequest(req)
         const deletedIds = await this.peeringGroupService.delete(ids, sr)
-        for (const deletedId of deletedIds) {
-            await this.journalService.writeJournal(sr, deletedId, {})
-        }
+        await this.journalService.writeJournals(sr, deletedIds.map(id => ({id, data: {}})))
         return deletedIds
     }
 

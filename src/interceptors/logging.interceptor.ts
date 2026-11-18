@@ -1,11 +1,11 @@
 import {CallHandler, ExecutionContext, NestInterceptor} from '@nestjs/common'
-import {instanceToPlain} from 'class-transformer'
 import {isObject} from 'class-validator'
 import {Observable} from 'rxjs'
-import {map} from 'rxjs/operators'
+import {mergeMap} from 'rxjs/operators'
 
 import Context from '~/helpers/context.helper'
 import {obfuscatePasswordQuery, obfuscatePasswordUrl} from '~/helpers/password-obfuscator.helper'
+import {serializeResponse} from '~/interceptors/response-serializer.interceptor'
 import {LoggerService} from '~/logger/logger.service'
 
 /**
@@ -24,13 +24,13 @@ export class LoggingInterceptor implements NestInterceptor {
      */
     intercept(context: ExecutionContext, next: CallHandler<unknown>): Observable<unknown> | Promise<Observable<unknown>> {
         return next.handle().pipe(
-            map(data => {
+            mergeMap(async data => {
                 // TODO: only log to console when executed in Debug mode
                 const httpCtx = context.switchToHttp()
                 const req = httpCtx.getRequest()
 
                 // Get redacted version of response data
-                const redacted: unknown = this.getRedactedPlain(data)
+                const redacted: unknown = await this.getRedactedPlain(data)
 
                 const ctx = Context.get(req)
                 const now = Date.now()
@@ -62,22 +62,13 @@ export class LoggingInterceptor implements NestInterceptor {
      * @param data Object or array of objects
      * @private
      */
-    private getRedactedPlain(data: unknown): unknown {
+    private async getRedactedPlain(data: unknown): Promise<unknown> {
         this.log.debug('generating redacted data')
         // check if data is array
         if (isObject(data) && 'stream' in data) {
             return 'stream'
         } else if (Array.isArray(data)) {
-            const redactedArr = []
-            // get plain version of stored object in array
-            // value.constructor returns the constructor of a specific object.
-            // This allows the call of the correct ClassConstructor in plainToInstance()
-            data.forEach(function (value) {
-                const plain = instanceToPlain(value)
-                //    let redacted = plainToInstance(value.constructor, plain)
-                redactedArr.push(plain)
-            })
-            return redactedArr
+            return await serializeResponse(data)
         } else if (data) {
             // get plain version object
             // value.constructor returns the constructor of a specific object.

@@ -1,9 +1,7 @@
 import {deflateSync} from 'zlib'
 
-import {ClassSerializerInterceptor, INestApplication} from '@nestjs/common'
-import {Reflector} from '@nestjs/core'
+import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
-import bodyParser from 'body-parser'
 import request from 'supertest'
 import {In, Like, MoreThanOrEqual} from 'typeorm'
 import {v4 as uuidv4} from 'uuid'
@@ -13,6 +11,7 @@ import {JournalModule} from './journal.module'
 
 import {AppModule} from '~/app.module'
 import {AppService} from '~/app.service'
+import {setupApp} from '~/app.setup'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
@@ -20,15 +19,7 @@ import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voi
 import {ContactStatus} from '~/entities/internal/contact.internal.entity'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
-import {HttpExceptionFilter} from '~/helpers/http-exception.filter'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
-import {ExpandInterceptor} from '~/interceptors/expand.interceptor'
-import {LazyFieldInterceptor} from '~/interceptors/lazy-field.interceptor'
-import {LoggingInterceptor} from '~/interceptors/logging.interceptor'
-import {ResponseValidationInterceptor} from '~/interceptors/response-validation.interceptor'
-import {TransactionInterceptor} from '~/interceptors/transaction.interceptor'
-import {TransformInterceptor} from '~/interceptors/transform.interceptor'
-import {ValidateInputPipe} from '~/pipes/validate.pipe'
 
 describe('Journal', () => {
     let app: INestApplication
@@ -38,6 +29,7 @@ describe('Journal', () => {
     let contractId: number
     let phonebookId: number
     let contactId: number
+    let bulkContactIds: number[] = []
     let journalIds: number[] = []
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const resellerCreds = {username: `mockResellerUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
@@ -132,31 +124,7 @@ describe('Journal', () => {
         app = moduleRef.createNestApplication()
 
         app.setGlobalPrefix('api')
-        app.useGlobalPipes(new ValidateInputPipe({
-            forbidUnknownValues: false,
-            whitelist: true,
-            forbidNonWhitelisted: true,
-            transform: true,
-            disableErrorMessages: true,
-        }))
-        app.useGlobalFilters(new HttpExceptionFilter())
-        app.useGlobalInterceptors(
-            new TransformInterceptor({
-                pageName: AppService.config.common.api_default_query_page_name,
-                perPageName: AppService.config.common.api_default_query_rows_name,
-            }),
-            new LoggingInterceptor(),
-            new ClassSerializerInterceptor(app.get(Reflector)),
-            app.get(LazyFieldInterceptor),
-            new TransactionInterceptor(app.get(Reflector)),
-            new ResponseValidationInterceptor(),
-            app.get(ExpandInterceptor),
-        )
-        app.use(bodyParser.json({
-            type: ['application/json-patch+json', 'application/json'],
-        }))
-        app.getHttpAdapter().getInstance().disable('x-powered-by')
-        app.getHttpAdapter().getInstance().set('json spaces', 2)
+        setupApp(app)
 
         await app.init()
 
@@ -200,7 +168,7 @@ describe('Journal', () => {
     })
 
     it('mock authService.compareBcryptPassword', async () => {
-        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(async () => true)
+        jest.spyOn(authService, 'compareBcryptPassword').mockImplementation(() => Promise.resolve(true))
         expect(await authService.compareBcryptPassword('123', '456')).toBe(true)
     })
 
@@ -267,6 +235,44 @@ describe('Journal', () => {
                     .set('Content-Type', 'application/json')
                     .send({email: 'journal_sc@example.com', firstname: 'journal', status: ContactStatus.Active})
                 expect(response.status).toEqual(204)
+            })
+        })
+
+        describe('bulk writes', () => {
+            it('journal each item of a bulk POST with its representation', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/systemcontacts')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send([
+                        {email: `journal_bulk1_${suffix}@example.com`, status: ContactStatus.Active},
+                        {email: `journal_bulk2_${suffix}@example.com`, status: ContactStatus.Active},
+                    ])
+                expect(response.status).toEqual(201)
+                bulkContactIds = response.body.data.map((contact: {id: number}) => +contact.id)
+                for (const contact of response.body.data) {
+                    const journals = await get(`/api/journals/systemcontacts/${contact.id}`)
+                    expect(journals.status).toEqual(200)
+                    expect(journals.body.total_count).toEqual(1)
+                    expect(journals.body.data[0].operation).toEqual('create')
+                    expect(journals.body.data[0].content).toMatchObject({id: +contact.id, email: contact.email})
+                }
+            })
+            it('journal each item of a bulk DELETE', async () => {
+                const response = await request(app.getHttpServer())
+                    .delete('/api/systemcontacts')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(bulkContactIds)
+                expect(response.status).toEqual(204)
+                for (const id of bulkContactIds) {
+                    const journals = await get(`/api/journals/systemcontacts/${id}?operation=delete`)
+                    expect(journals.status).toEqual(200)
+                    expect(journals.body.total_count).toEqual(1)
+                }
             })
         })
 
@@ -628,6 +634,8 @@ describe('Journal', () => {
                 await db.billing.ContractPhonebook.delete(phonebookId)
             if (contactId)
                 await db.billing.Contact.delete(contactId)
+            if (bulkContactIds.length)
+                await db.billing.Contact.delete(bulkContactIds)
             if (contractId)
                 await db.billing.Contract.delete(contractId)
         })

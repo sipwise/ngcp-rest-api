@@ -7,6 +7,7 @@ import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {FilterBy} from '~/interfaces/filter-by.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -35,11 +36,7 @@ export class CustomerBalanceMariadbRepository extends MariaDbRepository implemen
         // the latest balance per contract
         qb.andWhere('customerBalance.id IN (SELECT MAX(latest.id) FROM billing.contract_balances latest GROUP BY latest.contract_id)')
         const [result, totalCount] = await qb.getManyAndCount()
-        return [await Promise.all(
-            result.map(async (d) =>
-                d.toInternal(),
-            ),
-        ), totalCount]
+        return [await mapYield(result, d => d.toInternal()), totalCount]
     }
 
     async readById(id: number, sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.ContractBalance> {
@@ -63,25 +60,14 @@ export class CustomerBalanceMariadbRepository extends MariaDbRepository implemen
         return result.toInternal()
     }
 
-    async readWhereInIds(ids: number[], sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.ContractBalance[]> {
+    async readWhereInIds(ids: number[], _sr: ServiceRequest, filterBy?: FilterBy): Promise<internal.ContractBalance[]> {
         const qb = db.billing.ContractBalance.createQueryBuilder('customerBalance')
-        const searchDto  = new CustomerBalanceSearchDto()
-        configureQueryBuilder(
-            qb,
-            sr.query,
-            new SearchLogic(
-                sr,
-                Object.keys(searchDto),
-                undefined,
-                searchDto._alias,
-            ),
-        )
         qb.innerJoinAndSelect('customerBalance.contract', 'contract')
         qb.innerJoinAndSelect('contract.contact', 'contact')
         qb.andWhereInIds(ids)
         this.addFilterBy(qb, filterBy)
         const result = await qb.getMany()
-        return await Promise.all(result.map(async (d) => d.toInternal()))
+        return await mapYield(result, (d) => d.toInternal())
     }
 
     async update(updates: Dictionary<internal.ContractBalance>, _sr: ServiceRequest): Promise<number[]> {

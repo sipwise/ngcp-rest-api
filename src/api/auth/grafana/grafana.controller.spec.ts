@@ -37,67 +37,67 @@ describe('AuthGrafanaController', () => {
         expect(controller).toBeDefined()
     })
 
-    it('returns username when edit is not requested', async () => {
-        const result = await controller.grafana(dto(), mockRequest(false), res)
+    it('returns username when edit is not requested', () => {
+        const result = controller.grafana(dto(), mockRequest(false), res)
         expect(result.grafana_user).toEqual('testuser')
     })
 
-    it('returns admin when grafana_edit is true', async () => {
-        const result = await controller.grafana(dto(true), mockRequest(false), res)
+    it('returns admin when grafana_edit is true', () => {
+        const result = controller.grafana(dto(true), mockRequest(false), res)
         expect(result.grafana_user).toEqual('admin')
     })
 
-    it('sets NGCP-Grafana-User header to the grafana_user value', async () => {
-        let result = await controller.grafana(dto(), mockRequest(false), res)
+    it('sets NGCP-Grafana-User header to the grafana_user value', () => {
+        let result = controller.grafana(dto(), mockRequest(false), res)
         expect(headers['NGCP-Grafana-User']).toEqual('testuser')
         expect(headers['NGCP-Grafana-User']).toEqual(result.grafana_user)
-        result = await controller.grafana(dto(true), mockRequest(false), res)
+        result = controller.grafana(dto(true), mockRequest(false), res)
         expect(headers['NGCP-Grafana-User']).toEqual('admin')
         expect(headers['NGCP-Grafana-User']).toEqual(result.grafana_user)
     })
 
-    it('does not set NGCP-Grafana-User header when denied', async () => {
-        await expect(controller.grafana(dto(true), mockRequest(true), res)).rejects.toThrow(ForbiddenException)
+    it('does not set NGCP-Grafana-User header when denied', () => {
+        expect(() => controller.grafana(dto(true), mockRequest(true), res)).toThrow(ForbiddenException)
         expect(headers['NGCP-Grafana-User']).toBeUndefined()
     })
 
-    it('returns admin when NGCP-Grafana-Edit header is 1', async () => {
-        const result = await controller.grafana(dto(), mockRequest(false, {'ngcp-grafana-edit': '1'}), res)
+    it('returns admin when NGCP-Grafana-Edit header is 1', () => {
+        const result = controller.grafana(dto(), mockRequest(false, {'ngcp-grafana-edit': '1'}), res)
         expect(result.grafana_user).toEqual('admin')
     })
 
-    it('returns username when NGCP-Grafana-Edit header is 0', async () => {
-        const result = await controller.grafana(dto(), mockRequest(false, {'ngcp-grafana-edit': '0'}), res)
+    it('returns username when NGCP-Grafana-Edit header is 0', () => {
+        const result = controller.grafana(dto(), mockRequest(false, {'ngcp-grafana-edit': '0'}), res)
         expect(result.grafana_user).toEqual('testuser')
     })
 
-    it('returns username when NGCP-Grafana-Edit header is not 0/1', async () => {
-        const result = await controller.grafana(dto(), mockRequest(false, {'ngcp-grafana-edit': 'true'}), res)
+    it('returns username when NGCP-Grafana-Edit header is not 0/1', () => {
+        const result = controller.grafana(dto(), mockRequest(false, {'ngcp-grafana-edit': 'true'}), res)
         expect(result.grafana_user).toEqual('testuser')
     })
 
-    it('grafana_edit in body takes precedence over the header', async () => {
-        let result = await controller.grafana(dto(false), mockRequest(false, {'ngcp-grafana-edit': '1'}), res)
+    it('grafana_edit in body takes precedence over the header', () => {
+        let result = controller.grafana(dto(false), mockRequest(false, {'ngcp-grafana-edit': '1'}), res)
         expect(result.grafana_user).toEqual('testuser')
-        result = await controller.grafana(dto(true), mockRequest(false, {'ngcp-grafana-edit': '0'}), res)
+        result = controller.grafana(dto(true), mockRequest(false, {'ngcp-grafana-edit': '0'}), res)
         expect(result.grafana_user).toEqual('admin')
     })
 
-    it('read-only user gets username when edit is not requested', async () => {
-        const result = await controller.grafana(dto(), mockRequest(true), res)
+    it('read-only user gets username when edit is not requested', () => {
+        const result = controller.grafana(dto(), mockRequest(true), res)
         expect(result.grafana_user).toEqual('testuser')
     })
 
-    it('read-only user is denied when grafana_edit is true', async () => {
-        await expect(controller.grafana(dto(true), mockRequest(true), res)).rejects.toThrow(ForbiddenException)
+    it('read-only user is denied when grafana_edit is true', () => {
+        expect(() => controller.grafana(dto(true), mockRequest(true), res)).toThrow(ForbiddenException)
     })
 
-    it('read-only user is denied when NGCP-Grafana-Edit header is 1', async () => {
-        await expect(controller.grafana(dto(), mockRequest(true, {'ngcp-grafana-edit': '1'}), res)).rejects.toThrow(ForbiddenException)
+    it('read-only user is denied when NGCP-Grafana-Edit header is 1', () => {
+        expect(() => controller.grafana(dto(), mockRequest(true, {'ngcp-grafana-edit': '1'}), res)).toThrow(ForbiddenException)
     })
 
-    it('read-only user is allowed when body grafana_edit false overrides header', async () => {
-        const result = await controller.grafana(dto(false), mockRequest(true, {'ngcp-grafana-edit': '1'}), res)
+    it('read-only user is allowed when body grafana_edit false overrides header', () => {
+        const result = controller.grafana(dto(false), mockRequest(true, {'ngcp-grafana-edit': '1'}), res)
         expect(result.grafana_user).toEqual('testuser')
     })
 })

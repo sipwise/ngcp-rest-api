@@ -36,7 +36,7 @@ export class HeaderManipulationController extends CrudController<never, HeaderMa
     @Get()
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(HeaderManipulationResponseDto)
-    async readAll(@Req() req: Request): Promise<[HeaderManipulationResponseDto[], number]> {
+    readAll(@Req() req: Request): Promise<[HeaderManipulationResponseDto[], number]> {
         this.log.debug({
             message: 'read all header manipulations',
             func: this.readAll.name,
@@ -46,6 +46,6 @@ export class HeaderManipulationController extends CrudController<never, HeaderMa
         const sr = new ServiceRequest(req)
         const response = [new HeaderManipulationResponseDto({url: req.url})]
         const sortedResponse = sortAndPaginate<HeaderManipulationResponseDto>(response, sr, 'resourceUrl')
-        return [sortedResponse, response.length]
+        return Promise.resolve([sortedResponse, response.length])
     }
 }

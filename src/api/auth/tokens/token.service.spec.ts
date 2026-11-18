@@ -40,7 +40,7 @@ describe('AuthToken Service', () => {
         service = module.get<AuthTokenService>(AuthTokenService)
         authService = module.get<AuthService>(AuthService)
 
-        jest.spyOn(authService, 'signAuthJwt').mockImplementation(async () => Promise.resolve({access_token: 'mocked.jwt.token'}))
+        jest.spyOn(authService, 'signAuthJwt').mockReturnValue({access_token: 'mocked.jwt.token'})
 
         sr = {returnContent: true, headers: [undefined], params: undefined, query: undefined, user: user, req: undefined}
     })
