@@ -242,6 +242,30 @@ describe('Rule', () => {
                 expect(response.status).toEqual(201)
                 createdRuleIds.push(+response.body.data[0].id)
             })
+
+            it('reject unsupported direction b_inbound', async () => {
+                const rule: RulePost = {
+                    set_id: createdSetIds[0],
+                    name: 'test_rule_b_inbound',
+                    description: 'test_rule_b_inbound description',
+                    priority: 400,
+                    direction: 'b_inbound',
+                    stopper: false,
+                    enabled: true,
+                }
+                const response = await request(app.getHttpServer())
+                    .post('/api/header-manipulations/sets/rules')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(rule)
+                expect(response.status).toEqual(422)
+                expect(response.body.errors).toEqual([{
+                    pointer: '/direction',
+                    code: 'isEnum',
+                    message: 'direction must be one of the following values: a_inbound, a_outbound, b_outbound, local, peer, cf_inbound, cf_outbound, reply',
+                }])
+            })
         })
 
         describe('GET', () => {

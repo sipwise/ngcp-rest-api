@@ -1,7 +1,6 @@
 
 export enum HeaderRuleDirection {
     AInbound = 'a_inbound',
-    BInbound = 'b_inbound',
     AOutbound = 'a_outbound',
     BOutbound = 'b_outbound',
     Local = 'local',
