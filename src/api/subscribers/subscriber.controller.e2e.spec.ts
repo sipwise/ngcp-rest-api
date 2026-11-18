@@ -425,7 +425,7 @@ describe('Subscriber', () => {
                     domain: domain,
                     domain_id: billingDomainId,
                     status: 'active',
-                    lock: '3',
+                    lock: 3,
                     external_id: `${prefix}-sext`,
                     email: `${prefix}-sipadmin@example.org`,
                     timezone: 'Europe/Vienna',
@@ -794,7 +794,7 @@ describe('Subscriber', () => {
                     domain: wdomain,
                     domain_id: wBillingDomainId,
                     status: 'active',
-                    lock: '2',
+                    lock: 2,
                     external_id: `${prefix}-wext`,
                     email: `${prefix}-wsip@example.org`,
                     timezone: 'Europe/Vienna',
@@ -822,7 +822,7 @@ describe('Subscriber', () => {
                 const [first, second] = response.body.data as SubscriberResponseDto[]
                 created.wbulk1 = first.id
                 created.wbulk2 = second.id
-                expect(second).toMatchObject({status: 'locked', lock: '4'})
+                expect(second).toMatchObject({status: 'locked', lock: 4})
                 for (const id of [first.id, second.id]) {
                     const journal = await get(`/api/subscribers/${id}/journal`)
                     expect(journal.status).toEqual(HttpStatus.OK)
@@ -843,6 +843,9 @@ describe('Subscriber', () => {
                 ['profile set of another reseller', {profile_set_id: -1}, '/profile_set_id', 'SUBSCRIBER_PROFILE_SET_INVALID'],
                 ['profile without profile set', {profile_id: -1}, '/profile_id', 'SUBSCRIBER_PROFILE_SET_REQUIRED'],
                 ['PBX field on a SIP customer', {pbx_extension: '101'}, '/pbx_extension', 'SUBSCRIBER_PBX_FIELD_INVALID'],
+                ['lock above the levels', {lock: 6}, '/lock', 'isIn'],
+                ['negative lock', {lock: -1}, '/lock', 'isIn'],
+                ['lock by name', {lock: 'global'}, '/lock', 'isIn'],
             ])('rejects %s with 422', async (_case, values: Record<string, unknown>, pointer, code) => {
                 const body = sipBody('winvalid', {primary_number: wNumber('120'), ...values})
                 if ('domain_id' in values)
@@ -1017,7 +1020,7 @@ describe('Subscriber', () => {
                     {op: 'remove', path: '/timezone'},
                 ])
                 expect(response.status).toEqual(HttpStatus.OK)
-                expect(response.body).toMatchObject({display_name: 'W Sip 2', status: 'locked', lock: '4', timezone: null, email: `${prefix}-wsip@example.org`})
+                expect(response.body).toMatchObject({display_name: 'W Sip 2', status: 'locked', lock: 4, timezone: null, email: `${prefix}-wsip@example.org`})
                 const journal = await get(`/api/subscribers/${created.wsip}/journal`)
                 expect(journal.body.total_count).toEqual(2)
             })
@@ -1036,7 +1039,7 @@ describe('Subscriber', () => {
 
             it('keeps the lock when unlocking without a lock level', async () => {
                 const response = await patch('wsip', [{op: 'replace', path: '/status', value: 'active'}])
-                expect(response.body).toMatchObject({status: 'active', lock: '4'})
+                expect(response.body).toMatchObject({status: 'active', lock: 4})
             })
 
             it('takes a given lock level when locking', async () => {
@@ -1044,7 +1047,7 @@ describe('Subscriber', () => {
                     {op: 'replace', path: '/status', value: 'locked'},
                     {op: 'replace', path: '/lock', value: 3},
                 ])
-                expect(response.body).toMatchObject({status: 'locked', lock: '3'})
+                expect(response.body).toMatchObject({status: 'locked', lock: 3})
                 const unlocked = await patch('wbulk1', [{op: 'replace', path: '/status', value: 'active'}, {op: 'replace', path: '/lock', value: 0}])
                 expect(unlocked.body).toMatchObject({status: 'active', lock: null})
             })

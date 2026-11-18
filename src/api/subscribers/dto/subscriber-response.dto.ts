@@ -8,6 +8,7 @@ import {ResponseDto} from '~/dto/response.dto'
 import {internal} from '~/entities'
 import {
     SubscriberAliasNumber,
+    SubscriberLockLevel,
     SubscriberNumber,
     SubscriberPbxHuntCancelMode,
     SubscriberPbxHuntPolicy,
@@ -47,6 +48,16 @@ export class SubscriberAliasNumberResponseDto extends SubscriberNumberResponseDt
     }
 }
 
+export const lockLevels = [
+    SubscriberLockLevel.Foreign,
+    SubscriberLockLevel.Outgoing,
+    SubscriberLockLevel.IncomingOutgoing,
+    SubscriberLockLevel.Global,
+    SubscriberLockLevel.Ported,
+]
+export const lockLevelDescription = 'Lock level: 1 foreign, 2 outgoing, 3 incoming and outgoing, '
+    + '4 global (also refuses the subscriber\'s login), 5 ported'
+
 const subscriberRoles: string[] = [
     RbacRole.subscriberadmin,
     RbacRole.subscriber,
@@ -80,13 +91,21 @@ export class SubscriberResponseDto extends ResponseDto {
         domain_id: number
 
     @IsEnum(VoipSubscriberStatus)
-    @ApiProperty({enum: [VoipSubscriberStatus.Active, VoipSubscriberStatus.Locked]})
+    @ApiProperty({
+        enum: [VoipSubscriberStatus.Active, VoipSubscriberStatus.Locked],
+        description: 'Subscriber state; the level of a lock is in lock',
+    })
         status: VoipSubscriberStatus
 
     @IsOptional()
-    @IsString()
-    @ApiPropertyOptional({nullable: true, description: 'Lock level, admin roles only'})
-        lock?: string | null
+    @IsInt()
+    @ApiPropertyOptional({
+        type: 'integer',
+        enum: lockLevels,
+        nullable: true,
+        description: `${lockLevelDescription}; null = unlocked. Admin roles only`,
+    })
+        lock?: SubscriberLockLevel | null
 
     @IsOptional()
     @IsString()

@@ -17,12 +17,15 @@ import {
     ValidateNested,
 } from 'class-validator'
 
+import {lockLevelDescription, lockLevels} from './subscriber-response.dto'
+
 import {IsTimezoneName} from '~/decorators/is-timezone-name.decorator'
 import {IsValidPassword} from '~/decorators/is-valid-password.decorator'
 import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
 import {
     SubscriberAliasNumber,
+    SubscriberLockLevel,
     SubscriberNumber,
     SubscriberPbxHuntCancelMode,
     SubscriberPbxHuntPolicy,
@@ -33,13 +36,9 @@ const writableStatuses = [
     VoipSubscriberStatus.Active,
     VoipSubscriberStatus.Locked,
 ]
-const lockLevels = [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
+const writableLockLevels = [
+    SubscriberLockLevel.None,
+    ...lockLevels,
 ]
 // no spaces, no leading, trailing or double dots
 const identifierPattern = /^(?!\.)(?!.*\.\.)(?!.*\.$)[A-Za-z0-9+=,;_.~'()!*-]+$/
@@ -129,17 +128,21 @@ export class SubscriberRequestDto implements RequestDto {
 
     @IsOptional()
     @IsIn(writableStatuses)
-    @ApiPropertyOptional({enum: writableStatuses, default: VoipSubscriberStatus.Active, description: 'Use DELETE to terminate a subscriber'})
+    @ApiPropertyOptional({
+        enum: writableStatuses,
+        default: VoipSubscriberStatus.Active,
+        description: 'Subscriber state; the level of a lock is in lock. Use DELETE to terminate a subscriber',
+    })
         status?: VoipSubscriberStatus
 
     @IsOptional()
-    @IsIn([...lockLevels, ...lockLevels.map(String)])
+    @IsIn([...writableLockLevels, ...writableLockLevels.map(String)])
     @ApiPropertyOptional({
         type: 'integer',
+        enum: writableLockLevels,
         nullable: true,
-        minimum: 0,
-        maximum: 5,
-        description: 'Lock level, 0 or null = unlocked; locking the subscriber sets 4 unless given',
+        description: `${lockLevelDescription}; 0 or null = unlocked. Status locked without a lock sets 4, `
+            + 'status active keeps the stored level',
     })
         lock?: number | string | null
 
@@ -266,7 +269,7 @@ export class SubscriberRequestDto implements RequestDto {
         this.domain = entity.domain
         this.domain_id = entity.domainId
         this.status = entity.status
-        this.lock = entity.lock == null ? null : +entity.lock
+        this.lock = entity.lock
         this.external_id = entity.externalId
         this.email = entity.email
         this.timezone = entity.timezone
@@ -296,7 +299,7 @@ export class SubscriberRequestDto implements RequestDto {
         subscriber.domain = this.domain
         subscriber.domainId = this.domain_id
         subscriber.status = this.status
-        subscriber.lock = this.lock === undefined ? undefined : lockValue(this.lock)
+        subscriber.lock = this.lock === undefined ? undefined : Number(this.lock) || null
         subscriber.externalId = this.external_id === '' ? null : this.external_id
         subscriber.email = this.email
         subscriber.timezone = this.timezone
@@ -323,10 +326,6 @@ export class SubscriberRequestDto implements RequestDto {
         subscriber.pbxGroupmemberIds = this.pbx_groupmember_ids === null ? [] : this.pbx_groupmember_ids
         return subscriber
     }
-}
-
-function lockValue(lock: number | string | null): string | null {
-    return lock == null || +lock == 0 ? null : `${+lock}`
 }
 
 export const subscriberRequestFields: (keyof internal.Subscriber)[] = [

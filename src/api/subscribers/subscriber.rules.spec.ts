@@ -15,7 +15,7 @@ import {
 
 import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
-import {SubscriberAliasNumber} from '~/entities/internal/subscriber.internal.entity'
+import {SubscriberAliasNumber, SubscriberLockLevel} from '~/entities/internal/subscriber.internal.entity'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
 
 const subscriber = (values: Partial<internal.Subscriber> = {}): internal.Subscriber => Object.assign(new internal.Subscriber(), {
@@ -58,7 +58,7 @@ describe('subscriber.rules', () => {
             ['other primary number', 'primaryNumber', {primaryNumber: {cc: 43, ac: '1', sn: '200'}}, false],
             ['aliases without is_devid', 'aliasNumbers', {aliasNumbers: [{cc: 43, ac: '1', sn: '101', isDevId: undefined}]}, true],
             ['aliases with another is_devid', 'aliasNumbers', {aliasNumbers: [{cc: 43, ac: '1', sn: '101', isDevId: false}]}, false],
-            ['lock 0 and null', 'lock', {lock: '0'}, true],
+            ['lock 0 and null', 'lock', {lock: SubscriberLockLevel.None}, true],
             ['profile 0 and null', 'profileId', {profileId: 0}, true],
             ['group ids as a set', 'pbxGroupIds', {pbxGroupIds: [6, 5]}, true],
             ['member ids in order', 'pbxGroupmemberIds', {pbxGroupmemberIds: [8, 7]}, false],
@@ -131,11 +131,11 @@ describe('subscriber.rules', () => {
         })
 
         it.each([
-            ['given lock wins', 'locked', '2', undefined, '2'],
-            ['locking sets 4', 'locked', undefined, subscriber(), '4'],
-            ['staying locked keeps the level', 'locked', undefined, subscriber({status: VoipSubscriberStatus.Locked, lock: '3'}), '3'],
-            ['unlocking keeps the level', 'active', undefined, subscriber({status: VoipSubscriberStatus.Locked, lock: '3'}), '3'],
-            ['active without a lock', 'active', undefined, subscriber({lock: '1'}), null],
+            ['given lock wins', 'locked', SubscriberLockLevel.Outgoing, undefined, SubscriberLockLevel.Outgoing],
+            ['locking sets 4', 'locked', undefined, subscriber(), SubscriberLockLevel.Global],
+            ['staying locked keeps the level', 'locked', undefined, subscriber({status: VoipSubscriberStatus.Locked, lock: SubscriberLockLevel.IncomingOutgoing}), SubscriberLockLevel.IncomingOutgoing],
+            ['unlocking keeps the level', 'active', undefined, subscriber({status: VoipSubscriberStatus.Locked, lock: SubscriberLockLevel.IncomingOutgoing}), SubscriberLockLevel.IncomingOutgoing],
+            ['active without a lock', 'active', undefined, subscriber({lock: SubscriberLockLevel.Foreign}), null],
         ])('lock level: %s', (_case, status, lock, stored, expected) => {
             expect(lockLevel(status, lock, stored)).toBe(expected)
         })

@@ -847,7 +847,7 @@ export class SubscriberService implements CrudService<internal.Subscriber> {
         const preferences: Record<string, string | null> = {
             display_name: s.displayName || null,
             ext_subscriber_id: s.externalId ?? null,
-            lock: s.lock ?? null,
+            lock: s.lock ? `${s.lock}` : null,
         }
         if (!pbx)
             return preferences

@@ -212,7 +212,7 @@ export class SubscriberMariadbRepository extends MariaDbRepository implements Su
             if (preference.voipPreference.attribute == 'display_name')
                 subscriber.displayName = preference.value || null
             else
-                subscriber.lock = preference.value
+                subscriber.lock = Number(preference.value) || null
         }
     }
 

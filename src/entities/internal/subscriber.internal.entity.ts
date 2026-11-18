@@ -16,6 +16,15 @@ export enum SubscriberPbxHuntCancelMode {
     Cancel = 'cancel',
 }
 
+export enum SubscriberLockLevel {
+    None = 0,
+    Foreign = 1,
+    Outgoing = 2,
+    IncomingOutgoing = 3,
+    Global = 4,
+    Ported = 5,
+}
+
 export interface SubscriberNumber {
     numberId?: number
     cc: number
@@ -45,7 +54,7 @@ export class Subscriber {
     domain: string
     domainId: number
     status: VoipSubscriberStatus
-    lock: string | null
+    lock: SubscriberLockLevel | null
     externalId: string | null
     email: string | null
     timezone: string | null

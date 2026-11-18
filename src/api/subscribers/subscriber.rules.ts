@@ -2,6 +2,7 @@ import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
 import {
     SubscriberAliasNumber,
+    SubscriberLockLevel,
     SubscriberNumber,
 } from '~/entities/internal/subscriber.internal.entity'
 
@@ -134,6 +135,7 @@ export function sameValue(
         case 'pbxGroupmemberIds':
             return sameIdList(a as number[], b as number[])
         case 'lock':
+            return (a ?? 0) === (b ?? 0)
         case 'profileSetId':
         case 'profileId':
             return `${a ?? 0}` == `${b ?? 0}`
@@ -283,13 +285,13 @@ export function limitReached(
  */
 export function lockLevel(
     status: string,
-    lock: string | null | undefined,
+    lock: SubscriberLockLevel | null | undefined,
     stored?: internal.Subscriber,
-): string | null {
+): SubscriberLockLevel | null {
     if (lock !== undefined)
         return lock
     if (status == 'locked')
-        return stored?.status == 'locked' ? stored.lock ?? '4' : '4'
+        return stored?.status == 'locked' ? stored.lock ?? SubscriberLockLevel.Global : SubscriberLockLevel.Global
     return stored?.status == 'locked' ? stored.lock : null
 }
 

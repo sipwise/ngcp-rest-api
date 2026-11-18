@@ -16,12 +16,10 @@ import {RbacRole} from '~/config/constants.config'
 import {RedisDatabases} from '~/config/redis.config'
 import {db, internal} from '~/entities'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
+import {SubscriberLockLevel} from '~/entities/internal/subscriber.internal.entity'
 import {findKeys, keyExists} from '~/helpers/redis.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
-
-// lock levels below it restrict calls only
-const GLOBAL_LOCK_LEVEL = '4'
 
 /**
  * `AuthService` provides functionality to authenticate Admins and to sign JWTs for authenticated users
@@ -229,7 +227,8 @@ export class AuthService {
             },
             relations: {voipPreference: true},
         })
-        if (lock?.value === GLOBAL_LOCK_LEVEL) {
+        // lock levels below global restrict calls only
+        if (Number(lock?.value) === SubscriberLockLevel.Global) {
             this.log.debug({message: 'validating subscriber', success: false, constraint: 'lock'})
             return false
         }
