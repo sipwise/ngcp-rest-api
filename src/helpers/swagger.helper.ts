@@ -182,7 +182,8 @@ const stickyHeaderCss = `
 .swagger-ui .scheme-container, html.dark-mode .swagger-ui .scheme-container { position: sticky; top: var(--ngcp-header-height, 50px);
     z-index: 30; background: #fafafa }
 html.dark-mode .swagger-ui .information-container, html.dark-mode .swagger-ui .scheme-container { background: #1c2022 }
-.swagger-ui :is(.guide-panel, .opblock-tag-section, .opblock) { scroll-margin-top: calc(var(--ngcp-sticky-height, 112px) + 8px) }
+.swagger-ui :is(.guide-panel, .opblock-tag-section) { scroll-margin-top: calc(var(--ngcp-sticky-height, 112px) + 8px) }
+.swagger-ui .opblock { scroll-margin-top: calc(var(--ngcp-sticky-height, 112px) + var(--ngcp-tag-height) + 8px) }
 .swagger-ui .guide-panel :is(h3, h4) { scroll-margin-top: calc(var(--ngcp-sticky-height, 112px) + var(--ngcp-sections-height, 0px) + 8px) }
 .swagger-ui .guide-sections { position: sticky; top: var(--ngcp-sticky-height, 112px); z-index: 20; margin: 12px 0 24px;
     padding: 8px 0; background: #fafafa; transition: box-shadow .2s }
@@ -246,6 +247,93 @@ const stickyHeaderJs = `
     }).observe(document.body, {childList: true, subtree: true})
     window.addEventListener('scroll', scrolled, {passive: true})
     scrolled()
+})()
+`
+
+// the open tag and the open operation being read stay below the sticky header as compact bars, the operation
+// in its method colour (opaque, swagger's light tints are translucent); each bar scrolls away with the end of
+// its tag section or operation
+const pinnedOperationCss = `
+:root { --ngcp-tag-height: 36px }
+.swagger-ui .opblock-tag-section.is-open > .opblock-tag { position: sticky; top: var(--ngcp-sticky-height, 112px); z-index: 12;
+    background: #fafafa }
+html.dark-mode .swagger-ui .opblock-tag-section.is-open > .opblock-tag { background: #1c2022 }
+.swagger-ui .opblock-tag.ngcp-pinned { height: var(--ngcp-tag-height); padding-top: 0; padding-bottom: 0 }
+.swagger-ui .opblock-tag.ngcp-pinned a.nostyle span { font-size: 16px }
+.swagger-ui .opblock-get { --ngcp-method-tint: rgba(97, 175, 254, .1) }
+.swagger-ui .opblock-post { --ngcp-method-tint: rgba(73, 204, 144, .1) }
+.swagger-ui .opblock-put { --ngcp-method-tint: rgba(252, 161, 48, .1) }
+.swagger-ui .opblock-patch { --ngcp-method-tint: rgba(80, 227, 194, .1) }
+.swagger-ui .opblock-delete { --ngcp-method-tint: rgba(249, 62, 62, .1) }
+.swagger-ui .opblock-head { --ngcp-method-tint: rgba(144, 18, 254, .1) }
+.swagger-ui .opblock-options { --ngcp-method-tint: rgba(13, 90, 167, .1) }
+.swagger-ui .opblock.is-open > .opblock-summary { position: sticky; top: calc(var(--ngcp-sticky-height, 112px) + var(--ngcp-tag-height));
+    z-index: 11; background: linear-gradient(var(--ngcp-method-tint, transparent), var(--ngcp-method-tint, transparent)) #fafafa }
+html.dark-mode .swagger-ui .opblock.is-open > .opblock-summary { background: inherit }
+.swagger-ui :is(.opblock-tag-section.is-open > .opblock-tag, .opblock.is-open > .opblock-summary, .opblock.is-open > .opblock-summary *) {
+    transition: none }
+.swagger-ui .opblock-summary.ngcp-pinned { height: 32px; padding-top: 0; padding-bottom: 0; box-shadow: 0 2px 4px rgba(0, 0, 0, .1) }
+.swagger-ui .opblock-summary.ngcp-pinned .opblock-summary-path { overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
+.swagger-ui .opblock-summary.ngcp-pinned .opblock-summary-method { padding: 3px 0; font-size: 12px }
+.swagger-ui .opblock-summary.ngcp-pinned .opblock-summary-description { display: none }
+`
+
+// marks the tag and the operation bars that are pinned (compact). The height they lose is added as margin below
+// them, so the content does not jump when a bar pins or unpins. Collapsing a pinned bar scrolls back to its block,
+// which otherwise is far above the view.
+const pinnedOperationJs = `
+(function () {
+    const root = document.documentElement
+    let frame = 0
+
+    function pin(bar, pinned) {
+        if (bar.classList.contains('ngcp-pinned') == pinned)
+            return
+        bar.style.marginBottom = ''
+        const height = bar.getBoundingClientRect().height
+        const margin = parseFloat(getComputedStyle(bar).marginBottom)
+        bar.classList.toggle('ngcp-pinned', pinned)
+        if (pinned)
+            bar.style.marginBottom = margin + height - bar.getBoundingClientRect().height + 'px'
+    }
+
+    function crosses(block, line) {
+        const rect = block.getBoundingClientRect()
+        return rect.top < line && rect.bottom > line
+    }
+
+    function sync() {
+        frame = 0
+        const header = parseFloat(root.style.getPropertyValue('--ngcp-sticky-height')) || 0
+        const tag = parseFloat(getComputedStyle(root).getPropertyValue('--ngcp-tag-height'))
+        document.querySelectorAll('.swagger-ui .opblock-tag').forEach(bar => {
+            const section = bar.closest('.opblock-tag-section')
+            pin(bar, section.classList.contains('is-open') && crosses(section, header))
+        })
+        document.querySelectorAll('.swagger-ui .opblock-summary').forEach(bar => {
+            const block = bar.closest('.opblock')
+            pin(bar, block.classList.contains('is-open') && crosses(block, header + tag))
+        })
+    }
+
+    function schedule() {
+        if (!frame)
+            frame = requestAnimationFrame(sync)
+    }
+
+    document.addEventListener('click', event => {
+        const bar = event.target.closest('.swagger-ui :is(.opblock-tag, .opblock-summary).ngcp-pinned')
+        if (!bar)
+            return
+        const block = bar.closest('.opblock, .opblock-tag-section')
+        setTimeout(() => {
+            if (!block.classList.contains('is-open'))
+                block.scrollIntoView({block: 'start'})
+            schedule()
+        })
+    })
+    window.addEventListener('scroll', schedule, {passive: true})
+    window.addEventListener('resize', schedule)
 })()
 `
 
@@ -458,7 +546,7 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string):
         customCss: `
             .swagger-ui .topbar { display: none }
         ` + fontsCss + headerCss + buttonsCss + swaggerGuideCss + swaggerSearchCss + languageSwitchCss + swaggerAuthCss + stickyHeaderCss
-            + swaggerSchemaTableCss,
+            + pinnedOperationCss + swaggerSchemaTableCss,
 
         customCssUrl: './' + (api_prefix.split('/')[1] ? api_prefix.split('/')[1]+'/' : '') + 'css/swagger-fonts.css',
         customSiteTitle: 'NGCP API 2.1',
@@ -473,7 +561,7 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string):
         // functions in swaggerOptions are serialized with toString(), which returns no source in the
         // bytecode compiled prod bundle, so onComplete is injected as a plain js string instead
         customJsStr: [
-            pageInitJs, versionsJs, swaggerAuthJs, stickyHeaderJs, swaggerUiTranslateJs, pdfDownloadButtonJs, themeSwitchJs, languageSwitchJs, swaggerGuideJs, swaggerSearchJs,
+            pageInitJs, versionsJs, swaggerAuthJs, stickyHeaderJs, pinnedOperationJs, swaggerUiTranslateJs, pdfDownloadButtonJs, themeSwitchJs, languageSwitchJs, swaggerGuideJs, swaggerSearchJs,
             scrollTopJs, swaggerSchemaTableJs,
         ],
         jsonDocumentUrl: api_prefix + '/swagger.json',
