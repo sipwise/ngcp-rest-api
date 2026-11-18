@@ -161,6 +161,7 @@ describe('Customer Phonebook', () => {
                     contact_id: 1,
                     product_id: 4,
                 }).save()
+                await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [contract.id, null, ',,1,,;'])
                 createdContractIds.push(contract.id)
                 // test this first so it doesnt affect other tests via purge
                 const purgeTest = await db.billing.ContractPhonebook.create({
@@ -455,6 +456,7 @@ describe('Customer Phonebook', () => {
                 otherCustomerId = (await db.billing.Contract.create({
                     contact_id: contact.id, product_id: 4, status: ContractStatus.Active, create_timestamp: now, modify_timestamp: now,
                 }).save()).id
+                await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [otherCustomerId, null, ',,1,,;'])
                 const resellerRole = await db.billing.AclRole.findOneByOrFail({role: RbacRole.reseller})
                 await db.billing.Admin.insert({
                     reseller_id: otherResellerId,
@@ -585,6 +587,7 @@ describe('Customer Phonebook', () => {
                 scopeBillingDomainId = (await db.billing.Domain.create({domain: scopeDomain, reseller_id: 1}).save()).id
                 scopeProvisioningDomainId = (await db.provisioning.VoipDomain.create({domain: scopeDomain}).save()).id
                 scopeCustomerId = (await db.billing.Contract.create({contact_id: 1, product_id: 4}).save()).id
+                await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [scopeCustomerId, null, ',,1,,;'])
                 const uuid = uuidv4()
                 await BillingVoipSubscriber.insert({ // insert instead of create to avoid a cyclic dependency error
                     contract_id: scopeCustomerId,

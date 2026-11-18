@@ -167,6 +167,7 @@ describe('Subscriber Phonebook', () => {
                     contact_id: 1,
                     product_id: 4,
                 }).save()
+                await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [contract.id, null, ',,1,,;'])
                 createdContractIds.push(contract.id)
                 const domain = await db.billing.Domain.create({
                     domain: 'sub_pb_test_dom1',
@@ -413,6 +414,8 @@ describe('Subscriber Phonebook', () => {
                 scopeProvisioningDomainId = (await db.provisioning.VoipDomain.create({domain: scopeDomain}).save()).id
                 ownCustomerId = (await db.billing.Contract.create({contact_id: 1, product_id: 4}).save()).id
                 const foreignCustomerId = (await db.billing.Contract.create({contact_id: 1, product_id: 4}).save()).id
+                await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [ownCustomerId, null, ',,1,,;'])
+                await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [foreignCustomerId, null, ',,1,,;'])
                 scopeContractIds.push(ownCustomerId, foreignCustomerId)
 
                 const subadmin = await insertBillingSubscriber(ownCustomerId, subadminUsername)
@@ -511,6 +514,7 @@ describe('Subscriber Phonebook', () => {
                 otherCustomerId = (await db.billing.Contract.create({
                     contact_id: otherContactId, product_id: 4, status: ContractStatus.Active, create_timestamp: now, modify_timestamp: now,
                 }).save()).id
+                await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [otherCustomerId, null, ',,1,,;'])
                 otherBillingDomainId = (await db.billing.Domain.create({domain: resellerDomain, reseller_id: otherResellerId}).save()).id
                 otherProvisioningDomainId = (await db.provisioning.VoipDomain.create({domain: resellerDomain}).save()).id
                 const uuid = uuidv4()

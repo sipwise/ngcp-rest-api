@@ -219,6 +219,7 @@ describe('Journal', () => {
         describe('write', () => {
             it('create a customer phonebook entry', async () => {
                 const contract = await db.billing.Contract.create({contact_id: 1, product_id: 4}).save()
+                await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [contract.id, null, ',,1,,;'])
                 contractId = contract.id
                 const response = await request(app.getHttpServer())
                     .post('/api/customers/phonebook')

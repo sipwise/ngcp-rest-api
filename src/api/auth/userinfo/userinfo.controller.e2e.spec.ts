@@ -317,6 +317,7 @@ describe('', () => {
                     tz.customerId = (await db.billing.Contract.create({
                         contact_id: tz.customerContactId, product_id: 4, status: ContractStatus.Active, create_timestamp: now, modify_timestamp: now,
                     }).save()).id
+                    await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [tz.customerId, null, ',,1,,;'])
                     tz.billingDomainId = (await db.billing.Domain.create({domain: tzDomain, reseller_id: tzResellerId}).save()).id
                     tz.provisioningDomainId = (await db.provisioning.VoipDomain.create({domain: tzDomain}).save()).id
                     const uuid = randomUUID()

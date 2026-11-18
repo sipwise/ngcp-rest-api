@@ -154,6 +154,7 @@ describe('Customer Balances', () => {
             create_timestamp: new Date(),
             modify_timestamp: new Date(),
         }).save()
+        await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [contract.id, null, ',,1,,;'])
         contractId = contract.id
         fixtureContractIds.push(contract.id)
         oldBalanceId = await createBalance(10, new Date(2026, 0, 1), new Date(2026, 0, 31, 23, 59, 59))

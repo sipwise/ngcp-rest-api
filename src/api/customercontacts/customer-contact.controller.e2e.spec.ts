@@ -844,6 +844,7 @@ describe('CustomerContact', () => {
                         create_timestamp: now,
                         modify_timestamp: now,
                     }).save()
+                    await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [contract.id, null, ',,1,,;'])
                     fixtureContractIds.push(contract.id)
                     const response = await request(app.getHttpServer())
                         .delete('/api/customercontacts')

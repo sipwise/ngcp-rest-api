@@ -180,6 +180,7 @@ describe('Auth JWT', () => {
         billingDomainId = (await db.billing.Domain.create({domain, reseller_id: 1}).save()).id
         provisioningDomainId = (await db.provisioning.VoipDomain.create({domain}).save()).id
         customerId = (await db.billing.Contract.create({contact_id: 1, product_id: 4}).save()).id
+        await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [customerId, null, ',,1,,;'])
         lockAttributeId = (await db.provisioning.VoipPreference.findOneByOrFail({attribute: 'lock'})).id
         for (const sub of subscribers)
             sub.id = await insertSubscriber(sub.username, sub.role == RbacRole.subscriberadmin)

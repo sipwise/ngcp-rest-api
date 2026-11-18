@@ -39,6 +39,7 @@ const SIPPEERING_PRODUCT_ID = 2
 const RESELLER_PRODUCT_ID = 3
 const SIPACCOUNT_PRODUCT_ID = 4
 const SYSTEM_CONTACT_ID = 2
+const BILLING_PROFILE_ID = 1
 // fixture contracts exist before the invoice period
 const CREATED_AT = new Date(2024, 11, 1)
 const epoch = (date: Date): number => date.getTime() / 1000
@@ -93,6 +94,7 @@ describe('Invoice', () => {
         productId: number,
         contactId?: number,
         values: Partial<db.billing.Contract> = {},
+        billingProfileId = BILLING_PROFILE_ID,
     ): Promise<number> => {
         if (!contactId) {
             const contact = await db.billing.Contact.create({
@@ -112,13 +114,9 @@ describe('Invoice', () => {
             ...values,
         }).save()
         createdContractIds.push(contract.id)
+        if (productId != RESELLER_PRODUCT_ID)
+            await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [contract.id, null, `,,${billingProfileId},,;`])
         return contract.id
-    }
-
-    const createBilledContract = async (...args: Parameters<typeof createContract>): Promise<number> => {
-        const contractId = await createContract(...args)
-        await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [contractId, null, `,,${profileId},,;`])
-        return contractId
     }
 
     const createZone = async (zone: string, detail: string): Promise<number> => {
@@ -195,9 +193,9 @@ describe('Invoice', () => {
         const domain = await db.billing.Domain.create({domain: `${prefix}.example.org`, reseller_id: RESELLER_ID}).save()
         domainId = domain.id
 
-        cdrCustomerId = await createBilledContract(RESELLER_ID, SIPACCOUNT_PRODUCT_ID, undefined, {add_vat: true, vat_rate: 20})
-        peerId = await createBilledContract(undefined, SIPPEERING_PRODUCT_ID, SYSTEM_CONTACT_ID)
-        terminatedId = await createBilledContract(RESELLER_ID, SIPACCOUNT_PRODUCT_ID, undefined, {status: ContractStatus.Terminated})
+        cdrCustomerId = await createContract(RESELLER_ID, SIPACCOUNT_PRODUCT_ID, undefined, {add_vat: true, vat_rate: 20}, profileId)
+        peerId = await createContract(undefined, SIPPEERING_PRODUCT_ID, SYSTEM_CONTACT_ID, {}, profileId)
+        terminatedId = await createContract(RESELLER_ID, SIPACCOUNT_PRODUCT_ID, undefined, {status: ContractStatus.Terminated}, profileId)
         await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [otherResellerContractId, null, `,,${profileId},,;`])
         const u1 = await createSubscriber(cdrCustomerId, `${prefix}-u1`)
         const u2 = await createSubscriber(cdrCustomerId, `${prefix}-u2`)
@@ -253,7 +251,7 @@ describe('Invoice', () => {
             create_timestamp: new Date(),
         }).save()
         createdContactIds.push(tokyoContact.id)
-        tokyoCustomerId = await createBilledContract(RESELLER_ID, SIPACCOUNT_PRODUCT_ID, tokyoContact.id, {profile_package_id: tokyoPackageId})
+        tokyoCustomerId = await createContract(RESELLER_ID, SIPACCOUNT_PRODUCT_ID, tokyoContact.id, {profile_package_id: tokyoPackageId}, profileId)
         const tokyoOut = {
             source_user_id: await createSubscriber(tokyoCustomerId, `${prefix}-t1`), source_account_id: tokyoCustomerId,
             source_provider_id: String(RESELLER_CONTRACT_ID), source_customer_billing_zone_id: z1,

@@ -126,6 +126,7 @@ describe('Ban Subscribers', () => {
         billingDomainId = (await db.billing.Domain.create({domain, reseller_id: 1}).save()).id
         provisioningDomainId = (await db.provisioning.VoipDomain.create({domain}).save()).id
         customerId = (await db.billing.Contract.create({contact_id: 1, product_id: 4}).save()).id
+        await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [customerId, null, ',,1,,;'])
         resellerId = (await db.billing.Contact.findOneByOrFail({id: 1})).reseller_id
         readerId = await insertSubscriber(readerUsername, true)
         bannedSubscriberId = await insertSubscriber(bannedUsername, false)

@@ -141,6 +141,7 @@ describe('Voicemail', () => {
         billingDomainId = (await db.billing.Domain.create({domain, reseller_id: 1}).save()).id
         provisioningDomainId = (await db.provisioning.VoipDomain.create({domain}).save()).id
         contractId = (await db.billing.Contract.create({contact_id: 1, product_id: 4}).save()).id
+        await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [contractId, null, ',,1,,;'])
         const uuid = uuidv4()
         await BillingVoipSubscriber.insert({ // insert instead of create to avoid a cyclic dependency error
             contract_id: contractId,

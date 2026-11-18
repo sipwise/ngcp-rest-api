@@ -114,6 +114,7 @@ describe('PBX Group', () => {
             contact_id: contact.id,
             product_id: productId,
         }).save()
+        await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [contract.id, null, ',,1,,;'])
         createdContractIds.push(contract.id)
         const customer: PbxCustomer = {
             contractId: contract.id,
