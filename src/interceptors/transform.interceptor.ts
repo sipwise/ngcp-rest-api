@@ -21,6 +21,19 @@ interface TransformInterceptorOptions {
 }
 
 /**
+ * Rel name from the route path without the prefix, optional-group braces and parameters:
+ * `/api/v2/header-manipulations/sets/{:setId/}rules{/:ruleId}/conditions` ->
+ * `header-manipulations/sets/rules/conditions`
+ */
+export function halRelName(path: string): string {
+    const subPath = path.replace(/^\/api\/(v2\/)?/, '').replace(/[{}]/g, '')
+    return subPath
+        .split('/')
+        .filter(segment => segment !== '' && !segment.startsWith(':'))
+        .join('/')
+}
+
+/**
  * TransformInterceptor transforms the data that is returned based on values set in the 'Accept' HTTP header.
  *
  * If the 'Accept' header explicitly contains 'application/json' that data is returned as is.
@@ -175,7 +188,7 @@ export class TransformInterceptor implements NestInterceptor {
 
         // `<item>/@<field>` collections: their items are no resources of their own
         const lazyField = lazyFieldRequest(req)?.field
-        const resName = lazyField ?? this.getResourceName(path)
+        const resName = lazyField ?? halRelName(path)
 
         let resource
 
@@ -285,19 +298,5 @@ export class TransformInterceptor implements NestInterceptor {
 
         return urlArray.join('/')
     }
-
-    /**
-     * Rel name from the route path without the prefix, optional-group braces and parameters:
-     * `/api/v2/header-manipulations/sets/{:setId/}rules{/:ruleId}/conditions` ->
-     * `header-manipulations/sets/rules/conditions`
-     */
-    private getResourceName(path: string): string {
-        const subPath = path.replace(/^\/api\/(v2\/)?/, '').replace(/[{}]/g, '')
-        return subPath
-            .split('/')
-            .filter(segment => segment !== '' && !segment.startsWith(':'))
-            .join('/')
-    }
-
 }
 

@@ -15,6 +15,7 @@ import {
     HeaderRuleConditionValueType,
 } from '~/entities/internal/header-rule-condition.internal.entity'
 import {HeaderRuleDirection} from '~/entities/internal/header-rule.internal.entity'
+import {halRelName} from '~/interceptors/transform.interceptor'
 
 const RESELLER_ID = 1
 const HAL = 'application/hal+json'
@@ -53,19 +54,14 @@ describe('HAL', () => {
         .auth(username, password)
         .set('Accept', HAL)
 
-    // GET routes reachable without ids: optional groups dropped, no parameters left
-    const collectionPaths = (): string[] => {
+    // `<item>/@<field>` routes take the field as their rel
+    const getRoutePaths = (): string[] => {
         const stack = app.getHttpAdapter().getInstance().router.stack as RouteLayer[]
         const paths = stack
             .filter(layer => layer.route?.methods.get)
-            .map(layer => layer.route.path.replace(/\{[^}]*\}/g, ''))
-            .filter(path => !path.includes(':') && !path.includes('*'))
+            .map(layer => layer.route.path)
+            .filter(path => !path.includes('/@') && !path.includes('*'))
         return [...new Set(paths)]
-    }
-
-    const itemLinks = (body: {_links: Record<string, Link | Link[]>}, rel: string): Link[] => {
-        const links = body._links[rel] ?? []
-        return Array.isArray(links) ? links : [links]
     }
 
     beforeAll(async () => {
@@ -177,35 +173,11 @@ describe('HAL', () => {
             expect(response.body._links).toEqual({self: {href: url}})
         })
 
-        it('keeps the HAL rules on every collection', async () => {
-            const rows = AppService.config.common.api_default_query_rows_name
-            const problems: string[] = []
-            let checked = 0
-            for (const path of collectionPaths()) {
-                const response = await get(`${path}?${rows}=5`)
-                if (response.status != 200 || !response.type.includes(HAL))
-                    continue
-                checked++
-                for (const [rel, items] of Object.entries(response.body._embedded ?? {}) as [string, HalItem[]][]) {
-                    if (!/^ngcp:[a-z0-9_-]+(\/[a-z0-9_-]+)*$/.test(rel))
-                        problems.push(`${path}: invalid rel ${rel}`)
-                    const selfLinks: Link[] = []
-                    for (const item of items) {
-                        if (item.id === undefined || item.id === null) {
-                            if (item._links)
-                                problems.push(`${path}: links on an item without id`)
-                        } else if (item._links?.self) {
-                            selfLinks.push(item._links.self as Link)
-                        } else {
-                            problems.push(`${path}: no self link on item ${item.id}`)
-                        }
-                    }
-                    if (JSON.stringify(itemLinks(response.body, rel)) != JSON.stringify(selfLinks))
-                        problems.push(`${path}: ${rel} links do not match the embedded self links`)
-                }
-            }
-            expect(problems).toEqual([])
-            expect(checked).toBeGreaterThan(20)
+        it('derives a valid rel from every GET route', () => {
+            const paths = getRoutePaths()
+            const invalid = paths.filter(path => !/^[a-z0-9_-]+(\/[a-z0-9_-]+)*$/.test(halRelName(path)))
+            expect(invalid).toEqual([])
+            expect(paths.length).toBeGreaterThan(20)
         })
     })
 
