@@ -1,5 +1,5 @@
 import {Controller, Get, Inject, Param, Query, Req, Res, StreamableFile, UnprocessableEntityException} from '@nestjs/common'
-import {ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiOkResponse, ApiOperation, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {I18nService} from 'nestjs-i18n'
 
 import {OtpResponseDto} from './dto/otp-response.dto'
@@ -37,9 +37,11 @@ export class AuthOtpController extends CrudController<never, never> {
     }
 
     @Get()
+    @ApiOperation({summary: 'Get the OTP secret of the authenticated user'})
     @ApiQuery({
         name: 'qr',
-        required: false, // Optional query parameter
+        required: false,
+        description: '`true`: the secret as a QR code image (`image/png`) instead of JSON',
         schema: {
             type: 'string',
             enum: ['true', 'false'],

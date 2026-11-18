@@ -3,19 +3,19 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {VoicemailResponseDto} from './voicemail-response.dto'
 
 export class VoicemailSearchDto implements VoicemailResponseDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the voicemail'})
         id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Call-ID of the recorded call'})
         call_id: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Caller number'})
         caller: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Duration in seconds'})
         duration: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Mailbox folder of the message'})
         folder: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Recording time, Unix timestamp in seconds'})
         time: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Subscriber owning the message'})
         subscriber_id: number
     @ApiHideProperty()
         _alias = {

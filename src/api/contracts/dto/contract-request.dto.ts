@@ -14,36 +14,35 @@ export class ContractRequestDto implements RequestDto {
     @IsIn([ContractBillingProfileDefinition.ID])
     @IsNotEmpty()
     @ApiProperty({
-        description: 'Explicitly declare the way how you want to set billing profiles for this API call.',
+        description: 'Billing profile field to use, only `id`',
         enum: [ContractBillingProfileDefinition.ID],
     })
         billing_profile_definition?: ContractBillingProfileDefinition
 
     @IsNumber()
     @ApiProperty({
-        description: 'The billing profile id used to charge this contract, which will become active immediately. ' +
-            'This field is required if the profile definition mode is not defined or the "id" mode is used.',
+        description: 'Billing profile charging the contract, active immediately',
     })
         billing_profile_id: number
 
     @IsNumber()
-    @ApiProperty({description: 'The contact id this contract belongs to'})
+    @ApiProperty({description: 'Contact of the contract'})
         contact_id?: number
 
     @IsOptional()
     @IsNotEmpty()
     @IsString()
-    @ApiProperty({description: 'A non-unique external ID e.g., provided by a 3rd party provisioning'})
+    @ApiProperty({description: 'Non-unique external id, e.g. from third-party provisioning'})
         external_id?: string
 
     @IsNotEmpty()
     @IsEnum(ContractStatus)
-    @ApiProperty({description: 'The status of the contract'})
+    @ApiProperty({description: 'State of the contract'})
         status?: ContractStatus
 
     @IsNotEmpty()
     @IsEnum(ContractType)
-    @ApiProperty({description: 'The type of contract'})
+    @ApiProperty({description: '`sippeering` for peerings, `reseller` for resellers'})
         type?: ContractType
 
     constructor(entity?: internal.Contract) {

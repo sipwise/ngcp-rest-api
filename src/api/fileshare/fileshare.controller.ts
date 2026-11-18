@@ -12,7 +12,7 @@ import {
     UseInterceptors,
 } from '@nestjs/common'
 import {FileInterceptor} from '@nestjs/platform-express'
-import {ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
+import {ApiConsumes, ApiOkResponse, ApiOperation, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {FileshareRequestDto} from './dto/fileshare-request.dto'
@@ -48,6 +48,7 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
     }
 
     @Post()
+    @ApiOperation({summary: 'Upload a file'})
     @ApiConsumes('multipart/form-data')
     @ApiCreatedResponse(FileshareResponseDto)
     @UseInterceptors(FileInterceptor('file', {
@@ -83,6 +84,7 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
 
     @Public(AppService.config.fileshare.public_links)
     @Get(':id')
+    @ApiOperation({summary: 'Download a file'})
     @ApiOkResponse({
         type: StreamableFile,
     })

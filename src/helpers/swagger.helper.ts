@@ -33,6 +33,7 @@ import {
     swaggerUiTranslateJs,
 } from '~/helpers/swagger-i18n.helper'
 import {addLazyFieldDocumentation, addLazyFieldOperations} from '~/helpers/swagger-lazy-field.helper'
+import {addOperationSummaries, addPathParameters} from '~/helpers/swagger-operation.helper'
 import {renderSwaggerPdf} from '~/helpers/swagger-pdf.helper'
 import {swaggerSchemaTableCss, swaggerSchemaTableJs} from '~/helpers/swagger-schema-table.helper'
 import {swaggerSearchCss, swaggerSearchJs} from '~/helpers/swagger-search.helper'
@@ -437,6 +438,8 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string):
 
     const document = SwaggerModule.createDocument(app, docBuilder.build(), {extraModels: [ErrorResponseDto, ErrorEntryDto]})
     addLazyFieldOperations(document, app.get(LazyFieldInterceptor).lazyFieldRoutes())
+    addPathParameters(document, api_prefix)
+    addOperationSummaries(document, api_prefix)
     sortSearchQueryParameters(document)
     const expand = app.get(ExpandInterceptor)
     const models = expand.responseModels()

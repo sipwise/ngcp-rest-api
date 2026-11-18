@@ -11,18 +11,18 @@ export class CustomerPhonebookCsvRequestDto implements RequestDto {
     @IsString()
     @IsNotEmpty()
     @MaxLength(255)
-    @ApiProperty()
+    @ApiProperty({description: 'Full name of the entry, e.g. `John Smith`'})
         name: string
 
     @IsString()
     @IsNotEmpty()
     @MaxLength(255)
-    @ApiProperty()
+    @ApiProperty({description: 'Phone number or SIP URI'})
         number: string
 
     @IsNumberString()
     @IsOptional()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Customer owning the entry'})
         customer_id?: number
 
     constructor(entity?: internal.CustomerPhonebook) {

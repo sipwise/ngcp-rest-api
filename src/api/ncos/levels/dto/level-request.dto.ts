@@ -7,8 +7,7 @@ import {NCOSLevelMode} from '~/entities/internal/ncos-level.internal.entity'
 
 export class NCOSLevelRequestDto implements RequestDto {
     @ApiPropertyOptional({
-        description: 'Reseller Id, mandatory for admin and system roles, must not be provided by reseller roles' +
-            ' as it is automatically set to the reseller_id of the user',
+        description: 'Reseller of the NCOS level; required for admin roles, the own reseller for reseller roles',
         example: 1,
     })
     @IsOptional()
@@ -16,39 +15,39 @@ export class NCOSLevelRequestDto implements RequestDto {
     @IsInt()
         reseller_id?: number
 
-    @ApiProperty()
+    @ApiProperty({description: 'Name of the NCOS level'})
     @IsString()
     @IsNotEmpty()
         level: string
 
-    @ApiProperty()
+    @ApiProperty({description: '`whitelist`: only matching numbers may be called, `blacklist`: matching numbers are blocked'})
     @IsEnum(NCOSLevelMode)
         mode: NCOSLevelMode
 
-    @ApiProperty()
+    @ApiProperty({description: 'Calls to the local area code are also checked'})
     @IsBoolean()
         local_ac: boolean
 
-    @ApiProperty()
+    @ApiProperty({description: 'Calls within the same PBX customer are also checked'})
     @IsBoolean()
         intra_pbx: boolean
 
-    @ApiProperty()
+    @ApiProperty({description: 'Time set matching is inverted'})
     @IsBoolean()
         time_set_invert: boolean
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Description of the NCOS level'})
     @IsOptional()
     @IsString()
         description?: string
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time set the level applies in; null = always'})
     @IsOptional()
     @IsInt()
     @IsPositive()
         time_set_id?: number
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Customers can see and use the level in their preferences'})
     @IsOptional()
     @IsBoolean()
         expose_to_customer?: boolean

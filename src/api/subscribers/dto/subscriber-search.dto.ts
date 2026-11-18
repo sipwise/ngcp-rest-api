@@ -16,7 +16,7 @@ export const conditionFilter = (where: (param: string) => string): object => ({
 })
 
 export class SubscriberSearchDto {
-    @ApiPropertyOptional({description: 'Subscriber id'})
+    @ApiPropertyOptional({description: 'Id of the subscriber'})
         id: number
     @ApiPropertyOptional({description: 'SIP username of the subscriber'})
         username: string
@@ -24,7 +24,7 @@ export class SubscriberSearchDto {
         webusername: string
     @ApiPropertyOptional({description: 'Domain name'})
         domain: string
-    @ApiPropertyOptional({description: 'Customer id'})
+    @ApiPropertyOptional({description: 'Customer of the subscriber'})
         customer_id: number
     @ApiPropertyOptional({enum: [VoipSubscriberStatus.Active, VoipSubscriberStatus.Locked], description: 'Status of the subscriber'})
         status: VoipSubscriberStatus
@@ -32,7 +32,7 @@ export class SubscriberSearchDto {
         customer_external_id: string
     @ApiPropertyOptional({description: 'External id of the subscriber'})
         subscriber_external_id: string
-    @ApiPropertyOptional({description: 'Subscriber profile id'})
+    @ApiPropertyOptional({description: 'Subscriber profile'})
         profile_id: number
     @ApiPropertyOptional({description: 'PBX groups'})
         is_pbx_group: string

@@ -7,21 +7,21 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class CustomerSpeedDialResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the customer speed dial'})
         id: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Customer owning the speed dial'})
         customer_id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Speed dial slot'})
         slot: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Speed dial destination'})
         destination: string
 
     constructor(csd: internal.CustomerSpeedDial, options?: ResponseDtoOptions) {

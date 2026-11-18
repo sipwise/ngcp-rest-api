@@ -6,8 +6,7 @@ import {internal} from '~/entities'
 
 export class HeaderManipulationSetRequestDto implements RequestDto {
     @ApiPropertyOptional({
-        description: 'Reseller Id, mandatory for admin and system roles, must not be provided by reseller roles' +
-            ' as it is automatically set to the reseller_id of the user',
+        description: 'Reseller of the header rule set; required for admin roles, the own reseller for reseller roles',
         example: 1,
     })
     @IsOptional()
@@ -16,15 +15,15 @@ export class HeaderManipulationSetRequestDto implements RequestDto {
         reseller_id?: number
 
     @IsNotEmpty()
-    @ApiProperty({description: 'Rule set name', example: 'Restricted destinations'})
+    @ApiProperty({description: 'Name of the header rule set', example: 'Restricted destinations'})
         name: string
 
     @IsOptional()
-    @ApiPropertyOptional({description: 'Subscriber Id', example: 1})
+    @ApiPropertyOptional({description: 'Subscriber the set belongs to; null = reseller-wide set', example: 1})
         subscriber_id?: number
 
     @IsNotEmpty()
-    @ApiProperty({description: 'Rule set description', example: 'Block calls to restricted destinations'})
+    @ApiProperty({description: 'Description of the header rule set', example: 'Block calls to restricted destinations'})
         description: string
 
 

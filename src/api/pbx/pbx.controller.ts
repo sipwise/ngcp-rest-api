@@ -1,5 +1,5 @@
 import {Controller, Get, Req} from '@nestjs/common'
-import {ApiTags} from '@nestjs/swagger'
+import {ApiOperation, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {PbxResponseDto} from './dto/pbx-response.dto'
@@ -35,6 +35,7 @@ export class PbxController extends CrudController<never, PbxResponseDto> {
     }
 
     @Get()
+    @ApiOperation({summary: 'List links to the PBX resources'})
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(PbxResponseDto)
     readAll(@Req() req: Request): Promise<[PbxResponseDto[], number]> {

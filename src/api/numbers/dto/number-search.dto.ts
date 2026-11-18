@@ -1,21 +1,21 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class NumberSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Subscriber the number is assigned to'})
         subscriber_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Primary number of its subscriber'})
         is_primary: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Device id alias: the subscriber can register with it and receives only calls to it'})
         is_devid: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the number'})
         number_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Country code'})
         cc: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Area code, may be empty'})
         ac: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Subscriber number'})
         sn: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the number'})
         id: number
     @ApiHideProperty()
         _alias = {

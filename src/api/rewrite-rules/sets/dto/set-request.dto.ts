@@ -8,8 +8,7 @@ import {internal} from '~/entities'
 
 export class RewriteRuleSetRequestDto implements RequestDto {
     @ApiPropertyOptional({
-        description: 'Reseller Id, mandatory for admin and system roles, must not be provided by reseller roles' +
-            ' as it is automatically set to the reseller_id of the user',
+        description: 'Reseller of the rewrite rule set; required for admin roles, the own reseller for reseller roles',
         example: 1,
     })
     @IsOptional()
@@ -17,18 +16,18 @@ export class RewriteRuleSetRequestDto implements RequestDto {
     @IsInt()
         reseller_id?: number
 
-    @ApiProperty({description: 'Rule set name', example: 'Restricted destinations'})
+    @ApiProperty({description: 'Name of the rewrite rule set', example: 'Restricted destinations'})
     @IsString()
     @IsNotEmpty()
     @MaxLength(32)
         name!: string
 
-    @ApiPropertyOptional({description: 'Rule set description', example: 'Block calls to restricted destinations'})
+    @ApiPropertyOptional({description: 'Description of the rewrite rule set', example: 'Block calls to restricted destinations'})
     @IsOptional()
     @IsString()
         description?: string
 
-    @ApiPropertyOptional({description: 'Rule set rules', example: []})
+    @ApiPropertyOptional({description: 'Rules of the set', example: []})
     @IsOptional()
     @IsArray()
     @ValidateNested({each: true})

@@ -5,21 +5,21 @@ import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
 
 export class CustomerBalanceRequestDto implements RequestDto {
-    @ApiProperty()
+    @ApiProperty({description: 'Current cash balance in currency units'})
     @IsNumber()
         cash_balance!: number
 
-    @ApiPropertyOptional({description: 'Read-only, ignored'})
+    @ApiPropertyOptional({description: 'Amount spent in the current balance interval, in currency units; read-only, ignored'})
     @IsOptional()
     @IsNumber()
         cash_debit?: number
 
-    @ApiPropertyOptional({description: 'Kept when omitted'})
+    @ApiPropertyOptional({description: 'Free time left in the current balance interval, in seconds; kept when omitted'})
     @IsOptional()
     @IsNumber()
         free_time_balance?: number
 
-    @ApiPropertyOptional({description: 'Read-only, ignored'})
+    @ApiPropertyOptional({description: 'Free time spent in the current balance interval, in seconds; read-only, ignored'})
     @IsOptional()
     @IsNumber()
         free_time_spent?: number

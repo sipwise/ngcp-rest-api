@@ -5,10 +5,10 @@ import {internal} from '~/entities'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class BanIpResponseDto extends ResponseDto {
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the IP ban'})
         id!: string
 
-    @ApiProperty()
+    @ApiProperty({description: 'Banned IP address'})
         ip!: string
 
     constructor(entity: internal.BanIp, options?: ResponseDtoOptions) {

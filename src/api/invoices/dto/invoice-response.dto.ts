@@ -12,7 +12,7 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class InvoiceResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the invoice'})
         id: number
 
     @IsInt()
@@ -21,29 +21,29 @@ export class InvoiceResponseDto extends ResponseDto {
         customer_id: number
 
     @IsString()
-    @ApiProperty({example: 'INV2026010000042'})
+    @ApiProperty({description: 'Serial number of the invoice', example: 'INV2026010000042'})
         serial: string
 
     @LocalDateTimeField()
     @IsDate()
-    @ApiProperty({type: Date})
+    @ApiProperty({description: 'Start of the invoice period', type: Date})
         period_start: Date
 
     @LocalDateTimeField()
     @IsDate()
-    @ApiProperty({type: Date})
+    @ApiProperty({description: 'End of the invoice period', type: Date})
         period_end: Date
 
     @IsNumber()
-    @ApiProperty({description: 'Net amount in cents'})
+    @ApiProperty({description: 'Net amount in currency units'})
         amount_net: number
 
     @IsNumber()
-    @ApiProperty({description: 'VAT amount in cents'})
+    @ApiProperty({description: 'VAT amount in currency units'})
         amount_vat: number
 
     @IsNumber()
-    @ApiProperty({description: 'Total amount in cents'})
+    @ApiProperty({description: 'Total amount in currency units'})
         amount_total: number
 
     @DateTimeField()

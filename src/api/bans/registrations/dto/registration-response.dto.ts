@@ -6,20 +6,20 @@ import {internal} from '~/entities'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class BanRegistrationResponseDto extends ResponseDto {
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the registration ban'})
         id!: string
 
-    @ApiProperty()
+    @ApiProperty({description: 'SIP username of the banned registrations'})
         username!: string
 
-    @ApiProperty()
+    @ApiProperty({description: 'SIP domain of the banned registrations'})
         domain!: string
 
-    @ApiProperty()
+    @ApiProperty({description: 'Number of failed authentication attempts'})
         auth_count!: number
 
     @DateTimeField()
-    @ApiProperty()
+    @ApiProperty({description: 'Time of the last failed authentication attempt'})
         last_auth!: Date
 
     constructor(entity: internal.BanRegistration, options?: ResponseDtoOptions) {

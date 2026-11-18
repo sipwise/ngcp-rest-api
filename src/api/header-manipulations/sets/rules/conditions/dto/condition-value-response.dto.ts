@@ -7,12 +7,12 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class HeaderManipulationRuleConditionValueResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the condition value'})
         id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Value the source value is compared with'})
         value: string
 
     constructor(entity?: internal.HeaderRuleConditionValue, options?: ResponseDtoOptions) {

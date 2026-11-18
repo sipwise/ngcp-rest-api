@@ -34,6 +34,9 @@ const swaggerOptions: Record<DateTimeKind, {format: string, timezone: string, ex
     },
 }
 
+// the notes the document appends to the descriptions of date/time fields
+export const DATE_TIME_DESCRIPTION_SUFFIXES = Object.values(swaggerOptions).map(options => options.suffix)
+
 /**
  * Date/time fields of a DTO (own and inherited) by property name
  */

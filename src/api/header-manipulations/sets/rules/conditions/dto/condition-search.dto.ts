@@ -1,21 +1,21 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class HeaderManipulationRuleConditionSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Header rule of the condition'})
         rule_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Name of the header, preference or AVP matched'})
         match_name: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Result of the comparison is negated'})
         expression_negation: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Rewrite rule set applied to the source value; null = none'})
         rwr_set_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Internal dialplan id of the applied rewrite rules'})
         rwr_dp_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Condition is enabled'})
         enabled: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Subscriber of the header rule set'})
         subscriber_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the header rule condition'})
         id: number
     @ApiHideProperty()
         _alias = {

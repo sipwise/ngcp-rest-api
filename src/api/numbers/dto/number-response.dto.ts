@@ -8,39 +8,39 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class NumberResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Subscriber the number is assigned to'})
         subscriber_id: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the number'})
         id: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Customer of the subscriber'})
         customer_id: number
 
     @IsNumber()
-    @ApiProperty()
+    @ApiProperty({description: 'Country code'})
         cc: number
 
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Area code, may be empty'})
         ac: string
 
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Subscriber number'})
         sn: string
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Primary number of its subscriber'})
         is_primary: boolean
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Device id alias: the subscriber can register with it and receives only calls to it'})
         is_devid: boolean
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Reseller owning the number'})
         reseller_id: number
 
     constructor(data: internal.VoipNumber, role: RbacRole, options?: ResponseDtoOptions) {

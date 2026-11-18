@@ -18,16 +18,16 @@ import {lazyArray} from '~/helpers/lazy-field.helper'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class SubscriberNumberResponseDto {
-    @ApiProperty({example: 43})
+    @ApiProperty({description: 'Country code', example: 43})
         cc: number
 
-    @ApiProperty({example: '1'})
+    @ApiProperty({description: 'Area code, may be empty', example: '1'})
         ac: string
 
-    @ApiProperty({example: '9999'})
+    @ApiProperty({description: 'Subscriber number', example: '9999'})
         sn: string
 
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the number'})
         number_id: number
 
     constructor(number: SubscriberNumber) {
@@ -65,29 +65,29 @@ const subscriberRoles: string[] = [
 
 export class SubscriberResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the subscriber'})
         id: number
 
     @IsOptional()
     @IsString()
-    @ApiPropertyOptional({description: 'Admin roles only'})
+    @ApiPropertyOptional({description: 'Internal UUID of the subscriber; admin roles only'})
         uuid?: string
 
     @IsOptional()
     @IsInt()
-    @ApiPropertyOptional({description: 'Not shown to subscriber'})
+    @ApiPropertyOptional({description: 'Customer of the subscriber; not shown to subscriber roles'})
         customer_id?: number
 
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'SIP username'})
         username: string
 
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Domain name'})
         domain: string
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the domain'})
         domain_id: number
 
     @IsEnum(VoipSubscriberStatus)
@@ -109,78 +109,82 @@ export class SubscriberResponseDto extends ResponseDto {
 
     @IsOptional()
     @IsString()
-    @ApiPropertyOptional({nullable: true, description: 'Admin roles only'})
+    @ApiPropertyOptional({nullable: true, description: 'Non-unique external id, e.g. from third-party provisioning; admin roles only'})
         external_id?: string | null
 
     @CanBeNull()
     @IsString()
-    @ApiProperty({nullable: true})
+    @ApiProperty({description: 'Email address', nullable: true})
         email: string | null
 
     @CanBeNull()
     @IsString()
-    @ApiProperty({nullable: true})
+    @ApiProperty({description: 'Time zone, IANA name such as `Europe/Vienna`', nullable: true})
         timezone: string | null
 
     @CanBeNull()
     @IsString()
-    @ApiProperty({nullable: true})
+    @ApiProperty({description: 'Login for the web interfaces', nullable: true})
         webusername: string | null
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Subscriber administrator of its customer'})
         administrative: boolean
 
     @IsOptional()
     @IsInt()
-    @ApiPropertyOptional({nullable: true, description: 'Admin roles only'})
+    @ApiPropertyOptional({nullable: true, description: 'Subscriber profile set, defines the profiles to choose from; admin roles only'})
         profile_set_id?: number | null
 
     @CanBeNull()
     @IsInt()
-    @ApiProperty({nullable: true})
+    @ApiProperty({description: 'Subscriber profile, defines the available features', nullable: true})
         profile_id: number | null
 
-    @ApiProperty({type: SubscriberNumberResponseDto, nullable: true})
+    @ApiProperty({description: 'Main E.164 number for inbound and outbound calls', type: SubscriberNumberResponseDto, nullable: true})
         primary_number: SubscriberNumberResponseDto | null
 
     @IsArray()
-    @ApiProperty({type: [SubscriberAliasNumberResponseDto]})
+    @ApiProperty({description: 'Additional E.164 numbers routed to the subscriber', type: [SubscriberAliasNumberResponseDto]})
         alias_numbers: SubscriberAliasNumberResponseDto[]
 
     @CanBeNull()
     @IsString()
-    @ApiProperty({nullable: true})
+    @ApiProperty({description: 'Name shown on provisioned phones and as network-provided display name in calls', nullable: true})
         display_name: string | null
 
     @IsOptional()
     @IsBoolean()
-    @ApiPropertyOptional({description: 'PBX customers only'})
+    @ApiPropertyOptional({description: 'Pilot subscriber of the PBX customer; PBX customers only'})
         is_pbx_pilot?: boolean
 
     @IsOptional()
     @IsBoolean()
-    @ApiPropertyOptional({description: 'PBX customers only'})
+    @ApiPropertyOptional({description: 'Subscriber is a PBX group; PBX customers only'})
         is_pbx_group?: boolean
 
     @IsOptional()
     @IsString()
-    @ApiPropertyOptional({nullable: true, description: 'PBX customers only'})
+    @ApiPropertyOptional({nullable: true, description: 'Extension for short dialling; PBX customers only'})
         pbx_extension?: string | null
 
     @IsOptional()
     @IsEnum(SubscriberPbxHuntPolicy)
-    @ApiPropertyOptional({enum: SubscriberPbxHuntPolicy, nullable: true, description: 'PBX groups only'})
+    @ApiPropertyOptional({enum: SubscriberPbxHuntPolicy, nullable: true, description: 'Hunting policy of the group; PBX groups only'})
         pbx_hunt_policy?: SubscriberPbxHuntPolicy | null
 
     @IsOptional()
     @IsInt()
-    @ApiPropertyOptional({nullable: true, description: 'PBX groups only'})
+    @ApiPropertyOptional({nullable: true, description: 'Hunting timeout in seconds; PBX groups only'})
         pbx_hunt_timeout?: number | null
 
     @IsOptional()
     @IsEnum(SubscriberPbxHuntCancelMode)
-    @ApiPropertyOptional({enum: SubscriberPbxHuntCancelMode, nullable: true, description: 'PBX groups only'})
+    @ApiPropertyOptional({
+        enum: SubscriberPbxHuntCancelMode,
+        nullable: true,
+        description: 'How unanswered call legs of the group are ended, `bye` or `cancel`; PBX groups only',
+    })
         pbx_hunt_cancel_mode?: SubscriberPbxHuntCancelMode | null
 
     @IsOptional()
@@ -206,13 +210,13 @@ export class SubscriberResponseDto extends ResponseDto {
     @DateTimeField()
     @IsOptional()
     @IsDate()
-    @ApiPropertyOptional({description: 'Admin roles only'})
+    @ApiPropertyOptional({description: 'Creation time; admin roles only'})
         create_timestamp?: Date
 
     @DateTimeField()
     @IsOptional()
     @IsDate()
-    @ApiPropertyOptional({description: 'Admin roles only'})
+    @ApiPropertyOptional({description: 'Time of the last modification; admin roles only'})
         modify_timestamp?: Date
 
     /**

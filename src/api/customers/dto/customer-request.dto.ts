@@ -32,30 +32,29 @@ const allowedCustomerStatuses = Object.values(CustomerStatus).filter(
 
 export class CustomerRequestDto implements RequestDto {
     @IsOptional()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Activation time, ignored on input'})
         activate_timestamp?: string
 
     @IsOptional()
     @IsBoolean()
-    @ApiPropertyOptional({default: false})
+    @ApiPropertyOptional({description: 'VAT is added on invoices', default: false})
         add_vat?: boolean = false
 
     @ValidateIf(o => o.billing_profile_definition === ContractBillingProfileDefinition.ID || !o.billing_profile_definition)
     @IsNumber()
     @IsOptional()
     @ApiPropertyOptional({
-        description:
-            'The billing profile id used to charge this contract, required if billing_profile_definition is undefined or "id".',
+        description: 'Billing profile charging the customer, active immediately; required for billing_profile_definition `id`',
     })
         billing_profile_id?: number
 
     @IsNumber()
-    @ApiProperty({description: 'The contact id this contract belongs to'})
+    @ApiProperty({description: 'Contact of the customer'})
         contact_id: number
 
     @IsOptional()
     @IsString()
-    @ApiPropertyOptional({description: 'A non-unique external ID e.g., provided by a 3rd party provisioning'})
+    @ApiPropertyOptional({description: 'Non-unique external id, e.g. from third-party provisioning'})
         external_id?: string
 
     @IsOptional()
@@ -65,28 +64,30 @@ export class CustomerRequestDto implements RequestDto {
 
     @IsOptional()
     @IsNumber()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Invoice template; null = no invoices are generated'})
         invoice_template_id?: number
 
     @IsOptional()
     @IsNumber()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Maximum number of subscribers; null = unlimited'})
         max_subscribers?: number
 
     @IsOptional()
     @IsNumber()
-    @ApiPropertyOptional({description: 'Email template used to notify users about password reset'})
+    @ApiPropertyOptional({description: 'Email template used to notify users about password resets'})
         passreset_email_template_id?: number
 
     @ValidateIf(o => o.billing_profile_definition === ContractBillingProfileDefinition.Package)
     @IsNumber()
     @IsOptional()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({
+        description: 'Profile package whose initial profiles charge the customer; required for billing_profile_definition `package`',
+    })
         profile_package_id?: number
 
     @IsNotEmpty()
     @IsIn(allowedCustomerStatuses)
-    @ApiProperty({description: 'The status of the contract', enum: allowedCustomerStatuses})
+    @ApiProperty({description: 'State of the customer (DELETE sets `terminated`)', enum: allowedCustomerStatuses})
         status: CustomerStatus
 
     @IsOptional()
@@ -96,12 +97,12 @@ export class CustomerRequestDto implements RequestDto {
 
     @IsNotEmpty()
     @IsEnum(CustomerType)
-    @ApiProperty({description: 'The type of contract'})
+    @ApiProperty({description: '`sipaccount` for SIP customers, `pbxaccount` for Cloud PBX customers'})
         type: CustomerType
 
     @IsOptional()
     @IsNumber({maxDecimalPlaces: 14})
-    @ApiPropertyOptional({description: 'VAT rate, e.g., 0.19000000000000'})
+    @ApiPropertyOptional({description: 'VAT rate in percent, e.g. 20'})
         vat_rate?: number
 
     @IsOptional()
@@ -110,14 +111,19 @@ export class CustomerRequestDto implements RequestDto {
         message:
             'Only one of billing_profile_id, profile_package_id, or billing_profiles must be set based on billing_profile_definition.',
     })
-    @ApiPropertyOptional({description: 'Defines which billing profile field is used (id, profiles, package)'})
+    @ApiPropertyOptional({
+        description: 'Billing profile field to use: `id` (billing_profile_id, default), `profiles` (billing_profiles) or `package` (profile_package_id)',
+    })
         billing_profile_definition?: ContractBillingProfileDefinition
 
     @ValidateIf(o => o.billing_profile_definition === ContractBillingProfileDefinition.Profiles)
     @IsOptional()
     @ValidateNested({each: true})
     @Type(() => CustomerBillingProfileRequestDto)
-    @ApiPropertyOptional({type: [CustomerBillingProfileRequestDto]})
+    @ApiPropertyOptional({
+        description: 'Billing profile schedule; required for billing_profile_definition `profiles`',
+        type: [CustomerBillingProfileRequestDto],
+    })
         billing_profiles?: CustomerBillingProfileRequestDto[]
 
     constructor(entity?: internal.Customer) {

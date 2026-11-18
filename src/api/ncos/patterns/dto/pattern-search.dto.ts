@@ -1,15 +1,15 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class NCOSPatternSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'NCOS level of the pattern'})
         ncos_level_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'PCRE regex matched against the called number'})
         pattern: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Description of the pattern'})
         description: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Reseller of the NCOS level'})
         reseller_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the NCOS pattern'})
         id: number
     @ApiHideProperty()
         _alias = {

@@ -1,17 +1,17 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class PbxGroupSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'PBX customer of the group'})
         customer_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Extension of the group'})
         extension: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Hunting policy of the group'})
         hunt_policy: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Hunting timeout in seconds'})
         hunt_timeout: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Display name of the group'})
         name: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the PBX group'})
         id: number
     @ApiHideProperty()
         _alias = {

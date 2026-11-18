@@ -1,15 +1,15 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class CustomerPhonebookSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Full name of the entry, e.g. `John Smith`'})
         name: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Customer owning the entry'})
         customer_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Phone number or SIP URI'})
         number: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Entry belongs to the customer, not to its reseller'})
         own: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the phonebook entry'})
         id: number
     @ApiHideProperty()
         _alias = {

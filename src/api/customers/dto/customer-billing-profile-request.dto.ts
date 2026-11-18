@@ -10,22 +10,22 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 export class CustomerBillingProfileRequestDto {
     static readonly dtoFields: DtoFields<internal.CustomerBillingProfile, CustomerBillingProfileRequestDto> = {id: 'profile_id', startDate: 'start', endDate: 'stop'}
 
-    @ApiProperty()
+    @ApiProperty({description: 'Billing profile'})
     @IsNumber()
         profile_id: number
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Billing network the profile is restricted to'})
     @IsOptional()
     @IsNumber()
         network_id?: number
 
     @LocalDateTimeField()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time the billing profile becomes active'})
     @IsOptional()
         start?: Date
 
     @LocalDateTimeField()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time the billing profile is revoked'})
     @IsOptional()
         stop?: Date
 

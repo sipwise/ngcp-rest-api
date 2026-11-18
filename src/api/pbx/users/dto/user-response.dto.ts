@@ -10,31 +10,31 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class PbxUserResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the PBX user'})
         id: number
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Name shown on provisioned phones and as network-provided display name in calls'})
         display_name: string
 
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Extension for short dialling'})
         pbx_extension: string
 
     @ValidateNested()
     @Type(() => PrimaryNumber)
-    @ApiProperty()
+    @ApiProperty({description: 'Main E.164 number for inbound and outbound calls'})
         primary_number: PrimaryNumber
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'SIP username'})
         username: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Domain name'})
         domain: string
 
     constructor(entity: internal.PbxUser, options?: ResponseDtoOptions) {

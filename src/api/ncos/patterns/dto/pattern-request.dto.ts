@@ -5,17 +5,17 @@ import {RequestDto, RequestDtoOptions} from '~/dto/request.dto'
 import {internal} from '~/entities'
 
 export class NCOSPatternRequestDto implements RequestDto {
-    @ApiProperty()
+    @ApiProperty({description: 'NCOS level of the pattern'})
     @IsInt()
     @IsPositive()
         ncos_level_id: number
 
-    @ApiProperty()
+    @ApiProperty({description: 'PCRE regex matched against the called number'})
     @IsString()
     @IsNotEmpty()
         pattern: string
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Description of the pattern'})
     @IsOptional()
     @IsString()
         description?: string

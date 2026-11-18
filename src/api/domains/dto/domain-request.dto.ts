@@ -6,12 +6,11 @@ import {internal} from '~/entities'
 
 export class DomainRequestDto implements RequestDto {
     @IsNotEmpty()
-    @ApiProperty({description: 'The fully qualified domain name', example: 'sip.example.org'})
+    @ApiProperty({description: 'Fully qualified domain name', example: 'sip.example.org'})
         domain: string
 
     @ApiPropertyOptional({
-        description: 'The reseller id to assign this domain to, mandatory for admin and system roles, must not be' +
-            ' provided by reseller roles as it is automatically set to the reseller_id of the user',
+        description: 'Reseller of the domain; required for admin roles, the own reseller for reseller roles',
         type: 'integer',
     })
     @IsOptional()

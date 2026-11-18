@@ -11,32 +11,32 @@ import {UrlReference} from '~/types/url-reference.type'
 
 export class NCOSSetResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the NCOS set'})
         id: number
 
     @CanBeNull()
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Reseller of the NCOS set'})
         reseller_id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Name of the NCOS set'})
         name: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Description of the NCOS set'})
         description: string
 
     @IsOptional()
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Customers can see and use the set in their preferences'})
         expose_to_customer: boolean
 
     @ValidateNested()
     @Type(() => UrlReference)
-    @ApiProperty()
+    @ApiProperty({description: 'Link to the levels of the set'})
         levels: UrlReference
 
     constructor(entity: internal.NCOSSet, options?: ResponseDtoOptions) {

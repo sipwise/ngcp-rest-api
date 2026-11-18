@@ -1,5 +1,5 @@
 import {Body, Controller, ForbiddenException, HttpCode, HttpStatus, Inject, Post, Req, Res} from '@nestjs/common'
-import {ApiBody, ApiHeader, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiTags} from '@nestjs/swagger'
 import {Request, Response} from 'express'
 import {I18nService} from 'nestjs-i18n'
 
@@ -33,6 +33,7 @@ export class AuthGrafanaController {
     }
 
     @Post()
+    @ApiOperation({summary: 'Get the Grafana user of the authenticated user'})
     @HttpCode(HttpStatus.OK)
     @ApiBody({
         type: AuthGrafanaRequestDto,

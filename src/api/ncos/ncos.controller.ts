@@ -1,5 +1,5 @@
 import {Controller, Get, Req} from '@nestjs/common'
-import {ApiTags} from '@nestjs/swagger'
+import {ApiOperation, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {NCOSResponseDto} from './dto/ncos-response.dto'
@@ -32,6 +32,7 @@ export class NCOSController extends CrudController<never, NCOSResponseDto> {
     }
 
     @Get()
+    @ApiOperation({summary: 'List links to the NCOS resources'})
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(NCOSResponseDto)
     readAll(@Req() req: Request): Promise<[NCOSResponseDto[], number]> {

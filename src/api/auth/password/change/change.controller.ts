@@ -1,5 +1,5 @@
 import {Body, Controller, Post, Req} from '@nestjs/common'
-import {ApiBody, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiOperation, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {AuthPasswordChangeService} from './change.service'
@@ -33,6 +33,7 @@ export class AuthPasswordChangeController extends CrudController<PasswordChangeR
     }
 
     @Post()
+    @ApiOperation({summary: 'Change the password of the authenticated user'})
     @ApiCreatedResponse(PasswordChangeResponseDto)
     @ApiBody({
         type: PasswordChangeRequestDto,

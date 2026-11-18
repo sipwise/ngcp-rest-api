@@ -7,31 +7,31 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class VoicemailResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty({description: 'unique identifier of a voicemail'})
+    @ApiProperty({description: 'Id of the voicemail'})
         id: number
 
     @IsString()
-    @ApiProperty({description: 'call-id of the voicemail'})
+    @ApiProperty({description: 'Call-ID of the recorded call'})
         call_id: string
 
     @IsString()
-    @ApiProperty({description: 'caller number'})
+    @ApiProperty({description: 'Caller number'})
         caller: string
 
     @IsString()
-    @ApiProperty({description: 'time of the message (timestamp)'})
+    @ApiProperty({description: 'Recording time as `Nov 18 2026 10:15:00`, in the server time zone'})
         time: string
 
     @IsString()
-    @ApiProperty({description: 'duration of the message in seconds'})
+    @ApiProperty({description: 'Duration in seconds'})
         duration: string
 
     @IsString()
-    @ApiProperty({description: 'message folder', example: ['Inbox', 'Old']})
+    @ApiProperty({description: 'Mailbox folder of the message', example: ['Inbox', 'Old']})
         folder: string
 
     @IsInt()
-    @ApiProperty({description: 'the subscriber id the message belongs to'})
+    @ApiProperty({description: 'Subscriber owning the message'})
         subscriber_id: number
 
     constructor(voicemail: internal.Voicemail, options?: ResponseDtoOptions) {

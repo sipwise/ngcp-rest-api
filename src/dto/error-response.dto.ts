@@ -61,7 +61,7 @@ export class ErrorResponseDto {
         message: string
 
     @ApiPropertyOptional({
-        description: 'The single failures in request order, left out when there are none',
+        description: 'Single failures in request order, left out when there are none',
         type: [ErrorEntryDto],
     })
         errors?: ErrorEntryDto[]

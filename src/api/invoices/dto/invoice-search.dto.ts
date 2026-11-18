@@ -5,15 +5,15 @@ import {InvoiceGenerator} from '~/entities/internal/invoice.internal.entity'
 import {dateTimeFilter} from '~/helpers/query-builder.helper'
 
 export class InvoiceSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the invoice'})
         id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Contract of the invoice'})
         customer_id: number
     @ApiPropertyOptional({description: 'Reseller of the contract contact'})
         reseller_id: number
-    @ApiPropertyOptional({description: 'Serial, `*` as wildcard'})
+    @ApiPropertyOptional({description: 'Serial number of the invoice'})
         serial: string
-    @ApiPropertyOptional({enum: InvoiceGenerator})
+    @ApiPropertyOptional({description: 'Generator of the invoice', enum: InvoiceGenerator})
         generator: InvoiceGenerator
     @LocalDateTimeField()
     @ApiPropertyOptional({description: 'Invoices with period_start >= the value'})

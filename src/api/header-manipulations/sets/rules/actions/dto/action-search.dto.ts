@@ -1,29 +1,29 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class HeaderManipulationRuleActionSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Change made to the header'})
         action_type: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Action is enabled'})
         enabled: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Part of the header the action changes'})
         header_part: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'SIP header the action changes'})
         header: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the header rule action'})
         id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Priority of the action; lower values are applied first'})
         priority: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Header rule of the action'})
         rule_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Internal dialplan id of the applied rewrite rules'})
         rwr_dp_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Rewrite rule set applied to the value; null = none'})
         rwr_set_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Part of the value that is used'})
         value_part: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Value used by the action'})
         value: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Subscriber of the header rule set'})
         subscriber_id: number
     @ApiHideProperty()
         _alias = {

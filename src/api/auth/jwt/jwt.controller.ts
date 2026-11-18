@@ -1,5 +1,5 @@
 import {Body, Controller, Post, Req} from '@nestjs/common'
-import {ApiTags} from '@nestjs/swagger'
+import {ApiOperation, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {AuthJwtRequestDto} from './dto/jwt-request.dto'
@@ -21,6 +21,7 @@ export class AuthJwtController {
 
     @ApiTags('Auth')
     @Post('auth/jwt')
+    @ApiOperation({summary: 'Get an access token'})
     login(
         @Body() dto: AuthJwtRequestDto,
         @Req() req: Request,

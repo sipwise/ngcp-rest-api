@@ -5,7 +5,7 @@ import {internal} from '~/entities'
 
 export class CustomerSpeedDialUpdateDto {
     @IsNotEmpty()
-    @ApiPropertyOptional({description: 'Customer id', example: 1})
+    @ApiPropertyOptional({description: 'Customer owning the speed dial', example: 1})
         customer_id?: number
 
     @IsNotEmpty()

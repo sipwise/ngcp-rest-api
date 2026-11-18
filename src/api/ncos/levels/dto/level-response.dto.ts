@@ -6,34 +6,34 @@ import {NCOSLevelMode} from '~/entities/internal/ncos-level.internal.entity'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class NCOSLevelResponseDto extends ResponseDto {
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the NCOS level'})
         id: number
 
-    @ApiProperty()
+    @ApiProperty({description: 'Reseller of the NCOS level'})
         reseller_id: number
 
-    @ApiProperty()
+    @ApiProperty({description: 'Name of the NCOS level'})
         level: string
 
-    @ApiProperty({type: NCOSLevelMode, enumName: 'NCOSLevelMode'})
+    @ApiProperty({description: '`whitelist`: only matching numbers may be called, `blacklist`: matching numbers are blocked', type: NCOSLevelMode, enumName: 'NCOSLevelMode'})
         mode: NCOSLevelMode
 
-    @ApiProperty()
+    @ApiProperty({description: 'Calls to the local area code are also checked'})
         local_ac: boolean
 
-    @ApiProperty()
+    @ApiProperty({description: 'Calls within the same PBX customer are also checked'})
         intra_pbx: boolean
 
-    @ApiProperty()
+    @ApiProperty({description: 'Description of the NCOS level'})
         description?: string | null
 
-    @ApiProperty()
+    @ApiProperty({description: 'Time set the level applies in; null = always'})
         time_set_id?: number | null
 
-    @ApiProperty()
+    @ApiProperty({description: 'Customers can see and use the level in their preferences'})
         expose_to_customer: boolean
 
-    @ApiProperty()
+    @ApiProperty({description: 'Time set matching is inverted'})
         time_set_invert: boolean
 
     constructor(entity: internal.NCOSLevel, options?: ResponseDtoOptions) {

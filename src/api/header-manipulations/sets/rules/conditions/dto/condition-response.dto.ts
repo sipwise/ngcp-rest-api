@@ -14,61 +14,61 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class HeaderManipulationRuleConditionResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the header rule condition'})
         id: number
 
     @IsInt()
     @Expand('header-manipulations/sets/rules')
-    @ApiProperty()
+    @ApiProperty({description: 'Header rule of the condition'})
         rule_id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Source of the matched value: a SIP header, a preference or an AVP'})
         match_type: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Part of the source value that is matched'})
         match_part: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Name of the header, preference or AVP matched'})
         match_name: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Comparison of the source value with the values'})
         expression: string
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Result of the comparison is negated'})
         expression_negation: boolean
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Type of the values: literal input, a preference or an AVP'})
         value_type: string
 
     @CanBeNull()
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Rewrite rule set applied to the source value; null = none'})
         rwr_set_id?: number
 
     @IsOptional()
     @IsEnum(RwrDpEnum)
-    @ApiProperty()
+    @ApiProperty({description: 'Rewrite rules of the set that are applied, by field and direction'})
         rwr_dp?: RwrDpEnum
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Condition is enabled'})
         enabled: boolean
 
     @IsArray()
     @ValidateNested({each: true})
     @Type(() => HeaderManipulationRuleConditionValueResponseDto)
-    @ApiProperty({type: [HeaderManipulationRuleConditionValueResponseDto]})
+    @ApiProperty({description: 'Values the source value is compared with', type: [HeaderManipulationRuleConditionValueResponseDto]})
         values: HeaderManipulationRuleConditionValueResponseDto[]
 
     constructor(entity?: internal.HeaderRuleCondition, options?: ResponseDtoOptions) {

@@ -15,7 +15,7 @@ import {
     UseInterceptors,
 } from '@nestjs/common'
 import {FileInterceptor} from '@nestjs/platform-express'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiProduces, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiProduces, ApiTags} from '@nestjs/swagger'
 import {plainToInstance} from 'class-transformer'
 import {Request, Response as ExpressResponse} from 'express'
 
@@ -82,6 +82,7 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
     }
 
     @Post()
+    @ApiOperation({summary: 'Create invoice templates'})
     @ApiConsumes('application/json', 'multipart/form-data')
     @ApiBody({
         description: 'application/json without `file` stores the default template of the category, multipart/form-data with the svg `file` stores the uploaded template',
@@ -126,6 +127,7 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
     }
 
     @Get(':id/@vars')
+    @ApiOperation({summary: 'Get the variables of an invoice template'})
     @ApiOkResponse({
         description: 'All variables and functions supported by the category of the invoice template, with example values',
         type: InvoiceTemplateVarsResponseDto,
@@ -173,6 +175,7 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
     }
 
     @Get(':id/@preview')
+    @ApiOperation({summary: 'Render a PDF preview of an invoice template'})
     @ApiProduces('application/pdf')
     @ApiOkResponse({
         description: 'Pdf preview of the invoice template, rendered with example values of its category',
@@ -191,6 +194,7 @@ export class InvoiceTemplateController extends CrudController<InvoiceTemplateReq
     }
 
     @Put(':id')
+    @ApiOperation({summary: 'Replace an invoice template'})
     @ApiConsumes('application/json', 'multipart/form-data')
     @ApiBody({
         description: 'application/json without `file` stores the default template of the category, multipart/form-data with the svg `file` stores the uploaded template',

@@ -9,17 +9,17 @@ export class SubscriberPhonebookCsvRequestDto implements RequestDto {
     @IsString()
     @IsNotEmpty()
     @MaxLength(255)
-    @ApiProperty()
+    @ApiProperty({description: 'Full name of the entry, e.g. `John Smith`'})
         name: string
 
     @IsString()
     @IsNotEmpty()
     @MaxLength(255)
-    @ApiProperty()
+    @ApiProperty({description: 'Phone number or SIP URI'})
         number: string
 
     @IsNumberString()
-    @ApiProperty()
+    @ApiProperty({description: 'Subscriber owning the entry'})
         subscriber_id: number
 
     @Transform(({value}) => {
@@ -33,7 +33,7 @@ export class SubscriberPhonebookCsvRequestDto implements RequestDto {
         return false
     })
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Entry is visible to the other subscribers of the customer'})
         shared: boolean
 
     constructor(entity?: internal.SubscriberPhonebook) {

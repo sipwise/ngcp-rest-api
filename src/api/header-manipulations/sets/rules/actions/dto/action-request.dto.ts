@@ -10,49 +10,49 @@ import {RwrDpEnum} from '~/enums/rwr-dp.enum'
 export class HeaderManipulationRuleActionRequestDto implements RequestDto {
 
     @IsNotEmpty()
-    @ApiProperty({description: 'Rule id', example: '1'})
+    @ApiProperty({description: 'Header rule of the action', example: '1'})
         rule_id: number
 
     @IsNotEmpty()
-    @ApiProperty({description: 'Action header', example: 'X-FOO'})
+    @ApiProperty({description: 'SIP header the action changes', example: 'X-FOO'})
         header: string
 
     @IsNotEmpty()
     @IsEnum(HeaderRuleActionHeaderPart)
-    @ApiProperty({description: 'Action header part', example: 'full'})
+    @ApiProperty({description: 'Part of the header the action changes', example: 'full'})
         header_part: HeaderRuleActionHeaderPart
 
     @IsNotEmpty()
     @IsEnum(HeaderRuleActionActionType)
-    @ApiProperty({description: 'Action type', example: 'set'})
+    @ApiProperty({description: 'Change made to the header', example: 'set'})
         action_type: HeaderRuleActionActionType
 
     @IsNotEmpty()
     @IsEnum(HeaderRuleActionValuePart)
-    @ApiProperty({description: 'Action value part', example: 'full'})
+    @ApiProperty({description: 'Part of the value that is used', example: 'full'})
         value_part: HeaderRuleActionValuePart
 
     @IsOptional()
-    @ApiPropertyOptional({description: 'Action value', example: 'bar'})
+    @ApiPropertyOptional({description: 'Value used by the action', example: 'bar'})
         value?: string
 
     @IsOptional()
     @DependsOn('rwr_dp')
-    @ApiPropertyOptional({description: 'Action Rewrite Rule Set Id', example: 1})
+    @ApiPropertyOptional({description: 'Rewrite rule set applied to the value; null = none', example: 1})
         rwr_set_id?: number
 
     @IsEnum(RwrDpEnum)
     @IsOptional()
     @DependsOn('rwr_set_id')
-    @ApiPropertyOptional({description: 'Action Rewrite Rule', enum: RwrDpEnum, example: 'caller_in'})
+    @ApiPropertyOptional({description: 'Rewrite rules of the set that are applied, by field and direction', enum: RwrDpEnum, example: 'caller_in'})
         rwr_dp?: RwrDpEnum
 
     @IsOptional()
-    @ApiPropertyOptional({description: 'Action priority', example: 100})
+    @ApiPropertyOptional({description: 'Priority of the action; lower values are applied first', example: 100})
         priority?: number
 
     @IsOptional()
-    @ApiPropertyOptional({description: 'Action enabled', example: true})
+    @ApiPropertyOptional({description: 'Action is enabled', example: true})
         enabled?: boolean
 
     constructor(entity?: internal.HeaderRuleAction) {

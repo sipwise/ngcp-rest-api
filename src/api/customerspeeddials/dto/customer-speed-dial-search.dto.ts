@@ -1,13 +1,13 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class CustomerSpeedDialSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Customer owning the speed dial'})
         customer_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Speed dial slot'})
         slot: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Speed dial destination'})
         destination: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the customer speed dial'})
         id: number
     @ApiHideProperty()
         _alias = {

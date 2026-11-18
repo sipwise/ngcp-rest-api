@@ -13,7 +13,7 @@ export class HeaderManipulationResponseDto extends ResponseDto {
     @ValidateNested({each: true})
     @Type(() => UrlReference)
     @NotLazy()
-    @ApiProperty()
+    @ApiProperty({description: 'Links to the nested resources'})
         links: UrlReference[]
 
     constructor(options?: ResponseDtoOptions) {

@@ -16,8 +16,7 @@ export class AdminRequestDto implements RequestDto {
 
     @ApiPropertyOptional({
         example: 1,
-        description: 'Unique identifier of a reseller, mandatory for admin and system roles, must not be provided by' +
-            ' reseller roles as it is automatically set to the reseller_id of the user',
+        description: 'Reseller of the admin; required for admin roles, the own reseller for reseller roles',
         type: 'integer',
     })
     @IsOptional()
@@ -33,34 +32,33 @@ export class AdminRequestDto implements RequestDto {
 
     @IsOptional()
     @ApiPropertyOptional({
-        description: 'Can manage other admin users within the same or level permission levels ' +
-            '(only applies to "System", "Admin" and "Reseller") roles',
+        description: 'Master admin of its reseller',
         default: false,
     })
         is_master?: boolean = false
 
     @IsOptional()
-    @ApiPropertyOptional({description: 'Can use the UI/API', default: true})
+    @ApiPropertyOptional({description: 'User is active', default: true})
         is_active?: boolean
 
     @IsOptional()
-    @ApiPropertyOptional({description: 'Set access to read-only, cannot change any data', default: false})
+    @ApiPropertyOptional({description: 'User can not make changes', default: false})
         read_only?: boolean
 
     @IsOptional()
-    @ApiPropertyOptional({description: 'Can see passwords', default: true})
+    @ApiPropertyOptional({description: 'User can see passwords', default: true})
         show_passwords?: boolean
 
     @IsOptional()
-    @ApiPropertyOptional({description: 'Call data', default: true})
+    @ApiPropertyOptional({description: 'User can see call data (CDRs, call flows)', default: true})
         call_data?: boolean
 
     @IsOptional()
-    @ApiPropertyOptional({description: 'Can manage "topup vouchers"', default: true})
+    @ApiPropertyOptional({description: 'User can see billing data such as top-up voucher codes', default: true})
         billing_data?: boolean
 
     @IsOptional()
-    @ApiPropertyOptional({description: 'Can reset password', default: true})
+    @ApiPropertyOptional({description: 'User can reset its password', default: true})
         can_reset_password?: boolean
 
     @IsString()
@@ -75,17 +73,17 @@ export class AdminRequestDto implements RequestDto {
         role: RbacRole
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Two-factor authentication is enabled; enabling it generates an OTP secret key'})
         enable_2fa: boolean
 
     @IsOptional()
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'OTP registration info (QR code) is still to be shown'})
         otp_init?: boolean
 
     @IsOptional()
     @IsBase32()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'OTP secret key, Base32; generated when 2FA is enabled without one'})
         otp_secret_key?: string
 
     constructor(entity?: internal.Admin) {

@@ -1,23 +1,23 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class PeeringInboundRuleSearchDto {
-    @ApiPropertyOptional()
+    @ApiHideProperty()
         name: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Peering group of the rule'})
         group_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Field of the inbound SIP message the pattern is matched against'})
         field: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'PCRE regex matched against the field, e.g. `^sip:431` for a full URI'})
         pattern: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Priority of the rule; lower values are checked first'})
         priority: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'SIP code (400-699) to reject calls from the group servers that do not match the pattern; null = no rejection'})
         reject_code: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Reason phrase of the rejection; used with reject_code'})
         reject_reason: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Rule is enabled'})
         enabled: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the peering group inbound rule'})
         id: number
     @ApiHideProperty()
         _alias = {

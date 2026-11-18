@@ -10,7 +10,7 @@ export class VoicemailRequestDto implements RequestDto {
     static readonly dtoFields: DtoFields<internal.Voicemail, VoicemailRequestDto> = {dir: 'folder'}
 
     @IsIn(supportedVoicemailFolders)
-    @ApiProperty({description: 'message folder', enum: supportedVoicemailFolders, example: 'Old'})
+    @ApiProperty({description: 'Mailbox folder of the message', enum: supportedVoicemailFolders, example: 'Old'})
         folder: string
 
     toInternal(options: RequestDtoOptions = {}): internal.Voicemail {

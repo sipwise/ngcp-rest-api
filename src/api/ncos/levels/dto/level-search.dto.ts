@@ -3,25 +3,25 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {NCOSLevelMode} from '~/entities/internal/ncos-level.internal.entity'
 
 export class NCOSLevelSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Reseller of the NCOS level'})
         reseller_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Name of the NCOS level'})
         level: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: '`whitelist`: only matching numbers may be called, `blacklist`: matching numbers are blocked'})
         mode: NCOSLevelMode
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Calls to the local area code are also checked'})
         local_ac: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Calls within the same PBX customer are also checked'})
         intra_pbx: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Description of the NCOS level'})
         description: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time set the level applies in; null = always'})
         time_set_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time set matching is inverted'})
         time_set_invert: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Customers can see and use the level in their preferences'})
         expose_to_customer: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the NCOS level'})
         id: number
     @ApiHideProperty()
         _alias = {

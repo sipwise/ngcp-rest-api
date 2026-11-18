@@ -1,5 +1,5 @@
 import {Controller, Get, Req} from '@nestjs/common'
-import {ApiTags} from '@nestjs/swagger'
+import {ApiOperation, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {HeaderManipulationResponseDto} from './dto/header-manipulation-response.dto'
@@ -34,6 +34,7 @@ export class HeaderManipulationController extends CrudController<never, HeaderMa
     }
 
     @Get()
+    @ApiOperation({summary: 'List links to the header manipulation resources'})
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(HeaderManipulationResponseDto)
     readAll(@Req() req: Request): Promise<[HeaderManipulationResponseDto[], number]> {

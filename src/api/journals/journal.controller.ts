@@ -1,5 +1,5 @@
 import {Controller, Get, Param, Req} from '@nestjs/common'
-import {ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
+import {ApiOkResponse, ApiOperation, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {JournalResponseDto} from './dto/journal-response.dto'
@@ -46,6 +46,7 @@ export class JournalController {
     }
 
     @Get('*resource')
+    @ApiOperation({summary: 'List journal entries of a resource'})
     @ApiParam({
         name: 'resource',
         description: 'Resource name, optionally followed by a resource id (`customers`, `customers/phonebook/23`), ' +

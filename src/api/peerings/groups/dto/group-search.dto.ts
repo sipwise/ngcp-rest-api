@@ -1,17 +1,17 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class PeeringGroupSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'System contract of the peering group'})
         contract_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Name of the peering group'})
         name: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Description of the peering group'})
         description: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time set restricting the periods the group is active in; null = always active'})
         time_set_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Priority of the group, 1 (highest) to 9 (lowest); 1 if omitted'})
         priority: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the peering group'})
         id: number
     @ApiHideProperty()
         _alias = {

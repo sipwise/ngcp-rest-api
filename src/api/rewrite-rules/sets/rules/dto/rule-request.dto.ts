@@ -8,41 +8,41 @@ import {internal} from '~/entities'
 import {RewriteRuleDirection, RewriteRuleField} from '~/entities/internal/rewrite-rule.internal.entity'
 
 export class RewriteRuleRequestDto implements RequestDto {
-    @ApiProperty()
+    @ApiProperty({description: 'Rewrite rule set of the rule'})
     @IsInt()
         set_id!: number
 
-    @ApiProperty()
+    @ApiProperty({description: 'PCRE regex the number is matched against'})
     @IsString()
     @IsNotEmpty()
     @IsValidRWRMatchPattern()
         match_pattern!: string
 
-    @ApiProperty()
+    @ApiProperty({description: 'Replacement for the matched number, may use the regex groups (`\\1`)'})
     @IsString()
     @IsNotEmpty()
     @IsValidRWRReplacePattern()
         replace_pattern!: string
 
-    @ApiProperty()
+    @ApiProperty({description: 'Description of the rule'})
     @IsString()
     @IsNotEmpty()
         description!: string
 
-    @ApiProperty()
+    @ApiProperty({description: 'Direction the rule applies to: `in` inbound, `out` outbound, `lnp` number portability'})
     @IsEnum(RewriteRuleDirection)
         direction!: RewriteRuleDirection
 
-    @ApiProperty()
+    @ApiProperty({description: 'Number the rule rewrites: `caller` or `callee`'})
     @IsEnum(RewriteRuleField)
         field!: RewriteRuleField
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Priority of the rule; lower values are applied first'})
     @IsOptional()
     @IsInt()
         priority?: number
 
-    @ApiProperty()
+    @ApiProperty({description: 'Rule is enabled'})
     @IsBoolean()
         enabled!: boolean
 

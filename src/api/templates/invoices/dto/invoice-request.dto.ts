@@ -8,14 +8,14 @@ import {InvoiceTemplateCallDirection, InvoiceTemplateCategory, InvoiceTemplateTy
 
 export class InvoiceTemplateRequestDto implements RequestDto {
     @ApiPropertyOptional({
-        description: 'SVG template file (`image/svg+xml`, multipart/form-data only). If omitted on create or update, the default template of the category is stored',
+        description: 'SVG template file (`image/svg+xml`, multipart/form-data only); the default template of the category if omitted',
         type: 'string',
         format: 'binary',
     })
     @IsOptional()
         file?: string
 
-    @ApiProperty({example: 'Default customer invoice'})
+    @ApiProperty({description: 'Name of the invoice template', example: 'Default customer invoice'})
     @IsString()
     @IsNotEmpty()
         name: string
@@ -23,8 +23,8 @@ export class InvoiceTemplateRequestDto implements RequestDto {
     @ApiPropertyOptional({
         example: 1,
         nullable: true,
-        description: 'Required for categories `customer` and `did`, must be empty for `peer` and `reseller`.' +
-            ' Must not be provided by reseller roles as it is automatically set to the reseller_id of the user',
+        description: 'Reseller of the template; required for `customer` and `did`, empty for `peer` and `reseller`;' +
+            ' the own reseller for reseller roles',
     })
     @IsOptional()
     @IsInt()
@@ -39,17 +39,17 @@ export class InvoiceTemplateRequestDto implements RequestDto {
     })
         reseller_id?: number
 
-    @ApiPropertyOptional({enum: [InvoiceTemplateType.SVG], default: InvoiceTemplateType.SVG})
+    @ApiPropertyOptional({description: 'Template format', enum: [InvoiceTemplateType.SVG], default: InvoiceTemplateType.SVG})
     @IsOptional()
     @IsIn([InvoiceTemplateType.SVG])
         type?: InvoiceTemplateType
 
-    @ApiPropertyOptional({enum: InvoiceTemplateCallDirection, default: InvoiceTemplateCallDirection.Out})
+    @ApiPropertyOptional({description: 'Calls listed on the invoice: `in` incoming, `out` outgoing, `in_out` both', enum: InvoiceTemplateCallDirection, default: InvoiceTemplateCallDirection.Out})
     @IsOptional()
     @IsEnum(InvoiceTemplateCallDirection)
         call_direction?: InvoiceTemplateCallDirection
 
-    @ApiPropertyOptional({enum: InvoiceTemplateCategory, default: InvoiceTemplateCategory.Customer})
+    @ApiPropertyOptional({description: 'Contract the invoices are for: `customer`, `did` (customer, per number), `peer` or `reseller`', enum: InvoiceTemplateCategory, default: InvoiceTemplateCategory.Customer})
     @IsOptional()
     @IsEnum(InvoiceTemplateCategory)
         category?: InvoiceTemplateCategory

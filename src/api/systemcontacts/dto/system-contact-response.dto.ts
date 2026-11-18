@@ -10,37 +10,37 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class SystemContactResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the system contact'})
         id: number
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Name of the bank'})
         bankname?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'BIC (Business Identifier Code) of the bank account'})
         bic?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'City'})
         city?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Company name'})
         company?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Company registration number'})
         comregnum?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Two-letter ISO 3166-1 country code, e.g. `US` or `DE`'})
         country?: string
 
     @DateTimeField()
@@ -51,87 +51,87 @@ export class SystemContactResponseDto extends ResponseDto {
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Email address'})
         email?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Fax number'})
         faxnumber?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Given name'})
         firstname?: string
 
     @CanBeNull()
     @IsEnum(ContactGender)
-    @ApiProperty()
+    @ApiProperty({description: '`male` or `female`'})
         gender?: ContactGender
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'General purpose field for free use'})
         gpp0?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'General purpose field for free use'})
         gpp1?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'General purpose field for free use'})
         gpp2?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'General purpose field for free use'})
         gpp3?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'General purpose field for free use'})
         gpp4?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'General purpose field for free use'})
         gpp5?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'General purpose field for free use'})
         gpp6?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'General purpose field for free use'})
         gpp7?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'General purpose field for free use'})
         gpp8?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'General purpose field for free use'})
         gpp9?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'IBAN (International Bank Account Number) of the bank account'})
         iban?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Surname'})
         lastname?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Mobile number'})
         mobilenumber?: string
 
     @DateTimeField()
@@ -141,26 +141,26 @@ export class SystemContactResponseDto extends ResponseDto {
         modify_timestamp?: Date
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Contact receives the newsletter'})
         newsletter: boolean
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Phone number'})
         phonenumber?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Postal code'})
         postcode?: string
 
     @IsEnum(ContactStatus)
-    @ApiProperty()
+    @ApiProperty({description: '`active`, or `terminated` once deleted while terminated contracts or subscribers still use it'})
         status: ContactStatus
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Street address'})
         street?: string
 
     @DateTimeField()
@@ -171,12 +171,12 @@ export class SystemContactResponseDto extends ResponseDto {
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Time zone, IANA name such as `Europe/Vienna`'})
         timezone?: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'VAT number'})
         vatnum?: string
 
     constructor(contact: internal.Contact, options?: ResponseDtoOptions) {

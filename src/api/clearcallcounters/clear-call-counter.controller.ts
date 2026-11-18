@@ -1,5 +1,5 @@
 import {Controller, Get, Post, Req} from '@nestjs/common'
-import {ApiCreatedResponse, ApiTags} from '@nestjs/swagger'
+import {ApiCreatedResponse, ApiOperation, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {ClearCallCounterService} from './clear-call-counter.service'
@@ -33,6 +33,7 @@ export class ClearCallCounterController extends CrudController<never, ClearCallC
     }
 
     @Post()
+    @ApiOperation({summary: 'Clear the call counters of the proxies'})
     @ApiCreatedResponse()
     @Transactional()
     async create(_: never[], @Req() req: Request): Promise<void> {
@@ -47,6 +48,7 @@ export class ClearCallCounterController extends CrudController<never, ClearCallC
     }
 
     @Get()
+    @ApiOperation({summary: 'List stuck calls in the call counters of the proxies'})
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(ClearCallCounterResponseDto)
     async readAll(@Req() req: Request): Promise<[ClearCallCounterResponseDto[], number]> {

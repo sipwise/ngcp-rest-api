@@ -8,21 +8,21 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class ProductResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the product'})
         id: number
 
     @IsEnum(ProductClass)
-    @ApiProperty()
+    @ApiProperty({description: 'Product class, the kind of contract it is used for'})
         class: ProductClass
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Unique handle of the product'})
         handle: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Name of the product'})
         name: string
 
     constructor(data: internal.Product, options?: ResponseDtoOptions) {

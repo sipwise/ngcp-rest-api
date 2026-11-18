@@ -1,11 +1,11 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class BanAdminSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Reseller of the admin'})
         reseller_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the banned admin'})
         id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Login of the admin'})
         username: string
     @ApiHideProperty()
         _alias = {

@@ -13,48 +13,48 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class HeaderManipulationRuleResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the header rule'})
         id: number
 
     @IsInt()
     @Expand('header-manipulations/sets')
-    @ApiProperty()
+    @ApiProperty({description: 'Header rule set of the rule'})
         set_id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Name of the rule'})
         name: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Description of the rule'})
         description: string
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Priority of the rule; lower values are processed first'})
         priority: number
 
     @IsEnum(HeaderRuleDirection)
-    @ApiProperty()
+    @ApiProperty({description: 'Call leg and direction the rule applies to'})
         direction: HeaderRuleDirection
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'No further rules are processed when this rule matches'})
         stopper: boolean
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Rule is enabled'})
         enabled: boolean
 
     @ValidateNested()
     @Type(() => UrlReference)
-    @ApiProperty()
+    @ApiProperty({description: 'Link to the actions of the rule'})
         actions: UrlReference
 
     @ValidateNested()
     @Type(() => UrlReference)
-    @ApiProperty()
+    @ApiProperty({description: 'Link to the conditions of the rule'})
         conditions: UrlReference
 
     constructor(entity: internal.HeaderRule, options?: ResponseDtoOptions) {

@@ -25,16 +25,16 @@ export class InvoiceTemplateVarsResponseDto extends ResponseDto {
     @ApiProperty({type: () => InvoiceTemplateContactVars, description: 'Reseller contact'})
         rescontact: InvoiceTemplateContactVars
 
-    @ApiProperty({type: () => InvoiceTemplateCustomerVars})
+    @ApiProperty({description: 'Customer the invoice is for', type: () => InvoiceTemplateCustomerVars})
         customer: InvoiceTemplateCustomerVars
 
     @ApiProperty({type: () => InvoiceTemplateContactVars, description: 'Customer contact'})
         custcontact: InvoiceTemplateContactVars
 
-    @ApiProperty({type: () => InvoiceTemplateBillingProfileVars})
+    @ApiProperty({description: 'Billing profile of the customer', type: () => InvoiceTemplateBillingProfileVars})
         billprof: InvoiceTemplateBillingProfileVars
 
-    @ApiProperty({type: () => InvoiceTemplateInvoiceVars})
+    @ApiProperty({description: 'Invoice data', type: () => InvoiceTemplateInvoiceVars})
         invoice: InvoiceTemplateInvoiceVars
 
     @ApiProperty({example: '29.90', description: 'Fixed fee (billing profile interval charge)'})

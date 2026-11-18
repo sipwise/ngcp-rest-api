@@ -33,8 +33,8 @@ const LINK_SCHEMA_OBJECT: SchemaObject = {
         'url',
     ],
     properties: {
-        type: {type: 'string', enum: ['link']},
-        url: {type: 'string', example: '/api/v2/subscribers/1/@alias_numbers'},
+        type: {type: 'string', enum: ['link'], description: 'Always `link`'},
+        url: {type: 'string', description: 'Url of the field\'s collection', example: '/api/v2/subscribers/1/@alias_numbers'},
         total_count: {type: 'number', description: 'Number of items of the field (not on link-only fields)'},
     },
 }

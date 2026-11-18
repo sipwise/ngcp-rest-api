@@ -7,16 +7,16 @@ import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 
 export class ResellerRequestDto implements RequestDto {
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Reseller contract'})
         contract_id: number
 
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Unique name of the reseller'})
         name: string
 
     @IsNotEmpty()
     @IsEnum(ResellerStatus)
-    @ApiProperty()
+    @ApiProperty({description: 'State of the reseller'})
         status: ResellerStatus
 
     constructor(entity?: internal.Reseller) {

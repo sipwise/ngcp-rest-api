@@ -1,8 +1,8 @@
 import {ApiPropertyOptional} from '@nestjs/swagger'
 
 export class BanIpSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Banned IP address'})
         ip: string = undefined
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the IP ban'})
         id: string = undefined
 }

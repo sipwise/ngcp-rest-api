@@ -1,5 +1,5 @@
 import {Controller, Get, Req} from '@nestjs/common'
-import {ApiTags} from '@nestjs/swagger'
+import {ApiOperation, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {PasswordResponseDto} from './dto/password-response.dto'
@@ -31,6 +31,7 @@ export class AuthPasswordController extends CrudController<never, PasswordRespon
     }
 
     @Get()
+    @ApiOperation({summary: 'List links to the password resources'})
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(PasswordResponseDto)
     readAll(@Req() req: Request): Promise<[PasswordResponseDto[], number]> {

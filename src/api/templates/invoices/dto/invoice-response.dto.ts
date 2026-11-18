@@ -13,28 +13,28 @@ import {UrlReference} from '~/types/url-reference.type'
 
 export class InvoiceTemplateResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the invoice template'})
         id: number
 
     @CanBeNull()
     @IsInt()
-    @ApiProperty({nullable: true})
+    @ApiProperty({description: 'Reseller of the template; null for `peer` and `reseller` templates', nullable: true})
         reseller_id: number | null
 
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Name of the invoice template'})
         name: string
 
     @IsEnum(InvoiceTemplateType)
-    @ApiProperty({enum: InvoiceTemplateType, example: InvoiceTemplateType.SVG})
+    @ApiProperty({description: 'Template format', enum: InvoiceTemplateType, example: InvoiceTemplateType.SVG})
         type: InvoiceTemplateType
 
     @IsEnum(InvoiceTemplateCallDirection)
-    @ApiProperty({enum: InvoiceTemplateCallDirection, example: InvoiceTemplateCallDirection.Out})
+    @ApiProperty({description: 'Calls listed on the invoice: `in` incoming, `out` outgoing, `in_out` both', enum: InvoiceTemplateCallDirection, example: InvoiceTemplateCallDirection.Out})
         call_direction: InvoiceTemplateCallDirection
 
     @IsEnum(InvoiceTemplateCategory)
-    @ApiProperty({enum: InvoiceTemplateCategory, example: InvoiceTemplateCategory.Customer})
+    @ApiProperty({description: 'Contract the invoices are for: `customer`, `did` (customer, per number), `peer` or `reseller`', enum: InvoiceTemplateCategory, example: InvoiceTemplateCategory.Customer})
         category: InvoiceTemplateCategory
 
     @LinkOnly()

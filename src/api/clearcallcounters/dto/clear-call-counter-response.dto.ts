@@ -6,7 +6,7 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class ClearCallCounterResponseDto extends ResponseDto  {
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Call-ID of a call in the call counters of the proxies'})
         call_id!: string
 
     constructor(callId: string, options?: ResponseDtoOptions) {

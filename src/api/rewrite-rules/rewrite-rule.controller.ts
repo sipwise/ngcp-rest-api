@@ -1,5 +1,5 @@
 import {Controller, Get, Req} from '@nestjs/common'
-import {ApiTags} from '@nestjs/swagger'
+import {ApiOperation, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {RewriteRuleBaseResponseDto} from './dto/rewrite-rule-base-response.dto'
@@ -32,6 +32,7 @@ export class RewriteRuleController extends CrudController<never, RewriteRuleBase
     }
 
     @Get()
+    @ApiOperation({summary: 'List links to the rewrite rule resources'})
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(RewriteRuleBaseResponseDto)
     readAll(@Req() req: Request): Promise<[RewriteRuleBaseResponseDto[], number]> {

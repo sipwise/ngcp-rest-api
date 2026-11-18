@@ -10,42 +10,42 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class HeaderManipulationRuleActionResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the header rule action'})
         id: number
 
     @IsInt()
     @Expand('header-manipulations/sets/rules')
-    @ApiProperty()
+    @ApiProperty({description: 'Header rule of the action'})
         rule_id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'SIP header the action changes'})
         header: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Part of the header the action changes'})
         header_part: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Change made to the header'})
         action_type: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Part of the value that is used'})
         value_part: string
 
     @IsOptional()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Value used by the action'})
         value?: string
 
     @CanBeNull()
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Rewrite rule set applied to the value; null = none'})
         rwr_set_id?: number
 
     @IsOptional()
@@ -54,12 +54,12 @@ export class HeaderManipulationRuleActionResponseDto extends ResponseDto {
 
     @CanBeNull()
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Priority of the action; lower values are applied first'})
         priority?: number
 
     @IsOptional()
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Action is enabled'})
         enabled?: boolean
 
     constructor(entity: internal.HeaderRuleAction, options?: ResponseDtoOptions) {

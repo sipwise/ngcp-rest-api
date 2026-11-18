@@ -8,38 +8,38 @@ import {UrlReference} from '~/types/url-reference.type'
 
 export class PbxGroupResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'PBX customer of the group'})
         customer_id: number
 
     @IsOptional()
     @IsString()
-    @ApiProperty({nullable: true})
+    @ApiProperty({description: 'Extension of the group', nullable: true})
         extension: string
 
     @IsOptional()
     @IsString()
-    @ApiProperty({nullable: true})
+    @ApiProperty({description: 'Hunting policy of the group', nullable: true})
         hunt_policy: string
 
     @IsOptional()
     @IsNumber()
-    @ApiProperty({nullable: true})
+    @ApiProperty({description: 'Hunting timeout in seconds', nullable: true})
         hunt_timeout: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the PBX group'})
         id: number
 
     @Type(() => UrlReference)
-    @ApiProperty()
+    @ApiProperty({description: 'Link to the members of the group'})
         members: UrlReference
 
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Display name of the group'})
         name: string
 
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Domain of the group'})
         domain: string
 
     constructor(url:string, pbxGroup: internal.PbxGroup) {

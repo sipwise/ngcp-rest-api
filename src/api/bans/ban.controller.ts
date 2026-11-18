@@ -1,5 +1,5 @@
 import {Controller, Get, Req} from '@nestjs/common'
-import {ApiTags} from '@nestjs/swagger'
+import {ApiOperation, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {BanResponseDto} from './dto/ban-response.dto'
@@ -27,6 +27,7 @@ export class BanController extends CrudController<never, BanResponseDto> {
     }
 
     @Get()
+    @ApiOperation({summary: 'List links to the ban resources'})
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(BanResponseDto)
     readAll(@Req() req: Request): Promise<[BanResponseDto[], number]> {

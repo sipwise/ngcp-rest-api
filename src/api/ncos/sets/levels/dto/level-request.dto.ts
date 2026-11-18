@@ -7,7 +7,7 @@ import {internal} from '~/entities'
 export class NCOSSetLevelRequestDto implements RequestDto {
     @IsNotEmpty()
     @IsNumber()
-    @ApiProperty({description: 'NCOS Level Id', example: 2})
+    @ApiProperty({description: 'NCOS level in the set', example: 2})
         level_id: number
 
     toInternal(options: RequestDtoOptions = {}): internal.NCOSSetLevel {

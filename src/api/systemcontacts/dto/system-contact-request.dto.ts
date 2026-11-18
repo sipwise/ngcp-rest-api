@@ -10,179 +10,179 @@ export class SystemContactRequestDto implements RequestDto {
     @IsOptional()
     @IsString()
     @MaxLength(255)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Name of the bank'})
         bankname?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(11)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'BIC (Business Identifier Code) of the bank account'})
         bic?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(127)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'City'})
         city?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(127)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Company name'})
         company?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(31)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Company registration number'})
         comregnum?: string
 
     @IsOptional()
     @IsString()
     @Length(2, 2)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Two-letter ISO 3166-1 country code, e.g. `US` or `DE`'})
         country?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(255)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Email address'})
         email?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(31)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Fax number'})
         faxnumber?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(127)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Given name'})
         firstname?: string
 
     @IsOptional()
     @IsEnum(ContactGender)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: '`male` or `female`'})
         gender?: ContactGender
 
     @IsOptional()
     @IsString()
     @MaxLength(255)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp0?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(255)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp1?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(255)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp2?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(255)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp3?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(255)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp4?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(255)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp5?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(255)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp6?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(255)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp7?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(255)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp8?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(255)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp9?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(34)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'IBAN (International Bank Account Number) of the bank account'})
         iban?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(127)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Surname'})
         lastname?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(31)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Mobile number'})
         mobilenumber?: string
 
     @IsOptional()
     @IsBoolean()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Contact receives the newsletter'})
         newsletter?: boolean
 
     @IsOptional()
     @IsString()
     @MaxLength(31)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Phone number'})
         phonenumber?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(16)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Postal code'})
         postcode?: string
 
     @IsNotEmpty()
     @IsEnum(ContactStatus)
-    @ApiProperty()
+    @ApiProperty({description: '`active`, or `terminated` once deleted while terminated contracts or subscribers still use it'})
         status: ContactStatus
 
     @IsOptional()
     @IsString()
     @MaxLength(127)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Street address'})
         street?: string
 
     @IsOptional()
     @IsString()
     @IsTimezoneName()
     @MaxLength(80)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time zone, IANA name such as `Europe/Vienna`'})
         timezone?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(127)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'VAT number'})
         vatnum?: string
 
     constructor(entity?: internal.Contact) {

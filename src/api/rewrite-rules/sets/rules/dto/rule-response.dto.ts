@@ -9,43 +9,43 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class RewriteRuleResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the rewrite rule'})
         id!: number
 
     @IsInt()
     @Expand('rewrite-rules/sets')
-    @ApiProperty()
+    @ApiProperty({description: 'Rewrite rule set of the rule'})
         set_id!: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'PCRE regex the number is matched against'})
         match_pattern!: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Replacement for the matched number, may use the regex groups (`\\1`)'})
         replace_pattern!: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Description of the rule'})
         description!: string
 
     @IsEnum(RewriteRuleDirection)
-    @ApiProperty()
+    @ApiProperty({description: 'Direction the rule applies to: `in` inbound, `out` outbound, `lnp` number portability'})
         direction!: RewriteRuleDirection
 
     @IsEnum(RewriteRuleField)
-    @ApiProperty()
+    @ApiProperty({description: 'Number the rule rewrites: `caller` or `callee`'})
         field!: RewriteRuleField
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Priority of the rule; lower values are applied first'})
         priority!: number
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Rule is enabled'})
         enabled!: boolean
 
     constructor(entity: internal.RewriteRule, options?: ResponseDtoOptions) {

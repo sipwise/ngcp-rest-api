@@ -8,30 +8,30 @@ import {DtoFields, withDtoFields} from '~/helpers/dto-fields.helper'
 export class PeeringGroupRequestDto implements RequestDto {
     static readonly dtoFields: DtoFields<internal.VoipPeeringGroup, PeeringGroupRequestDto> = {peeringContractId: 'contract_id'}
 
-    @ApiProperty({description: 'System Contract Id', example: 1})
+    @ApiProperty({description: 'System contract of the peering group', example: 1})
     @IsPositive()
     @IsInt()
         contract_id!: number
 
-    @ApiProperty()
+    @ApiProperty({description: 'Name of the peering group'})
     @IsString()
     @IsNotEmpty()
     @MaxLength(127)
         name!: string
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Description of the peering group'})
     @IsOptional()
     @IsString()
     @MaxLength(255)
         description?: string
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Priority of the group, 1 (highest) to 9 (lowest); 1 if omitted'})
     @IsOptional()
     @IsInt()
     @IsPositive()
         priority: number = 1
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time set restricting the periods the group is active in; null = always active'})
     @IsOptional()
     @IsInt()
     @IsPositive()

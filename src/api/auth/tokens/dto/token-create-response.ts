@@ -7,11 +7,11 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class AuthTokenCreateResponseDto extends ResponseDto {
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the auth token'})
         id: string
 
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Auth token (JWT) to exchange for an access token at `POST /auth/jwt`; only in this response'})
         auth_token: string
 
     @IsString()
@@ -19,11 +19,11 @@ export class AuthTokenCreateResponseDto extends ResponseDto {
         identifier: string
 
     @IsString()
-    @ApiProperty({description: 'ISO 8601 timestamp when the token was created'})
+    @ApiProperty({description: 'Creation time, ISO 8601'})
         created_at: string
 
     @IsString()
-    @ApiProperty({description: 'ISO 8601 timestamp when the token expires'})
+    @ApiProperty({description: 'Expiry time, ISO 8601'})
         expires_at: string
 
     constructor(token: internal.AuthToken, options?: ResponseDtoOptions) {

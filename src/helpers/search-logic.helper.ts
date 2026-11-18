@@ -30,15 +30,19 @@ export class SearchLogic {
     aliases?: {[key: string]: string | object}
     searchableFields: string[]
     nestedFilters: NestedFilter[]
-    @ApiPropertyOptional({default: 1})
+    @ApiPropertyOptional({default: 1, description: 'Page of the collection, from 1'})
         page: number
-    @ApiPropertyOptional({default: 10})
+    @ApiPropertyOptional({default: 10, description: 'Items per page'})
         rows: number
-    @ApiPropertyOptional({description: 'field name to order by', name: 'order_by'})
+    @ApiPropertyOptional({description: 'Field to order the collection by: a filter field or `id`', name: 'order_by'})
         orderBy: string
-    @ApiPropertyOptional({default: OrderByDirection.ASC.toLowerCase(), name: 'order_by_direction'})
+    @ApiPropertyOptional({
+        default: OrderByDirection.ASC.toLowerCase(),
+        description: 'Direction of `order_by`: `asc` or `desc`',
+        name: 'order_by_direction',
+    })
         orderByDirection: OrderByDirection = OrderByDirection.ASC
-    @ApiPropertyOptional({default: false, name: 'search_or'})
+    @ApiPropertyOptional({default: false, description: 'Filters combined with OR instead of AND', name: 'search_or'})
         searchOr: boolean
 
     constructor(sr: ServiceRequest, searchableFields: string[], joins?: Join[], aliases?: {[key: string]: string | object}) {

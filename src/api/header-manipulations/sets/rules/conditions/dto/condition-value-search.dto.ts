@@ -1,9 +1,9 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class HeaderManipulationRuleConditionValueSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the condition value'})
         id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Value the source value is compared with'})
         value: string
     @ApiHideProperty()
         _alias = {

@@ -8,18 +8,17 @@ export class ResellerPhonebookRequestDto implements RequestDto {
     @IsString()
     @IsNotEmpty()
     @MaxLength(255)
-    @ApiProperty()
+    @ApiProperty({description: 'Full name of the entry, e.g. `John Smith`'})
         name: string
 
     @IsString()
     @IsNotEmpty()
     @MaxLength(255)
-    @ApiProperty()
+    @ApiProperty({description: 'Phone number or SIP URI'})
         number: string
 
     @ApiPropertyOptional({
-        description: 'Reseller Id, mandatory for admin and system roles, must not be provided by reseller roles' +
-            ' as it is automatically set to the reseller_id of the user',
+        description: 'Reseller owning the entry; required for admin roles, the own reseller for reseller roles',
         example: 1,
     })
     @IsOptional()

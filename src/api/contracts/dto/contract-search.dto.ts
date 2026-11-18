@@ -7,19 +7,19 @@ import {
 } from '~/entities/internal/contract.internal.entity'
 
 export class ContractSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Billing profile field to use, only `id`'})
         billing_profile_definition: ContractBillingProfileDefinition
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Billing profile charging the contract, active immediately'})
         billing_profile_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Contact of the contract'})
         contact_id?: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Non-unique external id, e.g. from third-party provisioning'})
         external_id: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'State of the contract'})
         status?: ContractStatus
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: '`sippeering` for peerings, `reseller` for resellers'})
         type?: ContractType
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the contract'})
         id: number
     @ApiHideProperty()
         _alias = {

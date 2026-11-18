@@ -5,78 +5,78 @@ import {ContactGender, ContactStatus} from '~/entities/internal/contact.internal
 import {dateTimeFilter} from '~/helpers/query-builder.helper'
 
 export class CustomerContactSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Name of the bank'})
         bankname?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'BIC (Business Identifier Code) of the bank account'})
         bic?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'City'})
         city?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Company name'})
         company?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Company registration number'})
         comregnum?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Two-letter ISO 3166-1 country code, e.g. `US` or `DE`'})
         country?: string
     @DateTimeField()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time of creation'})
         create_timestamp: Date
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Email address'})
         email?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Fax number'})
         faxnumber?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Given name'})
         firstname?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: '`male` or `female`'})
         gender?: ContactGender
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp0?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp1?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp2?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp3?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp4?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp5?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp6?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp7?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp8?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'General purpose field for free use'})
         gpp9?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'IBAN (International Bank Account Number) of the bank account'})
         iban?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Surname'})
         lastname?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Mobile number'})
         mobilenumber?: string
     @DateTimeField()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time of the last modification'})
         modify_timestamp: Date
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Contact receives the newsletter'})
         newsletter: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Phone number'})
         phonenumber?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Postal code'})
         postcode?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Reseller of the contact; required for admin roles, the own reseller for reseller roles'})
         reseller_id?: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: '`active`, or `terminated` once deleted while terminated contracts or subscribers still use it'})
         status: ContactStatus
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Street address'})
         street?: string
     @DateTimeField()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time of termination'})
         terminate_timestamp?: Date
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time zone, IANA name such as `Europe/Vienna`'})
         timezone?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'VAT number'})
         vatnum?: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the customer contact'})
         id: number
     @ApiHideProperty()
         _alias = {

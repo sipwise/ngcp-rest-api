@@ -62,7 +62,7 @@ export class SubscriberNumberRequestDto {
 
     @IsOptional()
     @IsInt()
-    @ApiPropertyOptional({description: 'Ignored, accepted so a read item can be sent back'})
+    @ApiPropertyOptional({description: 'Id of the number, ignored on input'})
         number_id?: number
 
     constructor(number?: SubscriberNumber) {
@@ -149,20 +149,20 @@ export class SubscriberRequestDto implements RequestDto {
     @IsOptional()
     @IsString()
     @MaxLength(255)
-    @ApiPropertyOptional({nullable: true})
+    @ApiPropertyOptional({description: 'Non-unique external id, e.g. from third-party provisioning; admin roles only', nullable: true})
         external_id?: string | null
 
     @IsOptional()
     @IsEmail()
     @MaxLength(255)
-    @ApiPropertyOptional({nullable: true})
+    @ApiPropertyOptional({description: 'Email address', nullable: true})
         email?: string | null
 
     @IsOptional()
     @IsString()
     @IsTimezoneName()
     @MaxLength(80)
-    @ApiPropertyOptional({nullable: true})
+    @ApiPropertyOptional({description: 'Time zone, IANA name such as `Europe/Vienna`', nullable: true})
         timezone?: string | null
 
     @IsOptional()
@@ -191,7 +191,7 @@ export class SubscriberRequestDto implements RequestDto {
 
     @IsOptional()
     @IsInt()
-    @ApiPropertyOptional({nullable: true})
+    @ApiPropertyOptional({description: 'Subscriber profile set, defines the profiles to choose from; admin roles only', nullable: true})
         profile_set_id?: number | null
 
     @IsOptional()
@@ -202,20 +202,20 @@ export class SubscriberRequestDto implements RequestDto {
     @IsOptional()
     @ValidateNested()
     @Type(() => SubscriberNumberRequestDto)
-    @ApiPropertyOptional({type: SubscriberNumberRequestDto, nullable: true})
+    @ApiPropertyOptional({description: 'Main E.164 number for inbound and outbound calls', type: SubscriberNumberRequestDto, nullable: true})
         primary_number?: SubscriberNumberRequestDto | null
 
     @IsOptional()
     @IsArray()
     @ValidateNested({each: true})
     @Type(() => SubscriberAliasNumberRequestDto)
-    @ApiPropertyOptional({type: [SubscriberAliasNumberRequestDto]})
+    @ApiPropertyOptional({description: 'Additional E.164 numbers routed to the subscriber', type: [SubscriberAliasNumberRequestDto]})
         alias_numbers?: SubscriberAliasNumberRequestDto[]
 
     @IsOptional()
     @IsString()
     @MaxLength(128)
-    @ApiPropertyOptional({nullable: true})
+    @ApiPropertyOptional({description: 'Name shown on provisioned phones and as network-provided display name in calls', nullable: true})
         display_name?: string | null
 
     @IsOptional()
@@ -236,18 +236,22 @@ export class SubscriberRequestDto implements RequestDto {
 
     @IsOptional()
     @IsEnum(SubscriberPbxHuntPolicy)
-    @ApiPropertyOptional({enum: SubscriberPbxHuntPolicy, nullable: true, description: 'PBX groups only'})
+    @ApiPropertyOptional({enum: SubscriberPbxHuntPolicy, nullable: true, description: 'Hunting policy of the group; PBX groups only'})
         pbx_hunt_policy?: SubscriberPbxHuntPolicy | null
 
     @IsOptional()
     @IsInt()
     @Min(0)
-    @ApiPropertyOptional({nullable: true, description: 'PBX groups only'})
+    @ApiPropertyOptional({nullable: true, description: 'Hunting timeout in seconds; PBX groups only'})
         pbx_hunt_timeout?: number | null
 
     @IsOptional()
     @IsEnum(SubscriberPbxHuntCancelMode)
-    @ApiPropertyOptional({enum: SubscriberPbxHuntCancelMode, nullable: true, description: 'PBX groups only'})
+    @ApiPropertyOptional({
+        enum: SubscriberPbxHuntCancelMode,
+        nullable: true,
+        description: 'How unanswered call legs of the group are ended, `bye` or `cancel`; PBX groups only',
+    })
         pbx_hunt_cancel_mode?: SubscriberPbxHuntCancelMode | null
 
     @IsOptional()

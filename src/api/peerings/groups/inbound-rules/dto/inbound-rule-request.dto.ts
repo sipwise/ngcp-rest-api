@@ -8,39 +8,39 @@ import {VoipPeeringInboundRuleField} from '~/entities/internal/voip-peering-inbo
 export class PeeringInboundRuleRequestDto implements RequestDto {
     @IsInt()
     @IsPositive()
-    @ApiProperty()
+    @ApiProperty({description: 'Peering group of the rule'})
         group_id: number
 
     @IsEnum(VoipPeeringInboundRuleField)
-    @ApiProperty({type: 'string', enumName: 'VoipPeeringInboundRuleField'})
+    @ApiProperty({description: 'Field of the inbound SIP message the pattern is matched against', type: 'string', enumName: 'VoipPeeringInboundRuleField'})
         field: string
 
     @IsString()
     @IsNotEmpty()
     @MaxLength(1023)
-    @ApiProperty()
+    @ApiProperty({description: 'PCRE regex matched against the field, e.g. `^sip:431` for a full URI'})
         pattern: string
 
     @IsOptional()
     @IsInt()
     @IsPositive()
     @Min(400)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'SIP code (400-699) to reject calls from the group servers that do not match the pattern; null = no rejection'})
         reject_code?: number
 
     @IsOptional()
     @IsString()
     @MaxLength(64)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Reason phrase of the rejection; used with reject_code'})
         reject_reason?: string
 
     @IsInt()
     @IsPositive()
-    @ApiProperty()
+    @ApiProperty({description: 'Priority of the rule; lower values are checked first'})
         priority: number
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Rule is enabled'})
         enabled: boolean
 
     constructor(entity?: internal.VoipPeeringInboundRule) {

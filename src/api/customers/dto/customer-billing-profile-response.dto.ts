@@ -13,23 +13,23 @@ export class CustomerBillingProfileResponseDto {
     @IsDate()
         effective_start_time: Date | null
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Billing network the profile is restricted to'})
     @CanBeNull()
     @IsNumber()
         network_id?: number
 
-    @ApiProperty()
+    @ApiProperty({description: 'Billing profile'})
     @IsNumber()
         profile_id: number
 
     @LocalDateTimeField()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time the billing profile becomes active'})
     @CanBeNull()
     @IsDate()
         start?: Date
 
     @LocalDateTimeField()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time the billing profile is revoked'})
     @IsDate()
     @CanBeNull()
         stop?: Date

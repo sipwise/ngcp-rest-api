@@ -9,55 +9,55 @@ import {RwrDpEnum} from '~/enums/rwr-dp.enum'
 
 export class HeaderManipulationRuleConditionRequestDto implements RequestDto {
     @IsNotEmpty()
-    @ApiProperty({description: 'Rule id', example: '1'})
+    @ApiProperty({description: 'Header rule of the condition', example: '1'})
         rule_id: number
 
     @IsNotEmpty()
     @IsEnum(HeaderRuleConditionMatchType)
-    @ApiProperty({description: 'Condition Match Type', example: 'header'})
+    @ApiProperty({description: 'Source of the matched value: a SIP header, a preference or an AVP', example: 'header'})
         match_type: HeaderRuleConditionMatchType
 
     @IsNotEmpty()
     @IsEnum(HeaderRuleConditionMatchPart)
-    @ApiProperty({description: 'Condition Match Part', example: 'full'})
+    @ApiProperty({description: 'Part of the source value that is matched', example: 'full'})
         match_part: HeaderRuleConditionMatchPart
 
     @IsNotEmpty()
     @MaxLength(255)
-    @ApiProperty({description: 'Condition Match Name', example: 'name'})
+    @ApiProperty({description: 'Name of the header, preference or AVP matched', example: 'name'})
         match_name: string
 
     @IsNotEmpty()
     @IsEnum(HeaderRuleConditionExpression)
-    @ApiProperty({description: 'Condition Expression', example: 'is'})
+    @ApiProperty({description: 'Comparison of the source value with the values', example: 'is'})
         expression: HeaderRuleConditionExpression
 
     @IsNotEmpty()
-    @ApiProperty({description: 'Condition Expression Negation', example: true})
+    @ApiProperty({description: 'Result of the comparison is negated', example: true})
         expression_negation: boolean
 
     @IsNotEmpty()
     @IsEnum(HeaderRuleConditionValueType)
-    @ApiProperty({description: 'Condition Value Type', example: 'input'})
+    @ApiProperty({description: 'Type of the values: literal input, a preference or an AVP', example: 'input'})
         value_type: HeaderRuleConditionValueType
 
     @IsOptional()
     @DependsOn('rwr_dp')
-    @ApiPropertyOptional({description: 'Condition Rewrite Rule Set Id', example: 1})
+    @ApiPropertyOptional({description: 'Rewrite rule set applied to the source value; null = none', example: 1})
         rwr_set_id?: number
 
     @IsEnum(RwrDpEnum)
     @IsOptional()
     @DependsOn('rwr_set_id')
-    @ApiPropertyOptional({description: 'Condition Rewrite Rule', enum: RwrDpEnum, example: 'caller_in'})
+    @ApiPropertyOptional({description: 'Rewrite rules of the set that are applied, by field and direction', enum: RwrDpEnum, example: 'caller_in'})
         rwr_dp?: RwrDpEnum
 
     @IsNotEmpty()
-    @ApiProperty({description: 'Condition enabled', example: true})
+    @ApiProperty({description: 'Condition is enabled', example: true})
         enabled: boolean
 
     @IsOptional()
-    @ApiPropertyOptional({description: 'Condition Values', example: ['1', '2']})
+    @ApiPropertyOptional({description: 'Values the source value is compared with', example: ['1', '2']})
         values?: string[]
 
     constructor(entity?: internal.HeaderRuleCondition) {

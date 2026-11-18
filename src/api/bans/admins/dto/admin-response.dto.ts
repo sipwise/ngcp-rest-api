@@ -8,31 +8,31 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class BanAdminResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the banned admin'})
         id: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Reseller of the admin'})
         reseller_id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Login of the admin'})
         username: string
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Ban stage, auto incremented by each subsequent ban, with growing ban time based on the value'})
         ban_increment_stage: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'IP address of the last banned login attempt'})
         last_banned_ip: string
 
     @DateTimeField()
     @IsDate()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Time of the last ban'})
         last_banned_at: Date
 
     constructor(entity: internal.BanAdmin, options?: ResponseDtoOptions) {

@@ -7,34 +7,34 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class SubscriberPhonebookResponseDto extends ResponseDto {
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the own phonebook entry or composed id of an included "inherited" phonebook entry'})
         id: string
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Subscriber owning the entry'})
         subscriber_id: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Customer of the subscriber owning the entry'})
         customer_id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Full name of the entry, e.g. `John Smith`'})
         name: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Phone number or SIP URI'})
         number: string
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Entry is visible to the other subscribers of the customer'})
         shared: boolean
 
     @IsOptional()
     @IsBoolean()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Entry belongs to the subscriber, not to its customer or reseller'})
         own?: boolean
 
     constructor(entity: internal.SubscriberPhonebook | internal.VSubscriberPhonebook, options?: ResponseDtoOptions) {

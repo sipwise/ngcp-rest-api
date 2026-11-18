@@ -8,39 +8,39 @@ export class PeeringRuleRequestDto implements RequestDto {
     @IsOptional()
     @IsInt()
     @IsPositive()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Peering group of the rule'})
         group_id: number
 
     @IsOptional()
     @IsString()
     @MaxLength(64)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Callee number prefix the rule matches, e.g. 43'})
         callee_prefix?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(64)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'PCRE regex matched against the full Request-URI, e.g. `^sip:431`'})
         callee_pattern?: string
 
     @IsOptional()
     @IsString()
     @MaxLength(64)
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'PCRE regex matched against the caller URI `sip:user@domain`, e.g. `^sip:.+@example\\.org$`'})
         caller_pattern?: string
 
     @IsNotEmpty()
     @IsString()
     @MaxLength(255)
-    @ApiProperty()
+    @ApiProperty({description: 'Description of the rule'})
         description: string
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Rule is enabled'})
         enabled: boolean
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'No further rules are processed when this rule matches'})
         stopper: boolean
 
     constructor(entity?: internal.VoipPeeringRule) {

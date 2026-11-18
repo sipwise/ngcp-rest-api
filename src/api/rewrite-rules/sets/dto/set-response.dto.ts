@@ -11,26 +11,26 @@ import {UrlReference} from '~/types/url-reference.type'
 
 export class RewriteRuleSetResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the rewrite rule set'})
         id: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Reseller of the rewrite rule set; required for admin roles, the own reseller for reseller roles'})
         reseller_id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Name of the rewrite rule set'})
         name: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Description of the rewrite rule set'})
         description?: string
 
     @ValidateNested()
     @Type(() => UrlReference)
-    @ApiProperty()
+    @ApiProperty({description: 'Rules of the set'})
         rules: UrlReference
 
     constructor(entity: internal.RewriteRuleSet, options?: ResponseDtoOptions) {

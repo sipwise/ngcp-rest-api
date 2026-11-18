@@ -7,30 +7,30 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class PbxGroupMemberResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the PBX group member'})
         id: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the PBX group'})
         group_id: number
 
     @IsNotEmpty()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Extension of the member'})
         extension: string
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Subscriber of the member'})
         subscriber_id: number
 
     @IsNotEmpty()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'SIP username of the member'})
         username: string
 
     @IsNotEmpty()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Domain of the member'})
         domain: string
 
     constructor(member: internal.PbxGroupMember, options?: ResponseDtoOptions) {

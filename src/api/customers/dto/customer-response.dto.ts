@@ -28,24 +28,25 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class CustomerResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the customer'})
         id: number
 
     @DateTimeField()
     @IsOptional()
     @CanBeNull()
     @IsDate()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Activation time'})
         activate_timestamp?: Date
 
     @IsOptional()
     @IsBoolean()
-    @ApiPropertyOptional({default: false})
+    @ApiPropertyOptional({description: 'VAT is added on invoices', default: false})
         add_vat?: boolean = false
 
     @IsOptional()
     @IsEnum(ContractBillingProfileDefinition)
     @ApiPropertyOptional({
+        description: 'How the billing profiles were set: `id`, `profiles` or `package`',
         enum: ContractBillingProfileDefinition,
     })
         billing_profile_definition: ContractBillingProfileDefinition
@@ -53,85 +54,84 @@ export class CustomerResponseDto extends ResponseDto {
     @IsNumber()
     @IsOptional()
     @ApiPropertyOptional({
-        description:
-            'The billing profile id used to charge this contract, required if billing_profile_definition is "id".',
+        description: 'Billing profile currently charging the customer',
     })
         billing_profile_id?: number
 
     @IsNumber()
-    @ApiProperty({description: 'The contact id this contract belongs to'})
+    @ApiProperty({description: 'Contact of the customer'})
         contact_id: number
 
     @IsOptional()
     @CanBeNull()
     @IsString()
-    @ApiPropertyOptional({description: 'A non-unique external ID e.g., provided by a 3rd party provisioning'})
+    @ApiPropertyOptional({description: 'Non-unique external id, e.g. from third-party provisioning'})
         external_id?: string
 
     @DateTimeField()
     @IsDate()
-    @ApiProperty()
+    @ApiProperty({description: 'Creation time'})
         create_timestamp: Date
 
     @IsOptional()
     @CanBeNull()
     @IsNumber()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Email template used to notify users about invoices'})
         invoice_email_template_id?: number
 
     @IsOptional()
     @CanBeNull()
     @IsNumber()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Invoice template; null = no invoices are generated'})
         invoice_template_id?: number
 
     @IsOptional()
     @CanBeNull()
     @IsNumber()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Maximum number of subscribers; null = unlimited'})
         max_subscribers?: number
 
     @DateTimeField()
     @IsDate()
-    @ApiProperty()
+    @ApiProperty({description: 'Time of the last modification'})
         modify_timestamp: Date
 
     @IsOptional()
     @CanBeNull()
     @IsNumber()
-    @ApiPropertyOptional({description: 'The email template used to notify users about password reset'})
+    @ApiPropertyOptional({description: 'Email template used to notify users about password resets'})
         passreset_email_template_id?: number
 
     @IsNumber()
     @IsOptional()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Profile package whose initial profiles charge the customer'})
         profile_package_id?: number
 
     @IsNotEmpty()
     @IsEnum(CustomerStatus)
-    @ApiProperty({description: 'The status of the contract'})
+    @ApiProperty({description: 'State of the customer (DELETE sets `terminated`)'})
         status: CustomerStatus
 
     @IsOptional()
     @CanBeNull()
     @IsNumber()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Email template used to notify users about subscriber creation'})
         subscriber_email_template_id?: number
 
     @IsOptional()
     @IsNotEmpty()
     @IsEnum(CustomerType)
-    @ApiPropertyOptional({description: 'The type of contract'})
+    @ApiPropertyOptional({description: '`sipaccount` for SIP customers, `pbxaccount` for Cloud PBX customers'})
         type: CustomerType
 
     @DateTimeField()
     @CanBeNull()
     @IsDate()
-    @ApiProperty()
+    @ApiProperty({description: 'Termination time'})
         terminate_timestamp: Date
 
     @IsDecimal()
-    @ApiProperty({description: 'VAT rate, e.g., 0.19000000000000'})
+    @ApiProperty({description: 'VAT rate in percent, e.g. 20'})
         vat_rate?: number
 
     @IsArray()

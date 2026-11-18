@@ -1,11 +1,11 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class DomainSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Fully qualified domain name'})
         domain: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Reseller of the domain; required for admin roles, the own reseller for reseller roles'})
         reseller_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the domain'})
         id: number
     @ApiHideProperty()
         _alias = {

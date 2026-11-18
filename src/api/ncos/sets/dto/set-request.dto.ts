@@ -6,8 +6,7 @@ import {internal} from '~/entities'
 
 export class NCOSSetRequestDto implements RequestDto {
     @ApiPropertyOptional({
-        description: 'Reseller Id, mandatory for admin and system roles, must not be provided by reseller roles' +
-            ' as it is automatically set to the reseller_id of the user',
+        description: 'Reseller of the NCOS set; required for admin roles, the own reseller for reseller roles',
         example: 1,
     })
     @IsOptional()
@@ -16,15 +15,15 @@ export class NCOSSetRequestDto implements RequestDto {
         reseller_id?: number
 
     @IsNotEmpty()
-    @ApiProperty({description: 'NCOS set name', example: 'Restricted destinations'})
+    @ApiProperty({description: 'Name of the NCOS set', example: 'Restricted destinations'})
         name: string
 
     @IsNotEmpty()
-    @ApiProperty({description: 'NCOS set description', example: 'For all subscribers'})
+    @ApiProperty({description: 'Description of the NCOS set', example: 'For all subscribers'})
         description: string
 
     @IsOptional()
-    @ApiPropertyOptional({description: 'NCOS set expose to customer', example: 'true'})
+    @ApiPropertyOptional({description: 'Customers can see and use the set in their preferences', example: 'true'})
         expose_to_customer?: boolean
 
     constructor(entity?: internal.NCOSSet) {

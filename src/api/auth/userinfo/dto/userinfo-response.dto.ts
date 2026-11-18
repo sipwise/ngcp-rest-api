@@ -8,71 +8,71 @@ import {internal} from '~/entities'
 
 export class UserinfoResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the admin, or of the subscriber for subscriber roles'})
         id: number
 
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Login of the admin, or web username of the subscriber'})
         username: string
 
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Role of the user'})
         role: string
 
     @IsOptional()
     @IsObject()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'ACL role of the admin with its permissions; admin roles only'})
         role_data?: internal.AclRole
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'User is active; always `true` for subscribers'})
         active: boolean
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'User can not make changes; always `false` for subscribers'})
         readOnly: boolean
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'User can see passwords; always `false` for subscribers'})
         showPasswords: boolean
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Master admin of its reseller; always `false` for subscribers'})
         is_master: boolean
 
     @IsOptional()
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Reseller of the user'})
         reseller_id: number
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'User is limited to its reseller: reseller, ccare and subscriber roles'})
         reseller_id_required: boolean
 
     @IsOptional()
     @IsInt()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Customer of the subscriber; subscriber roles only'})
         customer_id?: number
 
     @IsOptional()
     @IsString()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'UUID of the subscriber; subscriber roles only'})
         uuid?: string
 
     @DateTimeField()
     @IsOptional()
     @IsDate()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Last password change'})
         password_modified_timestamp?: Date
 
     @IsOptional()
     @IsBoolean()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Two-factor authentication is enabled; admin roles only'})
         enable_2fa?: boolean
 
     @IsOptional()
     @IsBoolean()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'OTP registration info (QR code) is still to be shown; admin roles only'})
         otp_init?: boolean
 
     constructor(user: AuthResponseDto) {

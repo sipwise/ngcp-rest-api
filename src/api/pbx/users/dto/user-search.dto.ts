@@ -1,11 +1,11 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class PbxUserSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the PBX user'})
         id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Name shown on provisioned phones and as network-provided display name in calls'})
         display_name: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Extension for short dialling'})
         pbx_extension: string
     @ApiHideProperty()
         _alias = {

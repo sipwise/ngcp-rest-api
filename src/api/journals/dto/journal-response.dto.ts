@@ -5,29 +5,29 @@ import {internal} from '~/entities'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class JournalResponseDto extends ResponseDto {
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the journal entry'})
         id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Resource data written by the operation, passwords masked; null when it can not be decoded'})
         content?: string | Buffer
-    @ApiProperty()
+    @ApiProperty({description: 'Format the content is stored in, e.g. `json` or `json_deflate`'})
         content_format: string
-    @ApiProperty()
+    @ApiProperty({description: 'Operation on the resource: `create`, `update` or `delete`'})
         operation: string
-    @ApiProperty()
+    @ApiProperty({description: 'Reseller of the user who made the change'})
         reseller_id: number
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the changed resource'})
         resource_id: number
-    @ApiProperty()
+    @ApiProperty({description: 'Resource path without prefix and ids, e.g. `customers/phonebook`'})
         resource_name: string
-    @ApiProperty()
+    @ApiProperty({description: 'Role of the user who made the change'})
         role: string | null
-    @ApiProperty()
+    @ApiProperty({description: 'Time of the change, Unix time in seconds with milliseconds'})
         timestamp: number
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the request in the server log'})
         tx_id: string
-    @ApiProperty()
+    @ApiProperty({description: 'Login of the user who made the change'})
         username: string
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the admin or subscriber who made the change'})
         user_id: number
 
     constructor(journal: internal.Journal, options?: ResponseDtoOptions) {

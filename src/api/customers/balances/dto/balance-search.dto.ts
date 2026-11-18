@@ -1,17 +1,17 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class CustomerBalanceSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Customer of the balance'})
         customer_id: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'External id of the customer'})
         external_id: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Reseller of the customer'})
         reseller_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Contact of the customer'})
         contact_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'State of the customer'})
         status: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the customer balance'})
         id: number
     @ApiHideProperty()
         _alias = {

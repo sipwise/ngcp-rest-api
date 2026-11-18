@@ -7,38 +7,38 @@ import {DateTimeField, DateTimeKind} from '~/decorators/date-time-field.decorato
 import {dateTimeFilter} from '~/helpers/query-builder.helper'
 
 export class AdminSearchDto implements AdminResponseDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'User can see billing data such as top-up voucher codes'})
         billing_data: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'User can see call data (CDRs, call flows)'})
         call_data: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'User can reset its password'})
         can_reset_password: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Email address'})
         email: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the admin'})
         id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'User is active'})
         is_active: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Master admin of its reseller'})
         is_master: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Username used for authentication'})
         login: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'User can not make changes'})
         read_only: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Reseller of the admin'})
         reseller_id?: number
-    @ApiPropertyOptional({enum: adminRoles})
+    @ApiPropertyOptional({description: 'Access level of the user', enum: adminRoles})
         role: RbacRole
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'User can see passwords'})
         show_passwords: boolean
     @DateTimeField()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Time of the last password change'})
         password_last_modify_time: Date
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Two-factor authentication is enabled'})
         enable_2fa: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'OTP registration info (QR code) is still to be shown'})
         otp_init: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'OTP secret key, Base32'})
         otp_secret?: string
     @ApiHideProperty()
         _alias = {

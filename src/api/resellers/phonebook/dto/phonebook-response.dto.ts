@@ -7,21 +7,21 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class ResellerPhonebookResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the phonebook entry'})
         id: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Reseller owning the entry; required for admin roles, the own reseller for reseller roles'})
         reseller_id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Full name of the entry, e.g. `John Smith`'})
         name: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Phone number or SIP URI'})
         number: string
 
     constructor(entity: internal.ResellerPhonebook, options?: ResponseDtoOptions) {

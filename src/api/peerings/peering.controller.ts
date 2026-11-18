@@ -1,5 +1,5 @@
 import {Controller, Get, Req} from '@nestjs/common'
-import {ApiTags} from '@nestjs/swagger'
+import {ApiOperation, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {PeeringResponseDto} from './dto/peering-response.dto'
@@ -31,6 +31,7 @@ export class PeeringController extends CrudController<never, PeeringResponseDto>
     }
 
     @Get()
+    @ApiOperation({summary: 'List links to the peering resources'})
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(PeeringResponseDto)
     readAll(@Req() req: Request): Promise<[PeeringResponseDto[], number]> {

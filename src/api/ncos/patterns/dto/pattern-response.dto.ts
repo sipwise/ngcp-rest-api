@@ -5,16 +5,16 @@ import {internal} from '~/entities'
 import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class NCOSPatternResponseDto extends ResponseDto {
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the NCOS pattern'})
         id: number
 
-    @ApiProperty()
+    @ApiProperty({description: 'NCOS level of the pattern'})
         ncos_level_id: number
 
-    @ApiProperty()
+    @ApiProperty({description: 'PCRE regex matched against the called number'})
         pattern: string
 
-    @ApiProperty()
+    @ApiProperty({description: 'Description of the pattern'})
         description?: string | null
 
     constructor(entity: internal.NCOSPattern, options?: ResponseDtoOptions) {

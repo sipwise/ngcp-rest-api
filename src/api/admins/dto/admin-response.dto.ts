@@ -10,71 +10,71 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class AdminResponseDto extends ResponseDto {
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'User can see billing data such as top-up voucher codes'})
         billing_data!: boolean
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'User can see call data (CDRs, call flows)'})
         call_data!: boolean
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'User can reset its password'})
         can_reset_password!: boolean
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Email address'})
         email!: string
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the admin'})
         id!: number
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'User is active'})
         is_active!: boolean
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Master admin of its reseller'})
         is_master!: boolean
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Username used for authentication'})
         login!: string
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'User can not make changes'})
         read_only!: boolean
 
     @IsOptional()
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Reseller of the admin'})
         reseller_id?: number
 
     @IsEnum(RbacRole)
-    @ApiProperty({enum: adminRoles})
+    @ApiProperty({description: 'Access level of the user', enum: adminRoles})
         role!: RbacRole
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'User can see passwords'})
         show_passwords!: boolean
 
     @DateTimeField()
     @IsDate()
-    @ApiProperty()
+    @ApiProperty({description: 'Time of the last password change'})
         password_last_modify_time: Date
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Two-factor authentication is enabled'})
         enable_2fa: boolean
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'OTP registration info (QR code) is still to be shown'})
         otp_init: boolean
 
     @CanBeNull()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'OTP secret key, Base32; only shown to the admin itself'})
         otp_secret_key?: string
 
     constructor(admin: internal.Admin, role: RbacRole, options?: ResponseDtoOptions) {

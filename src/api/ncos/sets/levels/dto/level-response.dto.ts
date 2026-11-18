@@ -7,20 +7,20 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class NCOSSetLevelResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the NCOS set level'})
         id: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'NCOS set the level belongs to'})
         set_id: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'NCOS level in the set'})
         level_id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Name of the NCOS level'})
         level: string
 
     constructor(entity: internal.NCOSSetLevel, options?: ResponseDtoOptions) {

@@ -3,18 +3,18 @@ import {IsInt, IsString} from 'class-validator'
 
 export class PrimaryNumber {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the number'})
         number_id: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Country code'})
         cc: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Area code, may be empty'})
         ac: number
 
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Subscriber number'})
         sn: string
 }

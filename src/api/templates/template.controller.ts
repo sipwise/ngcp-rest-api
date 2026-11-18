@@ -1,5 +1,5 @@
 import {Controller, Get, Req} from '@nestjs/common'
-import {ApiTags} from '@nestjs/swagger'
+import {ApiOperation, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {TemplateResponseDto} from './dto/template-response.dto'
@@ -34,6 +34,7 @@ export class TemplateController extends CrudController<never, TemplateResponseDt
     }
 
     @Get()
+    @ApiOperation({summary: 'List links to the template resources'})
     @ApiSearchQuery(SearchLogic)
     @ApiPaginatedResponse(TemplateResponseDto)
     readAll(@Req() req: Request): Promise<[TemplateResponseDto[], number]> {

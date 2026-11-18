@@ -12,24 +12,24 @@ import {UrlReference} from '~/types/url-reference.type'
 
 export class ResellerResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the reseller'})
         id: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Reseller contract'})
         contract_id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Unique name of the reseller'})
         name: string
 
     @IsEnum(ResellerStatus)
-    @ApiProperty()
+    @ApiProperty({description: 'State of the reseller'})
         status: ResellerStatus
 
     @Type(() => UrlReference)
-    @ApiProperty()
+    @ApiProperty({description: 'Link to the phonebook of the reseller'})
         phonebook: UrlReference
 
     constructor(reseller: internal.Reseller, options?: ResponseDtoOptions) {

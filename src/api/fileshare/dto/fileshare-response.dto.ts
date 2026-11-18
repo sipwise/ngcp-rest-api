@@ -8,12 +8,12 @@ import {ResponseDto} from '~/dto/response.dto'
 export class FileshareResponseDto extends ResponseDto {
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the file'})
         id: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'File name'})
         name: string
 
     @IsString()
@@ -22,31 +22,31 @@ export class FileshareResponseDto extends ResponseDto {
 
     @IsNumber()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Time to live in seconds'})
         ttl: number
 
     @IsNumber()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Size in bytes'})
         size: number
 
     @DateTimeField()
     @IsDate()
-    @ApiProperty()
+    @ApiProperty({description: 'Upload time'})
         created_at: Date
 
     @DateTimeField()
     @IsDate()
-    @ApiProperty()
+    @ApiProperty({description: 'Expiry time, the file is deleted afterwards'})
         expires_at: Date
 
     @CanBeNull()
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Subscriber who uploaded the file'})
         subscriber_id?: number
 
     @CanBeNull()
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Reseller of the uploader'})
         reseller_id?: number
 }

@@ -7,26 +7,26 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class CustomerPhonebookResponseDto extends ResponseDto {
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the own phonebook entry or composed id of an included "inherited" phonebook entry'})
         id: string
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Customer owning the entry'})
         customer_id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Full name of the entry, e.g. `John Smith`'})
         name: string
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Phone number or SIP URI'})
         number: string
 
     @IsOptional()
     @IsBoolean()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Entry belongs to the customer, not to its reseller'})
         own?: boolean
 
     constructor(entity: internal.CustomerPhonebook | internal.VCustomerPhonebook, options?: ResponseDtoOptions) {

@@ -1,21 +1,21 @@
 import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
 export class SubscriberPhonebookSearchDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Full name of the entry, e.g. `John Smith`'})
         name: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Subscriber owning the entry'})
         subscriber_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Customer of the subscriber owning the entry'})
         customer_id: number
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Phone number or SIP URI'})
         number: string
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Entry is visible to the other subscribers of the customer'})
         shared: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Entry belongs to the subscriber, not to its customer or reseller'})
         own: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'CSV import: delete the existing entries of the imported subscribers first'})
         purge_existing: boolean
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({description: 'Id of the phonebook entry'})
         id: number
     @ApiHideProperty()
         _alias = {

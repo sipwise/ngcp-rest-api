@@ -1,12 +1,49 @@
 import {HttpStatus} from '@nestjs/common'
 import {NestApplication} from '@nestjs/core'
-import {OperationObject, RequestBodyObject, ResponseObject} from '@nestjs/swagger'
+import {OperationObject, ParameterObject, RequestBodyObject, ResponseObject, SchemaObject} from '@nestjs/swagger'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
 
 import {AppModule} from '~/app.module'
+import {DATE_TIME_DESCRIPTION_SUFFIXES} from '~/decorators/date-time-field.decorator'
 import {SWAGGER_LANGUAGES, SwaggerLanguage, readLocalisationFile, readSwaggerStrings} from '~/helpers/swagger-i18n.helper'
 import {createSwaggerDocument} from '~/helpers/swagger.helper'
+
+// descriptions that carry only a scope or omission note
+const WEAK_DESCRIPTION = /^(\w+ roles only|PBX \w+ only|read-only, ignored|kept when omitted)$/i
+// generated in full by the document helpers, as prose
+const GENERATED_PARAMETERS = [
+    'expand',
+    'inline',
+    'soft_expand',
+    'tz',
+]
+
+// the description as written in the code, without the notes the document adds
+function sourceDescription(description = ''): string {
+    let source = description.replace(/ ?\(expandable\)$/, '')
+    for (const suffix of DATE_TIME_DESCRIPTION_SUFFIXES) {
+        if (source.endsWith(suffix))
+            source = source.slice(0, -suffix.length).replace(/\.? ?$/, '')
+    }
+    return source
+}
+
+function descriptionProblems(description: string | undefined): string[] {
+    const source = sourceDescription(description)
+    if (!source.trim())
+        return ['missing']
+    const problems: string[] = []
+    if (WEAK_DESCRIPTION.test(source.trim()))
+        problems.push('weak')
+    if (source != source.trim())
+        problems.push('whitespace')
+    if (source.endsWith('.'))
+        problems.push('trailing period')
+    if (/^(The|A|An)\b/.test(source))
+        problems.push('leading article')
+    return problems
+}
 
 describe('Swagger', () => {
     let app: NestApplication
@@ -17,6 +54,7 @@ describe('Swagger', () => {
         }).compile()
 
         app = moduleRef.createNestApplication<NestApplication>()
+        app.setGlobalPrefix('api')
         createSwaggerDocument(app, 'api')
         await app.init()
     })
@@ -139,7 +177,7 @@ describe('Swagger', () => {
 
         const bodySchema = (operation: OperationObject, type = 'application/json'): Record<string, unknown> =>
             (operation.requestBody as RequestBodyObject).content[type].schema as Record<string, unknown>
-        const collection = paths['/customercontacts']
+        const collection = paths['/api/customercontacts']
         expect(bodySchema(collection.post).oneOf).toEqual([
             {$ref: '#/components/schemas/CustomerContactRequestDto'},
             {type: 'array', items: {$ref: '#/components/schemas/CustomerContactRequestDto'}, maxItems: 10000},
@@ -151,7 +189,7 @@ describe('Swagger', () => {
             expect(tooLarge.schema).toEqual({$ref: '#/components/schemas/ErrorResponse'})
             expect(tooLarge.example).toEqual(expect.objectContaining({errorCode: 'BULK_TOO_LARGE'}))
         }
-        const item = paths['/customercontacts/{id}']
+        const item = paths['/api/customercontacts/{id}']
         expect(bodySchema(item.patch, 'application/json-patch+json').maxItems).toBeUndefined()
         expect(item.patch.responses['413']).toBeUndefined()
         expect(collection.get.responses['413']).toBeUndefined()
@@ -165,7 +203,7 @@ describe('Swagger', () => {
             (operation.responses[code] as ResponseObject).content['application/json'].schema as Record<string, unknown>
         const subscriber = {$ref: '#/components/schemas/SubscriberResponseDto'}
 
-        const created = responseSchema(paths['/subscribers'].post, '201')
+        const created = responseSchema(paths['/api/subscribers'].post, '201')
         expect(created).toEqual(expect.objectContaining({type: 'object', required: ['total_count']}))
         expect(created).not.toHaveProperty('allOf')
         expect(created.properties).toEqual({
@@ -174,10 +212,10 @@ describe('Swagger', () => {
             links: expect.objectContaining({type: 'array', items: {type: 'string'}}),
             ids: expect.objectContaining({type: 'array', items: {type: 'integer'}}),
         })
-        const tokenIds = (responseSchema(paths['/auth/tokens'].post, '201').properties as Record<string, unknown>).ids
+        const tokenIds = (responseSchema(paths['/api/auth/tokens'].post, '201').properties as Record<string, unknown>).ids
         expect(tokenIds).toEqual(expect.objectContaining({items: {type: 'string'}}))
 
-        const collection = responseSchema(paths['/subscribers'].get, '200')
+        const collection = responseSchema(paths['/api/subscribers'].get, '200')
         expect(collection).toEqual(expect.objectContaining({type: 'object', required: ['total_count', 'data']}))
         expect(collection.properties).toEqual({
             total_count: expect.objectContaining({type: 'integer'}),
@@ -199,13 +237,13 @@ describe('Swagger', () => {
         const item = {$ref: '#/components/schemas/SubscriberRequestDto'}
         const patch = {$ref: '#/components/schemas/PatchDto'}
 
-        const subscribers = paths['/subscribers']
+        const subscribers = paths['/api/subscribers']
         expect(bodySchema(subscribers.post).oneOf).toEqual([item, expect.objectContaining({type: 'array', items: item})])
         expect(bodySchema(subscribers.put)).toEqual(expect.objectContaining({type: 'object', additionalProperties: item}))
         expect(bodySchema(subscribers.patch, 'application/json-patch+json'))
             .toEqual(expect.objectContaining({type: 'object', additionalProperties: {type: 'array', items: patch}}))
-        expect(bodySchema(paths['/subscribers/{id}'].patch, 'application/json-patch+json')).toEqual({type: 'array', items: patch})
-        expect(bodySchema(paths['/customers/{customerId}/phonebook'].post).oneOf).toHaveLength(2)
+        expect(bodySchema(paths['/api/subscribers/{id}'].patch, 'application/json-patch+json')).toEqual({type: 'array', items: patch})
+        expect(bodySchema(paths['/api/customers/{customerId}/phonebook'].post).oneOf).toHaveLength(2)
 
         const postBodies = Object.values(paths)
             .map(pathItem => (pathItem.post?.requestBody as RequestBodyObject | undefined)?.content['application/json']?.schema)
@@ -256,11 +294,11 @@ describe('Swagger', () => {
         const parameter = (operation: OperationObject, name: string): {description?: string} | undefined =>
             operation.parameters.find(param => 'name' in param && param.name == name) as {description?: string} | undefined
 
-        const contracts = paths['/contracts'].get
+        const contracts = paths['/api/contracts'].get
         expect(parameter(contracts, 'expand').description).toMatch(/^Fields to resolve, comma separated: `contact_id`/)
         expect(parameter(contracts, 'soft_expand')).toBeDefined()
-        expect(parameter(paths['/contracts/{id}'].patch, 'expand')).toBeUndefined()
-        expect(parameter(paths['/auth/userinfo'].get, 'expand')).toBeUndefined()
+        expect(parameter(paths['/api/contracts/{id}'].patch, 'expand')).toBeUndefined()
+        expect(parameter(paths['/api/auth/userinfo'].get, 'expand')).toBeUndefined()
         expect(JSON.stringify(json.body)).not.toContain('x-ngcp-no-expand')
 
         const schemas = json.body.components.schemas
@@ -295,7 +333,7 @@ describe('Swagger', () => {
         expect(schemas.SubscriberResponseDto.properties.pbx_group_ids.description).toMatch(/\(expandable\)$/)
         expect(schemas.InvoiceTemplateResponseDto.properties.vars.allOf).toEqual([link])
 
-        const inline = paths['/subscribers'].get.parameters.find(param => 'name' in param && param.name == 'inline')
+        const inline = paths['/api/subscribers'].get.parameters.find(param => 'name' in param && param.name == 'inline')
         expect(inline).toEqual(expect.objectContaining({
             in: 'query',
             description: expect.stringMatching(/^Lazy fields .*: `alias_numbers`, `pbx_group_ids`, `pbx_groupmember_ids`\./),
@@ -303,34 +341,86 @@ describe('Swagger', () => {
         expect(inline).toEqual(expect.objectContaining({
             description: expect.stringMatching(/at most \d+ items, in page order while the response holds at most \d+ inlined items/),
         }))
-        expect(parameterNames(paths['/subscribers/{id}'].get)).toContain('inline')
-        expect(parameterNames(paths['/templates/invoices/{id}'].get)).not.toContain('inline')
-        expect(parameterNames(paths['/subscribers/{id}'].put)).not.toContain('inline')
+        expect(parameterNames(paths['/api/subscribers/{id}'].get)).toContain('inline')
+        expect(parameterNames(paths['/api/templates/invoices/{id}'].get)).not.toContain('inline')
+        expect(parameterNames(paths['/api/subscribers/{id}'].put)).not.toContain('inline')
 
         expect(Object.keys(paths).filter(path => path.includes('@{field}'))).toEqual([])
-        expect(Object.keys(paths).filter(path => path.startsWith('/subscribers/{subscriberId}/@')).sort()).toEqual([
-            '/subscribers/{subscriberId}/@alias_numbers',
-            '/subscribers/{subscriberId}/@pbx_group_ids',
-            '/subscribers/{subscriberId}/@pbx_groupmember_ids',
+        expect(Object.keys(paths).filter(path => path.startsWith('/api/subscribers/{subscriberId}/@')).sort()).toEqual([
+            '/api/subscribers/{subscriberId}/@alias_numbers',
+            '/api/subscribers/{subscriberId}/@pbx_group_ids',
+            '/api/subscribers/{subscriberId}/@pbx_groupmember_ids',
         ])
-        const aliasNumbers = paths['/subscribers/{subscriberId}/@alias_numbers'].get
+        const aliasNumbers = paths['/api/subscribers/{subscriberId}/@alias_numbers'].get
         expect(aliasNumbers.operationId).toEqual('SubscriberController_readField_alias_numbers')
         expect(parameterNames(aliasNumbers)).toEqual(expect.arrayContaining(['subscriberId', 'page', 'rows', 'order_by', 'number', 'is_devid']))
         expect(parameterNames(aliasNumbers)).not.toContain('field')
         expect(JSON.stringify((aliasNumbers.responses['200'] as ResponseObject).content['application/json'].schema))
             .toContain('"items":{"$ref":"#/components/schemas/SubscriberAliasNumberResponseDto"}')
-        const groupIds = paths['/subscribers/{subscriberId}/@pbx_group_ids'].get
+        const groupIds = paths['/api/subscribers/{subscriberId}/@pbx_group_ids'].get
         expect(JSON.stringify((groupIds.responses['200'] as ResponseObject).content['application/json'].schema))
             .toContain('"items":{"type":"object","required":["value"],"properties":{"value":{"type":"number"}}}')
         expect(parameterNames(groupIds)).toContain('value')
         expect(parameterNames(groupIds)).not.toContain('expand')
-        expect(parameterNames(paths['/customers/{customerId}/@billing_profiles'].get)).toEqual(['customerId', 'page', 'rows', 'tz'])
-        const conditionValues = paths['/header-manipulations/sets/{setId}/rules/{ruleId}/conditions/{conditionId}/@values'].get
+        expect(parameterNames(paths['/api/customers/{customerId}/@billing_profiles'].get)).toEqual(['customerId', 'page', 'rows', 'tz'])
+        const conditionValues = paths['/api/header-manipulations/sets/{setId}/rules/{ruleId}/conditions/{conditionId}/@values'].get
         const queryNames = conditionValues.parameters.filter(param => 'in' in param && param.in == 'query').map(param => 'name' in param ? param.name : '')
         expect(queryNames).toEqual(expect.arrayContaining(['id', 'value', 'page', 'rows', 'order_by']))
         expect(queryNames).not.toContain('match_name')
         // link-only fields keep their own operations
-        expect(paths['/templates/invoices/{id}/@vars'].get.operationId).toEqual('InvoiceTemplateController_readVars')
+        expect(paths['/api/templates/invoices/{id}/@vars'].get.operationId).toEqual('InvoiceTemplateController_readVars')
+    })
+
+    it('describes every schema property, parameter and operation in the v2 style', async () => {
+        const json = await request(app.getHttpServer()).get('/api/swagger.json')
+        expect(json.status).toEqual(HttpStatus.OK)
+        const problems: string[] = []
+        const report = (where: string, found: string[]): void => {
+            if (found.length)
+                problems.push(`${where}: ${found.join(', ')}`)
+        }
+        const schemas = json.body.components.schemas as Record<string, SchemaObject>
+        for (const [name, schema] of Object.entries(schemas)) {
+            for (const [field, property] of Object.entries(schema.properties ?? {}))
+                report(`schema ${name}.${field}`, descriptionProblems((property as SchemaObject).description))
+        }
+        const paths = json.body.paths as Record<string, Record<string, OperationObject>>
+        for (const [path, item] of Object.entries(paths)) {
+            for (const [method, operation] of Object.entries(item)) {
+                const where = `${method.toUpperCase()} ${path}`
+                report(where, descriptionProblems(operation.summary))
+                for (const param of operation.parameters as ParameterObject[]) {
+                    const found = GENERATED_PARAMETERS.includes(param.name)
+                        ? (param.description ? [] : ['missing'])
+                        : descriptionProblems(param.description)
+                    report(`${where} ${param.in} ${param.name}`, found)
+                }
+            }
+        }
+        expect(problems).toEqual([])
+    })
+
+    it('generates the operation summaries and the path parameters from the path', async () => {
+        const json = await request(app.getHttpServer()).get('/api/swagger.json')
+        expect(json.status).toEqual(HttpStatus.OK)
+        const levels = json.body.paths['/api/ncos/sets/{setId}/levels/{id}']
+        expect(levels.get.summary).toEqual('Get a level of an NCOS set')
+        expect(levels.get.parameters).toEqual(expect.arrayContaining([
+            expect.objectContaining({name: 'setId', in: 'path', required: true, description: 'Id of the NCOS set'}),
+            expect.objectContaining({name: 'id', in: 'path', required: true, description: 'Id of the NCOS set level'}),
+        ]))
+        expect(json.body.paths['/api/ncos/sets/{setId}/levels'].post.parameters).toEqual(expect.arrayContaining([
+            expect.objectContaining({name: 'setId', in: 'path', schema: {type: 'number'}}),
+        ]))
+        // delete routes take the id from the path or the body, swagger doesn't see it
+        expect(json.body.paths['/api/admins/{id}'].delete).toEqual(expect.objectContaining({
+            summary: 'Delete admins',
+            parameters: expect.arrayContaining([expect.objectContaining({name: 'id', in: 'path', description: 'Id of the admin'})]),
+        }))
+        expect(json.body.paths['/api/bans/ips/{id}/journal'].get.summary).toEqual('List journal entries of an IP ban')
+        expect(json.body.paths['/api/subscribers/{subscriberId}/@alias_numbers'].get.summary)
+            .toEqual('List alias numbers of a subscriber')
+        expect(json.body.paths['/api/fileshare'].post.summary).toEqual('Upload a file')
     })
 
     it('documents no parameter twice in an operation', async () => {

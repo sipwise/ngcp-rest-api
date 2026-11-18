@@ -11,31 +11,31 @@ import {UrlReference} from '~/types/url-reference.type'
 
 export class HeaderManipulationSetResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the header rule set'})
         id: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Reseller of the header rule set'})
         reseller_id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Name of the header rule set'})
         name: string
 
     @CanBeNull()
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Subscriber the set belongs to; null = reseller-wide set'})
         subscriber_id?: number
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Description of the header rule set'})
         description: string
 
     @ValidateNested()
     @Type(() => UrlReference)
-    @ApiProperty()
+    @ApiProperty({description: 'Link to the rules of the set'})
         rules: UrlReference
 
     constructor(entity: internal.HeaderRuleSet, options?: ResponseDtoOptions) {

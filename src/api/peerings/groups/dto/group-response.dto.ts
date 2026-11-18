@@ -8,34 +8,34 @@ import {ResponseDtoOptions} from '~/types/response-dto-options'
 
 export class PeeringGroupResponseDto extends ResponseDto {
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Id of the peering group'})
         id: number
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'System contract of the peering group'})
         contract_id: number
 
     @IsString()
     @IsNotEmpty()
-    @ApiProperty()
+    @ApiProperty({description: 'Name of the peering group'})
         name: string
 
     @CanBeNull()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({description: 'Description of the peering group'})
         description?: string
 
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Priority of the group, 1 (highest) to 9 (lowest); 1 if omitted'})
         priority: number
 
     @IsBoolean()
-    @ApiProperty()
+    @ApiProperty({description: 'Group has at least one inbound rule; set by the server'})
         has_inbound_rules: boolean
 
     @CanBeNull()
     @IsInt()
-    @ApiProperty()
+    @ApiProperty({description: 'Time set restricting the periods the group is active in; null = always active'})
         time_set_id?: number
 
     constructor(entity: internal.VoipPeeringGroup, options?: ResponseDtoOptions) {
