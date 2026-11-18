@@ -12,6 +12,7 @@ import {setupApp} from '~/app.setup'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
+import {ErrorEntry} from '~/helpers/errors.helper'
 
 type PeeringInboundRulePost = {
     group_id: number
@@ -31,6 +32,8 @@ describe('Peering Inbound Rule', () => {
     let contractId: number
     let groupId: number
     let otherGroupId: number
+    let otherGroupRuleId: number
+    let thirdRuleId: number
     const createdIds: number[] = []
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const prefix = `e2e_peer_inrule_${process.env.JEST_WORKER_ID}_${Date.now()}`
@@ -326,6 +329,278 @@ describe('Peering Inbound Rule', () => {
                 expect(response.status).toEqual(204)
                 expect(await hasInboundRules(groupId)).toEqual(true)
                 expect(await hasInboundRules(otherGroupId)).toEqual(false)
+            })
+        })
+
+        describe('unique priorities', () => {
+            const pointers = (response: request.Response): string[][] =>
+                (response.body.errors as ErrorEntry[]).map(e => [e.pointer, e.code])
+
+            it('create a rule with a priority used in another group', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/peerings/groups/inbound-rules')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send({...rulePost(3), group_id: otherGroupId, priority: 10})
+                expect(response.status).toEqual(201)
+                otherGroupRuleId = +response.body.data[0].id
+                createdIds.push(otherGroupRuleId)
+            })
+            it('fail to create a rule with a used priority', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/peerings/groups/inbound-rules')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({...rulePost(3), priority: 20})
+                expect(response.status).toEqual(422)
+                expect(response.body.errorCode).toEqual('PEERING_INBOUND_RULE_PRIORITY_EXISTS')
+                expect(pointers(response)).toEqual([['/priority', 'PEERING_INBOUND_RULE_PRIORITY_EXISTS']])
+            })
+            it('fail to create rules with the same priority in one request', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/peerings/groups/inbound-rules')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send([rulePost(3), {...rulePost(4), priority: 30}])
+                expect(response.status).toEqual(422)
+                expect(pointers(response)).toEqual([
+                    ['/0/priority', 'PEERING_INBOUND_RULE_PRIORITY_EXISTS'],
+                    ['/1/priority', 'PEERING_INBOUND_RULE_PRIORITY_EXISTS'],
+                ])
+                expect(await db.provisioning.VoipPeeringInboundRule.countBy({group_id: groupId})).toEqual(2)
+            })
+            it('fail to update a rule to a used priority', async () => {
+                const response = await request(app.getHttpServer())
+                    .put(`/api/peerings/groups/inbound-rules/${createdIds[1]}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({...rulePost(2), priority: 10})
+                expect(response.status).toEqual(422)
+                expect(pointers(response)).toEqual([['/priority', 'PEERING_INBOUND_RULE_PRIORITY_EXISTS']])
+            })
+            it('fail to update rules to the same priority in one request', async () => {
+                const response = await request(app.getHttpServer())
+                    .put('/api/peerings/groups/inbound-rules')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        [createdIds[0]]: {...rulePost(1), priority: 30},
+                        [createdIds[1]]: {...rulePost(2), priority: 30},
+                    })
+                expect(response.status).toEqual(422)
+                expect(pointers(response)).toEqual([
+                    [`/${createdIds[0]}/priority`, 'PEERING_INBOUND_RULE_PRIORITY_EXISTS'],
+                    [`/${createdIds[1]}/priority`, 'PEERING_INBOUND_RULE_PRIORITY_EXISTS'],
+                ])
+            })
+            it('swap the priorities of two rules in one request', async () => {
+                const response = await request(app.getHttpServer())
+                    .put('/api/peerings/groups/inbound-rules')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        [createdIds[0]]: {...rulePost(1), priority: 20},
+                        [createdIds[1]]: {...rulePost(2), priority: 10},
+                    })
+                expect(response.status).toEqual(204)
+                const rules = await db.provisioning.VoipPeeringInboundRule.findBy({id: In(createdIds)})
+                expect(rules.find(r => r.id == createdIds[0]).priority).toEqual(20)
+                expect(rules.find(r => r.id == createdIds[1]).priority).toEqual(10)
+            })
+            it('fail to adjust a rule to a used priority', async () => {
+                const response = await request(app.getHttpServer())
+                    .patch(`/api/peerings/groups/inbound-rules/${createdIds[0]}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send([{op: 'replace', path: '/priority', value: 10}])
+                expect(response.status).toEqual(422)
+                expect(pointers(response)).toEqual([['/priority', 'PEERING_INBOUND_RULE_PRIORITY_EXISTS']])
+            })
+            it('fail to adjust rules to the same priority in one request', async () => {
+                const response = await request(app.getHttpServer())
+                    .patch('/api/peerings/groups/inbound-rules')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send({
+                        [createdIds[0]]: [{op: 'replace', path: '/priority', value: 50}],
+                        [createdIds[1]]: [{op: 'replace', path: '/priority', value: 50}],
+                    })
+                expect(response.status).toEqual(422)
+                expect(pointers(response)).toEqual([
+                    [`/${createdIds[0]}/priority`, 'PEERING_INBOUND_RULE_PRIORITY_EXISTS'],
+                    [`/${createdIds[1]}/priority`, 'PEERING_INBOUND_RULE_PRIORITY_EXISTS'],
+                ])
+            })
+            it('fail to adjust a rule into a group where its priority is used', async () => {
+                const response = await request(app.getHttpServer())
+                    .patch('/api/peerings/groups/inbound-rules')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send({[otherGroupRuleId]: [{op: 'replace', path: '/group_id', value: groupId}]})
+                expect(response.status).toEqual(422)
+                expect(pointers(response)).toEqual([[`/${otherGroupRuleId}/priority`, 'PEERING_INBOUND_RULE_PRIORITY_EXISTS']])
+                const rule = await db.provisioning.VoipPeeringInboundRule.findOneByOrFail({id: otherGroupRuleId})
+                expect(rule.group_id).toEqual(otherGroupId)
+            })
+        })
+
+        describe('move', () => {
+            // rules of the group: createdIds[1] (priority 10), createdIds[0] (20), thirdRuleId (30)
+            const priorityOf = async (id: number): Promise<number> =>
+                (await db.provisioning.VoipPeeringInboundRule.findOneByOrFail({id})).priority
+
+            it('create a third rule', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/peerings/groups/inbound-rules')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send(rulePost(3))
+                expect(response.status).toEqual(201)
+                thirdRuleId = +response.body.data[0].id
+                createdIds.push(thirdRuleId)
+            })
+            it('move a rule up', async () => {
+                const response = await request(app.getHttpServer())
+                    .post(`/api/peerings/groups/inbound-rules/${createdIds[0]}/move`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({direction: 'up'})
+                expect(response.status).toEqual(200)
+                const rule: PeeringInboundRuleResponseDto = response.body
+                expect(rule.id).toEqual(createdIds[0])
+                expect(rule.priority).toEqual(10)
+                expect(rule.pattern).toEqual(`^${prefix}_1`)
+                expect(await priorityOf(createdIds[1])).toEqual(20)
+                expect(await priorityOf(thirdRuleId)).toEqual(30)
+                expect(await priorityOf(otherGroupRuleId)).toEqual(10)
+            })
+            it('journal both moved rules as update', async () => {
+                const journals = await db.billing.Journal.find({
+                    where: {username: creds.username, resource_id: In([createdIds[0], createdIds[1]]), timestamp: MoreThanOrEqual(startedAt)},
+                    order: {id: 'DESC'},
+                    take: 2,
+                })
+                expect(journals.map(j => [j.resource_id, j.operation, j.resource_name]).sort()).toEqual([
+                    [createdIds[0], 'update', 'peerings/groups/inbound-rules'],
+                    [createdIds[1], 'update', 'peerings/groups/inbound-rules'],
+                ].sort())
+                expect(journals[0].tx_id).toEqual(journals[1].tx_id)
+                const priorities = journals.map(j => [j.resource_id, (JSON.parse(String(j.content)) as PeeringInboundRuleResponseDto).priority])
+                expect(priorities.sort()).toEqual([[createdIds[0], 10], [createdIds[1], 20]].sort())
+            })
+            it('move a rule down in the group path', async () => {
+                const response = await request(app.getHttpServer())
+                    .post(`/api/peerings/groups/${groupId}/inbound-rules/${createdIds[0]}/move`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({direction: 'down'})
+                expect(response.status).toEqual(200)
+                expect(response.body.priority).toEqual(20)
+                expect(await priorityOf(createdIds[1])).toEqual(10)
+            })
+            it('fail to move the first rule up', async () => {
+                const response = await request(app.getHttpServer())
+                    .post(`/api/peerings/groups/inbound-rules/${createdIds[1]}/move`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({direction: 'up'})
+                expect(response.status).toEqual(422)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/direction', 'PEERING_INBOUND_RULE_CANNOT_MOVE']])
+            })
+            it('fail to move the last rule down', async () => {
+                const response = await request(app.getHttpServer())
+                    .post(`/api/peerings/groups/inbound-rules/${thirdRuleId}/move`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({direction: 'down'})
+                expect(response.status).toEqual(422)
+                expect(response.body.errorCode).toEqual('PEERING_INBOUND_RULE_CANNOT_MOVE')
+                expect(await priorityOf(thirdRuleId)).toEqual(30)
+            })
+            it('fail to move with an invalid direction', async () => {
+                const response = await request(app.getHttpServer())
+                    .post(`/api/peerings/groups/inbound-rules/${thirdRuleId}/move`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({direction: 'left'})
+                expect(response.status).toEqual(422)
+                expect(response.body.errors.map((e: ErrorEntry) => e.pointer)).toEqual(['/direction'])
+            })
+            it('fail to move a non-existing rule', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/peerings/groups/inbound-rules/999911111122/move')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({direction: 'up'})
+                expect(response.status).toEqual(404)
+            })
+            it('fail to move a rule of another group than the path group', async () => {
+                const response = await request(app.getHttpServer())
+                    .post(`/api/peerings/groups/${otherGroupId}/inbound-rules/${createdIds[0]}/move`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({direction: 'up'})
+                expect(response.status).toEqual(404)
+                expect(await priorityOf(createdIds[0])).toEqual(20)
+            })
+            it('fail to move a rule past a tied rule onto a used priority', async () => {
+                // legacy data: thirdRuleId ties with createdIds[0] (20), priority 19 is used
+                await db.provisioning.VoipPeeringInboundRule.update(thirdRuleId, {priority: 20})
+                await db.provisioning.VoipPeeringInboundRule.update(createdIds[1], {priority: 19})
+                const response = await request(app.getHttpServer())
+                    .post(`/api/peerings/groups/inbound-rules/${thirdRuleId}/move`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({direction: 'up'})
+                expect(response.status).toEqual(422)
+                expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/direction', 'PEERING_INBOUND_RULE_PRIORITY_EXISTS']])
+                expect(await priorityOf(thirdRuleId)).toEqual(20)
+            })
+            it('move a rule up past a tied rule', async () => {
+                await db.provisioning.VoipPeeringInboundRule.update(createdIds[1], {priority: 10})
+                const response = await request(app.getHttpServer())
+                    .post(`/api/peerings/groups/inbound-rules/${thirdRuleId}/move`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({direction: 'up'})
+                expect(response.status).toEqual(200)
+                expect(response.body.priority).toEqual(19)
+                expect(await priorityOf(createdIds[0])).toEqual(20)
+            })
+            it('move a rule down past a tied rule', async () => {
+                // createdIds[1] ties with thirdRuleId (19) and has the lower id, so it comes first
+                await db.provisioning.VoipPeeringInboundRule.update(createdIds[1], {priority: 19})
+                await db.provisioning.VoipPeeringInboundRule.update(createdIds[0], {priority: 30})
+                const response = await request(app.getHttpServer())
+                    .post(`/api/peerings/groups/inbound-rules/${createdIds[1]}/move`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({direction: 'down'})
+                expect(response.status).toEqual(200)
+                expect(response.body.priority).toEqual(20)
+                expect(await priorityOf(thirdRuleId)).toEqual(19)
             })
         })
     })

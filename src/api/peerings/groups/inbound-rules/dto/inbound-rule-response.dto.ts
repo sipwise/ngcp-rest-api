@@ -25,7 +25,7 @@ export class PeeringInboundRuleResponseDto extends ResponseDto {
     @ApiProperty({description: 'Reason phrase of the rejection; used with reject_code'})
         reject_reason: string
 
-    @ApiProperty({description: 'Priority of the rule; lower values are checked first'})
+    @ApiProperty({description: 'Priority of the rule, unique within the group; lower values are checked first'})
         priority: number
 
     @ApiProperty({description: 'Rule is enabled'})

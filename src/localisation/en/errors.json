@@ -415,5 +415,11 @@
   },
   "INVALID_TIMEZONE_NAME": {
     "message": "must be an IANA time zone name (e.g. Europe/Vienna) or null"
+  },
+  "PEERING_INBOUND_RULE_PRIORITY_EXISTS": {
+    "message": "Priority '{priority}' is already used by another inbound rule of the peering group"
+  },
+  "PEERING_INBOUND_RULE_CANNOT_MOVE": {
+    "message": "Inbound rule cannot be moved further {direction} in the peering group"
   }
 }

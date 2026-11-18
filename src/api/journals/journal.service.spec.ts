@@ -184,6 +184,14 @@ describe('JournalService', () => {
             expect(journals.slice(-2).map(j => [j.resource_id, j.content])).toStrictEqual([[5, '{"a":1}'], [6, '{"a":2}']])
         })
 
+        it('takes operation and resource name from the options', async () => {
+            sr.req = makeReq('POST')
+            await service.writeJournals(sr, [{id: 4, data: {a: 1}}], {operation: 'update', resourceName: 'peerings/groups/inbound-rules'})
+            const j = await lastJournal()
+            expect(j.operation).toEqual('update')
+            expect(j.resource_name).toEqual('peerings/groups/inbound-rules')
+        })
+
         it('defaults the content format to json and sets the credentials header', async () => {
             sr.req = makeReq('POST')
             sr.headers['content-type'] = 'text/plain'

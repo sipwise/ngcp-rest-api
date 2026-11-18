@@ -20,6 +20,11 @@ const operation = {
     'DELETE': 'delete',
 }
 
+export interface JournalOptions {
+    operation?: 'create' | 'update' | 'delete'
+    resourceName?: string
+}
+
 /**
  * Lookup-table for Content-Type
  */
@@ -73,8 +78,9 @@ export class JournalService {
 
     /**
      * One journal entry per resource of the request, `data` is its content
+     * @param options operation and resource name for routes whose method and path don't name them
      */
-    public async writeJournals(sr: ServiceRequest, entries: {id: number, data: unknown}[]): Promise<boolean> {
+    public async writeJournals(sr: ServiceRequest, entries: {id: number, data: unknown}[], options: JournalOptions = {}): Promise<boolean> {
         // Set content format and default to json
         // TODO: Check if this even worked before as the 'content-type' was wrongly started with a capital letter
         let cf = contentFormat[sr.headers['content-type']]
@@ -84,13 +90,13 @@ export class JournalService {
         }
 
         // skip journaling if request method is not POST, PUT or DELETE
-        const op = operation[sr.req.method]
+        const op = options.operation ?? operation[sr.req.method]
 
         if (op === undefined) {
             return false
         }
 
-        const resourceName = this.resourceName(sr)
+        const resourceName = options.resourceName ?? this.resourceName(sr)
 
         const ctx = Context.get(sr.req)
 

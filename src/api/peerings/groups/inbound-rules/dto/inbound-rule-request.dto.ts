@@ -36,7 +36,7 @@ export class PeeringInboundRuleRequestDto implements RequestDto {
 
     @IsInt()
     @IsPositive()
-    @ApiProperty({description: 'Priority of the rule; lower values are checked first'})
+    @ApiProperty({description: 'Priority of the rule, unique within the group; lower values are checked first'})
         priority: number
 
     @IsBoolean()

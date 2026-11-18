@@ -9,7 +9,7 @@ export class PeeringInboundRuleSearchDto {
         field: string
     @ApiPropertyOptional({description: 'PCRE regex matched against the field, e.g. `^sip:431` for a full URI'})
         pattern: string
-    @ApiPropertyOptional({description: 'Priority of the rule; lower values are checked first'})
+    @ApiPropertyOptional({description: 'Priority of the rule, unique within the group; lower values are checked first'})
         priority: number
     @ApiPropertyOptional({description: 'SIP code (400-699) to reject calls from the group servers that do not match the pattern; null = no rejection'})
         reject_code: number

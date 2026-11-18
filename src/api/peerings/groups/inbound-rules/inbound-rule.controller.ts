@@ -1,7 +1,8 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
+import {Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
+import {PeeringInboundRuleMoveRequestDto} from './dto/inbound-rule-move-request.dto'
 import {PeeringInboundRuleRequestDto} from './dto/inbound-rule-request.dto'
 import {PeeringInboundRuleResponseDto} from './dto/inbound-rule-response.dto'
 import {PeeringInboundRuleSearchDto} from './dto/inbound-rule-search.dto'
@@ -220,6 +221,42 @@ export class PeeringInboundRuleController extends CrudController<PeeringInboundR
         const updates = await patchManyToEntities<internal.VoipPeeringInboundRule, PeeringInboundRuleRequestDto>(patches, id => this.ruleService.read(id, sr), PeeringInboundRuleRequestDto)
 
         return await this.ruleService.update(updates, sr)
+    }
+
+    @Post('{:groupId/}inbound-rules/:id/move')
+    @ApiOperation({summary: 'Move a peering group inbound rule up or down'})
+    @ApiParam({name: 'groupId', required: false, type: Number})
+    @ApiOkResponse({
+        type: PeeringInboundRuleResponseDto,
+    })
+    @HttpCode(HttpStatus.OK)
+    @Transactional()
+    async move(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: PeeringInboundRuleMoveRequestDto,
+        @Req() req: Request,
+        @Param('groupId', new ParseIntIdPipe({allowUndefined: true})) _groupId: number,
+    ): Promise<PeeringInboundRuleResponseDto> {
+        this.log.debug({
+            message: 'move peering rule by id',
+            id: id,
+            func: this.move.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const changed = await this.ruleService.move(id, dto.direction, sr)
+        const ruleUrl = req.url.replace(/\/move(?=\?|$)/, '')
+        const response = changed.map(rule => new PeeringInboundRuleResponseDto(
+            rule,
+            {url: ruleUrl, containsResourceId: true},
+        ))
+        await this.journalService.writeJournals(
+            sr,
+            response.map(entry => ({id: entry.id, data: entry})),
+            {operation: 'update', resourceName: 'peerings/groups/inbound-rules'},
+        )
+        return response.find(entry => entry.id == id)
     }
 
     @Delete('{:groupId/}inbound-rules{/:id}')

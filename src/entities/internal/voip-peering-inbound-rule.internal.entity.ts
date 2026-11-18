@@ -13,6 +13,11 @@ export enum VoipPeeringInboundRuleField {
     PaiUri = 'pai_uri'
 }
 
+export enum VoipPeeringInboundRuleMoveDirection {
+    Up = 'up',
+    Down = 'down'
+}
+
 export class VoipPeeringInboundRule {
     id: number
     groupId: number
