@@ -188,17 +188,19 @@ export class TransformInterceptor implements NestInterceptor {
             }
             resource = halson('')
                 .addLink('self', req.originalUrl)
-            data.map(async (row) => {
-                const link = urlPath + (row.id ? '/' + row.id : '')
-                if (lazyField === undefined) {
-                    if (data.length == 1) {
-                        await resource.addLink(`ngcp:${resName}`, [{href: `${link}`}])
-                    } else {
-                        await resource.addLink(`ngcp:${resName}`, `${link}`)
-                    }
+            for (const row of data) {
+                if (lazyField !== undefined || !this.hasId(row)) {
+                    resource.addEmbed(`ngcp:${resName}`, [row])
+                    continue
                 }
-                await resource.addEmbed(`ngcp:${resName}`, [row])
-            })
+                const link = `${urlPath}/${row.id}`
+                if (data.length == 1) {
+                    resource.addLink(`ngcp:${resName}`, [{href: link}])
+                } else {
+                    resource.addLink(`ngcp:${resName}`, link)
+                }
+                resource.addEmbed(`ngcp:${resName}`, [halson(row).addLink('self', link)])
+            }
             resource.addLink('collection', urlPath)
             resource['total_count'] = totalCount
 
@@ -210,17 +212,16 @@ export class TransformInterceptor implements NestInterceptor {
                 resource.addLink('next', this.pageLink(urlPath, urlQuery, +page + 1, rows))
             }
             return resource
-        } else if (data && 'id' in data) {
-            const collectionResName = this.removeResourceId(path, url)
-            resource = halson(data)
-                .addLink('self', url)
-                .addLink('collection', collectionResName)
-        } else {
-            resource = halson(data)
-                .addLink('self', url)
-                .addLink('collection', url)
         }
+
+        resource = halson(data).addLink('self', url)
+        if (this.hasId(data))
+            resource.addLink('collection', this.removeResourceId(path, url))
         return resource
+    }
+
+    private hasId(row: any): boolean {
+        return row?.id !== undefined && row.id !== null
     }
 
     /**
@@ -290,21 +291,17 @@ export class TransformInterceptor implements NestInterceptor {
         return urlArray.join('/')
     }
 
+    /**
+     * Rel name from the route path without the prefix, optional-group braces and parameters:
+     * `/api/v2/header-manipulations/sets/{:setId/}rules{/:ruleId}/conditions` ->
+     * `header-manipulations/sets/rules/conditions`
+     */
     private getResourceName(path: string): string {
-
-        const re = /^\/api\/(v2\/)?(.+)?$/
-        const subPath: string = path.match(re)[2]
-
-        const pathArray = subPath.split('/')
-
-        const resNameArray = []
-
-        pathArray.forEach((_e, i) => {
-            if (!(pathArray[i].startsWith(':')))
-                resNameArray.push(pathArray[i])
-        })
-
-        return resNameArray.join('/')
+        const subPath = path.replace(/^\/api\/(v2\/)?/, '').replace(/[{}]/g, '')
+        return subPath
+            .split('/')
+            .filter(segment => segment !== '' && !segment.startsWith(':'))
+            .join('/')
     }
 
 }
