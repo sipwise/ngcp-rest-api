@@ -15,7 +15,7 @@ import rust from 'highlight.js/lib/languages/rust'
 import typescript from 'highlight.js/lib/languages/typescript'
 import MarkdownIt from 'markdown-it'
 
-import {SwaggerLanguage, readLocalisationFile} from '~/helpers/swagger-i18n.helper'
+import {SWAGGER_DEFAULT_LANGUAGE, SwaggerLanguage, readLocalisationFile} from '~/helpers/swagger-i18n.helper'
 
 // the chapters in localisation/<lang>/guide, in order, with their tabs (also the address, #concepts) and tab label strings
 export const GUIDE_CHAPTERS = [
@@ -104,6 +104,18 @@ export function guideCodeBlocks(guide: string): {lang: string, label: string, ht
                 : escapeHtml(token.content)
             return {lang, label, html}
         })
+}
+
+const slug = (text: string): string => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+/**
+ * Returns the anchors of the sections (h3) of a chapter, from the english titles so that the address of a
+ * section is the same in every language (the translations keep the sections and their order)
+ */
+export function guideSections(file: string): string[] {
+    const tokens = new MarkdownIt().parse(readLocalisationFile(SWAGGER_DEFAULT_LANGUAGE, `guide/${file}.md`), {})
+    return tokens
+        .flatMap((token, i) => token.type == 'heading_open' && token.tag == 'h3' ? [slug(tokens[i + 1].content)] : [])
 }
 
 // swagger ui renders the description as markdown; the chapters (h2) become collapsible sections and
@@ -222,11 +234,29 @@ export const swaggerGuideJs = `
 
     const slug = text => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
-    // the tab of the address, #concepts, #authentication or #usage (#/usage after swagger's deep linking rewrote it),
+    // the address without # (and the / of swagger's deep linking, which rewrites #usage to #/usage)
+    const hash = () => window.location.hash.replace(/^#\\/?/, '')
+
+    // the section (h3) of the address, #concepts-journaling, null otherwise
+    function sectionFromHash() {
+        const heading = hash() && document.getElementById(hash())
+        return heading && heading.matches('.guide-panel > h3') ? heading : null
+    }
+
+    // the tab of the address, #concepts, #authentication or #usage, or of its section,
     // anything else (swagger's #/tag/operation) is the API
     function tabFromHash() {
-        const tab = window.location.hash.replace(/^#\\/?/, '')
-        return document.querySelector('.swagger-ui .guide-panel[data-tab="' + tab + '"]') ? tab : 'api'
+        const section = sectionFromHash()
+        if (section)
+            return section.parentElement.dataset.tab
+        return document.querySelector('.swagger-ui .guide-panel[data-tab="' + hash() + '"]') ? hash() : 'api'
+    }
+
+    function showHash(behavior) {
+        showTab(tabFromHash())
+        const section = sectionFromHash()
+        if (section)
+            section.scrollIntoView({behavior, block: 'start'})
     }
 
     function showTab(tab) {
@@ -275,6 +305,8 @@ export const swaggerGuideJs = `
                 panel.append(title.nextSibling)
             title.remove()
             const sections = [...panel.querySelectorAll(':scope > h3')]
+            sections.forEach((heading, i) =>
+                heading.id = chapter.tab + '-' + ((chapter.sections || [])[i] || slug(heading.textContent)))
             if (sections.length > 1) {
                 const links = document.createElement('div')
                 links.className = 'guide-sections'
@@ -282,7 +314,10 @@ export const swaggerGuideJs = `
                     const link = document.createElement('button')
                     link.type = 'button'
                     link.textContent = heading.textContent
-                    link.addEventListener('click', () => heading.scrollIntoView({behavior: 'smooth', block: 'start'}))
+                    link.addEventListener('click', () => {
+                        window.history.pushState(null, '', '#' + heading.id)
+                        heading.scrollIntoView({behavior: 'smooth', block: 'start'})
+                    })
                     links.append(link)
                 }
                 panel.prepend(links)
@@ -298,8 +333,8 @@ export const swaggerGuideJs = `
         else
             anchor.after(nav)
         anchor.after(panels)
-        window.addEventListener('popstate', () => showTab(tabFromHash()))
-        window.addEventListener('hashchange', () => showTab(tabFromHash()))
+        window.addEventListener('popstate', () => showHash('instant'))
+        window.addEventListener('hashchange', () => showHash('instant'))
         showTab(tabFromHash())
     }
 
@@ -332,6 +367,12 @@ export const swaggerGuideJs = `
             pre.append(copyButton(() => pre.querySelector('code').textContent)))
         chapterTabs(markdown)
         refresh()
+        // a shared section address: once scrolled, the title bar shrinks and the sticky heights are measured
+        // again, the fonts can still change the height of the guide above it; scroll again when they settled
+        if (sectionFromHash()) {
+            showHash('instant')
+            document.fonts.ready.then(() => setTimeout(() => showHash('instant'), 300))
+        }
     }
 
     new MutationObserver(() => {

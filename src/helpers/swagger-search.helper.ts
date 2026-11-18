@@ -199,6 +199,8 @@ export const swaggerSearchJs = `
             openTag(item.tag, scrollTo)
         else {
             selectTab(item.tab)
+            if (item.heading)
+                window.history.replaceState(null, '', '#' + item.heading.id)
             const panel = document.querySelector('.swagger-ui .guide-panel[data-tab="' + item.tab + '"]')
             scrollTo(item.heading || panel)
             highlight(item.heading ? [item.heading, ...item.nodes] : item.nodes, terms)

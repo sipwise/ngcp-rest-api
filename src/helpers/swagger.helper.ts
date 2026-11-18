@@ -8,7 +8,7 @@ import {SearchLogic} from '~/helpers/search-logic.helper'
 import {SIPWISE_LOGO_SVG} from '~/helpers/sipwise-logo'
 import {swaggerAuthCss, swaggerAuthJs} from '~/helpers/swagger-auth.helper'
 import {addExpandDocumentation} from '~/helpers/swagger-expand.helper'
-import {GUIDE_CHAPTERS, guideCodeBlocks, readSwaggerGuide, swaggerGuideCss, swaggerGuideJs} from '~/helpers/swagger-guide.helper'
+import {GUIDE_CHAPTERS, guideCodeBlocks, guideSections, readSwaggerGuide, swaggerGuideCss, swaggerGuideJs} from '~/helpers/swagger-guide.helper'
 import {
     SWAGGER_DEFAULT_LANGUAGE,
     SWAGGER_LANGUAGES,
@@ -524,7 +524,11 @@ function localisedDocuments(document: OpenAPIObject, versions: Versions, build: 
                     swaggerUi,
                     versions,
                     build,
-                    chapters: GUIDE_CHAPTERS.map(chapter => ({tab: chapter.tab, label: strings[chapter.label]})),
+                    chapters: GUIDE_CHAPTERS.map(chapter => ({
+                        tab: chapter.tab,
+                        label: strings[chapter.label],
+                        sections: guideSections(chapter.file),
+                    })),
                     blocks: guideCodeBlocks(doc.info.description ?? ''),
                 }
                 pages.set(lang, {...doc, info: {...doc.info, [PAGE_DATA]: data} as OpenAPIObject['info']})
