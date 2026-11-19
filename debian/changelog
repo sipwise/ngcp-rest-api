@@ -1,3 +1,11 @@
+ngcp-rest-api (26.0.1.20+0~mr26.0.1.20) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [49674b3] MT#66788 task agent helper: finish on rejected/error
+  * [a8e8995] MT#66788 fix header manipulation ruleset invalidation
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Thu, 19 Nov 2026 15:13:31 +0100
+
 ngcp-rest-api (26.0.1.19+0~mr26.0.1.19) unstable; urgency=medium
 
   [ Kirill Solomko ]
