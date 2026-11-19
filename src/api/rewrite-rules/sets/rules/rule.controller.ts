@@ -1,7 +1,8 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
+import {Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
+import {RewriteRuleMoveRequestDto} from './dto/rule-move-request.dto'
 import {RewriteRuleRequestDto} from './dto/rule-request.dto'
 import {RewriteRuleService} from './rule.service'
 
@@ -210,6 +211,38 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
         const updates = await patchManyToEntities<internal.RewriteRule, RewriteRuleRequestDto>(patches, id => this.ruleService.read(id, sr), RewriteRuleRequestDto)
 
         return await this.ruleService.update(updates, sr)
+    }
+
+    @Post('{:setId/}rules/:id/move')
+    @ApiOperation({summary: 'Move a rewrite rule up or down'})
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiOkResponse({
+        type: RewriteRuleResponseDto,
+    })
+    @HttpCode(HttpStatus.OK)
+    @Transactional()
+    async move(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: RewriteRuleMoveRequestDto,
+        @Req() req: Request,
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
+    ): Promise<RewriteRuleResponseDto> {
+        this.log.debug({
+            message: 'move rewrite rule by id',
+            id: id,
+            func: this.move.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const changed = await this.ruleService.move(id, dto.direction, sr)
+        const response = changed.map(rule => new RewriteRuleResponseDto(rule))
+        await this.journalService.writeJournals(
+            sr,
+            response.map(entry => ({id: entry.id, data: entry})),
+            {operation: 'update', resourceName: 'rewrite-rules/sets/rules'},
+        )
+        return response.find(entry => entry.id == id)
     }
 
     @Delete('{:setId/}rules{/:id}')

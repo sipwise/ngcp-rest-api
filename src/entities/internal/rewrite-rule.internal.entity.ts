@@ -9,6 +9,11 @@ export enum RewriteRuleField {
     Callee = 'callee',
 }
 
+export enum RewriteRuleMoveDirection {
+    Up = 'up',
+    Down = 'down',
+}
+
 export class RewriteRule {
     id!: number
     setId!: number

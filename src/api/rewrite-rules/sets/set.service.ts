@@ -9,7 +9,7 @@ import {AppService} from '~/app.service'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {throwMissingIds} from '~/helpers/errors.helper'
-import {runOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
+import {runOnceOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {TaskAgentHelper} from '~/helpers/task-agent.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -31,9 +31,6 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
     async create(entities: internal.RewriteRuleSet[], sr: ServiceRequest): Promise<internal.RewriteRuleSet[]> {
         this.assignUserResellerId(entities, sr)
         const created = await this.ruleSetRepo.create(entities)
-
-        this.reloadDialPlanAfterCommit(sr)
-
         return await this.ruleSetRepo.readWhereInIds(created, sr)
     }
 
@@ -69,7 +66,7 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
         return await this.ruleSetRepo.update(updates, sr)
     }
 
-    async updateWithRuleRecreation(updates: Dictionary<internal.RewriteRuleSet>, rules: internal.RewriteRule[], sr: ServiceRequest): Promise<number[]> {
+    async updateAndCleanSets(updates: Dictionary<internal.RewriteRuleSet>, sr: ServiceRequest): Promise<number[]> {
         const ids = Object.keys(updates).map(id => parseInt(id))
         let sets: internal.RewriteRuleSet[]
         if (sr.user.reseller_id_required) {
@@ -82,13 +79,9 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
 
         this.assignUserResellerId(Object.values(updates), sr)
         const updatedIds = await this.ruleSetRepo.update(updates, sr)
-        await this.ruleSetRepo.cleanSets(updatedIds, sr)
-        if (rules && rules.length > 0) {
-            await this.ruleSetRepo.createRules(rules)
+        if (await this.ruleSetRepo.cleanSets(updatedIds, sr))
             this.reloadDialPlanAfterCommit(sr)
-        }
         return updatedIds
-
     }
 
     async delete(ids: number[], sr: ServiceRequest): Promise<number[]> {
@@ -102,30 +95,18 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
 
         throwMissingIds(sr, ids, sets.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
+        // a set without rules has no dialplan to reload
+        if (await this.ruleSetRepo.hasRules(ids))
+            this.reloadDialPlanAfterCommit(sr)
         const deletedIds = await this.ruleSetRepo.delete(ids, sr)
 
-        this.reloadDialPlanAfterCommit(sr)
-
         return deletedIds
-    }
-
-    async cleanSets(ids: number[], sr: ServiceRequest): Promise<void> {
-        let sets: internal.RewriteRuleSet[]
-        if (sr.user.reseller_id_required) {
-            sets = await this.ruleSetRepo.readWhereInIds(ids, sr, {resellerId: sr.user.reseller_id})
-        } else {
-            sets = await this.ruleSetRepo.readWhereInIds(ids, sr)
-        }
-
-        throwMissingIds(sr, ids, sets.map(entry => entry.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
-
-        await this.ruleSetRepo.cleanSets(ids, sr)
     }
 
     // TODO: required for mocking, as esbuild-jest has issues with jest mock
     // patterns and will be reviewed after packages upgrade
     reloadDialPlanAfterCommit(sr: ServiceRequest): void {
-        runOnTransactionCommit(async () => await this.ruleSetRedisRepo.reloadDialPlan(sr))
+        runOnceOnTransactionCommit('rewrite-rules-dialplan-reload', async () => await this.ruleSetRedisRepo.reloadDialPlan(sr))
     }
 
     private assignUserResellerId(entities: internal.RewriteRuleSet[], sr: ServiceRequest): void {

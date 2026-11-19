@@ -1,7 +1,7 @@
 import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
-import {MoreThanOrEqual} from 'typeorm'
+import {In, MoreThanOrEqual} from 'typeorm'
 
 import {RewriteRuleResponseDto} from './dto/rule-response.dto'
 import {RewriteRuleModule} from './rule.module'
@@ -14,6 +14,7 @@ import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {RewriteRuleDirection, RewriteRuleField} from '~/entities/internal/rewrite-rule.internal.entity'
+import {ErrorEntry} from '~/helpers/errors.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 
 type RuleSetPost = {
@@ -354,6 +355,312 @@ describe('Rewrite Rule', () => {
                     .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(404)
+            })
+        })
+
+        describe('move', () => {
+            let moveSetId: number
+            let otherSetId: number
+            // in/callee rules ruleA (10), ruleB (20) with identical patterns, ruleC (30);
+            // other direction ruleOut (15), other field ruleCaller (25)
+            let ruleA: number
+            let ruleB: number
+            let ruleC: number
+            let ruleOut: number
+            let ruleCaller: number
+
+            const priorityOf = async (id: number): Promise<number> =>
+                (await db.provisioning.VoipRewriteRule.findOneByOrFail({id})).priority
+
+            const dialplanPriorities = async (): Promise<number[]> => {
+                const set = await db.provisioning.VoipRewriteRuleSet.findOneByOrFail({id: moveSetId})
+                const rows: {pr: number}[] = await db.provisioning.VoipRewriteRule.query(
+                    'SELECT pr FROM kamailio.dialplan WHERE dpid = ?',
+                    [set.callee_in_dpid],
+                )
+                return rows.map(row => +row.pr).sort((a, b) => a - b)
+            }
+
+            const postMove = (path: string, direction: string): request.Test =>
+                request(app.getHttpServer())
+                    .post(`/api/rewrite-rules/sets/${path}/move`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({direction})
+
+            const createSet = async (name: string): Promise<number> => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send({name: `${name}${suffix}`, reseller_id: 1, description: `${name} description`})
+                expect(response.status).toEqual(201)
+                createdSetIds.push(+response.body.data[0].id)
+                return +response.body.data[0].id
+            }
+
+            const createRule = async (
+                priority: number,
+                match: string,
+                direction = RewriteRuleDirection.In,
+                field = RewriteRuleField.Callee,
+            ): Promise<number> => {
+                const rule: RulePost = {
+                    set_id: moveSetId,
+                    description: `move rule ${priority}`,
+                    priority,
+                    direction,
+                    replace_pattern: 'foo',
+                    match_pattern: match,
+                    field,
+                    enabled: true,
+                }
+                const response = await request(app.getHttpServer())
+                    .post('/api/rewrite-rules/sets/rules')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send(rule)
+                expect(response.status).toEqual(201)
+                createdRuleIds.push(+response.body.data[0].id)
+                return +response.body.data[0].id
+            }
+
+            it('create fixtures', async () => {
+                moveSetId = await createSet('test_move_set')
+                otherSetId = await createSet('test_move_other_set')
+                ruleA = await createRule(10, 'same')
+                ruleB = await createRule(20, 'same')
+                ruleC = await createRule(30, 'other')
+                ruleOut = await createRule(15, 'out', RewriteRuleDirection.Out)
+                ruleCaller = await createRule(25, 'caller', RewriteRuleDirection.In, RewriteRuleField.Caller)
+                expect(await dialplanPriorities()).toEqual([10, 20, 30])
+            })
+            it('move a rule up', async () => {
+                const response = await postMove(`rules/${ruleB}`, 'up')
+                expect(response.status).toEqual(200)
+                const rule: RewriteRuleResponseDto = response.body
+                expect(rule.id).toEqual(ruleB)
+                expect(rule.priority).toEqual(10)
+                expect(await priorityOf(ruleA)).toEqual(20)
+                expect(await priorityOf(ruleC)).toEqual(30)
+                expect(await priorityOf(ruleOut)).toEqual(15)
+                expect(await priorityOf(ruleCaller)).toEqual(25)
+            })
+            it('keeps one dialplan row per priority for rules with identical patterns', async () => {
+                expect(await dialplanPriorities()).toEqual([10, 20, 30])
+            })
+            it('journal both moved rules as update', async () => {
+                const journals = await db.billing.Journal.find({
+                    where: {username: creds.username, resource_id: In([ruleA, ruleB]), timestamp: MoreThanOrEqual(startedAt)},
+                    order: {id: 'DESC'},
+                    take: 2,
+                })
+                expect(journals.map(j => [j.resource_id, j.operation, j.resource_name]).sort()).toEqual([
+                    [ruleA, 'update', 'rewrite-rules/sets/rules'],
+                    [ruleB, 'update', 'rewrite-rules/sets/rules'],
+                ].sort())
+                expect(journals[0].tx_id).toEqual(journals[1].tx_id)
+                const priorities = journals.map(j => [j.resource_id, (JSON.parse(String(j.content)) as RewriteRuleResponseDto).priority])
+                expect(priorities.sort()).toEqual([[ruleA, 20], [ruleB, 10]].sort())
+            })
+            it('move a rule down in the set path', async () => {
+                const response = await postMove(`${moveSetId}/rules/${ruleA}`, 'down')
+                expect(response.status).toEqual(200)
+                expect(response.body.priority).toEqual(30)
+                expect(await priorityOf(ruleC)).toEqual(20)
+                expect(await dialplanPriorities()).toEqual([10, 20, 30])
+            })
+            it('fail to move the first rule up', async () => {
+                const response = await postMove(`rules/${ruleB}`, 'up')
+                expect(response.status).toEqual(422)
+                expect((response.body.errors as ErrorEntry[]).map(e => [e.pointer, e.code])).toEqual([['/direction', 'REWRITE_RULE_CANNOT_MOVE']])
+            })
+            it('fail to move the last rule down', async () => {
+                const response = await postMove(`rules/${ruleA}`, 'down')
+                expect(response.status).toEqual(422)
+                expect(response.body.errorCode).toEqual('REWRITE_RULE_CANNOT_MOVE')
+                expect(await priorityOf(ruleA)).toEqual(30)
+            })
+            it('fail to move with an invalid direction', async () => {
+                const response = await postMove(`rules/${ruleA}`, 'left')
+                expect(response.status).toEqual(422)
+                expect((response.body.errors as ErrorEntry[]).map(e => e.pointer)).toEqual(['/direction'])
+            })
+            it('fail to move a non-existing rule', async () => {
+                const response = await postMove('rules/999911111122', 'up')
+                expect(response.status).toEqual(404)
+            })
+            it('fail to move a rule of another set than the path set', async () => {
+                const response = await postMove(`${otherSetId}/rules/${ruleA}`, 'up')
+                expect(response.status).toEqual(404)
+                expect(await priorityOf(ruleA)).toEqual(30)
+            })
+            it('fail to move a rule past a tied rule onto a used priority', async () => {
+                // legacy data: ruleC ties with ruleA (20), priority 19 is used
+                await db.provisioning.VoipRewriteRule.update(ruleA, {priority: 20})
+                await db.provisioning.VoipRewriteRule.update(ruleB, {priority: 19})
+                const response = await postMove(`rules/${ruleC}`, 'up')
+                expect(response.status).toEqual(422)
+                expect((response.body.errors as ErrorEntry[]).map(e => [e.pointer, e.code])).toEqual([['/direction', 'REWRITE_RULE_PRIORITY_EXISTS']])
+                expect(await priorityOf(ruleC)).toEqual(20)
+            })
+            it('move a rule up past a tied rule', async () => {
+                await db.provisioning.VoipRewriteRule.update(ruleB, {priority: 10})
+                const response = await postMove(`rules/${ruleC}`, 'up')
+                expect(response.status).toEqual(200)
+                expect(response.body.priority).toEqual(19)
+                expect(await priorityOf(ruleA)).toEqual(20)
+            })
+            it('move a rule down past a tied rule', async () => {
+                // ruleA ties with ruleC (20) and has the lower id, so it comes first
+                await db.provisioning.VoipRewriteRule.update(ruleC, {priority: 20})
+                const response = await postMove(`rules/${ruleA}`, 'down')
+                expect(response.status).toEqual(200)
+                expect(response.body.priority).toEqual(21)
+                expect(await priorityOf(ruleC)).toEqual(20)
+            })
+        })
+
+        describe('unique priorities', () => {
+            let uniqSetId: number
+            let autoSetId: number
+            // in/callee rules ruleA (10), ruleB (20) of uniqSetId
+            let ruleA: number
+            let ruleB: number
+            let ruleOut: number
+
+            const body = (setId: number, priority?: number, extra: Partial<RulePost> = {}): Partial<RulePost> => ({
+                set_id: setId,
+                description: 'uniq rule',
+                direction: RewriteRuleDirection.In,
+                replace_pattern: 'foo',
+                match_pattern: 'bar',
+                field: RewriteRuleField.Callee,
+                enabled: true,
+                ...(priority === undefined ? {} : {priority}),
+                ...extra,
+            })
+
+            const send = (method: 'post' | 'put' | 'patch', path: string, payload: unknown): request.Test =>
+                request(app.getHttpServer())[method](`/api/rewrite-rules/sets/rules${path}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', method == 'patch' ? 'application/json-patch+json' : 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send(payload as object)
+
+            const createRules = async (payload: Partial<RulePost>[]): Promise<number[]> => {
+                const response = await send('post', '', payload)
+                expect(response.status).toEqual(201)
+                const ids = (response.body.data as {id: number}[]).map(rule => +rule.id)
+                createdRuleIds.push(...ids)
+                return ids
+            }
+
+            const priorityOf = async (id: number): Promise<number> =>
+                (await db.provisioning.VoipRewriteRule.findOneByOrFail({id})).priority
+
+            const errorsOf = (response: request.Response): [string, string][] =>
+                (response.body.errors as ErrorEntry[]).map(e => [e.pointer, e.code])
+
+            const createSet = async (name: string): Promise<number> => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send({name: `${name}${suffix}`, reseller_id: 1, description: `${name} description`})
+                expect(response.status).toEqual(201)
+                createdSetIds.push(+response.body.data[0].id)
+                return +response.body.data[0].id
+            }
+
+            it('create fixtures', async () => {
+                uniqSetId = await createSet('test_uniq_set')
+                autoSetId = await createSet('test_uniq_auto_set')
+                const ids = await createRules([body(uniqSetId, 10), body(uniqSetId, 20)])
+                ruleA = ids[0]
+                ruleB = ids[1]
+            })
+            it('fail to create a rule with a used priority', async () => {
+                const response = await send('post', '', body(uniqSetId, 10))
+                expect(response.status).toEqual(422)
+                expect(errorsOf(response)).toEqual([['/priority', 'REWRITE_RULE_PRIORITY_EXISTS']])
+            })
+            it('fail to create rules with a used priority or equal priorities in a bulk', async () => {
+                const response = await send('post', '', [body(uniqSetId, 30), body(uniqSetId, 30), body(uniqSetId, 20)])
+                expect(response.status).toEqual(422)
+                expect(errorsOf(response)).toEqual([
+                    ['/0/priority', 'REWRITE_RULE_PRIORITY_EXISTS'],
+                    ['/1/priority', 'REWRITE_RULE_PRIORITY_EXISTS'],
+                    ['/2/priority', 'REWRITE_RULE_PRIORITY_EXISTS'],
+                ])
+                expect((await db.provisioning.VoipRewriteRule.countBy({set_id: uniqSetId}))).toEqual(2)
+            })
+            it('create rules with the used priority in another direction, field or set', async () => {
+                const ids = await createRules([
+                    body(uniqSetId, 10, {direction: RewriteRuleDirection.Out}),
+                    body(uniqSetId, 10, {field: RewriteRuleField.Caller}),
+                    body(autoSetId, 10),
+                ])
+                expect(ids).toHaveLength(3)
+                ruleOut = ids[0]
+            })
+            it('create rules without priority with ascending priorities after the highest of the set and the request', async () => {
+                const ids = await createRules([body(autoSetId), body(autoSetId), body(uniqSetId), body(autoSetId, 50), body(autoSetId)])
+                expect(await Promise.all(ids.map(priorityOf))).toEqual([51, 52, 21, 50, 53])
+            })
+            it('fail to update a rule to a used priority with PUT', async () => {
+                const response = await send('put', `/${ruleB}`, body(uniqSetId, 10))
+                expect(response.status).toEqual(422)
+                expect(errorsOf(response)).toEqual([['/priority', 'REWRITE_RULE_PRIORITY_EXISTS']])
+                expect(await priorityOf(ruleB)).toEqual(20)
+            })
+            it('fail to update a rule to a used priority with PATCH', async () => {
+                const response = await send('patch', `/${ruleB}`, [{op: 'replace', path: '/priority', value: 10}])
+                expect(response.status).toEqual(422)
+                expect(errorsOf(response)).toEqual([['/priority', 'REWRITE_RULE_PRIORITY_EXISTS']])
+            })
+            it('fail to change the direction of a rule into a used priority, keep an unchanged rule editable', async () => {
+                let response = await send('patch', `/${ruleOut}`, [{op: 'replace', path: '/direction', value: 'in'}])
+                expect(response.status).toEqual(422)
+                expect(errorsOf(response)).toEqual([['/priority', 'REWRITE_RULE_PRIORITY_EXISTS']])
+                response = await send('put', `/${ruleOut}`, body(uniqSetId, 10, {direction: RewriteRuleDirection.Out, field: RewriteRuleField.Callee}))
+                expect(response.status).toEqual(200)
+            })
+            it('fail to update rules to equal or used priorities in a bulk', async () => {
+                let response = await send('put', '', {[ruleA]: body(uniqSetId, 15), [ruleB]: body(uniqSetId, 15)})
+                expect(response.status).toEqual(422)
+                expect(errorsOf(response)).toEqual([
+                    [`/${ruleA}/priority`, 'REWRITE_RULE_PRIORITY_EXISTS'],
+                    [`/${ruleB}/priority`, 'REWRITE_RULE_PRIORITY_EXISTS'],
+                ])
+                response = await send('patch', '', {[ruleB]: [{op: 'replace', path: '/priority', value: 10}]})
+                expect(response.status).toEqual(422)
+                expect(errorsOf(response)).toEqual([[`/${ruleB}/priority`, 'REWRITE_RULE_PRIORITY_EXISTS']])
+            })
+            it('swap the priorities of two rules in a bulk PUT', async () => {
+                const response = await send('put', '', {[ruleA]: body(uniqSetId, 20), [ruleB]: body(uniqSetId, 10)})
+                expect(response.status).toEqual(200)
+                expect(await priorityOf(ruleA)).toEqual(20)
+                expect(await priorityOf(ruleB)).toEqual(10)
+            })
+            it('update a rule keeping its priority', async () => {
+                const response = await send('put', `/${ruleA}`, body(uniqSetId, 20, {description: 'kept'}))
+                expect(response.status).toEqual(200)
+            })
+            it('edit a rule of an existing duplicate without changing its priority', async () => {
+                await db.provisioning.VoipRewriteRule.update(ruleA, {priority: 10})
+                const response = await send('patch', `/${ruleA}`, [{op: 'replace', path: '/description', value: 'legacy'}])
+                expect(response.status).toEqual(200)
+                expect(await priorityOf(ruleA)).toEqual(10)
+                expect(await priorityOf(ruleB)).toEqual(10)
             })
         })
     })

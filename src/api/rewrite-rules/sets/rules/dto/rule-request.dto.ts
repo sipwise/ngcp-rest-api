@@ -37,7 +37,7 @@ export class RewriteRuleRequestDto implements RequestDto {
     @IsEnum(RewriteRuleField)
         field!: RewriteRuleField
 
-    @ApiPropertyOptional({description: 'Priority of the rule; lower values are applied first'})
+    @ApiPropertyOptional({description: 'Priority of the rule, unique within the set, direction and field; lower values are applied first. Missing on create: after the highest priority of the set'})
     @IsOptional()
     @IsInt()
         priority?: number

@@ -41,7 +41,7 @@ export class RewriteRuleResponseDto extends ResponseDto {
         field!: RewriteRuleField
 
     @IsInt()
-    @ApiProperty({description: 'Priority of the rule; lower values are applied first'})
+    @ApiProperty({description: 'Priority of the rule, unique within the set, direction and field; lower values are applied first'})
         priority!: number
 
     @IsBoolean()

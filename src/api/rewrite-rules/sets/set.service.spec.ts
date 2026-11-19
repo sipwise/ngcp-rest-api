@@ -237,11 +237,6 @@ describe('RewriteRuleSet Service', () => {
             await service.delete([1], sr)
             expect(spy).toHaveBeenCalledWith([1], sr, {resellerId: 1})
         })
-
-        it('cleanSets throws NotFoundException for a set of another reseller', async () => {
-            await expect(service.cleanSets([3], sr)).rejects.toThrow(ApiErrorException)
-            expect(rwrMockRepo.cleaned).toHaveLength(0)
-        })
     })
 
     describe('partial ids', () => {
@@ -258,28 +253,38 @@ describe('RewriteRuleSet Service', () => {
             expect(reloadSpy).not.toHaveBeenCalled()
         })
 
-        it('cleanSets throws UnprocessableEntityException if some ids are missing', async () => {
-            await expect(service.cleanSets([1, 100], sr)).rejects.toThrow(ApiErrorException)
-            expect(rwrMockRepo.cleaned).toHaveLength(0)
-        })
-
-        it('updateWithRuleRecreation throws UnprocessableEntityException if some ids are missing', async () => {
-            await expect(service.updateWithRuleRecreation(makeUpdates(1, 100), [], sr)).rejects.toThrow(ApiErrorException)
+        it('updateAndCleanSets throws UnprocessableEntityException if some ids are missing', async () => {
+            await expect(service.updateAndCleanSets(makeUpdates(1, 100), sr)).rejects.toThrow(ApiErrorException)
             expect(rwrMockRepo.cleaned).toHaveLength(0)
         })
     })
 
     describe('dial plan reload', () => {
-        it('create reloads the dial plan', async () => {
+        it('create does not reload the dial plan, a new set has no rules', async () => {
             const set = new internal.RewriteRuleSet()
             set.name = 'reload'
             await service.create([set], sr)
+            expect(reloadSpy).not.toHaveBeenCalled()
+        })
+
+        it('delete reloads the dial plan if a set has rules', async () => {
+            await service.delete([2, 3], sr)
             expect(reloadSpy).toHaveBeenCalledWith(sr)
         })
 
-        it('delete reloads the dial plan', async () => {
-            await service.delete([2], sr)
+        it('delete does not reload the dial plan if no set has rules', async () => {
+            await service.delete([3], sr)
+            expect(reloadSpy).not.toHaveBeenCalled()
+        })
+
+        it('updateAndCleanSets reloads the dial plan if it removed rules', async () => {
+            await service.updateAndCleanSets(makeUpdates(1), sr)
             expect(reloadSpy).toHaveBeenCalledWith(sr)
+        })
+
+        it('updateAndCleanSets does not reload the dial plan if a set had no rules', async () => {
+            await service.updateAndCleanSets(makeUpdates(4), sr)
+            expect(reloadSpy).not.toHaveBeenCalled()
         })
     })
 
@@ -290,47 +295,24 @@ describe('RewriteRuleSet Service', () => {
         })
     })
 
-    describe('updateWithRuleRecreation', () => {
-        const rule = (): internal.RewriteRule => new internal.RewriteRule()
-
-        it('cleans every updated set, creates the rules and reloads the dial plan', async () => {
-            const rules = [rule(), rule()]
-            const got = await service.updateWithRuleRecreation(makeUpdates(1, 2), rules, sr)
+    describe('updateAndCleanSets', () => {
+        it('updates and cleans every updated set', async () => {
+            const got = await service.updateAndCleanSets(makeUpdates(1, 2), sr)
             expect(got).toStrictEqual([1, 2])
             expect(rwrMockRepo.cleaned).toStrictEqual([1, 2])
-            expect(rwrMockRepo.createdRules).toStrictEqual(rules)
-            expect(reloadSpy).toHaveBeenCalledTimes(1)
-        })
-
-        it.each([[[]], [undefined]])('does not create rules nor reload when rules are %p', async (rules) => {
-            await service.updateWithRuleRecreation(makeUpdates(1), rules as internal.RewriteRule[], sr)
-            expect(rwrMockRepo.cleaned).toStrictEqual([1])
-            expect(rwrMockRepo.createdRules).toHaveLength(0)
-            expect(reloadSpy).not.toHaveBeenCalled()
         })
 
         it('throws NotFoundException if no set exists', async () => {
-            await expect(service.updateWithRuleRecreation(makeUpdates(100), [rule()], sr)).rejects.toThrow(ApiErrorException)
+            await expect(service.updateAndCleanSets(makeUpdates(100), sr)).rejects.toThrow(ApiErrorException)
         })
 
         it('forces the reseller id of reseller users and filters by it', async () => {
             sr.user = resellerUser
             const updates = makeUpdates(1)
             updates[1].resellerId = 9
-            await service.updateWithRuleRecreation(updates, [], sr)
+            await service.updateAndCleanSets(updates, sr)
             expect(updates[1].resellerId).toEqual(1)
-            await expect(service.updateWithRuleRecreation(makeUpdates(2), [], sr)).rejects.toThrow(ApiErrorException)
-        })
-    })
-
-    describe('cleanSets', () => {
-        it('cleans all given sets', async () => {
-            await service.cleanSets([1, 2], sr)
-            expect(rwrMockRepo.cleaned).toStrictEqual([1, 2])
-        })
-
-        it('throws NotFoundException if no set exists', async () => {
-            await expect(service.cleanSets([100], sr)).rejects.toThrow(ApiErrorException)
+            await expect(service.updateAndCleanSets(makeUpdates(2), sr)).rejects.toThrow(ApiErrorException)
         })
     })
 

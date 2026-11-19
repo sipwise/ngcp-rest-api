@@ -95,7 +95,9 @@ export class RewriteRuleSetMariadbRepository extends MariaDbRepository implement
         for (const id of ids) {
             const dbEntity = db.provisioning.VoipRewriteRuleSet.create()
             dbEntity.fromInternal(updates[id])
-            await db.provisioning.VoipRewriteRuleSet.update(id, dbEntity)
+            // the *_dpid columns are assigned on insert, dialplan rows and preferences reference them
+            const {reseller_id, name, description} = dbEntity
+            await db.provisioning.VoipRewriteRuleSet.update(id, {reseller_id, name, description})
         }
         return ids
     }
@@ -105,15 +107,14 @@ export class RewriteRuleSetMariadbRepository extends MariaDbRepository implement
         return ids
     }
 
-    async cleanSets(ids: number[], _sr: ServiceRequest): Promise<void> {
-        await db.provisioning.VoipRewriteRule.delete({set_id: In(ids)})
+    async hasRules(ids: number[]): Promise<boolean> {
+        return await db.provisioning.VoipRewriteRule.existsBy({set_id: In(ids)})
     }
 
-    async createRules(entities: internal.RewriteRule[]): Promise<number[]> {
-        const qb = db.provisioning.VoipRewriteRule.createQueryBuilder('rewriteRule')
-        const values = await mapYield(entities, entity => new db.provisioning.VoipRewriteRule().fromInternal(entity))
-        const result = await qb.insert().values(values).execute()
-        return result.identifiers.map((obj: {id: number}) => obj.id)
+    // returns the number of deleted rules
+    async cleanSets(ids: number[], _sr: ServiceRequest): Promise<number> {
+        const result = await db.provisioning.VoipRewriteRule.delete({set_id: In(ids)})
+        return result.affected
     }
 
     private addFilterBy(qb: SelectQueryBuilder<db.provisioning.VoipRewriteRuleSet>, filterBy: FilterBy): void {

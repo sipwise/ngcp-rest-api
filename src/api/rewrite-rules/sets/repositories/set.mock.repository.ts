@@ -15,7 +15,8 @@ export class RewriteRuleSetMockRepository implements RewriteRuleSetRepository {
     private readonly db: RewriteRuleSetMockDB
     private nextId: number
     readonly cleaned: number[] = []
-    readonly createdRules: internal.RewriteRule[] = []
+    // number of rules per set id, sets 3 and 4 have none
+    private readonly ruleCounts = new Map([[1, 2], [2, 1]])
 
     constructor() {
         this.db = {
@@ -73,14 +74,18 @@ export class RewriteRuleSetMockRepository implements RewriteRuleSetRepository {
         return Promise.resolve(ids.filter(id => this.db[id] != undefined && this.matches(this.db[id], filterBy)).map(id => this.db[id]))
     }
 
-    async cleanSets(ids: number[], _sr: ServiceRequest): Promise<void> {
-        this.cleaned.push(...ids)
-        return Promise.resolve()
+    async hasRules(ids: number[]): Promise<boolean> {
+        return Promise.resolve(ids.some(id => this.ruleCounts.get(id)))
     }
 
-    async createRules(rules: internal.RewriteRule[]): Promise<number[]> {
-        this.createdRules.push(...rules)
-        return Promise.resolve(rules.map((_r, i) => i + 1))
+    async cleanSets(ids: number[], _sr: ServiceRequest): Promise<number> {
+        this.cleaned.push(...ids)
+        let deleted = 0
+        for (const id of ids) {
+            deleted += this.ruleCounts.get(id) ?? 0
+            this.ruleCounts.delete(id)
+        }
+        return Promise.resolve(deleted)
     }
 
     private matches(set: internal.RewriteRuleSet, filterBy?: FilterBy): boolean {

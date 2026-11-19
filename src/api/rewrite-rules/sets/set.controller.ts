@@ -151,9 +151,9 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
         validateResellerId(new Dictionary(id.toString(), dto), sr)
         const updates = new Dictionary<internal.RewriteRuleSet>()
         updates[id] = Object.assign(new RewriteRuleSetRequestDto(), dto).toInternal({id: id, assignNulls: true})
-        const rewriteRules = dto.rules && dto.rules.length > 0
-            ? await mapYield(dto.rules, rule => rule.toInternal({parentId: id})) : []
-        const ids = await this.ruleSetService.updateWithRuleRecreation(updates, rewriteRules, sr)
+        const ids = await this.ruleSetService.updateAndCleanSets(updates, sr)
+        if (dto.rules?.length)
+            await this.ruleService.create(await mapYield(dto.rules, rule => rule.toInternal({parentId: id})), sr)
         const entity = await this.ruleSetService.read(ids[0], sr)
         const response = new RewriteRuleSetResponseDto(
             entity,
@@ -178,14 +178,15 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
             const dto: RewriteRuleSetRequestDto = updates[id]
             sets[id] = dto.toInternal({id: parseInt(id), assignNulls: true})
         }
-        const rewriteRules = []
+        const updated = await this.ruleSetService.updateAndCleanSets(sets, sr)
+        const rewriteRules: internal.RewriteRule[] = []
         for (const set of Object.values(sets)) {
             const dto = updates[set.id]
-            if (dto.rules) {
-                rewriteRules.push(...dto.rules.map(rule => rule.toInternal({parentId: set.id})))
-            }
+            if (dto.rules)
+                rewriteRules.push(...await mapYield(dto.rules, rule => rule.toInternal({parentId: set.id})))
         }
-        const updated = await this.ruleSetService.updateWithRuleRecreation(sets, rewriteRules, sr)
+        if (rewriteRules.length)
+            await this.ruleService.create(rewriteRules, sr)
 
         return updated
     }

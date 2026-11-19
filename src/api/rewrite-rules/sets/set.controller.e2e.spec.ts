@@ -12,6 +12,7 @@ import {setupApp} from '~/app.setup'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
+import {ErrorEntry} from '~/helpers/errors.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
 
@@ -533,6 +534,102 @@ describe('Rule Set', () => {
                     .set('Content-Type', 'application/json-patch+json')
                     .send(patch)
                 expect(response.status).toEqual(404)
+            })
+        })
+
+        describe('PUT with embedded rules', () => {
+            let putSetId: number
+            let otherPutSetId: number
+            const embedded = (props: Partial<EmbeddedRule> = {}): EmbeddedRule => ({
+                match_pattern: 'test',
+                replace_pattern: 'test',
+                description: 'embedded',
+                direction: 'in',
+                field: 'callee',
+                enabled: true,
+                ...props,
+            })
+            const putSet = (path: string, payload: object): request.Test =>
+                request(app.getHttpServer())
+                    .put(`/api/rewrite-rules/sets${path}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(payload)
+            const setBody = (name: string, rules: EmbeddedRule[]): RuleSetPost => ({name: `${name}${suffix}`, reseller_id: 1, description: name, rules})
+            const rulesOf = (setId: number): Promise<db.provisioning.VoipRewriteRule[]> =>
+                db.provisioning.VoipRewriteRule.find({where: {set_id: setId}, order: {id: 'ASC'}})
+            const createSet = async (name: string): Promise<number> => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send(setBody(name, []))
+                expect(response.status).toEqual(201)
+                createdIds.push(+response.body.data[0].id)
+                return +response.body.data[0].id
+            }
+
+            it('create sets', async () => {
+                putSetId = await createSet('test_put_rules_set')
+                otherPutSetId = await createSet('test_put_rules_other_set')
+            })
+            it('replace the rules of a set with rules without priority', async () => {
+                const before = await db.provisioning.VoipRewriteRuleSet.findOneByOrFail({id: putSetId})
+                const response = await putSet(`/${putSetId}`, setBody('test_put_rules_set', [
+                    embedded({match_pattern: '^${x}', replace_pattern: '${y}'}),
+                    embedded(),
+                    embedded({direction: 'out'}),
+                    embedded({priority: 5, field: 'caller'}),
+                    embedded({field: 'caller'}),
+                ]))
+                expect(response.status).toEqual(204)
+                const rules = await rulesOf(putSetId)
+                expect(rules.map(rule => [rule.direction, rule.field, rule.priority])).toEqual([
+                    ['in', 'callee', 6],
+                    ['in', 'callee', 7],
+                    ['out', 'callee', 8],
+                    ['in', 'caller', 5],
+                    ['in', 'caller', 9],
+                ])
+                expect(rules[0].match_pattern).toEqual('^$avp(s:x)')
+                expect(rules[0].replace_pattern).toEqual('$avp(s:y)')
+                const after = await db.provisioning.VoipRewriteRuleSet.findOneByOrFail({id: putSetId})
+                expect(after.caller_in_dpid).toEqual(before.caller_in_dpid)
+                expect(after.callee_lnp_dpid).toEqual(before.callee_lnp_dpid)
+            })
+            it('read the embedded rule with inflated patterns', async () => {
+                const rules = await rulesOf(putSetId)
+                const response = await request(app.getHttpServer())
+                    .get(`/api/rewrite-rules/sets/${putSetId}/rules/${rules[0].id}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                expect(response.body.match_pattern).toEqual('^${x}')
+                expect(response.body.replace_pattern).toEqual('${y}')
+            })
+            it('fail to replace the rules with rules of equal priorities and keep the old ones', async () => {
+                const before = (await rulesOf(putSetId)).map(rule => rule.id)
+                const response = await putSet(`/${putSetId}`, setBody('test_put_rules_set', [embedded({priority: 3}), embedded({priority: 3})]))
+                expect(response.status).toEqual(422)
+                expect((response.body.errors as ErrorEntry[]).map(e => e.code)).toEqual(['REWRITE_RULE_PRIORITY_EXISTS', 'REWRITE_RULE_PRIORITY_EXISTS'])
+                expect((await rulesOf(putSetId)).map(rule => rule.id)).toEqual(before)
+            })
+            it('replace the rules of several sets in a bulk', async () => {
+                const response = await putSet('', {
+                    [putSetId]: setBody('test_put_rules_set', [embedded(), embedded()]),
+                    [otherPutSetId]: setBody('test_put_rules_other_set', [embedded(), embedded({priority: 9}), embedded()]),
+                })
+                expect(response.status).toEqual(204)
+                expect((await rulesOf(putSetId)).map(rule => rule.priority)).toEqual([1, 2])
+                expect((await rulesOf(otherPutSetId)).map(rule => rule.priority)).toEqual([10, 9, 11])
+            })
+            it('replace the rules of a set with none', async () => {
+                const response = await putSet(`/${putSetId}`, setBody('test_put_rules_set', []))
+                expect(response.status).toEqual(204)
+                expect(await rulesOf(putSetId)).toHaveLength(0)
             })
         })
 

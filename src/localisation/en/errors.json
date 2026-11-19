@@ -421,5 +421,11 @@
   },
   "PEERING_INBOUND_RULE_CANNOT_MOVE": {
     "message": "Inbound rule cannot be moved further {direction} in the peering group"
+  },
+  "REWRITE_RULE_PRIORITY_EXISTS": {
+    "message": "Priority '{priority}' is already used by another rewrite rule of the set with the same direction and field"
+  },
+  "REWRITE_RULE_CANNOT_MOVE": {
+    "message": "Rewrite rule cannot be moved further {direction} in its set, direction and field"
   }
 }

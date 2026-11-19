@@ -17,7 +17,7 @@ export class RewriteRuleSearchDto {
         direction: RewriteRuleDirection
     @ApiPropertyOptional({description: 'Number the rule rewrites: `caller` or `callee`'})
         field: RewriteRuleField
-    @ApiPropertyOptional({description: 'Priority of the rule; lower values are applied first'})
+    @ApiPropertyOptional({description: 'Priority of the rule, unique within the set, direction and field; lower values are applied first'})
         priority: number
     @ApiPropertyOptional({description: 'Id of the rewrite rule'})
         id: number
