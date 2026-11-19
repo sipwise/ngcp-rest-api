@@ -38,6 +38,7 @@ import {InvoiceTemplateCallDirection, InvoiceTemplateCategory} from '~/entities/
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
 
 const admin: AuthResponseDto = {
     readOnly: false,
@@ -242,9 +243,11 @@ describe('InvoiceTemplateService', () => {
         })
 
         it('throws UnprocessableEntityException if the default template cannot be loaded', async () => {
+            const errorSpy = jest.spyOn(LoggerService.prototype, 'error').mockImplementation(() => undefined)
             ;(readDefaultInvoiceTemplate as jest.Mock).mockRejectedValue(new Error('ENOENT'))
             await expect(service.create([newTemplate({name: 'x', category: InvoiceTemplateCategory.Peer})], makeSr()))
                 .rejects.toThrow(UnprocessableEntityException)
+            expect(errorSpy).toHaveBeenCalledWith(expect.objectContaining({message: 'failed to load default invoice template'}))
         })
 
         it('does not store anything when the check fails', async () => {
@@ -311,8 +314,10 @@ describe('InvoiceTemplateService', () => {
         })
 
         it('maps a pdf error to InternalServerErrorException', async () => {
+            const errorSpy = jest.spyOn(LoggerService.prototype, 'error').mockImplementation(() => undefined)
             ;(svgToPdf as jest.Mock).mockRejectedValue(new InvoiceTemplatePdfError('converter'))
             await expect(service.render(template(), {} as never)).rejects.toThrow(InternalServerErrorException)
+            expect(errorSpy).toHaveBeenCalledWith(expect.objectContaining({message: 'failed to convert invoice template to pdf'}))
         })
 
         it('rethrows unknown errors', async () => {

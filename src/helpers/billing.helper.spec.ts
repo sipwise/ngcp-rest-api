@@ -2,6 +2,7 @@ import {balanceIntervalSettings, billingTimezone, initialBalanceInterval} from '
 
 import {BillingProfile, IntervalUnit as ProfileIntervalUnit} from '~/entities/internal/billing-profile.internal.entity'
 import {IntervalStartMode, IntervalUnit} from '~/entities/internal/profile-package.internal.entity'
+import {LoggerService} from '~/logger/logger.service'
 
 // unit specs run in Europe/Vienna: the platform zone
 const platform = 'Europe/Vienna'
@@ -25,8 +26,14 @@ describe('billing helper', () => {
         ])('uses for start mode %s the zone %s', (mode, zone) => {
             expect(billingTimezone(mode, tokyo)).toEqual(zone)
         })
-        it.each([null, undefined, 'localtime', 'SYSTEM', 'Mars/Base'])('uses the platform zone for the stored contract zone %s', name => {
+        it.each([null, undefined, 'localtime', 'SYSTEM'])('uses the platform zone for the stored contract zone %s', name => {
             expect(billingTimezone(IntervalStartMode.FirstTZ, name)).toEqual(platform)
+        })
+        it('uses the platform zone and warns for an invalid stored contract zone', () => {
+            const warnSpy = jest.spyOn(LoggerService.prototype, 'warn').mockImplementation(() => undefined)
+            expect(billingTimezone(IntervalStartMode.FirstTZ, 'Mars/Base')).toEqual(platform)
+            expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Mars/Base'))
+            warnSpy.mockRestore()
         })
     })
 

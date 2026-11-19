@@ -134,6 +134,22 @@ export function handleTypeORMError(err: Error): Error {
     return err
 }
 
+const expectedQueryErrorCodes = [
+    'ER_DUP_ENTRY',
+    'ER_CHECKREAD',
+    'ER_LOCK_DEADLOCK',
+]
+
+/**
+ * DB errors of normal operation, handleTypeORMError maps them to a specific 4xx
+ */
+export function isExpectedDbError(err: unknown): boolean {
+    if (err instanceof EntityNotFoundError)
+        return true
+    return err instanceof QueryFailedError
+        && expectedQueryErrorCodes.includes((<QueryFailedError<QueryError>>err).driverError.code)
+}
+
 /**
  * RFC 6901 escaping of one reference token
  */

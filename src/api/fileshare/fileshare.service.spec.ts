@@ -7,7 +7,7 @@ import {AppService} from '~/app.service'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {db} from '~/entities'
 import {fileshare} from '~/entities/db'
-import {ApiErrorException} from '~/helpers/errors.helper'
+import {ApiErrorException, InvalidParameterException} from '~/helpers/errors.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const admin: AuthResponseDto = {
@@ -268,7 +268,8 @@ describe('FileshareService', () => {
         })
 
         it('rejects an invalid page', async () => {
-            await expect(service.readAll(makeSr(admin, {page: '-1'}))).rejects.toThrow()
+            jest.spyOn(db.fileshare.Upload, 'count').mockResolvedValue(0)
+            await expect(service.readAll(makeSr(admin, {page: '-1'}))).rejects.toThrow(InvalidParameterException)
         })
     })
 

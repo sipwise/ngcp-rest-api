@@ -21,6 +21,7 @@ import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
 import {postCommitQueueStorage} from '~/helpers/post-commit-queue.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
+import {LoggerService} from '~/logger/logger.service'
 
 const user: AuthResponseDto = {
     readOnly: false,
@@ -122,8 +123,10 @@ describe('VoicemailsService', () => {
         })
 
         it('throws 422 when the notify command fails', async () => {
+            const errorSpy = jest.spyOn(LoggerService.prototype, 'error').mockImplementation(() => undefined)
             execMock.mockImplementation((_cmd, _args, _opts, cb: ExecCb) => { cb(Object.assign(new Error('fail'), {cmd: 'x', stdout: '', stderr: 'boom'})) })
             await expect(service.sendNotification(makeVoicemail(7, `${basePath}/INBOX`), sr)).rejects.toThrow(UnprocessableEntityException)
+            expect(errorSpy).toHaveBeenCalled()
         })
     })
 

@@ -1,5 +1,17 @@
-import {handleTypeORMError} from '~/helpers/errors.helper'
+import {HttpException} from '@nestjs/common'
+
+import {handleTypeORMError, isExpectedDbError} from '~/helpers/errors.helper'
 import {LoggerService} from '~/logger/logger.service'
+
+// HttpExceptions are logged with the error response by the exception filter
+function logError(log: LoggerService, err: Error): void {
+    if (err instanceof HttpException)
+        return
+    if (isExpectedDbError(err))
+        log.debug(err.message)
+    else
+        log.error(err, err.stack)
+}
 
 function applyDecorator(target: unknown, propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor {
     const log = new LoggerService(`${target.constructor.name}/${propertyKey}`)
@@ -14,7 +26,7 @@ function applyDecorator(target: unknown, propertyKey: string, descriptor: Proper
                 // TODO: Fix this mess if fixable
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return result.catch((err: Error) => {
-                    log.error(err, err.stack, `${target.constructor.name}/${propertyKey}`)
+                    logError(log, err)
                     throw handleTypeORMError(err)
                 })
             }
@@ -22,7 +34,7 @@ function applyDecorator(target: unknown, propertyKey: string, descriptor: Proper
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return result
         } catch (err) {
-            log.error(err, err.stack, `${target.constructor.name}/${propertyKey}`)
+            logError(log, err)
             throw handleTypeORMError(err)
         }
     }
