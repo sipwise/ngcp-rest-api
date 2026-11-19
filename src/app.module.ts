@@ -112,7 +112,8 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
         loader: I18nErrorCodeLoader,
         loaderOptions: {
             path: path.join(__dirname, '/localisation/'),
-            watch: true,
+            // reload on change while developing; the watcher would keep test workers alive
+            watch: process.env.NODE_ENV == 'development',
         },
         resolvers: [
             {use: QueryResolver, options: ['lang', 'locale', 'l']},

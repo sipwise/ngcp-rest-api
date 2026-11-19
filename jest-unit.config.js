@@ -17,6 +17,9 @@ module.exports =
     transform: {
         '^.+\\.(ts|tsx|js|jsx)$': path.resolve(__dirname, 'jest-unit.transformer.js'),
     },
+    // ESM-only packages are compiled to CommonJS: jest's ESM support
+    // (--experimental-vm-modules) keeps every test file's modules in memory
+    transformIgnorePatterns: [],
     collectCoverageFrom: [
         '**/*.(t|j)s',
     ],

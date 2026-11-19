@@ -1,3 +1,5 @@
+const path = require('path')
+
 process.env.NODE_JEST = true
 process.env.NODE_TEST_E2E = true
 process.env.API_LOG_LEVELS ??= 'log,warn,error,fatal'
@@ -12,13 +14,17 @@ module.exports =
     rootDir: 'src',
     testRegex: '.*\\.e2e\\.spec\\.ts$',
     transform: {
-        '^.+\\.(t|j)s$': [
+        '^.+\\.ts$': [
             'ts-jest',
             {
                 tsconfig: './tsconfig.jest.json',
             },
         ],
+        '^.+\\.js$': path.resolve(__dirname, 'jest-unit.transformer.js'),
     },
+    // ESM-only packages are compiled to CommonJS: jest's ESM support
+    // (--experimental-vm-modules) keeps every test file's modules in memory
+    transformIgnorePatterns: [],
     collectCoverageFrom: [
         '**/*.(t|j)s',
     ],

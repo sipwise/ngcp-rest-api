@@ -1,6 +1,5 @@
 import {DataSource} from 'typeorm'
-import {initializeTransactionalContext} from 'typeorm-transactional'
-import {addTransactionalDataSource} from 'typeorm-transactional'
+import {StorageDriver, addTransactionalDataSource, initializeTransactionalContext} from 'typeorm-transactional'
 
 import {databaseConfig} from '~/config/database.config'
 import {LoggerService} from '~/logger/logger.service'
@@ -11,7 +10,8 @@ export const databaseProviders = [
         useFactory: async (): Promise<DataSource> => {
             const log = new LoggerService('databaseProviders[DB]')
             const ds  = new DataSource(databaseConfig)
-            initializeTransactionalContext()
+            // the default cls-hooked driver installs a process-wide async hook that is never removed
+            initializeTransactionalContext({storageDriver: StorageDriver.ASYNC_LOCAL_STORAGE})
             if (process.env.NODE_ENV == 'test' && process.env.NODE_TEST_E2E !== 'true') {
                 return ds
             }
