@@ -41,7 +41,7 @@ export class ContactResponseDto extends ResponseDto {
 
     @CanBeNull()
     @IsString()
-    @ApiProperty({description: 'Two-letter ISO 3166-1 country code, e.g. `US` or `DE`'})
+    @ApiProperty({description: 'Two-letter ISO 3166-1 country code, e.g. `AT` or `DE`'})
         country?: string
 
     @DateTimeField()

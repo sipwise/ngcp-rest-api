@@ -221,7 +221,7 @@ describe('Rule Set', () => {
 
         describe('PUT', () => {
             const ruleset3: RuleSetPost = {
-                name: 'test ruleset3',
+                name: `test ruleset3${suffix}`,
                 reseller_id: 1,
                 description: 'test ruleset3 description',
             }
@@ -255,7 +255,7 @@ describe('Rule Set', () => {
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ruleset: HeaderManipulationSetResponseDto = response.body
-                expect(ruleset.name).toEqual('test ruleset3')
+                expect(ruleset.name).toEqual(`test ruleset3${suffix}`)
                 expect(ruleset.reseller_id).toEqual(1)
                 expect(ruleset.description).toEqual('test ruleset3 description')
             })
@@ -416,7 +416,7 @@ describe('Rule Set', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({...{
-                        name: 'test_reseller_ruleset',
+                        name: `test_reseller_ruleset${suffix}`,
                         description: 'reseller',
                     }, reseller_id: 1})
                 expect(response.status).toEqual(422)
@@ -429,7 +429,7 @@ describe('Rule Set', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        name: 'test_reseller_ruleset',
+                        name: `test_reseller_ruleset${suffix}`,
                         description: 'reseller',
                     })
                 expect(response.status).toEqual(201)
@@ -451,7 +451,7 @@ describe('Rule Set', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({...{
-                        name: 'renamed_test_reseller_ruleset',
+                        name: `renamed_test_reseller_ruleset${suffix}`,
                         description: 'reseller',
                     }, reseller_id: 1})
                 expect(response.status).toEqual(422)
@@ -464,7 +464,7 @@ describe('Rule Set', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        name: 'renamed_test_reseller_ruleset',
+                        name: `renamed_test_reseller_ruleset${suffix}`,
                         description: 'reseller',
                     })
                 expect(response.status).toEqual(204)

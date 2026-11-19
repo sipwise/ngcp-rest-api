@@ -41,7 +41,7 @@ export class ContactRequestDto implements RequestDto {
     @IsOptional()
     @IsString()
     @Length(2, 2)
-    @ApiPropertyOptional({description: 'Two-letter ISO 3166-1 country code, e.g. `US` or `DE`'})
+    @ApiPropertyOptional({description: 'Two-letter ISO 3166-1 country code, e.g. `AT` or `DE`'})
         country?: string
 
     @IsOptional()

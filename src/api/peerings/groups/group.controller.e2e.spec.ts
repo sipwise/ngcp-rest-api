@@ -116,7 +116,7 @@ describe('Peering Group', () => {
                 }).save()
                 createdContractIds.push(contract.id)
                 const peeringGroup1DefaultPriority: PeeringGroupPost = {
-                    name: 'test_peeringGroup1DefaultPriority',
+                    name: `test_peeringGroup1DefaultPriority_${suffix}`,
                     description: 'test_peeringGroup1DefaultPriority description',
                     contract_id: contract.id,
                 }
@@ -135,7 +135,7 @@ describe('Peering Group', () => {
                 }).save()
                 createdContractIds.push(contract.id)
                 const peeringGroup2: PeeringGroupPost = {
-                    name: 'test_peeringGroup2',
+                    name: `test_peeringGroup2_${suffix}`,
                     description: 'test_peeringGroup2 description',
                     contract_id: contract.id,
                     priority: 2,
@@ -201,7 +201,7 @@ describe('Peering Group', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        name: 'test_peeringGroup3',
+                        name: `test_peeringGroup3_${suffix}`,
                         description: 'test_peeringGroup3 description',
                         contract_id: contract.id,
                     })
@@ -213,7 +213,7 @@ describe('Peering Group', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        name: 'test_peeringGroup3',
+                        name: `test_peeringGroup3_${suffix}`,
                         description: 'test_peeringGroup3 description',
                         contract_id: contract.id,
                     })
@@ -237,13 +237,13 @@ describe('Peering Group', () => {
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const group: PeeringGroupResponseDto = response.body
-                expect(group.name).toEqual('test_peeringGroup1DefaultPriority')
+                expect(group.name).toEqual(`test_peeringGroup1DefaultPriority_${suffix}`)
                 expect(group.priority).toEqual(1)
                 expect(group.has_inbound_rules).toBe(false)
             })
             it('read created group test_peeringGroup1DefaultPriority by name', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/peerings/groups/?name=test_peeringGroup1DefaultPriority')
+                    .get(`/api/peerings/groups/?name=test_peeringGroup1DefaultPriority_${suffix}`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -253,12 +253,12 @@ describe('Peering Group', () => {
                 expect(await validate(setEntries)).toEqual([])
                 expect(setEntries).toHaveLength(1)
                 const group = setEntries[0]
-                expect(group.name).toEqual('test_peeringGroup1DefaultPriority')
+                expect(group.name).toEqual(`test_peeringGroup1DefaultPriority_${suffix}`)
                 expect(group.priority).toEqual(1)
             })
             it('read created group test_peeringGroup2', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/peerings/groups/?name=test_peeringGroup2')
+                    .get(`/api/peerings/groups/?name=test_peeringGroup2_${suffix}`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -268,7 +268,7 @@ describe('Peering Group', () => {
                 expect(await validate(setEntries)).toEqual([])
                 expect(setEntries).toHaveLength(1)
                 const group = setEntries[0]
-                expect(group.name).toEqual('test_peeringGroup2')
+                expect(group.name).toEqual(`test_peeringGroup2_${suffix}`)
                 expect(group.priority).toEqual(2)
                 expect(group.description).toEqual('test_peeringGroup2 description')
             })
@@ -287,7 +287,7 @@ describe('Peering Group', () => {
                 }).save()
                 createdContractIds.push(contract.id)
                 const peeringGroup1DefaultPriorityUpdate: PeeringGroupPost = {
-                    name: 'renamed_test_peeringGroup1DefaultPriority',
+                    name: `renamed_test_peeringGroup1DefaultPriority_${suffix}`,
                     description: 'foo',
                     contract_id: contract.id,
                 }
@@ -305,7 +305,7 @@ describe('Peering Group', () => {
                 }).save()
                 createdContractIds.push(contract.id)
                 const peeringGroup2Update: PeeringGroupPost = {
-                    name: 'renamed_test_peeringGroup2',
+                    name: `renamed_test_peeringGroup2_${suffix}`,
                     description: 'bar',
                     contract_id: contract.id,
                 }
@@ -324,7 +324,7 @@ describe('Peering Group', () => {
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const group: PeeringGroupResponseDto = response.body
-                expect(group.name).toEqual('renamed_test_peeringGroup1DefaultPriority')
+                expect(group.name).toEqual(`renamed_test_peeringGroup1DefaultPriority_${suffix}`)
             })
             it('read updated group 2', async () => {
                 const response = await request(app.getHttpServer())
@@ -333,7 +333,7 @@ describe('Peering Group', () => {
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const group: PeeringGroupResponseDto = response.body
-                expect(group.name).toEqual('renamed_test_peeringGroup2')
+                expect(group.name).toEqual(`renamed_test_peeringGroup2_${suffix}`)
             })
             it('update group bulk', async () => {
                 const response = await request(app.getHttpServer())
@@ -342,8 +342,8 @@ describe('Peering Group', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        [createdPeeringGroupIds[0]]: {name: 'bulk_put_test_peeringGroup1', description: 'bulk1', contract_id: createdContractIds[3]},
-                        [createdPeeringGroupIds[1]]: {name: 'bulk_put_test_peeringGroup2', description: 'bulk2', contract_id: createdContractIds[4]},
+                        [createdPeeringGroupIds[0]]: {name: `bulk_put_test_peeringGroup1_${suffix}`, description: 'bulk1', contract_id: createdContractIds[3]},
+                        [createdPeeringGroupIds[1]]: {name: `bulk_put_test_peeringGroup2_${suffix}`, description: 'bulk2', contract_id: createdContractIds[4]},
                     })
                 expect(response.status).toEqual(204)
             })
@@ -355,7 +355,7 @@ describe('Peering Group', () => {
                         .set('Accept', 'application/json')
                     expect(response.status).toEqual(200)
                     const group: PeeringGroupResponseDto = response.body
-                    expect(group.name).toEqual(`bulk_put_test_peeringGroup${n}`)
+                    expect(group.name).toEqual(`bulk_put_test_peeringGroup${n}_${suffix}`)
                     expect(group.description).toEqual(`bulk${n}`)
                 }
             })
@@ -365,7 +365,7 @@ describe('Peering Group', () => {
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
-                    .send({name: 'bulk_put_test_peeringGroup1', contract_id: nonPeeringContractId})
+                    .send({name: `bulk_put_test_peeringGroup1_${suffix}`, contract_id: nonPeeringContractId})
                 expect(response.status).toEqual(422)
                 expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual(invalidContract('/contract_id'))
             })
@@ -377,8 +377,8 @@ describe('Peering Group', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        [createdPeeringGroupIds[0]]: {name: 'bulk_put_test_peeringGroup1', description: 'bulk1', contract_id: createdContractIds[3]},
-                        [id]: {name: 'bulk_put_test_peeringGroup2', description: 'bulk2', contract_id: 999999999},
+                        [createdPeeringGroupIds[0]]: {name: `bulk_put_test_peeringGroup1_${suffix}`, description: 'bulk1', contract_id: createdContractIds[3]},
+                        [id]: {name: `bulk_put_test_peeringGroup2_${suffix}`, description: 'bulk2', contract_id: 999999999},
                     })
                 expect(response.status).toEqual(422)
                 expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual(invalidContract(`/${id}/contract_id`))
@@ -421,7 +421,7 @@ describe('Peering Group', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        name: 'renamed_test_peeringGroup1DefaultPriority',
+                        name: `renamed_test_peeringGroup1DefaultPriority_${suffix}`,
                         contract_id: createdContractIds[createdContractIds.length - 1],
                     })
                 expect(response.status).toEqual(404)
@@ -432,7 +432,7 @@ describe('Peering Group', () => {
                 {
                     op: 'replace',
                     path: '/name',
-                    value: 'patched_test_peeringGroup1DefaultPriority',
+                    value: `patched_test_peeringGroup1DefaultPriority_${suffix}`,
                 },
             ]
             it('adjust peeringGroup1DefaultPriority', async () => {
@@ -451,7 +451,7 @@ describe('Peering Group', () => {
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const group: PeeringGroupResponseDto = response.body
-                expect(group.name).toEqual('patched_test_peeringGroup1DefaultPriority')
+                expect(group.name).toEqual(`patched_test_peeringGroup1DefaultPriority_${suffix}`)
             })
             it('adjust groups bulk', async () => {
                 const response = await request(app.getHttpServer())
@@ -461,7 +461,7 @@ describe('Peering Group', () => {
                     .set('Content-Type', 'application/json-patch+json')
                     .send({
                         [createdPeeringGroupIds[0]]: [{op: 'replace', path: '/description', value: 'bulk_patched1'}],
-                        [createdPeeringGroupIds[1]]: [{op: 'replace', path: '/name', value: 'bulk_patch_test_peeringGroup2'}],
+                        [createdPeeringGroupIds[1]]: [{op: 'replace', path: '/name', value: `bulk_patch_test_peeringGroup2_${suffix}`}],
                     })
                 expect(response.status).toEqual(204)
             })
@@ -472,13 +472,13 @@ describe('Peering Group', () => {
                     .set('Accept', 'application/json')
                 expect(first.status).toEqual(200)
                 expect(first.body.description).toEqual('bulk_patched1')
-                expect(first.body.name).toEqual('patched_test_peeringGroup1DefaultPriority')
+                expect(first.body.name).toEqual(`patched_test_peeringGroup1DefaultPriority_${suffix}`)
                 const second = await request(app.getHttpServer())
                     .get(`/api/peerings/groups/${createdPeeringGroupIds[1]}`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(second.status).toEqual(200)
-                expect(second.body.name).toEqual('bulk_patch_test_peeringGroup2')
+                expect(second.body.name).toEqual(`bulk_patch_test_peeringGroup2_${suffix}`)
                 expect(second.body.description).toEqual('bulk2')
             })
             it('fail adjust group to non-peering contract', async () => {

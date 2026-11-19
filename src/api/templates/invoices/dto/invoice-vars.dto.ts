@@ -29,7 +29,7 @@ export class InvoiceTemplateContactVars {
         postcode: string | null = '12345'
     @ApiPropertyOptional({description: 'City', example: 'Resellercity', nullable: true})
         city: string | null = 'Resellercity'
-    @ApiPropertyOptional({description: 'Two-letter ISO 3166-1 country code, e.g. `US` or `DE`', example: 'Austria', nullable: true})
+    @ApiPropertyOptional({description: 'Two-letter ISO 3166-1 country code, e.g. `AT` or `DE`', example: 'Austria', nullable: true})
         country: string | null = 'Austria'
     @ApiPropertyOptional({description: 'Phone number', example: '+1234567890', nullable: true})
         phonenumber: string | null = '+1234567890'

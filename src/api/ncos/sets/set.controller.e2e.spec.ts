@@ -30,6 +30,7 @@ describe('NCOS Set', () => {
     let resellerAdminId: number
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
+    const suffix = `${process.env.JEST_WORKER_ID}${Date.now()}`
     const resellerCreds = {username: `ncos_set_reseller_${Date.now().toString(36)}`, password: 'FFFooobarbaz123!!!'}
 
     beforeAll(async () => {
@@ -109,12 +110,12 @@ describe('NCOS Set', () => {
     describe('', () => { // main tests block
         describe('POST', () => {
             const ncosset1: NcosSetPost = {
-                name: 'test_ncosset1',
+                name: `test_ncosset1_${suffix}`,
                 reseller_id: 1,
                 description: 'test_ncosset1 description',
             }
             const ncosset2: NcosSetPost = {
-                name: 'test_ncosset2',
+                name: `test_ncosset2_${suffix}`,
                 reseller_id: 1,
                 description: 'test_ncosset2 description',
             }
@@ -161,7 +162,7 @@ describe('NCOS Set', () => {
         describe('GET', () => {
             it('read created ncos set 1', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/ncos/sets/?name=test_ncosset1')
+                    .get(`/api/ncos/sets/?name=test_ncosset1_${suffix}`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -171,13 +172,13 @@ describe('NCOS Set', () => {
                 expect(await validate(setEntries)).toEqual([])
                 expect(setEntries).toHaveLength(1)
                 const ncosset = setEntries[0]
-                expect(ncosset.name).toEqual('test_ncosset1')
+                expect(ncosset.name).toEqual(`test_ncosset1_${suffix}`)
                 expect(ncosset.reseller_id).toEqual(1)
                 expect(ncosset.description).toEqual('test_ncosset1 description')
             })
             it('read created ncos set 2', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/ncos/sets/?name=test_ncosset2')
+                    .get(`/api/ncos/sets/?name=test_ncosset2_${suffix}`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -187,7 +188,7 @@ describe('NCOS Set', () => {
                 expect(await validate(setEntries)).toEqual([])
                 expect(setEntries).toHaveLength(1)
                 const ncosset = setEntries[0]
-                expect(ncosset.name).toEqual('test_ncosset2')
+                expect(ncosset.name).toEqual(`test_ncosset2_${suffix}`)
                 expect(ncosset.reseller_id).toEqual(1)
                 expect(ncosset.description).toEqual('test_ncosset2 description')
             })
@@ -202,12 +203,12 @@ describe('NCOS Set', () => {
 
         describe('PUT', () => {
             const ncosset3: NcosSetPost = {
-                name: 'test_ncosset3',
+                name: `test_ncosset3_${suffix}`,
                 reseller_id: 1,
                 description: 'test_ncosset3 description',
             }
             const ncosset4: NcosSetPost = {
-                name: 'test_ncosset4',
+                name: `test_ncosset4_${suffix}`,
                 reseller_id: 1,
                 description: 'test_ncosset4 description',
             }
@@ -236,7 +237,7 @@ describe('NCOS Set', () => {
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ncosset: NCOSSetResponseDto = response.body
-                expect(ncosset.name).toEqual('test_ncosset3')
+                expect(ncosset.name).toEqual(`test_ncosset3_${suffix}`)
                 expect(ncosset.reseller_id).toEqual(1)
                 expect(ncosset.description).toEqual('test_ncosset3 description')
             })
@@ -247,7 +248,7 @@ describe('NCOS Set', () => {
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ncosset: NCOSSetResponseDto = response.body
-                expect(ncosset.name).toEqual('test_ncosset4')
+                expect(ncosset.name).toEqual(`test_ncosset4_${suffix}`)
                 expect(ncosset.reseller_id).toEqual(1)
                 expect(ncosset.description).toEqual('test_ncosset4 description')
             })
@@ -267,7 +268,7 @@ describe('NCOS Set', () => {
                 {
                     op: 'replace',
                     path: '/name',
-                    value: 'test_ncosset5',
+                    value: `test_ncosset5_${suffix}`,
                 },
                 {
                     op: 'replace',
@@ -291,7 +292,7 @@ describe('NCOS Set', () => {
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ncosset: NCOSSetResponseDto = response.body
-                expect(ncosset.name).toEqual('test_ncosset5')
+                expect(ncosset.name).toEqual(`test_ncosset5_${suffix}`)
                 expect(ncosset.reseller_id).toEqual(1)
                 expect(ncosset.description).toEqual('test_ncosset5 description')
             })
@@ -314,7 +315,7 @@ describe('NCOS Set', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        name: 'test_ncosset_no_reseller',
+                        name: `test_ncosset_no_reseller_${suffix}`,
                         description: 'no reseller_id',
                     })
                 expect(response.status).toEqual(422)
@@ -327,7 +328,7 @@ describe('NCOS Set', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        name: 'test_ncosset_no_reseller',
+                        name: `test_ncosset_no_reseller_${suffix}`,
                         description: 'no reseller_id',
                     })
                 expect(response.status).toEqual(422)
@@ -397,7 +398,7 @@ describe('NCOS Set', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({...{
-                        name: 'test_reseller_ncosset',
+                        name: `test_reseller_ncosset_${suffix}`,
                         description: 'reseller',
                     }, reseller_id: 1})
                 expect(response.status).toEqual(422)
@@ -410,7 +411,7 @@ describe('NCOS Set', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        name: 'test_reseller_ncosset',
+                        name: `test_reseller_ncosset_${suffix}`,
                         description: 'reseller',
                     })
                 expect(response.status).toEqual(201)
@@ -432,7 +433,7 @@ describe('NCOS Set', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({...{
-                        name: 'renamed_test_reseller_ncosset',
+                        name: `renamed_test_reseller_ncosset_${suffix}`,
                         description: 'reseller',
                     }, reseller_id: 1})
                 expect(response.status).toEqual(422)
@@ -445,7 +446,7 @@ describe('NCOS Set', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        name: 'renamed_test_reseller_ncosset',
+                        name: `renamed_test_reseller_ncosset_${suffix}`,
                         description: 'reseller',
                     })
                 expect(response.status).toEqual(204)

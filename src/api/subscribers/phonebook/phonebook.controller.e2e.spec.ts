@@ -137,14 +137,14 @@ describe('Subscriber Phonebook', () => {
                 await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [contract.id, null, ',,1,,;'])
                 createdContractIds.push(contract.id)
                 const domain = await db.billing.Domain.create({
-                    domain: 'sub_pb_test_dom1',
+                    domain: `sub-pb-test-dom-${suffix}.invalid`,
                     reseller_id: 1,
                 }).save()
                 createdDomainIds.push(domain.id)
                 const insertResult = await BillingVoipSubscriber.insert({ // insert instead of create to avoid a cyclic dependency error
                     contract_id: contract.id,
                     uuid: uuidv4(),
-                    username: 'sub_pb_test1',
+                    username: `sub_pb_test${suffix}`,
                     domain_id: domain.id,
                     status: 'active',
                 })

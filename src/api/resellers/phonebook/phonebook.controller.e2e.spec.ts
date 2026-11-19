@@ -279,7 +279,7 @@ describe('Reseller Phonebook', () => {
                 {
                     op: 'replace',
                     path: '/number',
-                    value: '999',
+                    value: `${num}999`,
                 },
             ]
             it('adjust phonebook', async () => {
@@ -299,7 +299,7 @@ describe('Reseller Phonebook', () => {
                 expect(response.status).toEqual(200)
                 const phonebookset: ResellerPhonebookResponseDto = response.body
                 expect(phonebookset.name).toEqual('test_phonebook_foobar')
-                expect(phonebookset.number).toEqual('999')
+                expect(phonebookset.number).toEqual(`${num}999`)
             })
             it('adjust non-existing phonebook', async () => {
                 const response = await request(app.getHttpServer())

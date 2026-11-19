@@ -32,6 +32,7 @@ describe('NCOS Set Level', () => {
     let createdLevelIds: number[] = []
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
+    const suffix = `${process.env.JEST_WORKER_ID}${Date.now()}`
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -112,7 +113,7 @@ describe('NCOS Set Level', () => {
     describe('', () => { // main tests block
         it('create ncos set for level tests', async () => {
             const ncosset: NcosSetPost = {
-                name: 'test_ncossetlevel_set',
+                name: `test_ncossetlevel_set_${suffix}`,
                 reseller_id: 1,
                 description: 'test_ncossetlevel_set description',
             }
@@ -128,14 +129,14 @@ describe('NCOS Set Level', () => {
 
         it('create ncos level', async () => {
             const ncosLevel = db.billing.NCOSLevel.create({
-                level: 'test_level1',
+                level: `test_level1_${suffix}`,
                 reseller_id: 1,
                 mode: NCOSLevelMode.Blacklist,
             })
             const res = await ncosLevel.save()
             createdLevelIds.push(ncosLevel.id)
 
-            expect(res.level).toEqual('test_level1')
+            expect(res.level).toEqual(`test_level1_${suffix}`)
         })
 
         describe('POST', () => {

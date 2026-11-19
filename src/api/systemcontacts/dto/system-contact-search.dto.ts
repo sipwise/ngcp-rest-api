@@ -15,7 +15,7 @@ export class SystemContactSearchDto {
         company?: string
     @ApiPropertyOptional({description: 'Company registration number'})
         comregnum?: string
-    @ApiPropertyOptional({description: 'Two-letter ISO 3166-1 country code, e.g. `US` or `DE`'})
+    @ApiPropertyOptional({description: 'Two-letter ISO 3166-1 country code, e.g. `AT` or `DE`'})
         country?: string
     @DateTimeField()
     @ApiPropertyOptional({description: 'Time of creation'})

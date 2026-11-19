@@ -32,6 +32,7 @@ describe('Contact', () => {
     let authHeader: [string, string]
     const createdIds: number[] = []
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const suffix = `${process.env.JEST_WORKER_ID}${Date.now()}`
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -111,14 +112,14 @@ describe('Contact', () => {
                 reseller_id: 1,
                 firstname: 'test_c1_first',
                 lastname: 'test_c1_last',
-                email: 'test_c1@example.com',
+                email: `test_c1_${suffix}@example.com`,
                 newsletter: false,
                 status: ContactStatus.Active,
             }
             const contact2: ContactPost = {
                 reseller_id: 1,
                 firstname: 'test_c2_first',
-                email: 'test_c2@example.com',
+                email: `test_c2_${suffix}@example.com`,
                 newsletter: true,
                 status: ContactStatus.Active,
             }
@@ -174,7 +175,7 @@ describe('Contact', () => {
         describe('GET', () => {
             it('read contacts collection', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/contacts?email=test_c1@example.com')
+                    .get(`/api/contacts?email=test_c1_${suffix}@example.com`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -218,7 +219,7 @@ describe('Contact', () => {
             const contact3: ContactPost = {
                 reseller_id: 1,
                 firstname: 'test_c3_first',
-                email: 'test_c3@example.com',
+                email: `test_c3_${suffix}@example.com`,
                 newsletter: true,
                 status: ContactStatus.Active,
             }
@@ -273,7 +274,7 @@ describe('Contact', () => {
                 expect(response.status).toEqual(200)
                 const contact: ContactResponseDto = response.body
                 expect(contact.firstname).toEqual('test_c4_first')
-                expect(contact.email).toEqual('test_c3@example.com')
+                expect(contact.email).toEqual(`test_c3_${suffix}@example.com`)
                 expect(contact.newsletter).toEqual(false)
             })
             it('adjust contacts bulk', async () => {

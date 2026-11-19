@@ -110,10 +110,10 @@ describe('AdminController', () => {
     it('should load db entities', async () => {
         const admin = db.billing.Admin.create()
         admin.is_active = true
-        admin.email = 'staticadmin@example.com'
+        admin.email = `staticadmin_${run}@example.com`
         admin.role_id = 1
         admin.is_master = true
-        admin.login = 'staticadmin'
+        admin.login = loginOf('staticadmin')
         admin.saltedpass = strongPassword
 
         const result = await db.billing.Admin.insert(admin)
@@ -157,7 +157,7 @@ describe('AdminController', () => {
                     can_reset_password: true,
                     is_active: true,
                     is_master: true,
-                    email: 'adminmaster@example.com',
+                    email: `adminmaster_${run}@example.com`,
                     login: loginOf('adminmaster'),
                     password: strongPassword,
                     read_only: false,
@@ -172,7 +172,7 @@ describe('AdminController', () => {
                     can_reset_password: true,
                     is_active: true,
                     is_master: false,
-                    email: 'admin@example.com',
+                    email: `admin_${run}@example.com`,
                     login: loginOf('admin'),
                     password: strongPassword,
                     read_only: false,
@@ -187,7 +187,7 @@ describe('AdminController', () => {
                     can_reset_password: true,
                     is_active: true,
                     is_master: true,
-                    email: 'system@example.com',
+                    email: `system_${run}@example.com`,
                     login: loginOf('system'),
                     password: strongPassword,
                     read_only: false,
@@ -202,7 +202,7 @@ describe('AdminController', () => {
                     can_reset_password: true,
                     is_active: true,
                     is_master: true,
-                    email: 'resellermaster@example.com',
+                    email: `resellermaster_${run}@example.com`,
                     login: loginOf('resellermaster'),
                     password: strongPassword,
                     read_only: false,
@@ -217,7 +217,7 @@ describe('AdminController', () => {
                     can_reset_password: true,
                     is_active: true,
                     is_master: false,
-                    email: 'reseller@example.com',
+                    email: `reseller_${run}@example.com`,
                     login: loginOf('reseller'),
                     password: strongPassword,
                     read_only: false,
@@ -232,7 +232,7 @@ describe('AdminController', () => {
                     can_reset_password: true,
                     is_active: true,
                     is_master: true,
-                    email: 'ccareadmin@example.com',
+                    email: `ccareadmin_${run}@example.com`,
                     login: loginOf('ccareadmin'),
                     password: strongPassword,
                     read_only: false,
@@ -247,7 +247,7 @@ describe('AdminController', () => {
                     can_reset_password: true,
                     is_active: true,
                     is_master: true,
-                    email: 'ccare@example.com',
+                    email: `ccare_${run}@example.com`,
                     login: loginOf('ccare'),
                     password: strongPassword,
                     read_only: false,
@@ -262,7 +262,7 @@ describe('AdminController', () => {
                     can_reset_password: true,
                     is_active: true,
                     is_master: true,
-                    email: 'lintercept@example.com',
+                    email: `lintercept_${run}@example.com`,
                     login: loginOf('lintercept'),
                     password: strongPassword,
                     read_only: false,
@@ -277,7 +277,7 @@ describe('AdminController', () => {
                     can_reset_password: true,
                     is_active: true,
                     is_master: true,
-                    email: '2faProvidedSecret@example.com',
+                    email: `2faProvidedSecret_${run}@example.com`,
                     login: loginOf('2faProvidedSecret'),
                     password: strongPassword,
                     read_only: false,
@@ -293,7 +293,7 @@ describe('AdminController', () => {
                     can_reset_password: true,
                     is_active: true,
                     is_master: true,
-                    email: '2faGeneratedSecret@example.com',
+                    email: `2faGeneratedSecret_${run}@example.com`,
                     login: loginOf('2faGeneratedSecret'),
                     password: strongPassword,
                     read_only: false,
@@ -798,9 +798,9 @@ describe('AdminController', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json-patch+json')
                     .set('Prefer', 'return=representation')
-                    .send([{op: 'replace', path: '/email', value: 'rid_reseller_patched@example.com'}])
+                    .send([{op: 'replace', path: '/email', value: `rid_reseller_patched_${run}@example.com`}])
                 expect(response.status).toEqual(200)
-                expect(response.body.email).toEqual('rid_reseller_patched@example.com')
+                expect(response.body.email).toEqual(`rid_reseller_patched_${run}@example.com`)
             })
             it('admin: should read the reseller_id of the user on admin created by resellermaster', async () => {
                 const response = await request(app.getHttpServer())
@@ -821,7 +821,7 @@ describe('AdminController', () => {
                     can_reset_password: true,
                     is_active: true,
                     is_master: true,
-                    email: 'update_self@example.com',
+                    email: `update_self_${run}@example.com`,
                     login: loginOf('update_self'),
                     password: strongPassword,
                     read_only: false,

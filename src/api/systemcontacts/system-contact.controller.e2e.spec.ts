@@ -31,6 +31,7 @@ describe('SystemContact', () => {
     let authHeader: [string, string]
     const createdIds: number[] = []
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const suffix = `${process.env.JEST_WORKER_ID}${Date.now()}`
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -109,13 +110,13 @@ describe('SystemContact', () => {
             const contact1: SystemContactPost = {
                 firstname: 'test_sc1_first',
                 lastname: 'test_sc1_last',
-                email: 'test_sc1@example.com',
+                email: `test_sc1_${suffix}@example.com`,
                 newsletter: false,
                 status: ContactStatus.Active,
             }
             const contact2: SystemContactPost = {
                 firstname: 'test_sc2_first',
-                email: 'test_sc2@example.com',
+                email: `test_sc2_${suffix}@example.com`,
                 newsletter: true,
                 status: ContactStatus.Active,
             }
@@ -145,7 +146,7 @@ describe('SystemContact', () => {
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
-                    .send({email: 'test_sc_nostatus@example.com'})
+                    .send({email: `test_sc_nostatus_${suffix}@example.com`})
                 expect(response.status).toEqual(422)
             })
         })
@@ -153,7 +154,7 @@ describe('SystemContact', () => {
         describe('GET', () => {
             it('read system contacts collection', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/systemcontacts?email=test_sc1@example.com')
+                    .get(`/api/systemcontacts?email=test_sc1_${suffix}@example.com`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -195,7 +196,7 @@ describe('SystemContact', () => {
         describe('PUT', () => {
             const contact3: SystemContactPost = {
                 firstname: 'test_sc3_first',
-                email: 'test_sc3@example.com',
+                email: `test_sc3_${suffix}@example.com`,
                 newsletter: true,
                 status: ContactStatus.Active,
             }
@@ -232,7 +233,7 @@ describe('SystemContact', () => {
                         [createdIds[1]]: {
                             firstname: 'test_sc2_first',
                             lastname: 'test_sc2_put_last',
-                            email: 'test_sc2@example.com',
+                            email: `test_sc2_${suffix}@example.com`,
                             newsletter: false,
                             status: ContactStatus.Active,
                         },
@@ -266,7 +267,7 @@ describe('SystemContact', () => {
                 expect(response.status).toEqual(200)
                 const contact: SystemContactResponseDto = response.body
                 expect(contact.firstname).toEqual('test_sc4_first')
-                expect(contact.email).toEqual('test_sc3@example.com')
+                expect(contact.email).toEqual(`test_sc3_${suffix}@example.com`)
                 expect(contact.newsletter).toEqual(false)
             })
             it('adjust system contacts bulk', async () => {

@@ -39,6 +39,7 @@ describe('CustomerContact', () => {
     const fixtureContractIds: number[] = []
     let resellerAdminId: number
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
+    const suffix = `${process.env.JEST_WORKER_ID}${Date.now()}`
     const resellerCreds = {username: `cc_reseller_${Date.now().toString(36)}`, password: 'FFFooobarbaz123!!!'}
 
     beforeAll(async () => {
@@ -119,14 +120,14 @@ describe('CustomerContact', () => {
                 reseller_id: 1,
                 firstname: 'test_cc1_first',
                 lastname: 'test_cc1_last',
-                email: 'test_cc1@example.com',
+                email: `test_cc1_${suffix}@example.com`,
                 newsletter: false,
                 status: ContactStatus.Active,
             }
             const contact2: CustomerContactPost = {
                 reseller_id: 1,
                 firstname: 'test_cc2_first',
-                email: 'test_cc2@example.com',
+                email: `test_cc2_${suffix}@example.com`,
                 newsletter: true,
                 status: ContactStatus.Active,
             }
@@ -173,7 +174,7 @@ describe('CustomerContact', () => {
         describe('GET', () => {
             it('read customer contacts collection', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/customercontacts?email=test_cc1@example.com')
+                    .get(`/api/customercontacts?email=test_cc1_${suffix}@example.com`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -216,7 +217,7 @@ describe('CustomerContact', () => {
             const contact3: CustomerContactPost = {
                 reseller_id: 1,
                 firstname: 'test_cc3_first',
-                email: 'test_cc3@example.com',
+                email: `test_cc3_${suffix}@example.com`,
                 newsletter: true,
                 status: ContactStatus.Active,
             }
@@ -261,7 +262,7 @@ describe('CustomerContact', () => {
                 expect(response.status).toEqual(200)
                 const contact: CustomerContactResponseDto = response.body
                 expect(contact.firstname).toEqual('test_cc4_first')
-                expect(contact.email).toEqual('test_cc3@example.com')
+                expect(contact.email).toEqual(`test_cc3_${suffix}@example.com`)
                 expect(contact.newsletter).toEqual(false)
             })
             it('adjust customer contacts bulk', async () => {
@@ -996,7 +997,7 @@ describe('CustomerContact', () => {
                     .set('Content-Type', 'application/json')
                     .send({...{
                         firstname: 'test_cc_reseller',
-                        email: 'test_cc_reseller@example.com',
+                        email: `test_cc_reseller_${suffix}@example.com`,
                         status: 'active',
                     }, reseller_id: 1})
                 expect(response.status).toEqual(422)
@@ -1010,7 +1011,7 @@ describe('CustomerContact', () => {
                     .set('Content-Type', 'application/json')
                     .send({
                         firstname: 'test_cc_reseller',
-                        email: 'test_cc_reseller@example.com',
+                        email: `test_cc_reseller_${suffix}@example.com`,
                         status: 'active',
                     })
                 expect(response.status).toEqual(201)
@@ -1033,7 +1034,7 @@ describe('CustomerContact', () => {
                     .set('Content-Type', 'application/json')
                     .send({...{
                         firstname: 'renamed_test_cc_reseller',
-                        email: 'test_cc_reseller@example.com',
+                        email: `test_cc_reseller_${suffix}@example.com`,
                         status: 'active',
                     }, reseller_id: 1})
                 expect(response.status).toEqual(422)
@@ -1047,7 +1048,7 @@ describe('CustomerContact', () => {
                     .set('Content-Type', 'application/json')
                     .send({
                         firstname: 'renamed_test_cc_reseller',
-                        email: 'test_cc_reseller@example.com',
+                        email: `test_cc_reseller_${suffix}@example.com`,
                         status: 'active',
                     })
                 expect(response.status).toEqual(204)

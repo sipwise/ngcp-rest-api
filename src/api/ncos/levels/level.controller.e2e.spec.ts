@@ -37,6 +37,7 @@ describe('NCOS Level', () => {
     let resellerAdminId: number
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
+    const suffix = `${process.env.JEST_WORKER_ID}${Date.now().toString(36)}`
     const resellerCreds = {username: `ncos_lvl_reseller_${Date.now().toString(36)}`, password: 'FFFooobarbaz123!!!'}
 
     beforeAll(async () => {
@@ -116,7 +117,7 @@ describe('NCOS Level', () => {
             const ncosLevel1: NCOSLevelPost = {
                 reseller_id: 1,
                 description: 'test_ncosLevel1 description',
-                level: 'test_ncosLevel1',
+                level: `test_ncosLevel1_${suffix}`,
                 mode: 'blacklist',
                 local_ac: false,
                 intra_pbx: false,
@@ -126,7 +127,7 @@ describe('NCOS Level', () => {
             const ncosLevel2: NCOSLevelPost = {
                 reseller_id: 1,
                 description: 'test_ncosLevel2 description',
-                level: 'test_ncosLevel2',
+                level: `test_ncosLevel2_${suffix}`,
                 mode: 'blacklist',
                 local_ac: false,
                 intra_pbx: false,
@@ -176,7 +177,7 @@ describe('NCOS Level', () => {
         describe('GET', () => {
             it('read created ncos level 1', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/ncos/levels?level=test_ncosLevel1')
+                    .get(`/api/ncos/levels?level=test_ncosLevel1_${suffix}`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -186,13 +187,13 @@ describe('NCOS Level', () => {
                 expect(await validate(setEntries)).toEqual([])
                 expect(setEntries).toHaveLength(1)
                 const ncosLevel = setEntries[0]
-                expect(ncosLevel.level).toEqual('test_ncosLevel1')
+                expect(ncosLevel.level).toEqual(`test_ncosLevel1_${suffix}`)
                 expect(ncosLevel.reseller_id).toEqual(1)
                 expect(ncosLevel.description).toEqual('test_ncosLevel1 description')
             })
             it('read created ncos level 2', async () => {
                 const response = await request(app.getHttpServer())
-                    .get('/api/ncos/levels/?level=test_ncosLevel2')
+                    .get(`/api/ncos/levels/?level=test_ncosLevel2_${suffix}`)
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
@@ -202,7 +203,7 @@ describe('NCOS Level', () => {
                 expect(await validate(setEntries)).toEqual([])
                 expect(setEntries).toHaveLength(1)
                 const ncosLevel = setEntries[0]
-                expect(ncosLevel.level).toEqual('test_ncosLevel2')
+                expect(ncosLevel.level).toEqual(`test_ncosLevel2_${suffix}`)
                 expect(ncosLevel.reseller_id).toEqual(1)
                 expect(ncosLevel.description).toEqual('test_ncosLevel2 description')
             })
@@ -217,7 +218,7 @@ describe('NCOS Level', () => {
 
         describe('PUT', () => {
             const ncosLevel3: NCOSLevelPost = {
-                level: 'test_ncosLevel3',
+                level: `test_ncosLevel3_${suffix}`,
                 reseller_id: 1,
                 description: 'test_ncosLevel3 description',
                 mode: 'blacklist',
@@ -242,7 +243,7 @@ describe('NCOS Level', () => {
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ncosLevel: NCOSLevelResponseDto = response.body
-                expect(ncosLevel.level).toEqual('test_ncosLevel3')
+                expect(ncosLevel.level).toEqual(`test_ncosLevel3_${suffix}`)
             })
             it('update non-existing ncos level', async () => {
                 const response = await request(app.getHttpServer())
@@ -280,7 +281,7 @@ describe('NCOS Level', () => {
                 {
                     op: 'replace',
                     path: '/level',
-                    value: 'test_ncosLevel5',
+                    value: `test_ncosLevel5_${suffix}`,
                 },
                 {
                     op: 'replace',
@@ -304,7 +305,7 @@ describe('NCOS Level', () => {
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(200)
                 const ncosLevel: NCOSLevelResponseDto = response.body
-                expect(ncosLevel.level).toEqual('test_ncosLevel5')
+                expect(ncosLevel.level).toEqual(`test_ncosLevel5_${suffix}`)
                 expect(ncosLevel.reseller_id).toEqual(1)
                 expect(ncosLevel.description).toEqual('test_ncosLevel5 description')
             })
@@ -327,7 +328,7 @@ describe('NCOS Level', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        level: 'test_ncosLevel_no_reseller',
+                        level: `ncosLevel_nores_${suffix}`,
                         description: 'no reseller_id',
                         mode: 'blacklist',
                         local_ac: false,
@@ -345,7 +346,7 @@ describe('NCOS Level', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        level: 'test_ncosLevel_no_reseller',
+                        level: `ncosLevel_nores_${suffix}`,
                         description: 'no reseller_id',
                         mode: 'blacklist',
                         local_ac: false,
@@ -420,7 +421,7 @@ describe('NCOS Level', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({...{
-                        level: 'test_reseller_ncosLevel',
+                        level: `rs_ncosLevel_${suffix}`,
                         description: 'reseller',
                         mode: 'blacklist',
                         local_ac: false,
@@ -438,7 +439,7 @@ describe('NCOS Level', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        level: 'test_reseller_ncosLevel',
+                        level: `rs_ncosLevel_${suffix}`,
                         description: 'reseller',
                         mode: 'blacklist',
                         local_ac: false,
@@ -465,7 +466,7 @@ describe('NCOS Level', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({...{
-                        level: 'renamed_test_reseller_ncosLevel',
+                        level: `rs_ncosLevel_ren_${suffix}`,
                         description: 'reseller',
                         mode: 'blacklist',
                         local_ac: false,
@@ -483,7 +484,7 @@ describe('NCOS Level', () => {
                     .set('Accept', 'application/json')
                     .set('Content-Type', 'application/json')
                     .send({
-                        level: 'renamed_test_reseller_ncosLevel',
+                        level: `rs_ncosLevel_ren_${suffix}`,
                         description: 'reseller',
                         mode: 'blacklist',
                         local_ac: false,
