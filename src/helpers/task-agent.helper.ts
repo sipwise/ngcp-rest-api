@@ -123,6 +123,14 @@ export class TaskAgentHelper {
                     acceptedCount++
                 }
 
+                // 'rejected' is sent instead of 'accepted': the node has answered and is finished
+                if (status === 'rejected') {
+                    acceptedCount++
+                    completedCount++
+                    errors[uuid] = reason ?? 'Unknown error'
+                    this.log.error(`Task rejected in feedback=${feedbackChannel} host=${host} uuid=${request.uuid} error=${errors[uuid]}`)
+                }
+
                 if (status === 'error') {
                     completedCount++
                     errors[uuid] = reason ?? 'Unknown error'
@@ -182,7 +190,8 @@ export class TaskAgentHelper {
                 return
             }
 
-            if (acceptedCount > 0 && completedCount >= acceptedCount) {
+            // an 'error' without 'accepted' is an immediate final answer
+            if (completedCount > 0 && completedCount >= acceptedCount) {
                 await this.unsubscriberFromFeedback(feedbackChannel)
                 this.log.debug(`Task completed feedback=${feedbackChannel} uuid=${request.uuid} accepted=${acceptedCount} completed=${completedCount} errors=${errorsStr}`)
                 break
