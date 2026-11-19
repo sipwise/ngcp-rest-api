@@ -19,7 +19,9 @@ export class HeaderManipulationSetRedisRepository {
             dst: '*|state=active;role=proxy',
             options: {
                 path: '/hm_invalidate_ruleset/',
-                headers: `"P-NGCP-HM-Invalidate-Rule-Set": ${setId.toString()}`,
+                headers: {
+                    'P-NGCP-HM-Invalidate-Rule-Set': setId.toString(),
+                },
             },
         })
 
