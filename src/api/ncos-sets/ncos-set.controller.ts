@@ -79,6 +79,13 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         return await Promise.all(created.map(async setLevel => new NCOSSetLevelResponseDto(setLevel)))
     }
 
+    @Auth(
+        RbacRole.system,
+        RbacRole.admin,
+        RbacRole.reseller,
+        RbacRole.ccareadmin,
+        RbacRole.ccare,
+    )
     @Get(':id?/levels')
     @ApiOkResponse({
         type: NCOSSetLevelResponseDto,
@@ -196,6 +203,8 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         RbacRole.system,
         RbacRole.admin,
         RbacRole.reseller,
+        RbacRole.ccareadmin,
+        RbacRole.ccare,
         RbacRole.subscriberadmin,
     )
     @Get()
