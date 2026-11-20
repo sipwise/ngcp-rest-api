@@ -1,3 +1,10 @@
+ngcp-rest-api (13.5.1.38+0~mr13.5.1.38) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [926860d] MT#66764 ncos: allow ccare roles to GET collections
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Fri, 20 Nov 2026 17:39:18 +0100
+
 ngcp-rest-api (13.5.1.37+0~mr13.5.1.37) unstable; urgency=medium
 
   [ Kirill Solomko ]
