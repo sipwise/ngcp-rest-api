@@ -30,7 +30,7 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.NCOSSet[], number]> {
-        if (sr.user.role == 'reseller')
+        if (sr.user.role == 'reseller' || sr.user.role == 'ccare')
             return await this.ncosSetRepo.readAll(sr, {resellerId: sr.user.reseller_id})
         if (sr.user.role == 'subscriberadmin')
             return await this.ncosSetRepo.readAll(sr, {resellerId: sr.user.reseller_id, exposeToCustomer: true})
@@ -82,7 +82,7 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
     }
 
     async readLevelAll(sr: ServiceRequest, id?: number): Promise<[internal.NCOSSetLevel[], number]> {
-        if (sr.user.role == 'reseller')
+        if (sr.user.role == 'reseller' || sr.user.role == 'ccare')
             return await this.ncosSetRepo.readLevelAll(sr, id, {resellerId: sr.user.reseller_id})
         return await this.ncosSetRepo.readLevelAll(sr, id)
     }
