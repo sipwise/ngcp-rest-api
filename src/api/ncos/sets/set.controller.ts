@@ -80,6 +80,8 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         RbacRole.system,
         RbacRole.admin,
         RbacRole.reseller,
+        RbacRole.ccareadmin,
+        RbacRole.ccare,
         RbacRole.subscriberadmin,
     )
     @Get()

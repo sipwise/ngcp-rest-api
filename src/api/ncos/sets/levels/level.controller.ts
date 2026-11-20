@@ -67,6 +67,13 @@ export class NCOSSetLevelController extends CrudController<NCOSSetLevelRequestDt
         return await Promise.all(created.map(async entity => new NCOSSetLevelResponseDto(entity)))
     }
 
+    @Auth(
+        RbacRole.system,
+        RbacRole.admin,
+        RbacRole.reseller,
+        RbacRole.ccareadmin,
+        RbacRole.ccare,
+    )
     @Get('{:setId/}levels')
     @ApiParam({name: 'setId', required: false, type: Number})
     @ApiSearchQuery(SearchLogic, NCOSSetLevelSearchDto)
