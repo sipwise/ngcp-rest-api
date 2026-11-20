@@ -39,7 +39,7 @@ export class NCOSLevelService implements CrudService<internal.NCOSLevel> {
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.NCOSLevel[], number]> {
-        if (sr.user.role == RbacRole.reseller)
+        if (sr.user.role == RbacRole.reseller || sr.user.role == RbacRole.ccare)
             return await this.ncosLevelRepo.readAll(sr, {resellerId: sr.user.reseller_id})
         if (sr.user.role == RbacRole.subscriberadmin)
             return await this.ncosLevelRepo.readAll(sr, {resellerId: sr.user.reseller_id, exposeToCustomer: true})
