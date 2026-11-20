@@ -27,7 +27,7 @@ export class NCOSSetService implements CrudService<internal.NCOSSet> {
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.NCOSSet[], number]> {
-        if (sr.user.role == 'reseller')
+        if (sr.user.role == 'reseller' || sr.user.role == 'ccare')
             return await this.ncosSetRepo.readAll(sr, {resellerId: sr.user.reseller_id})
         if (sr.user.role == 'subscriberadmin')
             return await this.ncosSetRepo.readAll(sr, {resellerId: sr.user.reseller_id, exposeToCustomer: true})

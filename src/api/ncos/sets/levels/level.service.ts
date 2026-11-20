@@ -31,7 +31,7 @@ export class NCOSSetLevelService implements CrudService<internal.NCOSSetLevel> {
 
     async readAll(sr: ServiceRequest): Promise<[internal.NCOSSetLevel[], number]> {
         const filters = this.getFiltersFromServiceRequest(sr)
-        if (sr.user.role == 'reseller')
+        if (sr.user.role == 'reseller' || sr.user.role == 'ccare')
             filters.resellerId = sr.user.reseller_id
 
         return await this.ncosSetLevelRepo.readAll(sr, filters)

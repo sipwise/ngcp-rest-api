@@ -12,6 +12,8 @@ import {setupApp} from '~/app.setup'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
+import {ContractStatus} from '~/entities/internal/contract.internal.entity'
+import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {ErrorEntry} from '~/helpers/errors.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
@@ -39,6 +41,38 @@ describe('NCOS Level', () => {
     const startedAt = Date.now() / 1000
     const suffix = `${process.env.JEST_WORKER_ID}${Date.now().toString(36)}`
     const resellerCreds = {username: `ncos_lvl_reseller_${Date.now().toString(36)}`, password: 'FFFooobarbaz123!!!'}
+
+    const ccareLogins = {
+        [RbacRole.ccare]: `mockCcareUser${process.env.JEST_WORKER_ID}`,
+        [RbacRole.ccareadmin]: `mockCcareadminUser${process.env.JEST_WORKER_ID}`,
+    }
+    let otherResellerContractId: number
+    let otherResellerId: number
+
+    const insertAdmin = async (login: string, role: RbacRole, resellerId: number): Promise<void> => {
+        await db.billing.Admin.delete({login: login})
+        const aclRole = await db.billing.AclRole.findOneByOrFail({role: role})
+        await db.billing.Admin.insert({
+            reseller_id: resellerId,
+            login: login,
+            saltedpass: 'mockAdminSaltedpass',
+            saltedpass_modify_timestamp: new Date(),
+            role_id: aclRole.id,
+            is_master: true,
+            is_superuser: role == RbacRole.ccareadmin,
+            is_system: false,
+            is_ccare: true,
+            lawful_intercept: false,
+            is_active: true,
+            read_only: false,
+            show_passwords: true,
+            call_data: true,
+            billing_data: true,
+            can_reset_password: true,
+            enable_2fa: false,
+            show_otp_registration_info: false,
+        })
+    }
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
@@ -532,6 +566,76 @@ describe('NCOS Level', () => {
                 expect(response.body.reseller_id).toEqual(1)
             })
         })
+
+        describe('as ccare roles', () => {
+            let otherLevelId: number
+            const headers: {[role: string]: [string, string]} = {}
+
+            const get = (role: string, url: string): request.Test => request(app.getHttpServer())
+                .get(url)
+                .set(...headers[role])
+                .set('Accept', 'application/json')
+
+            it('create another reseller and log in as its ccare roles', async () => {
+                const now = new Date()
+                otherResellerContractId = (await db.billing.Contract.create({
+                    contact_id: 2, product_id: 3, status: ContractStatus.Active, create_timestamp: now, modify_timestamp: now,
+                }).save()).id
+                otherResellerId = (await db.billing.Reseller.create({
+                    contract_id: otherResellerContractId,
+                    name: `ncos_lvl_ccare_reseller_${suffix}`,
+                    status: ResellerStatus.Active,
+                }).save()).id
+                for (const [role, login] of Object.entries(ccareLogins)) {
+                    await insertAdmin(login, role as RbacRole, otherResellerId)
+                    const auth = await request(app.getHttpServer())
+                        .post('/api/auth/jwt')
+                        .set('Accept', 'application/json')
+                        .set('Content-Type', 'application/json')
+                        .send({username: login, password: 'mockAdminPass'})
+                    expect(auth.status).toEqual(201)
+                    headers[role] = ['Authorization', 'Bearer ' + auth.body['access_token']]
+                }
+            })
+
+            it('create ncos level of the other reseller', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/ncos/levels')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        reseller_id: otherResellerId,
+                        level: `ccare_ncosLevel_${suffix}`,
+                        description: 'ccare',
+                        mode: 'blacklist',
+                        local_ac: false,
+                        intra_pbx: false,
+                        expose_to_customer: false,
+                        time_set_invert: false,
+                    })
+                expect(response.status).toEqual(201)
+                otherLevelId = +response.body.data[0].id
+                createdIds.push(otherLevelId)
+            })
+
+            it('list only own ncos levels as ccare', async () => {
+                const response = await get(RbacRole.ccare, `/api/ncos/levels?level=*_${suffix}`)
+                expect(response.status).toEqual(200)
+                expect(response.body.data.map((l: NCOSLevelResponseDto) => +l.id)).toEqual([otherLevelId])
+            })
+
+            it('list ncos levels of all resellers as ccareadmin', async () => {
+                const response = await get(RbacRole.ccareadmin, `/api/ncos/levels?level=*_${suffix}`)
+                expect(response.status).toEqual(200)
+                expect(response.body.data.map((l: NCOSLevelResponseDto) => +l.id).sort()).toEqual([...createdIds].sort())
+            })
+
+            it.each([RbacRole.ccare, RbacRole.ccareadmin])('fail read ncos level as %s', async role => {
+                const response = await get(role, `/api/ncos/levels/${otherLevelId}`)
+                expect(response.status).toEqual(403)
+            })
+        })
     })
 
     describe('NCOSLevel DELETE', () => {
@@ -555,6 +659,14 @@ describe('NCOS Level', () => {
         })
         it('delete created journals', async () => {
             await db.billing.Journal.delete({username: In([creds.username, resellerCreds.username]), timestamp: MoreThanOrEqual(startedAt)})
+        })
+
+        it('delete created fixtures', async () => {
+            await db.billing.Admin.delete({login: In(Object.values(ccareLogins))})
+            if (otherResellerId)
+                await db.billing.Reseller.delete(otherResellerId)
+            if (otherResellerContractId)
+                await db.billing.Contract.delete(otherResellerContractId)
         })
 
         it('delete mock admin', async () => {
