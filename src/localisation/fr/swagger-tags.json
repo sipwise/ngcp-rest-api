@@ -89,7 +89,7 @@
     },
     {
         "name": "Peering",
-        "description": "[/peerings] Routes relatives au peering, y compris les règles de groupe, les règles entrantes et les serveurs"
+        "description": "[/peerings] Routes relatives au peering, y compris les règles de groupe, les règles entrantes, les serveurs et la vue d'ensemble des règles par serveur"
     },
     {
         "name": "Product",

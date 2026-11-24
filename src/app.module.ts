@@ -61,6 +61,9 @@ import {PeeringGroupModule} from './api/peerings/groups/group.module'
 import {PeeringInboundRuleModule} from './api/peerings/groups/inbound-rules/inbound-rule.module'
 import {PeeringRuleModule} from './api/peerings/groups/rules/rule.module'
 import {PeeringGroupServerModule} from './api/peerings/groups/servers/server.module'
+import {PeeringInboundRuleOverviewModule} from './api/peerings/overview/inbound-rules/inbound-rule.module'
+import {PeeringOverviewModule} from './api/peerings/overview/overview.module'
+import {PeeringRuleOverviewModule} from './api/peerings/overview/rules/rule.module'
 import {PeeringModule} from './api/peerings/peering.module'
 import {ProductModule} from './api/products/product.module'
 import {ResellerPhonebookModule} from './api/resellers/phonebook/phonebook.module'
@@ -167,6 +170,9 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     PeeringModule,
     PeeringGroupServerModule,
     PeeringInboundRuleModule,
+    PeeringInboundRuleOverviewModule,
+    PeeringRuleOverviewModule,
+    PeeringOverviewModule,
     PeeringRuleModule,
     PeeringGroupModule,
     ProductModule,

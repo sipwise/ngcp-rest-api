@@ -167,19 +167,19 @@ function addSearchFilterToQueryBuilder<T extends BaseEntity>(qb: SelectQueryBuil
                 parameters[paramKey] = formattedValue
             })
         } else if (typeof alias == 'string' && isBooleanColumn(qb, qbAlias, alias)) {
-            conditions.push(`${qbAlias}.${alias} IN (:...${alias}_in)`)
-            parameters[`${alias}_in`] = values.map(value => booleanFilterValue(searchField, value))
+            conditions.push(`${qbAlias}.${alias} IN (:...${searchField}_in)`)
+            parameters[`${searchField}_in`] = values.map(value => booleanFilterValue(searchField, value))
         } else {
             const exactValues = values.filter(value => !value.includes('*'))
             const likeValues = values.filter(value => value.includes('*'))
 
             if (exactValues.length > 0) {
-                conditions.push(`${qbAlias}.${alias} IN (:...${alias}_in)`)
-                parameters[`${alias}_in`] = exactValues
+                conditions.push(`${qbAlias}.${alias} IN (:...${searchField}_in)`)
+                parameters[`${searchField}_in`] = exactValues
             }
 
             likeValues.forEach((value, index) => {
-                const paramKey = `${alias}_like_${index}`
+                const paramKey = `${searchField}_like_${index}`
                 conditions.push(`${qbAlias}.${alias} LIKE :${paramKey}`)
                 parameters[paramKey] = value.replace(/\*/g, '%')
             })

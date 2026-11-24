@@ -89,7 +89,7 @@
     },
     {
         "name": "Peering",
-        "description": "[/peerings] Rutas de peering, incluidas las reglas de grupo, las reglas entrantes y los servidores"
+        "description": "[/peerings] Rutas de peering, incluidas las reglas de grupo, las reglas entrantes, los servidores y la vista general de las reglas por servidor"
     },
     {
         "name": "Product",

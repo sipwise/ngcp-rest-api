@@ -23,6 +23,8 @@ export class PeeringResponseDto extends ResponseDto {
             {type: UrlReferenceType.Link, url: `${this.resourceUrl}/groups/servers`},
             {type: UrlReferenceType.Link, url: `${this.resourceUrl}/groups/inbound-rules`},
             {type: UrlReferenceType.Link, url: `${this.resourceUrl}/groups/rules`},
+            {type: UrlReferenceType.Link, url: `${this.resourceUrl}/overview/rules`},
+            {type: UrlReferenceType.Link, url: `${this.resourceUrl}/overview/inbound-rules`},
         ]
     }
 }

@@ -89,7 +89,7 @@
     },
     {
         "name": "Peering",
-        "description": "[/peerings] Verfügbare Routen für Peering, einschließlich Gruppenregeln, Inbound-Regeln und Servern"
+        "description": "[/peerings] Verfügbare Routen für Peering, einschließlich Gruppenregeln, Inbound-Regeln, Servern und der Übersicht der Regeln pro Server"
     },
     {
         "name": "Product",
