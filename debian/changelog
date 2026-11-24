@@ -1,3 +1,10 @@
+ngcp-rest-api (13.5.1.39+0~mr13.5.1.39) unstable; urgency=medium
+
+  [ Kirill Solomko ]
+  * [f3e8922] MT#63670 ncos: subscriberadmin may only list levels and sets
+
+ -- Sipwise Jenkins Builder <jenkins@sipwise.com>  Tue, 24 Nov 2026 17:03:34 +0100
+
 ngcp-rest-api (13.5.1.38+0~mr13.5.1.38) unstable; urgency=medium
 
   [ Kirill Solomko ]
