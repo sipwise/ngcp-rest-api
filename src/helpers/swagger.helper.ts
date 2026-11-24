@@ -535,6 +535,7 @@ export function createSwaggerDocument(app: NestApplication, api_prefix: string):
     addLazyFieldDocumentation(document, models)
     addTimezoneParameter(document)
     addRequestLimits(document)
+    addSingleItemFormBodies(document)
     addErrorResponses(document)
     const versions = readVersions()
     // the start of the server, refers the page to the init script and the pdf of this version
@@ -770,6 +771,18 @@ function withBulkBodyLimit(method: string, max: number, schema?: SchemaObject): 
     if ((method == 'put' || method == 'patch') && schema?.type == 'object')
         return {...schema, maxProperties: max}
     return undefined
+}
+
+// a form carries one item: the multipart body of a one-or-many route documents the item schema only
+function addSingleItemFormBodies(document: OpenAPIObject): void {
+    for (const pathItem of Object.values(document.paths)) {
+        for (const method of OPERATION_METHODS) {
+            const form = (pathItem[method]?.requestBody as RequestBodyObject)?.content?.['multipart/form-data']
+            const schema = form?.schema as SchemaObject
+            if (schema?.oneOf)
+                form.schema = schema.oneOf.find(s => !('type' in s && s.type == 'array'))
+        }
+    }
 }
 
 // performance.read_limit on `rows` (ReadLimitMiddleware), write_limit on bulk bodies (checkWriteLimit) with their 413

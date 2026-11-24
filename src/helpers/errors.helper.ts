@@ -327,8 +327,18 @@ export function isSingleItemRequest(sr: ServiceRequest): boolean {
 }
 
 /**
+ * Whether the items of the request are the rows of an uploaded file (csv import, iCalendar events): an upload
+ * without form fields, its items are pointed like a bulk POST array (`/<row>`)
+ */
+export function isFileRowsRequest(sr: ServiceRequest): boolean {
+    const body: unknown = sr?.req?.body
+    return sr?.req?.file != null && (body == null || Object.keys(body).length == 0)
+}
+
+/**
  * Pointer of a request item and a field in it.
- * Item: '' for single routes (`:id`) and single POST bodies, `/<index>` in a bulk array, `/<id>` in a bulk dictionary.
+ * Item: '' for single routes (`:id`) and single POST bodies, `/<index>` in a bulk array, `/<id>` in a bulk dictionary,
+ * `/<row>` for the rows of an uploaded file.
  * Fields: internal names, translated by the map the request DTO attached (`withDtoFields`), else snake_case;
  * numbers are array indexes.
  * @param sr service request of the endpoint
@@ -337,7 +347,7 @@ export function isSingleItemRequest(sr: ServiceRequest): boolean {
  * @param path internal field names and array indexes
  */
 export function itemPointer(sr: ServiceRequest, key: number | string, entity?: unknown, ...path: (number | string)[]): string {
-    return (isSingleItemRequest(sr) ? '' : bodyItemPointer(sr?.req?.body, key)) + fieldPointer(entity, path)
+    return (isSingleItemRequest(sr) ? '' : bodyItemPointer(isFileRowsRequest(sr) ? [] : sr?.req?.body, key)) + fieldPointer(entity, path)
 }
 
 /**

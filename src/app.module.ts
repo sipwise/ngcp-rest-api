@@ -73,6 +73,8 @@ import {SubscriberModule} from './api/subscribers/subscriber.module'
 import {SystemContactModule} from './api/systemcontacts/system-contact.module'
 import {InvoiceTemplateModule} from './api/templates/invoices/invoice.module'
 import {TemplateModule} from './api/templates/template.module'
+import {TimeSetEventModule} from './api/time-sets/events/event.module'
+import {TimeSetModule} from './api/time-sets/time-set.module'
 import {VoicemailModule} from './api/voicemails/voicemail.module'
 import {AppService} from './app.service'
 import {AuthModule} from './auth/auth.module'
@@ -178,6 +180,8 @@ let modulesImport: Array<Type<unknown> | DynamicModule | Promise<DynamicModule> 
     SubscriberModule,
     SystemContactModule,
     TemplateModule,
+    TimeSetEventModule,
+    TimeSetModule,
     VoicemailModule,
     LicenseModule,
     AuthPasswordModule,

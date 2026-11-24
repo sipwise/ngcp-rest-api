@@ -19,4 +19,5 @@ export const expandConfig: Readonly<Record<string, ExpandRule>> = {
     reseller_id: {target: 'resellers'},
     rwr_set_id: {target: 'rewrite-rules/sets'},
     subscriber_id: {target: 'subscribers'},
+    time_set_id: {target: 'time-sets'},
 }

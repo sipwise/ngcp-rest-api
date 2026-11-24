@@ -66,6 +66,7 @@
     "generate-password": "1.7.1",
     "halson": "3.2.0",
     "highlight.js": "11.12.0",
+    "ical.js": "2.2.1",
     "ioredis": "6.0.0",
     "js-yaml": "5.5.0",
     "markdown-it": "14.3.3",

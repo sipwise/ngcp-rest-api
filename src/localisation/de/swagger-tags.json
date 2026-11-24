@@ -116,6 +116,10 @@
         "description": "[/templates] Verfügbare Routen für Templates, einschließlich Rechnungen"
     },
     {
+        "name": "TimeSet",
+        "description": "[/time-sets] Zeitsets mit ihren Ereignissen, die festlegen, wann Peering-Gruppen und NCOS-Stufen gelten"
+    },
+    {
         "name": "Userinfo",
         "description": "[/userinfo] Informationen über den aktuellen Benutzer, seine Rolle und Berechtigungen"
     },

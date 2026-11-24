@@ -116,6 +116,10 @@
         "description": "[/templates] Route disponibili relative ai modelli, incluse le fatture"
     },
     {
+        "name": "TimeSet",
+        "description": "[/time-sets] Set orari con i relativi eventi, che limitano quando si applicano i gruppi di peering e i livelli NCOS"
+    },
+    {
         "name": "Userinfo",
         "description": "[/userinfo] Informazioni sull'utente corrente, ruolo e autorizzazioni"
     },

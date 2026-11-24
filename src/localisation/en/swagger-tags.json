@@ -116,6 +116,10 @@
         "description": "[/templates] Available Template related routes including invoices"
     },
     {
+        "name": "TimeSet",
+        "description": "[/time-sets] Time sets with their events, restricting when peering groups and NCOS levels apply"
+    },
+    {
         "name": "Userinfo",
         "description": "[/userinfo] Info about the current user, role, permissions"
     },

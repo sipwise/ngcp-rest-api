@@ -427,5 +427,47 @@
   },
   "REWRITE_RULE_CANNOT_MOVE": {
     "message": "Rewrite rule cannot be moved further {direction} in its set, direction and field"
+  },
+  "TIME_SET_NAME_EXISTS": {
+    "message": "Time set name '{name}' already exists"
+  },
+  "TIME_SET_IN_USE": {
+    "message": "Time set is still in use by a peering group or an NCOS level"
+  },
+  "EVENT_END_AND_DURATION": {
+    "message": "end and duration are mutually exclusive"
+  },
+  "EVENT_END_BEFORE_START": {
+    "message": "end must not be before start"
+  },
+  "EVENT_UNTIL_AND_COUNT": {
+    "message": "until and count are mutually exclusive"
+  },
+  "EVENT_REQUIRES_FREQ": {
+    "message": "{field} requires freq"
+  },
+  "INVALID_BY_LIST": {
+    "message": "must be a comma-separated list of integers {range}"
+  },
+  "INVALID_BYDAY": {
+    "message": "must be a comma-separated list of weekdays (MO, TU, WE, TH, FR, SA, SU), each optionally preceded by an ordinal from 1 to 53 with an optional sign (e.g. MO, 1MO, -1FR)"
+  },
+  "INVALID_DURATION": {
+    "message": "must be an iCalendar duration without a sign (e.g. P1D, PT2H30M, P2W)"
+  },
+  "CALENDAR_MALFORMED": {
+    "message": "Invalid or malformed iCalendar content/file"
+  },
+  "CALENDAR_UNSUPPORTED_PROPERTY": {
+    "message": "iCalendar property {property} is not supported (event {event})"
+  },
+  "CALENDAR_MISSING_DTSTART": {
+    "message": "iCalendar event {event} has no DTSTART"
+  },
+  "CALENDAR_INVALID_VALUE": {
+    "message": "Invalid iCalendar value of {property} (event {event})"
+  },
+  "CALENDAR_UNKNOWN_TIMEZONE": {
+    "message": "Unknown timezone '{tzid}' in {property} (event {event})"
   }
 }

@@ -116,6 +116,10 @@
         "description": "[/templates] Rutas de plantillas, incluidas las facturas"
     },
     {
+        "name": "TimeSet",
+        "description": "[/time-sets] Conjuntos horarios con sus eventos, que limitan cuándo se aplican los grupos de peering y los niveles NCOS"
+    },
+    {
         "name": "Userinfo",
         "description": "[/userinfo] Información sobre el usuario actual, su rol y sus permisos"
     },

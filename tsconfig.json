@@ -10,6 +10,7 @@
     "baseUrl": "./src",
     "incremental": false,
     "esModuleInterop": true,
+    "skipLibCheck": true,
     "resolveJsonModule": true,
     "paths": {
       "~/*": [

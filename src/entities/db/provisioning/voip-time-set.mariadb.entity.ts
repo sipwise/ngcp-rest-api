@@ -1,5 +1,6 @@
 import {BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from 'typeorm'
 
+import {internal} from '~/entities'
 import {Reseller} from '~/entities/db/billing'
 
 @Entity({
@@ -41,7 +42,22 @@ export class VoipTimeSet extends BaseEntity {
     })
         subscriber_id?: number
 
-    @ManyToOne(() => Reseller, reseller => reseller.journals)
+    @ManyToOne(() => Reseller, reseller => reseller.voipTimeSets)
     @JoinColumn({name: 'reseller_id'})
         reseller!: Reseller
+
+    toInternal(): internal.TimeSet {
+        const entity = new internal.TimeSet()
+        entity.id = this.id
+        entity.resellerId = this.reseller_id
+        entity.name = this.name
+        return entity
+    }
+
+    fromInternal(entity: internal.TimeSet): VoipTimeSet {
+        this.id = entity.id
+        this.reseller_id = entity.resellerId
+        this.name = entity.name
+        return this
+    }
 }

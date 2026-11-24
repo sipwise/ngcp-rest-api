@@ -5954,6 +5954,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ical.js@npm:2.2.1":
+  version: 2.2.1
+  resolution: "ical.js@npm:2.2.1"
+  checksum: 10c0/f08e896d613fe7dc737ca2cc5254b5413586c6f2d4c90568cdf077eff757051f8443d3b8705548e3dd7c3771e26aa3fdf7a2534b763242a9cf90a4150efefd85
+  languageName: node
+  linkType: hard
+
 "iconv-lite@npm:^0.7.2, iconv-lite@npm:^0.7.3, iconv-lite@npm:~0.7.0":
   version: 0.7.3
   resolution: "iconv-lite@npm:0.7.3"
@@ -7571,6 +7578,7 @@ __metadata:
     globals: "npm:17.13.0"
     halson: "npm:3.2.0"
     highlight.js: "npm:11.12.0"
+    ical.js: "npm:2.2.1"
     ignore-loader: "npm:0.1.2"
     ioredis: "npm:6.0.0"
     jest: "npm:30.5.2"

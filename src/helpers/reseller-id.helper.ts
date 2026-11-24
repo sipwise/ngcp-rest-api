@@ -1,5 +1,5 @@
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ErrorEntry, ValidationFailedException, bodyItemPointer} from '~/helpers/errors.helper'
+import {ErrorEntry, ValidationFailedException, bodyItemPointer, isFileRowsRequest} from '~/helpers/errors.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
@@ -35,8 +35,7 @@ export function validateResellerId(
 ): void {
     const required = options.required ?? true
     const errors: ErrorEntry[] = []
-    // items of an uploaded file (csv import) are rows: `/<row>/reseller_id`
-    const body: unknown = sr.req?.file ? dtos : sr.req?.body
+    const body: unknown = isFileRowsRequest(sr) ? dtos : sr.req?.body
     for (const [key, dto] of Object.entries(dtos)) {
         if (sr.user.reseller_id_required && dto.reseller_id !== undefined)
             errors.push(resellerIdNotAllowed(bodyItemPointer(body, key)))
