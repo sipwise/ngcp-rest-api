@@ -2,6 +2,7 @@ import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
 import {In, MoreThanOrEqual} from 'typeorm'
+import {v4 as uuidv4} from 'uuid'
 
 import {NCOSSetResponseDto} from './dto/set-response.dto'
 import {NCOSSetModule} from './set.module'
@@ -12,6 +13,7 @@ import {setupApp} from '~/app.setup'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
+import {VoipSubscriber as BillingVoipSubscriber} from '~/entities/db/billing/voip-subscriber.mariadb.entity'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
@@ -41,6 +43,13 @@ describe('NCOS Set', () => {
     }
     let otherResellerContractId: number
     let otherResellerId: number
+    const subadminDomain = `ncos-set-${suffix}.invalid`
+    const subadminUsername = `ncossetadmin${suffix}`
+    let subadminContactId: number
+    let subadminCustomerId: number
+    let subadminBillingDomainId: number
+    let subadminProvisioningDomainId: number
+    let subadminProvisioningSubscriberId: number
 
     const insertAdmin = async (login: string, role: RbacRole, resellerId: number): Promise<void> => {
         await db.billing.Admin.delete({login: login})
@@ -584,6 +593,104 @@ describe('NCOS Set', () => {
                 expect(response.status).toEqual(403)
             })
         })
+
+        describe('as subscriberadmin', () => {
+            const exposedIds: number[] = []
+
+            const asSubadmin = (req: request.Test): request.Test => req
+                .auth(`${subadminUsername}@${subadminDomain}`, 'mockSubscriberWebpassword')
+                .set('X-Auth-Realm', 'subscriber')
+                .set('Accept', 'application/json')
+
+            it('create a customer of the other reseller with a subscriberadmin', async () => {
+                const now = new Date()
+                subadminContactId = (await db.billing.Contact.create({
+                    reseller_id: otherResellerId, email: `ncos_set_${suffix}@example.org`, create_timestamp: now,
+                }).save()).id
+                subadminCustomerId = (await db.billing.Contract.create({
+                    contact_id: subadminContactId, product_id: 4, status: ContractStatus.Active, create_timestamp: now, modify_timestamp: now,
+                }).save()).id
+                await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [subadminCustomerId, null, ',,1,,;'])
+                subadminBillingDomainId = (await db.billing.Domain.create({domain: subadminDomain, reseller_id: otherResellerId}).save()).id
+                subadminProvisioningDomainId = (await db.provisioning.VoipDomain.create({domain: subadminDomain}).save()).id
+                const uuid = uuidv4()
+                await BillingVoipSubscriber.insert({ // insert instead of create to avoid a cyclic dependency error
+                    contract_id: subadminCustomerId,
+                    uuid: uuid,
+                    username: subadminUsername,
+                    domain_id: subadminBillingDomainId,
+                    status: 'active',
+                })
+                subadminProvisioningSubscriberId = (await db.provisioning.VoipSubscriber.insert({
+                    username: subadminUsername,
+                    domain_id: subadminProvisioningDomainId,
+                    uuid: uuid,
+                    password: uuidv4().slice(0, 16),
+                    webusername: subadminUsername,
+                    webpassword: 'mockSubscriberWebpassword',
+                    webpassword_modify_timestamp: now,
+                    admin: true,
+                    account_id: subadminCustomerId,
+                })).identifiers[0].id
+            })
+
+            it.each([true, false])('create ncos set of the other reseller with expose_to_customer %s', async expose => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/ncos/sets')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        reseller_id: otherResellerId,
+                        name: `subadmin_${expose}_ncosset_${suffix}`,
+                        description: 'subscriberadmin',
+                        expose_to_customer: expose,
+                    })
+                expect(response.status).toEqual(201)
+                const id = +response.body.data[0].id
+                createdIds.push(id)
+                if (expose)
+                    exposedIds.push(id)
+            })
+
+            it('list only exposed ncos sets of the own reseller', async () => {
+                const response = await asSubadmin(request(app.getHttpServer()).get(`/api/ncos/sets?name=*_${suffix}`))
+                expect(response.status).toEqual(200)
+                expect(response.body.data.map((s: NCOSSetResponseDto) => +s.id)).toEqual(exposedIds)
+            })
+
+            it('fail read ncos set', async () => {
+                const response = await asSubadmin(request(app.getHttpServer()).get(`/api/ncos/sets/${exposedIds[0]}`))
+                expect(response.status).toEqual(403)
+            })
+
+            it('fail create ncos set', async () => {
+                const response = await asSubadmin(request(app.getHttpServer()).post('/api/ncos/sets'))
+                    .set('Content-Type', 'application/json')
+                    .send({name: `subadmin_put_${suffix}`, description: 'subscriberadmin', expose_to_customer: true})
+                expect(response.status).toEqual(403)
+            })
+
+            it('fail update ncos set', async () => {
+                const response = await asSubadmin(request(app.getHttpServer()).put(`/api/ncos/sets/${exposedIds[0]}`))
+                    .set('Content-Type', 'application/json')
+                    .send({name: `subadmin_put_${suffix}`, description: 'subscriberadmin', expose_to_customer: true})
+                expect(response.status).toEqual(403)
+            })
+
+            it('fail adjust ncos set', async () => {
+                const response = await asSubadmin(request(app.getHttpServer()).patch(`/api/ncos/sets/${exposedIds[0]}`))
+                    .set('Content-Type', 'application/json-patch+json')
+                    .send([{op: 'replace', path: '/description', value: 'subscriberadmin_patch'}])
+                expect(response.status).toEqual(403)
+            })
+
+            it('fail delete ncos set', async () => {
+                const response = await asSubadmin(request(app.getHttpServer()).delete(`/api/ncos/sets/${exposedIds[0]}`))
+                    .set('Content-Type', 'application/json')
+                expect(response.status).toEqual(403)
+            })
+        })
     })
 
     describe('NCOSSet DELETE', () => {
@@ -610,6 +717,21 @@ describe('NCOS Set', () => {
         })
 
         it('delete created fixtures', async () => {
+            if (subadminCustomerId) {
+                const subscribers = await BillingVoipSubscriber.findBy({contract_id: subadminCustomerId})
+                if (subscribers.length)
+                    await BillingVoipSubscriber.delete(subscribers.map(sub => sub.id))
+            }
+            if (subadminProvisioningSubscriberId)
+                await db.provisioning.VoipSubscriber.delete(subadminProvisioningSubscriberId)
+            if (subadminCustomerId)
+                await db.billing.Contract.delete(subadminCustomerId)
+            if (subadminContactId)
+                await db.billing.Contact.delete(subadminContactId)
+            if (subadminBillingDomainId)
+                await db.billing.Domain.delete(subadminBillingDomainId)
+            if (subadminProvisioningDomainId)
+                await db.provisioning.VoipDomain.delete(subadminProvisioningDomainId)
             await db.billing.Admin.delete({login: In(Object.values(ccareLogins))})
             if (otherResellerId)
                 await db.billing.Reseller.delete(otherResellerId)

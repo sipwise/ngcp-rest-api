@@ -41,8 +41,6 @@ export class NCOSLevelService implements CrudService<internal.NCOSLevel> {
     async read(id: number, sr: ServiceRequest): Promise<internal.NCOSLevel> {
         if (sr.user.role == RbacRole.reseller)
             return await this.ncosLevelRepo.readById(id, sr, {resellerId: sr.user.reseller_id})
-        if (sr.user.role == RbacRole.subscriberadmin)
-            return await this.ncosLevelRepo.readById(id, sr, {resellerId: sr.user.reseller_id, exposeToCustomer: true})
         return await this.ncosLevelRepo.readById(id, sr)
     }
 
@@ -53,9 +51,6 @@ export class NCOSLevelService implements CrudService<internal.NCOSLevel> {
         switch (sr.user.role) {
             case RbacRole.reseller:
                 levels = await this.ncosLevelRepo.readWhereInIds(ids, sr, {resellerId: sr.user.reseller_id})
-                break
-            case RbacRole.subscriberadmin:
-                levels = await this.ncosLevelRepo.readWhereInIds(ids, sr, {resellerId: sr.user.reseller_id, exposeToCustomer: true})
                 break
             default:
                 levels = await this.ncosLevelRepo.readWhereInIds(ids, sr)
@@ -76,9 +71,6 @@ export class NCOSLevelService implements CrudService<internal.NCOSLevel> {
             case 'reseller':
                 levels = await this.ncosLevelRepo.readWhereInIds(ids, sr, {resellerId: sr.user.reseller_id})
                 break
-            case RbacRole.subscriberadmin:
-                levels = await this.ncosLevelRepo.readWhereInIds(ids, sr, {resellerId: sr.user.reseller_id, exposeToCustomer: true})
-                break
             default:
                 levels = await this.ncosLevelRepo.readWhereInIds(ids, sr)
                 break
@@ -97,10 +89,10 @@ export class NCOSLevelService implements CrudService<internal.NCOSLevel> {
     }
 
     /**
-     * Reports every item whose time set is not one of the user's reseller (reseller, subscriberadmin)
+     * Reports every item whose time set belongs to another reseller (reseller role)
      */
     private async hasAccessToTimeSets(levels: internal.NCOSLevel[] | Dictionary<internal.NCOSLevel>, sr: ServiceRequest): Promise<void> {
-        if (sr.user.role != RbacRole.reseller && sr.user.role != RbacRole.subscriberadmin)
+        if (sr.user.role != RbacRole.reseller)
             return
         const ids = [...new Set(Object.values(levels).map(level => level.timeSetId).filter(id => id != null))]
         if (!ids.length)
