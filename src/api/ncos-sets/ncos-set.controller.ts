@@ -227,12 +227,6 @@ export class NCOSSetController extends CrudController<NCOSSetRequestDto, NCOSSet
         return [responseList, totalCount]
     }
 
-    @Auth(
-        RbacRole.system,
-        RbacRole.admin,
-        RbacRole.reseller,
-        RbacRole.subscriberadmin,
-    )
     @Get(':id')
     @ApiOkResponse({
         type: NCOSSetResponseDto,
