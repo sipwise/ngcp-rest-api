@@ -110,12 +110,6 @@ export class NCOSLevelController extends CrudController<NCOSLevelRequestDto, NCO
         return [responseList, totalCount]
     }
 
-    @Auth(
-        RbacRole.system,
-        RbacRole.admin,
-        RbacRole.reseller,
-        RbacRole.subscriberadmin,
-    )
     @Get(':id')
     @ApiOkResponse({
         type: NCOSLevelResponseDto,
