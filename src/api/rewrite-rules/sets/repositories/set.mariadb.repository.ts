@@ -111,6 +111,24 @@ export class RewriteRuleSetMariadbRepository extends MariaDbRepository implement
         return await db.provisioning.VoipRewriteRule.existsBy({set_id: In(ids)})
     }
 
+    async readTakenNames(names: string[]): Promise<string[]> {
+        const sets = await db.provisioning.VoipRewriteRuleSet.find({select: {id: true, name: true}, where: {name: In(names)}})
+        return sets.map(set => set.name)
+    }
+
+    // returns the number of copied rules
+    async copyRules(fromSetId: number, toSetId: number): Promise<number> {
+        const result: {affectedRows: number} = await db.provisioning.VoipRewriteRule.query(`
+            INSERT INTO provisioning.voip_rewrite_rules
+                (set_id, match_pattern, replace_pattern, description, direction, field, priority, enabled)
+            SELECT ?, match_pattern, replace_pattern, description, direction, field, priority, enabled
+              FROM provisioning.voip_rewrite_rules
+             WHERE set_id = ?
+             ORDER BY id
+        `, [toSetId, fromSetId])
+        return result.affectedRows
+    }
+
     // returns the number of deleted rules
     async cleanSets(ids: number[], _sr: ServiceRequest): Promise<number> {
         const result = await db.provisioning.VoipRewriteRule.delete({set_id: In(ids)})

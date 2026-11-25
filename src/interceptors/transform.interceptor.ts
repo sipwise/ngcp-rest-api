@@ -2,7 +2,7 @@
 // Wait for NestJS to provide a better way to handle this.
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import {CallHandler, ExecutionContext, Injectable, NestInterceptor} from '@nestjs/common'
+import {CallHandler, ExecutionContext, HttpStatus, Injectable, NestInterceptor} from '@nestjs/common'
 import halson from 'halson'
 import {Observable} from 'rxjs'
 import {mergeMap} from 'rxjs/operators'
@@ -10,6 +10,7 @@ import {mergeMap} from 'rxjs/operators'
 import {AppService} from '~/app.service'
 import {CreateResponseDto} from '~/dto/create-response.dto'
 import {lazyFieldRequest} from '~/helpers/lazy-field.helper'
+import {collectionUrl} from '~/helpers/uri.helper'
 import {forEachYield} from '~/helpers/yield.helper'
 
 /**
@@ -78,7 +79,7 @@ export class TransformInterceptor implements NestInterceptor {
                 return data
             }
 
-            if (req.method == 'POST')
+            if (req.method == 'POST' && res.statusCode == HttpStatus.CREATED)
                 this.addLocationHeader(req, res, data)
 
             /**
@@ -125,7 +126,7 @@ export class TransformInterceptor implements NestInterceptor {
     }
 
     private addLocationHeader(req: any, res: any, data): void {
-        const path = req.route.path
+        const path = collectionUrl(req)
         let id: number | string
         let length: number
         if (Array.isArray(data) && data.length == 2 && Array.isArray(data[0]) && Number.isInteger(data[1])) {
@@ -250,7 +251,8 @@ export class TransformInterceptor implements NestInterceptor {
     }
 
     private async generateDataLinks(req: any, res: any, data: any): Promise<CreateResponseDto<any>> {
-        const path = req.route.path
+        // a POST links the created items like its Location header, other methods keep the route pattern
+        const path = req.method == 'POST' ? collectionUrl(req) : req.route.path
         const resource: CreateResponseDto<any> = new CreateResponseDto<any>()
 
         if (data && !Array.isArray(data))

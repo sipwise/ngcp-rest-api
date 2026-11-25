@@ -8,6 +8,7 @@ import {RewriteRuleRedisRepository} from './repositories/rule.redis.repository'
 import {RewriteRuleSetMariadbRepository} from '~/api/rewrite-rules/sets/repositories/set.mariadb.repository'
 import {internal} from '~/entities'
 import {RewriteRuleMoveDirection} from '~/entities/internal/rewrite-rule.internal.entity'
+import {cloneEntity} from '~/helpers/clone.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrors, apiError, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {runOnceOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
@@ -50,6 +51,12 @@ export class RewriteRuleService implements CrudService<internal.RewriteRule> {
         this.reloadDialPlanAfterCommit(sr)
 
         return await this.ruleRepo.readWhereInIds(createdIds, sr)
+    }
+
+    async clone(id: number, overrides: internal.RewriteRule, sr: ServiceRequest): Promise<internal.RewriteRule> {
+        const source = await this.read(id, sr)
+        const [created] = await this.create([cloneEntity(source, overrides, ['priority'])], sr)
+        return created
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.RewriteRule[], number]> {

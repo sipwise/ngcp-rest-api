@@ -12,4 +12,8 @@ export interface RewriteRuleSetRepository {
     update(updates: Dictionary<internal.RewriteRuleSet>, sr: ServiceRequest): Promise<number[]>
 
     delete(ids: number[], sr: ServiceRequest): Promise<number[]>
+
+    readTakenNames(names: string[]): Promise<string[]>
+
+    copyRules(fromSetId: number, toSetId: number): Promise<number>
 }

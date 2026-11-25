@@ -15,6 +15,7 @@ export class RewriteRuleSetMockRepository implements RewriteRuleSetRepository {
     private readonly db: RewriteRuleSetMockDB
     private nextId: number
     readonly cleaned: number[] = []
+    readonly copied: [number, number][] = []
     // number of rules per set id, sets 3 and 4 have none
     private readonly ruleCounts = new Map([[1, 2], [2, 1]])
 
@@ -86,6 +87,16 @@ export class RewriteRuleSetMockRepository implements RewriteRuleSetRepository {
             this.ruleCounts.delete(id)
         }
         return Promise.resolve(deleted)
+    }
+
+    async readTakenNames(names: string[]): Promise<string[]> {
+        const taken = (Object.values(this.db) as internal.RewriteRuleSet[]).map(set => set.name)
+        return Promise.resolve(names.filter(name => taken.includes(name)))
+    }
+
+    async copyRules(fromSetId: number, toSetId: number): Promise<number> {
+        this.copied.push([fromSetId, toSetId])
+        return Promise.resolve(this.ruleCounts.get(fromSetId) ?? 0)
     }
 
     private matches(set: internal.RewriteRuleSet, filterBy?: FilterBy): boolean {

@@ -1,3 +1,5 @@
+import {Request} from 'express'
+
 /**
  * Extracts the API resource name from the path pattern of the matched route: the path without the API prefix,
  * the route parameters and a trailing `journal` segment, e.g. `/api/customers/{:customerId/}phonebook/:id/journal`
@@ -28,6 +30,17 @@ export function prepareUrlReference(url: string, removeLeadingResourceId?: boole
         return strippedUrl
     }
     return strippedUrl.split('/').slice(0, -1).join('/')
+}
+
+/**
+ * Url of the collection a request addresses: its path without the query, and without the trailing
+ * `/<id>/<action>` of an item action route such as `:id/clone`
+ */
+export function collectionUrl(req: Request): string {
+    const path = prepareUrlReference(stripQueryParams(req.originalUrl))
+    if (/\/:id\/[\w-]+$/.test(req.route.path))
+        return path.split('/').slice(0, -2).join('/')
+    return path
 }
 
 export function stripQueryParams(url: string): string {

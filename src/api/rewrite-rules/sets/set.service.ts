@@ -7,6 +7,7 @@ import {RewriteRuleSetRedisRepository} from './repositories/set.redis.repository
 
 import {AppService} from '~/app.service'
 import {internal} from '~/entities'
+import {cloneEntity, uniqueCloneName} from '~/helpers/clone.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {throwMissingIds} from '~/helpers/errors.helper'
 import {runOnceOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
@@ -32,6 +33,25 @@ export class RewriteRuleSetService implements CrudService<internal.RewriteRuleSe
         this.assignUserResellerId(entities, sr)
         const created = await this.ruleSetRepo.create(entities)
         return await this.ruleSetRepo.readWhereInIds(created, sr)
+    }
+
+    async clone(id: number, overrides: internal.RewriteRuleSet, sr: ServiceRequest): Promise<internal.RewriteRuleSet> {
+        const source = await this.read(id, sr)
+        // the name is chosen below, the insert trigger assigns new dpids
+        const set = cloneEntity(source, overrides, [
+            'name',
+            'callerInDpid',
+            'calleeInDpid',
+            'callerOutDpid',
+            'calleeOutDpid',
+            'callerLnpDpid',
+            'calleeLnpDpid',
+        ])
+        set.name ??= await uniqueCloneName(source.name, 32, names => this.ruleSetRepo.readTakenNames(names))
+        const [created] = await this.create([set], sr)
+        if (await this.ruleSetRepo.copyRules(source.id, created.id))
+            this.reloadDialPlanAfterCommit(sr)
+        return created
     }
 
     async readAll(sr: ServiceRequest): Promise<[internal.RewriteRuleSet[], number]> {

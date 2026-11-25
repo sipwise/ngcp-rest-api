@@ -230,6 +230,60 @@ describe('RewriteRuleService', () => {
         })
     })
 
+    describe('clone', () => {
+        const clone = (id: number, overrides: Partial<internal.RewriteRule> = {}, params: Record<string, string> = {}): Promise<internal.RewriteRule> =>
+            run(() => service.clone(id, Object.assign(new internal.RewriteRule(), overrides), makeSr({}, {id: `${id}`, ...params})))
+
+        it('copies the rule to the end of its set without a priority', async () => {
+            const cloned = await clone(2)
+            expect(cloned).toMatchObject({
+                setId: 1,
+                matchPattern: 'match2',
+                replacePattern: 'replace2',
+                description: 'desc2',
+                direction: In,
+                field: Callee,
+                enabled: true,
+                priority: 5,
+            })
+            expect(cloned.id).not.toEqual(2)
+        })
+
+        it('uses the priority of the overrides', async () => {
+            const cloned = await clone(2, {priority: 30})
+            expect(cloned.priority).toEqual(30)
+        })
+
+        it('rejects a priority another rule of the set, direction and field uses', async () => {
+            const err = await failure(() => clone(2, {priority: 3}))
+            expect(errorEntries(err)).toEqual([['/priority', 'REWRITE_RULE_PRIORITY_EXISTS']])
+        })
+
+        it('copies into the set of the overrides, after its highest priority', async () => {
+            const cloned = await clone(2, {setId: 2})
+            expect(cloned.setId).toEqual(2)
+            expect(cloned.priority).toEqual(6)
+        })
+
+        it('keeps the patterns deflated like a created rule', async () => {
+            const cloned = await clone(2, {matchPattern: '^${x}'})
+            expect(cloned.matchPattern).toEqual('^$avp(s:x)')
+        })
+
+        it('reloads the dial plan', async () => {
+            await clone(2)
+            expect(ruleRedisRepo.reloadDialPlan).toHaveBeenCalledTimes(1)
+        })
+
+        it('throws 404 for a rule of another set than the one in the path', async () => {
+            await expect(clone(2, {}, {setId: '2'})).rejects.toThrow(NotFoundException)
+        })
+
+        it('throws 404 for an unknown rule', async () => {
+            await expect(clone(100)).rejects.toThrow(NotFoundException)
+        })
+    })
+
     describe('move', () => {
         it('swaps the priority with the previous rule on up', async () => {
             const changed = await move(2, Up)

@@ -104,4 +104,70 @@ describe('TransformInterceptor', () => {
             expect(body._links).toEqual({self: {href: url}})
         })
     })
+
+    describe('Location header', () => {
+        const location = async (routePath: string, url: string, data: unknown, statusCode = 201): Promise<string | undefined> => {
+            const req = {method: 'POST', route: {path: routePath}, url, originalUrl: url, query: {}, headers: {accept: HAL}} as unknown as Request
+            const res = {statusCode, setHeader: jest.fn(), status: jest.fn()}
+            const context = {
+                switchToHttp: (): object => ({getRequest: (): Request => req, getResponse: (): object => res}),
+            } as unknown as ExecutionContext
+            const next: CallHandler = {handle: () => of(data)}
+            await lastValueFrom(interceptor.intercept(context, next))
+            return res.setHeader.mock.calls.find(([name]) => name == 'Location')?.[1] as string | undefined
+        }
+
+        it('is the collection url and the id of the created item', async () => {
+            expect(await location('/api/rewrite-rules/sets', '/api/rewrite-rules/sets', [{id: 7}]))
+                .toBe('/api/rewrite-rules/sets/7')
+        })
+
+        it('is built from the resolved path of a nested route', async () => {
+            expect(await location('/api/rewrite-rules/sets/{:setId/}rules', '/api/rewrite-rules/sets/3/rules', [{id: 9}]))
+                .toBe('/api/rewrite-rules/sets/3/rules/9')
+        })
+
+        it('is the collection of an item action route', async () => {
+            expect(await location('/api/rewrite-rules/sets/:id/clone', '/api/rewrite-rules/sets/3/clone', [{id: 12}]))
+                .toBe('/api/rewrite-rules/sets/12')
+        })
+
+        it('ignores the query string and a trailing slash', async () => {
+            expect(await location('/api/rewrite-rules/sets', '/api/rewrite-rules/sets/?tz=UTC', [{id: 7}]))
+                .toBe('/api/rewrite-rules/sets/7')
+        })
+
+        it('has no id for several created items', async () => {
+            expect(await location('/api/rewrite-rules/sets', '/api/rewrite-rules/sets', [{id: 7}, {id: 8}]))
+                .toBe('/api/rewrite-rules/sets')
+        })
+
+        it('is not set if the POST does not answer 201', async () => {
+            expect(await location('/api/rewrite-rules/sets/{:setId/}rules/:id/move', '/api/rewrite-rules/sets/rules/4/move', [{id: 4}], 200))
+                .toBeUndefined()
+        })
+    })
+
+    describe('POST with Prefer return=link', () => {
+        const links = async (routePath: string, url: string, data: unknown): Promise<string[]> => {
+            const req = {method: 'POST', route: {path: routePath}, url, originalUrl: url, query: {}, headers: {prefer: 'return=link'}} as unknown as Request
+            const res = {statusCode: 201, setHeader: jest.fn(), status: jest.fn()}
+            const context = {
+                switchToHttp: (): object => ({getRequest: (): Request => req, getResponse: (): object => res}),
+            } as unknown as ExecutionContext
+            const next: CallHandler = {handle: () => of(data)}
+            const body = await lastValueFrom(interceptor.intercept(context, next)) as {links: string[]}
+            return body.links
+        }
+
+        it('links the created items under the resolved collection path', async () => {
+            expect(await links('/api/rewrite-rules/sets/{:setId/}rules', '/api/rewrite-rules/sets/3/rules', [{id: 9}, {id: 10}]))
+                .toEqual(['/api/rewrite-rules/sets/3/rules/9', '/api/rewrite-rules/sets/3/rules/10'])
+        })
+
+        it('links the new item of an item action route in its collection', async () => {
+            expect(await links('/api/rewrite-rules/sets/:id/clone', '/api/rewrite-rules/sets/3/clone', [{id: 12}]))
+                .toEqual(['/api/rewrite-rules/sets/12'])
+        })
+    })
 })

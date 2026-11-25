@@ -2,6 +2,7 @@ import {Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
+import {RewriteRuleCloneRequestDto} from './dto/rule-clone-request.dto'
 import {RewriteRuleMoveRequestDto} from './dto/rule-move-request.dto'
 import {RewriteRuleRequestDto} from './dto/rule-request.dto'
 import {RewriteRuleService} from './rule.service'
@@ -22,6 +23,7 @@ import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
+import {cloneOverrides} from '~/helpers/clone.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {Operation} from '~/helpers/patch.helper'
@@ -243,6 +245,43 @@ export class RewriteRuleController extends CrudController<RewriteRuleRequestDto,
             {operation: 'update', resourceName: 'rewrite-rules/sets/rules'},
         )
         return response.find(entry => entry.id == id)
+    }
+
+    @Post('{:setId/}rules/:id/clone')
+    @ApiOperation({
+        summary: 'Clone a rewrite rule',
+        description: 'Creates a copy of the rule. Fields given in the body replace the copied values. Without a priority in the body, the copy goes after the highest priority of its set. A priority that another rule of the set, direction and field already uses is rejected',
+    })
+    @ApiParam({name: 'setId', required: false, type: Number})
+    @ApiCreatedResponse(RewriteRuleResponseDto)
+    @ApiBody({
+        type: RewriteRuleCloneRequestDto,
+        required: false,
+    })
+    @Transactional()
+    async clone(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: RewriteRuleCloneRequestDto,
+        @Req() req: Request,
+        @Param('setId', new ParseIntIdPipe({allowUndefined: true})) _setId: number,
+    ): Promise<RewriteRuleResponseDto[]> {
+        this.log.debug({
+            message: 'clone rewrite rule by id',
+            id: id,
+            func: this.clone.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        const overrides = await cloneOverrides(dto, RewriteRuleRequestDto)
+        const created = await this.ruleService.clone(id, overrides, sr)
+        const response = new RewriteRuleResponseDto(created)
+        await this.journalService.writeJournals(
+            sr,
+            [{id: response.id, data: response}],
+            {resourceName: 'rewrite-rules/sets/rules'},
+        )
+        return [response]
     }
 
     @Delete('{:setId/}rules{/:id}')

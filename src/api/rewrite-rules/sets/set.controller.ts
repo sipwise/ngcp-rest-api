@@ -1,7 +1,8 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
+import {RewriteRuleSetCloneRequestDto} from './dto/set-clone-request.dto'
 import {RewriteRuleSetRequestDto} from './dto/set-request.dto'
 import {RewriteRuleSetResponseDto} from './dto/set-response.dto'
 import {RewriteRuleSetSearchDto} from './dto/set-search.dto'
@@ -22,11 +23,13 @@ import {ParamOrBody} from '~/decorators/param-or-body.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
 import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
+import {cloneOverrides} from '~/helpers/clone.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {Operation as PatchOperation,patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
 import {Operation} from '~/helpers/patch.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {collectionUrl} from '~/helpers/uri.helper'
 import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -92,6 +95,43 @@ export class RewriteRuleSetController extends CrudController<RewriteRuleSetReque
         ))
         await this.journalService.writeJournals(sr, response.map(entry => ({id: entry.id, data: entry})))
         return response
+    }
+
+    @Post(':id/clone')
+    @ApiOperation({
+        summary: 'Clone a rewrite rule set with its rules',
+        description: 'Creates a copy of the set and all its rules. Fields given in the body replace the copied values. Without a name in the body, the copy is named after the source with the suffix `_clone` (`_clone2`, `_clone3` and so on if that name is taken)',
+    })
+    @ApiCreatedResponse(RewriteRuleSetResponseDto)
+    @ApiBody({
+        type: RewriteRuleSetCloneRequestDto,
+        required: false,
+    })
+    @Transactional()
+    async clone(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: RewriteRuleSetCloneRequestDto,
+        @Req() req: Request,
+    ): Promise<RewriteRuleSetResponseDto[]> {
+        this.log.debug({
+            message: 'clone rewrite rule set by id',
+            id: id,
+            func: this.clone.name,
+            url: req.url,
+            method: req.method,
+        })
+        const sr = new ServiceRequest(req)
+        // a missing reseller_id copies the one of the source, null is rejected like on create
+        validateResellerId([dto], sr, {required: dto.reseller_id === null})
+        const overrides = await cloneOverrides(dto, RewriteRuleSetRequestDto)
+        const created = await this.ruleSetService.clone(id, overrides, sr)
+        const response = new RewriteRuleSetResponseDto(created, {url: collectionUrl(req)})
+        await this.journalService.writeJournals(
+            sr,
+            [{id: response.id, data: response}],
+            {resourceName},
+        )
+        return [response]
     }
 
     @Get()

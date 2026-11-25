@@ -12,6 +12,8 @@ import {setupApp} from '~/app.setup'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
+import {ContractStatus} from '~/entities/internal/contract.internal.entity'
+import {ResellerStatus} from '~/entities/internal/reseller.internal.entity'
 import {ErrorEntry} from '~/helpers/errors.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {validate} from '~/helpers/validate.helper'
@@ -41,6 +43,9 @@ describe('Rule Set', () => {
     let authHeader: [string, string]
     let createdIds: number[] = []
     let resellerAdminId: number
+    let otherResellerContractId: number
+    let otherResellerId: number
+    let otherResellerSetId: number
     const creds = {username: `mockAdminUser${process.env.JEST_WORKER_ID}`, password: 'mockAdminPass'}
     const startedAt = Date.now() / 1000
     const suffix = `_${process.env.JEST_WORKER_ID}_${Date.now().toString(36).slice(-4)}`
@@ -670,6 +675,228 @@ describe('Rule Set', () => {
             })
         })
 
+        describe('POST clone', () => {
+            const sourceName = `test_clone_source${suffix}`
+            // 32 characters, the clone name has to be cut
+            const longName = 'test_clone_long'.padEnd(32 - suffix.length, 'x') + suffix
+            let sourceId: number
+            let emptyId: number
+            let longId: number
+            let firstCloneId: number
+            const dpidColumns = ['caller_in_dpid', 'callee_in_dpid', 'caller_out_dpid', 'callee_out_dpid', 'caller_lnp_dpid', 'callee_lnp_dpid'] as const
+            const sourceRules: EmbeddedRule[] = [
+                {
+                    match_pattern: '^(${caller_cc})?([1-9][0-9]+)$',
+                    replace_pattern: '\\2',
+                    description: 'clone rule in',
+                    direction: 'in',
+                    field: 'caller',
+                    priority: 5,
+                    enabled: true,
+                },
+                {
+                    match_pattern: '^00(.*)$',
+                    replace_pattern: '+\\1',
+                    description: 'clone rule out 10',
+                    direction: 'out',
+                    field: 'callee',
+                    priority: 10,
+                    enabled: true,
+                },
+                {
+                    match_pattern: '^0(.*)$',
+                    replace_pattern: '+43\\1',
+                    description: 'clone rule out 20',
+                    direction: 'out',
+                    field: 'callee',
+                    priority: 20,
+                    enabled: false,
+                },
+            ]
+
+            const createSet = async (payload: object): Promise<number> => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send(payload)
+                expect(response.status).toEqual(201)
+                createdIds.push(+response.body.data[0].id)
+                return +response.body.data[0].id
+            }
+            const postClone = (id: number, payload?: object): request.Test =>
+                request(app.getHttpServer())
+                    .post(`/api/rewrite-rules/sets/${id}/clone`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send(payload)
+            const clone = async (id: number, payload: object = {}): Promise<{id: number, name: string, description: string, reseller_id: number}> => {
+                const response = await postClone(id, payload)
+                expect(response.status).toEqual(201)
+                createdIds.push(+response.body.data[0].id)
+                return response.body.data[0] as {id: number, name: string, description: string, reseller_id: number}
+            }
+            const rulesOf = async (setId: number): Promise<Record<string, unknown>[]> => {
+                const response = await request(app.getHttpServer())
+                    .get(`/api/rewrite-rules/sets/${setId}/rules`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(200)
+                return (response.body.data as {priority: number}[]).sort((a, b) => a.priority - b.priority)
+            }
+            const dpidsOf = async (setId: number): Promise<number[]> => {
+                const set = await db.provisioning.VoipRewriteRuleSet.findOneByOrFail({id: setId})
+                return dpidColumns.map(column => set[column])
+            }
+            const dialplanRows = async (setId: number): Promise<number> => {
+                const rows: {cnt: string}[] = await db.provisioning.VoipRewriteRule.query(
+                    `SELECT COUNT(*) AS cnt FROM kamailio.dialplan WHERE dpid IN (${dpidColumns.map(() => '?').join(',')})`,
+                    await dpidsOf(setId),
+                )
+                return +rows[0].cnt
+            }
+            const errorsOf = (response: request.Response): [string, string][] =>
+                (response.body.errors as ErrorEntry[]).map(e => [e.pointer, e.code])
+
+            it('create the source sets and another reseller', async () => {
+                sourceId = await createSet({name: sourceName, reseller_id: 1, description: 'clone source', rules: sourceRules})
+                emptyId = await createSet({name: `test_clone_empty${suffix}`, reseller_id: 1, description: 'no rules'})
+                longId = await createSet({name: longName, reseller_id: 1})
+                const now = new Date()
+                otherResellerContractId = (await db.billing.Contract.create({
+                    contact_id: 2, product_id: 3, status: ContractStatus.Active, create_timestamp: now, modify_timestamp: now,
+                }).save()).id
+                otherResellerId = (await db.billing.Reseller.create({
+                    contract_id: otherResellerContractId,
+                    name: `rwr_set_clone_reseller${suffix}`,
+                    status: ResellerStatus.Active,
+                }).save()).id
+                otherResellerSetId = await createSet({name: `test_clone_other${suffix}`, reseller_id: otherResellerId})
+                expect(longName).toHaveLength(32)
+            })
+            it('clone a set with an empty body', async () => {
+                const response = await postClone(sourceId, {})
+                expect(response.status).toEqual(201)
+                const set = response.body.data[0]
+                firstCloneId = +set.id
+                createdIds.push(firstCloneId)
+                expect(set).toMatchObject({name: `${sourceName}_clone`, reseller_id: 1, description: 'clone source'})
+                expect(firstCloneId).not.toEqual(sourceId)
+                expect(set.rules).toEqual({type: 'link', url: `/api/rewrite-rules/sets/${firstCloneId}/rules`})
+                expect(response.headers.location).toEqual(`/api/rewrite-rules/sets/${firstCloneId}`)
+            })
+            it('copy every rule of the source into the clone', async () => {
+                const copied = await rulesOf(firstCloneId)
+                const original = await rulesOf(sourceId)
+                expect(copied).toHaveLength(3)
+                expect(copied.map(rule => rule.set_id)).toEqual([firstCloneId, firstCloneId, firstCloneId])
+                const fields = (rule: Record<string, unknown>): unknown[] =>
+                    [rule.match_pattern, rule.replace_pattern, rule.description, rule.direction, rule.field, rule.priority, rule.enabled]
+                expect(copied.map(fields)).toEqual(original.map(fields))
+                expect(copied.map(rule => rule.match_pattern)).toContain(sourceRules[0].match_pattern)
+                expect(copied.map(rule => rule.id).filter(id => original.some(rule => rule.id == id))).toEqual([])
+            })
+            it('keep the rules of the source unchanged', async () => {
+                const original = await rulesOf(sourceId)
+                expect(original).toHaveLength(3)
+                expect(original.every(rule => rule.set_id == sourceId)).toBe(true)
+            })
+            it('give the clone its own dpids and dialplan rows', async () => {
+                const sourceDpids = await dpidsOf(sourceId)
+                const cloneDpids = await dpidsOf(firstCloneId)
+                expect(cloneDpids.every(dpid => dpid != null)).toBe(true)
+                expect(cloneDpids.filter(dpid => sourceDpids.includes(dpid))).toEqual([])
+                expect(await dialplanRows(firstCloneId)).toBeGreaterThan(0)
+                expect(await dialplanRows(firstCloneId)).toEqual(await dialplanRows(sourceId))
+            })
+            it('count up the name suffix for the same source', async () => {
+                const set = await clone(sourceId)
+                expect(set.name).toEqual(`${sourceName}_clone2`)
+            })
+            it('link the clone with Prefer return=link', async () => {
+                const response = await request(app.getHttpServer())
+                    .post(`/api/rewrite-rules/sets/${emptyId}/clone`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=link')
+                    .send({name: `test_clone_link${suffix}`})
+                expect(response.status).toEqual(201)
+                const id = +response.headers.location.split('/').pop()
+                createdIds.push(id)
+                expect(response.body.links).toEqual([`/api/rewrite-rules/sets/${id}`])
+            })
+            it('clone a set without rules', async () => {
+                const set = await clone(emptyId)
+                expect(set.name).toEqual(`test_clone_empty${suffix}_clone`)
+                expect(await rulesOf(set.id)).toEqual([])
+            })
+            it('cut the name of a 32 character source', async () => {
+                const set = await clone(longId)
+                expect(set.name).toHaveLength(32)
+                expect(set.name).toEqual(longName.slice(0, 26) + '_clone')
+            })
+            it('use the fields of the body', async () => {
+                const set = await clone(sourceId, {name: `test_clone_given${suffix}`, description: 'given'})
+                expect(set).toMatchObject({name: `test_clone_given${suffix}`, description: 'given'})
+            })
+            it('clear the description with null', async () => {
+                const set = await clone(sourceId, {name: `test_clone_null${suffix}`, description: null})
+                expect(set.description).toBeNull()
+            })
+            it('journal the clone as a create of the set', async () => {
+                const journal = await db.billing.Journal.findOneByOrFail({resource_name: 'rewrite-rules/sets', resource_id: firstCloneId, timestamp: MoreThanOrEqual(startedAt)})
+                expect(journal.operation).toEqual('create')
+            })
+            it('fail with a name that already exists', async () => {
+                const response = await postClone(sourceId, {name: sourceName})
+                expect(response.status).toEqual(422)
+                expect(response.body.errorCode).toEqual('DUPLICATE_ENTRY')
+            })
+            it('fail to clear the required name', async () => {
+                const response = await postClone(sourceId, {name: null})
+                expect(response.status).toEqual(422)
+                expect(new Set(errorsOf(response).map(([pointer]) => pointer))).toEqual(new Set(['/name']))
+            })
+            it('fail with rules in the body', async () => {
+                const response = await postClone(sourceId, {rules: []})
+                expect(response.status).toEqual(422)
+                expect(errorsOf(response)).toEqual([['/rules', 'whitelistValidation']])
+            })
+            it('fail with an unknown field', async () => {
+                const response = await postClone(sourceId, {unknownField: 'test'})
+                expect(response.status).toEqual(422)
+            })
+            it('fail for an unknown set', async () => {
+                const response = await postClone(999911111122)
+                expect(response.status).toEqual(404)
+            })
+            it('clone into the reseller of the body as admin', async () => {
+                const set = await clone(sourceId, {name: `test_clone_reseller${suffix}`, reseller_id: otherResellerId})
+                expect(set.reseller_id).toEqual(otherResellerId)
+            })
+            it('fail to clear the reseller_id as admin', async () => {
+                const response = await postClone(sourceId, {reseller_id: null})
+                expect(response.status).toEqual(422)
+                expect(errorsOf(response)).toEqual([['/reseller_id', 'isNotEmpty']])
+            })
+            it('clone without a body', async () => {
+                const response = await request(app.getHttpServer())
+                    .post(`/api/rewrite-rules/sets/${emptyId}/clone`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                expect(response.status).toEqual(201)
+                createdIds.push(+response.body.data[0].id)
+                expect(response.body.data[0].name).toEqual(`test_clone_empty${suffix}_clone2`)
+            })
+        })
+
         describe('as reseller', () => {
             let resellerSetId: number
             it('create reseller admin', async () => {
@@ -774,6 +1001,81 @@ describe('Rule Set', () => {
                 expect(response.body.reseller_id).toEqual(1)
                 expect(response.body.description).toEqual('patched reseller')
             })
+            it('clone an own set', async () => {
+                const response = await request(app.getHttpServer())
+                    .post(`/api/rewrite-rules/sets/${resellerSetId}/clone`)
+                    .auth(resellerCreds.username, resellerCreds.password)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send({})
+                expect(response.status).toEqual(201)
+                createdIds.push(+response.body.data[0].id)
+                expect(response.body.data[0].reseller_id).toEqual(1)
+            })
+            it('fail to clone a set of another reseller', async () => {
+                const response = await request(app.getHttpServer())
+                    .post(`/api/rewrite-rules/sets/${otherResellerSetId}/clone`)
+                    .auth(resellerCreds.username, resellerCreds.password)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({})
+                expect(response.status).toEqual(404)
+            })
+            it('fail to clone with reseller_id', async () => {
+                const response = await request(app.getHttpServer())
+                    .post(`/api/rewrite-rules/sets/${resellerSetId}/clone`)
+                    .auth(resellerCreds.username, resellerCreds.password)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({reseller_id: 1})
+                expect(response.status).toEqual(422)
+                expect(JSON.stringify(response.body.errors)).toContain('property reseller_id should not exist')
+            })
+            describe('rule clone', () => {
+                const rule = (setId: number): EmbeddedRule => ({
+                    set_id: setId,
+                    match_pattern: '^1(.*)$',
+                    replace_pattern: '\\1',
+                    description: 'reseller clone rule',
+                    direction: 'in',
+                    field: 'caller',
+                    enabled: true,
+                })
+                const cloneRule = (id: number, payload: object): request.Test =>
+                    request(app.getHttpServer())
+                        .post(`/api/rewrite-rules/sets/rules/${id}/clone`)
+                        .auth(resellerCreds.username, resellerCreds.password)
+                        .set('Accept', 'application/json')
+                        .set('Content-Type', 'application/json')
+                        .send(payload)
+
+                it('fail to clone a rule of a set of another reseller', async () => {
+                    const created = await request(app.getHttpServer())
+                        .post('/api/rewrite-rules/sets/rules')
+                        .set(...authHeader)
+                        .set('Accept', 'application/json')
+                        .set('Content-Type', 'application/json')
+                        .set('Prefer', 'return=representation')
+                        .send(rule(otherResellerSetId))
+                    expect(created.status).toEqual(201)
+                    const response = await cloneRule(+created.body.data[0].id, {})
+                    expect(response.status).toEqual(404)
+                })
+                it('fail to clone a rule into a set of another reseller', async () => {
+                    const created = await request(app.getHttpServer())
+                        .post('/api/rewrite-rules/sets/rules')
+                        .auth(resellerCreds.username, resellerCreds.password)
+                        .set('Accept', 'application/json')
+                        .set('Content-Type', 'application/json')
+                        .set('Prefer', 'return=representation')
+                        .send(rule(resellerSetId))
+                    expect(created.status).toEqual(201)
+                    const response = await cloneRule(+created.body.data[0].id, {set_id: otherResellerSetId})
+                    expect(response.status).toEqual(422)
+                    expect((response.body.errors as ErrorEntry[]).map(e => e.pointer)).toEqual(['/set_id'])
+                })
+            })
         })
     })
 
@@ -795,6 +1097,12 @@ describe('Rule Set', () => {
                 .set(...authHeader)
                 .set('Accept', 'application/json')
             expect(response.status).toEqual(204)
+        })
+        it('delete the other reseller', async () => {
+            if (otherResellerId)
+                await db.billing.Reseller.delete(otherResellerId)
+            if (otherResellerContractId)
+                await db.billing.Contract.delete(otherResellerContractId)
         })
         it('delete created journals', async () => {
             await db.billing.Journal.delete({username: In([creds.username, resellerCreds.username]), timestamp: MoreThanOrEqual(startedAt)})

@@ -121,6 +121,66 @@ describe('RewriteRuleSet Service', () => {
         })
     })
 
+    describe('clone', () => {
+        const clone = (id: number, overrides: Partial<internal.RewriteRuleSet> = {}): Promise<internal.RewriteRuleSet> =>
+            service.clone(id, Object.assign(new internal.RewriteRuleSet(), overrides), sr)
+
+        it('names the copy after the source with the suffix _clone', async () => {
+            const cloned = await clone(2)
+            expect(cloned).toMatchObject({name: 'rwrset2_clone', resellerId: 2, description: 'desc2'})
+            expect(cloned.id).not.toEqual(2)
+        })
+
+        it('counts up the suffix of a taken name', async () => {
+            await clone(2)
+            expect((await clone(2)).name).toEqual('rwrset2_clone2')
+        })
+
+        it('uses the name of the overrides', async () => {
+            const cloned = await clone(2, {name: 'given', description: null})
+            expect(cloned).toMatchObject({name: 'given', description: null})
+        })
+
+        it('does not pass the dpids of the source to the create', async () => {
+            Object.assign(await rwrMockRepo.readById(2, sr), {callerInDpid: 10, calleeLnpDpid: 15})
+            const create = jest.spyOn(rwrMockRepo, 'create')
+            await clone(2)
+            const [[created]] = create.mock.calls[0]
+            expect(created).not.toHaveProperty('callerInDpid')
+            expect(created).not.toHaveProperty('calleeLnpDpid')
+        })
+
+        it('copies the rules of the source into the new set', async () => {
+            const cloned = await clone(2)
+            expect(rwrMockRepo.copied).toEqual([[2, cloned.id]])
+        })
+
+        it('reloads the dial plan if rules were copied', async () => {
+            await clone(2)
+            expect(reloadSpy).toHaveBeenCalledWith(sr)
+        })
+
+        it('does not reload the dial plan for a set without rules', async () => {
+            await clone(3)
+            expect(reloadSpy).not.toHaveBeenCalled()
+        })
+
+        it('assigns the reseller of a reseller role', async () => {
+            sr.user = resellerUser
+            const cloned = await clone(1, {resellerId: 7})
+            expect(cloned.resellerId).toEqual(1)
+        })
+
+        it('throws 404 for a set of another reseller', async () => {
+            sr.user = resellerUser
+            await expect(clone(2)).rejects.toThrow(NotFoundException)
+        })
+
+        it('throws 404 for an unknown set', async () => {
+            await expect(clone(100)).rejects.toThrow(NotFoundException)
+        })
+    })
+
     describe('update', () => {
         it('should update rewrite rule set by id', async () => {
             const set1 = new internal.RewriteRuleSet()

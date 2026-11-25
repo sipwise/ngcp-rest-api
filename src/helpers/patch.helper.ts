@@ -1,5 +1,5 @@
 import {plainToInstance} from 'class-transformer'
-import {validate as classValidate} from 'class-validator'
+import {ValidationError, validate as classValidate} from 'class-validator'
 import * as core from 'fast-json-patch'
 
 import {
@@ -83,6 +83,15 @@ function topLevelKey(path: string): string {
 }
 
 /**
+ * Validation errors of the request dto fields in `keys` that are null or missing. A field may only be
+ * emptied if the request dto marks it optional.
+ */
+export async function validateEmptiedFields(reqDto: object, keys: string[]): Promise<ValidationError[]> {
+    const errors = await classValidate(reqDto, {whitelist: true, forbidNonWhitelisted: true})
+    return errors.filter(err => keys.includes(err.property))
+}
+
+/**
  * Applies a JSON Patch to an internal entity through its request dto.
  * 400 malformed patch, 409 patch conflicts with the entity, 422 patched fields fail the request dto validation
  * (also paths outside the request dto). Pointers start with `base` (`/<id>` in bulk PATCH).
@@ -109,7 +118,7 @@ export async function patchToEntity<T extends {id?: number}, D extends RequestDt
     // emptied fields (remove, null) are skipped above; they must be optional in the request dto
     const emptied = [...keys].filter(key => dto[key] == null)
     if (emptied.length)
-        errors = errors.concat((await classValidate(reqDto, options)).filter(err => emptied.includes(err.property)))
+        errors = errors.concat(await validateEmptiedFields(reqDto, emptied))
     if (errors.length)
         throw new ValidationFailedException(formatValidationErrors(errors, base))
     for (const key of keys) {

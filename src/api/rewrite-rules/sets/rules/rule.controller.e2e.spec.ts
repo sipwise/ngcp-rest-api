@@ -663,6 +663,145 @@ describe('Rewrite Rule', () => {
                 expect(await priorityOf(ruleB)).toEqual(10)
             })
         })
+
+        describe('POST clone', () => {
+            let cloneSetId: number
+            let secondSetId: number
+            // in/caller rules ruleA (10), ruleB (20) of cloneSetId
+            let ruleA: number
+            let ruleB: number
+            let firstCloneId: number
+
+            const createSet = async (name: string): Promise<number> => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send({name: `${name}${suffix}`, reseller_id: 1, description: `${name} description`})
+                expect(response.status).toEqual(201)
+                createdSetIds.push(+response.body.data[0].id)
+                return +response.body.data[0].id
+            }
+            const createRule = async (priority: number): Promise<number> => {
+                const rule: RulePost = {
+                    set_id: cloneSetId,
+                    description: `clone rule ${priority}`,
+                    priority,
+                    direction: RewriteRuleDirection.In,
+                    replace_pattern: '\\2',
+                    match_pattern: '^(${caller_cc})?([1-9][0-9]+)$',
+                    field: RewriteRuleField.Caller,
+                    enabled: true,
+                }
+                const response = await request(app.getHttpServer())
+                    .post('/api/rewrite-rules/sets/rules')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send(rule)
+                expect(response.status).toEqual(201)
+                createdRuleIds.push(+response.body.data[0].id)
+                return +response.body.data[0].id
+            }
+            const postClone = (path: string, payload: object): request.Test =>
+                request(app.getHttpServer())
+                    .post(`/api/rewrite-rules/sets/${path}/clone`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send(payload)
+            const errorsOf = (response: request.Response): [string, string][] =>
+                (response.body.errors as ErrorEntry[]).map(e => [e.pointer, e.code])
+
+            it('create fixtures', async () => {
+                cloneSetId = await createSet('test_clone_set')
+                secondSetId = await createSet('test_clone_second_set')
+                ruleA = await createRule(10)
+                ruleB = await createRule(20)
+            })
+            it('clone a rule to the end of its set', async () => {
+                const response = await postClone(`rules/${ruleA}`, {})
+                expect(response.status).toEqual(201)
+                const rule: RewriteRuleResponseDto = response.body.data[0]
+                firstCloneId = +rule.id
+                createdRuleIds.push(firstCloneId)
+                expect(firstCloneId).not.toEqual(ruleA)
+                expect(rule).toMatchObject({
+                    set_id: cloneSetId,
+                    description: 'clone rule 10',
+                    direction: RewriteRuleDirection.In,
+                    field: RewriteRuleField.Caller,
+                    replace_pattern: '\\2',
+                    enabled: true,
+                    priority: 21,
+                })
+                expect(response.headers.location).toEqual(`/api/rewrite-rules/sets/rules/${firstCloneId}`)
+            })
+            it('keep the match pattern with its variable', async () => {
+                const rule = await db.provisioning.VoipRewriteRule.findOneByOrFail({id: firstCloneId})
+                const source = await db.provisioning.VoipRewriteRule.findOneByOrFail({id: ruleA})
+                expect(rule.match_pattern).toEqual(source.match_pattern)
+            })
+            it('clone a rule through the path of its set', async () => {
+                const response = await postClone(`${cloneSetId}/rules/${ruleB}`, {})
+                expect(response.status).toEqual(201)
+                createdRuleIds.push(+response.body.data[0].id)
+                expect(response.body.data[0].priority).toEqual(22)
+                expect(response.headers.location).toEqual(`/api/rewrite-rules/sets/${cloneSetId}/rules/${response.body.data[0].id}`)
+            })
+            it('fail to clone a rule through the path of another set', async () => {
+                const response = await postClone(`${secondSetId}/rules/${ruleA}`, {})
+                expect(response.status).toEqual(404)
+            })
+            it('use the given priority', async () => {
+                const response = await postClone(`rules/${ruleA}`, {priority: 30})
+                expect(response.status).toEqual(201)
+                createdRuleIds.push(+response.body.data[0].id)
+                expect(response.body.data[0].priority).toEqual(30)
+            })
+            it('fail with a priority that the set, direction and field already use', async () => {
+                const response = await postClone(`rules/${ruleA}`, {priority: 10})
+                expect(response.status).toEqual(422)
+                expect(errorsOf(response)).toEqual([['/priority', 'REWRITE_RULE_PRIORITY_EXISTS']])
+            })
+            it('clone into another set after its highest priority', async () => {
+                const first = await postClone(`rules/${ruleA}`, {set_id: secondSetId})
+                expect(first.status).toEqual(201)
+                createdRuleIds.push(+first.body.data[0].id)
+                expect(first.body.data[0]).toMatchObject({set_id: secondSetId, priority: 1})
+                const second = await postClone(`rules/${ruleA}`, {set_id: secondSetId})
+                expect(second.status).toEqual(201)
+                createdRuleIds.push(+second.body.data[0].id)
+                expect(second.body.data[0].priority).toEqual(2)
+            })
+            it('fail to clear a required field', async () => {
+                const response = await postClone(`rules/${ruleA}`, {description: null})
+                expect(response.status).toEqual(422)
+                expect(new Set(errorsOf(response).map(([pointer]) => pointer))).toEqual(new Set(['/description']))
+            })
+            it('use the enabled flag of the body', async () => {
+                const response = await postClone(`rules/${ruleA}`, {enabled: false})
+                expect(response.status).toEqual(201)
+                createdRuleIds.push(+response.body.data[0].id)
+                expect(response.body.data[0].enabled).toBe(false)
+            })
+            it('journal the clone as a create of the rule', async () => {
+                const journal = await db.billing.Journal.findOneByOrFail({resource_name: 'rewrite-rules/sets/rules', resource_id: firstCloneId, timestamp: MoreThanOrEqual(startedAt)})
+                expect(journal.operation).toEqual('create')
+            })
+            it('fail with an unknown field', async () => {
+                const response = await postClone(`rules/${ruleA}`, {unknownField: 'test'})
+                expect(response.status).toEqual(422)
+            })
+            it('fail for an unknown rule', async () => {
+                const response = await postClone('rules/999911111122', {})
+                expect(response.status).toEqual(404)
+            })
+        })
     })
 
     describe('Rule DELETE', () => {
