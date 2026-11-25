@@ -355,6 +355,10 @@ describe('Swagger', () => {
         expect(aliasNumbers.operationId).toEqual('SubscriberController_readField_alias_numbers')
         expect(parameterNames(aliasNumbers)).toEqual(expect.arrayContaining(['subscriberId', 'page', 'rows', 'order_by', 'number', 'is_devid']))
         expect(parameterNames(aliasNumbers)).not.toContain('field')
+        const aliasNumberParameter = (name: string): ParameterObject =>
+            aliasNumbers.parameters.find(param => 'name' in param && param.name == name) as ParameterObject
+        expect(aliasNumberParameter('is_devid').schema).toEqual({type: 'boolean'})
+        expect(aliasNumberParameter('cc').schema).toEqual({type: 'number'})
         expect(JSON.stringify((aliasNumbers.responses['200'] as ResponseObject).content['application/json'].schema))
             .toContain('"items":{"$ref":"#/components/schemas/SubscriberAliasNumberResponseDto"}')
         const groupIds = paths['/api/subscribers/{subscriberId}/@pbx_group_ids'].get
@@ -421,6 +425,29 @@ describe('Swagger', () => {
         expect(json.body.paths['/api/subscribers/{subscriberId}/@alias_numbers'].get.summary)
             .toEqual('List alias numbers of a subscriber')
         expect(json.body.paths['/api/fileshare'].post.summary).toEqual('Upload a file')
+    })
+
+    it('documents boolean query parameters with true and false only', async () => {
+        const json = await request(app.getHttpServer()).get('/api/swagger.json')
+        expect(json.status).toEqual(HttpStatus.OK)
+        const paths = json.body.paths as Record<string, Record<string, OperationObject>>
+        const numeric: string[] = []
+        for (const [path, item] of Object.entries(paths)) {
+            for (const [method, operation] of Object.entries(item)) {
+                for (const param of operation.parameters as ParameterObject[]) {
+                    const values = ((param.schema as SchemaObject)?.enum ?? []).map(String)
+                    if (param.in == 'query' && (values.includes('0') || values.includes('1')))
+                        numeric.push(`${method.toUpperCase()} ${path}: ${param.name}`)
+                }
+            }
+        }
+        expect(numeric).toEqual([])
+        const queryParameter = (path: string, name: string): ParameterObject =>
+            paths[path].get.parameters.find(param => 'name' in param && param.name == name) as ParameterObject
+        for (const name of ['is_admin', 'is_pbx_group', 'is_pbx_pilot'])
+            expect(queryParameter('/api/subscribers', name).schema).toEqual({type: 'boolean'})
+        for (const path of ['/api/customers', '/api/customers/{id}'])
+            expect(queryParameter(path, 'include_terminated').schema).toEqual({type: 'boolean'})
     })
 
     it('documents no parameter twice in an operation', async () => {

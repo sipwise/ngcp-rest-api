@@ -187,21 +187,22 @@ export class CustomerService implements CrudService<internal.Customer> {
         return Object.keys(updates).map(id => +id)
     }
 
-    /**
-     * Reports every item whose contact is not an active customer contact visible to the user
-     */
     // include_terminated is no search field, so it is taken out of the query
     private readFilter(sr: ServiceRequest): CustomerFilterBy {
         const filters: CustomerFilterBy = {}
         if (sr.user.reseller_id_required)
             filters.resellerId = sr.user.reseller_id
-        if (sr.query.include_terminated !== undefined) {
-            filters.showTerminated = SearchLogic.isTrue(sr.query.include_terminated)
+        const showTerminated = SearchLogic.parseBoolean(sr, 'include_terminated')
+        if (showTerminated !== undefined) {
+            filters.showTerminated = showTerminated
             delete sr.query.include_terminated
         }
         return filters
     }
 
+    /**
+     * Reports every item whose contact is not an active customer contact visible to the user
+     */
     private checkActiveContacts(customers: internal.Customer[] | Dictionary<internal.Customer>, activeContacts: internal.Contact[], sr: ServiceRequest): void {
         const errors = new ApiErrors()
         for (const [key, customer] of Object.entries(customers)) {

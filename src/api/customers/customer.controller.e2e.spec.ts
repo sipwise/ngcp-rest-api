@@ -1411,6 +1411,14 @@ describe('CustomerController', () => {
                 expect(response.body.status).toEqual(ContractStatus.Terminated)
             })
 
+            it('rejects an invalid include_terminated with 400', async () => {
+                const response = await send('get', ids.terminated, creds, '?include_terminated=yes')
+                expect(response.status).toEqual(HttpStatus.BAD_REQUEST)
+                expect(response.body.errors).toEqual([{
+                    parameter: 'include_terminated', code: 'INVALID_BOOLEAN', message: 'include_terminated must be true or false',
+                }])
+            })
+
             it('does not read a contract that is not a customer', async () => {
                 // seed contract of reseller 1, with billing mappings
                 expect((await send('get', 1)).status).toEqual(HttpStatus.NOT_FOUND)

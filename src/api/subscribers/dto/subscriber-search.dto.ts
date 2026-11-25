@@ -3,12 +3,6 @@ import {ApiHideProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {DateTimeField, DateTimeKind} from '~/decorators/date-time-field.decorator'
 import {VoipSubscriberStatus} from '~/entities/internal/voip-subscriber.internal.entity'
 import {dateTimeFilter} from '~/helpers/query-builder.helper'
-import {SearchLogic} from '~/helpers/search-logic.helper'
-
-const booleanFilter = (column: string): object => ({
-    format: (args: string[]): string => SearchLogic.isTrue(args[0]) ? '1' : '0',
-    where: (param: string): string => `${column} = :${param}`,
-})
 
 export const conditionFilter = (where: (param: string) => string): object => ({
     format: (args: string[]): string => args[0],
@@ -35,11 +29,11 @@ export class SubscriberSearchDto {
     @ApiPropertyOptional({description: 'Subscriber profile'})
         profile_id: number
     @ApiPropertyOptional({description: 'PBX groups'})
-        is_pbx_group: string
+        is_pbx_group: boolean
     @ApiPropertyOptional({description: 'Administrative subscribers'})
-        is_admin: string
+        is_admin: boolean
     @ApiPropertyOptional({description: 'PBX pilot subscribers'})
-        is_pbx_pilot: string
+        is_pbx_pilot: boolean
     @ApiPropertyOptional({description: 'Subscribers with this alias (number or device id)'})
         alias: string
     @ApiPropertyOptional({description: 'Reseller of the customer'})
@@ -81,9 +75,9 @@ export class SubscriberSearchDto {
             customer_external_id: 'contract.external_id',
             subscriber_external_id: 'subscriber.external_id',
             profile_id: 'prov.profile_id',
-            is_pbx_group: booleanFilter('prov.is_pbx_group'),
-            is_admin: booleanFilter('prov.admin'),
-            is_pbx_pilot: booleanFilter('prov.is_pbx_pilot'),
+            is_pbx_group: 'prov.is_pbx_group',
+            is_admin: 'prov.admin',
+            is_pbx_pilot: 'prov.is_pbx_pilot',
             alias: conditionFilter(param => 'EXISTS (SELECT 1 FROM provisioning.voip_dbaliases alias' +
                 ` WHERE alias.subscriber_id = prov.id AND alias.username LIKE :${param})`),
             reseller_id: 'contact.reseller_id',

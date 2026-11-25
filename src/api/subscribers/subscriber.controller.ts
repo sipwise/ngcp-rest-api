@@ -1,8 +1,7 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, ValidationPipe} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
-import {SubscriberQueryDto} from './dto/subscriber-query.dto'
 import {SubscriberRequestDto, subscriberRequestFields} from './dto/subscriber-request.dto'
 import {SubscriberResponseDto} from './dto/subscriber-response.dto'
 import {SubscriberSearchDto} from './dto/subscriber-search.dto'
@@ -92,7 +91,6 @@ export class SubscriberController extends CrudController<SubscriberRequestDto, S
     @ApiPaginatedResponse(SubscriberResponseDto)
     async readAll(
         @Req() req: Request,
-        @Query(new ValidationPipe()) _query: SubscriberQueryDto,
     ): Promise<[SubscriberResponseDto[], number]> {
         this.log.debug({
             message: 'fetch all subscribers',

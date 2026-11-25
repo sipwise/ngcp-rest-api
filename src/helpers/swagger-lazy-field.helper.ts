@@ -63,11 +63,14 @@ function queryParameter(param: SearchQueryParam): ParameterObject {
     } as ParameterObject
 }
 
+// the filters without an explicit type get the one of their search DTO property, as on the other GET routes
 function searchParameters(search?: Type<unknown>): ParameterObject[] {
-    const params = search
-        ? searchQueryParams(SearchLogic, search)
-        : searchQueryParams(SearchLogic).filter(param => PAGING_PARAMS.includes(param.name))
-    return params.map(queryParameter)
+    if (!search)
+        return searchQueryParams(SearchLogic).filter(param => PAGING_PARAMS.includes(param.name)).map(queryParameter)
+    return searchQueryParams(SearchLogic, search).map(param => queryParameter({
+        ...param,
+        type: param.type ?? Reflect.getMetadata('design:type', search.prototype, param.name),
+    }))
 }
 
 /**

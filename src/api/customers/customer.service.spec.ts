@@ -16,7 +16,7 @@ import {ContactStatus} from '~/entities/internal/contact.internal.entity'
 import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {ApiErrorException} from '~/helpers/errors.helper'
+import {ApiErrorException, InvalidParameterException} from '~/helpers/errors.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const admin: AuthResponseDto = {
@@ -311,6 +311,17 @@ describe('CustomerService', () => {
             const readAll = jest.spyOn(customerMockRepo, 'readAll')
             await service.readAll(makeSr(admin, {include_terminated: 'false'}))
             expect(readAll.mock.calls[0][1]).toStrictEqual({showTerminated: false})
+        })
+
+        it('should show terminated customers with include_terminated=1', async () => {
+            const readAll = jest.spyOn(customerMockRepo, 'readAll')
+            await service.readAll(makeSr(admin, {include_terminated: '1'}))
+            expect(readAll.mock.calls[0][1]).toStrictEqual({showTerminated: true})
+        })
+
+        it('should reject an invalid include_terminated', async () => {
+            await expect(service.readAll(makeSr(admin, {include_terminated: 'yes'})))
+                .rejects.toThrow(InvalidParameterException)
         })
 
         it('should filter by reseller for a reseller user', async () => {

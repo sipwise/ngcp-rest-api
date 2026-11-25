@@ -1,9 +1,8 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, ValidationPipe} from '@nestjs/common'
-import {ApiBody, ApiConsumes, ApiOkResponse,ApiTags} from '@nestjs/swagger'
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req} from '@nestjs/common'
+import {ApiBody, ApiConsumes, ApiOkResponse, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
 import {CustomerService} from './customer.service'
-import {CustomerQueryDto} from './dto/customer-query.dto'
 import {CustomerRequestDto} from './dto/customer-request.dto'
 import {CustomerResponseDto} from './dto/customer-response.dto'
 import {CustomerSearchDto} from './dto/customer-search.dto'
@@ -35,6 +34,13 @@ import {ParseOneOrManyPipe} from '~/pipes/parse-one-or-many.pipe'
 import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
 const resourceName = 'customers'
+
+const includeTerminatedQuery = {
+    name: 'include_terminated',
+    required: false,
+    type: 'boolean',
+    description: 'Include terminated customers, default false',
+}
 
 @Auth(
     RbacRole.system,
@@ -84,10 +90,10 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
 
     @Get()
     @ApiSearchQuery(SearchLogic, CustomerSearchDto)
+    @ApiQuery(includeTerminatedQuery)
     @ApiPaginatedResponse(CustomerResponseDto)
     async readAll(
         @Req() req: Request,
-        @Query(new ValidationPipe()) _query: CustomerQueryDto,
     ): Promise<[CustomerResponseDto[], number]> {
         this.log.debug({
             message: 'read all customers',
@@ -103,13 +109,13 @@ export class CustomerController extends CrudController<CustomerRequestDto, Custo
     }
 
     @Get(':id')
+    @ApiQuery(includeTerminatedQuery)
     @ApiOkResponse({
         type: CustomerResponseDto,
     })
     async read(
         @Param('id', ParseIntPipe) id: number,
         @Req() req: Request,
-        @Query(new ValidationPipe()) _query: CustomerQueryDto,
     ): Promise<CustomerResponseDto> {
         this.log.debug({
             message: 'read customer by id',

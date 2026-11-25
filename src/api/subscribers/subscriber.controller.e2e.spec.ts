@@ -686,7 +686,11 @@ describe('Subscriber', () => {
             })
 
             it('rejects an invalid boolean filter with 400', async () => {
-                expect((await list('is_pbx_pilot=yes')).status).toEqual(HttpStatus.BAD_REQUEST)
+                const response = await list('is_pbx_pilot=yes')
+                expect(response.status).toEqual(HttpStatus.BAD_REQUEST)
+                expect(response.body.errors).toEqual([{
+                    parameter: 'is_pbx_pilot', code: 'INVALID_BOOLEAN', message: 'is_pbx_pilot must be true or false',
+                }])
             })
 
             it('rejects an unknown filter with 400', async () => {
@@ -750,7 +754,12 @@ describe('Subscriber', () => {
                 expect(ids(response)).toEqual([subscribers.sipadmin.id, subscribers.sipuser.id])
             })
 
-            it.each(['password', 'is_admin', 'display_name'])('rejects order_by=%s with 400', async field => {
+            it('orders by is_admin', async () => {
+                const response = await list(`customer_id=${sipCustomerId}&order_by=is_admin&order_by_direction=desc`)
+                expect(ids(response)).toEqual([subscribers.sipadmin.id, subscribers.sipuser.id])
+            })
+
+            it.each(['password', 'alias', 'display_name'])('rejects order_by=%s with 400', async field => {
                 expect((await list(`order_by=${field}`)).status).toEqual(HttpStatus.BAD_REQUEST)
             })
 
