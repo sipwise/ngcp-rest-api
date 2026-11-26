@@ -9,9 +9,10 @@ import {AppService} from '~/app.service'
 import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
-import {AdminPasswordJournal} from '~/entities/internal'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {apiError, checkItems, idPointer, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
+import {isPasswordInJournal, passwordJournalHash} from '~/helpers/password.helper'
+import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {AclRoleRepository} from '~/repositories/acl-role.repository'
@@ -31,9 +32,9 @@ export class AdminService { //} implements CrudService<internal.Admin> {
     }
 
     async create(admins: internal.Admin[], sr: ServiceRequest): Promise<internal.Admin[]> {
-        const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr) // TODO: changing req.user.role to internal.AclRole would remove redundant db call
+        const roles = await this.readRoles(admins, sr)
         await checkItems(admins, async (admin, key) => {
-            await this.populateAdmin(admin, accessorRole, sr, key)
+            await this.populateAdmin(admin, roles, sr, key)
             if (admin.enable2fa) {
                 if (!admin.otpSecret)
                     admin.otpSecret = this.authService.generateOtpSecretKey()
@@ -46,23 +47,11 @@ export class AdminService { //} implements CrudService<internal.Admin> {
         })
 
         const createdIds = await this.adminRepo.create(admins)
+        admins.forEach((admin, index) => {
+            admin.id = createdIds[index]
+        })
+        await this.insertPasswordJournals(admins)
         const created = await this.adminRepo.readWhereInIds(createdIds, this.getAdminOptionsFromServiceRequest(sr))
-
-        const keepPasswordAmount = this.app.config.security.password.web_keep_last_used
-        if (this.app.config.security.password.web_validate && this.app.config.security.password.web_keep_last_used > 0) {
-            for (const admin of admins) {
-                if (admin.password) {
-                    const createdAdmin = created.find(a => a.login == admin.login)
-                    if (createdAdmin) {
-                        admin.id = createdAdmin.id
-                        const journalHash = await admin.generateSaltedpass(6)
-                        const journal = AdminPasswordJournal.create({admin_id: admin.id, value: journalHash})
-                        await this.adminPasswordJournalRepo.create([journal])
-                        await this.adminPasswordJournalRepo.keepLastNPasswords(admin.id, keepPasswordAmount)
-                    }
-                }
-            }
-        }
 
         for (const admin of created) {
             if (admin.id != sr.user.id) {
@@ -105,12 +94,17 @@ export class AdminService { //} implements CrudService<internal.Admin> {
         throwMissingIds(sr, ids, admins.map(admin => admin.id), this.i18n.t('errors.ENTRY_NOT_FOUND'))
 
         const oldAdmins = new Map(admins.map(admin => [admin.id, admin]))
-        const accessorRole = await this.aclRepo.readOneByRole(sr.user.role, sr)
+        const roles = await this.readRoles(Object.values(updates), sr)
+        const journalSize = this.passwordJournalSize()
+        const journals = await this.readPasswordJournals(ids.filter(id => updates[id].password))
 
         await checkItems(updates, async (admin, key) => {
             const id = +key
             admin.id = id  // TODO: Do we want to set the id here? After validation in controller it should not be possible to receive updates where the id in the update does not equal the key id
-            await this.populateAdmin(admin, accessorRole, sr, key)
+            await this.populateAdmin(admin, roles, sr, key)
+            const lastPasswords = journals.get(id)?.slice(0, journalSize).map(journal => journal.value)
+            if (admin.password && lastPasswords && await isPasswordInJournal(admin.password, lastPasswords))
+                throw apiError(this.i18n.t('errors.PASSWORD_ALREADY_USED'), itemPointer(sr, key, admin, 'password'))
             const oldAdmin = oldAdmins.get(id)
             if (oldAdmin.role == RbacRole.lintercept && !this.canManageLintercept(sr))
                 throw apiError(this.i18n.t('errors.PERMISSION_DENIED'), itemPointer(sr, key, admin, 'role'), HttpStatus.FORBIDDEN)
@@ -129,6 +123,12 @@ export class AdminService { //} implements CrudService<internal.Admin> {
 
             this.validateUpdate(sr.user.id, oldAdmin, admin, sr, key)
         })
+
+        await this.insertPasswordJournals(Object.values(updates))
+        // every admin with journals got a new entry, so only its newest journalSize - 1 old ones stay
+        const staleIds = [...journals.values()].flatMap(old => old.slice(journalSize - 1)).map(journal => journal.id)
+        if (staleIds.length)
+            await this.adminPasswordJournalRepo.delete(staleIds)
         return await this.adminRepo.update(updates, options)
     }
 
@@ -184,8 +184,49 @@ export class AdminService { //} implements CrudService<internal.Admin> {
         return sr.user.role == RbacRole.system && sr.user.is_master === true
     }
 
-    private async populateAdmin(admin: internal.Admin, accessorRole: internal.AclRole, sr: ServiceRequest, key: number | string): Promise<void> {
-        const role = await this.aclRepo.readOneByRole(admin.role, sr)
+    private async readRoles(admins: internal.Admin[], sr: ServiceRequest): Promise<Map<string, internal.AclRole>> {
+        const names = new Set([sr.user.role, ...admins.map(admin => admin.role)])
+        const roles = await this.aclRepo.readByRoles([...names])
+        return new Map(roles.map(role => [role.role, role]))
+    }
+
+    /**
+     * Number of last passwords an admin may not reuse, 0 if the journal is disabled
+     */
+    private passwordJournalSize(): number {
+        const {web_validate, web_keep_last_used} = this.app.config.security.password
+        return web_validate ? web_keep_last_used : 0
+    }
+
+    /**
+     * Password journals of the admins, newest first; none if the journal is disabled
+     */
+    private async readPasswordJournals(adminIds: number[]): Promise<Map<number, internal.AdminPasswordJournal[]>> {
+        const journals = new Map<number, internal.AdminPasswordJournal[]>()
+        if (!adminIds.length || !this.passwordJournalSize())
+            return journals
+        for (const journal of await this.adminPasswordJournalRepo.readByAdminIds(adminIds)) {
+            if (!journals.has(journal.admin_id))
+                journals.set(journal.admin_id, [])
+            journals.get(journal.admin_id).push(journal)
+        }
+        return journals
+    }
+
+    private async insertPasswordJournals(admins: internal.Admin[]): Promise<void> {
+        const changed = admins.filter(admin => admin.password)
+        if (!changed.length || !this.passwordJournalSize())
+            return
+        const journals = await mapYield(changed, async admin => internal.AdminPasswordJournal.create({
+            admin_id: admin.id,
+            value: await passwordJournalHash(admin.password),
+        }))
+        await this.adminPasswordJournalRepo.create(journals)
+    }
+
+    private async populateAdmin(admin: internal.Admin, roles: Map<string, internal.AclRole>, sr: ServiceRequest, key: number | string): Promise<void> {
+        const role = roles.get(admin.role)
+        const accessorRole = roles.get(sr.user.role)
         admin.setPermissionFlags()
         admin.roleId = role.id
         admin.roleData = role
@@ -206,24 +247,6 @@ export class AdminService { //} implements CrudService<internal.Admin> {
         if (admin.password) {
             admin.saltedpass = await admin.generateSaltedpass()
             admin.saltedpassModifyTimestamp = new Date()
-            if (admin.id &&
-                this.app.config.security.password.web_validate &&
-                this.app.config.security.password.web_keep_last_used > 0
-            ) {
-                const lastPasswords = await this.adminPasswordJournalRepo.readLastNPasswords(admin.id, this.app.config.security.password.web_keep_last_used)
-                for (const pass of lastPasswords) {
-                    const [storedSalt, storedHash] = pass.value.split('$')
-                    const generatedHash = await admin.generateSaltedpass(6, storedSalt)
-                    if (generatedHash.split('$')[1] === storedHash) {
-                        throw apiError(this.i18n.t('errors.PASSWORD_ALREADY_USED'), itemPointer(sr, key, admin, 'password'))
-                    }
-                }
-                const journalHash = await admin.generateSaltedpass(6)
-                const journal = AdminPasswordJournal.create({admin_id: admin.id, value: journalHash})
-                const keepPasswordAmount = this.app.config.security.password.web_keep_last_used
-                await this.adminPasswordJournalRepo.create([journal])
-                await this.adminPasswordJournalRepo.keepLastNPasswords(admin.id, keepPasswordAmount)
-            }
         }
 
         if (sr.user.reseller_id_required) {

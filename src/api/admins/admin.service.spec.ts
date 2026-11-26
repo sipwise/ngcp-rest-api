@@ -17,6 +17,7 @@ import {internal} from '~/entities'
 import {deepCopy} from '~/helpers/deep-copy.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
+import {passwordJournalHash} from '~/helpers/password.helper'
 import {Operation as PatchOperation, patchToEntity} from '~/helpers/patch.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {AclRoleMockRepository} from '~/repositories/acl-role.mock.repository'
@@ -332,6 +333,64 @@ describe('AdminService', () => {
             expect(got.readOnly).not.toStrictEqual(created.readOnly)
             expect(got.resellerId).not.toStrictEqual(created.resellerId)
             expect(got.showPasswords).not.toStrictEqual(created.showPasswords)
+        })
+    })
+
+    describe('bulk', () => {
+        const bulkSr = (body: object): ServiceRequest => ({...sr, req: {body} as never})
+        const journalsOf = async (id: number): Promise<internal.AdminPasswordJournal[]> =>
+            adminPasswordJournalMockRepo.readByAdminIds([id])
+
+        afterEach(() => jest.restoreAllMocks())
+
+        it('should read the roles once and write the password journals with one insert on create', async () => {
+            const readRoles = jest.spyOn(aclRoleMockRepo, 'readByRoles')
+            const insert = jest.spyOn(adminPasswordJournalMockRepo, 'create')
+            const createAdmins = jest.spyOn(adminMockRepo, 'create')
+            await service.create([
+                internal.Admin.create({login: 'jest_a', role: RbacRole.admin, password: 'secret_a'}),
+                internal.Admin.create({login: 'jest_b', role: RbacRole.reseller, password: 'secret_b'}),
+                internal.Admin.create({login: 'jest_c', role: RbacRole.ccare}),
+            ], bulkSr([{}, {}, {}]))
+            expect(readRoles).toHaveBeenCalledTimes(1)
+            expect(insert).toHaveBeenCalledTimes(1)
+            const ids = await createAdmins.mock.results[0].value
+            expect(insert.mock.calls[0][0].map(journal => journal.admin_id)).toStrictEqual(ids.slice(0, 2))
+        })
+
+        it('should read and trim the password journals of all admins at once on update', async () => {
+            const keep = 12
+            for (const id of [2, 3]) {
+                for (let n = 0; n < keep; n++)
+                    await adminPasswordJournalMockRepo.create([internal.AdminPasswordJournal.create({admin_id: id, value: await passwordJournalHash(`old_${n}`)})])
+            }
+            const oldest = [(await journalsOf(2)).at(-1).id, (await journalsOf(3)).at(-1).id]
+            const readRoles = jest.spyOn(aclRoleMockRepo, 'readByRoles')
+            const read = jest.spyOn(adminPasswordJournalMockRepo, 'readByAdminIds')
+            const remove = jest.spyOn(adminPasswordJournalMockRepo, 'delete')
+            const updates = new Dictionary<internal.Admin>()
+            updates[2] = internal.Admin.create({login: 'jest_2', role: RbacRole.admin, password: 'new_2'})
+            updates[3] = internal.Admin.create({login: 'jest_3', role: RbacRole.reseller, password: 'new_3'})
+            await service.update(updates, bulkSr({2: {}, 3: {}}))
+            expect(readRoles).toHaveBeenCalledTimes(1)
+            expect(read).toHaveBeenCalledTimes(1)
+            expect(remove).toHaveBeenCalledTimes(1)
+            expect(remove.mock.calls[0][0]).toHaveLength(2)
+            expect(remove.mock.calls[0][0]).toEqual(expect.arrayContaining(oldest))
+            expect((await journalsOf(2)).length).toBe(keep)
+            expect((await journalsOf(3)).length).toBe(keep)
+        })
+
+        it('should report a reused password with the pointer of its item and write no journals', async () => {
+            await adminPasswordJournalMockRepo.create([internal.AdminPasswordJournal.create({admin_id: 3, value: await passwordJournalHash('used_3')})])
+            const insert = jest.spyOn(adminPasswordJournalMockRepo, 'create')
+            const updates = new Dictionary<internal.Admin>()
+            updates[2] = internal.Admin.create({login: 'jest_2', role: RbacRole.admin, password: 'new_2'})
+            updates[3] = internal.Admin.create({login: 'jest_3', role: RbacRole.reseller, password: 'used_3'})
+            await expect(service.update(updates, bulkSr({2: {}, 3: {}}))).rejects.toMatchObject({errorList: [
+                {pointer: '/3/password', code: 'PASSWORD_ALREADY_USED'},
+            ]})
+            expect(insert).not.toHaveBeenCalled()
         })
     })
 

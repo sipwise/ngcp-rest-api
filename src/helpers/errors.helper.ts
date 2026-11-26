@@ -378,10 +378,24 @@ function fieldPointer(entity: unknown, path: (number | string)[]): string {
 export function idPointer(sr: ServiceRequest, id: number | string): string {
     const body = sr?.req?.body
     if (sr?.req?.method == 'DELETE' && Array.isArray(body)) {
-        const index = body.findIndex(value => `${value}` == `${id}`)
-        return index >= 0 ? `/${index}` : ''
+        const index = bodyIdIndex(body).get(`${id}`)
+        return index !== undefined ? `/${index}` : ''
     }
     return itemPointer(sr, id)
+}
+
+const bodyIdIndexes = new WeakMap<unknown[], Map<string, number>>()
+
+// built once per request body; backwards, so a duplicate id keeps its first index
+function bodyIdIndex(body: unknown[]): Map<string, number> {
+    let index = bodyIdIndexes.get(body)
+    if (!index) {
+        index = new Map()
+        for (let i = body.length - 1; i >= 0; i--)
+            index.set(`${body[i]}`, i)
+        bodyIdIndexes.set(body, index)
+    }
+    return index
 }
 
 /**

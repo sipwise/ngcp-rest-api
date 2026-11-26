@@ -12,7 +12,7 @@ import {
 import {ClassTransformOptions} from '@nestjs/common/interfaces/external/class-transform-options.interface'
 import {ValidatorOptions} from '@nestjs/common/interfaces/external/validator-options.interface'
 import {ErrorHttpStatusCode} from '@nestjs/common/utils/http-error-by-code.util'
-import {instanceToPlain, plainToInstance} from 'class-transformer'
+import {instanceToPlain} from 'class-transformer'
 
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {
@@ -22,7 +22,7 @@ import {
     formatValidationErrors,
 } from '~/helpers/errors.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
-import {validate} from '~/helpers/validate.helper'
+import {plainToInstanceInChunks, validate} from '~/helpers/validate.helper'
 import {LoggerService} from '~/logger/logger.service'
 
 export interface ValidationPipeOptions extends ValidatorOptions {
@@ -88,7 +88,7 @@ export class ValidateInputPipe implements PipeTransform<any> {
 
         const isNil = value !== originalValue
         const isPrimitive = this.isPrimitive(value)
-        let entity = plainToInstance(
+        let entity = await plainToInstanceInChunks(
             metatype,
             value,
             this.transformOptions,

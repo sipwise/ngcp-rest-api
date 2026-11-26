@@ -143,32 +143,25 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         return cbpns.profileNetwork.billingProfile.toInternal()
     }
 
-    async readEmailTemplateIdsByIds(ids: number[], resellerId: number): Promise<[number[], number]> {
-        const qb = db.billing.EmailTemplate.createQueryBuilder('emailTemplate')
-        qb.andWhere('emailTemplate.reseller_id = :resellerId', {resellerId: resellerId})
-        qb.andWhereInIds(ids)
-
-        const [templates, count] = await qb.getManyAndCount()
-        const readIds = templates.map(template => template.id)
-        return [readIds, count]
-    }
-
-    async readCountOfInvoiceTemplates(ids: number[], resellerId: number): Promise<number> {
-        const qb = db.billing.InvoiceTemplate.createQueryBuilder('invoiceTemplate')
-        qb.andWhere('invoiceTemplate.reseller_id = :resellerId', {resellerId: resellerId})
-        qb.andWhereInIds(ids)
-        return await qb.getCount()
-    }
-
-    async readProductByType(type: string, sr: ServiceRequest): Promise<internal.Product> {
-        this.log.debug({
-            message: 'read product by type',
-            func: this.readProductByType.name,
-            user: sr.user.username,
-            type: type,
+    /**
+     * Reseller id per invoice template id
+     */
+    async readInvoiceTemplateResellerIds(ids: number[]): Promise<Map<number, number>> {
+        const templateIds = ids.filter(id => id != null)
+        if (!templateIds.length)
+            return new Map()
+        const templates = await db.billing.InvoiceTemplate.find({
+            select: {id: true, reseller_id: true},
+            where: {id: In(templateIds)},
         })
-        const product = await db.billing.Product.findOneBy({class: <ProductClass>type})
-        return product != undefined ? product.toInternal() : undefined
+        return new Map(templates.map(template => [template.id, template.reseller_id]))
+    }
+
+    async readProductsByTypes(types: string[]): Promise<internal.Product[]> {
+        if (!types.length)
+            return []
+        const products = await db.billing.Product.findBy({class: In(types as ProductClass[])})
+        return products.map(product => product.toInternal())
     }
 
     async readAll(sr: ServiceRequest, filterBy?: FilterBy): Promise<[internal.Customer[], number]> {
@@ -322,34 +315,35 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         return ids
     }
 
-    async readBillingProfile(profileId: number, _sr: ServiceRequest): Promise<internal.BillingProfile> {
-        // a null id would be ignored in the where clause and return the first row
-        if (profileId == undefined)
-            return null
-        const profile = await db.billing.BillingProfile.findOne({where: {id: profileId}})
-        if (!profile) {
-            return null
-        }
-        return profile.toInternal()
+    async readBillingProfiles(ids: number[]): Promise<internal.BillingProfile[]> {
+        const profileIds = ids.filter(id => id != null)
+        if (!profileIds.length)
+            return []
+        const profiles = await db.billing.BillingProfile.findBy({id: In(profileIds)})
+        return profiles.map(profile => profile.toInternal())
     }
 
-    async readBillingNetwork(networkId: number, _sr: ServiceRequest): Promise<internal.BillingNetwork> {
-        if (networkId == undefined)
-            return null
-        const network = await db.billing.BillingNetwork.findOne({where: {id: networkId}})
-        if (!network) {
-            return null
-        }
-        return network.toInternal()
+    async readBillingNetworks(ids: number[]): Promise<internal.BillingNetwork[]> {
+        const networkIds = ids.filter(id => id != null)
+        if (!networkIds.length)
+            return []
+        const networks = await db.billing.BillingNetwork.findBy({id: In(networkIds)})
+        return networks.map(network => network.toInternal())
     }
 
-    async readProfilePackageWithInitialProfiles(packageId: number, _sr: ServiceRequest): Promise<internal.ProfilePackage> {
+    /**
+     * Profile packages with their initial profiles; packages without any are left out
+     */
+    async readProfilePackagesWithInitialProfiles(ids: number[]): Promise<internal.ProfilePackage[]> {
+        const packageIds = ids.filter(id => id != null)
+        if (!packageIds.length)
+            return []
         const qb = db.billing.ProfilePackage.createQueryBuilder('profilePackage')
-        qb.where({id: packageId})
+        qb.whereInIds(packageIds)
         qb.innerJoinAndSelect('profilePackage.packageProfileSets', 'packageProfileSets')
         qb.andWhere('packageProfileSets.discriminator = :discriminator', {discriminator: Discriminator.Initial})
-        const profile = await qb.getOne()
-        return profile?.toInternal()
+        const packages = await qb.getMany()
+        return packages.map(profilePackage => profilePackage.toInternal())
     }
 
     /**
@@ -404,14 +398,10 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         return templates.map(template => template.toInternal())
     }
 
-    async findResellerEmailTemplates(resellerId: number): Promise<internal.EmailTemplate[]> {
-        const templates = await db.billing.EmailTemplate.find(
-            {
-                where: {
-                    reseller_id: resellerId,
-                },
-            },
-        )
+    async readEmailTemplatesOfResellers(resellerIds: number[]): Promise<internal.EmailTemplate[]> {
+        if (!resellerIds.length)
+            return []
+        const templates = await db.billing.EmailTemplate.findBy({reseller_id: In(resellerIds)})
         return templates.map(template => template.toInternal())
     }
 
@@ -421,10 +411,5 @@ export class CustomerMariadbRepository extends MariaDbRepository implements Cust
         delete copy.id
         const result = await db.billing.EmailTemplate.insert(copy)
         return (result.identifiers[0] as {id: number}).id
-    }
-
-    async readContactById(contactId: number): Promise<internal.Contact> {
-        const contact = await db.billing.Contact.findOneOrFail({where: {id: contactId}})
-        return contact.toInternal()
     }
 }

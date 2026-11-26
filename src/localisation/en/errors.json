@@ -272,9 +272,6 @@
   "VOICEMAIL_DIR_INVALID": {
     "message": "Invalid voicemail folder '{dir}'"
   },
-  "CONTACT_TERMINATED": {
-    "message": "Contact is terminated"
-  },
   "EMAIL_TEMPLATE_NOT_FOUND": {
     "message": "Email template not found"
   },

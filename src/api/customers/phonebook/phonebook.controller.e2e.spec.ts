@@ -280,6 +280,14 @@ describe('Customer Phonebook', () => {
                 expect(response.status).toEqual(200)
                 expect(response.headers['content-type']).toContain('text/csv')
                 expect(response.text).toContain('CUST_PHONEBOOK_TEST3')
+
+                const entries = (await request(app.getHttpServer())
+                    .get(`/api/customers/phonebook?customer_id=${createdContractIds[0]}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')).body.data
+                const rows = entries.map((entry: CustomerPhonebookResponseDto) =>
+                    [entry.id, entry.customer_id, entry.name, entry.number, entry.own].join(','))
+                expect(response.text).toEqual(['id,customer_id,name,number,own', ...rows].join('\r\n'))
             })
             it('read non-existing phonebook', async () => {
                 const response = await request(app.getHttpServer())

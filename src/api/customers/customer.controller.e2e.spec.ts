@@ -1,7 +1,7 @@
 import {HttpStatus, INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
-import {In} from 'typeorm'
+import {In, Like} from 'typeorm'
 
 import {CustomerModule} from './customer.module'
 import {CustomerResponseDto} from './dto/customer-response.dto'
@@ -766,6 +766,192 @@ describe('CustomerController', () => {
                     ['/0/billing_profiles/0/profile_id', 'INVALID_BILLING_PROFILE_ID'],
                     ['/2/billing_profiles/1/start', 'START_DATE_NOT_IN_FUTURE'],
                 ])
+            })
+        })
+
+        describe('Customer bulk create and update', () => {
+            let otherContactId: number
+            const bulk = (method: 'post' | 'put' | 'patch'): request.Test => request(app.getHttpServer())[method]('/api/customers')
+                .set(...authHeader)
+                .set('Accept', 'application/json')
+                .set('Content-Type', method == 'patch' ? 'application/json-patch+json' : 'application/json')
+            const item = (data: object): object => ({status: ContractStatus.Active, type: CustomerType.SipAccount, contact_id: CONTACT_ID, ...data})
+            const byId = (profileId: number): object => ({billing_profile_definition: ContractBillingProfileDefinition.ID, billing_profile_id: profileId})
+            const byPackage = (packageId: number): object => ({billing_profile_definition: ContractBillingProfileDefinition.Package, profile_package_id: packageId})
+            const byProfiles = (profiles: object[]): object => ({billing_profile_definition: ContractBillingProfileDefinition.Profiles, billing_profiles: profiles})
+            // [profile, network, start, end] of the stored mappings
+            const mappingsOf = async (contractId: number): Promise<(number | null)[][]> => (await readMappings(contractId)).map(mapping => [
+                mapping.billing_profile_id,
+                mapping.billing_network_id,
+                mapping.start_date?.getTime() ?? null,
+                mapping.end_date?.getTime() ?? null,
+            ])
+            const errorsOf = (response: request.Response): string[][] => (response.body.errors as ErrorEntry[]).map(e => [e.pointer, e.code])
+
+            beforeAll(async () => {
+                const contact = await db.billing.Contact.create({
+                    reseller_id: otherResellerId,
+                    email: `e2e-bulk-${suffix}@example.org`,
+                    create_timestamp: new Date(),
+                    modify_timestamp: new Date(),
+                }).save()
+                fixtureContactIds.push(contact.id)
+                otherContactId = contact.id
+            })
+
+            it('creates customers of several resellers and billing definitions in one request', async () => {
+                const start = at(5 * DAY)
+                const stop = at(6 * DAY)
+                const response = await bulk('post').set('Prefer', 'return=representation').send([
+                    item({...byId(profileA), ...ownTemplates}),
+                    item({contact_id: otherContactId, type: CustomerType.PbxAccount, ...byId(profileOtherReseller), ...foreignTemplates}),
+                    item(byPackage(packageB)),
+                    item(byProfiles([
+                        {profile_id: profileA},
+                        {profile_id: profileB, network_id: networkA, start: toLocalDateTime(start), stop: toLocalDateTime(stop)},
+                    ])),
+                    item({contact_id: otherContactId, ...byId(profileNoReseller)}),
+                ])
+                expect(response.status).toEqual(HttpStatus.CREATED)
+                const created: CustomerResponseDto[] = response.body.data
+                const ids = created.map(customer => customer.id)
+                fixtureContractIds.push(...ids)
+
+                const read: CustomerResponseDto[] = []
+                for (const id of ids) {
+                    const readResponse = await request(app.getHttpServer())
+                        .get(`/api/customers/${id}`)
+                        .set(...authHeader)
+                        .set('Accept', 'application/json')
+                    read.push(readResponse.body)
+                }
+                expect(read.map(customer => [customer.type, customer.billing_profile_definition, customer.billing_profile_id])).toEqual([
+                    [CustomerType.SipAccount, ContractBillingProfileDefinition.ID, profileA],
+                    [CustomerType.PbxAccount, ContractBillingProfileDefinition.ID, profileOtherReseller],
+                    [CustomerType.SipAccount, ContractBillingProfileDefinition.Package, profileB],
+                    [CustomerType.SipAccount, ContractBillingProfileDefinition.Profiles, profileA],
+                    [CustomerType.SipAccount, ContractBillingProfileDefinition.ID, profileNoReseller],
+                ])
+                expect(created[0]).toMatchObject(ownTemplates)
+                expect(created[1]).toMatchObject(foreignTemplates)
+                // the reseller's copies of the default templates
+                const otherDefaults = await db.billing.EmailTemplate.findBy({reseller_id: otherResellerId, name: Like('%_default_email')})
+                expect([created[4].subscriber_email_template_id, created[4].passreset_email_template_id, created[4].invoice_email_template_id].sort())
+                    .toEqual(otherDefaults.map(template => template.id).sort())
+                expect(await mappingsOf(ids[0])).toEqual([[profileA, null, null, null]])
+                expect(await mappingsOf(ids[1])).toEqual([[profileOtherReseller, null, null, null]])
+                expect(await mappingsOf(ids[2])).toEqual([[profileB, null, null, null]])
+                expect(await mappingsOf(ids[3])).toEqual([[profileA, null, null, null], [profileB, networkA, start.getTime(), stop.getTime()]])
+                expect(await db.billing.ContractBalance.countBy({contract_id: In(ids)})).toEqual(ids.length)
+            })
+
+            it('reports the first error of every failing item of a bulk POST and creates none', async () => {
+                const contractsBefore = await db.billing.Contract.countBy({contact_id: In([CONTACT_ID, otherContactId])})
+                const response = await bulk('post').send([
+                    item(byId(profileA)),
+                    item(byId(profileOtherReseller)),
+                    item({contact_id: otherContactId, ...byId(profileOtherReseller), subscriber_email_template_id: ownTemplates.subscriber_email_template_id}),
+                    item(byPackage(2000000000)),
+                    item(byProfiles([{profile_id: profileA}, {profile_id: profileB, network_id: 2000000000, start: toLocalDateTime(at(DAY))}])),
+                    item({...byId(profileTerminated), invoice_template_id: foreignTemplates.invoice_template_id}),
+                    item(byId(profileTerminated)),
+                ])
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errorCode).toEqual('CONTACT_AND_BILLING_PROFILE_RESELLER_ID_MISMATCH')
+                expect(errorsOf(response)).toEqual([
+                    ['/1/billing_profile_id', 'CONTACT_AND_BILLING_PROFILE_RESELLER_ID_MISMATCH'],
+                    ['/2/subscriber_email_template_id', 'EMAIL_TEMPLATE_NOT_FOUND'],
+                    ['/3/profile_package_id', 'INVALID_PROFILE_PACKAGE_ID'],
+                    ['/4/billing_profiles/1/network_id', 'INVALID_BILLING_NETWORK_ID'],
+                    ['/5/invoice_template_id', 'INVOICE_TEMPLATE_NOT_FOUND'],
+                    ['/6/billing_profile_id', 'BILLING_PROFILE_ALREADY_TERMINATED'],
+                ])
+                expect(await db.billing.Contract.countBy({contact_id: In([CONTACT_ID, otherContactId])})).toEqual(contractsBefore)
+            })
+
+            it('updates customers of all billing definitions with a bulk PUT', async () => {
+                const ids = [
+                    await createContract([{profileId: profileA}]),
+                    await createContract([{profileId: profileA}], at(0), packageA),
+                    await createContract([{profileId: profileA}]),
+                    await createContract([{profileId: profileA}], at(0), undefined, otherContactId),
+                ]
+                const start = at(5 * DAY)
+                const stop = at(6 * DAY)
+                const response = await bulk('put').send({
+                    [ids[0]]: item(byId(profileB)),
+                    [ids[1]]: item(byPackage(packageB)),
+                    [ids[2]]: item(byProfiles([{profile_id: profileC, network_id: networkA, start: toLocalDateTime(start), stop: toLocalDateTime(stop)}])),
+                    [ids[3]]: item({contact_id: otherContactId, type: CustomerType.PbxAccount, ...byId(profileOtherReseller), ...foreignTemplates}),
+                })
+                expect(response.status).toEqual(HttpStatus.NO_CONTENT)
+
+                const contracts = await db.billing.Contract.findBy({id: In(ids)})
+                expect(contracts.find(contract => contract.id == ids[1]).profile_package_id).toEqual(packageB)
+                expect(contracts.find(contract => contract.id == ids[3])).toMatchObject(foreignTemplates)
+                const [first, second, third, fourth] = await Promise.all(ids.map(id => mappingsOf(id)))
+                expect(first.map(([profileId, networkId,, end]) => [profileId, networkId, end])).toEqual([[profileA, null, null], [profileB, null, null]])
+                expect(first[1][2]).toBeGreaterThan(Date.now() - 60000)
+                expect(second.map(([profileId]) => profileId)).toEqual([profileA, profileB])
+                expect(third).toEqual([[profileA, null, null, null], [profileC, networkA, start.getTime(), stop.getTime()]])
+                expect(fourth.map(([profileId]) => profileId)).toEqual([profileA, profileOtherReseller])
+            })
+
+            it('reports the first error of every failing item of a bulk PUT and updates none', async () => {
+                const ids = [
+                    await createContract([{profileId: profileA}]),
+                    await createContract([{profileId: profileA}], at(0), packageA),
+                    await createContract([{profileId: profileA}]),
+                    await createContract([{profileId: profileA}]),
+                ]
+                const response = await bulk('put').send({
+                    [ids[0]]: item(byId(profileOtherReseller)),
+                    [ids[1]]: item(byPackage(packageB)),
+                    [ids[2]]: item(byProfiles([{profile_id: profileB}])),
+                    [ids[3]]: item({contact_id: otherContactId, ...byId(profileB)}),
+                })
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(errorsOf(response)).toEqual([
+                    [`/${ids[0]}/billing_profile_id`, 'CONTACT_AND_BILLING_PROFILE_RESELLER_ID_MISMATCH'],
+                    [`/${ids[2]}/billing_profiles/0`, 'OPEN_INTERVAL_MAPPING_NOT_ALLOWED'],
+                    [`/${ids[3]}/billing_profile_id`, 'CONTACT_AND_BILLING_PROFILE_RESELLER_ID_MISMATCH'],
+                ])
+                for (const id of ids)
+                    expect(await mappingsOf(id)).toEqual([[profileA, null, null, null]])
+            })
+
+            it('reports the failing items of a bulk PATCH and updates none', async () => {
+                const ids = [
+                    await createContract([{profileId: profileA}]),
+                    await createContract([{profileId: profileA}]),
+                    await createContract([{profileId: profileA}]),
+                ]
+                const response = await bulk('patch').send({
+                    [ids[0]]: [{op: 'replace', path: '/billing_profile_id', value: profileB}],
+                    [ids[1]]: [{op: 'replace', path: '/billing_profile_id', value: profileTerminated}],
+                    [ids[2]]: [{op: 'replace', path: '/invoice_template_id', value: foreignTemplates.invoice_template_id}],
+                })
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(errorsOf(response)).toEqual([
+                    [`/${ids[1]}/billing_profile_id`, 'BILLING_PROFILE_ALREADY_TERMINATED'],
+                    [`/${ids[2]}/invoice_template_id`, 'INVOICE_TEMPLATE_NOT_FOUND'],
+                ])
+                for (const id of ids)
+                    expect(await mappingsOf(id)).toEqual([[profileA, null, null, null]])
+            })
+
+            it('changes the billing profiles of a bulk PATCH', async () => {
+                const ids = [
+                    await createContract([{profileId: profileA}]),
+                    await createContract([{profileId: profileA}]),
+                ]
+                const response = await bulk('patch').send({
+                    [ids[0]]: [{op: 'replace', path: '/billing_profile_id', value: profileB}],
+                    [ids[1]]: [{op: 'replace', path: '/billing_profile_id', value: profileC}],
+                })
+                expect(response.status).toEqual(HttpStatus.NO_CONTENT)
+                expect((await mappingsOf(ids[0])).map(([profileId]) => profileId)).toEqual([profileA, profileB])
+                expect((await mappingsOf(ids[1])).map(([profileId]) => profileId)).toEqual([profileA, profileC])
             })
         })
 

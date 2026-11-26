@@ -9,6 +9,7 @@ import {BillingProfileStatus} from '~/entities/internal/billing-profile.internal
 import {ContactStatus} from '~/entities/internal/contact.internal.entity'
 import {ContractBillingProfileDefinition, ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {CustomerType} from '~/entities/internal/customer.internal.entity'
+import {ProductClass} from '~/entities/internal/product.internal.entity'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {memoryFieldSource} from '~/helpers/lazy-field.helper'
 import {LazyFieldSources} from '~/interfaces/lazy-field-source.interface'
@@ -72,8 +73,8 @@ export class CustomerMockRepository implements CustomerRepository {
             } as internal.ProfilePackage),
         }
         this.productDB = {
-            [CustomerType.SipAccount]: internal.Product.create({id: 4, handle: 'SIP_ACCOUNT'} as internal.Product),
-            [CustomerType.PbxAccount]: internal.Product.create({id: 5, handle: 'PBX_ACCOUNT'} as internal.Product),
+            [CustomerType.SipAccount]: internal.Product.create({id: 4, handle: 'SIP_ACCOUNT', class: ProductClass.SipAccount} as internal.Product),
+            [CustomerType.PbxAccount]: internal.Product.create({id: 5, handle: 'PBX_ACCOUNT', class: ProductClass.PbxAccount} as internal.Product),
         }
         this.defaultEmailTemplates = [
             {id: 1, resellerId: null, name: 'subscriber_default_email'} as internal.EmailTemplate,
@@ -117,8 +118,8 @@ export class CustomerMockRepository implements CustomerRepository {
         return Promise.resolve(this.billingProfileDB[1])
     }
 
-    readProductByType(type: string, _sr: ServiceRequest): Promise<internal.Product> {
-        return Promise.resolve(this.productDB[type])
+    readProductsByTypes(types: string[]): Promise<internal.Product[]> {
+        return Promise.resolve(types.filter(type => this.productDB[type]).map(type => this.productDB[type]))
     }
 
     readAll(_sr: ServiceRequest, filterBy?: CustomerFilterBy): Promise<[internal.Customer[], number]> {
@@ -159,24 +160,24 @@ export class CustomerMockRepository implements CustomerRepository {
         return Promise.resolve(ids)
     }
 
-    readBillingProfile(profileId: number, _sr: ServiceRequest): Promise<internal.BillingProfile> {
-        return Promise.resolve(this.billingProfileDB[profileId])
+    readBillingProfiles(ids: number[]): Promise<internal.BillingProfile[]> {
+        return Promise.resolve(ids.map(id => this.billingProfileDB[id]).filter(profile => profile))
     }
 
-    readBillingNetwork(networkId: number, _sr: ServiceRequest): Promise<internal.BillingNetwork> {
-        return Promise.resolve(this.billingNetworkDB[networkId])
+    readBillingNetworks(ids: number[]): Promise<internal.BillingNetwork[]> {
+        return Promise.resolve(ids.map(id => this.billingNetworkDB[id]).filter(network => network))
     }
 
-    readProfilePackageWithInitialProfiles(packageId: number, _sr: ServiceRequest): Promise<internal.ProfilePackage> {
-        return Promise.resolve(this.profilePackageDB[packageId])
+    readProfilePackagesWithInitialProfiles(ids: number[]): Promise<internal.ProfilePackage[]> {
+        return Promise.resolve(ids.map(id => this.profilePackageDB[id]).filter(profilePackage => profilePackage))
     }
 
     findDefaultEmailTemplates(): Promise<internal.EmailTemplate[]> {
         return Promise.resolve(this.defaultEmailTemplates)
     }
 
-    findResellerEmailTemplates(resellerId: number): Promise<internal.EmailTemplate[]> {
-        return Promise.resolve(this.resellerEmailTemplates[resellerId] ?? [])
+    readEmailTemplatesOfResellers(resellerIds: number[]): Promise<internal.EmailTemplate[]> {
+        return Promise.resolve(resellerIds.flatMap(id => this.resellerEmailTemplates[id] ?? []))
     }
 
     createResellerDefaultTemplate(resellerId: number, defaultTemplate: internal.EmailTemplate): Promise<number> {
@@ -188,19 +189,10 @@ export class CustomerMockRepository implements CustomerRepository {
         return Promise.resolve(id)
     }
 
-    readEmailTemplateIdsByIds(ids: number[], resellerId: number): Promise<[number[], number]> {
-        const readIds = (this.resellerEmailTemplates[resellerId] ?? [])
-            .map(template => template.id)
-            .filter(id => ids.includes(id))
-        return Promise.resolve([readIds, readIds.length])
-    }
-
-    readCountOfInvoiceTemplates(ids: number[], resellerId: number): Promise<number> {
-        return Promise.resolve(ids.filter(id => this.invoiceTemplateResellerIds[id] == resellerId).length)
-    }
-
-    readContactById(contactId: number): Promise<internal.Contact> {
-        return Promise.resolve(this.contactDB[contactId])
+    readInvoiceTemplateResellerIds(ids: number[]): Promise<Map<number, number>> {
+        return Promise.resolve(new Map(ids
+            .filter(id => this.invoiceTemplateResellerIds[id] != undefined)
+            .map(id => [id, this.invoiceTemplateResellerIds[id]])))
     }
 
     private matches(customer: internal.Customer, filterBy?: CustomerFilterBy): boolean {

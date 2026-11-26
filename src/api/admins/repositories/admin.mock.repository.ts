@@ -47,11 +47,12 @@ export class AdminMockRepository implements AdminRepository {
     }
 
     create(admins: internal.Admin[]): Promise<number[]> {
-        const nextId = this.getNextId()
-        admins[0].id = nextId
-        this.db[nextId] = admins[0]
-
-        return Promise.resolve([nextId])
+        const ids = admins.map(admin => {
+            admin.id = this.getNextId()
+            this.db[admin.id] = admin
+            return admin.id
+        })
+        return Promise.resolve(ids)
     }
 
     delete(ids: number[]): Promise<number[]> {

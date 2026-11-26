@@ -279,6 +279,37 @@ describe('Rule Set', () => {
                     {pointer: '/rules/1/direction', code: 'isEnum', message: 'direction must be one of the following values: in, out, lnp'},
                 ])
             })
+            it('fail create set with invalid rules among many embedded rules', async () => {
+                const rule = rulesetWithMultipleEmbedded.rules[0]
+                const rules: object[] = Array.from({length: 1200}, () => rule)
+                rules[3] = {...rule, direction: 'sideways'}
+                rules[1100] = {...rule, replace_pattern: '+43 \\1', unknown_field: 1}
+                const response = await request(app.getHttpServer())
+                    .post('/api/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({...rulesetWithMultipleEmbedded, rules})
+                expect(response.status).toEqual(422)
+                expect(response.body.errors).toEqual([
+                    {pointer: '/rules/3/direction', code: 'isEnum', message: 'direction must be one of the following values: in, out, lnp'},
+                    {pointer: '/rules/1100/unknown_field', code: 'whitelistValidation', message: 'property unknown_field should not exist'},
+                    {pointer: '/rules/1100/replace_pattern', code: 'containsSpaces', message: 'replace_pattern cannot contain spaces'},
+                ])
+            })
+            it('create set with many embedded rules', async () => {
+                const rules = Array.from({length: 1200}, () => rulesetWithMultipleEmbedded.rules[0])
+                const response = await request(app.getHttpServer())
+                    .post('/api/rewrite-rules/sets')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({...rulesetWithMultipleEmbedded, name: `test_ruleset_many${suffix}`, rules})
+                expect(response.status).toEqual(201)
+                const setId = +response.body.data[0].id
+                createdIds.push(setId)
+                expect(await db.provisioning.VoipRewriteRule.countBy({set_id: setId})).toEqual(1200)
+            })
             it('create set test_ruleset3 with a single embedded rule', async () => {
                 const response = await request(app.getHttpServer())
                     .post('/api/rewrite-rules/sets')

@@ -23,25 +23,15 @@ export class AdminPasswordJournalMariadbRepository extends MariaDbRepository imp
         return result.identifiers.map((obj: {id: number}) => obj.id)
     }
 
-    async readLastNPasswords(adminId: number, n: number): Promise<internal.AdminPasswordJournal[]> {
-        const qb = db.billing.AdminPasswordJournal.createQueryBuilder('pass')
-        qb.where('pass.admin_id = :admin_id', {admin_id: adminId})
-        qb.orderBy('pass.id', 'DESC')
-        qb.limit(n)
-        return await qb.getMany()
-    }
-
-    async keepLastNPasswords(adminId: number, n: number): Promise<void> {
-        const rows = await db.billing.AdminPasswordJournal.createQueryBuilder('pass')
-            .select('pass.id')
-            .where('pass.admin_id = :admin_id', {admin_id: adminId})
+    async readByAdminIds(adminIds: number[]): Promise<internal.AdminPasswordJournal[]> {
+        const journals = await db.billing.AdminPasswordJournal.createQueryBuilder('pass')
+            .where('pass.admin_id IN (:...adminIds)', {adminIds})
             .orderBy('pass.id', 'DESC')
             .getMany()
-        const stale = rows.slice(n)
+        return journals.map(journal => journal.toInternal())
+    }
 
-        if (!stale.length)
-            return
-
-        await db.billing.AdminPasswordJournal.delete(stale.map(row => row.id))
+    async delete(ids: number[]): Promise<void> {
+        await db.billing.AdminPasswordJournal.delete(ids)
     }
 }

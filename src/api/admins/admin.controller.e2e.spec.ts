@@ -12,6 +12,7 @@ import {AuthService} from '~/auth/auth.service'
 import {RbacRole} from '~/config/constants.config'
 import {db} from '~/entities'
 import {ErrorEntry} from '~/helpers/errors.helper'
+import {passwordJournalHash} from '~/helpers/password.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 
 type AdminPost = {
@@ -1043,6 +1044,97 @@ describe('AdminController', () => {
                     expect(response.status).toEqual(400)
                 })
             }
+        })
+
+        describe('Admins bulk passwords', () => {
+            const ids: number[] = []
+            const adminBody = (name: string, password: string): object => ({
+                billing_data: true,
+                call_data: false,
+                can_reset_password: true,
+                is_active: true,
+                is_master: false,
+                email: `${name}_${run}@example.com`,
+                login: loginOf(name),
+                password,
+                read_only: false,
+                reseller_id: 1,
+                role: RbacRole.admin,
+                show_passwords: true,
+                enable_2fa: false,
+            })
+            const journalIds = async (id: number): Promise<number[]> =>
+                (await db.billing.AdminPasswordJournal.find({where: {admin_id: id}, order: {id: 'ASC'}})).map(journal => journal.id)
+            const send = (method: 'put' | 'delete', body: object): request.Test => request(app.getHttpServer())[method]('/api/admins')
+                .set(...systemAuthHeader)
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json')
+                .send(body)
+
+            it('writes one password journal entry per created admin', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/admins')
+                    .set(...systemAuthHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .set('Prefer', 'return=representation')
+                    .send([adminBody('pw_a', strongPassword), adminBody('pw_b', strongPassword), adminBody('pw_c', strongPassword)])
+                expect(response.status).toEqual(201)
+                ids.push(...response.body.data.map((admin: {id: number}) => +admin.id))
+                createdAdminIds.push(...ids)
+                for (const id of ids)
+                    expect(await journalIds(id)).toHaveLength(1)
+            })
+
+            it('adds a journal entry per updated admin and drops the oldest beyond the limit', async () => {
+                const keep = appService.config.security.password.web_keep_last_used
+                const old = []
+                for (let n = 1; n < keep; n++)
+                    old.push({admin_id: ids[2], value: await passwordJournalHash(`old_${n}`)})
+                await db.billing.AdminPasswordJournal.insert(old)
+                const [oldest] = await journalIds(ids[2])
+                const response = await send('put', {
+                    [ids[0]]: adminBody('pw_a', 'GGGooobarbaz123!!!'),
+                    [ids[2]]: adminBody('pw_c', 'GGGooobarbaz123!!!'),
+                })
+                expect(response.status).toEqual(204)
+                expect(await journalIds(ids[0])).toHaveLength(2)
+                expect(await journalIds(ids[1])).toHaveLength(1)
+                const trimmed = await journalIds(ids[2])
+                expect(trimmed).toHaveLength(keep)
+                expect(trimmed).not.toContain(oldest)
+            })
+
+            it('rejects a reused password with the pointer of its item and keeps the journals', async () => {
+                const response = await send('put', {
+                    [ids[0]]: adminBody('pw_a', 'HHHooobarbaz123!!!'),
+                    [ids[1]]: adminBody('pw_b', strongPassword),
+                })
+                expect(response.status).toEqual(422)
+                expect(response.body.errors).toEqual([
+                    {pointer: `/${ids[1]}/password`, code: 'PASSWORD_ALREADY_USED', message: expect.any(String)},
+                ])
+                expect(await journalIds(ids[0])).toHaveLength(2)
+                expect(await journalIds(ids[1])).toHaveLength(1)
+            })
+
+            it('points at the unknown ids of a bulk DELETE by their index', async () => {
+                const response = await send('delete', [ids[0], 999999998, ids[1], 999999999])
+                expect(response.status).toEqual(422)
+                expect(response.body.errors.map((error: ErrorEntry) => [error.pointer, error.code])).toEqual([
+                    ['/1', 'ENTRY_NOT_FOUND'],
+                    ['/3', 'ENTRY_NOT_FOUND'],
+                ])
+            })
+
+            it('points at the own id of a bulk DELETE by its index', async () => {
+                const {id: ownId} = await db.billing.Admin.findOneByOrFail({login: systemCreds.username})
+                const response = await send('delete', [ids[0], ownId])
+                expect(response.status).toEqual(403)
+                expect(response.body.errors.map((error: ErrorEntry) => [error.pointer, error.code])).toEqual([
+                    ['/1', 'ADMIN_DELETE_SELF'],
+                ])
+            })
         })
 
         describe('Admins lintercept', () => {

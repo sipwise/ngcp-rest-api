@@ -57,31 +57,37 @@ export async function csvToDto<T extends object>(file: Express.Multer.File, dtoC
     return dtos
 }
 
+const CSV_CHUNK_ROWS = 1000
+const CSV_NEWLINE = '\r\n'
+
 /**
  * Converts an array of the provided DTO type to a UTF-8 CSV string.
- *
+ * Rows are unparsed in chunks, so large exports don't block the event loop.
  */
 export async function dtoToCsv<T extends object>(dtos: T[], options?: CsvOptions): Promise<string> {
-    const useNumericBooleans = options?.numericBooleans || false
-    const mappedDtos = useNumericBooleans
-        ? await mapYield(dtos, dto => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const result: Record<string, any> = {}
-            for (const [key, value] of Object.entries(dto)) {
-                if (typeof value === 'boolean') {
-                    result[key] = value ? '1' : '0'
-                } else {
-                    result[key] = value
-                }
-            }
-            return result
-        })
+    const rows = options?.numericBooleans
+        ? await mapYield(dtos, booleansToNumeric)
         : dtos
-    const csv = Papa.unparse(mappedDtos, {
+    if (!rows.length)
+        return ''
+    const columns = Object.keys(rows[0])
+    const chunks: object[][] = []
+    for (let start = 0; start < rows.length; start += CSV_CHUNK_ROWS)
+        chunks.push(rows.slice(start, start + CSV_CHUNK_ROWS))
+    const csvChunks = await mapYield(chunks, (chunk, index) => Papa.unparse(chunk, {
         delimiter: ',',
-        header: true,
-    })
-    return csv
+        newline: CSV_NEWLINE,
+        header: index == 0,
+        columns,
+    }))
+    return csvChunks.join(CSV_NEWLINE)
+}
+
+function booleansToNumeric(dto: object): Record<string, unknown> {
+    const result: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(dto))
+        result[key] = typeof value === 'boolean' ? (value ? '1' : '0') : value
+    return result
 }
 
 /**

@@ -868,6 +868,22 @@ describe('Subscriber', () => {
                 expect(response.body.errors).toContainEqual(expect.objectContaining({pointer, code}))
             })
 
+            it.each([
+                ['put', '/api/subscribers/999999999'],
+                ['post', '/api/subscribers'],
+            ] as const)('reports invalid items of a large alias_numbers list by their index (%s)', async (method, url) => {
+                const aliases: object[] = Array.from({length: 1200}, (_, i) => wNumber(`${1000 + i}`))
+                aliases[3] = {...wNumber('3'), sn: 'abc'}
+                aliases[1100] = {...wNumber('1100'), cc: 0, extra: 1}
+                const response = await send(method, url, sipBody('winvalid', {primary_number: wNumber('120'), alias_numbers: aliases}))
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors).toEqual([
+                    {pointer: '/alias_numbers/3/sn', code: 'matches', message: 'sn must be 1 to 31 digits'},
+                    {pointer: '/alias_numbers/1100/extra', code: 'whitelistValidation', message: 'property extra should not exist'},
+                    {pointer: '/alias_numbers/1100/cc', code: 'min', message: 'cc must not be less than 1'},
+                ])
+            })
+
             it('rejects a profile outside the profile set with 422', async () => {
                 const set = (await db.provisioning.VoipSubscriberProfile.insert({set_id: otherResellerProfileSetId, name: 'x', description: ''})).identifiers[0].id
                 const response = await send('post', '/api/subscribers', sipBody('winvalid', {
@@ -1088,6 +1104,19 @@ describe('Subscriber', () => {
                 const response = await patch('wsip', [op])
                 expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
                 expect(response.body.errors).toContainEqual(expect.objectContaining({pointer, code}))
+            })
+
+            it('reports invalid items of a large alias_numbers list by their index (patch)', async () => {
+                const aliases: object[] = Array.from({length: 1200}, (_, i) => wNumber(`${1000 + i}`))
+                aliases[3] = {...wNumber('3'), sn: 'abc'}
+                aliases[1100] = {...wNumber('1100'), cc: 0, extra: 1}
+                const response = await patch('wsip', [{op: 'replace', path: '/alias_numbers', value: aliases}])
+                expect(response.status).toEqual(HttpStatus.UNPROCESSABLE_ENTITY)
+                expect(response.body.errors).toEqual([
+                    {pointer: '/alias_numbers/3/sn', code: 'matches', message: 'sn must be 1 to 31 digits'},
+                    {pointer: '/alias_numbers/1100/extra', code: 'whitelistValidation', message: 'property extra should not exist'},
+                    {pointer: '/alias_numbers/1100/cc', code: 'min', message: 'cc must not be less than 1'},
+                ])
             })
 
             it('changes the profile within the set', async () => {

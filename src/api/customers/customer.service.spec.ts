@@ -61,6 +61,9 @@ describe('CustomerService', () => {
     const profile = (data: Partial<internal.CustomerBillingProfile>): internal.CustomerBillingProfile =>
         internal.CustomerBillingProfile.create({id: 1, networkId: undefined, startDate: undefined, endDate: undefined, ...data})
 
+    // a bulk request, so the error pointers carry the item index or id
+    const bulkSr = (body: object): ServiceRequest => ({...makeSr(), req: {body} as never})
+
     beforeAll(async () => {
         customerMockRepo = new CustomerMockRepository()
         contactMockRepo = new ContactMockRepository()
@@ -288,6 +291,86 @@ describe('CustomerService', () => {
                     expect([entity.subscriberEmailTemplateId, entity.passresetEmailTemplateId, entity.invoiceEmailTemplateId])
                         .toEqual(created)
                 }
+            })
+        })
+
+        describe('bulk', () => {
+            it('should read the referenced data once per request', async () => {
+                const reads = [
+                    jest.spyOn(contactMockRepo, 'readActiveContactsInIds'),
+                    jest.spyOn(customerMockRepo, 'readProductsByTypes'),
+                    jest.spyOn(customerMockRepo, 'readEmailTemplatesOfResellers'),
+                    jest.spyOn(customerMockRepo, 'readInvoiceTemplateResellerIds'),
+                    jest.spyOn(customerMockRepo, 'readBillingProfiles'),
+                    jest.spyOn(customerMockRepo, 'readBillingNetworks'),
+                    jest.spyOn(customerMockRepo, 'readProfilePackagesWithInitialProfiles'),
+                ]
+                const append = jest.spyOn(customerMockRepo, 'appendBillingMappings')
+                const start = new Date(Date.now() + day)
+                const created = await service.create([
+                    newCustomer({invoiceTemplateId: 1}),
+                    newCustomer({contactId: 3, type: CustomerType.PbxAccount, billingProfileId: 3}),
+                    newCustomer({
+                        billingProfileDefinition: ContractBillingProfileDefinition.Package,
+                        billingProfileId: undefined,
+                        profilePackageId: 1,
+                    }),
+                    newCustomer({
+                        billingProfileDefinition: ContractBillingProfileDefinition.Profiles,
+                        billingProfileId: undefined,
+                        billingProfiles: [profile({id: 1}), profile({id: 3, networkId: 1, startDate: start})],
+                    }),
+                ], bulkSr([{}, {}, {}, {}]))
+                for (const read of reads)
+                    expect(read).toHaveBeenCalledTimes(1)
+                expect(created.map(customer => customer.productId)).toStrictEqual([4, 5, 4, 4])
+                expect(append.mock.calls.map(call => call[1].map(mapping => [mapping.billingProfileId, mapping.networkId])))
+                    .toStrictEqual([
+                        [[1, undefined]],
+                        [[3, undefined]],
+                        [[1, undefined], [3, 1]],
+                        [[1, null], [3, 1]],
+                    ])
+            })
+
+            it('should report the first error of every failing item in request order', async () => {
+                const create = jest.spyOn(customerMockRepo, 'create')
+                await expect(service.create([
+                    newCustomer({}),
+                    newCustomer({billingProfileId: 99}),
+                    newCustomer({type: 'invalid' as CustomerType, billingProfileId: 99}),
+                    newCustomer({
+                        billingProfileDefinition: ContractBillingProfileDefinition.Package,
+                        billingProfileId: undefined,
+                        profilePackageId: 2,
+                    }),
+                    newCustomer({
+                        billingProfileDefinition: ContractBillingProfileDefinition.Profiles,
+                        billingProfileId: undefined,
+                        billingProfiles: [profile({id: 1}), profile({id: 1, networkId: 2})],
+                    }),
+                    newCustomer({subscriberEmailTemplateId: 31}),
+                    newCustomer({invoiceTemplateId: 2}),
+                ], bulkSr([{}, {}, {}, {}, {}, {}, {}]))).rejects.toMatchObject({errorList: [
+                    {pointer: '/1/billing_profile_id'},
+                    {pointer: '/2/type'},
+                    {pointer: '/3/profile_package_id'},
+                    {pointer: '/4/billing_profiles/1/network_id'},
+                    {pointer: '/5/subscriber_email_template_id'},
+                    {pointer: '/6/invoice_template_id'},
+                ]})
+                expect(create).not.toHaveBeenCalled()
+            })
+
+            it('should report the items with an invalid contact before any other check', async () => {
+                await expect(service.create([
+                    newCustomer({contactId: 100}),
+                    newCustomer({billingProfileId: 99}),
+                    newCustomer({contactId: 5}),
+                ], bulkSr([{}, {}, {}]))).rejects.toMatchObject({errorList: [
+                    {pointer: '/0/contact_id'},
+                    {pointer: '/2/contact_id'},
+                ]})
             })
         })
     })
@@ -558,6 +641,31 @@ describe('CustomerService', () => {
                 customerMockRepo.customerDB[2].profilePackageId = 1
                 await expect(service.update(packageUpdate(2), makeSr()))
                     .rejects.toThrow(ApiErrorException)
+            })
+        })
+
+        describe('bulk', () => {
+            it('should read the referenced data once per request and report every failing item', async () => {
+                const readProfiles = jest.spyOn(customerMockRepo, 'readBillingProfiles')
+                const readPackages = jest.spyOn(customerMockRepo, 'readProfilePackagesWithInitialProfiles')
+                const update = jest.spyOn(customerMockRepo, 'update')
+                customerMockRepo.customerDB[2].profilePackageId = 1
+                const updates = new Dictionary<internal.Customer>()
+                updates[1] = newCustomer({...customerMockRepo.customerDB[1], billingProfileId: 3})
+                updates[2] = newCustomer({
+                    ...customerMockRepo.customerDB[2],
+                    contactId: 2,
+                    billingProfileDefinition: ContractBillingProfileDefinition.Package,
+                    profilePackageId: 2,
+                })
+                updates[3] = newCustomer({...customerMockRepo.customerDB[3], billingProfileId: 2})
+                await expect(service.update(updates, bulkSr({1: {}, 2: {}, 3: {}}))).rejects.toMatchObject({errorList: [
+                    {pointer: '/2/profile_package_id'},
+                    {pointer: '/3/billing_profile_id'},
+                ]})
+                expect(readProfiles).toHaveBeenCalledTimes(1)
+                expect(readPackages).toHaveBeenCalledTimes(1)
+                expect(update).not.toHaveBeenCalled()
             })
         })
     })

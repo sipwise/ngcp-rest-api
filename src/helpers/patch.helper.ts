@@ -1,5 +1,4 @@
-import {plainToInstance} from 'class-transformer'
-import {ValidationError, validate as classValidate} from 'class-validator'
+import {ValidationError} from 'class-validator'
 import * as core from 'fast-json-patch'
 
 import {
@@ -16,6 +15,7 @@ import {RequestDto} from '~/dto/request.dto'
 import {currentRequestTimezone} from '~/helpers/date-time-input.helper'
 import {renderDateTimes} from '~/helpers/date-time-renderer.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
+import {plainToInstanceInChunks, validateInChunks} from '~/helpers/validate.helper'
 
 export function normalisePatch(patch: core.Operation | core.Operation[]): core.Operation[] {
     return Array.isArray(patch) ? patch : Array(patch)
@@ -87,7 +87,7 @@ function topLevelKey(path: string): string {
  * emptied if the request dto marks it optional.
  */
 export async function validateEmptiedFields(reqDto: object, keys: string[]): Promise<ValidationError[]> {
-    const errors = await classValidate(reqDto, {whitelist: true, forbidNonWhitelisted: true})
+    const errors = await validateInChunks(reqDto, {whitelist: true, forbidNonWhitelisted: true})
     return errors.filter(err => keys.includes(err.property))
 }
 
@@ -112,9 +112,9 @@ export async function patchToEntity<T extends {id?: number}, D extends RequestDt
     for (const key of keys)
         dto[key] = document[key]
     const values = Object.assign(new requestDto(null), Object.fromEntries([...keys].map(key => [key, dto[key]])))
-    const reqDto = plainToInstance(requestDto, values)
+    const reqDto = await plainToInstanceInChunks(requestDto, values)
     const options = {whitelist: true, forbidNonWhitelisted: true}
-    let errors = await classValidate(reqDto, {...options, skipMissingProperties: true})
+    let errors = await validateInChunks(reqDto, {...options, skipMissingProperties: true})
     // emptied fields (remove, null) are skipped above; they must be optional in the request dto
     const emptied = [...keys].filter(key => dto[key] == null)
     if (emptied.length)

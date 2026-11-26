@@ -1,4 +1,3 @@
-
 import {AdminPasswordJournalRepository} from '~/api/admins/interfaces/admin-password-journal.repository'
 import {internal} from '~/entities'
 
@@ -19,24 +18,23 @@ export class AdminPasswordJournalMockRepository implements AdminPasswordJournalR
         }
     }
 
-    keepLastNPasswords(adminId: number, n: number): Promise<void> {
-        const journals = Object.values(this.db).filter(journal => journal.admin_id === adminId)
-        const journalsToDelete = journals.slice(0, -n)
-        journalsToDelete.forEach(journal => delete this.db[journal.id])
+    create(journals: internal.AdminPasswordJournal[]): Promise<number[]> {
+        const ids = journals.map(journal => {
+            journal.id = this.getNextId()
+            this.db[journal.id] = journal
+            return journal.id
+        })
+        return Promise.resolve(ids)
+    }
+
+    readByAdminIds(adminIds: number[]): Promise<internal.AdminPasswordJournal[]> {
+        const journals: internal.AdminPasswordJournal[] = Object.values(this.db).filter(journal => adminIds.includes(journal.admin_id))
+        return Promise.resolve(journals.reverse())
+    }
+
+    delete(ids: number[]): Promise<void> {
+        ids.forEach(id => delete this.db[id])
         return Promise.resolve()
-    }
-
-    async create(journals: internal.AdminPasswordJournal[]): Promise<number[]> {
-        const nextId = this.getNextId()
-        journals[0].id = nextId
-        this.db[nextId] = journals[0]
-
-        return Promise.resolve([nextId])
-    }
-
-    readLastNPasswords(adminId: number, n: number): Promise<internal.AdminPasswordJournal[]> {
-        const journals = Object.values(this.db).filter(journal => journal.admin_id === adminId)
-        return Promise.resolve(journals.slice(-n) as internal.AdminPasswordJournal[])
     }
 
     private getNextId(): number {
