@@ -25,7 +25,7 @@ export class LoggerService implements NestLoggerService {
     constructor(private readonly context?: string) {}
 
     // same as nest's isLogLevelEnabled: a listed level and every level above the highest listed one
-    private enabled(level: LogLevel): boolean {
+    isEnabled(level: LogLevel): boolean {
         const levels = LoggerService.levels
         if (!levels.length)
             return false
@@ -40,7 +40,7 @@ export class LoggerService implements NestLoggerService {
     }
 
     log(message: unknown, context?: string): void {
-        if (!this.enabled('log'))
+        if (!this.isEnabled('log'))
             return
         const ctx = context ?? this.context
         if (ctx && this.silencedContexts.includes(ctx))
@@ -49,13 +49,13 @@ export class LoggerService implements NestLoggerService {
     }
 
     debug(message: unknown, context?: string): void {
-        if (!this.enabled('debug'))
+        if (!this.isEnabled('debug'))
             return
         winstonLogger.debug(message, context ?? this.context)
     }
 
     warn(message: unknown, context?: string): void {
-        if (!this.enabled('warn'))
+        if (!this.isEnabled('warn'))
             return
         const ctx = context ?? this.context
         if (ctx && this.silencedLegacyWarnContext.includes(ctx))
@@ -64,13 +64,13 @@ export class LoggerService implements NestLoggerService {
     }
 
     error(message: unknown, trace?: string, context?: string): void {
-        if (!this.enabled('error'))
+        if (!this.isEnabled('error'))
             return
         winstonLogger.error(message, trace, context ?? this.context)
     }
 
     verbose(message: unknown, context?: string): void {
-        if (!this.enabled('verbose'))
+        if (!this.isEnabled('verbose'))
             return
         winstonLogger.verbose?.(message, context ?? this.context)
     }
