@@ -1,27 +1,30 @@
 import {Readable} from 'stream'
 
-import {StreamableFile, UnprocessableEntityException} from '@nestjs/common'
+import {PayloadTooLargeException, StreamableFile, UnprocessableEntityException} from '@nestjs/common'
 import {plainToInstance} from 'class-transformer'
 import {ValidationError} from 'class-validator'
 import {Response} from 'express'
 import * as Papa from 'papaparse'
 
 import {ErrorEntry, ValidationFailedException, formatValidationErrors} from './errors.helper'
-import {checkWriteLimit} from './request-limits.helper'
+import {formatSize, readFileLimit, readRowsLimit, writeItemsLimit} from './request-limits.helper'
 import {validate} from './validate.helper'
-import {mapYield} from './yield.helper'
+import {forEachYield, mapYield} from './yield.helper'
 
 import {errorMessage} from '~/helpers/errors.helper'
+import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 export interface CsvOptions {
     numericBooleans?: boolean
 }
 /**
  * Converts UTF-8CSV file buffer to an array of the provided DTO type.
- *
+ * Parsing stops with 413 once the file has more rows than write_items_limit.
  */
 export async function csvToDto<T extends object>(file: Express.Multer.File, dtoClass: new () => T): Promise<T[] | null> {
-    const result = await new Promise<Papa.ParseResult<object>>((resolve, reject) => {
+    const max = writeItemsLimit()
+    const rows = await new Promise<object[]>((resolve, reject) => {
+        const rows: object[] = []
         const stream = Readable.from(file.buffer.toString('utf-8'))
         stream.on('error', reject)
         Papa.parse(stream, {
@@ -29,15 +32,21 @@ export async function csvToDto<T extends object>(file: Express.Multer.File, dtoC
             skipEmptyLines: true,
             delimiter: ',',
             encoding: 'utf-8',
-            complete: resolve,
+            step: (result: Papa.ParseStepResult<object>, parser: Papa.Parser) => {
+                rows.push(result.data)
+                // abort() calls complete, so reject first
+                if (rows.length > max) {
+                    reject(new PayloadTooLargeException(errorMessage('CSV_TOO_MANY_ROWS', {max})))
+                    parser.abort()
+                }
+            },
+            complete: () => resolve(rows),
             error: reject,
         })
     })
 
-    const rows = result.data
-    if (!rows || rows.length === 0)
+    if (rows.length === 0)
         return null
-    checkWriteLimit(rows.length)
 
     let dtos: T[]
     let rowErrors: ValidationError[][]
@@ -61,26 +70,49 @@ const CSV_CHUNK_ROWS = 1000
 const CSV_NEWLINE = '\r\n'
 
 /**
- * Converts an array of the provided DTO type to a UTF-8 CSV string.
- * Rows are unparsed in chunks, so large exports don't block the event loop.
+ * The CSV of every row the collection read returns for the request, regardless of its rows and page: read in
+ * pages of read_rows_limit rows, unparsed in chunks with yields; 422 once it grows above read_file_limit
  */
-export async function dtoToCsv<T extends object>(dtos: T[], options?: CsvOptions): Promise<string> {
-    const rows = options?.numericBooleans
-        ? await mapYield(dtos, booleansToNumeric)
-        : dtos
-    if (!rows.length)
-        return ''
-    const columns = Object.keys(rows[0])
-    const chunks: object[][] = []
-    for (let start = 0; start < rows.length; start += CSV_CHUNK_ROWS)
-        chunks.push(rows.slice(start, start + CSV_CHUNK_ROWS))
-    const csvChunks = await mapYield(chunks, (chunk, index) => Papa.unparse(chunk, {
-        delimiter: ',',
-        newline: CSV_NEWLINE,
-        header: index == 0,
-        columns,
-    }))
+export async function readAllAsCsv<T>(
+    sr: ServiceRequest,
+    readPage: (sr: ServiceRequest) => Promise<[T[], number]>,
+    toRow: (item: T) => object,
+    options?: CsvOptions,
+): Promise<string> {
+    const rows = readRowsLimit()
+    const maxBytes = readFileLimit()
+    const csvChunks: string[] = []
+    let bytes = 0
+    let columns: string[]
+    for (let page = 1; ; page++) {
+        const [items] = await readPage(pageRequest(sr, page, rows))
+        const records = await mapYield(items, item => options?.numericBooleans
+            ? booleansToNumeric(toRow(item))
+            : toRow(item))
+        columns ??= records.length ? Object.keys(records[0]) : undefined
+        const chunks: object[][] = []
+        for (let start = 0; start < records.length; start += CSV_CHUNK_ROWS)
+            chunks.push(records.slice(start, start + CSV_CHUNK_ROWS))
+        await forEachYield(chunks, chunk => {
+            const csv = Papa.unparse(chunk, {
+                delimiter: ',',
+                newline: CSV_NEWLINE,
+                header: csvChunks.length == 0,
+                columns,
+            })
+            bytes += Buffer.byteLength(csv) + (csvChunks.length ? CSV_NEWLINE.length : 0)
+            if (bytes > maxBytes)
+                throw new UnprocessableEntityException(errorMessage('EXPORT_TOO_LARGE', {max: formatSize(maxBytes)}))
+            csvChunks.push(csv)
+        })
+        if (items.length < rows)
+            break
+    }
     return csvChunks.join(CSV_NEWLINE)
+}
+
+function pageRequest(sr: ServiceRequest, page: number, rows: number): ServiceRequest {
+    return {...sr, query: {...sr.query, page: `${page}`, rows: `${rows}`}}
 }
 
 function booleansToNumeric(dto: object): Record<string, unknown> {

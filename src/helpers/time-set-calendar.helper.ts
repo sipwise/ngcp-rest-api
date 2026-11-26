@@ -3,7 +3,7 @@ import {plainToInstance} from 'class-transformer'
 import ICAL from 'ical.js'
 
 import {ErrorEntry, ValidationFailedException, errorMessage, formatValidationErrors} from '~/helpers/errors.helper'
-import {checkWriteLimit} from '~/helpers/request-limits.helper'
+import {checkWriteItemsLimit} from '~/helpers/request-limits.helper'
 import {canonicalTimezone, platformTimezone} from '~/helpers/timezone.helper'
 import {validate} from '~/helpers/validate.helper'
 import {forEachYield, mapYield} from '~/helpers/yield.helper'
@@ -82,7 +82,7 @@ export async function calendarToDtos<T extends object>(file: Express.Multer.File
     if (!calendarMimeTypes.includes(file.mimetype))
         throw new UnprocessableEntityException(errorMessage('FILE_MIME_TYPE_NOT_SUPPORTED'))
     const events = await parseTimeSetCalendar(file.buffer.toString('utf-8'), platformTimezone())
-    checkWriteLimit(events.length)
+    checkWriteItemsLimit(events.length)
 
     const dtos = await mapYield(events, event => plainToInstance(dtoClass, event))
     const errors: ErrorEntry[] = []

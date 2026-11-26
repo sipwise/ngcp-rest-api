@@ -15,7 +15,7 @@ import {NextFunction, Request, Response} from 'express'
 import {SEARCH_QUERY_ORDER_KEY} from '~/decorators/api-search-query.decorator'
 import {ErrorEntryDto, ErrorResponseDto} from '~/dto/error-response.dto'
 import {errorMessage} from '~/helpers/errors.helper'
-import {readLimit, writeLimit} from '~/helpers/request-limits.helper'
+import {formatSize, readFileLimit, readRowsLimit, writeFileLimit, writeItemsLimit} from '~/helpers/request-limits.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {SIPWISE_LOGO_SVG} from '~/helpers/sipwise-logo'
 import {swaggerAuthCss, swaggerAuthJs} from '~/helpers/swagger-auth.helper'
@@ -785,15 +785,30 @@ function addSingleItemFormBodies(document: OpenAPIObject): void {
     }
 }
 
-// performance.read_limit on `rows` (ReadLimitMiddleware), write_limit on bulk bodies (checkWriteLimit) with their 413
+// performance.read_rows_limit on rows (ReadLimitMiddleware), write_items_limit on bulk bodies (checkWriteItemsLimit),
+// write_file_limit on uploads, read_file_limit on CSV exports, with their 413/422
 function addRequestLimits(document: OpenAPIObject): void {
-    const max = writeLimit()
+    const max = writeItemsLimit()
     const bulkTooLarge = errorResponse(`More than ${max} items, or a request body above the size limit`, {
         statusCode: 413,
         path: '/api/v2/customercontacts',
         method: 'POST',
         error: 'Payload Too Large',
         ...errorMessage('BULK_TOO_LARGE', {count: max + 1, max}),
+    })
+    const fileTooLarge = errorResponse('A file above the upload size limit', {
+        statusCode: 413,
+        path: '/api/v2/customers/phonebook',
+        method: 'POST',
+        error: 'Payload Too Large',
+        ...errorMessage('FILE_TOO_LARGE', {max: formatSize(writeFileLimit())}),
+    })
+    const exportTooLarge = errorResponse('The CSV export is above the export size limit', {
+        statusCode: 422,
+        path: '/api/v2/customers/phonebook',
+        method: 'GET',
+        error: 'Unprocessable Entity',
+        ...errorMessage('EXPORT_TOO_LARGE', {max: formatSize(readFileLimit())}),
     })
     for (const pathItem of Object.values(document.paths)) {
         for (const method of OPERATION_METHODS) {
@@ -802,9 +817,12 @@ function addRequestLimits(document: OpenAPIObject): void {
                 continue
             for (const param of operation.parameters ?? []) {
                 if ('in' in param && param.in == 'query' && param.name == 'rows')
-                    param.schema = {...param.schema, maximum: readLimit()}
+                    param.schema = {...param.schema, maximum: readRowsLimit()}
             }
             const content = (operation.requestBody as RequestBodyObject)?.content ?? {}
+            // uploads that also take a JSON bulk body document the file limit, maxItems shows the item limit
+            if (content['multipart/form-data'])
+                operation.responses['413'] ??= fileTooLarge
             for (const type of JSON_MEDIA_TYPES) {
                 const limited = withBulkBodyLimit(method, max, content[type]?.schema as SchemaObject)
                 if (!limited)
@@ -812,6 +830,8 @@ function addRequestLimits(document: OpenAPIObject): void {
                 content[type].schema = limited
                 operation.responses['413'] ??= bulkTooLarge
             }
+            if (method == 'get' && (operation.responses['200'] as ResponseObject)?.content?.['text/csv'])
+                operation.responses['422'] ??= exportTooLarge
         }
     }
 }

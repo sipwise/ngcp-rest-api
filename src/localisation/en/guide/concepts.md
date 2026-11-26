@@ -264,15 +264,26 @@ A bulk POST without `Prefer` returns 204, so ask for `return=id` or `return=repr
 
 ### Request limits
 
-Each request is limited, so that one request cannot hold up the others:
+Each request is limited, so that one request cannot hold up the others or the platform. The limits are platform settings of the API:
 
-| Limit | Default | Above it |
-| --- | --- | --- |
-| `rows` of a GET request | 10000 | 400 |
-| Items of a bulk request: POST array, PUT or PATCH by id, DELETE ids, CSV rows | 10000 | 413 `BULK_TOO_LARGE` |
-| Request body, JSON or CSV file | 20 MB | 413 `PAYLOAD_TOO_LARGE` |
+| Setting | Default | Limits | Above it |
+| --- | --- | --- | --- |
+| `performance.read_rows_limit` | `10000` | `rows` of a GET request with a JSON response | 400 `INVALID_PARAMETER` |
+| `performance.write_items_limit` | `10000` | Items of a bulk request: POST array, PUT or PATCH by id, DELETE ids; rows of a CSV import; events of an iCalendar import | 413 `BULK_TOO_LARGE`, CSV import 413 `CSV_TOO_MANY_ROWS` |
+| `performance.write_body_limit` | `20mb` | JSON request body | 413 `BODY_TOO_LARGE` |
+| `performance.write_file_limit` | `50mb` | Uploaded file: CSV import, iCalendar, invoice template | 413 `FILE_TOO_LARGE` |
+| `fileshare.limits.upload_size` | `10485760` | Fileshare upload, in bytes (10 MB), `0` = no limit | 413 `FILE_TOO_LARGE` |
+| `performance.read_file_limit` | `50mb` | CSV export (`Accept: text/csv`) | 422 `EXPORT_TOO_LARGE` |
+| `performance.lazy_load.inline_max_items` | `1000` | Entries of one inlined lazy field, also the threshold of `inline=auto` | 422 `INLINE_TOO_LARGE` |
+| `performance.lazy_load.inline_max_hard_limit` | `10000` | Inlined entries of one response, across all its items and expanded items | 422 `INLINE_TOO_LARGE` |
+| `expand.filter_max_ids` | `10000` | Referenced items that one filter on a referenced field may match | 422 `EXPAND_NOT_POSSIBLE` |
 
-The limits are the platform settings `performance.read_limit`, `performance.write_limit` and `performance.body_limit`. A bulk request above the item limit is rejected before its items are validated and nothing of it is written: split it into several requests. `rows` had no upper limit before: read larger collections page by page.
+Counts are whole numbers from 1. Sizes are a number with the unit `b`, `kb`, `mb` or `gb` (multiples of 1024, in any case, decimals allowed such as `1.5mb`); `fileshare.limits.upload_size` is a plain number of bytes. A setting that is not set has its default. The error message names the configured limit, e.g. `The file is larger than the 50mb allowed`.
+
+- A bulk request or CSV import above the item limit is rejected before its items are validated and nothing of it is written: split it into several requests. A CSV file is read only up to the first row above the limit.
+- `rows` is 10 when not given. It had no upper limit before: read larger collections page by page.
+- A CSV export holds every row that matches the search filters, read as one consistent snapshot; `rows` and `page` don't apply to it. An export above the limit is rejected before anything is sent: narrow it down with search filters.
+- Lazy fields and filters on referenced fields: see "Lazy fields" and "Related resources" above.
 
 ### Date/time and timezones
 

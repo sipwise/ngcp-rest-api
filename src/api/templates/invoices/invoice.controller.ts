@@ -14,7 +14,6 @@ import {
     UploadedFile,
     UseInterceptors,
 } from '@nestjs/common'
-import {FileInterceptor} from '@nestjs/platform-express'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiProduces, ApiTags} from '@nestjs/swagger'
 import {plainToInstance} from 'class-transformer'
 import {Request, Response as ExpressResponse} from 'express'
@@ -28,7 +27,6 @@ import {InvoiceTemplateService} from './invoice.service'
 
 import {JournalResponseDto} from '~/api/journals/dto/journal-response.dto'
 import {JournalService} from '~/api/journals/journal.service'
-import {AppService} from '~/app.service'
 import {License as LicenseType, RbacRole} from '~/config/constants.config'
 import {CrudController} from '~/controllers/crud.controller'
 import {ApiCreatedResponse} from '~/decorators/api-created-response.decorator'
@@ -44,8 +42,10 @@ import {Dictionary} from '~/helpers/dictionary.helper'
 import {ValidationFailedException, escapePointerToken} from '~/helpers/errors.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {patchToEntity} from '~/helpers/patch.helper'
+import {writeFileLimit} from '~/helpers/request-limits.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {FileUploadInterceptor} from '~/interceptors/file-upload.interceptor'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIntIdArrayPipe} from '~/pipes/parse-int-id-array.pipe'
@@ -53,11 +53,7 @@ import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
 const resourceName = 'templates/invoices'
 
-const uploadInterceptor = FileInterceptor('file', {
-    limits: {
-        fileSize: AppService.config.fileshare.limits.upload_size || null,
-    },
-})
+const uploadInterceptor = FileUploadInterceptor('file', writeFileLimit())
 
 const multipartPatchFields = ['name', 'reseller_id', 'type', 'call_direction', 'category']
 

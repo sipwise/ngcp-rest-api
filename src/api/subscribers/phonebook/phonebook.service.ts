@@ -9,7 +9,7 @@ import {SubscriberPhonebookMariadbRepository} from './repositories/phonebook.mar
 import {AppService} from '~/app.service'
 import {RbacRole} from '~/config/constants.config'
 import {internal} from '~/entities'
-import {dtoToCsv} from '~/helpers/csv.helper'
+import {readAllAsCsv} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrors, itemPointer, rowPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -156,16 +156,10 @@ export class SubscriberPhonebookService implements CrudService<internal.Subscrib
     }
 
     async exportCsv(sr: ServiceRequest): Promise<StreamableFile> {
-        const [entities] = await this.readAll(sr)
-        const dtos = entities.map(entity => {
-            const dto = new SubscriberPhonebookResponseDto(entity)
-            const {resourceUrl, ...rest} = dto
-            return rest
-        })
-
-        const csv = await dtoToCsv<SubscriberPhonebookResponseDto>(dtos, {
-            numericBooleans: this.app.config.csv.export_boolean_format === 'numeric',
-        })
+        const csv = await readAllAsCsv<internal.SubscriberPhonebook | internal.VSubscriberPhonebook>(sr, sr => this.readAll(sr), entity => {
+            const {resourceUrl, ...row} = new SubscriberPhonebookResponseDto(entity)
+            return row
+        }, {numericBooleans: this.app.config.csv.export_boolean_format === 'numeric'})
 
         const buffer = Buffer.from(csv, 'utf-8')
         return new StreamableFile(Uint8Array.from(buffer), {

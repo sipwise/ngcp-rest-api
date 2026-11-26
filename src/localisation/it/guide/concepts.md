@@ -264,15 +264,26 @@ Una POST in blocco senza `Prefer` restituisce 204, quindi richiedere `return=id`
 
 ### Limiti delle richieste
 
-Ogni richiesta è limitata, così che una singola richiesta non possa trattenere le altre:
+Ogni richiesta è limitata, così che una singola richiesta non possa trattenere le altre né la piattaforma. I limiti sono impostazioni di piattaforma dell'API:
 
-| Limite | Predefinito | Oltre |
-| --- | --- | --- |
-| `rows` di una richiesta GET | 10000 | 400 |
-| Elementi di una richiesta in blocco: array POST, PUT o PATCH per id, id DELETE, righe CSV | 10000 | 413 `BULK_TOO_LARGE` |
-| Corpo della richiesta, JSON o file CSV | 20 MB | 413 `PAYLOAD_TOO_LARGE` |
+| Impostazione | Predefinito | Limita | Oltre |
+| --- | --- | --- | --- |
+| `performance.read_rows_limit` | `10000` | `rows` di una richiesta GET con risposta JSON | 400 `INVALID_PARAMETER` |
+| `performance.write_items_limit` | `10000` | Elementi di una richiesta in blocco: array POST, PUT o PATCH per id, id DELETE; righe di un import CSV; eventi di un import iCalendar | 413 `BULK_TOO_LARGE`, import CSV 413 `CSV_TOO_MANY_ROWS` |
+| `performance.write_body_limit` | `20mb` | Corpo JSON della richiesta | 413 `BODY_TOO_LARGE` |
+| `performance.write_file_limit` | `50mb` | File caricato: import CSV, iCalendar, modello di fattura | 413 `FILE_TOO_LARGE` |
+| `fileshare.limits.upload_size` | `10485760` | Caricamento fileshare, in byte (10 MB), `0` = nessun limite | 413 `FILE_TOO_LARGE` |
+| `performance.read_file_limit` | `50mb` | Export CSV (`Accept: text/csv`) | 422 `EXPORT_TOO_LARGE` |
+| `performance.lazy_load.inline_max_items` | `1000` | Voci di un campo differito incluso, anche la soglia di `inline=auto` | 422 `INLINE_TOO_LARGE` |
+| `performance.lazy_load.inline_max_hard_limit` | `10000` | Voci incluse di una risposta, su tutti i suoi elementi e gli elementi espansi | 422 `INLINE_TOO_LARGE` |
+| `expand.filter_max_ids` | `10000` | Elementi referenziati a cui un filtro su un campo referenziato può corrispondere | 422 `EXPAND_NOT_POSSIBLE` |
 
-I limiti sono le impostazioni di piattaforma `performance.read_limit`, `performance.write_limit` e `performance.body_limit`. Una richiesta in blocco oltre il limite di elementi viene rifiutata prima della validazione dei suoi elementi e non ne viene scritto nulla: suddividetela in più richieste. `rows` non aveva prima un limite superiore: leggete le collezioni grandi pagina per pagina.
+I conteggi sono numeri interi da 1. Le dimensioni sono un numero con l'unità `b`, `kb`, `mb` o `gb` (multipli di 1024, maiuscole o minuscole, decimali ammessi come `1.5mb`); `fileshare.limits.upload_size` è un semplice numero di byte. Un'impostazione non definita ha il suo valore predefinito. Il messaggio di errore indica il limite configurato, ad es. `The file is larger than the 50mb allowed`.
+
+- Una richiesta in blocco o un import CSV oltre il limite di elementi viene rifiutato prima della validazione dei suoi elementi e non ne viene scritto nulla: suddividetelo in più richieste. Un file CSV viene letto solo fino alla prima riga oltre il limite.
+- `rows` vale 10 se non indicato. Non aveva prima un limite superiore: leggete le collezioni grandi pagina per pagina.
+- Un export CSV contiene tutte le righe che corrispondono ai filtri di ricerca, lette come uno stato coerente; `rows` e `page` non vi si applicano. Un export oltre il limite viene rifiutato prima di inviare qualsiasi cosa: restringetelo con i filtri di ricerca.
+- Campi differiti e filtri su campi referenziati: vedete «Campi differiti» e «Risorse correlate» sopra.
 
 ### Data/ora e fusi orari
 

@@ -241,6 +241,16 @@ export function addPaginationToQueryBuilder<T extends BaseEntity>(qb: SelectQuer
 }
 
 /**
+ * Stable paging: the columns not already in the order (the client's order_by) are added as tiebreakers
+ */
+export function addTiebreakerOrder<T extends BaseEntity>(qb: SelectQueryBuilder<T>, columns: string[]): void {
+    for (const column of columns) {
+        if (!(column in qb.expressionMap.orderBys))
+            qb.addOrderBy(column)
+    }
+}
+
+/**
  * Number of rows of the query per value of `column` (e.g. the items of lazy fields per owner of a page), in one
  * grouped query; owners without rows are missing from the map
  */

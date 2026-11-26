@@ -5,7 +5,7 @@ import {CustomerPhonebookSearchDto} from '~/api/customers/phonebook/dto/phoneboo
 import {CustomerPhonebookOptions} from '~/api/customers/phonebook/interfaces/phonebook-options.interface'
 import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {configureQueryBuilder} from '~/helpers/query-builder.helper'
+import {addTiebreakerOrder, configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -38,6 +38,7 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
             ),
         )
         this.addFilterBy(qb, options.filterBy)
+        addTiebreakerOrder(qb, ['phonebook.id'])
         const [result, totalCount] = await qb.getManyAndCount()
         return [await mapYield(result, d => d.toInternal()), totalCount]
     }
@@ -140,6 +141,7 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
             ),
         )
         this.addFilterBy(qb, options.filterBy)
+        addTiebreakerOrder(qb, ['phonebook.id'])
         const [result, totalCount] = await qb.getManyAndCount()
         return [await mapYield(result, d => d.toInternal()), totalCount]
     }
@@ -158,6 +160,7 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
             ),
         )
         this.addFilterBy(qb, options.filterBy)
+        addTiebreakerOrder(qb, ['phonebook.id'])
         const [result, totalCount] = await qb.getManyAndCount()
         return [await mapYield(result, d => d.toInternal()), totalCount]
     }
@@ -176,6 +179,7 @@ export class CustomerPhonebookMariadbRepository extends MariaDbRepository implem
             ),
         )
         this.addFilterBy(qb, options.filterBy)
+        addTiebreakerOrder(qb, ['phonebook.id'])
         const [result, totalCount] = await qb.getManyAndCount()
         return [await mapYield(result, d => d.toInternal()), totalCount]
     }

@@ -264,15 +264,26 @@ Un POST masivo sin `Prefer` devuelve 204, así que solicite `return=id` o `retur
 
 ### Límites de las solicitudes
 
-Cada solicitud está limitada, para que una sola solicitud no pueda retener a las demás:
+Cada solicitud está limitada, para que una sola solicitud no pueda retener a las demás ni a la plataforma. Los límites son ajustes de plataforma de la API:
 
-| Límite | Predeterminado | Por encima |
-| --- | --- | --- |
-| `rows` de una solicitud GET | 10000 | 400 |
-| Elementos de una solicitud masiva: array POST, PUT o PATCH por id, ids de DELETE, filas CSV | 10000 | 413 `BULK_TOO_LARGE` |
-| Cuerpo de la solicitud, JSON o archivo CSV | 20 MB | 413 `PAYLOAD_TOO_LARGE` |
+| Ajuste | Predeterminado | Limita | Por encima |
+| --- | --- | --- | --- |
+| `performance.read_rows_limit` | `10000` | `rows` de una solicitud GET con respuesta JSON | 400 `INVALID_PARAMETER` |
+| `performance.write_items_limit` | `10000` | Elementos de una solicitud masiva: array POST, PUT o PATCH por id, ids de DELETE; filas de una importación CSV; eventos de una importación iCalendar | 413 `BULK_TOO_LARGE`, importación CSV 413 `CSV_TOO_MANY_ROWS` |
+| `performance.write_body_limit` | `20mb` | Cuerpo JSON de la solicitud | 413 `BODY_TOO_LARGE` |
+| `performance.write_file_limit` | `50mb` | Archivo subido: importación CSV, iCalendar, plantilla de factura | 413 `FILE_TOO_LARGE` |
+| `fileshare.limits.upload_size` | `10485760` | Subida a fileshare, en bytes (10 MB), `0` = sin límite | 413 `FILE_TOO_LARGE` |
+| `performance.read_file_limit` | `50mb` | Exportación CSV (`Accept: text/csv`) | 422 `EXPORT_TOO_LARGE` |
+| `performance.lazy_load.inline_max_items` | `1000` | Entradas de un campo diferido incluido, también el umbral de `inline=auto` | 422 `INLINE_TOO_LARGE` |
+| `performance.lazy_load.inline_max_hard_limit` | `10000` | Entradas incluidas de una respuesta, en todos sus elementos y elementos expandidos | 422 `INLINE_TOO_LARGE` |
+| `expand.filter_max_ids` | `10000` | Elementos referenciados con los que puede coincidir un filtro sobre un campo referenciado | 422 `EXPAND_NOT_POSSIBLE` |
 
-Los límites son los ajustes de plataforma `performance.read_limit`, `performance.write_limit` y `performance.body_limit`. Una solicitud masiva por encima del límite de elementos se rechaza antes de validar sus elementos y no se escribe nada de ella: divídala en varias solicitudes. `rows` no tenía límite superior antes: lea las colecciones grandes página a página.
+Las cantidades son números enteros desde 1. Los tamaños son un número con la unidad `b`, `kb`, `mb` o `gb` (múltiplos de 1024, en mayúsculas o minúsculas, se admiten decimales como `1.5mb`); `fileshare.limits.upload_size` es un número simple de bytes. Un ajuste no definido tiene su valor predeterminado. El mensaje de error indica el límite configurado, p. ej. `The file is larger than the 50mb allowed`.
+
+- Una solicitud masiva o una importación CSV por encima del límite de elementos se rechaza antes de validar sus elementos y no se escribe nada de ella: divídala en varias solicitudes. Un archivo CSV se lee solo hasta la primera fila por encima del límite.
+- `rows` es 10 si no se indica. No tenía límite superior antes: lea las colecciones grandes página a página.
+- Una exportación CSV contiene todas las filas que coinciden con los filtros de búsqueda, leídas como un estado coherente; `rows` y `page` no se le aplican. Una exportación por encima del límite se rechaza antes de enviar nada: restrínjala con filtros de búsqueda.
+- Campos diferidos y filtros sobre campos referenciados: vea «Campos diferidos» y «Recursos relacionados» más arriba.
 
 ### Fecha/hora y zonas horarias
 

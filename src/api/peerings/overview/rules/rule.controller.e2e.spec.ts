@@ -262,7 +262,7 @@ describe('Peering Rule Overview', () => {
                 expect(result.ids).toEqual([rows()[4]])
             })
 
-            it('exports the filtered, ordered and paged rows as csv', async () => {
+            it('exports every filtered row in order as csv, ignoring rows and page', async () => {
                 const response = await request(app.getHttpServer())
                     .get(`/api/peerings/overview/rules?${ownGroups()}&order_by=server_ip&order_by_direction=desc&rows=2&page=2`)
                     .set(...authHeader)
@@ -271,11 +271,9 @@ describe('Peering Rule Overview', () => {
                 expect(response.headers['content-type']).toContain('text/csv')
                 expect(response.headers['content-disposition']).toContain('peering_overview_rules.csv')
                 const lines = response.text.trim().split(/\r?\n/)
-                expect(lines).toHaveLength(3)
                 expect(lines[0].split(',').slice(0, 4)).toEqual(['id', 'rule_id', 'group_id', 'server_id'])
                 expect(lines[0]).toContain('server_enabled')
-                expect(lines[1].split(',')[0]).toEqual(rows()[0])
-                expect(lines[2].split(',')[0]).toEqual(rows()[2])
+                expect(lines.slice(1).map(line => line.split(',')[0])).toEqual([rows()[1], rows()[3], rows()[0], rows()[2], rows()[4]])
             })
 
             it('exports a server-less rule with empty server columns', async () => {

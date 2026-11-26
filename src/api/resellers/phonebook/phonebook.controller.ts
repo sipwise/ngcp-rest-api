@@ -1,5 +1,4 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, Res, StreamableFile, UnprocessableEntityException, UploadedFile, UseInterceptors} from '@nestjs/common'
-import {FileInterceptor} from '@nestjs/platform-express'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'fast-json-patch'
@@ -34,10 +33,11 @@ import {csvToDto, handleCsvExport} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
-import {bodyLimit} from '~/helpers/request-limits.helper'
+import {writeFileLimit} from '~/helpers/request-limits.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {mapYield} from '~/helpers/yield.helper'
+import {FileUploadInterceptor} from '~/interceptors/file-upload.interceptor'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {FileMimeTypePipe} from '~/pipes/parse-file-mimetype.pipe'
@@ -71,11 +71,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
     @Post('{:resellerId/}phonebook')
     @ApiCreatedResponse(ResellerPhonebookResponseDto)
     @ApiJsonOrCsvBody(ResellerPhonebookRequestDto, ResellerPhonebookTextCsvExampleRequest)
-    @UseInterceptors(FileInterceptor('file', {
-        limits: {
-            fileSize: bodyLimit(),
-        },
-    }))
+    @UseInterceptors(FileUploadInterceptor('file', writeFileLimit()))
     @ApiContentTypeHeader('application/json', 'multipart/form-data')
     @Transactional()
     async create(
@@ -136,6 +132,7 @@ export class ResellerPhonebookController extends CrudController<ResellerPhoneboo
         ],
     })
     @ApiAcceptHeader('application/json', 'application/hal+json', 'text/csv')
+    @Transactional()
     async readAll(
         @Req() req: Request,
         @Param('resellerId', new ParseIntIdPipe({allowUndefined: true})) _resellerId: number,

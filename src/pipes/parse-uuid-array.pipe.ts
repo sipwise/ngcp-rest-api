@@ -2,7 +2,7 @@ import {ArgumentMetadata, Injectable, Optional, ParseUUIDPipeOptions, PipeTransf
 
 import {paramOrBodyFromBody} from '~/decorators/param-or-body.decorator'
 import {parameterException} from '~/helpers/errors.helper'
-import {checkWriteLimit} from '~/helpers/request-limits.helper'
+import {checkWriteItemsLimit} from '~/helpers/request-limits.helper'
 import {isUuidValue} from '~/pipes/parse-uuid.pipe'
 
 interface ParseUuidArrayPipeOptions extends Pick<ParseUUIDPipeOptions, 'version'> {
@@ -25,7 +25,7 @@ export class ParseUUIDArrayPipe implements PipeTransform {
         const fromBody = value != null && typeof value == 'object' && paramOrBodyFromBody.has(value)
         if (!Array.isArray(value))
             throw parameterException(name, 'isArray', `${name} must be an array`, fromBody ? '' : undefined)
-        checkWriteLimit(value.length)
+        checkWriteItemsLimit(value.length)
         const index = value.findIndex(val => !isUuidValue(val, this.options.version))
         if (index >= 0)
             throw parameterException(name, 'isUuid', `${name} must be a UUID`, fromBody ? `/${index}` : undefined)

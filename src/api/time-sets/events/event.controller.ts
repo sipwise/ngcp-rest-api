@@ -1,5 +1,4 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req, UploadedFile, UseInterceptors} from '@nestjs/common'
-import {FileInterceptor} from '@nestjs/platform-express'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
@@ -26,10 +25,11 @@ import {PatchDto} from '~/dto/patch.dto'
 import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {Operation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
-import {bodyLimit} from '~/helpers/request-limits.helper'
+import {writeFileLimit} from '~/helpers/request-limits.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {calendarToDtos} from '~/helpers/time-set-calendar.helper'
 import {mapYield} from '~/helpers/yield.helper'
+import {FileUploadInterceptor} from '~/interceptors/file-upload.interceptor'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
@@ -61,11 +61,7 @@ export class TimeSetEventController extends CrudController<TimeSetEventRequestDt
     @ApiParam({name: 'timeSetId', required: false, type: Number})
     @ApiCreatedResponse(TimeSetEventResponseDto)
     @ApiJsonOrCalendarBody(TimeSetEventRequestDto)
-    @UseInterceptors(FileInterceptor('file', {
-        limits: {
-            fileSize: bodyLimit(),
-        },
-    }))
+    @UseInterceptors(FileUploadInterceptor('file', writeFileLimit()))
     @ApiContentTypeHeader('application/json', 'multipart/form-data')
     @Transactional()
     async create(

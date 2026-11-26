@@ -4,7 +4,7 @@ import bodyParser from 'body-parser'
 
 import {AppService} from './app.service'
 import {HttpExceptionFilter} from './helpers/http-exception.filter'
-import {bodyLimit} from './helpers/request-limits.helper'
+import {writeBodyLimit} from './helpers/request-limits.helper'
 import {ExpandInterceptor} from './interceptors/expand.interceptor'
 import {LazyFieldInterceptor} from './interceptors/lazy-field.interceptor'
 import {LoggingInterceptor} from './interceptors/logging.interceptor'
@@ -45,7 +45,7 @@ export function setupApp(app: INestApplication): void {
 
     app.use(bodyParser.json({
         type: ['application/json-patch+json', 'application/json'],
-        limit: bodyLimit(),
+        limit: writeBodyLimit(),
     }))
 
     app.getHttpAdapter().getInstance().disable('x-powered-by')

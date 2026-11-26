@@ -5,8 +5,9 @@ import {AbstractHttpAdapter} from '@nestjs/core'
 import {Request, Response} from 'express'
 
 import Context from '~/helpers/context.helper'
-import {ErrorCode, ErrorEntry} from '~/helpers/errors.helper'
+import {ErrorCode, ErrorEntry, errorMessage} from '~/helpers/errors.helper'
 import {obfuscatePasswordQuery, obfuscatePasswordUrl} from '~/helpers/password-obfuscator.helper'
+import {formatSize} from '~/helpers/request-limits.helper'
 import {LoggerService} from '~/logger/logger.service'
 
 interface ErrorBody {
@@ -21,6 +22,7 @@ interface ParserError extends Error {
     type: string
     status: number
     expose: boolean
+    limit?: number
 }
 
 function isParserError(exception: unknown): exception is ParserError {
@@ -70,6 +72,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
             }
         }
         if (isParserError(exception)) {
+            if (exception.type == 'entity.too.large')
+                return {statusCode: exception.status, ...errorMessage('BODY_TOO_LARGE', {max: formatSize(exception.limit)})}
             return {
                 statusCode: exception.status,
                 errorCode: exception.type == 'entity.parse.failed' ? ErrorCode.INVALID_JSON : statusName(exception.status),

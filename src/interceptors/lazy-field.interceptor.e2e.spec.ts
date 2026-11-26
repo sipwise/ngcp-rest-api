@@ -395,7 +395,7 @@ describe('Lazy fields', () => {
                 expect(filtered.body.total_count).toEqual(10)
             })
 
-            it('rejects rows above performance.read_limit with 400', async () => {
+            it('rejects rows above performance.read_rows_limit with 400', async () => {
                 const response = await get(`/api/subscribers/${subscribers.big.id}/@alias_numbers?rows=10001`)
                 expect(response.status).toEqual(HttpStatus.BAD_REQUEST)
                 expect(errors(response)).toEqual([{parameter: 'rows', code: 'max'}])

@@ -2,7 +2,7 @@ import {ArgumentMetadata, Injectable, Optional, PipeTransform} from '@nestjs/com
 
 import {paramOrBodyFromBody} from '~/decorators/param-or-body.decorator'
 import {parameterException} from '~/helpers/errors.helper'
-import {checkWriteLimit} from '~/helpers/request-limits.helper'
+import {checkWriteItemsLimit} from '~/helpers/request-limits.helper'
 import {isIntId} from '~/pipes/parse-int-id.pipe'
 
 interface ParseIntArrayPipeOptions {
@@ -27,7 +27,7 @@ export class ParseIntIdArrayPipe implements PipeTransform {
         const fromBody = value != null && typeof value == 'object' && paramOrBodyFromBody.has(value)
         if (!Array.isArray(value))
             throw parameterException(name, 'isArray', `${name} must be an array`, fromBody ? '' : undefined)
-        checkWriteLimit(value.length)
+        checkWriteItemsLimit(value.length)
         const index = value.findIndex(val => !isIntId(val))
         if (index >= 0)
             throw parameterException(name, 'isInt', `${name} must be an integer number`, fromBody ? `/${index}` : undefined)

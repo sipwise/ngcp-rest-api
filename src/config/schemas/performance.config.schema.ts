@@ -24,20 +24,30 @@ export class PerformanceConfig {
     @Type(() => LazyLoadConfig)
         lazy_load?: LazyLoadConfig
 
-    // most rows a client may request per page (GET `rows`)
+    // most rows a client may request per page of a JSON collection (GET `rows`)
     @IsOptional()
     @IsInt()
     @Min(1)
-        read_limit?: number
+        read_rows_limit?: number
 
     // most items of one bulk request (POST array, PUT/PATCH by id, DELETE ids, CSV rows)
     @IsOptional()
     @IsInt()
     @Min(1)
-        write_limit?: number
+        write_items_limit?: number
 
-    // largest JSON or CSV request body
+    // largest JSON request body
     @IsOptional()
     @Matches(SIZE_PATTERN)
-        body_limit?: string
+        write_body_limit?: string
+
+    // largest uploaded file (multipart: CSV, iCalendar, invoice templates)
+    @IsOptional()
+    @Matches(SIZE_PATTERN)
+        write_file_limit?: string
+
+    // largest CSV export
+    @IsOptional()
+    @Matches(SIZE_PATTERN)
+        read_file_limit?: string
 }

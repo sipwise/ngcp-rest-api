@@ -4,7 +4,7 @@ import {EntityNotFoundError, SelectQueryBuilder} from 'typeorm'
 import {PeeringRuleOverviewSearchDto} from '~/api/peerings/overview/rules/dto/rule-search.dto'
 import {PeeringRuleOverviewRepository} from '~/api/peerings/overview/rules/interfaces/rule.repository'
 import {db, internal} from '~/entities'
-import {configureQueryBuilder} from '~/helpers/query-builder.helper'
+import {addTiebreakerOrder, configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -49,11 +49,7 @@ export class PeeringRuleOverviewMariadbRepository extends MariaDbRepository impl
         )
         // one row per rule and server: getCount() would count the distinct rules
         const {count} = await qb.clone().select('COUNT(*)', 'count').orderBy().limit().offset().getRawOne()
-        // stable paging, an order_by on one of these columns keeps its direction
-        for (const column of ['rule.id', 'server.id']) {
-            if (!(column in qb.expressionMap.orderBys))
-                qb.addOrderBy(column)
-        }
+        addTiebreakerOrder(qb, ['rule.id', 'server.id'])
         const result = await qb.getRawMany<RawRuleRow>()
         return [await mapYield(result, raw => this.rawToInternalRule(raw)), +count]
     }

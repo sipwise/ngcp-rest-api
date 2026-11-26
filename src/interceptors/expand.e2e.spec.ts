@@ -475,9 +475,9 @@ describe('Expand', () => {
                 }
             })
 
-            it('is not limited by performance.read_limit, it pages its own reads', async () => {
+            it('is not limited by performance.read_rows_limit, it pages its own reads', async () => {
                 const config = AppService.config.performance
-                AppService.config.performance = {...config, read_limit: 1}
+                AppService.config.performance = {...config, read_rows_limit: 1}
                 try {
                     const response = await get(`/api/subscribers?customer_id.contact_id.email=${prefix}-pl*`)
                     expect(response.status).toEqual(HttpStatus.OK)

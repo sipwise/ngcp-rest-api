@@ -2,7 +2,7 @@ import {HttpException, HttpStatus, Injectable, NestMiddleware} from '@nestjs/com
 import bodyParser from 'body-parser'
 import {NextFunction, Request, Response} from 'express'
 
-import {bodyLimit} from '~/helpers/request-limits.helper'
+import {writeBodyLimit} from '~/helpers/request-limits.helper'
 
 function hasRequestBody(req: Request): boolean {
     const contentLength = req.headers['content-length']
@@ -17,7 +17,7 @@ function hasRequestBody(req: Request): boolean {
  */
 @Injectable()
 export class ContentTypeMiddleware implements NestMiddleware {
-    private readonly parseJson = bodyParser.json({type: () => true, limit: bodyLimit()})
+    private readonly parseJson = bodyParser.json({type: () => true, limit: writeBodyLimit()})
 
     use(req: Request, res: Response, next: NextFunction): void {
         if (req.headers['content-type'] || !hasRequestBody(req)) {

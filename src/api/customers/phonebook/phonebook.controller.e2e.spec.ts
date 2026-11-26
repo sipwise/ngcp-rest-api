@@ -40,6 +40,7 @@ describe('Customer Phonebook', () => {
     let otherResellerContractId: number
     let otherResellerId: number
     let otherCustomerId: number
+    let exportCustomerId: number
     let resellerHeader: [string, string]
     const scopeDomain = `cust-pb-${suffix}.invalid`
     const subadminUsername = `custpbadmin${suffix}`
@@ -218,7 +219,7 @@ describe('Customer Phonebook', () => {
                 expect(response.body.errorCode).toEqual('DUPLICATE_IN_CSV')
                 expect(response.body.errors.map((e: ErrorEntry) => [e.pointer, e.code])).toEqual([['/2/number', 'DUPLICATE_IN_CSV']])
             })
-            it('rejects a csv import above performance.write_limit with 413 before validating the rows', async () => {
+            it('rejects a csv import above performance.write_items_limit with 413 before validating the rows', async () => {
                 const csvContent = [
                     'customer_id,name,number',
                     'x,,',
@@ -226,7 +227,7 @@ describe('Customer Phonebook', () => {
                     'x,,',
                 ].join('\n')
                 const performance = AppService.config.performance
-                AppService.config.performance = {...performance, write_limit: 2}
+                AppService.config.performance = {...performance, write_items_limit: 2}
                 try {
                     const response = await request(app.getHttpServer())
                         .post('/api/customers/phonebook')
@@ -234,8 +235,8 @@ describe('Customer Phonebook', () => {
                         .set('Accept', 'application/json')
                         .attach('file', Buffer.from(csvContent), 'customer_phonebook_test.csv')
                     expect(response.status).toEqual(413)
-                    expect(response.body.errorCode).toEqual('BULK_TOO_LARGE')
-                    expect(response.body.message).toEqual('3 items are more than the 2 allowed per request')
+                    expect(response.body.errorCode).toEqual('CSV_TOO_MANY_ROWS')
+                    expect(response.body.message).toEqual('The file has more than the 2 rows allowed per request')
                 } finally {
                     AppService.config.performance = performance
                 }
@@ -295,6 +296,63 @@ describe('Customer Phonebook', () => {
                     .set(...authHeader)
                     .set('Accept', 'application/json')
                 expect(response.status).toEqual(404)
+            })
+        })
+
+        describe('CSV export', () => {
+            const csvExport = (query = ''): request.Test => request(app.getHttpServer())
+                .get(`/api/customers/phonebook?customer_id=${exportCustomerId}${query}`)
+                .set(...authHeader)
+                .set('Accept', 'text/csv')
+
+            it('create a customer with 12 entries', async () => {
+                const contract = await db.billing.Contract.create({
+                    contact_id: 1,
+                    product_id: 4,
+                }).save()
+                await appService.db.query('call billing.schedule_contract_billing_profile_network(?,?,?)', [contract.id, null, ',,1,,;'])
+                exportCustomerId = contract.id
+                const entries = Array.from({length: 12}, (_, i) => ({
+                    customer_id: exportCustomerId,
+                    name: `CUST_PHONEBOOK_EXPORT${i}`,
+                    number: `${71000 + i}`,
+                }))
+                const response = await request(app.getHttpServer())
+                    .post('/api/customers/phonebook')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send(entries)
+                expect(response.status).toEqual(204)
+            })
+            it('export every entry regardless of rows', async () => {
+                const response = await csvExport()
+                expect(response.status).toEqual(200)
+                expect(response.text.split('\r\n')).toHaveLength(13)
+            })
+            it('export the whole set in pages of performance.read_rows_limit, ignoring rows', async () => {
+                const full = await csvExport()
+                const performance = AppService.config.performance
+                AppService.config.performance = {...performance, read_rows_limit: 5}
+                try {
+                    const response = await csvExport('&rows=6')
+                    expect(response.status).toEqual(200)
+                    expect(response.text).toEqual(full.text)
+                } finally {
+                    AppService.config.performance = performance
+                }
+            })
+            it('reject an export above performance.read_file_limit with 422', async () => {
+                const performance = AppService.config.performance
+                AppService.config.performance = {...performance, read_file_limit: '10b'}
+                try {
+                    const response = await csvExport()
+                    expect(response.status).toEqual(422)
+                    expect(response.body.errorCode).toEqual('EXPORT_TOO_LARGE')
+                    expect(response.body.message).toEqual('The export is larger than the 10b allowed, narrow it down with search filters')
+                } finally {
+                    AppService.config.performance = performance
+                }
             })
         })
 
@@ -643,6 +701,10 @@ describe('Customer Phonebook', () => {
             if (otherCustomerId) {
                 await db.billing.ContractPhonebook.delete({contract_id: otherCustomerId})
                 createdContractIds.push(otherCustomerId)
+            }
+            if (exportCustomerId) {
+                await db.billing.ContractPhonebook.delete({contract_id: exportCustomerId})
+                createdContractIds.push(exportCustomerId)
             }
             if (createdContractIds.length)
                 await db.billing.Contract.delete(createdContractIds)

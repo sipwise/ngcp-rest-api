@@ -7,7 +7,7 @@ import {ResellerPhonebookMariadbRepository} from './repositories/phonebook.maria
 
 import {AppService} from '~/app.service'
 import {internal} from '~/entities'
-import {dtoToCsv} from '~/helpers/csv.helper'
+import {readAllAsCsv} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrors, rowPointer, throwMissingIds} from '~/helpers/errors.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
@@ -109,14 +109,10 @@ export class ResellerPhonebookService implements CrudService<internal.ResellerPh
     }
 
     async exportCsv(sr: ServiceRequest): Promise<StreamableFile> {
-        const [entities] = await this.readAll(sr)
-        const dtos = entities.map(entity => {
-            const dto = new ResellerPhonebookResponseDto(entity)
-            const {resourceUrl, ...rest} = dto
-            return rest
+        const csv = await readAllAsCsv(sr, sr => this.readAll(sr), entity => {
+            const {resourceUrl, ...row} = new ResellerPhonebookResponseDto(entity)
+            return row
         })
-
-        const csv = await dtoToCsv<ResellerPhonebookResponseDto>(dtos)
 
         const buffer = Buffer.from(csv, 'utf-8')
         return new StreamableFile(Uint8Array.from(buffer), {

@@ -11,7 +11,6 @@ import {
     UploadedFile,
     UseInterceptors,
 } from '@nestjs/common'
-import {FileInterceptor} from '@nestjs/platform-express'
 import {ApiConsumes, ApiOkResponse, ApiOperation, ApiQuery, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 
@@ -29,6 +28,7 @@ import {Public} from '~/decorators/public.decorator'
 import {Transactional} from '~/decorators/transactional.decorator'
 import {ValidationFailedException} from '~/helpers/errors.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
+import {FileUploadInterceptor} from '~/interceptors/file-upload.interceptor'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseUUIDArrayPipe} from '~/pipes/parse-uuid-array.pipe'
@@ -51,11 +51,7 @@ export class FileshareController extends CrudController<FileshareRequestDto, Fil
     @ApiOperation({summary: 'Upload a file'})
     @ApiConsumes('multipart/form-data')
     @ApiCreatedResponse(FileshareResponseDto)
-    @UseInterceptors(FileInterceptor('file', {
-        limits: {
-            fileSize: AppService.config.fileshare.limits.upload_size || null,
-        },
-    }))
+    @UseInterceptors(FileUploadInterceptor('file', AppService.config.fileshare.limits.upload_size || undefined))
     @Transactional()
     async createFile(
         @Body() createDto: FileshareRequestDto,

@@ -16,7 +16,7 @@ import {ContactStatus} from '~/entities/internal/contact.internal.entity'
 import {ContractStatus} from '~/entities/internal/contract.internal.entity'
 import {ErrorEntry} from '~/helpers/errors.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
-import {bodyLimit} from '~/helpers/request-limits.helper'
+import {writeBodyLimit} from '~/helpers/request-limits.helper'
 import {validate} from '~/helpers/validate.helper'
 
 const SIPACCOUNT_PRODUCT_ID = 4
@@ -852,12 +852,12 @@ describe('CustomerContact', () => {
                 .set('Content-Type', method == 'patch' ? 'application/json-patch+json' : 'application/json')
                 .send(body)
 
-            it('reject rows above performance.read_limit with 400', async () => {
+            it('reject rows above performance.read_rows_limit with 400', async () => {
                 const above = await get('/api/customercontacts?rows=10001')
                 expect(above.status).toEqual(400)
                 expect(above.body.errorCode).toEqual('INVALID_PARAMETER')
                 expect(above.body.errors).toEqual([{parameter: 'rows', code: 'max', message: 'rows must not be greater than 10000'}])
-                AppService.config.performance = {...performance, read_limit: 2}
+                AppService.config.performance = {...performance, read_rows_limit: 2}
                 try {
                     expect((await get('/api/customercontacts?rows=2')).status).toEqual(200)
                     const lowered = await get('/api/customercontacts?rows=3')
@@ -867,8 +867,8 @@ describe('CustomerContact', () => {
                     AppService.config.performance = performance
                 }
             })
-            it('reject bulk requests above performance.write_limit with 413 before validating the items', async () => {
-                AppService.config.performance = {...performance, write_limit: 2}
+            it('reject bulk requests above performance.write_items_limit with 413 before validating the items', async () => {
+                AppService.config.performance = {...performance, write_items_limit: 2}
                 try {
                     const post = await send('post', [{}, {}, {}])
                     expect(post.status).toEqual(413)
@@ -898,10 +898,11 @@ describe('CustomerContact', () => {
                     AppService.config.performance = performance
                 }
             })
-            it('reject a body above performance.body_limit with 413', async () => {
-                const response = await send('post', {firstname: 'x'.repeat(bodyLimit())})
+            it('reject a body above performance.write_body_limit with 413', async () => {
+                const response = await send('post', {firstname: 'x'.repeat(writeBodyLimit())})
                 expect(response.status).toEqual(413)
-                expect(response.body.errorCode).toEqual('PAYLOAD_TOO_LARGE')
+                expect(response.body.errorCode).toEqual('BODY_TOO_LARGE')
+                expect(response.body.message).toEqual('The request body is larger than the 20mb allowed')
             })
         })
 

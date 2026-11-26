@@ -165,7 +165,7 @@ describe('Swagger', () => {
         }
     })
 
-    it('documents the request limits: rows maximum, bulk body items and their 413', async () => {
+    it('documents the request limits: rows maximum, bulk body items, uploads and CSV exports with their 413/422', async () => {
         const json = await request(app.getHttpServer()).get('/api/swagger.json')
         expect(json.status).toEqual(HttpStatus.OK)
         const paths = json.body.paths as Record<string, Record<string, OperationObject>>
@@ -193,6 +193,12 @@ describe('Swagger', () => {
         expect(bodySchema(item.patch, 'application/json-patch+json').maxItems).toBeUndefined()
         expect(item.patch.responses['413']).toBeUndefined()
         expect(collection.get.responses['413']).toBeUndefined()
+
+        const errorExample = (operation: OperationObject, code: string): Record<string, unknown> =>
+            (operation.responses[code] as ResponseObject).content['application/json'].example as Record<string, unknown>
+        const phonebook = paths['/api/customers/{customerId}/phonebook']
+        expect(errorExample(phonebook.post, '413')).toEqual(expect.objectContaining({errorCode: 'FILE_TOO_LARGE'}))
+        expect(errorExample(phonebook.get, '422')).toEqual(expect.objectContaining({errorCode: 'EXPORT_TOO_LARGE'}))
     })
 
     it('documents the answer of a POST and collections as plain objects of their items', async () => {

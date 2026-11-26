@@ -264,15 +264,26 @@ Un POST en masse sans `Prefer` renvoie 204 ; demandez donc `return=id` ou `retur
 
 ### Limites des requêtes
 
-Chaque requête est limitée, afin qu'une seule requête ne puisse pas retenir les autres :
+Chaque requête est limitée, afin qu'une seule requête ne puisse pas retenir les autres ni la plateforme. Les limites sont des paramètres de plateforme de l'API :
 
-| Limite | Par défaut | Au-delà |
-| --- | --- | --- |
-| `rows` d'une requête GET | 10000 | 400 |
-| Éléments d'une requête en masse : tableau POST, PUT ou PATCH par id, ids DELETE, lignes CSV | 10000 | 413 `BULK_TOO_LARGE` |
-| Corps de la requête, JSON ou fichier CSV | 20 Mo | 413 `PAYLOAD_TOO_LARGE` |
+| Paramètre | Par défaut | Limite | Au-delà |
+| --- | --- | --- | --- |
+| `performance.read_rows_limit` | `10000` | `rows` d'une requête GET avec une réponse JSON | 400 `INVALID_PARAMETER` |
+| `performance.write_items_limit` | `10000` | Éléments d'une requête en masse : tableau POST, PUT ou PATCH par id, ids DELETE ; lignes d'un import CSV ; événements d'un import iCalendar | 413 `BULK_TOO_LARGE`, import CSV 413 `CSV_TOO_MANY_ROWS` |
+| `performance.write_body_limit` | `20mb` | Corps JSON de la requête | 413 `BODY_TOO_LARGE` |
+| `performance.write_file_limit` | `50mb` | Fichier téléversé : import CSV, iCalendar, modèle de facture | 413 `FILE_TOO_LARGE` |
+| `fileshare.limits.upload_size` | `10485760` | Téléversement fileshare, en octets (10 Mo), `0` = sans limite | 413 `FILE_TOO_LARGE` |
+| `performance.read_file_limit` | `50mb` | Export CSV (`Accept: text/csv`) | 422 `EXPORT_TOO_LARGE` |
+| `performance.lazy_load.inline_max_items` | `1000` | Entrées d'un champ différé inclus, aussi le seuil de `inline=auto` | 422 `INLINE_TOO_LARGE` |
+| `performance.lazy_load.inline_max_hard_limit` | `10000` | Entrées incluses d'une réponse, sur tous ses éléments et éléments développés | 422 `INLINE_TOO_LARGE` |
+| `expand.filter_max_ids` | `10000` | Éléments référencés auxquels un filtre sur un champ référencé peut correspondre | 422 `EXPAND_NOT_POSSIBLE` |
 
-Les limites sont les paramètres de plateforme `performance.read_limit`, `performance.write_limit` et `performance.body_limit`. Une requête en masse au-delà de la limite d'éléments est rejetée avant la validation de ses éléments et rien n'en est écrit : répartissez-la sur plusieurs requêtes. `rows` n'avait pas de limite supérieure auparavant : lisez les grandes collections page par page.
+Les nombres sont des entiers à partir de 1. Les tailles sont un nombre avec l'unité `b`, `kb`, `mb` ou `gb` (multiples de 1024, casse indifférente, décimales permises comme `1.5mb`) ; `fileshare.limits.upload_size` est un simple nombre d'octets. Un paramètre non défini a sa valeur par défaut. Le message d'erreur indique la limite configurée, p. ex. `The file is larger than the 50mb allowed`.
+
+- Une requête en masse ou un import CSV au-delà de la limite d'éléments est rejeté avant la validation de ses éléments et rien n'en est écrit : répartissez-le sur plusieurs requêtes. Un fichier CSV n'est lu que jusqu'à la première ligne au-delà de la limite.
+- `rows` vaut 10 s'il n'est pas indiqué. Il n'avait pas de limite supérieure auparavant : lisez les grandes collections page par page.
+- Un export CSV contient toutes les lignes correspondant aux filtres de recherche, lues comme un état cohérent ; `rows` et `page` ne s'y appliquent pas. Un export au-delà de la limite est rejeté avant tout envoi : restreignez-le avec des filtres de recherche.
+- Champs différés et filtres sur des champs référencés : voir « Champs différés » et « Ressources liées » plus haut.
 
 ### Date/heure et fuseaux horaires
 

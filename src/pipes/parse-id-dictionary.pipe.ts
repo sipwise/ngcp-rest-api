@@ -18,7 +18,7 @@ import {
     mergeErrorListExceptions,
 } from '~/helpers/errors.helper'
 import {Operation, assertJsonPatch, normalisePatch} from '~/helpers/patch.helper'
-import {checkWriteLimit} from '~/helpers/request-limits.helper'
+import {checkWriteItemsLimit} from '~/helpers/request-limits.helper'
 import {createItemValidationPipe, validateItem} from '~/helpers/validate.helper'
 import {forEachYield, mapYield} from '~/helpers/yield.helper'
 import {isIntId} from '~/pipes/parse-int-id.pipe'
@@ -52,7 +52,7 @@ export class ParseIdDictionary implements PipeTransform {
         if (value == null || typeof value != 'object' || Array.isArray(value))
             throw new ValidationFailedException([{pointer: '', code: 'isObject', message: 'body must be an object of items keyed by id'}])
         const entries = Object.entries(value)
-        checkWriteLimit(entries.length)
+        checkWriteItemsLimit(entries.length)
 
         const errors: ErrorEntry[] = []
         const patchErrors: ErrorListException[] = []

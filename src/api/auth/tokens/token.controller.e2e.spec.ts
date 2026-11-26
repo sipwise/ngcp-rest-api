@@ -287,7 +287,7 @@ describe('Auth Token', () => {
                 expect(ids).toEqual(expect.arrayContaining(createdIds))
             })
 
-            it('reject rows above performance.read_limit', async () => {
+            it('reject rows above performance.read_rows_limit', async () => {
                 const response = await request(app.getHttpServer())
                     .get('/api/auth/tokens?rows=10001')
                     .set(...authHeader)

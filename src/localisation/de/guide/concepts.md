@@ -264,15 +264,26 @@ Ein Bulk-POST ohne `Prefer` liefert 204; fordern Sie daher `return=id` oder `ret
 
 ### Anfragelimits
 
-Jede Anfrage ist begrenzt, damit eine einzelne Anfrage die anderen nicht aufhält:
+Jede Anfrage ist begrenzt, damit eine einzelne Anfrage die anderen oder die Plattform nicht aufhält. Die Limits sind Plattform-Einstellungen der API:
 
-| Limit | Standard | Darüber |
-| --- | --- | --- |
-| `rows` einer GET-Anfrage | 10000 | 400 |
-| Einträge einer Bulk-Anfrage: POST-Array, PUT oder PATCH nach ID, DELETE-IDs, CSV-Zeilen | 10000 | 413 `BULK_TOO_LARGE` |
-| Request-Body, JSON oder CSV-Datei | 20 MB | 413 `PAYLOAD_TOO_LARGE` |
+| Einstellung | Standard | Begrenzt | Darüber |
+| --- | --- | --- | --- |
+| `performance.read_rows_limit` | `10000` | `rows` einer GET-Anfrage mit JSON-Antwort | 400 `INVALID_PARAMETER` |
+| `performance.write_items_limit` | `10000` | Einträge einer Bulk-Anfrage: POST-Array, PUT oder PATCH nach ID, DELETE-IDs; Zeilen eines CSV-Imports; Events eines iCalendar-Imports | 413 `BULK_TOO_LARGE`, CSV-Import 413 `CSV_TOO_MANY_ROWS` |
+| `performance.write_body_limit` | `20mb` | JSON-Request-Body | 413 `BODY_TOO_LARGE` |
+| `performance.write_file_limit` | `50mb` | Hochgeladene Datei: CSV-Import, iCalendar, Rechnungsvorlage | 413 `FILE_TOO_LARGE` |
+| `fileshare.limits.upload_size` | `10485760` | Fileshare-Upload, in Bytes (10 MB), `0` = kein Limit | 413 `FILE_TOO_LARGE` |
+| `performance.read_file_limit` | `50mb` | CSV-Export (`Accept: text/csv`) | 422 `EXPORT_TOO_LARGE` |
+| `performance.lazy_load.inline_max_items` | `1000` | Einträge eines eingebetteten Lazy-Felds, auch die Schwelle von `inline=auto` | 422 `INLINE_TOO_LARGE` |
+| `performance.lazy_load.inline_max_hard_limit` | `10000` | Eingebettete Einträge einer Antwort, über alle ihre Einträge und expandierten Einträge | 422 `INLINE_TOO_LARGE` |
+| `expand.filter_max_ids` | `10000` | Verknüpfte Einträge, auf die ein Filter auf ein verknüpftes Feld passen darf | 422 `EXPAND_NOT_POSSIBLE` |
 
-Die Limits sind die Plattform-Einstellungen `performance.read_limit`, `performance.write_limit` und `performance.body_limit`. Eine Bulk-Anfrage über dem Eintragslimit wird abgelehnt, bevor ihre Einträge validiert werden, und nichts davon wird geschrieben: teilen Sie sie auf mehrere Anfragen auf. `rows` hatte bisher keine Obergrenze: lesen Sie größere Collections seitenweise.
+Anzahlen sind ganze Zahlen ab 1. Größen sind eine Zahl mit der Einheit `b`, `kb`, `mb` oder `gb` (Vielfache von 1024, Groß-/Kleinschreibung egal, Dezimalzahlen erlaubt wie `1.5mb`); `fileshare.limits.upload_size` ist eine reine Anzahl Bytes. Eine nicht gesetzte Einstellung hat ihren Standardwert. Die Fehlermeldung nennt das eingestellte Limit, z. B. `The file is larger than the 50mb allowed`.
+
+- Eine Bulk-Anfrage oder ein CSV-Import über dem Eintragslimit wird abgelehnt, bevor ihre Einträge validiert werden, und nichts davon wird geschrieben: teilen Sie sie auf mehrere Anfragen auf. Eine CSV-Datei wird nur bis zur ersten Zeile über dem Limit gelesen.
+- `rows` ist 10, wenn nicht angegeben. Es hatte bisher keine Obergrenze: lesen Sie größere Collections seitenweise.
+- Ein CSV-Export enthält alle Zeilen, die den Suchfiltern entsprechen, gelesen als ein konsistenter Stand; `rows` und `page` gelten für ihn nicht. Ein Export über dem Limit wird abgelehnt, bevor etwas gesendet wird: schränken Sie ihn mit Suchfiltern ein.
+- Lazy-Felder und Filter auf verknüpfte Felder: siehe „Lazy-Felder“ und „Verknüpfte Ressourcen“ oben.
 
 ### Datum/Uhrzeit und Zeitzonen
 

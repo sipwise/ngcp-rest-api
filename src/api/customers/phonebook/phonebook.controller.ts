@@ -1,5 +1,4 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, Res, StreamableFile, UnprocessableEntityException, UploadedFile, UseInterceptors, ValidationPipe} from '@nestjs/common'
-import {FileInterceptor} from '@nestjs/platform-express'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiParam, ApiTags} from '@nestjs/swagger'
 import {Request} from 'express'
 import {Operation} from 'fast-json-patch'
@@ -36,9 +35,10 @@ import {csvToDto, handleCsvExport} from '~/helpers/csv.helper'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {Operation as PatchOperation} from '~/helpers/patch.helper'
 import {patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
-import {bodyLimit} from '~/helpers/request-limits.helper'
+import {writeFileLimit} from '~/helpers/request-limits.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {mapYield} from '~/helpers/yield.helper'
+import {FileUploadInterceptor} from '~/interceptors/file-upload.interceptor'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {FileMimeTypePipe} from '~/pipes/parse-file-mimetype.pipe'
@@ -77,11 +77,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
     @Post('{:customerId/}phonebook')
     @ApiCreatedResponse(CustomerPhonebookResponseDto)
     @ApiJsonOrCsvBody(CustomerPhonebookRequestDto, CustomerPhonebookTextCsvExampleRequest)
-    @UseInterceptors(FileInterceptor('file', {
-        limits: {
-            fileSize: bodyLimit(),
-        },
-    }))
+    @UseInterceptors(FileUploadInterceptor('file', writeFileLimit()))
     @ApiContentTypeHeader('application/json', 'multipart/form-data')
     @Transactional()
     async create(
@@ -148,6 +144,7 @@ export class CustomerPhonebookController extends CrudController<CustomerPhoneboo
         ],
     })
     @ApiAcceptHeader('application/json', 'application/hal+json', 'text/csv')
+    @Transactional()
     async readAll(
         @Req() req: Request,
         @Param('customerId', new ParseIntIdPipe({allowUndefined: true})) _customerId: number,

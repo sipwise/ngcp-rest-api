@@ -1,5 +1,4 @@
 import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Req, Response, StreamableFile, UploadedFile, UseInterceptors} from '@nestjs/common'
-import {FileInterceptor} from '@nestjs/platform-express'
 import {ApiBody, ApiConsumes, ApiOkResponse, ApiTags} from '@nestjs/swagger'
 import {Request, Response as ExpressResponse} from 'express'
 
@@ -30,11 +29,12 @@ import {internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
 import {ApiErrors, errorMessage, itemPointer} from '~/helpers/errors.helper'
 import {Operation, patchManyToEntities, patchToEntity} from '~/helpers/patch.helper'
-import {bodyLimit} from '~/helpers/request-limits.helper'
+import {writeFileLimit} from '~/helpers/request-limits.helper'
 import {validatePatchResellerId, validateResellerId} from '~/helpers/reseller-id.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {calendarToDtos} from '~/helpers/time-set-calendar.helper'
 import {forEachYield, mapYield} from '~/helpers/yield.helper'
+import {FileUploadInterceptor} from '~/interceptors/file-upload.interceptor'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
 import {ParseIdDictionary} from '~/pipes/parse-id-dictionary.pipe'
@@ -44,11 +44,7 @@ import {ParsePatchPipe} from '~/pipes/parse-patch.pipe'
 
 const resourceName = 'time-sets'
 
-const uploadInterceptor = FileInterceptor('file', {
-    limits: {
-        fileSize: bodyLimit(),
-    },
-})
+const uploadInterceptor = FileUploadInterceptor('file', writeFileLimit())
 
 // the name without characters that need quoting, with the id to keep the files of equal names apart
 function toCalendarFile(timeSet: internal.TimeSet, ical: string): StreamableFile {

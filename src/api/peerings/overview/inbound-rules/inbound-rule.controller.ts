@@ -13,6 +13,7 @@ import {ApiAcceptHeader} from '~/decorators/api-accept-header.decorator'
 import {ApiPaginatedMultipleResponse} from '~/decorators/api-paginated-multiple-response.decorator'
 import {ApiSearchQuery} from '~/decorators/api-search-query.decorator'
 import {Auth} from '~/decorators/auth.decorator'
+import {Transactional} from '~/decorators/transactional.decorator'
 import {handleCsvExport} from '~/helpers/csv.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {mapYield} from '~/helpers/yield.helper'
@@ -58,6 +59,7 @@ export class PeeringInboundRuleOverviewController extends CrudController<never, 
         ],
     })
     @ApiAcceptHeader('application/json', 'application/hal+json', 'text/csv')
+    @Transactional()
     async readAll(
         @Req() req: Request,
         @Res({passthrough: true}) res,

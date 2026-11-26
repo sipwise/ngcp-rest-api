@@ -6,7 +6,7 @@ import {ResellerPhonebookOptions} from '~/api/resellers/phonebook/interfaces/pho
 import {ResellerPhonebookRepository} from '~/api/resellers/phonebook/interfaces/phonebook.repository'
 import {db, internal} from '~/entities'
 import {Dictionary} from '~/helpers/dictionary.helper'
-import {configureQueryBuilder} from '~/helpers/query-builder.helper'
+import {addTiebreakerOrder, configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
 import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -39,6 +39,7 @@ export class ResellerPhonebookMariadbRepository extends MariaDbRepository implem
             ),
         )
         this.addFilterBy(qb, options.filterBy)
+        addTiebreakerOrder(qb, ['phonebook.id'])
         const [result, totalCount] = await qb.getManyAndCount()
         return [await mapYield(result, d => d.toInternal()), totalCount]
     }
