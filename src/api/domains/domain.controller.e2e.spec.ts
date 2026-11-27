@@ -2,6 +2,7 @@ import {INestApplication} from '@nestjs/common'
 import {Test} from '@nestjs/testing'
 import request from 'supertest'
 import {In, MoreThanOrEqual} from 'typeorm'
+import {v4 as uuidv4} from 'uuid'
 
 import {DomainModule} from './domain.module'
 import {DomainResponseDto} from './dto/domain-response.dto'
@@ -34,6 +35,8 @@ describe('Domain', () => {
     }
     let otherResellerContractId: number
     let otherResellerId: number
+    let aliasDomainId: number
+    let aliasSubscriberId: number
 
     const insertAdmin = async (login: string, role: RbacRole, resellerId: number): Promise<void> => {
         await db.billing.Admin.delete({login: login})
@@ -355,6 +358,49 @@ describe('Domain', () => {
                 expect(await db.billing.Domain.findOneBy({id: createdIds[0]})).not.toBeNull()
             })
         })
+
+        describe('DELETE with aliases', () => {
+            const aliasDomain = `alias.${domainSuffix}`
+            const aliasUsername = `alias${process.env.JEST_WORKER_ID}`
+            const readKamailioAliases = async (): Promise<unknown[]> => await appService.db.query(
+                'SELECT id FROM kamailio.dbaliases WHERE alias_username = ? AND alias_domain = ?',
+                [aliasUsername, aliasDomain],
+            )
+
+            it('create a domain with an alias of a subscriber of another domain', async () => {
+                const response = await request(app.getHttpServer())
+                    .post('/api/domains')
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({domain: aliasDomain, reseller_id: 1})
+                expect(response.status).toEqual(201)
+                aliasDomainId = +response.body.data[0].id
+                aliasSubscriberId = (await db.provisioning.VoipSubscriber.insert({
+                    username: `alias_target_${domainSuffix}`,
+                    domain_id: 2,
+                    uuid: uuidv4(),
+                    password: uuidv4().slice(0, 16),
+                })).identifiers[0].id
+                const provisioningDomain = await db.provisioning.VoipDomain.findOneByOrFail({domain: aliasDomain})
+                await db.provisioning.VoipDBAlias.insert({
+                    username: aliasUsername,
+                    domain_id: provisioningDomain.id,
+                    subscriber_id: aliasSubscriberId,
+                })
+                expect(await readKamailioAliases()).toHaveLength(1)
+            })
+
+            it('delete the aliases of the domain with their kamailio entries', async () => {
+                const response = await request(app.getHttpServer())
+                    .delete(`/api/domains/${aliasDomainId}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(204)
+                expect(await db.provisioning.VoipDBAlias.findOneBy({subscriber_id: aliasSubscriberId})).toBeNull()
+                expect(await readKamailioAliases()).toHaveLength(0)
+            })
+        })
     })
 
     describe('Domain DELETE', () => {
@@ -376,11 +422,23 @@ describe('Domain', () => {
                 .set('Accept', 'application/json')
             expect(response.status).toEqual(204)
         })
+        it('delete alias fixtures', async () => {
+            if (aliasDomainId && await db.billing.Domain.findOneBy({id: aliasDomainId})) {
+                const response = await request(app.getHttpServer())
+                    .delete(`/api/domains/${aliasDomainId}`)
+                    .set(...authHeader)
+                    .set('Accept', 'application/json')
+                expect(response.status).toEqual(204)
+            }
+            if (aliasSubscriberId)
+                await db.provisioning.VoipSubscriber.delete(aliasSubscriberId)
+        })
         it('delete created journals', async () => {
-            if (createdIds.length)
+            const domainIds = aliasDomainId ? [...createdIds, aliasDomainId] : createdIds
+            if (domainIds.length)
                 await db.billing.Journal.delete({
                     resource_name: 'domains',
-                    resource_id: In(createdIds),
+                    resource_id: In(domainIds),
                     timestamp: MoreThanOrEqual(startedAt),
                 })
             if (resellerAdminId)

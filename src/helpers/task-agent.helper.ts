@@ -23,6 +23,10 @@ interface BuildRequestParams {
     data?: Record<string, unknown> | string;
 }
 
+interface InvokeTaskOptions {
+    longRunning?: boolean
+}
+
 @Injectable()
 export class TaskAgentHelper {
     private readonly log = new LoggerService(TaskAgentHelper.name)
@@ -99,6 +103,7 @@ export class TaskAgentHelper {
         feedbackChannel: string,
         request: TaskAgentRequest,
         handleOnData?: (data: unknown, ret: (T | string)[]) => Promise<void>,
+        {longRunning = false}: InvokeTaskOptions = {},
     ): Promise<(T | string)[]> {
         // NOTE: 'src'/'dst' on responses identify the nodename which can be identical
         // in multi site environments, e.g. sp1 from site1 and sp1 from site2 in 'src',
@@ -191,7 +196,10 @@ export class TaskAgentHelper {
             }
 
             if (elapsed > maxTimeout) {
-                this.log.error(`Task max response timeout feedback=${feedbackChannel} uuid=${request.uuid} accepted=${acceptedCount} completed=${completedCount} errors=${errorsStr}`)
+                if (longRunning)
+                    this.log.log(`Task still running after max timeout feedback=${feedbackChannel} uuid=${request.uuid} accepted=${acceptedCount} completed=${completedCount}`)
+                else
+                    this.log.error(`Task max response timeout feedback=${feedbackChannel} uuid=${request.uuid} accepted=${acceptedCount} completed=${completedCount} errors=${errorsStr}`)
                 await this.unsubscriberFromFeedback(feedbackChannel)
                 return
             }

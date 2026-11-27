@@ -5,12 +5,15 @@ import {DomainModule} from './domain.module'
 import {DomainService} from './domain.service'
 import {DomainMariadbRepository} from './repositories/domain.mariadb.repository'
 import {DomainMockRepository} from './repositories/domain.mock.repository'
+import {DomainRedisMockRepository} from './repositories/domain.redis.mock.repository'
+import {DomainRedisRepository} from './repositories/domain.redis.repository'
 
 import {AppModule} from '~/app.module'
 import {AuthResponseDto} from '~/auth/dto/auth-response.dto'
 import {internal} from '~/entities'
 import {deepCopy} from '~/helpers/deep-copy.helper'
 import {ApiErrorException} from '~/helpers/errors.helper'
+import {postCommitQueueStorage} from '~/helpers/post-commit-queue.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 
 const user: AuthResponseDto = {
@@ -30,6 +33,7 @@ const resellerUser: AuthResponseDto = {...user, role: 'reseller', reseller_id: 1
 describe('DomainService', () => {
     let service: DomainService
     let domainMockRepo: DomainMockRepository
+    let domainRedisMockRepo: DomainRedisMockRepository
 
     let sr: ServiceRequest
 
@@ -40,16 +44,28 @@ describe('DomainService', () => {
         return d
     }
 
+    const committed = async <T>(fn: () => Promise<T>, commit = true): Promise<T> => {
+        const store = {callbacks: []}
+        const result = await postCommitQueueStorage.run(store, fn)
+        if (commit) {
+            for (const cb of store.callbacks)
+                await cb()
+        }
+        return result
+    }
+
     afterEach(() => {
         jest.restoreAllMocks()
     })
 
     beforeEach(async () => {
         domainMockRepo = new DomainMockRepository()
+        domainRedisMockRepo = new DomainRedisMockRepository()
         const module: TestingModule = await Test.createTestingModule({
             imports: [DomainModule, AppModule],
         })
             .overrideProvider(DomainMariadbRepository).useValue(domainMockRepo)
+            .overrideProvider(DomainRedisRepository).useValue(domainRedisMockRepo)
             .compile()
 
         service = module.get<DomainService>(DomainService)
@@ -78,7 +94,7 @@ describe('DomainService', () => {
     describe('delete', () => {
         it('should delete domain by id', async () => {
             const id = 1
-            const got = await service.delete([id], sr)
+            const got = await committed(() => service.delete([id], sr))
             expect(got).toStrictEqual([id])
         })
 
@@ -98,7 +114,7 @@ describe('DomainService', () => {
     describe('create', () => {
         it('creates domains of an admin with the given reseller_id', async () => {
             const spy = jest.spyOn(domainMockRepo, 'create')
-            const got = await service.create([makeDomain('new1', 2), makeDomain('new2', 3)], sr)
+            const got = await committed(() => service.create([makeDomain('new1', 2), makeDomain('new2', 3)], sr))
             expect(spy).toHaveBeenCalledTimes(1)
             expect(got.map(d => [d.domain, d.reseller_id])).toStrictEqual([['new1', 2], ['new2', 3]])
         })
@@ -123,7 +139,7 @@ describe('DomainService', () => {
 
         it('forces the reseller_id of reseller users', async () => {
             const rsr = {...sr, user: resellerUser}
-            const got = await service.create([makeDomain('res1', 3), makeDomain('res2')], rsr)
+            const got = await committed(() => service.create([makeDomain('res1', 3), makeDomain('res2')], rsr))
             expect(got.map(d => d.reseller_id)).toStrictEqual([1, 1])
         })
 
@@ -158,19 +174,66 @@ describe('DomainService', () => {
         })
 
         it('lets a reseller delete its own domains', async () => {
-            await expect(service.delete([1, 4], {...sr, user: resellerUser})).resolves.toStrictEqual([1, 4])
+            await expect(committed(() => service.delete([1, 4], {...sr, user: resellerUser}))).resolves.toStrictEqual([1, 4])
         })
 
         it('does not check ownership for admins', async () => {
-            await expect(service.delete([2, 3], sr)).resolves.toStrictEqual([2, 3])
+            await expect(committed(() => service.delete([2, 3], sr))).resolves.toStrictEqual([2, 3])
         })
 
         it('deletes all domains in one call', async () => {
             const spy = jest.spyOn(domainMockRepo, 'delete')
-            await service.delete([1, 2], sr)
+            await committed(() => service.delete([1, 2], sr))
             expect(spy).toHaveBeenCalledTimes(1)
             expect(spy).toHaveBeenCalledWith([1, 2], sr)
         })
     })
 
+    describe('domain reload', () => {
+        it('reloads the domains once after creating several domains', async () => {
+            await committed(() => service.create([makeDomain('new1', 2), makeDomain('new2', 3)], sr))
+            expect(domainRedisMockRepo.reloads).toBe(1)
+        })
+
+        it('reloads the domains once after deleting several domains', async () => {
+            await committed(() => service.delete([1, 2], sr))
+            expect(domainRedisMockRepo.reloads).toBe(1)
+        })
+
+        it('does not reload when the delete is rejected', async () => {
+            await expect(committed(() => service.delete([2], {...sr, user: resellerUser}))).rejects.toThrow(ApiErrorException)
+            await expect(committed(() => service.delete([1, 100], sr))).rejects.toThrow(ApiErrorException)
+            expect(domainRedisMockRepo.reloads).toBe(0)
+        })
+
+        it('does not reload without a commit', async () => {
+            await committed(() => service.create([makeDomain('new1', 2)], sr), false)
+            await committed(() => service.delete([1], sr), false)
+            expect(domainRedisMockRepo.reloads).toBe(0)
+        })
+    })
+
+    describe('permanent registrations', () => {
+        it('removes the permanent registrations of the deleted domains after the commit', async () => {
+            await committed(() => service.delete([1, 2], sr))
+            expect(domainRedisMockRepo.removedPermanentLocations).toStrictEqual([['domain1', 'domain2']])
+            expect(domainRedisMockRepo.reloads).toBe(1)
+        })
+
+        it('does not remove registrations when the delete is rejected', async () => {
+            await expect(committed(() => service.delete([2], {...sr, user: resellerUser}))).rejects.toThrow(ApiErrorException)
+            await expect(committed(() => service.delete([1, 100], sr))).rejects.toThrow(ApiErrorException)
+            expect(domainRedisMockRepo.removedPermanentLocations).toStrictEqual([])
+        })
+
+        it('does not remove registrations without a commit', async () => {
+            await committed(() => service.delete([1], sr), false)
+            expect(domainRedisMockRepo.removedPermanentLocations).toStrictEqual([])
+        })
+
+        it('does not remove registrations on create', async () => {
+            await committed(() => service.create([makeDomain('new1', 2)], sr))
+            expect(domainRedisMockRepo.removedPermanentLocations).toStrictEqual([])
+        })
+    })
 })

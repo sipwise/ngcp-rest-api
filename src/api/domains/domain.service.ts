@@ -2,9 +2,11 @@ import {HttpStatus, Inject, Injectable, UnprocessableEntityException} from '@nes
 import {I18nService} from 'nestjs-i18n'
 
 import {DomainMariadbRepository} from './repositories/domain.mariadb.repository'
+import {DomainRedisRepository} from './repositories/domain.redis.repository'
 
 import {internal} from '~/entities'
 import {ApiErrors, idPointer, itemPointer, throwMissingIds} from '~/helpers/errors.helper'
+import {runOnTransactionCommit, runOnceOnTransactionCommit} from '~/helpers/post-commit-queue.helper'
 import {forEachYield} from '~/helpers/yield.helper'
 import {CrudService} from '~/interfaces/crud-service.interface'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
@@ -18,6 +20,7 @@ export class DomainService implements CrudService<internal.Domain> {
     constructor(
         @Inject(I18nService) private readonly i18n: I18nService,
         @Inject(DomainMariadbRepository) private readonly domainRepo: DomainMariadbRepository,
+        @Inject(DomainRedisRepository) private readonly domainRedisRepo: DomainRedisRepository,
     ) {
     }
 
@@ -40,6 +43,7 @@ export class DomainService implements CrudService<internal.Domain> {
         })
         errors.throwIfAny()
         const createdIds = await this.domainRepo.create(domains, sr)
+        runOnceOnTransactionCommit('domain-reload', async () => await this.domainRedisRepo.reloadDomains())
         return await this.domainRepo.readWhereInIds(createdIds, sr)
     }
 
@@ -75,6 +79,10 @@ export class DomainService implements CrudService<internal.Domain> {
                 errors.add(this.i18n.t('errors.DOMAIN_DOES_NOT_BELONG_TO_RESELLER'), idPointer(sr, domain.id))
         }
         errors.throwIfAny(HttpStatus.FORBIDDEN)
-        return await this.domainRepo.delete(ids, sr)
+        const deletedIds = await this.domainRepo.delete(ids, sr)
+        runOnceOnTransactionCommit('domain-reload', async () => await this.domainRedisRepo.reloadDomains())
+        const names = domains.map(domain => domain.domain)
+        runOnTransactionCommit(async () => await this.domainRedisRepo.removePermanentLocations(names))
+        return deletedIds
     }
 }

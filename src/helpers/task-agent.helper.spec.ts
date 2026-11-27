@@ -76,4 +76,36 @@ describe('TaskAgentHelper.invokeTask', () => {
         })
         expect(await helper.invokeTask('channel', 'feedback', request)).toEqual([{b: 2}])
     })
+
+    describe('max timeout', () => {
+        let logSpy: jest.SpyInstance
+        let errorSpy: jest.SpyInstance
+
+        beforeEach(() => {
+            jest.useFakeTimers()
+            logSpy = jest.spyOn(helper['log'], 'log').mockImplementation()
+            errorSpy = jest.spyOn(helper['log'], 'error').mockImplementation()
+            publishAnswers([{status: 'accepted'}])
+        })
+
+        afterEach(() => {
+            jest.useRealTimers()
+        })
+
+        it('logs a long running task still running at the max timeout as info', async () => {
+            const result = helper.invokeTask('channel', 'feedback', request, undefined, {longRunning: true})
+            await jest.advanceTimersByTimeAsync(10_500)
+            expect(await result).toBeUndefined()
+            expect(logSpy).toHaveBeenCalledTimes(1)
+            expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Task still running after max timeout'))
+            expect(errorSpy).not.toHaveBeenCalled()
+        })
+
+        it('logs a task still running at the max timeout as error', async () => {
+            const result = helper.invokeTask('channel', 'feedback', request)
+            await jest.advanceTimersByTimeAsync(10_500)
+            expect(await result).toBeUndefined()
+            expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Task max response timeout'))
+        })
+    })
 })

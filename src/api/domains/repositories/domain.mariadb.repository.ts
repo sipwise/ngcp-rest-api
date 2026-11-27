@@ -7,7 +7,6 @@ import {DomainRepository} from '~/api/domains/interfaces/domain.repository'
 import {db, internal} from '~/entities'
 import {configureQueryBuilder} from '~/helpers/query-builder.helper'
 import {SearchLogic} from '~/helpers/search-logic.helper'
-import {XmlDispatcher} from '~/helpers/xml-dispatcher'
 import {mapYield} from '~/helpers/yield.helper'
 import {ServiceRequest} from '~/interfaces/service-request.interface'
 import {LoggerService} from '~/logger/logger.service'
@@ -28,12 +27,6 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
         const qbProvisioning = db.provisioning.VoipDomain.createQueryBuilder('domain')
         const valuesProvisioning = domains.map(domain => new db.provisioning.VoipDomain().fromInternal(domain))
         await qbProvisioning.insert().values(valuesProvisioning).execute()
-
-        const xmlDispatcher = new XmlDispatcher()
-
-        for (const domain of domains) {
-            xmlDispatcher.sipDomainReload(domain.domain)
-        }
 
         return resultBilling.identifiers.map((obj: {id: number}) => obj.id)
     }
@@ -98,11 +91,12 @@ export class DomainMariadbRepository extends MariaDbRepository implements Domain
         const domains = await db.billing.Domain.find({select: {domain: true}, where: {id: In(ids)}})
         const names = domains.map(domain => domain.domain)
         await db.billing.Domain.delete(ids)
+        // MariaDB runs no triggers for FK cascades, so the aliases are deleted before their domains
+        // and their trigger removes the kamailio.dbaliases entries
+        const provisioningDomains = await db.provisioning.VoipDomain.find({select: {id: true}, where: {domain: In(names)}})
+        if (provisioningDomains.length)
+            await db.provisioning.VoipDBAlias.delete({domain_id: In(provisioningDomains.map(domain => domain.id))})
         await db.provisioning.VoipDomain.delete({domain: In(names)})
-
-        const xmlDispatcher = new XmlDispatcher()
-        for (const name of names)
-            xmlDispatcher.sipDomainReload(name)
         return ids
     }
 

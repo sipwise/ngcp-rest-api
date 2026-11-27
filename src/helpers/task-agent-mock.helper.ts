@@ -52,6 +52,7 @@ export class TaskAgentMockHelper {
         feedbackChannel: string,
         request: TaskAgentRequest,
         handleOnData?: (data, ret: unknown[]) => Promise<void>,
+        _options: {longRunning?: boolean} = {},
     ): Promise<void> {
         this.log.debug(`publishChannel: ${publishChannel}, feedbackChannel: ${feedbackChannel}, request: ${JSON.stringify(request)}, handleOnData: ${handleOnData.name}`)
         this.log.debug(`publish to task agent '${publishChannel}': ${JSON.stringify(request)}`)
